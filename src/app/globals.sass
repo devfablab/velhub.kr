@@ -1,0 +1,419 @@
+*, ::before, ::after
+  box-sizing: border-box
+
+\::selection
+  background-color: ds.$hex-bright
+  color: ds.$hex-primary
+
+html
+  font-size: 16px
+
+body
+  margin: 0
+  font-size: 16px
+  word-break: keep-all
+  -webkit-text-size-adjust: none
+  transition: all .4s cubic-bezier(.4,0,.2,1)
+
+body, pre, input, button, textarea, select
+  font-size: 1rem
+  @include ds.fw(pre, 400)
+  font-optical-sizing: auto
+  font-feature-settings: normal
+  font-stretch: 100%
+  text-size-adjust: 100%
+  text-rendering: optimizeLegibility
+  color: ds.$hex-bright
+  -webkit-font-smoothing: antialiased
+
+body
+  background-color: ds.$hex-primary
+
+h1, h2, h3, h4, h5, h6
+  margin-top: 0
+  margin-bottom: 0
+
+img
+  @include ds.image-rendering
+  user-drag: none
+
+a
+  text-decoration: none
+  -webkit-tap-highlight-color: rgba(255,255,255,.10)
+
+  &:focus
+    outline: 0
+
+fieldset
+  margin: 0
+  padding: 0
+
+form:not(.MuiBox-root)
+  legend
+    position: absolute
+    overflow: hidden
+    margin: 0
+    width: 1px
+    height: 1px
+    clip: rect(1px, 1px, 1px, 1px)
+
+label
+  cursor: pointer
+
+img, fieldset
+  border: 0
+
+p, ul, dl, pre
+  margin-top: 0
+  margin-bottom: 0
+
+ul, ol
+  margin-top: 0
+  margin-bottom: 0
+  padding-left: 0
+  list-style-type: none
+
+dd
+  margin-left: 0
+
+button
+  cursor: pointer
+  border: 0
+  padding: 0
+  color: ds.$hex-primary
+
+input
+  color: ds.$hex-primary
+
+figure
+  margin: 0
+
+address, cite
+  font-style: normal
+
+iframe
+  display: block
+
+a, button, select, input
+  user-select: none
+
+.sr-only, hr
+  @include ds.screen-reader-only
+
+.sr-only:focus
+  @include ds.visually-hidden-focusable
+  background-color: ds.$hex-warning
+  padding: ds.rem(5) ds.rem(7)
+  color: ds.$hex-white
+  @include ds.fw(pre, 700)
+
+.seo
+  @include ds.screen-reader-only
+
+main, article
+  background-color: ds.$hex-primary
+  display: flex
+  flex-grow: 1
+
+  @include ds.mq(maxLarge)
+    margin-top: ds.rem(-86)
+
+.loading
+  padding: ds.rem(52) ds.rem(12)
+  @include ds.fw(pre, 700)
+  font-size: ds.rem(23)!important
+  text-align: center
+
+#__next > div
+  display: flex
+  flex-direction: column
+  min-height: 100vh
+
+.main-admin
+  @include ds.mq(minMedium)
+    padding-top: ds.rem(66)!important
+
+  > .headline
+    .container
+      padding: ds.rem(27) ds.rem(17)
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
+      position: relative
+      z-index: 3
+
+      @include ds.mq(minMedium)
+        align-items: center
+        margin: 0 auto
+        padding: ds.rem(52) ds.rem(17)
+        width: 100%
+        max-width: ds.rem(1400)
+
+        h1, p
+          text-align: center
+
+      h1
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(24)
+        color: ds.$hex-bright
+
+        @include ds.mq(minMedium)
+          display: flex
+          flex-direction: column
+          width: ds.rem(352)
+          font-size: ds.rem(37)
+
+      p
+        @include ds.fw(pre, 400)
+        font-size: ds.rem(16)
+        line-height: 1.25
+        color: ds.$hex-light
+
+        @include ds.mq(minMedium)
+          @include ds.col
+          font-size: ds.rem(20)
+
+.main
+  > .headline
+    display: flex
+    height: ds.rem(370)
+    margin-top: ds.rem(-86)
+    padding: ds.rem(162) calc(env(safe-area-inset-right) + ds.rem(17)) 0 calc(env(safe-area-inset-left) + ds.rem(17))
+    position: relative
+    background-position: 50% 50%
+    background-size: cover
+    background-repeat: no-repeat
+
+    @include ds.mq(minExtraLarge)
+      margin: 0
+      padding: ds.rem(52) calc(env(safe-area-inset-right) + ds.rem(17)) 0 calc(env(safe-area-inset-left) + ds.rem(17))
+
+    @include ds.mq(minXExtraLarge)
+      padding: ds.rem(97) ds.rem(37) 0
+
+    .dummy
+      position: absolute
+      bottom: 0
+      left: 0
+      width: 100%
+      height: 100%
+      z-index: 2
+      background-color: rgba(ds.$hex-primary, .5)
+
+    .gradient
+      position: absolute
+      bottom: 0
+      left: 0
+      width: 100%
+      height: ds.rem(208)
+      z-index: 3
+      background: linear-gradient(180deg, rgba(ds.$hex-primary, 0.00) 0%, rgba(ds.$hex-primary, 0.70) 100%)
+
+      @include ds.mq(minExtraLarge)
+        height: ds.rem(318)
+
+      @include ds.mq(minXExtraLarge)
+        height: ds.rem(273)
+
+    .container
+      position: relative
+      z-index: 3
+      display: flex
+      flex-direction: column-reverse
+      gap: ds.rem(17)
+      align-items: center
+      justify-content: center
+      width: 100%
+
+      h1
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(27)
+        color: ds.$hex-bright
+        line-height: 1.5
+        text-align: center
+
+        @include ds.mq(minExtraLarge)
+          display: flex
+          flex-direction: column
+          font-size: ds.rem(32)
+
+      p
+        @include ds.fw(pre, 400)
+        font-size: ds.rem(16)
+        line-height: 1.25
+        color: rgba(ds.$hex-light, .7)
+
+        @include ds.mq(minExtraLarge)
+          font-size: ds.rem(20)
+
+.main, .main-admin
+  display: flex
+  flex-direction: column
+  width: 100%
+  position: relative
+
+  .sections
+    display: flex
+    flex-direction: column
+    gap: ds.rem(53)
+    padding-top: ds.rem(52)
+    padding-bottom: ds.rem(72)
+
+    @include ds.mq(minMedium)
+      gap: ds.rem(103)
+      padding-bottom: ds.rem(132)
+
+  section
+    display: flex
+    flex-direction: column
+    gap: ds.rem(27)
+
+    .headline
+      .container
+        padding: ds.rem(27) ds.rem(17) 0
+
+    .content
+      .container
+        padding: 0 ds.rem(17) ds.rem(27)
+
+    .container
+      display: flex
+      flex-direction: column
+      gap: ds.rem(17)
+      padding: ds.rem(17) ds.rem(17) 0
+
+      @include ds.mq(minMedium)
+        gap: ds.rem(27)
+        margin: 0 auto
+        padding: ds.rem(52) ds.rem(17) 0
+        width: 100%
+        max-width: ds.rem(1400)
+
+      .group
+        display: flex
+        flex-direction: column
+        gap: ds.rem(7)
+
+    .headline
+      h2
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(20)
+        line-height: 1.2
+
+        @include ds.mq(minMedium)
+          font-size: ds.rem(25)
+
+      p
+        display: flex
+        flex-direction: column
+        @include ds.fw(pre, 400)
+        font-size: ds.rem(14)
+        line-height: 1.5
+
+        @include ds.mq(minMedium)
+          font-size: ds.rem(20)
+
+    .group
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
+
+    .content
+      display: flex
+      flex-direction: column
+      gap: ds.rem(23)
+
+    table
+      caption-side: bottom
+      border-collapse: collapse
+      border-spacing: 0
+      border-bottom: 1px solid ds.$hex-tertiary
+
+      th
+        text-align: -webkit-match-parent
+
+      tr
+        th, td
+          &:last-of-type
+            border-right: 0
+
+      th, td
+        border-top: 1px solid ds.$hex-tertiary
+        padding: ds.rem(12) 0
+        font-size: ds.rem(12)
+        vertical-align: top
+
+        @include ds.mq(minMedium)
+          padding: ds.rem(14) 0
+          font-size: ds.rem(14)
+
+      th
+        @include ds.fw(pre, 500)
+        color: ds.$hex-black
+
+      td
+        @include ds.fw(pre, 400)
+        color: ds.$hex-primary
+
+    .description
+      list-style-type: disc
+      padding-left: ds.rem(20)
+
+      li
+        margin: ds.rem(3) 0
+        @include ds.fw(pre, 400)
+        font-size: ds.rem(12)
+        line-height: 1.5
+        color: ds.$hex-primary
+
+        span
+          display: block
+
+        @include ds.mq(minMedium)
+          font-size: ds.rem(14)
+          line-height: 1.42857143
+
+.screen
+  .error
+    font-size: ds.rem(23)
+    @include ds.fw(pre, 700)
+    text-align: center
+    color: ds.$hex-warning
+
+.loading
+  display: flex
+  justify-content: center
+  padding: ds.rem(52) ds.rem(12)
+  @include ds.fw(pre, 700)
+  font-size: ds.rem(23)!important
+  text-align: center
+
+.progress-circle
+  width: 75px
+  height: 75px
+  border-radius: 50%
+  background: conic-gradient(from 0deg,#673888 0deg,#ef4f91 120deg,#c79dd7 240deg,#673888 100 * 1%)
+  display: flex
+  align-items: center
+  justify-content: center
+  position: relative
+  transition: background 0.3s ease
+  animation: rotating 1s linear infinite
+  box-shadow: 0 2px 27px 0 rgba(0, 0, 0, 0.27)
+
+  .inner-circle
+    width: 52px
+    height: 52px
+    background: #fff
+    border-radius: 50%
+    box-shadow: inset 0 2px 17px 0 rgba(0, 0, 0, 0.17)
+
+    span
+      @include ds.screen-reader-only
+
+@keyframes rotating
+  from
+    transform: rotate(0deg)
+
+  to
+    transform: rotate(360deg)
