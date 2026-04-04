@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type ProcessingState = 'idle' | 'processing' | 'confirm' | 'failed';
@@ -272,24 +285,39 @@ export default function Page() {
   }
 
   return (
-    <main>
-      <h1>소셜 로그인 처리</h1>
+    <>
+      <Container maxWidth="sm">
+        <Box sx={{ py: 8 }}>
+          <Stack spacing={4}>
+            <Typography variant="h4" component="h1">
+              소셜 로그인 처리
+            </Typography>
 
-      {processingState === 'idle' || processingState === 'processing' ? <p>로그인 정보를 확인하고 있습니다.</p> : null}
+            <Paper elevation={0} sx={{ p: 3 }}>
+              {processingState === 'idle' || processingState === 'processing' ? (
+                <Typography>로그인 정보를 확인하고 있습니다.</Typography>
+              ) : null}
 
-      {processingState === 'confirm' ? (
-        <div>
-          <p>{confirmMessage}</p>
-          <button type="button" onClick={handleConfirmSocialLogin}>
-            소셜 로그인
-          </button>
-          <button type="button" onClick={handleCancelSocialLogin}>
+              {processingState === 'failed' ? <Alert severity="error">{errorMessage}</Alert> : null}
+            </Paper>
+          </Stack>
+        </Box>
+      </Container>
+
+      <Dialog open={processingState === 'confirm'} onClose={handleCancelSocialLogin} fullWidth maxWidth="xs">
+        <DialogTitle>소셜 로그인 확인</DialogTitle>
+        <DialogContent>
+          <Typography>{confirmMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="outlined" onClick={handleCancelSocialLogin}>
             이메일 로그인
-          </button>
-        </div>
-      ) : null}
-
-      {processingState === 'failed' ? <p>{errorMessage}</p> : null}
-    </main>
+          </Button>
+          <Button type="button" variant="contained" onClick={handleConfirmSocialLogin}>
+            소셜 로그인
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

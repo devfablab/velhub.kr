@@ -2,12 +2,14 @@
 
 import { useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, Box, Button, Paper, Stack, TextField } from '@mui/material';
+import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-export default function EmailSignUpForm() {
+export default function EmailSignUp() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
 
@@ -120,44 +122,56 @@ export default function EmailSignUpForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="email">이메일</label>
-        <input id="email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />
-      </div>
+    <Paper elevation={0} sx={{ p: 3 }}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={2.5}>
+          <TextField
+            label="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            fullWidth
+          />
 
-      <div>
-        <label htmlFor="userName">활동명</label>
-        <input id="userName" type="text" autoComplete="nickname" value={userName} onChange={handleUserNameChange} />
-      </div>
+          <TextField
+            label="활동명"
+            type="text"
+            autoComplete="nickname"
+            value={userName}
+            onChange={handleUserNameChange}
+            fullWidth
+          />
 
-      <div>
-        <label htmlFor="password">비밀번호</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={handlePasswordChange}
-        />
-      </div>
+          <TextField
+            label="비밀번호"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={handlePasswordChange}
+            fullWidth
+          />
 
-      <div>
-        <label htmlFor="passwordConfirm">비밀번호 확인</label>
-        <input
-          id="passwordConfirm"
-          type="password"
-          autoComplete="new-password"
-          value={passwordConfirm}
-          onChange={handlePasswordConfirmChange}
-        />
-      </div>
+          <TextField
+            label="비밀번호 확인"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={handlePasswordConfirmChange}
+            fullWidth
+          />
 
-      <button type="submit" disabled={isSubmitting}>
-        시작하기
-      </button>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Anchor href="/sign-in">로그인 하기</Anchor>
+          </Box>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
-    </form>
+          <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+            시작하기
+          </Button>
+
+          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        </Stack>
+      </Box>
+    </Paper>
   );
 }

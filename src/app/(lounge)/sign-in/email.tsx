@@ -2,6 +2,20 @@
 
 import { useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import HCaptchaBox from './hCaptcha';
 
@@ -235,67 +249,93 @@ export default function EmailSignIn() {
   }
 
   function handleCancelDecision() {
+    if (isSubmitting) {
+      return;
+    }
+
     setDecisionState('idle');
     setDecisionMessage('');
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="email">이메일</label>
-        <input id="email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />
-      </div>
+    <>
+      <Paper elevation={0} sx={{ p: 3 }}>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={2.5}>
+            <TextField
+              label="이메일"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={handleEmailChange}
+              fullWidth
+            />
 
-      <div>
-        <label htmlFor="password">비밀번호</label>
-        <input
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={handlePasswordChange}
-        />
-      </div>
+            <TextField
+              label="비밀번호"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={handlePasswordChange}
+              fullWidth
+            />
 
-      {isCaptchaRequired ? (
-        <div>
-          <p>로그인 실패가 누적되어 hCaptcha 확인이 필요합니다.</p>
-          <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
-        </div>
-      ) : null}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+              <Anchor href="/sign-up">회원가입</Anchor>
+              <Anchor href="/find-password">비밀번호 찾기</Anchor>
+            </Box>
 
-      {decisionState === 'confirm-enable-email-login' ? (
-        <div>
-          <p>{decisionMessage}</p>
-          <button type="button" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
+            {isCaptchaRequired ? (
+              <Stack spacing={1}>
+                <Typography variant="body2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
+                <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
+              </Stack>
+            ) : null}
+
+            <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+              로그인
+            </Button>
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {decisionState === 'idle' && decisionMessage ? <Alert severity="success">{decisionMessage}</Alert> : null}
+          </Stack>
+        </Box>
+      </Paper>
+
+      <Dialog
+        open={decisionState === 'confirm-enable-email-login'}
+        onClose={handleCancelDecision}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>이메일 로그인 설정</DialogTitle>
+        <DialogContent>
+          <Typography>{decisionMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="outlined" onClick={handleCancelDecision} disabled={isSubmitting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" onClick={handleConfirmEnableEmailLogin} disabled={isSubmitting}>
             비밀번호 설정 메일 보내기
-          </button>
-          <button type="button" onClick={handleCancelDecision} disabled={isSubmitting}>
-            취소
-          </button>
-        </div>
-      ) : null}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {decisionState === 'confirm-email-login' ? (
-        <div>
-          <p>{decisionMessage}</p>
-          <button type="button" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
+      <Dialog open={decisionState === 'confirm-email-login'} onClose={handleCancelDecision} fullWidth maxWidth="xs">
+        <DialogTitle>이메일 로그인 확인</DialogTitle>
+        <DialogContent>
+          <Typography>{decisionMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="outlined" onClick={handleCancelDecision} disabled={isSubmitting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" onClick={handleConfirmEmailLogin} disabled={isSubmitting}>
             이메일 로그인
-          </button>
-          <button type="button" onClick={handleCancelDecision} disabled={isSubmitting}>
-            취소
-          </button>
-        </div>
-      ) : null}
-
-      {decisionState === 'idle' ? (
-        <button type="submit" disabled={isSubmitting}>
-          로그인
-        </button>
-      ) : null}
-
-      {errorMessage ? <p>{errorMessage}</p> : null}
-      {decisionState === 'idle' && decisionMessage ? <p>{decisionMessage}</p> : null}
-    </form>
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

@@ -1,12 +1,21 @@
-import EmailSignUpForm from '@/components/auth/EmailSignUpForm';
+import { Box, Container, Stack, Typography } from '@mui/material';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import EmailSignUp from './email';
 
 export default function Page() {
   return (
-    <main>
-      <h1>가입하기</h1>
-      <EmailSignUpForm />
-      <SocialLoginButtons />
-    </main>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h4" component="h1">
+            가입하기
+          </Typography>
+
+          <EmailSignUp />
+
+          <SocialLoginButtons />
+        </Stack>
+      </Box>
+    </Container>
   );
 }

@@ -1,18 +1,6 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
-import '../globals.sass';
-
-const Pre = localFont({
-  src: '../fonts/PretendardVariable.woff2',
-  style: 'normal',
-  variable: '--square',
-});
-
-const Square = localFont({
-  src: '../fonts/NanumSquareNeoVF.woff2',
-  style: 'normal',
-  variable: '--square',
-});
+import HeaderLounge from '@/components/headers/Lounge';
+// import '../globals.sass';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -25,8 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko-KR" className={`${Pre.variable} ${Square.variable}`}>
-      <body>{children}</body>
-    </html>
+    <>
+      <HeaderLounge />
+      {children}
+    </>
   );
 }

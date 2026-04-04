@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -117,39 +118,44 @@ export default function Page() {
   }
 
   return (
-    <main>
-      <h1>새 비밀번호 설정</h1>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h4" component="h1">
+            새 비밀번호 설정
+          </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="password">새 비밀번호</label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={handlePasswordChange}
-          />
-        </div>
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="새 비밀번호"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  fullWidth
+                />
 
-        <div>
-          <label htmlFor="passwordConfirm">새 비밀번호 확인</label>
-          <input
-            id="passwordConfirm"
-            type="password"
-            autoComplete="new-password"
-            value={passwordConfirm}
-            onChange={handlePasswordConfirmChange}
-          />
-        </div>
+                <TextField
+                  label="새 비밀번호 확인"
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordConfirm}
+                  onChange={handlePasswordConfirmChange}
+                  fullWidth
+                />
 
-        <button type="submit" disabled={isSubmitting || !isRecoveryReady}>
-          비밀번호 재설정
-        </button>
+                <Button type="submit" variant="contained" disabled={isSubmitting || !isRecoveryReady} fullWidth>
+                  비밀번호 재설정
+                </Button>
 
-        {errorMessage ? <p>{errorMessage}</p> : null}
-        {successMessage ? <p>{successMessage}</p> : null}
-      </form>
-    </main>
+                {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+              </Stack>
+            </Box>
+          </Paper>
+        </Stack>
+      </Box>
+    </Container>
   );
 }

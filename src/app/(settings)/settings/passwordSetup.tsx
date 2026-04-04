@@ -1,6 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Stack,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 export default function PasswordSetup() {
@@ -8,6 +20,7 @@ export default function PasswordSetup() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasPassword, setHasPassword] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -41,6 +54,10 @@ export default function PasswordSetup() {
 
     void loadPasswordStatus();
   }, []);
+
+  function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
+    setIsExpanded(expanded);
+  }
 
   async function handleSendPasswordSetupEmail() {
     if (isSubmitting) {
@@ -93,18 +110,46 @@ export default function PasswordSetup() {
   }
 
   return (
-    <section>
-      <h2>비밀번호 설정</h2>
+    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box
+          sx={{
+            width: '100%',
+            pr: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            비밀번호 설정
+          </Typography>
 
-      <p>비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.</p>
-      <p>주의: 설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.</p>
+          <Chip label="미설정" size="small" color="warning" />
+        </Box>
+      </AccordionSummary>
 
-      <button type="button" onClick={handleSendPasswordSetupEmail} disabled={isSubmitting}>
-        비밀번호 설정 메일 보내기
-      </button>
+      <AccordionDetails>
+        <Stack spacing={2.5}>
+          <Typography variant="body2">비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.</Typography>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
-      {successMessage ? <p>{successMessage}</p> : null}
-    </section>
+          <Typography variant="body2">주의: 설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.</Typography>
+
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleSendPasswordSetupEmail}
+            disabled={isSubmitting}
+            fullWidth
+          >
+            비밀번호 설정 메일 보내기
+          </Button>
+
+          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 }

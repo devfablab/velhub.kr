@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { Box, Container, Stack, Typography } from '@mui/material';
 import { getSessionClaims } from '@/lib/session';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
@@ -14,13 +15,20 @@ export default async function Page() {
   }
 
   return (
-    <main>
-      <h1>설정</h1>
-      <PasswordChange />
-      <PasswordSetup />
-      <LoginMethod />
-      <TotpSetup />
-      <LogoutActions />
-    </main>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h4" component="h1">
+            설정
+          </Typography>
+
+          <PasswordChange />
+          <PasswordSetup />
+          <LoginMethod />
+          <TotpSetup />
+          <LogoutActions />
+        </Stack>
+      </Box>
+    </Container>
   );
 }

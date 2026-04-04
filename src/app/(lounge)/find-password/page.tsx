@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, type JSX } from 'react';
+import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } from '@mui/material';
+import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -62,22 +64,39 @@ export default function Page() {
   }
 
   return (
-    <main>
-      <h1>비밀번호 재설정</h1>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h4" component="h1">
+            비밀번호 재설정
+          </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">이메일</label>
-          <input id="email" type="email" autoComplete="email" value={email} onChange={handleEmailChange} />
-        </div>
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="이메일"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  fullWidth
+                />
 
-        <button type="submit" disabled={isSubmitting}>
-          재설정 메일 보내기
-        </button>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Anchor href="/sign-in">로그인으로 돌아가기</Anchor>
+                </Box>
 
-        {errorMessage ? <p>{errorMessage}</p> : null}
-        {successMessage ? <p>{successMessage}</p> : null}
-      </form>
-    </main>
+                <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+                  재설정 메일 보내기
+                </Button>
+
+                {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+              </Stack>
+            </Box>
+          </Paper>
+        </Stack>
+      </Box>
+    </Container>
   );
 }

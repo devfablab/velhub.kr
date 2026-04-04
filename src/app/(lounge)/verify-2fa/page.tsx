@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -132,29 +133,51 @@ export default function Page() {
 
   if (isLoading) {
     return (
-      <main>
-        <h1>2단계 인증 확인</h1>
-        <p>인증 정보를 확인하고 있습니다.</p>
-      </main>
+      <Container maxWidth="sm">
+        <Box sx={{ py: 8 }}>
+          <Stack spacing={4}>
+            <Typography variant="h4" component="h1">
+              2단계 인증 확인
+            </Typography>
+
+            <Paper elevation={0} sx={{ p: 3 }}>
+              <Typography>인증 정보를 확인하고 있습니다.</Typography>
+            </Paper>
+          </Stack>
+        </Box>
+      </Container>
     );
   }
 
   return (
-    <main>
-      <h1>2단계 인증 확인</h1>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h4" component="h1">
+            2단계 인증 확인
+          </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="verifyCode">인증 코드</label>
-          <input id="verifyCode" type="text" value={verifyCode} onChange={handleVerifyCodeChange} />
-        </div>
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Stack spacing={2.5}>
+                <TextField
+                  label="인증 코드"
+                  type="text"
+                  value={verifyCode}
+                  onChange={handleVerifyCodeChange}
+                  fullWidth
+                />
 
-        <button type="submit" disabled={isSubmitting}>
-          확인
-        </button>
+                <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+                  확인
+                </Button>
 
-        {errorMessage ? <p>{errorMessage}</p> : null}
-      </form>
-    </main>
+                {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+              </Stack>
+            </Box>
+          </Paper>
+        </Stack>
+      </Box>
+    </Container>
   );
 }

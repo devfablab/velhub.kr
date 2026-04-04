@@ -1,6 +1,21 @@
 'use client';
 
 import { useEffect, useState, type JSX } from 'react';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Stack,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -12,6 +27,7 @@ export default function LoginMethod() {
   const [savedLoginMethod, setSavedLoginMethod] = useState<DefaultLoginMethod>('email');
   const [canChangeDefaultLoginMethod, setCanChangeDefaultLoginMethod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -47,6 +63,10 @@ export default function LoginMethod() {
 
     void loadLoginMethod();
   }, []);
+
+  function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
+    setIsExpanded(expanded);
+  }
 
   function handleLoginMethodChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value as DefaultLoginMethod;
@@ -108,41 +128,58 @@ export default function LoginMethod() {
   }
 
   return (
-    <section>
-      <h2>기본 로그인 방식</h2>
+    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box
+          sx={{
+            width: '100%',
+            pr: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            기본 로그인 방식
+          </Typography>
 
-      {email ? <p>계정 이메일: {email}</p> : null}
+          <Chip label={savedLoginMethod === 'email' ? '이메일 우선' : '소셜 우선'} size="small" color="primary" />
+        </Box>
+      </AccordionSummary>
 
-      <div>
-        <input
-          id="defaultLoginMethodEmail"
-          name="defaultLoginMethod"
-          type="radio"
-          value="email"
-          checked={selectedLoginMethod === 'email'}
-          onChange={handleLoginMethodChange}
-        />
-        <label htmlFor="defaultLoginMethodEmail">이메일 로그인 우선</label>
-      </div>
+      <AccordionDetails>
+        <Stack spacing={2.5}>
+          {email ? <Typography variant="body2">계정 이메일: {email}</Typography> : null}
 
-      <div>
-        <input
-          id="defaultLoginMethodSocial"
-          name="defaultLoginMethod"
-          type="radio"
-          value="social"
-          checked={selectedLoginMethod === 'social'}
-          onChange={handleLoginMethodChange}
-        />
-        <label htmlFor="defaultLoginMethodSocial">소셜 로그인 우선</label>
-      </div>
+          <RadioGroup name="defaultLoginMethod" value={selectedLoginMethod}>
+            <FormControlLabel
+              value="email"
+              control={<Radio onChange={handleLoginMethodChange} />}
+              label="이메일 로그인 우선"
+            />
 
-      <button type="button" onClick={handleSave} disabled={isSubmitting || selectedLoginMethod === savedLoginMethod}>
-        기본 로그인 방식 변경
-      </button>
+            <FormControlLabel
+              value="social"
+              control={<Radio onChange={handleLoginMethodChange} />}
+              label="소셜 로그인 우선"
+            />
+          </RadioGroup>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
-      {successMessage ? <p>{successMessage}</p> : null}
-    </section>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleSave}
+            disabled={isSubmitting || selectedLoginMethod === savedLoginMethod}
+            fullWidth
+          >
+            기본 로그인 방식 변경
+          </Button>
+
+          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 }

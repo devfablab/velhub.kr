@@ -2,6 +2,19 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -13,6 +26,7 @@ export default function PasswordChange() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [hasPassword, setHasPassword] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
@@ -60,6 +74,10 @@ export default function PasswordChange() {
 
   function handleNextPasswordConfirmChange(event: InputChangeEvent) {
     setNextPasswordConfirm(event.currentTarget.value);
+  }
+
+  function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
+    setIsExpanded(expanded);
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -167,52 +185,70 @@ export default function PasswordChange() {
   }
 
   return (
-    <section>
-      <h2>비밀번호 변경</h2>
+    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Box
+          sx={{
+            width: '100%',
+            pr: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+          }}
+        >
+          <Typography variant="h6" component="h2">
+            비밀번호 변경
+          </Typography>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="currentPassword">현재 비밀번호</label>
-          <input
-            id="currentPassword"
-            type="password"
-            autoComplete="current-password"
-            value={currentPassword}
-            onChange={handleCurrentPasswordChange}
-          />
-        </div>
+          <Chip label="설정됨" size="small" color="success" />
+        </Box>
+      </AccordionSummary>
 
-        <div>
-          <label htmlFor="nextPassword">새 비밀번호</label>
-          <input
-            id="nextPassword"
-            type="password"
-            autoComplete="new-password"
-            value={nextPassword}
-            onChange={handleNextPasswordChange}
-          />
-        </div>
+      <AccordionDetails>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack spacing={2.5}>
+            <TextField
+              id="currentPassword"
+              label="현재 비밀번호"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={handleCurrentPasswordChange}
+              fullWidth
+            />
 
-        <div>
-          <label htmlFor="nextPasswordConfirm">새 비밀번호 확인</label>
-          <input
-            id="nextPasswordConfirm"
-            type="password"
-            autoComplete="new-password"
-            value={nextPasswordConfirm}
-            onChange={handleNextPasswordConfirmChange}
-          />
-        </div>
+            <TextField
+              id="nextPassword"
+              label="새 비밀번호"
+              type="password"
+              autoComplete="new-password"
+              value={nextPassword}
+              onChange={handleNextPasswordChange}
+              fullWidth
+            />
 
-        <button type="submit" disabled={isSubmitting}>
-          비밀번호 변경
-        </button>
+            <TextField
+              id="nextPasswordConfirm"
+              label="새 비밀번호 확인"
+              type="password"
+              autoComplete="new-password"
+              value={nextPasswordConfirm}
+              onChange={handleNextPasswordConfirmChange}
+              fullWidth
+            />
 
-        <p>비밀번호 변경시 자동으로 로그아웃됩니다.</p>
+            <Typography variant="body2">비밀번호 변경시 자동으로 로그아웃됩니다.</Typography>
 
-        {errorMessage ? <p>{errorMessage}</p> : null}
-        {successMessage ? <p>{successMessage}</p> : null}
-      </form>
-    </section>
+            <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+              비밀번호 변경
+            </Button>
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+          </Stack>
+        </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 }

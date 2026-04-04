@@ -2,15 +2,37 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 export default function LogoutActions() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
 
+  const [isExpanded, setIsExpanded] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoggingOutCurrentDevice, setIsLoggingOutCurrentDevice] = useState(false);
   const [isLoggingOutAllDevices, setIsLoggingOutAllDevices] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
+    setIsExpanded(expanded);
+  }
 
   async function handleLogoutCurrentDevice() {
     if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
@@ -41,14 +63,24 @@ export default function LogoutActions() {
     }
   }
 
-  async function handleLogoutAllDevices() {
+  function handleOpenConfirm() {
     if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
       return;
     }
 
-    const isConfirmed = window.confirm('모든 디바이스에서 로그아웃하시겠어요?');
+    setIsConfirmOpen(true);
+  }
 
-    if (!isConfirmed) {
+  function handleCloseConfirm() {
+    if (isLoggingOutAllDevices) {
+      return;
+    }
+
+    setIsConfirmOpen(false);
+  }
+
+  async function handleLogoutAllDevices() {
+    if (isLoggingOutCurrentDevice || isLoggingOutAllDevices) {
       return;
     }
 
@@ -71,32 +103,82 @@ export default function LogoutActions() {
       } else {
         setErrorMessage('모든 디바이스 로그아웃 중 오류가 발생했습니다.');
       }
+      setIsConfirmOpen(false);
     } finally {
       setIsLoggingOutAllDevices(false);
     }
   }
 
   return (
-    <section>
-      <h2>로그아웃</h2>
+    <>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Box
+            sx={{
+              width: '100%',
+              pr: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
+            <Typography variant="h6" component="h2">
+              로그아웃
+            </Typography>
 
-      <button
-        type="button"
-        onClick={handleLogoutCurrentDevice}
-        disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
-      >
-        이 디바이스에서 로그아웃
-      </button>
+            <Chip label="사용 가능" size="small" color="default" />
+          </Box>
+        </AccordionSummary>
 
-      <button
-        type="button"
-        onClick={handleLogoutAllDevices}
-        disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
-      >
-        모든 디바이스 로그아웃
-      </button>
+        <AccordionDetails>
+          <Stack spacing={2.5}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleLogoutCurrentDevice}
+              disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
+              fullWidth
+            >
+              이 디바이스에서 로그아웃
+            </Button>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
-    </section>
+            <Button
+              type="button"
+              variant="contained"
+              color="error"
+              onClick={handleOpenConfirm}
+              disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
+              fullWidth
+            >
+              모든 디바이스 로그아웃
+            </Button>
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+
+      <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs">
+        <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
+        <DialogContent>
+          <Typography>모든 디바이스에서 로그아웃하시겠어요?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="outlined" onClick={handleCloseConfirm} disabled={isLoggingOutAllDevices}>
+            취소
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            color="error"
+            onClick={handleLogoutAllDevices}
+            disabled={isLoggingOutAllDevices}
+          >
+            로그아웃
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
