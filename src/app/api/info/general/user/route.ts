@@ -1,0 +1,117 @@
+import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { encrypt } from '@/lib/encryption/encrypt';
+import { decrypt } from '@/lib/encryption/decrypt';
+
+type RequestBody = {
+  userName: string;
+  avatar: string;
+  bio: string;
+};
+
+export async function GET() {
+  try {
+    const sessionClaims = await getSessionClaims();
+
+    if (!sessionClaims) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const stigmaResult = await supabaseAdmin
+      .from('stigmas')
+      .select('user_name, bio, avatar')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle();
+
+    if (stigmaResult.error || !stigmaResult.data) {
+      return Response.json({ error: '기본정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      userName: stigmaResult.data.user_name ? decrypt(stigmaResult.data.user_name) : '',
+      bio: stigmaResult.data.bio ? decrypt(stigmaResult.data.bio) : '',
+      avatar: stigmaResult.data.avatar ?? '',
+    });
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return Response.json({ error: unknownError.message || '기본정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({ error: '기본정보를 불러오지 못했습니다.' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const sessionClaims = await getSessionClaims();
+
+    if (!sessionClaims) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const requestBody = (await request.json()) as RequestBody;
+
+    const userName = requestBody.userName.trim();
+    const avatar = requestBody.avatar.trim();
+    const bio = requestBody.bio.trim();
+
+    if (!userName) {
+      return Response.json({ error: '활동명을 입력해주세요.' }, { status: 400 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const stigmaUpdateResult = await supabaseAdmin
+      .from('stigmas')
+      .update({
+        user_name: encrypt(userName),
+        bio: bio ? encrypt(bio) : null,
+        avatar: avatar || null,
+      })
+      .eq('user_id', sessionClaims.userId);
+
+    if (stigmaUpdateResult.error) {
+      return Response.json({ error: '기본정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    const authUserResult = await supabaseAdmin.auth.admin.getUserById(sessionClaims.userId);
+
+    if (authUserResult.error || !authUserResult.data.user) {
+      return Response.json({ error: '인증 사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const currentMetadata = (authUserResult.data.user.user_metadata ?? {}) as Record<string, unknown>;
+
+    const authUpdateResult = await supabaseAdmin.auth.admin.updateUserById(sessionClaims.userId, {
+      user_metadata: {
+        ...currentMetadata,
+        user_name: userName,
+        name: userName,
+        full_name: userName,
+        preferred_username: userName,
+        avatar_url: avatar || null,
+        picture: avatar || null,
+        avatar: avatar || null,
+      },
+    });
+
+    if (authUpdateResult.error) {
+      return Response.json({ error: '인증 사용자 정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      ok: true,
+      userName,
+      bio,
+      avatar,
+    });
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return Response.json({ error: unknownError.message || '기본정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({ error: '기본정보 수정에 실패했습니다.' }, { status: 500 });
+  }
+}

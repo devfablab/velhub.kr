@@ -126,8 +126,6 @@ export default function LogoutActions() {
             <Typography variant="h6" component="h2">
               로그아웃
             </Typography>
-
-            <Chip label="사용 가능" size="small" color="default" />
           </Box>
         </AccordionSummary>
 

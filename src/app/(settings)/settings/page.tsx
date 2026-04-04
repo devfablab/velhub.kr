@@ -6,6 +6,7 @@ import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';
 import PasswordSetup from './passwordSetup';
 import LoginMethod from './loginMethod';
+import UserInfo from './info';
 
 export default async function Page() {
   const sessionClaims = await getSessionClaims();
@@ -22,6 +23,7 @@ export default async function Page() {
             설정
           </Typography>
 
+          <UserInfo />
           <PasswordChange />
           <PasswordSetup />
           <LoginMethod />
