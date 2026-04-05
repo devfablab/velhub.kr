@@ -285,13 +285,13 @@ export default function HeaderLounge() {
                   <ListItemIcon>
                     <LoginIcon fontSize="small" />
                   </ListItemIcon>
-                  <Anchor href="/sign-in">로그인</Anchor>
+                  <Anchor href="/auth/sign-in">로그인</Anchor>
                 </MenuItem>,
                 <MenuItem key="signup" onClick={handleCloseProfileMenu}>
                   <ListItemIcon>
                     <PersonAddIcon fontSize="small" />
                   </ListItemIcon>
-                  <Anchor href="/sign-up">회원가입</Anchor>
+                  <Anchor href="/auth/sign-up">회원가입</Anchor>
                 </MenuItem>,
               ]}
         </Menu>

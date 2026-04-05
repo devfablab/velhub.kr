@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -146,9 +146,14 @@ export default function Page() {
                   fullWidth
                 />
 
-                <Button type="submit" variant="contained" disabled={isSubmitting || !isRecoveryReady} fullWidth>
-                  비밀번호 재설정
-                </Button>
+                <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                  <Button type="submit" variant="contained" disabled={isSubmitting || !isRecoveryReady} size="large">
+                    비밀번호 재설정
+                  </Button>
+                  <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
+                    라운지로 이동
+                  </Link>
+                </Box>
 
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
               </Stack>

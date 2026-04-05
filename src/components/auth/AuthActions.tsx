@@ -53,8 +53,8 @@ export default function AuthActions() {
 
   return (
     <div>
-      <Anchor href="/sign-up">가입하기</Anchor>
-      <Anchor href="/sign-in">로그인하기</Anchor>
+      <Anchor href="/auth/sign-up">가입하기</Anchor>
+      <Anchor href="/auth/sign-in">로그인하기</Anchor>
     </div>
   );
 }

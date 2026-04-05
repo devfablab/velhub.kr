@@ -12,7 +12,6 @@ export default function Page() {
           </Typography>
 
           <EmailSignIn />
-
           <SocialLoginButtons />
         </Stack>
       </Box>

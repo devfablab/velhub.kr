@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type JSX } from 'react';
-import { Alert, Box, Button, Container, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
@@ -84,12 +84,17 @@ export default function Page() {
                 />
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Anchor href="/sign-in">로그인으로 돌아가기</Anchor>
+                  <Anchor href="/auth/sign-in">로그인으로 돌아가기</Anchor>
                 </Box>
 
-                <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
-                  재설정 메일 보내기
-                </Button>
+                <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                  <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+                    재설정 메일 보내기
+                  </Button>
+                  <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
+                    라운지로 이동
+                  </Link>
+                </Box>
 
                 {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
               </Stack>

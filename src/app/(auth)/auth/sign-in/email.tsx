@@ -10,6 +10,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   Paper,
   Stack,
   TextField,
@@ -91,7 +92,7 @@ export default function EmailSignIn() {
     const nextLevel = assuranceLevelResult.data.nextLevel;
 
     if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
-      router.replace('/verify-2fa');
+      router.replace('/auth/verify-2fa');
       return;
     }
 
@@ -229,7 +230,7 @@ export default function EmailSignIn() {
     }
 
     if (isCaptchaRequired && !captchaToken) {
-      setErrorMessage('hCaptcha 확인을 진행해주세요.');
+      setErrorMessage('캡챠 확인을 진행해주세요.');
       return;
     }
 
@@ -281,8 +282,8 @@ export default function EmailSignIn() {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-              <Anchor href="/sign-up">회원가입</Anchor>
-              <Anchor href="/find-password">비밀번호 찾기</Anchor>
+              <Anchor href="/auth/sign-up">회원가입</Anchor>
+              <Anchor href="/auth/find-password">비밀번호 찾기</Anchor>
             </Box>
 
             {isCaptchaRequired ? (
@@ -292,9 +293,15 @@ export default function EmailSignIn() {
               </Stack>
             ) : null}
 
-            <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
-              로그인
-            </Button>
+            <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+                로그인
+              </Button>
+
+              <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
+                라운지로 이동
+              </Link>
+            </Box>
 
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
             {decisionState === 'idle' && decisionMessage ? <Alert severity="success">{decisionMessage}</Alert> : null}
