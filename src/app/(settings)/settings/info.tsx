@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -21,19 +21,30 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
 
+const SUPABASE_AVATAR_PREFIX = 'supabase:';
+
+function isSupabaseAvatarValue(value: string) {
+  return value.startsWith(SUPABASE_AVATAR_PREFIX);
+}
+
+function getSupabaseAvatarPath(value: string) {
+  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
+}
+
 export default function UserInfo() {
+  const fileInputReference = useRef<HTMLInputElement | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [userName, setUserName] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
 
   const [userNameDraft, setUserNameDraft] = useState('');
-  const [avatarDraft, setAvatarDraft] = useState('');
   const [bioDraft, setBioDraft] = useState('');
 
-  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
   const [isEditingUserName, setIsEditingUserName] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
 
@@ -60,10 +71,10 @@ export default function UserInfo() {
 
         setUserName(result.userName ?? '');
         setAvatar(result.avatar ?? '');
+        setAvatarUrl(result.avatarUrl ?? '');
         setBio(result.bio ?? '');
 
         setUserNameDraft(result.userName ?? '');
-        setAvatarDraft(result.avatar ?? '');
         setBioDraft(result.bio ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -85,10 +96,6 @@ export default function UserInfo() {
 
   function handleUserNameChange(event: InputChangeEvent) {
     setUserNameDraft(event.currentTarget.value);
-  }
-
-  function handleAvatarChange(event: InputChangeEvent) {
-    setAvatarDraft(event.currentTarget.value);
   }
 
   function handleBioChange(event: TextAreaChangeEvent | InputChangeEvent) {
@@ -117,10 +124,10 @@ export default function UserInfo() {
 
     setUserName(result.userName ?? '');
     setAvatar(result.avatar ?? '');
+    setAvatarUrl(result.avatarUrl ?? '');
     setBio(result.bio ?? '');
 
     setUserNameDraft(result.userName ?? '');
-    setAvatarDraft(result.avatar ?? '');
     setBioDraft(result.bio ?? '');
   }
 
@@ -158,32 +165,6 @@ export default function UserInfo() {
     }
   }
 
-  async function handleSubmitAvatar(event: FormSubmitEvent) {
-    event.preventDefault();
-
-    if (isSubmittingAvatar) {
-      return;
-    }
-
-    setErrorMessage('');
-    setSuccessMessage('');
-    setIsSubmittingAvatar(true);
-
-    try {
-      await saveInfo(userName, avatarDraft.trim(), bio);
-      setIsEditingAvatar(false);
-      setSuccessMessage('아바타가 수정되었습니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '아바타 수정에 실패했습니다.');
-      } else {
-        setErrorMessage('아바타 수정에 실패했습니다.');
-      }
-    } finally {
-      setIsSubmittingAvatar(false);
-    }
-  }
-
   async function handleSubmitBio(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -210,14 +191,85 @@ export default function UserInfo() {
     }
   }
 
+  async function handleAvatarFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || isSubmittingAvatar) {
+      inputElement.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsSubmittingAvatar(true);
+
+    try {
+      if (avatar && isSupabaseAvatarValue(avatar)) {
+        const deleteResponse = await fetch('/api/attachment/delete/avatar/user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            path: getSupabaseAvatarPath(avatar),
+          }),
+        });
+
+        const deleteResult = await deleteResponse.json();
+
+        if (!deleteResponse.ok) {
+          throw new Error(deleteResult.error ?? '기존 아바타 삭제에 실패했습니다.');
+        }
+      }
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const addResponse = await fetch('/api/attachment/add/avatar/user', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const addResult = await addResponse.json();
+
+      if (!addResponse.ok) {
+        throw new Error(addResult.error ?? '아바타 업로드에 실패했습니다.');
+      }
+
+      const nextAvatar = typeof addResult.avatar === 'string' && addResult.avatar.trim() ? addResult.avatar.trim() : '';
+
+      if (!nextAvatar) {
+        throw new Error('업로드된 아바타 정보를 확인하지 못했습니다.');
+      }
+
+      await saveInfo(userName, nextAvatar, bio);
+      setSuccessMessage('아바타가 수정되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '아바타 수정에 실패했습니다.');
+      } else {
+        setErrorMessage('아바타 수정에 실패했습니다.');
+      }
+    } finally {
+      setIsSubmittingAvatar(false);
+      inputElement.value = '';
+    }
+  }
+
+  function handleClickAvatarUpload() {
+    if (isSubmittingAvatar) {
+      return;
+    }
+
+    fileInputReference.current?.click();
+  }
+
   function handleCancelUserName() {
     setUserNameDraft(userName);
     setIsEditingUserName(false);
-  }
-
-  function handleCancelAvatar() {
-    setAvatarDraft(avatar);
-    setIsEditingAvatar(false);
   }
 
   function handleCancelBio() {
@@ -228,6 +280,8 @@ export default function UserInfo() {
   if (isLoading) {
     return null;
   }
+
+  const hasUnsetField = !userName || !avatar || !bio;
 
   return (
     <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
@@ -245,40 +299,37 @@ export default function UserInfo() {
           <Typography variant="h6" component="h2">
             기본정보
           </Typography>
+
+          <Chip
+            label={hasUnsetField ? '미설정 항목 있음' : '설정됨'}
+            size="small"
+            color={hasUnsetField ? 'warning' : 'success'}
+          />
         </Box>
       </AccordionSummary>
 
       <AccordionDetails>
         <Stack spacing={3}>
           <Stack spacing={1.5} alignItems="flex-start">
-            {avatar ? (
-              <Avatar src={avatar} alt={userName || '아바타'} sx={{ width: 80, height: 80 }} />
+            {avatarUrl ? (
+              <Avatar src={avatarUrl} alt={userName || '아바타'} sx={{ width: 80, height: 80 }} />
             ) : (
               <Avatar sx={{ width: 80, height: 80 }}>
                 <PersonIcon />
               </Avatar>
             )}
 
-            {!isEditingAvatar ? (
-              <Button type="button" variant="outlined" onClick={() => setIsEditingAvatar(true)}>
-                아바타 수정
-              </Button>
-            ) : (
-              <Box component="form" onSubmit={handleSubmitAvatar} sx={{ width: '100%' }}>
-                <Stack spacing={1.5}>
-                  <TextField label="아바타 이미지 URL" value={avatarDraft} onChange={handleAvatarChange} fullWidth />
+            <input
+              ref={fileInputReference}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleAvatarFileChange}
+            />
 
-                  <Stack direction="row" spacing={1.5}>
-                    <Button type="submit" variant="contained" disabled={isSubmittingAvatar}>
-                      저장
-                    </Button>
-                    <Button type="button" variant="outlined" onClick={handleCancelAvatar} disabled={isSubmittingAvatar}>
-                      취소
-                    </Button>
-                  </Stack>
-                </Stack>
-              </Box>
-            )}
+            <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isSubmittingAvatar}>
+              아바타 수정
+            </Button>
           </Stack>
 
           <Stack spacing={1.5}>
@@ -317,7 +368,7 @@ export default function UserInfo() {
             {!isEditingBio ? (
               <>
                 <Typography variant="subtitle2">자기소개</Typography>
-                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{bio || '아직 설정하지 않았습니다.'}</Typography>
+                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{bio || '-'}</Typography>
                 <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
                   자기소개 수정
                 </Button>

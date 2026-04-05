@@ -7,6 +7,7 @@ import {
   Box,
   Divider,
   IconButton,
+  Link,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -270,7 +271,7 @@ export default function HeaderLounge() {
                   <ListItemIcon>
                     <SettingsIcon fontSize="small" />
                   </ListItemIcon>
-                  <Anchor href="/settings">설정</Anchor>
+                  <Link href="/settings">설정</Link>
                 </MenuItem>,
                 <MenuItem key="logout" onClick={handleLogout}>
                   <ListItemIcon>

@@ -200,8 +200,6 @@ export default function PasswordChange() {
           <Typography variant="h6" component="h2">
             비밀번호 변경
           </Typography>
-
-          <Chip label="설정됨" size="small" color="success" />
         </Box>
       </AccordionSummary>
 

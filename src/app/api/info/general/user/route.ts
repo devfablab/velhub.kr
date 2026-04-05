@@ -9,6 +9,25 @@ type RequestBody = {
   bio: string;
 };
 
+const AVATAR_BUCKET = 'avatar';
+const SUPABASE_AVATAR_PREFIX = 'supabase:';
+
+function isSupabaseAvatarValue(value: string) {
+  return value.startsWith(SUPABASE_AVATAR_PREFIX);
+}
+
+function getSupabaseAvatarPath(value: string) {
+  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
+}
+
+function getSupabaseAvatarPublicUrl(path: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const publicUrlResult = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+
+  return publicUrlResult.data.publicUrl ?? '';
+}
+
 export async function GET() {
   try {
     const sessionClaims = await getSessionClaims();
@@ -29,10 +48,24 @@ export async function GET() {
       return Response.json({ error: '기본정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const rawAvatarValue = stigmaResult.data.avatar ?? '';
+
+    let avatarUrl = '';
+
+    if (rawAvatarValue) {
+      if (isSupabaseAvatarValue(rawAvatarValue)) {
+        const avatarPath = getSupabaseAvatarPath(rawAvatarValue);
+        avatarUrl = avatarPath ? getSupabaseAvatarPublicUrl(avatarPath) : '';
+      } else {
+        avatarUrl = rawAvatarValue;
+      }
+    }
+
     return Response.json({
       userName: stigmaResult.data.user_name ? decrypt(stigmaResult.data.user_name) : '',
       bio: stigmaResult.data.bio ? decrypt(stigmaResult.data.bio) : '',
-      avatar: stigmaResult.data.avatar ?? '',
+      avatar: rawAvatarValue,
+      avatarUrl,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
@@ -84,6 +117,11 @@ export async function POST(request: Request) {
 
     const currentMetadata = (authUserResult.data.user.user_metadata ?? {}) as Record<string, unknown>;
 
+    const avatarUrl =
+      avatar && isSupabaseAvatarValue(avatar)
+        ? getSupabaseAvatarPublicUrl(getSupabaseAvatarPath(avatar))
+        : avatar || null;
+
     const authUpdateResult = await supabaseAdmin.auth.admin.updateUserById(sessionClaims.userId, {
       user_metadata: {
         ...currentMetadata,
@@ -91,9 +129,9 @@ export async function POST(request: Request) {
         name: userName,
         full_name: userName,
         preferred_username: userName,
-        avatar_url: avatar || null,
-        picture: avatar || null,
-        avatar: avatar || null,
+        avatar_url: avatarUrl,
+        picture: avatarUrl,
+        avatar: avatarUrl,
       },
     });
 
@@ -106,6 +144,7 @@ export async function POST(request: Request) {
       userName,
       bio,
       avatar,
+      avatarUrl: avatarUrl ?? '',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

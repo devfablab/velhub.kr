@@ -323,15 +323,16 @@ export default function TotpSetup() {
                 {pendingSetup.secret}
               </Typography>
 
-              <Typography variant="body2">
-                앱 등록 이후 반드시 인증 코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
-              </Typography>
+              <Alert severity="info">
+                앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
+              </Alert>
 
               <Box component="form" onSubmit={handleVerify}>
                 <Stack spacing={2.5}>
                   <TextField
                     id="verifyCode"
                     label="인증 코드"
+                    placeholder="XXXXXX"
                     type="text"
                     value={verifyCode}
                     onChange={handleVerifyCodeChange}
