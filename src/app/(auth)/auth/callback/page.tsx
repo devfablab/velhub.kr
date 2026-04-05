@@ -281,7 +281,7 @@ export default function Page() {
       scope: 'local',
     });
 
-    router.replace('/sign-in');
+    router.replace('/auth/sign-in');
   }
 
   return (

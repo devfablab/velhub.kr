@@ -104,7 +104,7 @@ export default function Page() {
       setSuccessMessage('비밀번호가 재설정되었습니다. 로그인 페이지로 이동합니다.');
 
       window.setTimeout(() => {
-        router.replace('/sign-in');
+        router.replace('/auth/sign-in');
       }, 1000);
     } catch (unknownError) {
       if (unknownError instanceof Error) {

@@ -1,12 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Box, Container, Stack, Typography } from '@mui/material';
 import { getSessionClaims } from '@/lib/session';
-import PasswordChange from './passwordChange';
-import TotpSetup from './totpSetup';
-import LogoutActions from './logoutActions';
-import PasswordSetup from './passwordSetup';
-import LoginMethod from './loginMethod';
-import UserInfo from './info';
+import Opt from './opt';
 
 export default async function Page() {
   const sessionClaims = await getSessionClaims();
@@ -20,15 +15,10 @@ export default async function Page() {
       <Box sx={{ py: 8 }}>
         <Stack spacing={4}>
           <Typography variant="h4" component="h1">
-            설정
+            블로그 생성
           </Typography>
 
-          <UserInfo />
-          <PasswordChange />
-          <PasswordSetup />
-          <LoginMethod />
-          <TotpSetup />
-          <LogoutActions />
+          <Opt />
         </Stack>
       </Box>
     </Container>

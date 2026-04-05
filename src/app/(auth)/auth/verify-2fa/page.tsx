@@ -33,7 +33,7 @@ export default function Page() {
         }
 
         if (!sessionResult.data.session) {
-          router.replace('/sign-in');
+          router.replace('/auth/sign-in');
           return;
         }
 
