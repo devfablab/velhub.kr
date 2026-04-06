@@ -12,6 +12,7 @@ type RequestBody = {
   summary: string | null;
   visibilityType: VisibilityType | null;
   themeType: ThemeType | null;
+  planType: string | null;
   isShutdown: boolean | null;
   commentProvider: CommentProvider | null;
 };
@@ -57,6 +58,7 @@ export async function POST(request: Request) {
     const trimmedSiteLabel = requestBody.siteLabel?.trim() ?? '';
     const trimmedProfilePicture = requestBody.profilePicture?.trim() ?? '';
     const trimmedSummary = requestBody.summary?.trim() ?? '';
+    const trimmedPlanType = requestBody.planType?.trim() ?? '';
 
     const visibilityType = isVisibilityType(requestBody.visibilityType) ? requestBody.visibilityType : 'public';
     const themeType = isThemeType(requestBody.themeType) ? requestBody.themeType : 'default';
@@ -81,6 +83,10 @@ export async function POST(request: Request) {
 
     if (normalizedSiteKey.includes('--')) {
       return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
+    }
+
+    if (!trimmedPlanType) {
+      return Response.json({ error: '플랜을 선택해주세요.' }, { status: 400 });
     }
 
     const finalSiteLabel = trimmedSiteLabel || normalizedSiteKey;
@@ -135,6 +141,21 @@ export async function POST(request: Request) {
       return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
     }
 
+    const planResult = await supabaseAdmin
+      .from('plans')
+      .select('id')
+      .eq('id', trimmedPlanType)
+      .eq('category_key', 'blog')
+      .maybeSingle();
+
+    if (planResult.error) {
+      return Response.json({ error: planResult.error.message || '플랜 확인에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (!planResult.data) {
+      return Response.json({ error: '유효하지 않은 플랜입니다.' }, { status: 400 });
+    }
+
     const rpcResult = await supabaseAdmin.rpc('create_blog_site', {
       p_owner_particle_id: particlesResult.data.id,
       p_owner_stigma_id: stigmaResult.data.id,
@@ -144,12 +165,14 @@ export async function POST(request: Request) {
       p_summary: trimmedSummary,
       p_visibility_type: visibilityType,
       p_theme_type: themeType,
+      p_plan_type: trimmedPlanType,
       p_is_shutdown: isShutdown,
       p_comment_provider: commentProvider,
     });
 
     if (rpcResult.error || !rpcResult.data) {
-      return Response.json({ error: '블로그 생성에 실패했습니다.' }, { status: 500 });
+      console.error('create_blog_site rpc 실패:', rpcResult.error);
+      return Response.json({ error: rpcResult.error?.message || '블로그 생성에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({

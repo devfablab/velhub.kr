@@ -61,7 +61,10 @@ export async function proxy(request: NextRequest) {
   const claimsResult = await supabase.auth.getClaims();
   const isLoggedIn = Boolean(claimsResult.data?.claims?.sub);
 
-  if (request.nextUrl.pathname.startsWith('/settings') && !isLoggedIn) {
+  if (
+    (request.nextUrl.pathname.startsWith('/settings') || request.nextUrl.pathname.startsWith('/new')) &&
+    !isLoggedIn
+  ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/';
     redirectUrl.search = '';

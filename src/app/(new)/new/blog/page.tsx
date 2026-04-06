@@ -1,15 +1,7 @@
-import { redirect } from 'next/navigation';
 import { Box, Container, Stack, Typography } from '@mui/material';
-import { getSessionClaims } from '@/lib/session';
 import Opt from './opt';
 
 export default async function Page() {
-  const sessionClaims = await getSessionClaims();
-
-  if (!sessionClaims) {
-    redirect('/auth/sign-in');
-  }
-
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>

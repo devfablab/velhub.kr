@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Alert,
@@ -28,6 +28,16 @@ type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textare
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
 type CommentProvider = 'none' | 'giscus' | 'disqus';
+
+type PlanRow = {
+  id: string;
+  categoryKey: string;
+  categoryLabel: string;
+  planKey: string;
+  planLabel: string;
+  price: number;
+  productType: string;
+};
 
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
 
@@ -68,14 +78,53 @@ export default function Opt() {
   const [themeType, setThemeType] = useState<ThemeType>('default');
   const [isShutdown, setIsShutdown] = useState(false);
   const [commentProvider, setCommentProvider] = useState<CommentProvider>('disqus');
+  const [plans, setPlans] = useState<PlanRow[]>([]);
+  const [planType, setPlanType] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        const response = await fetch('/api/plans', {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error ?? '플랜 목록을 불러오지 못했습니다.');
+        }
+
+        const allPlans = Array.isArray(result.plans) ? result.plans : [];
+        const nextPlans = allPlans.filter((planRow: PlanRow) => planRow.categoryKey === 'blog');
+
+        setPlans(nextPlans);
+
+        if (nextPlans.length > 0) {
+          setPlanType(nextPlans[0].id);
+        }
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          openErrorDialog(unknownError.message || '플랜 목록을 불러오지 못했습니다.');
+        } else {
+          openErrorDialog('플랜 목록을 불러오지 못했습니다.');
+        }
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    }
+
+    void loadPlans();
+  }, []);
 
   function openErrorDialog(message: string) {
     setErrorMessage(message);
@@ -132,6 +181,10 @@ export default function Opt() {
     setIsShutdown(event.currentTarget.checked);
   }
 
+  function handlePlanTypeChange(event: InputChangeEvent) {
+    setPlanType(event.currentTarget.value);
+  }
+
   async function handleCheckSiteKey() {
     if (isCheckingSiteKey) {
       return;
@@ -157,7 +210,7 @@ export default function Opt() {
     setIsCheckingSiteKey(true);
 
     try {
-      const response = await fetch('/api/info/general/site/check-key', {
+      const response = await fetch('/api/site/check-key', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -271,7 +324,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isCheckingSiteKey || isUploadingAvatar) {
+    if (isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans) {
       return;
     }
 
@@ -294,10 +347,15 @@ export default function Opt() {
       return;
     }
 
+    if (!planType) {
+      openErrorDialog('플랜을 선택해주세요.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/info/general/site/new', {
+      const response = await fetch('/api/site/blog/new', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -310,6 +368,7 @@ export default function Opt() {
           summary: trimmedSummary,
           visibilityType,
           themeType,
+          planType,
           isShutdown,
           commentProvider,
         }),
@@ -406,30 +465,44 @@ export default function Opt() {
             </Stack>
 
             <Stack spacing={1}>
+              <FormLabel>플랜</FormLabel>
+              <RadioGroup value={planType} onChange={handlePlanTypeChange}>
+                {plans.map((planRow) => (
+                  <FormControlLabel
+                    key={planRow.id}
+                    value={planRow.id}
+                    control={<Radio />}
+                    label={`${planRow.planLabel} (${planRow.price.toLocaleString()}원)`}
+                  />
+                ))}
+              </RadioGroup>
+            </Stack>
+
+            <Stack spacing={1}>
               <FormLabel>댓글 방식 (댓글 서비스 제공자)</FormLabel>
               <RadioGroup value={commentProvider} onChange={handleCommentProviderChange}>
                 <FormControlLabel value="disqus" control={<Radio />} label="disqus" />
                 <FormControlLabel value="giscus" control={<Radio />} label="giscus" />
-                <FormControlLabel value="none" control={<Radio />} label="none (댓글 닫음)" />
+                <FormControlLabel value="none" control={<Radio />} label="none" />
               </RadioGroup>
             </Stack>
 
             <Stack direction="row" spacing={3}>
               <FormControlLabel
                 control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
-                label={visibilityType === 'public' ? '공개 블로그(public)' : '비공개 블로그(private)'}
+                label={visibilityType === 'public' ? '공개' : '비공개'}
               />
 
               <FormControlLabel
                 control={<Switch checked={isShutdown} onChange={handleIsShutdownChange} />}
-                label={isShutdown ? '중단' : '폐쇄여부'}
+                label={isShutdown ? '중단' : '운영'}
               />
             </Stack>
 
             <Button
               type="submit"
               variant="contained"
-              disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar}
+              disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
               fullWidth
             >
               블로그 생성

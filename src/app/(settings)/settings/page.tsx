@@ -9,12 +9,6 @@ import LoginMethod from './loginMethod';
 import UserInfo from './info';
 
 export default async function Page() {
-  const sessionClaims = await getSessionClaims();
-
-  if (!sessionClaims) {
-    redirect('/auth/sign-in');
-  }
-
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
