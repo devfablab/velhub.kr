@@ -32,6 +32,18 @@ function getSupabaseBrowserKey() {
   return supabasePublishableKey;
 }
 
+function isManagePath(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 2 && segments[1] === 'manage';
+}
+
+function getSiteNameFromPath(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments[0] ?? '';
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request,
@@ -72,9 +84,56 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  if (isManagePath(request.nextUrl.pathname)) {
+    if (!isLoggedIn) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/auth/sign-in';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    const siteName = getSiteNameFromPath(request.nextUrl.pathname).trim().toLowerCase();
+
+    if (!siteName) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    const manageCheckResponse = await fetch(new URL('/api/auth/manage', request.url), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: request.headers.get('cookie') ?? '',
+      },
+      body: JSON.stringify({
+        siteName,
+      }),
+    });
+
+    if (manageCheckResponse.status === 401) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/auth/sign-in';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (!manageCheckResponse.ok) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = `/${siteName}`;
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
   return response;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/manage|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };

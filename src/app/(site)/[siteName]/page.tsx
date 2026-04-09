@@ -48,40 +48,40 @@ export default async function Page(context: RouteContext) {
   };
 
   if (rhizomeResult.data.site_type === 'blog') {
-    const blogResult = await supabaseAdmin
+    const blogInfo = await supabaseAdmin
       .from('blogs')
       .select('created_at, comment_provider')
       .eq('site_id', rhizomeResult.data.id)
       .maybeSingle();
 
-    if (blogResult.error || !blogResult.data) {
+    if (blogInfo.error || !blogInfo.data) {
       notFound();
     }
 
     return (
       <Container maxWidth="sm">
         <Box sx={{ py: 8 }}>
-          <Blog sitesInfo={sitesInfo} blogInfo={blogResult.data} />
+          <Blog sitesInfo={sitesInfo} blogInfo={blogInfo.data} />
         </Box>
       </Container>
     );
   }
 
   if (rhizomeResult.data.site_type === 'community') {
-    const communityResult = await supabaseAdmin
+    const communityInfo = await supabaseAdmin
       .from('communities')
       .select('created_at, join_type, policy_post, policy_comment')
       .eq('site_id', rhizomeResult.data.id)
       .maybeSingle();
 
-    if (communityResult.error || !communityResult.data) {
+    if (communityInfo.error || !communityInfo.data) {
       notFound();
     }
 
     return (
       <Container maxWidth="sm">
         <Box sx={{ py: 8 }}>
-          <Community sitesInfo={sitesInfo} communityInfo={communityResult.data} />
+          <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />
         </Box>
       </Container>
     );
