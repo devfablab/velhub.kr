@@ -303,15 +303,7 @@ export default function Opt({ siteName }: Props) {
   return (
     <Stack spacing={2}>
       <Paper elevation={0} sx={{ p: 2 }}>
-        <Typography>
-          {rhizomes.site_label} {formatDateTime(rhizomes.created_at)}에 생성
-        </Typography>
-      </Paper>
-
-      <Paper elevation={0} sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Typography>아바타</Typography>
-
+        <Stack spacing={1.5} alignItems="center">
           {profilePictureUrl ? (
             <Avatar src={profilePictureUrl} alt="사이트 아바타" sx={{ width: 96, height: 96 }} />
           ) : (
@@ -334,44 +326,48 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
+        <Typography>
+          {rhizomes.site_label} {formatDateTime(rhizomes.created_at)}에 생성
+        </Typography>
+      </Paper>
+
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography>사이트 식별자</Typography>
           {editingField === 'site_key' ? (
-            <>
-              <div>
-                <TextField
-                  value={String(draftValue)}
-                  onChange={handleTextChange}
-                  fullWidth
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                    },
-                  }}
-                />
-              </div>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                alignItems: 'center',
+              }}
+            >
+              <TextField
+                value={String(draftValue)}
+                onChange={handleTextChange}
+                fullWidth
+                size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                  },
                 }}
+              />
+              <Button
+                type="button"
+                variant="contained"
+                onClick={() => void saveField('site_key')}
+                disabled={isSubmitting}
+                sx={{ whiteSpace: 'nowrap' }}
+                size="large"
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('site_key')}
-                  disabled={isSubmitting}
-                >
-                  수정 완료
-                </Button>
-              </Stack>
-            </>
+                수정 완료
+              </Button>
+              <Button type="button" onClick={() => cancelEdit()} size="large">
+                취소
+              </Button>
+            </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{rhizomes.site_key}</Typography>
@@ -383,33 +379,33 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography>사이트명</Typography>
           {editingField === 'site_label' ? (
-            <>
-              <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth />
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                }}
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                justifyContent: 'flex-end',
+                alignItems: 'center',
+              }}
+            >
+              <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth size="small" />
+              <Button
+                type="button"
+                variant="contained"
+                onClick={() => void saveField('site_label')}
+                disabled={isSubmitting}
+                size="large"
+                sx={{ whiteSpace: 'nowrap' }}
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('site_label')}
-                  disabled={isSubmitting}
-                >
-                  수정 완료
-                </Button>
-              </Stack>
-            </>
+                수정 완료
+              </Button>
+              <Button type="button" onClick={() => cancelEdit()} size="large">
+                취소
+              </Button>
+            </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{rhizomes.site_label ?? ''}</Typography>
@@ -421,7 +417,7 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography>사이트 설명</Typography>
           {editingField === 'summary' ? (
@@ -435,9 +431,6 @@ export default function Opt({ siteName }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -445,6 +438,9 @@ export default function Opt({ siteName }: Props) {
                   disabled={isSubmitting}
                 >
                   수정 완료
+                </Button>
+                <Button type="button" onClick={() => cancelEdit()}>
+                  취소
                 </Button>
               </Stack>
             </>
@@ -459,7 +455,7 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography>테마</Typography>
           {editingField === 'theme_type' ? (
@@ -473,9 +469,6 @@ export default function Opt({ siteName }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -483,6 +476,9 @@ export default function Opt({ siteName }: Props) {
                   disabled={isSubmitting}
                 >
                   변경 완료
+                </Button>
+                <Button type="button" onClick={() => cancelEdit()}>
+                  취소
                 </Button>
               </Stack>
             </>
@@ -497,11 +493,18 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>공개 여부</Typography>
+          <Typography>{rhizomes.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
           {editingField === 'visibility_type' ? (
-            <>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <FormControlLabel
                 control={
                   <Switch
@@ -515,23 +518,23 @@ export default function Opt({ siteName }: Props) {
                 direction="row"
                 spacing={2}
                 sx={{
-                  justifyContent: 'flex-end',
                   alignItems: 'center',
                 }}
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
                 <Button
                   type="button"
                   variant="contained"
                   onClick={() => void saveField('visibility_type')}
                   disabled={isSubmitting}
+                  sx={{ whiteSpace: 'nowrap' }}
                 >
                   변경 완료
                 </Button>
+                <Button type="button" onClick={() => cancelEdit()}>
+                  취소
+                </Button>
               </Stack>
-            </>
+            </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{rhizomes.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
@@ -547,11 +550,18 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>중단 여부</Typography>
+          <Typography>운영중단</Typography>
           {editingField === 'is_shutdown' ? (
-            <>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <FormControlLabel
                 control={<Switch checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
                 label={Boolean(draftValue) ? '중단' : '운영'}
@@ -564,9 +574,6 @@ export default function Opt({ siteName }: Props) {
                   alignItems: 'center',
                 }}
               >
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
-                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -575,8 +582,11 @@ export default function Opt({ siteName }: Props) {
                 >
                   변경 완료
                 </Button>
+                <Button type="button" onClick={() => cancelEdit()}>
+                  취소
+                </Button>
               </Stack>
-            </>
+            </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{rhizomes.is_shutdown ? '중단함' : '운영중'}</Typography>
