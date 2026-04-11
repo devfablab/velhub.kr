@@ -44,6 +44,10 @@ function getSiteNameFromPath(pathname: string) {
   return segments[0] ?? '';
 }
 
+function isConciergeAdminPath(pathname: string) {
+  return pathname.startsWith('/concierge/admin');
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request,
@@ -82,6 +86,39 @@ export async function proxy(request: NextRequest) {
     redirectUrl.search = '';
 
     return NextResponse.redirect(redirectUrl);
+  }
+
+  if (isConciergeAdminPath(request.nextUrl.pathname)) {
+    if (!isLoggedIn) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/auth/sign-in';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    const adminCheckResponse = await fetch(new URL('/api/auth/admin', request.url), {
+      method: 'GET',
+      headers: {
+        cookie: request.headers.get('cookie') ?? '',
+      },
+    });
+
+    if (adminCheckResponse.status === 401) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/auth/sign-in';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    if (!adminCheckResponse.ok) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = '/';
+      redirectUrl.search = '';
+
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   if (isManagePath(request.nextUrl.pathname)) {
@@ -135,5 +172,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/auth/manage|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|api/auth/manage|api/auth/admin|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

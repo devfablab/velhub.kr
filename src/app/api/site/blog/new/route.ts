@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     }
 
     if (!trimmedPlanType) {
-      return Response.json({ error: '플랜을 선택해주세요.' }, { status: 400 });
+      return Response.json({ error: '요금제를 선택해주세요.' }, { status: 400 });
     }
 
     const finalSiteLabel = trimmedSiteLabel || normalizedSiteKey;
@@ -149,11 +149,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (planResult.error) {
-      return Response.json({ error: planResult.error.message || '플랜 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: planResult.error.message || '요금제 확인에 실패했습니다.' }, { status: 500 });
     }
 
     if (!planResult.data) {
-      return Response.json({ error: '유효하지 않은 플랜입니다.' }, { status: 400 });
+      return Response.json({ error: '유효하지 않은 요금제입니다.' }, { status: 400 });
     }
 
     const rpcResult = await supabaseAdmin.rpc('create_blog_site', {

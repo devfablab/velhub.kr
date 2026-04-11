@@ -34,12 +34,12 @@ type PolicyComment = 'estimate_0' | 'estimate_1' | 'estimate_3' | 'estimate_5';
 
 type PlanRow = {
   id: string;
-  categoryKey: string;
-  categoryLabel: string;
-  planKey: string;
-  planLabel: string;
+  category_key: string;
+  category_label: string;
+  plan_key: string;
+  plan_label: string;
   price: number;
-  productType: string;
+  product_type: string;
 };
 
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
@@ -106,11 +106,11 @@ export default function Opt() {
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error ?? '플랜 목록을 불러오지 못했습니다.');
+          throw new Error(result.error ?? '요금제 목록을 불러오지 못했습니다.');
         }
 
         const allPlans = Array.isArray(result.plans) ? result.plans : [];
-        const nextPlans = allPlans.filter((planRow: PlanRow) => planRow.categoryKey === 'community');
+        const nextPlans = allPlans.filter((planRow: PlanRow) => planRow.category_key === 'community');
 
         setPlans(nextPlans);
 
@@ -119,9 +119,9 @@ export default function Opt() {
         }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          openErrorDialog(unknownError.message || '플랜 목록을 불러오지 못했습니다.');
+          openErrorDialog(unknownError.message || '요금제 목록을 불러오지 못했습니다.');
         } else {
-          openErrorDialog('플랜 목록을 불러오지 못했습니다.');
+          openErrorDialog('요금제 목록을 불러오지 못했습니다.');
         }
       } finally {
         setIsLoadingPlans(false);
@@ -383,7 +383,7 @@ export default function Opt() {
     }
 
     if (!planType) {
-      openErrorDialog('플랜을 선택해주세요.');
+      openErrorDialog('요금제를 선택해주세요.');
       return;
     }
 
@@ -502,14 +502,14 @@ export default function Opt() {
             </Stack>
 
             <Stack spacing={1}>
-              <FormLabel>플랜</FormLabel>
+              <FormLabel>요금제</FormLabel>
               <RadioGroup value={planType} onChange={handlePlanTypeChange}>
                 {plans.map((planRow) => (
                   <FormControlLabel
                     key={planRow.id}
                     value={planRow.id}
                     control={<Radio />}
-                    label={`${planRow.planLabel} (${planRow.price.toLocaleString()}원)`}
+                    label={`${planRow.plan_label} (${planRow.price.toLocaleString()}원)`}
                   />
                 ))}
               </RadioGroup>
