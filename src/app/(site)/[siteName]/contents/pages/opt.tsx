@@ -70,7 +70,7 @@ export default function Opt({ siteName }: Props) {
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const items = useMemo(() => pages.map((page) => page.slug), [pages]);
+  const items = useMemo(() => pages.map((page: PageRow) => page.slug), [pages]);
 
   useEffect(() => {
     async function loadPages() {
@@ -105,7 +105,7 @@ export default function Opt({ siteName }: Props) {
           throw new Error(boardResult.error ?? '페이지 목록을 불러오지 못했습니다.');
         }
 
-        setPages(Array.isArray(boardResult.contents) ? boardResult.contents : []);
+        setPages(Array.isArray(boardResult.contents) ? (boardResult.contents as PageRow[]) : []);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '페이지 목록을 불러오지 못했습니다.');
@@ -131,14 +131,16 @@ export default function Opt({ siteName }: Props) {
       return;
     }
 
-    const oldIndex = pages.findIndex((page) => page.slug === active.id);
-    const newIndex = pages.findIndex((page) => page.slug === over.id);
+    const oldIndex = pages.findIndex((page: PageRow) => page.slug === active.id);
+    const newIndex = pages.findIndex((page: PageRow) => page.slug === over.id);
 
     if (oldIndex < 0 || newIndex < 0) {
       return;
     }
 
-    const reorderedPages = arrayMove(pages, oldIndex, newIndex).map((page, index) => ({
+    const movedPages = arrayMove(pages, oldIndex, newIndex) as PageRow[];
+
+    const reorderedPages: PageRow[] = movedPages.map((page: PageRow, index: number) => ({
       ...page,
       sort_order: index + 1,
     }));
@@ -149,7 +151,7 @@ export default function Opt({ siteName }: Props) {
 
     try {
       await Promise.all(
-        reorderedPages.map(async (page) => {
+        reorderedPages.map(async (page: PageRow) => {
           const response = await fetch(`/api/boards/${boardName}/${page.slug}/order`, {
             method: 'PATCH',
             headers: {
@@ -200,7 +202,7 @@ export default function Opt({ siteName }: Props) {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
             <Paper elevation={3} sx={{ p: 1 }}>
-              {pages.map((page) => (
+              {pages.map((page: PageRow) => (
                 <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
               ))}
             </Paper>

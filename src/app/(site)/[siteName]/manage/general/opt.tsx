@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import { formatDateTime } from '@/lib/utils';
+import { formatDate, formatDateTimeFull } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
@@ -315,7 +315,7 @@ export default function Opt({ siteName }: Props) {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Typography>
-          {rhizomes.site_label} {formatDateTime(rhizomes.created_at)}에 생성
+          {rhizomes.site_label} {formatDate(rhizomes.created_at)}에 생성
         </Typography>
       </Paper>
 
@@ -597,7 +597,7 @@ export default function Opt({ siteName }: Props) {
           <TableBody>
             <TableRow>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.log}</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTime(sites.updated_at)} 변경</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(sites.updated_at)} 변경</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.updated_by_name}</TableCell>
             </TableRow>
           </TableBody>

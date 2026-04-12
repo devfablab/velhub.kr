@@ -23,6 +23,17 @@ export function formatDateTimeDetail(value: DateInput): string {
   return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}. ${hours}:${minutes}`;
 }
 
+export function formatDateTimeFull(value: DateInput): string {
+  const date = parseDate(value);
+  if (!date) return '';
+
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 ${hours}시 ${minutes}분 ${seconds}초`;
+}
+
 export function formatTimeAgo(value: DateInput): string {
   const date = parseDate(value);
   if (!date) return '';
