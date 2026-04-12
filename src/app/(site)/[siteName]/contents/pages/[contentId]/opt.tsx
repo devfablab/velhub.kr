@@ -15,6 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { formatDate, formatDateTimeDetail } from '@/lib/utils';
 
 type ContentRow = {
   id: string;
@@ -170,10 +171,12 @@ export default function Opt({ siteName, contentId }: Props) {
             <Typography>{content.subject}</Typography>
           </Stack>
 
-          <Stack spacing={0.5}>
-            <Typography>페이지 부제목</Typography>
-            <Typography>{content.summary ?? ''}</Typography>
-          </Stack>
+          {content.summary && (
+            <Stack spacing={0.5}>
+              <Typography>페이지 부제목</Typography>
+              <Typography>{content.summary}</Typography>
+            </Stack>
+          )}
 
           <Stack spacing={0.5}>
             <Typography>작성자</Typography>
@@ -182,12 +185,12 @@ export default function Opt({ siteName, contentId }: Props) {
 
           <Stack spacing={0.5}>
             <Typography>생성일자</Typography>
-            <Typography>{content.created_at}</Typography>
+            <Typography>{formatDateTimeDetail(content.created_at)}</Typography>
           </Stack>
 
           <Stack spacing={0.5}>
             <Typography>수정일자</Typography>
-            <Typography>{content.edited_at}</Typography>
+            <Typography>{formatDateTimeDetail(content.edited_at)}</Typography>
           </Stack>
 
           <Stack spacing={0.5}>

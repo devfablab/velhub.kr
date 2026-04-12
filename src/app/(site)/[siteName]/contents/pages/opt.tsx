@@ -199,11 +199,11 @@ export default function Opt({ siteName }: Props) {
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
-            <Stack spacing={1.5}>
+            <Paper elevation={3} sx={{ p: 1 }}>
               {pages.map((page) => (
                 <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
               ))}
-            </Stack>
+            </Paper>
           </SortableContext>
         </DndContext>
       )}

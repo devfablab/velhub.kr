@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -271,7 +272,9 @@ export default function HeaderLounge() {
                   <ListItemIcon>
                     <SettingsIcon fontSize="small" />
                   </ListItemIcon>
-                  <Link href="/settings">설정</Link>
+                  <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
+                    설정
+                  </Link>
                 </MenuItem>,
                 <MenuItem key="logout" onClick={handleLogout}>
                   <ListItemIcon>
@@ -285,13 +288,17 @@ export default function HeaderLounge() {
                   <ListItemIcon>
                     <LoginIcon fontSize="small" />
                   </ListItemIcon>
-                  <Anchor href="/auth/sign-in">로그인</Anchor>
+                  <Link href="/auth/sign-in" underline="none" sx={{ flex: '1 0 0%' }}>
+                    로그인
+                  </Link>
                 </MenuItem>,
                 <MenuItem key="signup" onClick={handleCloseProfileMenu}>
                   <ListItemIcon>
                     <PersonAddIcon fontSize="small" />
                   </ListItemIcon>
-                  <Anchor href="/auth/sign-up">회원가입</Anchor>
+                  <Link href="/auth/sign-up" underline="none" sx={{ flex: '1 0 0%' }}>
+                    회원가입
+                  </Link>
                 </MenuItem>,
               ]}
         </Menu>

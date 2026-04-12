@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -7,6 +8,7 @@ import {
   Box,
   Divider,
   IconButton,
+  Link,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -248,7 +250,9 @@ export default function HeaderSettings() {
             <ListItemIcon>
               <HomeIcon fontSize="small" />
             </ListItemIcon>
-            <Anchor href="/">라운지</Anchor>
+            <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
+              라운지
+            </Link>
           </MenuItem>
 
           <MenuItem onClick={handleLogout}>

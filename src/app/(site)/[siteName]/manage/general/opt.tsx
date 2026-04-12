@@ -19,6 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import { formatDateTime } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
@@ -63,20 +64,6 @@ function isSupabaseAvatarValue(value: string) {
 
 function getSupabaseAvatarPath(value: string) {
   return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
 export default function Opt({ siteName }: Props) {
