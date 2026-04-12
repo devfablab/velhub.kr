@@ -146,6 +146,7 @@ export async function POST(request: Request, context: RouteContext) {
         user_id: sessionClaims.userId,
         site_id: rhizomeResult.data.id,
         board_id: boardResult.data.id,
+        is_comment: false,
       })
       .select('id')
       .maybeSingle();

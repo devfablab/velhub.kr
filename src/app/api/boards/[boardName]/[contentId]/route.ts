@@ -84,7 +84,7 @@ export async function GET(request: Request, context: RouteContext) {
     const pageResult = await supabaseAdmin
       .from('pages')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, created_at, edited_at, og_image, attachment_slug, attachment_origin, sort_order, user_id, site_id, board_id',
+        'id, slug, subject, summary, content_html, content_markdown, created_at, edited_at, og_image, attachment_slug, attachment_origin, sort_order, user_id, site_id, board_id, is_comment',
       )
       .eq('board_id', boardResult.data.id)
       .eq('slug', normalizedContentId)

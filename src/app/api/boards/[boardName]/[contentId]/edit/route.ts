@@ -18,6 +18,7 @@ type RequestBody = {
   ogImage: string | null;
   attachmentSlug: string | null;
   attachmentOrigin: string | null;
+  isComment: boolean | null;
 };
 
 function normalizeText(value: string | null | undefined) {
@@ -55,6 +56,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const ogImage = normalizeText(requestBody.ogImage);
     const attachmentSlug = normalizeText(requestBody.attachmentSlug);
     const attachmentOrigin = normalizeText(requestBody.attachmentOrigin);
+    const isComment = requestBody.isComment;
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -74,6 +76,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (attachmentSlug && !attachmentOrigin) {
       return Response.json({ error: '첨부파일 원본 이름을 확인해주세요.' }, { status: 400 });
+    }
+
+    if (typeof isComment !== 'boolean') {
+      return Response.json({ error: '댓글 쓰기 허용 값을 확인해주세요.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -148,6 +154,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         og_image: ogImage || null,
         attachment_slug: attachmentSlug || null,
         attachment_origin: attachmentOrigin || null,
+        is_comment: isComment,
       })
       .eq('id', currentPageResult.data.id);
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, FormControlLabel, Paper, Stack, Switch, TextField, Typography } from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -27,6 +27,7 @@ type ContentRow = {
   site_id: string;
   board_id: string;
   author_name: string;
+  is_comment: boolean;
 };
 
 type Props = {
@@ -71,6 +72,7 @@ export default function Opt({ siteName, contentId }: Props) {
   const [contentMarkdown, setContentMarkdown] = useState('');
   const [ogImage, setOgImage] = useState('');
   const [ogImageUrl, setOgImageUrl] = useState('');
+  const [isComment, setIsComment] = useState(false);
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -119,6 +121,7 @@ export default function Opt({ siteName, contentId }: Props) {
         setContentMarkdown(content.content_markdown ?? '');
         setOgImage(content.og_image ?? '');
         setOgImageUrl(content.og_image_url ?? '');
+        setIsComment(Boolean(content.is_comment));
         setSlugMessage('');
         setIsSlugAvailable(null);
       } catch (unknownError) {
@@ -149,6 +152,10 @@ export default function Opt({ siteName, contentId }: Props) {
 
   function handleSummaryChange(event: InputChangeEvent) {
     setSummary(event.currentTarget.value);
+  }
+
+  function handleIsCommentChange(event: InputChangeEvent) {
+    setIsComment(event.currentTarget.checked);
   }
 
   async function handleCheckSlug() {
@@ -221,7 +228,7 @@ export default function Opt({ siteName, contentId }: Props) {
 
     try {
       if (ogImage && isSupabaseOgImageValue(ogImage)) {
-        await fetch('/api/attachment/delete/og-image', {
+        await fetch('/api/attachment/delete/og-image/page', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -236,7 +243,7 @@ export default function Opt({ siteName, contentId }: Props) {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('/api/attachment/add/og-image', {
+      const response = await fetch('/api/attachment/add/og-image/page', {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -313,6 +320,7 @@ export default function Opt({ siteName, contentId }: Props) {
           ogImage: ogImage || null,
           attachmentSlug: null,
           attachmentOrigin: null,
+          isComment,
         }),
       });
 
@@ -351,6 +359,11 @@ export default function Opt({ siteName, contentId }: Props) {
 
         <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
         <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth />
+
+        <FormControlLabel
+          control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
+          label="댓글 쓰기 허용"
+        />
 
         <Box>
           <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>

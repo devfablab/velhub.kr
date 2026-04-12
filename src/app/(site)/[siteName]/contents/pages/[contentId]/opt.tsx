@@ -15,7 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { formatDate, formatDateTimeDetail } from '@/lib/utils';
+import { formatDateTimeDetail } from '@/lib/utils';
 
 type ContentRow = {
   id: string;
@@ -35,6 +35,7 @@ type ContentRow = {
   site_id: string;
   board_id: string;
   author_name: string;
+  is_comment: boolean;
 };
 
 type Props = {
@@ -194,6 +195,11 @@ export default function Opt({ siteName, contentId }: Props) {
           </Stack>
 
           <Stack spacing={0.5}>
+            <Typography>댓글 쓰기 허용</Typography>
+            <Typography>{content.is_comment ? '허용' : '불가'}</Typography>
+          </Stack>
+
+          <Stack spacing={0.5}>
             <Typography>오픈그래프 이미지</Typography>
             {profileImageUrl ? (
               <Box
@@ -205,6 +211,11 @@ export default function Opt({ siteName, contentId }: Props) {
             ) : (
               <Typography />
             )}
+          </Stack>
+
+          <Stack spacing={0.5}>
+            <Typography>첨부파일 원본 이름</Typography>
+            <Typography>{content.attachment_origin ?? ''}</Typography>
           </Stack>
 
           <Stack spacing={0.5}>
