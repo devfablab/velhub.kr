@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RequestBody = {
@@ -20,12 +20,6 @@ function normalizeKey(value: string | null | undefined) {
 
 export async function POST(request: Request) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeKey(requestBody.siteName);
@@ -61,65 +55,54 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const duplicateResult = await supabaseAdmin
+    if (session.case !== 'staff') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const duplicateBoardKey = await supabaseAdmin
       .from('boards')
       .select('id')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .eq('board_key', boardKey)
       .maybeSingle();
 
-    if (duplicateResult.error) {
+    if (duplicateBoardKey.error) {
       return Response.json({ error: '게시판 중복 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (duplicateResult.data) {
+    if (duplicateBoardKey.data) {
       return Response.json({ error: '이미 존재하는 게시판 식별자입니다.' }, { status: 400 });
     }
 
-    const sortOrderResult = await supabaseAdmin
+    const sortOrder = await supabaseAdmin
       .from('boards')
       .select('sort_order')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .order('sort_order', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (sortOrderResult.error) {
+    if (sortOrder.error) {
       return Response.json({ error: '게시판 정렬값 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextSortOrder =
-      typeof sortOrderResult.data?.sort_order === 'number' ? sortOrderResult.data.sort_order + 1 : 1;
+    const nextSortOrder = typeof sortOrder.data?.sort_order === 'number' ? sortOrder.data.sort_order + 1 : 1;
 
-    const insertResult = await supabaseAdmin
+    const insertBoard = await supabaseAdmin
       .from('boards')
       .insert({
         board_key: boardKey,
@@ -128,19 +111,19 @@ export async function POST(request: Request) {
         is_active: isActive,
         sort_order: nextSortOrder,
         markdown_status: markdownStatus,
-        site_id: rhizomeResult.data.id,
+        site_id: rhizome.data.id,
       })
       .select('id, board_key')
       .maybeSingle();
 
-    if (insertResult.error || !insertResult.data) {
+    if (insertBoard.error || !insertBoard.data) {
       return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      boardId: insertResult.data.id,
-      boardName: insertResult.data.board_key,
+      boardId: insertBoard.data.id,
+      boardName: insertBoard.data.board_key,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

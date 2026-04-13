@@ -57,13 +57,9 @@ async function verifyAdmin() {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('role')
-    .eq('user_id', sessionClaims.userId)
-    .maybeSingle();
+  const stigma = await supabaseAdmin.from('stigmas').select('role').eq('user_id', sessionClaims.userId).maybeSingle();
 
-  if (stigmaResult.error || !stigmaResult.data) {
+  if (stigma.error || !stigma.data) {
     return {
       ok: false as const,
       status: 500,
@@ -71,7 +67,7 @@ async function verifyAdmin() {
     };
   }
 
-  if (stigmaResult.data.role !== 'admin') {
+  if (stigma.data.role !== 'admin') {
     return {
       ok: false as const,
       status: 403,
@@ -94,33 +90,33 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const planResult = await supabaseAdmin
+    const plan = await supabaseAdmin
       .from('plans')
       .select('id, category_key, category_label, plan_key, plan_label, price, product_type')
       .eq('id', planId)
       .maybeSingle();
 
-    if (planResult.error) {
+    if (plan.error) {
       return Response.json({ error: '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    if (!planResult.data) {
+    if (!plan.data) {
       return Response.json({ error: '요금제를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const featureResult = await supabaseAdmin
+    const feature = await supabaseAdmin
       .from('plan_features')
       .select('id, is_editor_image, is_member, is_board_attachment, count_subpage, count_board, count_user, plan_id')
       .eq('plan_id', planId)
       .maybeSingle();
 
-    if (featureResult.error) {
+    if (feature.error) {
       return Response.json({ error: '요금제 기능 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({
-      plan: planResult.data,
-      feature: featureResult.data ?? null,
+      plan: plan.data,
+      feature: feature.data ?? null,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
@@ -133,10 +129,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
-    const adminResult = await verifyAdmin();
+    const admin = await verifyAdmin();
 
-    if (!adminResult.ok) {
-      return Response.json({ error: adminResult.error }, { status: adminResult.status });
+    if (!admin.ok) {
+      return Response.json({ error: admin.error }, { status: admin.status });
     }
 
     const { planId } = await context.params;
@@ -180,17 +176,17 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const currentPlanResult = await supabaseAdmin.from('plans').select('id').eq('id', planId).maybeSingle();
+    const currentPlan = await supabaseAdmin.from('plans').select('id').eq('id', planId).maybeSingle();
 
-    if (currentPlanResult.error) {
+    if (currentPlan.error) {
       return Response.json({ error: '요금제 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (!currentPlanResult.data) {
+    if (!currentPlan.data) {
       return Response.json({ error: '요금제를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const duplicateResult = await supabaseAdmin
+    const duplicatePlan = await supabaseAdmin
       .from('plans')
       .select('id')
       .eq('category_key', categoryKey)
@@ -198,15 +194,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       .neq('id', planId)
       .maybeSingle();
 
-    if (duplicateResult.error) {
+    if (duplicatePlan.error) {
       return Response.json({ error: '요금제 중복 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (duplicateResult.data) {
+    if (duplicatePlan.data) {
       return Response.json({ error: '이미 존재하는 요금제입니다.' }, { status: 400 });
     }
 
-    const updateResult = await supabaseAdmin
+    const updatePlan = await supabaseAdmin
       .from('plans')
       .update({
         category_key: categoryKey,
@@ -218,7 +214,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       })
       .eq('id', planId);
 
-    if (updateResult.error) {
+    if (updatePlan.error) {
       return Response.json({ error: '요금제 수정에 실패했습니다.' }, { status: 500 });
     }
 
@@ -236,10 +232,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    const adminResult = await verifyAdmin();
+    const admin = await verifyAdmin();
 
-    if (!adminResult.ok) {
-      return Response.json({ error: adminResult.error }, { status: adminResult.status });
+    if (!admin.ok) {
+      return Response.json({ error: admin.error }, { status: admin.status });
     }
 
     const { planId } = await context.params;
@@ -250,15 +246,15 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const featureDeleteResult = await supabaseAdmin.from('plan_features').delete().eq('plan_id', planId);
+    const deleteFeature = await supabaseAdmin.from('plan_features').delete().eq('plan_id', planId);
 
-    if (featureDeleteResult.error) {
+    if (deleteFeature.error) {
       return Response.json({ error: '요금제 기능 삭제에 실패했습니다.' }, { status: 500 });
     }
 
-    const planDeleteResult = await supabaseAdmin.from('plans').delete().eq('id', planId);
+    const deletePlan = await supabaseAdmin.from('plans').delete().eq('id', planId);
 
-    if (planDeleteResult.error) {
+    if (deletePlan.error) {
       return Response.json({ error: '요금제 삭제에 실패했습니다.' }, { status: 500 });
     }
 

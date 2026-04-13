@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RequestBody = {
@@ -38,12 +38,6 @@ function normalizeNumber(value: number | string | null | undefined) {
 
 export async function POST(request: Request) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
@@ -69,45 +63,35 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_type')
-      .eq('site_key', siteName)
-      .maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (rhizomeResult.data.site_type !== 'blog') {
+    if (rhizome.data.site_type !== 'blog') {
       return Response.json({ error: '블로그 사이트만 접근할 수 있습니다.' }, { status: 403 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const rpcResult = await supabaseAdmin.rpc('create_post_with_blog_board', {
-      p_site_id: rhizomeResult.data.id,
-      p_user_id: sessionClaims.userId,
+    if (session.case !== 'staff') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!session.authUserId) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const post = await supabaseAdmin.rpc('create_post_with_blog_board', {
+      p_site_id: rhizome.data.id,
+      p_user_id: session.authUserId,
       p_subject: subject,
       p_summary: summary || null,
       p_content_html: contentHtml,
@@ -118,18 +102,17 @@ export async function POST(request: Request) {
       p_thumbnail_height: thumbnailHeight,
     });
 
-    if (rpcResult.error || !Array.isArray(rpcResult.data) || !rpcResult.data[0]) {
-      console.error('create_post_with_blog_board rpc 실패:', rpcResult.error);
-      return Response.json({ error: rpcResult.error?.message || '블로그 글 생성에 실패했습니다.' }, { status: 500 });
+    if (post.error || !Array.isArray(post.data) || !post.data[0]) {
+      return Response.json({ error: post.error?.message || '블로그 글 생성에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      boardId: rpcResult.data[0].board_id,
-      postId: rpcResult.data[0].post_id,
-      createdBoard: rpcResult.data[0].created_board,
-      slug: String(rpcResult.data[0].slug),
-      idx: rpcResult.data[0].idx,
+      boardId: post.data[0].board_id,
+      postId: post.data[0].post_id,
+      createdBoard: post.data[0].created_board,
+      slug: String(post.data[0].slug),
+      idx: post.data[0].idx,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

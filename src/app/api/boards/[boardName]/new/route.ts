@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RouteContext = {
@@ -48,12 +48,6 @@ function normalizeNumber(value: number | string | null | undefined) {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const { boardName } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
 
@@ -90,50 +84,60 @@ export async function POST(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_type')
-      .eq('site_key', siteName)
-      .maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const boardResult = await supabaseAdmin
+    if (session.case !== 'staff' && session.case !== 'member') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!session.authUserId) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (session.case === 'member') {
+      if (!session.rhizomeStigmaId) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+
+      const memberAccess = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('is_approval, is_block')
+        .eq('id', session.rhizomeStigmaId)
+        .maybeSingle();
+
+      if (memberAccess.error || !memberAccess.data) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+
+      if (memberAccess.data.is_approval !== true || memberAccess.data.is_block !== false) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
+
+    const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_type')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
-    if (boardResult.error || !boardResult.data) {
+    if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (boardResult.data.board_type === 'page') {
+    if (board.data.board_type === 'page') {
       if (!slug) {
         return Response.json({ error: '페이지 식별자를 입력해주세요.' }, { status: 400 });
       }
@@ -142,22 +146,21 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '첨부파일 원본 이름을 확인해주세요.' }, { status: 400 });
       }
 
-      const sortOrderResult = await supabaseAdmin
+      const sortOrder = await supabaseAdmin
         .from('pages')
         .select('sort_order')
-        .eq('board_id', boardResult.data.id)
+        .eq('board_id', board.data.id)
         .order('sort_order', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (sortOrderResult.error) {
+      if (sortOrder.error) {
         return Response.json({ error: '페이지 정렬값 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      const nextSortOrder =
-        typeof sortOrderResult.data?.sort_order === 'number' ? sortOrderResult.data.sort_order + 1 : 1;
+      const nextSortOrder = typeof sortOrder.data?.sort_order === 'number' ? sortOrder.data.sort_order + 1 : 1;
 
-      const insertPageResult = await supabaseAdmin
+      const insertPage = await supabaseAdmin
         .from('pages')
         .insert({
           slug,
@@ -170,44 +173,44 @@ export async function POST(request: Request, context: RouteContext) {
           attachment_slug: attachmentSlug || null,
           attachment_origin: attachmentOrigin || null,
           sort_order: nextSortOrder,
-          user_id: sessionClaims.userId,
-          site_id: rhizomeResult.data.id,
-          board_id: boardResult.data.id,
+          user_id: session.authUserId,
+          site_id: rhizome.data.id,
+          board_id: board.data.id,
           is_comment: false,
         })
         .select('id')
         .maybeSingle();
 
-      if (insertPageResult.error || !insertPageResult.data) {
+      if (insertPage.error || !insertPage.data) {
         return Response.json({ error: '페이지 생성에 실패했습니다.' }, { status: 500 });
       }
 
       return Response.json({
         ok: true,
-        pageId: insertPageResult.data.id,
+        pageId: insertPage.data.id,
         slug,
-        boardId: boardResult.data.id,
+        boardId: board.data.id,
       });
     }
 
-    if (boardResult.data.board_type === 'blog') {
-      if (rhizomeResult.data.site_type !== 'blog') {
+    if (board.data.board_type === 'blog') {
+      if (rhizome.data.site_type !== 'blog') {
         return Response.json({ error: '블로그 사이트만 접근할 수 있습니다.' }, { status: 403 });
       }
 
-      const idxResult = await supabaseAdmin
+      const idx = await supabaseAdmin
         .from('posts')
         .select('idx')
-        .eq('board_id', boardResult.data.id)
+        .eq('board_id', board.data.id)
         .order('idx', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (idxResult.error) {
+      if (idx.error) {
         return Response.json({ error: '블로그 글 순번 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      const nextIdx = typeof idxResult.data?.idx === 'number' ? idxResult.data.idx + 1 : 1;
+      const nextIdx = typeof idx.data?.idx === 'number' ? idx.data.idx + 1 : 1;
 
       let nextSlug = '';
       let hasDuplicateSlug = true;
@@ -215,24 +218,24 @@ export async function POST(request: Request, context: RouteContext) {
       while (hasDuplicateSlug) {
         nextSlug = String(Math.floor(Math.random() * 10000000000)).padStart(10, '0');
 
-        const duplicateSlugResult = await supabaseAdmin
+        const duplicatePostSlug = await supabaseAdmin
           .from('posts')
           .select('id')
-          .eq('board_id', boardResult.data.id)
+          .eq('board_id', board.data.id)
           .eq('slug', Number(nextSlug))
           .maybeSingle();
 
-        if (duplicateSlugResult.error) {
+        if (duplicatePostSlug.error) {
           return Response.json({ error: '블로그 글 식별자 확인에 실패했습니다.' }, { status: 500 });
         }
 
-        hasDuplicateSlug = Boolean(duplicateSlugResult.data);
+        hasDuplicateSlug = Boolean(duplicatePostSlug.data);
       }
 
-      const insertPostResult = await supabaseAdmin
+      const insertPost = await supabaseAdmin
         .from('posts')
         .insert({
-          user_id: sessionClaims.userId,
+          user_id: session.authUserId,
           slug: Number(nextSlug),
           content_html: contentHtml,
           content_markdown: contentMarkdown || null,
@@ -243,22 +246,22 @@ export async function POST(request: Request, context: RouteContext) {
           thumbnail_width: thumbnailWidth,
           thumbnail_height: thumbnailHeight,
           idx: nextIdx,
-          board_id: boardResult.data.id,
-          site_id: rhizomeResult.data.id,
+          board_id: board.data.id,
+          site_id: rhizome.data.id,
         })
         .select('id, slug, idx')
         .maybeSingle();
 
-      if (insertPostResult.error || !insertPostResult.data) {
+      if (insertPost.error || !insertPost.data) {
         return Response.json({ error: '블로그 글 생성에 실패했습니다.' }, { status: 500 });
       }
 
       return Response.json({
         ok: true,
-        postId: insertPostResult.data.id,
-        slug: String(insertPostResult.data.slug),
-        idx: insertPostResult.data.idx,
-        boardId: boardResult.data.id,
+        postId: insertPost.data.id,
+        slug: String(insertPost.data.slug),
+        idx: insertPost.data.idx,
+        boardId: board.data.id,
       });
     }
 

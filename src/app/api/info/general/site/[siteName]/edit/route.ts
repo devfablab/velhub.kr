@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 
@@ -21,6 +21,10 @@ type RequestBody = {
   field: UpdateField;
   value: string | boolean | null;
 };
+
+function normalizeText(value: string | null | undefined) {
+  return value?.trim() ?? '';
+}
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -69,142 +73,135 @@ function formatLogMessage(
   return `중단 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
 }
 
+async function checkAccess(siteName: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const rhizome = await supabaseAdmin
+    .from('rhizomes')
+    .select(
+      'id, created_at, site_key, site_label, profile_picture, summary, site_type, visibility_type, theme_type, is_shutdown',
+    )
+    .eq('site_key', siteName)
+    .maybeSingle();
+
+  if (rhizome.error || !rhizome.data) {
+    return {
+      ok: false,
+      status: 404,
+      error: '사이트를 찾을 수 없습니다.',
+    } as const;
+  }
+
+  const session = await verifySession({
+    siteId: rhizome.data.id,
+  });
+
+  if (session.status === 'FAIL') {
+    return {
+      ok: false,
+      status: 403,
+      error: '접근 권한이 없습니다.',
+    } as const;
+  }
+
+  if (session.case !== 'staff') {
+    return {
+      ok: false,
+      status: 403,
+      error: '접근 권한이 없습니다.',
+    } as const;
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    rhizome: rhizome.data,
+    session,
+    supabaseAdmin,
+  } as const;
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const { siteName } = await context.params;
-    const normalizedSiteName = siteName.trim().toLowerCase();
+    const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
     if (!normalizedSiteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const access = await checkAccess(normalizedSiteName);
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
-
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    if (!access.ok) {
+      return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const rhizomeResult = await supabaseAdmin
-      .from('rhizomes')
-      .select(
-        'id, created_at, site_key, site_label, profile_picture, summary, site_type, visibility_type, theme_type, is_shutdown',
-      )
-      .eq('site_key', normalizedSiteName)
-      .maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
-      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const permissionResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
-
-    if (permissionResult.error || !permissionResult.data) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    const siteResult = await supabaseAdmin
+    const sites = await access.supabaseAdmin
       .from('sites')
       .select('updated_at, updated_by, log')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', access.rhizome.id)
       .maybeSingle();
 
-    if (siteResult.error || !siteResult.data) {
+    if (sites.error || !sites.data) {
       return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     let updatedByName = '';
 
-    if (siteResult.data.updated_by) {
-      const nicknameResult = await supabaseAdmin
+    if (sites.data.updated_by) {
+      const nickname = await access.supabaseAdmin
         .from('rhizome_stigmas')
         .select('nickname')
-        .eq('site_id', rhizomeResult.data.id)
-        .eq('user_id', siteResult.data.updated_by)
+        .eq('site_id', access.rhizome.id)
+        .eq('user_id', sites.data.updated_by)
         .maybeSingle();
 
-      if (nicknameResult.data?.nickname) {
-        updatedByName = nicknameResult.data.nickname;
+      if (nickname.data?.nickname) {
+        updatedByName = nickname.data.nickname;
       } else {
-        const stigmaUserResult = await supabaseAdmin
+        const stigmaUser = await access.supabaseAdmin
           .from('stigmas')
           .select('user_name')
-          .eq('id', siteResult.data.updated_by)
+          .eq('id', sites.data.updated_by)
           .maybeSingle();
 
-        if (stigmaUserResult.data?.user_name) {
-          updatedByName = decrypt(stigmaUserResult.data.user_name);
+        if (stigmaUser.data?.user_name) {
+          updatedByName = decrypt(stigmaUser.data.user_name);
         } else {
-          const particleResult = await supabaseAdmin
-            .from('particles')
-            .select('id')
-            .eq('id', siteResult.data.updated_by)
+          const fallbackStigma = await access.supabaseAdmin
+            .from('stigmas')
+            .select('user_name')
+            .eq('user_id', sites.data.updated_by)
             .maybeSingle();
 
-          if (particleResult.data) {
-            const fallbackStigmaResult = await supabaseAdmin
-              .from('stigmas')
-              .select('id, user_name')
-              .eq('user_id', particleResult.data.id)
-              .maybeSingle();
-
-            if (fallbackStigmaResult.data?.id) {
-              const fallbackNicknameResult = await supabaseAdmin
-                .from('rhizome_stigmas')
-                .select('nickname')
-                .eq('site_id', rhizomeResult.data.id)
-                .eq('user_id', fallbackStigmaResult.data.id)
-                .maybeSingle();
-
-              if (fallbackNicknameResult.data?.nickname) {
-                updatedByName = fallbackNicknameResult.data.nickname;
-              } else if (fallbackStigmaResult.data.user_name) {
-                updatedByName = decrypt(fallbackStigmaResult.data.user_name);
-              }
-            }
+          if (fallbackStigma.data?.user_name) {
+            updatedByName = decrypt(fallbackStigma.data.user_name);
           }
         }
       }
     }
 
-    const rawProfilePicture = rhizomeResult.data.profile_picture ?? '';
+    const rawProfilePicture = access.rhizome.profile_picture ?? '';
     let profilePictureUrl = '';
 
     if (rawProfilePicture) {
       if (rawProfilePicture.startsWith('supabase:')) {
         const targetPath = rawProfilePicture.replace('supabase:', '').trim();
-        const publicUrlResult = supabaseAdmin.storage.from('avatar').getPublicUrl(targetPath);
-        profilePictureUrl = publicUrlResult.data.publicUrl ?? '';
+        const publicUrl = access.supabaseAdmin.storage.from('avatar').getPublicUrl(targetPath);
+        profilePictureUrl = publicUrl.data.publicUrl ?? '';
       } else {
         profilePictureUrl = rawProfilePicture;
       }
     }
 
     return Response.json({
-      rhizomes: rhizomeResult.data,
+      rhizomes: access.rhizome,
       profilePictureUrl,
       sites: {
-        updated_at: siteResult.data.updated_at,
-        updated_by: siteResult.data.updated_by,
+        updated_at: sites.data.updated_at,
+        updated_by: sites.data.updated_by,
         updated_by_name: updatedByName,
-        log: siteResult.data.log ?? '사이트 생성',
+        log: sites.data.log ?? '사이트 생성',
       },
     });
   } catch (unknownError) {
@@ -218,14 +215,8 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const { siteName } = await context.params;
-    const normalizedSiteName = siteName.trim().toLowerCase();
+    const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
     if (!normalizedSiteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -247,41 +238,17 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '수정할 수 없는 항목입니다.' }, { status: 400 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const access = await checkAccess(normalizedSiteName);
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
-
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    if (!access.ok) {
+      return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const currentRhizomeResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_key, site_label, profile_picture, summary, visibility_type, theme_type, is_shutdown')
-      .eq('site_key', normalizedSiteName)
-      .maybeSingle();
-
-    if (currentRhizomeResult.error || !currentRhizomeResult.data) {
-      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const permissionResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', currentRhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
-
-    if (permissionResult.error || !permissionResult.data) {
+    if (!access.session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    let previousValue: string | boolean | null = currentRhizomeResult.data[requestBody.field];
+    const previousValue: string | boolean | null = access.rhizome[requestBody.field];
     let nextValue: string | boolean | null = null;
 
     if (requestBody.field === 'site_key') {
@@ -304,32 +271,32 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '사이트 식별자는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
       }
 
-      const denylistResult = await supabaseAdmin
+      const denylist = await access.supabaseAdmin
         .from('denylist')
         .select('word')
         .eq('word', normalizedValue)
         .maybeSingle();
 
-      if (denylistResult.error) {
+      if (denylist.error) {
         return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      if (denylistResult.data) {
+      if (denylist.data) {
         return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
       }
 
-      const duplicateResult = await supabaseAdmin
+      const duplicateSiteKey = await access.supabaseAdmin
         .from('rhizomes')
         .select('id')
         .eq('site_key', normalizedValue)
-        .neq('id', currentRhizomeResult.data.id)
+        .neq('id', access.rhizome.id)
         .maybeSingle();
 
-      if (duplicateResult.error) {
+      if (duplicateSiteKey.error) {
         return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      if (duplicateResult.data) {
+      if (duplicateSiteKey.data) {
         return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
       }
 
@@ -356,30 +323,30 @@ export async function POST(request: Request, context: RouteContext) {
       nextValue = typeof requestBody.value === 'string' ? requestBody.value.trim() || null : null;
     }
 
-    const rhizomeUpdateResult = await supabaseAdmin
+    const updateRhizome = await access.supabaseAdmin
       .from('rhizomes')
       .update({
         [requestBody.field]: nextValue,
       })
-      .eq('id', currentRhizomeResult.data.id);
+      .eq('id', access.rhizome.id);
 
-    if (rhizomeUpdateResult.error) {
+    if (updateRhizome.error) {
       return Response.json({ error: '사이트 정보 수정에 실패했습니다.' }, { status: 500 });
     }
 
     const nowIsoString = new Date().toISOString();
     const logMessage = formatLogMessage(requestBody.field, previousValue, nextValue);
 
-    const sitesUpdateResult = await supabaseAdmin
+    const updateSites = await access.supabaseAdmin
       .from('sites')
       .update({
         updated_at: nowIsoString,
-        updated_by: stigmaResult.data.id,
+        updated_by: access.session.stigmaId,
         log: logMessage,
       })
-      .eq('site_id', currentRhizomeResult.data.id);
+      .eq('site_id', access.rhizome.id);
 
-    if (sitesUpdateResult.error) {
+    if (updateSites.error) {
       return Response.json({ error: '수정 이력 저장에 실패했습니다.' }, { status: 500 });
     }
 

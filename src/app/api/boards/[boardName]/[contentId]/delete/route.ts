@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RouteContext = {
@@ -14,12 +14,6 @@ function normalizeText(value: string | null | undefined) {
 
 export async function DELETE(request: Request, context: RouteContext) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const { boardName, contentId } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
     const normalizedContentId = normalizeText(contentId);
@@ -41,64 +35,84 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const boardResult = await supabaseAdmin
+    if (session.case !== 'staff' && session.case !== 'member') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!session.authUserId) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!session.rhizomeStigmaId) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const rhizomeStigma = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('is_approval, is_block')
+      .eq('id', session.rhizomeStigmaId)
+      .maybeSingle();
+
+    if (rhizomeStigma.error || !rhizomeStigma.data) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (session.case === 'member') {
+      if (rhizomeStigma.data.is_approval !== true || rhizomeStigma.data.is_block !== false) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
+
+    if (session.case === 'staff') {
+      if (rhizomeStigma.data.is_block === true) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
+
+    const board = await supabaseAdmin
       .from('boards')
       .select('id, board_type')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
-    if (boardResult.error || !boardResult.data) {
+    if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (boardResult.data.board_type === 'page') {
-      const pageResult = await supabaseAdmin
+    if (board.data.board_type === 'page') {
+      const page = await supabaseAdmin
         .from('pages')
         .select('id, user_id')
-        .eq('board_id', boardResult.data.id)
+        .eq('board_id', board.data.id)
         .eq('slug', normalizedContentId)
         .maybeSingle();
 
-      if (pageResult.error || !pageResult.data) {
+      if (page.error || !page.data) {
         return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      if (pageResult.data.user_id !== sessionClaims.userId) {
+      if (page.data.user_id !== session.authUserId) {
         return Response.json({ error: '작성자만 삭제할 수 있습니다.' }, { status: 403 });
       }
 
-      const deletePageResult = await supabaseAdmin.from('pages').delete().eq('id', pageResult.data.id);
+      const deletePage = await supabaseAdmin.from('pages').delete().eq('id', page.data.id);
 
-      if (deletePageResult.error) {
+      if (deletePage.error) {
         return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
       }
 
@@ -107,25 +121,25 @@ export async function DELETE(request: Request, context: RouteContext) {
       });
     }
 
-    if (boardResult.data.board_type === 'blog') {
-      const postResult = await supabaseAdmin
+    if (board.data.board_type === 'blog') {
+      const post = await supabaseAdmin
         .from('posts')
         .select('id, user_id')
-        .eq('board_id', boardResult.data.id)
+        .eq('board_id', board.data.id)
         .eq('slug', normalizedContentId)
         .maybeSingle();
 
-      if (postResult.error || !postResult.data) {
+      if (post.error || !post.data) {
         return Response.json({ error: '블로그 글을 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      if (postResult.data.user_id !== sessionClaims.userId) {
+      if (post.data.user_id !== session.authUserId) {
         return Response.json({ error: '작성자만 삭제할 수 있습니다.' }, { status: 403 });
       }
 
-      const deletePostResult = await supabaseAdmin.from('posts').delete().eq('id', postResult.data.id);
+      const deletePost = await supabaseAdmin.from('posts').delete().eq('id', post.data.id);
 
-      if (deletePostResult.error) {
+      if (deletePost.error) {
         return Response.json({ error: '블로그 글 삭제에 실패했습니다.' }, { status: 500 });
       }
 

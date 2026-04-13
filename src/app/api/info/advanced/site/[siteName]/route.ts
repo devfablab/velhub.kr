@@ -6,10 +6,14 @@ type RouteContext = {
   }>;
 };
 
+function normalizeText(value: string | null | undefined) {
+  return value?.trim() ?? '';
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { siteName } = await context.params;
-    const normalizedSiteName = siteName.trim().toLowerCase();
+    const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
     if (!normalizedSiteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -17,32 +21,28 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizomeResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id')
-      .eq('site_key', normalizedSiteName)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', normalizedSiteName).maybeSingle();
 
-    if (rhizomeResult.error) {
+    if (rhizome.error) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 500 });
     }
 
-    if (!rhizomeResult.data) {
+    if (!rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const siteResult = await supabaseAdmin.from('sites').select('*').eq('site_id', rhizomeResult.data.id).maybeSingle();
+    const sites = await supabaseAdmin.from('sites').select('*').eq('site_id', rhizome.data.id).maybeSingle();
 
-    if (siteResult.error) {
+    if (sites.error) {
       return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    if (!siteResult.data) {
+    if (!sites.data) {
       return Response.json({ error: 'sites 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     return Response.json({
-      sites: siteResult.data,
+      sites: sites.data,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

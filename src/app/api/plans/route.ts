@@ -42,18 +42,18 @@ export async function GET() {
   try {
     const supabaseAdmin = getSupabaseAdmin();
 
-    const plansResult = await supabaseAdmin
+    const plans = await supabaseAdmin
       .from('plans')
       .select('id, category_key, category_label, plan_key, plan_label, price, product_type, plan_features(id)')
       .order('sort_order', { ascending: true })
       .order('price', { ascending: true });
 
-    if (plansResult.error) {
+    if (plans.error) {
       return Response.json({ error: '요금제 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({
-      plans: (plansResult.data ?? []).map((planRow) => ({
+      plans: (plans.data ?? []).map((planRow) => ({
         id: planRow.id,
         category_key: planRow.category_key,
         category_label: planRow.category_label,
@@ -83,17 +83,13 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('role')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const stigma = await supabaseAdmin.from('stigmas').select('role').eq('user_id', sessionClaims.userId).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
+    if (stigma.error || !stigma.data) {
       return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (stigmaResult.data.role !== 'admin') {
+    if (stigma.data.role !== 'admin') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -130,36 +126,35 @@ export async function POST(request: Request) {
       return Response.json({ error: '상품 종류를 선택해주세요.' }, { status: 400 });
     }
 
-    const duplicateResult = await supabaseAdmin
+    const duplicatePlan = await supabaseAdmin
       .from('plans')
       .select('id')
       .eq('category_key', categoryKey)
       .eq('plan_key', planKey)
       .maybeSingle();
 
-    if (duplicateResult.error) {
+    if (duplicatePlan.error) {
       return Response.json({ error: '요금제 중복 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (duplicateResult.data) {
+    if (duplicatePlan.data) {
       return Response.json({ error: '이미 존재하는 요금제입니다.' }, { status: 400 });
     }
 
-    const sortOrderResult = await supabaseAdmin
+    const sortOrder = await supabaseAdmin
       .from('plans')
       .select('sort_order')
       .order('sort_order', { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    if (sortOrderResult.error) {
+    if (sortOrder.error) {
       return Response.json({ error: '요금제 정렬값 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextSortOrder =
-      typeof sortOrderResult.data?.sort_order === 'number' ? sortOrderResult.data.sort_order + 1 : 1;
+    const nextSortOrder = typeof sortOrder.data?.sort_order === 'number' ? sortOrder.data.sort_order + 1 : 1;
 
-    const insertResult = await supabaseAdmin
+    const insertPlan = await supabaseAdmin
       .from('plans')
       .insert({
         category_key: categoryKey,
@@ -173,13 +168,13 @@ export async function POST(request: Request) {
       .select('id')
       .maybeSingle();
 
-    if (insertResult.error || !insertResult.data) {
+    if (insertPlan.error || !insertPlan.data) {
       return Response.json({ error: '요금제 추가에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      planId: insertResult.data.id,
+      planId: insertPlan.data.id,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

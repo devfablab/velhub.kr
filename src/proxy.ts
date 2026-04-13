@@ -43,6 +43,7 @@ function isReservedRootPath(pathname: string) {
 
   return (
     firstSegment === '' ||
+    firstSegment === '.well-known' ||
     firstSegment === 'auth' ||
     firstSegment === 'settings' ||
     firstSegment === 'new' ||
@@ -76,6 +77,12 @@ function isSiteStaffOnlyPath(pathname: string) {
   return segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'manage';
 }
 
+function isForbiddenPath(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 2 && segments[1] === 'forbidden';
+}
+
 async function fetchSessionRoute(request: NextRequest, pathname: string, query: Record<string, string>) {
   const targetUrl = new URL(pathname, request.url);
 
@@ -101,6 +108,40 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
       ok: boolean;
       allow?: boolean;
       redirectTo?: string | null;
+    };
+  } catch {
+    result = null;
+  }
+
+  return {
+    response,
+    result,
+  };
+}
+
+async function fetchRhizomeState(request: NextRequest, siteName: string) {
+  const targetUrl = new URL(`/api/rhizomes/${siteName}`, request.url);
+
+  const response = await fetch(targetUrl, {
+    method: 'GET',
+    headers: {
+      cookie: request.headers.get('cookie') ?? '',
+    },
+  });
+
+  let result: {
+    rhizomes?: {
+      visibility_type?: string | null;
+      is_shutdown?: boolean | null;
+    };
+  } | null = null;
+
+  try {
+    result = (await response.json()) as {
+      rhizomes?: {
+        visibility_type?: string | null;
+        is_shutdown?: boolean | null;
+      };
     };
   } catch {
     result = null;
@@ -146,8 +187,8 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const claimsResult = await supabase.auth.getClaims();
-  const isLoggedIn = Boolean(claimsResult.data?.claims?.sub);
+  const claims = await supabase.auth.getClaims();
+  const isLoggedIn = Boolean(claims.data?.claims?.sub);
 
   if (request.nextUrl.pathname.startsWith('/new') || request.nextUrl.pathname.startsWith('/settings')) {
     if (!isLoggedIn) {
@@ -162,13 +203,13 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    const adminCheck = await fetchSessionRoute(request, '/api/session/admin', {});
+    const admin = await fetchSessionRoute(request, '/api/session/admin', {});
 
-    if (adminCheck.response.status === 401) {
+    if (admin.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    if (!adminCheck.response.ok) {
+    if (!admin.response.ok) {
       return redirectWithPath(request, '/');
     }
 
@@ -186,15 +227,15 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    const staffCheck = await fetchSessionRoute(request, '/api/session/staff', {
+    const staff = await fetchSessionRoute(request, '/api/session/staff', {
       siteName,
     });
 
-    if (staffCheck.response.status === 401) {
+    if (staff.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    if (!staffCheck.response.ok) {
+    if (!staff.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
 
@@ -208,16 +249,49 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
+    const rhizome = await fetchRhizomeState(request, siteName);
+
+    if (!rhizome.response.ok || !rhizome.result?.rhizomes) {
+      return response;
+    }
+
+    const isPublicReadable =
+      rhizome.result.rhizomes.visibility_type === 'public' && rhizome.result.rhizomes.is_shutdown === false;
+
+    if (!isPublicReadable) {
+      if (!isLoggedIn) {
+        return redirectWithPath(request, `/${siteName}/forbidden`);
+      }
+
+      const staff = await fetchSessionRoute(request, '/api/session/staff', {
+        siteName,
+      });
+
+      if (!staff.response.ok) {
+        return redirectWithPath(request, `/${siteName}/forbidden`);
+      }
+
+      if (isForbiddenPath(request.nextUrl.pathname)) {
+        return response;
+      }
+
+      return response;
+    }
+
+    if (isForbiddenPath(request.nextUrl.pathname)) {
+      return redirectWithPath(request, `/${siteName}`);
+    }
+
     if (isSiteStaffOnlyPath(request.nextUrl.pathname)) {
       if (!isLoggedIn) {
         return redirectWithPath(request, `/${siteName}`);
       }
 
-      const staffCheck = await fetchSessionRoute(request, '/api/session/staff', {
+      const staff = await fetchSessionRoute(request, '/api/session/staff', {
         siteName,
       });
 
-      if (!staffCheck.response.ok) {
+      if (!staff.response.ok) {
         return redirectWithPath(request, `/${siteName}`);
       }
 
@@ -225,54 +299,54 @@ export async function proxy(request: NextRequest) {
     }
 
     if (isLoggedIn) {
-      const staffCheck = await fetchSessionRoute(request, '/api/session/staff', {
+      const staff = await fetchSessionRoute(request, '/api/session/staff', {
         siteName,
       });
 
-      if (staffCheck.response.ok) {
+      if (staff.response.ok) {
         return response;
       }
 
-      const memberCheck = await fetchSessionRoute(request, '/api/session/member', {
-        siteName,
-        pathname: request.nextUrl.pathname,
-      });
-
-      if (memberCheck.response.ok && memberCheck.result?.allow) {
-        return response;
-      }
-
-      if (memberCheck.response.ok && memberCheck.result && memberCheck.result.allow === false) {
-        return redirectWithPath(request, memberCheck.result.redirectTo || `/${siteName}`);
-      }
-
-      const guestSiteCheck = await fetchSessionRoute(request, '/api/session/guest-site', {
+      const member = await fetchSessionRoute(request, '/api/session/member', {
         siteName,
         pathname: request.nextUrl.pathname,
       });
 
-      if (guestSiteCheck.response.ok && guestSiteCheck.result?.allow) {
+      if (member.response.ok && member.result?.allow) {
         return response;
       }
 
-      if (guestSiteCheck.response.ok && guestSiteCheck.result && guestSiteCheck.result.allow === false) {
-        return redirectWithPath(request, guestSiteCheck.result.redirectTo || `/${siteName}/join`);
+      if (member.response.ok && member.result && member.result.allow === false) {
+        return redirectWithPath(request, member.result.redirectTo || `/${siteName}`);
+      }
+
+      const guestSite = await fetchSessionRoute(request, '/api/session/guest-site', {
+        siteName,
+        pathname: request.nextUrl.pathname,
+      });
+
+      if (guestSite.response.ok && guestSite.result?.allow) {
+        return response;
+      }
+
+      if (guestSite.response.ok && guestSite.result && guestSite.result.allow === false) {
+        return redirectWithPath(request, guestSite.result.redirectTo || `/${siteName}/join`);
       }
 
       return redirectWithPath(request, `/${siteName}`);
     }
 
-    const guestPublicCheck = await fetchSessionRoute(request, '/api/session/guest-public', {
+    const guestPublic = await fetchSessionRoute(request, '/api/session/guest-public', {
       siteName,
       pathname: request.nextUrl.pathname,
     });
 
-    if (guestPublicCheck.response.ok && guestPublicCheck.result?.allow) {
+    if (guestPublic.response.ok && guestPublic.result?.allow) {
       return response;
     }
 
-    if (guestPublicCheck.response.ok && guestPublicCheck.result && guestPublicCheck.result.allow === false) {
-      return redirectWithPath(request, guestPublicCheck.result.redirectTo || '/auth/sign-in');
+    if (guestPublic.response.ok && guestPublic.result && guestPublic.result.allow === false) {
+      return redirectWithPath(request, guestPublic.result.redirectTo || '/auth/sign-in');
     }
 
     return redirectWithPath(request, '/auth/sign-in');
@@ -283,6 +357,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|api/session/admin|api/session/staff|api/session/member|api/session/guest-site|api/session/guest-public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|api/session/admin|api/session/staff|api/session/member|api/session/guest-site|api/session/guest-public|api/rhizomes/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

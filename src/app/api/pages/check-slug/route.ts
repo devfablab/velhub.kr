@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 function normalizeText(value: string | null | undefined) {
@@ -22,12 +22,6 @@ function hasInvalidSlugCharacters(value: string) {
 
 export async function GET(request: Request) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
     const boardName = normalizeText(requestUrl.searchParams.get('boardName')).toLowerCase();
@@ -70,41 +64,31 @@ export async function GET(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const denylistResult = await supabaseAdmin.from('denylist').select('word').eq('word', slug).maybeSingle();
+    if (session.case !== 'staff') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
 
-    if (denylistResult.error) {
+    const denylist = await supabaseAdmin.from('denylist').select('word').eq('word', slug).maybeSingle();
+
+    if (denylist.error) {
       return Response.json({ error: '페이지 식별자 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (denylistResult.data) {
+    if (denylist.data) {
       return Response.json(
         {
           ok: false,
@@ -115,14 +99,14 @@ export async function GET(request: Request) {
       );
     }
 
-    const boardResult = await supabaseAdmin
+    const board = await supabaseAdmin
       .from('boards')
       .select('id')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .eq('board_key', boardName)
       .maybeSingle();
 
-    if (boardResult.error || !boardResult.data) {
+    if (board.error || !board.data) {
       return Response.json(
         {
           ok: true,
@@ -133,19 +117,19 @@ export async function GET(request: Request) {
       );
     }
 
-    const existingSlugResult = await supabaseAdmin
+    const existingSlug = await supabaseAdmin
       .from('pages')
       .select('id, slug')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('board_id', boardResult.data.id)
+      .eq('site_id', rhizome.data.id)
+      .eq('board_id', board.data.id)
       .eq('slug', slug)
       .maybeSingle();
 
-    if (existingSlugResult.error) {
+    if (existingSlug.error) {
       return Response.json({ error: '페이지 식별자 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (existingSlugResult.data && slug !== currentSlug) {
+    if (existingSlug.data && slug !== currentSlug) {
       return Response.json(
         {
           ok: false,

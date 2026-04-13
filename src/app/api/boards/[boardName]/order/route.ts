@@ -1,4 +1,4 @@
-import { getSessionClaims } from '@/lib/session';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type RouteContext = {
@@ -36,12 +36,6 @@ function normalizeSortOrder(value: number | string | null | undefined) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
-    const sessionClaims = await getSessionClaims();
-
-    if (!sessionClaims) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
     const { boardName } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
 
@@ -64,53 +58,43 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('user_id', sessionClaims.userId)
-      .maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
 
-    if (stigmaResult.error || !stigmaResult.data) {
-      return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const rhizomeResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
-
-    if (rhizomeResult.error || !rhizomeResult.data) {
+    if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const manageResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('role')
-      .eq('site_id', rhizomeResult.data.id)
-      .eq('user_id', stigmaResult.data.id)
-      .in('role', ['owner', 'manager'])
-      .maybeSingle();
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
 
-    if (manageResult.error || !manageResult.data) {
+    if (session.status === 'FAIL') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const boardResult = await supabaseAdmin
+    if (session.case !== 'staff') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const board = await supabaseAdmin
       .from('boards')
       .select('id')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
-    if (boardResult.error || !boardResult.data) {
+    if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const updateResult = await supabaseAdmin
+    const updateBoardOrder = await supabaseAdmin
       .from('boards')
       .update({
         sort_order: sortOrder,
       })
-      .eq('id', boardResult.data.id);
+      .eq('id', board.data.id);
 
-    if (updateResult.error) {
+    if (updateBoardOrder.error) {
       return Response.json({ error: '게시판 정렬 저장에 실패했습니다.' }, { status: 500 });
     }
 
