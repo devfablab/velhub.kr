@@ -33,7 +33,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     const requestUrl = new URL(request.url);
-    const siteName = requestUrl.searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+    const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -80,39 +80,66 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (boardResult.data.board_type !== 'page') {
-      return Response.json({ error: '페이지 게시판이 아닙니다.' }, { status: 400 });
+    if (boardResult.data.board_type === 'page') {
+      const pageResult = await supabaseAdmin
+        .from('pages')
+        .select('id, user_id')
+        .eq('board_id', boardResult.data.id)
+        .eq('slug', normalizedContentId)
+        .maybeSingle();
+
+      if (pageResult.error || !pageResult.data) {
+        return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      if (pageResult.data.user_id !== sessionClaims.userId) {
+        return Response.json({ error: '작성자만 삭제할 수 있습니다.' }, { status: 403 });
+      }
+
+      const deletePageResult = await supabaseAdmin.from('pages').delete().eq('id', pageResult.data.id);
+
+      if (deletePageResult.error) {
+        return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+      });
     }
 
-    const pageResult = await supabaseAdmin
-      .from('pages')
-      .select('id, user_id')
-      .eq('board_id', boardResult.data.id)
-      .eq('slug', normalizedContentId)
-      .maybeSingle();
+    if (boardResult.data.board_type === 'blog') {
+      const postResult = await supabaseAdmin
+        .from('posts')
+        .select('id, user_id')
+        .eq('board_id', boardResult.data.id)
+        .eq('slug', normalizedContentId)
+        .maybeSingle();
 
-    if (pageResult.error || !pageResult.data) {
-      return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
+      if (postResult.error || !postResult.data) {
+        return Response.json({ error: '블로그 글을 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      if (postResult.data.user_id !== sessionClaims.userId) {
+        return Response.json({ error: '작성자만 삭제할 수 있습니다.' }, { status: 403 });
+      }
+
+      const deletePostResult = await supabaseAdmin.from('posts').delete().eq('id', postResult.data.id);
+
+      if (deletePostResult.error) {
+        return Response.json({ error: '블로그 글 삭제에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+      });
     }
 
-    if (pageResult.data.user_id !== sessionClaims.userId) {
-      return Response.json({ error: '작성자만 삭제할 수 있습니다.' }, { status: 403 });
-    }
-
-    const deleteResult = await supabaseAdmin.from('pages').delete().eq('id', pageResult.data.id);
-
-    if (deleteResult.error) {
-      return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({
-      ok: true,
-    });
+    return Response.json({ error: '지원하지 않는 게시판 종류입니다.' }, { status: 400 });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '페이지 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '콘텐츠 삭제에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '콘텐츠 삭제에 실패했습니다.' }, { status: 500 });
   }
 }
