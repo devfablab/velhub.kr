@@ -1,0 +1,72 @@
+'use client';
+
+import Link from '@mui/material/Link';
+import { Avatar, Chip, Paper, Stack, Typography } from '@mui/material';
+
+type SiteType = 'blog' | 'community';
+
+type JoinSiteRow = {
+  id: string;
+  site_key: string;
+  site_label: string;
+  site_type: string;
+  avatar: string | null;
+  role: string;
+};
+
+type Props = {
+  siteType: SiteType;
+  joinSites: JoinSiteRow[];
+};
+
+function getSectionTitle(siteType: SiteType) {
+  return siteType === 'blog' ? '블로그' : '커뮤니티';
+}
+
+function getRoleLabel(role: string) {
+  if (role === 'owner') {
+    return 'owner';
+  }
+
+  if (role === 'manager') {
+    return 'manager';
+  }
+
+  if (role === 'member') {
+    return 'member';
+  }
+
+  return role;
+}
+
+export default function ComponentJoinSites({ siteType, joinSites }: Props) {
+  const filteredSites = joinSites.filter((site) => site.site_type === siteType);
+
+  if (filteredSites.length === 0) {
+    return null;
+  }
+
+  return (
+    <Stack spacing={1.5}>
+      <Typography variant="h6">{getSectionTitle(siteType)}</Typography>
+
+      <Stack spacing={1.5}>
+        {filteredSites.map((site) => (
+          <Paper key={site.id} elevation={0} sx={{ p: 2 }}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Avatar src={site.avatar ?? undefined} alt={site.site_label} />
+
+              <Stack sx={{ minWidth: 0, flex: 1 }}>
+                <Link href={`/${site.site_key}`} underline="hover">
+                  {site.site_label}
+                </Link>
+              </Stack>
+
+              <Chip label={getRoleLabel(site.role)} size="small" />
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
