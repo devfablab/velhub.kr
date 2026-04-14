@@ -81,7 +81,6 @@ export async function GET(request: Request) {
       .from('rhizome_stigmas')
       .select('id, user_id, nickname, role, is_block, blocked_at, block_count, approval_at')
       .eq('site_id', access.siteId)
-      .in('role', ['owner', 'manager'])
       .order('approval_at', { ascending: true });
 
     if (team.error) {

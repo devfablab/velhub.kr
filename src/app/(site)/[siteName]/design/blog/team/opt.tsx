@@ -16,6 +16,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -426,6 +427,7 @@ export default function Opt({ siteName }: Props) {
               value={inviteEmail}
               onChange={(event) => setInviteEmail(event.target.value)}
               fullWidth
+              size="small"
             />
 
             <TextField
@@ -434,6 +436,7 @@ export default function Opt({ siteName }: Props) {
               value={inviteRole}
               onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
               fullWidth
+              size="small"
             >
               <MenuItem value="manager">매니저</MenuItem>
               <MenuItem value="member">멤버</MenuItem>
@@ -448,31 +451,25 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper>
-        <Table>
+      <TableContainer component={Paper}>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>이메일</TableCell>
               <TableCell>이름</TableCell>
               <TableCell>가입일</TableCell>
               <TableCell>역할</TableCell>
-              <TableCell>차단 여부</TableCell>
-              <TableCell>차단</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>차단 여부</TableCell>
+              <TableCell />
             </TableRow>
           </TableHead>
           <TableBody>
-            {!isLoading && sortedTeams.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6}>등록된 팀블로그 사용자가 없습니다.</TableCell>
-              </TableRow>
-            ) : null}
-
             {sortedTeams.map((team) => (
               <TableRow key={team.id} hover onClick={() => handleOpenDetail(team)} sx={{ cursor: 'pointer' }}>
-                <TableCell>{team.email}</TableCell>
-                <TableCell>{team.name}</TableCell>
-                <TableCell>{formatDateTimeFull(team.approval_at)}</TableCell>
-                <TableCell>{getRoleLabel(team.role)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.email}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{team.name}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(team.approval_at)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(team.role)}</TableCell>
                 <TableCell>
                   {team.is_block ? (
                     <Chip color="error" label="차단됨" size="small" />
@@ -485,6 +482,7 @@ export default function Opt({ siteName }: Props) {
                     <Button
                       type="button"
                       variant="outlined"
+                      sx={{ whiteSpace: 'nowrap' }}
                       color={team.is_block ? 'inherit' : 'error'}
                       onClick={() => handleOpenBlockDialog(team, !team.is_block)}
                     >
@@ -496,10 +494,15 @@ export default function Opt({ siteName }: Props) {
             ))}
           </TableBody>
         </Table>
-      </Paper>
+      </TableContainer>
 
-      <Paper>
-        <Table>
+      {!isLoading && sortedInvites.length === 0 ? (
+        <Alert variant="filled" severity="info">
+          등록된 초대가 없습니다.
+        </Alert>
+      ) : null}
+      <TableContainer component={Paper}>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>초대 이메일</TableCell>
@@ -510,12 +513,6 @@ export default function Opt({ siteName }: Props) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {!isLoading && sortedInvites.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>등록된 초대가 없습니다.</TableCell>
-              </TableRow>
-            ) : null}
-
             {sortedInvites.map((invite) => (
               <TableRow key={invite.id}>
                 <TableCell>{invite.email}</TableCell>
@@ -538,7 +535,7 @@ export default function Opt({ siteName }: Props) {
             ))}
           </TableBody>
         </Table>
-      </Paper>
+      </TableContainer>
 
       <Dialog open={Boolean(selectedTeam)} onClose={handleCloseDetail} fullWidth maxWidth="sm">
         <DialogTitle>팀블로그 정보</DialogTitle>
