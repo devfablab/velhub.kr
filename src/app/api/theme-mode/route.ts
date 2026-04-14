@@ -29,15 +29,34 @@ export async function GET() {
 
     const profileResult = await supabaseAdmin
       .from('profiles')
-      .select('theme_mode')
-      .eq('id', sessionClaims.userId)
+      .select('id, user_id, theme_mode')
+      .eq('user_id', sessionClaims.userId)
       .maybeSingle();
 
     if (profileResult.error) {
       return Response.json({ error: '테마 모드를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const themeMode = isThemeMode(profileResult.data?.theme_mode) ? profileResult.data.theme_mode : 'system';
+    let profileData = profileResult.data;
+
+    if (!profileData) {
+      const insertResult = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          user_id: sessionClaims.userId,
+          theme_mode: 'system',
+        })
+        .select('id, user_id, theme_mode')
+        .maybeSingle();
+
+      if (insertResult.error || !insertResult.data) {
+        return Response.json({ error: '테마 모드를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      profileData = insertResult.data;
+    }
+
+    const themeMode = isThemeMode(profileData.theme_mode) ? profileData.theme_mode : 'system';
 
     return Response.json({
       isLoggedIn: true,
@@ -68,12 +87,38 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    const profileResult = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('user_id', sessionClaims.userId)
+      .maybeSingle();
+
+    if (profileResult.error) {
+      return Response.json({ error: '테마 모드 저장에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (!profileResult.data) {
+      const insertResult = await supabaseAdmin.from('profiles').insert({
+        user_id: sessionClaims.userId,
+        theme_mode: requestBody.themeMode,
+      });
+
+      if (insertResult.error) {
+        return Response.json({ error: '테마 모드 저장에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        themeMode: requestBody.themeMode,
+      });
+    }
+
     const updateResult = await supabaseAdmin
       .from('profiles')
       .update({
         theme_mode: requestBody.themeMode,
       })
-      .eq('id', sessionClaims.userId);
+      .eq('user_id', sessionClaims.userId);
 
     if (updateResult.error) {
       return Response.json({ error: '테마 모드 저장에 실패했습니다.' }, { status: 500 });
