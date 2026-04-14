@@ -1,5 +1,5 @@
 import { Box, Container, Stack, Typography } from '@mui/material';
-import BlogDesignBreadcrumb from '../../design/blog/breadcrumb';
+import BlogTeamBreadcrumb from '../breadcrumb';
 import Opt from './opt';
 
 type PageProps = {
@@ -19,7 +19,7 @@ export default async function Page({ params }: PageProps) {
             팀원 목록
           </Typography>
 
-          <BlogDesignBreadcrumb siteName={siteName} current="team" />
+          <BlogTeamBreadcrumb siteName={siteName} />
 
           <Opt siteName={siteName} />
         </Stack>

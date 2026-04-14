@@ -35,14 +35,6 @@ export default function BlogDesignBreadcrumb({ siteName, current }: Props) {
           링크 설정
         </Link>
       )}
-
-      {current === 'team' ? (
-        <Typography>팀 설정</Typography>
-      ) : (
-        <Link href={`/${siteName}/design/blog/team`} underline="hover">
-          팀 설정
-        </Link>
-      )}
     </Breadcrumbs>
   );
 }
