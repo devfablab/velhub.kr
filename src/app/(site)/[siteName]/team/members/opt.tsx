@@ -345,11 +345,11 @@ export default function Opt({ siteName }: Props) {
       const result = (await response.json()) as CreateInviteResponse | { error?: string };
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error || '초대 생성에 실패했습니다.' : '초대 생성에 실패했습니다.');
+        throw new Error('error' in result ? result.error || '초대를 실패했습니다.' : '초대를 실패했습니다.');
       }
 
       if (!('invite' in result) || !result.invite) {
-        throw new Error('초대 생성에 실패했습니다.');
+        throw new Error('초대를 실패했습니다.');
       }
 
       setInvites((previousInvites) => [result.invite, ...previousInvites]);
@@ -357,9 +357,9 @@ export default function Opt({ siteName }: Props) {
       setInviteRole('manager');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '초대 생성에 실패했습니다.');
+        setErrorMessage(unknownError.message || '초대를 실패했습니다.');
       } else {
-        setErrorMessage('초대 생성에 실패했습니다.');
+        setErrorMessage('초대를 실패했습니다.');
       }
     } finally {
       setIsInviteSubmitting(false);
@@ -460,7 +460,7 @@ export default function Opt({ siteName }: Props) {
               <TableCell>가입일</TableCell>
               <TableCell>역할</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>차단 여부</TableCell>
-              <TableCell />
+              <TableCell colSpan={2}>관리</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -479,15 +479,27 @@ export default function Opt({ siteName }: Props) {
                 </TableCell>
                 <TableCell onClick={(event) => event.stopPropagation()}>
                   {!team.is_self ? (
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      sx={{ whiteSpace: 'nowrap' }}
-                      color={team.is_block ? 'inherit' : 'error'}
-                      onClick={() => handleOpenBlockDialog(team, !team.is_block)}
-                    >
-                      {team.is_block ? '차단풀기' : '차단하기'}
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        type="button"
+                        size="small"
+                        variant="outlined"
+                        sx={{ whiteSpace: 'nowrap' }}
+                        color="secondary"
+                      >
+                        역할 변경
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        size="small"
+                        sx={{ whiteSpace: 'nowrap' }}
+                        color={team.is_block ? 'inherit' : 'error'}
+                        onClick={() => handleOpenBlockDialog(team, !team.is_block)}
+                      >
+                        {team.is_block ? '차단풀기' : '차단하기'}
+                      </Button>
+                    </Stack>
                   ) : null}
                 </TableCell>
               </TableRow>

@@ -303,7 +303,7 @@ export default function Opt({ siteName }: Props) {
 
       {posts.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>생성된 블로그 글이 없습니다</Typography>
+          <Typography>개설된 블로그 글이 없습니다</Typography>
         </Paper>
       ) : (
         <Paper elevation={0} sx={{ overflowX: 'auto' }}>

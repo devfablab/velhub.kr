@@ -313,9 +313,9 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper elevation={0}>
         <Typography>
-          {rhizomes.site_label} {formatDate(rhizomes.created_at)}에 생성
+          {rhizomes.site_label} {formatDate(rhizomes.created_at)}에 개설
         </Typography>
       </Paper>
 
@@ -585,8 +585,8 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       </Paper>
 
-      <Paper elevation={0} sx={{ p: 0, overflow: 'hidden' }}>
-        <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+      <Paper elevation={0}>
+        <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>수정내역</TableCell>

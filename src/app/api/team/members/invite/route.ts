@@ -295,7 +295,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (invite.error || !invite.data) {
-      return Response.json({ error: invite.error?.message || '초대 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: invite.error?.message || '초대를 실패했습니다.' }, { status: 500 });
     }
 
     try {
@@ -322,10 +322,10 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '초대를 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '초대 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '초대를 실패했습니다.' }, { status: 500 });
   }
 }
 

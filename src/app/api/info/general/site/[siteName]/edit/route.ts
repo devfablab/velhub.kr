@@ -201,7 +201,7 @@ export async function GET(_request: Request, context: RouteContext) {
         updated_at: sites.data.updated_at,
         updated_by: sites.data.updated_by,
         updated_by_name: updatedByName,
-        log: sites.data.log ?? '사이트 생성',
+        log: sites.data.log ?? '사이트 개설',
       },
     });
   } catch (unknownError) {

@@ -1,22 +1,25 @@
 import { Box, Container, Stack, Typography } from '@mui/material';
+import BlogDesignBreadcrumb from '../breadcrumb';
 import Opt from './opt';
 
-type RouteContext = {
+type PageProps = {
   params: Promise<{
     siteName: string;
   }>;
 };
 
-export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
+export default async function Page({ params }: PageProps) {
+  const { siteName } = await params;
 
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 8 }}>
         <Stack spacing={3}>
           <Typography variant="h4" component="h1">
-            페이지 추가
+            소셜 링크 관리
           </Typography>
+
+          <BlogDesignBreadcrumb siteName={siteName} current="links" />
 
           <Opt siteName={siteName} />
         </Stack>

@@ -7,7 +7,7 @@ export default async function Page() {
       <Box sx={{ py: 8 }}>
         <Stack spacing={4}>
           <Typography variant="h4" component="h1">
-            블로그 생성
+            블로그 개설
           </Typography>
 
           <Opt />

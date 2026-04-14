@@ -266,15 +266,15 @@ export default function Opt({ siteName }: Props) {
           });
         }
 
-        throw new Error(createResult.error ?? '페이지 생성에 실패했습니다.');
+        throw new Error(createResult.error ?? '페이지 추가에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/pages/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '페이지 생성에 실패했습니다.');
+        setErrorMessage(unknownError.message || '페이지 추가에 실패했습니다.');
       } else {
-        setErrorMessage('페이지 생성에 실패했습니다.');
+        setErrorMessage('페이지 추가에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);

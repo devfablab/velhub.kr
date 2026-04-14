@@ -182,7 +182,7 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (insertPage.error || !insertPage.data) {
-        return Response.json({ error: '페이지 생성에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '페이지 추가에 실패했습니다.' }, { status: 500 });
       }
 
       return Response.json({
@@ -253,7 +253,7 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (insertPost.error || !insertPost.data) {
-        return Response.json({ error: '블로그 글 생성에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '블로그 글 출간에 실패했습니다.' }, { status: 500 });
       }
 
       return Response.json({
@@ -268,9 +268,9 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({ error: '지원하지 않는 게시판 종류입니다.' }, { status: 400 });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '콘텐츠 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '콘텐츠 개설에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '콘텐츠 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '콘텐츠 개설에 실패했습니다.' }, { status: 500 });
   }
 }

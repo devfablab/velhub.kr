@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (insertBoard.error || !insertBoard.data) {
-      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '게시판 개설에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -127,9 +127,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '게시판 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '게시판 개설에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '게시판 개설에 실패했습니다.' }, { status: 500 });
   }
 }

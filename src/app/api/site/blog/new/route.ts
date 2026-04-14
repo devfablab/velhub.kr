@@ -172,7 +172,7 @@ export async function POST(request: Request) {
 
     if (rpcResult.error || !rpcResult.data) {
       console.error('create_blog_site rpc 실패:', rpcResult.error);
-      return Response.json({ error: rpcResult.error?.message || '블로그 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: rpcResult.error?.message || '블로그 개설에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -182,9 +182,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '블로그 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '블로그 개설에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '블로그 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '블로그 개설에 실패했습니다.' }, { status: 500 });
   }
 }

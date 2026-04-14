@@ -414,16 +414,16 @@ export default function Opt() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error ?? '커뮤니티 생성에 실패했습니다.');
+        throw new Error(result.error ?? '커뮤니티 개설에 실패했습니다.');
       }
 
-      setSuccessMessage('커뮤니티가 생성되었습니다.');
+      setSuccessMessage('커뮤니티가 개설되었습니다.');
       router.replace('/');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '커뮤니티 생성에 실패했습니다.');
+        openErrorDialog(unknownError.message || '커뮤니티 개설에 실패했습니다.');
       } else {
-        openErrorDialog('커뮤니티 생성에 실패했습니다.');
+        openErrorDialog('커뮤니티 개설에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -561,19 +561,19 @@ export default function Opt() {
               disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
               fullWidth
             >
-              커뮤니티 생성
+              커뮤니티 개설
             </Button>
 
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
             {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
 
-            <Typography variant="body2">생성이 완료되면 소유자 권한이 부여됩니다.</Typography>
+            <Typography variant="body2">개설이 완료되면 소유자 권한이 부여됩니다.</Typography>
           </Stack>
         </Box>
       </Paper>
 
       <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs">
-        <DialogTitle>생성할 수 없습니다</DialogTitle>
+        <DialogTitle>개설할 수 없습니다</DialogTitle>
         <DialogContent>
           <Typography>하단 에러 메시지를 확인해 주세요</Typography>
         </DialogContent>

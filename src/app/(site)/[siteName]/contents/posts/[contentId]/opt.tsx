@@ -177,7 +177,7 @@ export default function Opt({ siteName, contentId }: Props) {
           </Stack>
 
           <Stack spacing={0.5}>
-            <Typography>생성일자</Typography>
+            <Typography>개설일자</Typography>
             <Typography>{formatDateTimeFull(content.created_at)}</Typography>
           </Stack>
 

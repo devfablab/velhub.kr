@@ -179,15 +179,15 @@ export default function Opt({ siteName }: Props) {
           });
         }
 
-        throw new Error(createResult.error ?? '블로그 글 생성에 실패했습니다.');
+        throw new Error(createResult.error ?? '블로그 글 출간에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '블로그 글 생성에 실패했습니다.');
+        setErrorMessage(unknownError.message || '블로그 글 출간에 실패했습니다.');
       } else {
-        setErrorMessage('블로그 글 생성에 실패했습니다.');
+        setErrorMessage('블로그 글 출간에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);

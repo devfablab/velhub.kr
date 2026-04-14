@@ -90,7 +90,7 @@ export async function POST(request: Request) {
     });
 
     if (page.error || !Array.isArray(page.data) || !page.data[0]) {
-      return Response.json({ error: page.error?.message || '페이지 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: page.error?.message || '페이지 추가에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -102,9 +102,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '페이지 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '페이지 추가에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '페이지 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '페이지 추가에 실패했습니다.' }, { status: 500 });
   }
 }

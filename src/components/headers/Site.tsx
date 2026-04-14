@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
-import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LoginIcon from '@mui/icons-material/Login';
@@ -190,7 +190,7 @@ export default function HeaderLounge() {
       return <DarkModeIcon />;
     }
 
-    return <BrightnessAutoIcon />;
+    return <SettingsBrightnessIcon />;
   }
 
   if (!isMounted) {
@@ -231,7 +231,7 @@ export default function HeaderLounge() {
 
           <MenuItem onClick={() => handleSelectThemeMode('system')}>
             <ListItemIcon>
-              <BrightnessAutoIcon fontSize="small" />
+              <SettingsBrightnessIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>시스템</ListItemText>
           </MenuItem>
@@ -271,7 +271,7 @@ export default function HeaderLounge() {
                     <SettingsIcon fontSize="small" />
                   </ListItemIcon>
                   <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
-                    설정
+                    개인 설정
                   </Link>
                 </MenuItem>,
                 <MenuItem key="logout" onClick={handleLogout}>

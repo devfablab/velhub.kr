@@ -188,7 +188,7 @@ export async function POST(request: Request) {
 
     if (rpcResult.error || !rpcResult.data) {
       console.error('create_community_site rpc 실패:', rpcResult.error);
-      return Response.json({ error: rpcResult.error?.message || '커뮤니티 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: rpcResult.error?.message || '커뮤니티 개설에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -198,9 +198,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '커뮤니티 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '커뮤니티 개설에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '커뮤니티 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '커뮤니티 개설에 실패했습니다.' }, { status: 500 });
   }
 }

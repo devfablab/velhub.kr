@@ -7,7 +7,7 @@ export default async function Page() {
       <Box sx={{ py: 8 }}>
         <Stack spacing={4}>
           <Typography variant="h4" component="h1">
-            커뮤니티 생성
+            커뮤니티 개설
           </Typography>
 
           <Opt />

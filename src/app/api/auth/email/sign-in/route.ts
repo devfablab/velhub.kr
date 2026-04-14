@@ -232,7 +232,7 @@ export async function POST(request: Request) {
     const authSession = signInResult.data.session;
 
     if (!authSession) {
-      return Response.json({ error: '세션을 생성하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '세션은 만들지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({

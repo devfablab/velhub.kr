@@ -190,13 +190,13 @@ export default function Opt({ siteName }: Props) {
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="flex-end">
         <Button LinkComponent={Link} type="button" variant="contained" href={`/${siteName}/contents/pages/new`}>
-          페이지 생성
+          페이지 추가
         </Button>
       </Stack>
 
       {pages.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>생성된 페이지가 없습니다</Typography>
+          <Typography>개설된 페이지가 없습니다</Typography>
         </Paper>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

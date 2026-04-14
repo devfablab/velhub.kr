@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     });
 
     if (post.error || !Array.isArray(post.data) || !post.data[0]) {
-      return Response.json({ error: post.error?.message || '블로그 글 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: post.error?.message || '블로그 글 출간에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -116,9 +116,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '블로그 글 생성에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '블로그 글 출간에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '블로그 글 생성에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '블로그 글 출간에 실패했습니다.' }, { status: 500 });
   }
 }
