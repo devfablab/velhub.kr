@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type JSX } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -24,10 +24,18 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type SignInDecision = 'idle' | 'confirm-enable-email-login' | 'confirm-email-login';
+type AcceptInviteResponse = {
+  ok: boolean;
+  siteName: string;
+};
 
 export default function EmailSignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
+
+  const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
+  const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +53,34 @@ export default function EmailSignIn() {
 
   function handlePasswordChange(event: InputChangeEvent) {
     setPassword(event.currentTarget.value);
+  }
+
+  async function runInviteAccept() {
+    if (!inviteToken) {
+      return false;
+    }
+
+    const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
+
+    if (!acceptInviteResponse.ok) {
+      throw new Error(
+        'error' in acceptInviteResult
+          ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
+          : '초대 처리에 실패했습니다.',
+      );
+    }
+
+    if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
+      throw new Error('초대 처리에 실패했습니다.');
+    }
+
+    router.replace(`/${acceptInviteResult.siteName}`);
+    return true;
   }
 
   async function runSignIn(trimmedEmail: string) {
@@ -82,6 +118,12 @@ export default function EmailSignIn() {
       throw new Error(setSessionResult.error.message);
     }
 
+    const inviteAccepted = await runInviteAccept();
+
+    if (inviteAccepted) {
+      return;
+    }
+
     const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
     if (assuranceLevelResult.error) {
@@ -93,6 +135,11 @@ export default function EmailSignIn() {
 
     if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
       router.replace('/auth/verify-2fa');
+      return;
+    }
+
+    if (inviteSiteName) {
+      router.replace(`/${inviteSiteName}`);
       return;
     }
 
@@ -282,7 +329,15 @@ export default function EmailSignIn() {
             />
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-              <Anchor href="/auth/sign-up">회원가입</Anchor>
+              <Anchor
+                href={
+                  inviteToken
+                    ? `/auth/sign-up?inviteToken=${encodeURIComponent(inviteToken)}&siteName=${encodeURIComponent(inviteSiteName)}`
+                    : '/auth/sign-up'
+                }
+              >
+                회원가입
+              </Anchor>
               <Anchor href="/auth/find-password">비밀번호 찾기</Anchor>
             </Box>
 

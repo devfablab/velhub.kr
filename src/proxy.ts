@@ -23,9 +23,13 @@ function getSupabaseBrowserKey() {
 }
 
 function isManagePath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
   const segments = pathname.split('/').filter(Boolean);
 
-  return segments.length >= 2 && segments[1] === 'manage';
+  return segments.length >= 2 && (segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'manage');
 }
 
 function getSiteNameFromPath(pathname: string) {
@@ -77,6 +81,12 @@ function isSiteStaffOnlyPath(pathname: string) {
   return segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'manage';
 }
 
+function isInviteBlogPath(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 3 && segments[1] === 'invite-blog';
+}
+
 function isForbiddenPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
@@ -120,7 +130,8 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
 }
 
 async function fetchRhizomeState(request: NextRequest, siteName: string) {
-  const targetUrl = new URL(`/api/rhizomes/${siteName}`, request.url);
+  const targetUrl = new URL('/api/site/public', request.url);
+  targetUrl.searchParams.set('siteName', siteName);
 
   const response = await fetch(targetUrl, {
     method: 'GET',
@@ -249,6 +260,10 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
+    if (isInviteBlogPath(request.nextUrl.pathname)) {
+      return response;
+    }
+
     const rhizome = await fetchRhizomeState(request, siteName);
 
     if (!rhizome.response.ok || !rhizome.result?.rhizomes) {
@@ -357,6 +372,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|api/session/admin|api/session/staff|api/session/member|api/session/guest-site|api/session/guest-public|api/rhizomes/.*|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|api/session/admin|api/session/staff|api/session/member|api/session/guest-site|api/session/guest-public|api/site/public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

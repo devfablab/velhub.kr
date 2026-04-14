@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, type JSX } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, type JSX } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Box, Button, Link, Paper, Stack, TextField } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
@@ -9,22 +9,90 @@ import { getSupabaseBrowser } from '@/lib/supabase';
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
+type InviteResponse = {
+  ok: boolean;
+  invite: {
+    email: string;
+  };
+  site: {
+    site_key: string;
+  };
+};
+
+type AcceptInviteResponse = {
+  ok: boolean;
+  siteName: string;
+};
+
 export default function EmailSignUp() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
+
+  const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
+  const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
 
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
+  const [isInviteEmailLocked, setIsInviteEmailLocked] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInviteLoading, setIsInviteLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadInvite() {
+      if (!inviteToken) {
+        return;
+      }
+
+      try {
+        setIsInviteLoading(true);
+        setErrorMessage('');
+
+        const response = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as InviteResponse | { error?: string };
+
+        if (!response.ok) {
+          throw new Error(
+            'error' in result ? result.error || '초대 정보를 불러오지 못했습니다.' : '초대 정보를 불러오지 못했습니다.',
+          );
+        }
+
+        if (!('invite' in result) || !result.invite?.email) {
+          throw new Error('초대 정보를 불러오지 못했습니다.');
+        }
+
+        setEmail(result.invite.email);
+        setIsInviteEmailLocked(true);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '초대 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('초대 정보를 불러오지 못했습니다.');
+        }
+      } finally {
+        setIsInviteLoading(false);
+      }
+    }
+
+    void loadInvite();
+  }, [inviteToken]);
 
   function handleUserNameChange(event: InputChangeEvent) {
     setUserName(event.currentTarget.value);
   }
 
   function handleEmailChange(event: InputChangeEvent) {
+    if (isInviteEmailLocked) {
+      return;
+    }
+
     setEmail(event.currentTarget.value);
   }
 
@@ -39,7 +107,7 @@ export default function EmailSignUp() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting) {
+    if (isSubmitting || isInviteLoading) {
       return;
     }
 
@@ -103,10 +171,39 @@ export default function EmailSignUp() {
         }),
       });
 
-      const saveResult = await saveResponse.json();
+      const saveResult = (await saveResponse.json()) as { error?: string };
 
       if (!saveResponse.ok) {
         throw new Error(saveResult.error ?? '회원가입 저장 처리에 실패했습니다.');
+      }
+
+      if (inviteToken) {
+        const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
+
+        if (!acceptInviteResponse.ok) {
+          throw new Error(
+            'error' in acceptInviteResult
+              ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
+              : '초대 처리에 실패했습니다.',
+          );
+        }
+
+        if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
+          throw new Error('초대 처리에 실패했습니다.');
+        }
+
+        router.replace(`/${acceptInviteResult.siteName}`);
+        return;
+      }
+
+      if (inviteSiteName) {
+        router.replace(`/${inviteSiteName}`);
+        return;
       }
 
       router.replace('/');
@@ -132,6 +229,9 @@ export default function EmailSignUp() {
             value={email}
             onChange={handleEmailChange}
             fullWidth
+            InputProps={{
+              readOnly: isInviteEmailLocked,
+            }}
           />
 
           <TextField
@@ -162,11 +262,19 @@ export default function EmailSignUp() {
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Anchor href="/auth/sign-in">로그인 하기</Anchor>
+            <Anchor
+              href={
+                inviteToken
+                  ? `/auth/sign-in?inviteToken=${encodeURIComponent(inviteToken)}&siteName=${encodeURIComponent(inviteSiteName)}`
+                  : '/auth/sign-in'
+              }
+            >
+              로그인 하기
+            </Anchor>
           </Box>
 
           <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-            <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+            <Button type="submit" variant="contained" disabled={isSubmitting || isInviteLoading} size="large">
               시작하기
             </Button>
 

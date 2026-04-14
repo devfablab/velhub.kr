@@ -1,20 +1,24 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Alert, Button, Paper, Stack } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
-import { useState } from 'react';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 export default function SocialLoginButtons() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
+
+  const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
+  const siteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const actionText = pathname === '/sign-up' ? '시작하기' : '로그인';
+  const actionText = pathname === '/auth/sign-up' ? '시작하기' : '로그인';
 
   async function handleGoogleLogin() {
     if (isSubmitting) {
@@ -26,11 +30,20 @@ export default function SocialLoginButtons() {
 
     try {
       const currentOrigin = window.location.origin;
+      const redirectUrl = new URL('/auth/callback', currentOrigin);
+
+      if (inviteToken) {
+        redirectUrl.searchParams.set('inviteToken', inviteToken);
+      }
+
+      if (siteName) {
+        redirectUrl.searchParams.set('siteName', siteName);
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${currentOrigin}/auth/callback`,
+          redirectTo: redirectUrl.toString(),
         },
       });
 
@@ -58,11 +71,20 @@ export default function SocialLoginButtons() {
 
     try {
       const currentOrigin = window.location.origin;
+      const redirectUrl = new URL('/auth/callback', currentOrigin);
+
+      if (inviteToken) {
+        redirectUrl.searchParams.set('inviteToken', inviteToken);
+      }
+
+      if (siteName) {
+        redirectUrl.searchParams.set('siteName', siteName);
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${currentOrigin}/auth/callback`,
+          redirectTo: redirectUrl.toString(),
         },
       });
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -31,6 +31,11 @@ type PendingSocialSave = {
   tokenExpiresAt: number | null;
 };
 
+type AcceptInviteResponse = {
+  ok: boolean;
+  siteName: string;
+};
+
 function wait(delay: number) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, delay);
@@ -39,6 +44,11 @@ function wait(delay: number) {
 
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
+  const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+
   const [processingState, setProcessingState] = useState<ProcessingState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmMessage, setConfirmMessage] = useState('');
@@ -67,6 +77,37 @@ export default function Page() {
       throw new Error('세션을 가져오지 못했습니다.');
     }
 
+    async function runInviteAccept() {
+      if (!inviteToken) {
+        return false;
+      }
+
+      const acceptInviteResponse = await fetch(
+        `/api/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        },
+      );
+
+      const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
+
+      if (!acceptInviteResponse.ok) {
+        throw new Error(
+          'error' in acceptInviteResult
+            ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
+            : '초대 처리에 실패했습니다.',
+        );
+      }
+
+      if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
+        throw new Error('초대 처리에 실패했습니다.');
+      }
+
+      router.replace(`/${acceptInviteResult.siteName}`);
+      return true;
+    }
+
     async function saveSocialSignIn(targetPendingSocialSave: PendingSocialSave) {
       const supabase = getSupabaseBrowser();
 
@@ -89,6 +130,12 @@ export default function Page() {
         throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
       }
 
+      const inviteAccepted = await runInviteAccept();
+
+      if (inviteAccepted) {
+        return;
+      }
+
       const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
       if (assuranceLevelResult.error) {
@@ -100,6 +147,11 @@ export default function Page() {
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
         router.replace('/auth/verify-2fa');
+        return;
+      }
+
+      if (inviteSiteName) {
+        router.replace(`/${inviteSiteName}`);
         return;
       }
 
@@ -216,7 +268,7 @@ export default function Page() {
     return () => {
       isCancelled = true;
     };
-  }, [router]);
+  }, [router, inviteToken, inviteSiteName]);
 
   async function handleConfirmSocialLogin() {
     if (!pendingSocialSave) {
@@ -248,6 +300,30 @@ export default function Page() {
         throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
       }
 
+      if (inviteToken) {
+        const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
+
+        if (!acceptInviteResponse.ok) {
+          throw new Error(
+            'error' in acceptInviteResult
+              ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
+              : '초대 처리에 실패했습니다.',
+          );
+        }
+
+        if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
+          throw new Error('초대 처리에 실패했습니다.');
+        }
+
+        router.replace(`/${acceptInviteResult.siteName}`);
+        return;
+      }
+
       const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
       if (assuranceLevelResult.error) {
@@ -259,6 +335,11 @@ export default function Page() {
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
         router.replace('/auth/verify-2fa');
+        return;
+      }
+
+      if (inviteSiteName) {
+        router.replace(`/${inviteSiteName}`);
         return;
       }
 
@@ -280,6 +361,11 @@ export default function Page() {
     await supabase.auth.signOut({
       scope: 'local',
     });
+
+    if (inviteToken) {
+      router.replace(`/auth/sign-in?inviteToken=${inviteToken}&siteName=${inviteSiteName}`);
+      return;
+    }
 
     router.replace('/auth/sign-in');
   }
