@@ -43,6 +43,10 @@ export default function SectionJoinSites() {
           );
         }
 
+        if (!('isLoggedIn' in result) || !('joinSites' in result)) {
+          throw new Error('사용자 정보를 불러오지 못했습니다.');
+        }
+
         setIsLoggedIn(Boolean(result.isLoggedIn));
         setJoinSites(Array.isArray(result.joinSites) ? result.joinSites : []);
       } catch (unknownError) {

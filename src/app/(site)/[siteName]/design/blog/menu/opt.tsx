@@ -266,7 +266,6 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
-      {console.log('menus: ', menus)}
       <Stack spacing={3}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
