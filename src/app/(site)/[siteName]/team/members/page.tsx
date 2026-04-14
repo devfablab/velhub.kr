@@ -1,5 +1,5 @@
 import { Box, Container, Stack, Typography } from '@mui/material';
-import BlogDesignBreadcrumb from '../breadcrumb';
+import BlogDesignBreadcrumb from '../../design/blog/breadcrumb';
 import Opt from './opt';
 
 type PageProps = {
@@ -16,7 +16,7 @@ export default async function Page({ params }: PageProps) {
       <Box sx={{ py: 8 }}>
         <Stack spacing={3}>
           <Typography variant="h4" component="h1">
-            팀원 설정
+            팀원 목록
           </Typography>
 
           <BlogDesignBreadcrumb siteName={siteName} current="team" />

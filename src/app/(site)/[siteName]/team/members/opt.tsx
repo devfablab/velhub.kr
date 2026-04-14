@@ -149,7 +149,7 @@ export default function Opt({ siteName }: Props) {
   const [errorMessage, setErrorMessage] = useState('');
 
   async function loadTeams() {
-    const response = await fetch(`/api/design/blog/team?siteName=${encodeURIComponent(siteName)}`, {
+    const response = await fetch(`/api/team/members?siteName=${encodeURIComponent(siteName)}`, {
       method: 'GET',
       credentials: 'include',
     });
@@ -168,7 +168,7 @@ export default function Opt({ siteName }: Props) {
   }
 
   async function loadInvites() {
-    const response = await fetch(`/api/design/blog/team/invite?siteName=${encodeURIComponent(siteName)}`, {
+    const response = await fetch(`/api/team/members/invite?siteName=${encodeURIComponent(siteName)}`, {
       method: 'GET',
       credentials: 'include',
     });
@@ -262,7 +262,7 @@ export default function Opt({ siteName }: Props) {
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch('/api/design/blog/team', {
+      const response = await fetch('/api/team/members', {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -329,7 +329,7 @@ export default function Opt({ siteName }: Props) {
       setIsInviteSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch('/api/design/blog/team/invite', {
+      const response = await fetch('/api/team/members/invite', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -375,7 +375,7 @@ export default function Opt({ siteName }: Props) {
       setIsCancelSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch('/api/design/blog/team/invite', {
+      const response = await fetch('/api/team/members/invite', {
         method: 'PATCH',
         credentials: 'include',
         headers: {

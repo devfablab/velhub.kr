@@ -29,7 +29,10 @@ function isManagePath(pathname: string) {
 
   const segments = pathname.split('/').filter(Boolean);
 
-  return segments.length >= 2 && (segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'manage');
+  return (
+    segments.length >= 2 &&
+    (segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'team' || segments[1] === 'manage')
+  );
 }
 
 function getSiteNameFromPath(pathname: string) {
@@ -78,7 +81,7 @@ function isSiteStaffOnlyPath(pathname: string) {
     return false;
   }
 
-  return segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'manage';
+  return segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'team' || segments[1] === 'manage';
 }
 
 function isInviteBlogPath(pathname: string) {
