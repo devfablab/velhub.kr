@@ -1,26 +1,18 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
+import { Box, Container, Stack } from '@mui/material';
+import StaffTabs from '../../tabs';
 import BlogTeamBreadcrumb from '../breadcrumb';
 import Opt from './opt';
-import StaffTabs from '../../tabs';
 
-type PageProps = {
-  params: Promise<{
-    siteName: string;
-  }>;
-};
-
-export default async function Page({ params }: PageProps) {
-  const { siteName } = await params;
-
+export default async function Page() {
   return (
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
           <StaffTabs pageTitle="팀원 목록" />
 
-          <BlogTeamBreadcrumb siteName={siteName} />
+          <BlogTeamBreadcrumb />
 
-          <Opt siteName={siteName} />
+          <Opt />
         </Stack>
       </Box>
     </Container>

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { usePathname } from 'next/navigation';
+import { useMemo } from 'react';
+import { useParams, usePathname } from 'next/navigation';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
+import { normalizeText } from '@/lib/utils';
 
 type Crumb = {
   href: string;
@@ -12,12 +13,10 @@ type Crumb = {
   startsWith?: boolean;
 };
 
-type BlogTeamBreadcrumbProps = {
-  siteName: string;
-};
-
-export default function BlogTeamBreadcrumb({ siteName }: BlogTeamBreadcrumbProps) {
+export default function BlogTeamBreadcrumb() {
   const pathname = usePathname();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
 
   const crumbs: Crumb[] = useMemo(
     () => [

@@ -1,15 +1,12 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
     boardName: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function DELETE(request: Request, context: RouteContext) {
   try {

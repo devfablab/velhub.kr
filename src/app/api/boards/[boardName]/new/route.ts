@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -13,10 +14,6 @@ type RequestBody = {
   contentHtml: string | null;
   contentMarkdown: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function POST(request: Request, context: RouteContext) {
   try {

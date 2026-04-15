@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RhizomeStigmaRow = {
   site_id: string;
@@ -13,10 +14,6 @@ type RhizomeRow = {
   site_type: string;
   profile_picture: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function GET() {
   try {

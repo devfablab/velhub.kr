@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type JSX } from 'react';
+import { useParams } from 'next/navigation';
 import {
   Alert,
   Button,
@@ -18,6 +19,7 @@ import {
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -28,10 +30,6 @@ type MenuRow = {
   display_label: string;
   sort_order: number;
   is_renameable: boolean;
-};
-
-type Props = {
-  siteName: string;
 };
 
 type SortableItemProps = {
@@ -81,7 +79,7 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
   );
 }
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -90,6 +88,8 @@ export default function Opt({ siteName }: Props) {
     }),
   );
 
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
   const [menus, setMenus] = useState<MenuRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

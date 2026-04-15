@@ -1,14 +1,11 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
     siteName: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function GET(_request: Request, context: RouteContext) {
   try {

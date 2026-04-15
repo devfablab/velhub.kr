@@ -1,39 +1,48 @@
+'use client';
+
+import { useMemo } from 'react';
+import { useParams, usePathname } from 'next/navigation';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
+import { normalizeText } from '@/lib/utils';
 
-type CurrentValue = 'fonts' | 'menu' | 'links' | 'team';
-
-type Props = {
-  siteName: string;
-  current: CurrentValue;
+type Crumb = {
+  href: string;
+  label: string;
+  startsWith?: boolean;
 };
 
-export default function BlogDesignBreadcrumb({ siteName, current }: Props) {
+export default function BlogDesignBreadcrumb() {
+  const pathname = usePathname();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
+  const crumbs: Crumb[] = useMemo(
+    () => [
+      { href: `/${siteName}/design/blog/fonts`, label: '기본 서체' },
+      { href: `/${siteName}/design/blog/menu`, label: '메뉴' },
+      { href: `/${siteName}/design/blog/links`, label: '링크' },
+    ],
+    [siteName],
+  );
+
+  const isCurrent = (crumb: Crumb) => {
+    if (crumb.href === '/') return pathname === '/';
+    if (crumb.startsWith) return pathname.startsWith(crumb.href);
+    return pathname === crumb.href;
+  };
+
   return (
     <Breadcrumbs>
-      {current === 'fonts' ? (
-        <Typography>기본 서체 설정</Typography>
-      ) : (
-        <Link href={`/${siteName}/design/blog/fonts`} underline="hover">
-          기본 서체 설정
-        </Link>
-      )}
-
-      {current === 'menu' ? (
-        <Typography>메뉴 설정</Typography>
-      ) : (
-        <Link href={`/${siteName}/design/blog/menu`} underline="hover">
-          메뉴 설정
-        </Link>
-      )}
-
-      {current === 'links' ? (
-        <Typography>링크 설정</Typography>
-      ) : (
-        <Link href={`/${siteName}/design/blog/links`} underline="hover">
-          링크 설정
-        </Link>
+      {crumbs.map((crumb) =>
+        isCurrent(crumb) ? (
+          <Typography key={crumb.href}>{crumb.label}</Typography>
+        ) : (
+          <Link key={crumb.href} href={crumb.href} underline="hover" color="info">
+            {crumb.label}
+          </Link>
+        ),
       )}
     </Breadcrumbs>
   );

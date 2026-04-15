@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
@@ -12,10 +13,6 @@ type RequestBody = {
   attachmentSlug: string | null;
   attachmentOrigin: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function POST(request: Request) {
   try {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
+import { useParams } from 'next/navigation';
 import {
   Alert,
   Avatar,
@@ -21,7 +22,7 @@ import {
   useTheme,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import { formatDate, formatDateTimeFull } from '@/lib/utils';
+import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
@@ -54,10 +55,6 @@ type SitesInfo = {
   log: string;
 };
 
-type Props = {
-  siteName: string;
-};
-
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
 
 function isSupabaseAvatarValue(value: string) {
@@ -68,8 +65,10 @@ function getSupabaseAvatarPath(value: string) {
   return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
 }
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
 
   const [isLoading, setIsLoading] = useState(true);
   const [rhizomes, setRhizomes] = useState<RhizomesInfo | null>(null);

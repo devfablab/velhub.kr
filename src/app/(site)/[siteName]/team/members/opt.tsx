@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -25,7 +26,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDateTimeFull } from '@/lib/utils';
+import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 
 type TeamRow = {
   id: string;
@@ -78,10 +79,6 @@ type CancelInviteResponse = {
   invite: InviteRow;
 };
 
-type Props = {
-  siteName: string;
-};
-
 function getRoleLabel(role: string) {
   if (role === 'owner') {
     return '운영자';
@@ -118,25 +115,9 @@ function getInviteStatusLabel(status: string) {
   return status;
 }
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}.${month}.${day}`;
-}
-
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<TeamRow | null>(null);

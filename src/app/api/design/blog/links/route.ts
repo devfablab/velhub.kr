@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
 
@@ -14,10 +15,6 @@ type RequestBody = {
 };
 
 const ALLOWED_SERVICES: ServiceValue[] = ['Facebook', 'GitHub', 'Instagram', 'LinkedIn', 'Pinterest', 'X', 'YouTube'];
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function isAllowedService(value: string): value is ServiceValue {
   return ALLOWED_SERVICES.includes(value as ServiceValue);

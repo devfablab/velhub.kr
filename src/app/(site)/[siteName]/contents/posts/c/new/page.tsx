@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { Box, Container, Stack, Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 
 type RouteContext = {
@@ -8,10 +9,6 @@ type RouteContext = {
     siteName: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;

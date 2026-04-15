@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -7,10 +8,6 @@ type RouteContext = {
     contentId: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function DELETE(request: Request, context: RouteContext) {
   try {

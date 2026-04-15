@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '../utils';
 
 type VerifySessionStatus = 'SUCCESS' | 'FAIL';
 type VerifySessionCase = 'admin' | 'guest-public' | 'guest-site' | 'member' | 'staff';
@@ -16,10 +17,6 @@ type VerifySessionResult = {
   stigmaId: string | null;
   rhizomeStigmaId: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export default async function verifySession({ siteId }: VerifySessionParams): Promise<VerifySessionResult> {
   const normalizedSiteId = normalizeText(siteId);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -28,6 +29,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { normalizeText } from '@/lib/utils';
 
 type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
 
@@ -46,10 +48,6 @@ type LinkResponse = {
     sort_order: number;
     blog_id: string;
   }[];
-};
-
-type Props = {
-  siteName: string;
 };
 
 const SERVICE_OPTIONS: {
@@ -166,7 +164,10 @@ function SortableItem({
   );
 }
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
   const [items, setItems] = useState<LinkItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);

@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import { useParams, usePathname } from 'next/navigation';
 import { IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { normalizeText } from '@/lib/utils';
 
 type Props = {
   pageTitle: string;
@@ -32,18 +33,6 @@ type StaffTabItem = {
   label: string;
   href: string;
 };
-
-function normalizeText(value: string | string[] | undefined) {
-  if (typeof value === 'string') {
-    return value.trim();
-  }
-
-  if (Array.isArray(value)) {
-    return value[0]?.trim() ?? '';
-  }
-
-  return '';
-}
 
 function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
@@ -116,14 +105,14 @@ export default function StaffTabs({ pageTitle }: Props) {
 
   const tabItems: StaffTabItem[] = [
     { label: '관리 홈', href: `/${siteName}/staff` },
-    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
+    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage/general` },
     {
       label: '디자인',
       href: siteType === 'blog' ? `/${siteName}/design/blog/fonts` : `/${siteName}/design/community/menu`,
     },
     {
       label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`,
+      href: siteType === 'blog' ? `/${siteName}/team/members` : `/${siteName}/members`,
     },
     { label: '콘텐츠 관리', href: `/${siteName}/contents/posts` },
     ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/filtered` }] : []),

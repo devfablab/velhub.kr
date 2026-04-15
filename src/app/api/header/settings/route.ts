@@ -1,6 +1,7 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type ThemeMode = 'light' | 'system' | 'dark';
 
@@ -13,10 +14,6 @@ type AccountRow = {
 type ProfileRow = {
   theme_mode: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);

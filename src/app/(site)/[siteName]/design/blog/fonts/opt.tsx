@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
   Alert,
   Button,
@@ -17,6 +18,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { normalizeText } from '@/lib/utils';
 
 type ApplyScope = 'subject' | 'description' | 'both';
 type FontFamily = 'neo' | 'pre' | 'sans' | 'serif' | 'ham';
@@ -30,10 +32,6 @@ type BlogFontRow = {
   description_line_height: number | null;
   description_font_size: number | null;
   description_margin: number | null;
-};
-
-type Props = {
-  siteName: string;
 };
 
 const SUBJECT_FONT_OPTIONS: Array<{ label: string; value: FontFamily | '' }> = [
@@ -76,7 +74,10 @@ const MARGIN_OPTIONS: Array<{ label: string; value: number | '' }> = [
   { label: '크게', value: 18 },
 ];
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
   const [isLoading, setIsLoading] = useState(true);
   const [applyScope, setApplyScope] = useState<ApplyScope>('subject');
   const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>('neo');

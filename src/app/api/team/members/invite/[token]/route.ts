@@ -1,16 +1,13 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
     token: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function isExpired(value: string | null) {
   if (!value) {

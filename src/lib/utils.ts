@@ -78,3 +78,15 @@ export function formatTimeAgo(value: DateInput): string {
 
   return `${adjustedYears || 1}년 전`;
 }
+
+export function normalizeText(value: string | string[] | null | undefined) {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    return value[0]?.trim() ?? '';
+  }
+
+  return '';
+}

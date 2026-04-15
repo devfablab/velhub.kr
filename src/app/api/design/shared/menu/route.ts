@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type ApplyRequestBody = {
   siteName: string | null;
@@ -7,10 +8,6 @@ type ApplyRequestBody = {
   boardId?: string | null;
   boardLabel?: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();

@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
@@ -11,10 +12,6 @@ type RequestBody = {
   thumbnailWidth: number | string | null;
   thumbnailHeight: number | string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeNumber(value: number | string | null | undefined) {
   if (typeof value === 'number') {

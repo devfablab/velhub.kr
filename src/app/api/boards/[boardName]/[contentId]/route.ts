@@ -2,6 +2,7 @@ import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -9,10 +10,6 @@ type RouteContext = {
     contentId: string;
   }>;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function GET(request: Request, context: RouteContext) {
   try {

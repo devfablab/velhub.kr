@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -14,10 +15,6 @@ type RequestBody = {
     sortOrder: number | null;
   }[];
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeSortOrder(value: number | null | undefined) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {

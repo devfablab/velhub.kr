@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
@@ -9,10 +10,6 @@ type RequestBody = {
   isActive: boolean | null;
   markdownStatus: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeBoardKey(rawValue: string | null | undefined) {
   return (rawValue ?? '')

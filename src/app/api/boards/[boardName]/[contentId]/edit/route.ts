@@ -1,6 +1,7 @@
 import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -20,10 +21,6 @@ type RequestBody = {
   thumbnailHeight?: number | null;
   isClosed?: boolean | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {

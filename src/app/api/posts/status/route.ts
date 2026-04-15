@@ -1,9 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
+import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {
   try {

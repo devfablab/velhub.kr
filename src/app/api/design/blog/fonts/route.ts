@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type FontApplyScope = 'subject' | 'description' | 'both';
 type FontFamily = 'neo' | 'pre' | 'sans' | 'serif' | 'ham';
@@ -16,10 +17,6 @@ type RequestBody = {
   descriptionFontSize: number | string | null;
   descriptionMargin: number | string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeNullableText(value: string | null | undefined) {
   const normalizedValue = value?.trim() ?? '';

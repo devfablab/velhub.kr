@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '../utils';
 
 export type SessionRouteResult =
   | {
@@ -26,10 +27,6 @@ export type SitePathKind =
   | 'join'
   | 'forbidden'
   | 'other';
-
-export function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 export function getSitePathKind(pathname: string, siteName: string): SitePathKind {
   const normalizedPathname = normalizeText(pathname);

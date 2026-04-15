@@ -1,4 +1,5 @@
-import { getCurrentStigma, getSiteByName, getSitePathKind, normalizeText } from '@/lib/session/utils';
+import { getCurrentStigma, getSiteByName, getSitePathKind } from '@/lib/session/utils';
+import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {
   try {

@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
@@ -13,10 +14,6 @@ type CancelRequestBody = {
   siteName: string | null;
   inviteId: string | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeEmail(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';

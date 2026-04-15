@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -17,10 +18,6 @@ type RequestBody = {
   price: number | string | null;
   productType: ProductType | null;
 };
-
-function normalizeText(value: string | null | undefined) {
-  return value?.trim() ?? '';
-}
 
 function normalizeKey(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? '';
