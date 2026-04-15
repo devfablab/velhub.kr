@@ -1,3 +1,4 @@
+import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -35,6 +36,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const sessionClaims = await getSessionClaims();
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
@@ -46,25 +48,20 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
+
+    const isStaff = session.status !== 'FAIL' && session.case === 'staff';
     const isPublicReadable = rhizome.data.visibility_type === 'public' && rhizome.data.is_shutdown === false;
 
-    if (!isPublicReadable) {
-      const session = await verifySession({
-        siteId: rhizome.data.id,
-      });
-
-      if (session.status === 'FAIL') {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
-
-      if (session.case !== 'staff') {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
+    if (!isPublicReadable && !isStaff) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id')
+      .select('id, board_key, board_label, board_type, site_id')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -77,7 +74,7 @@ export async function GET(request: Request, context: RouteContext) {
       const page = await supabaseAdmin
         .from('pages')
         .select(
-          'id, slug, subject, summary, content_html, content_markdown, created_at, edited_at, og_image, attachment_slug, attachment_origin, sort_order, user_id, site_id, board_id, is_comment',
+          'id, slug, subject, summary, content_html, content_markdown, edited_at, created_at, sort_order, user_id, site_id, board_id',
         )
         .eq('board_id', board.data.id)
         .eq('slug', normalizedContentId)
@@ -89,67 +86,52 @@ export async function GET(request: Request, context: RouteContext) {
 
       let authorName = '';
 
-      const nickname = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('nickname')
-        .eq('site_id', rhizome.data.id)
-        .eq('user_id', page.data.user_id)
-        .maybeSingle();
-
-      if (nickname.data?.nickname) {
-        authorName = nickname.data.nickname;
-      } else {
-        const authorStigma = await supabaseAdmin
+      if (page.data.user_id) {
+        const stigma = await supabaseAdmin
           .from('stigmas')
           .select('user_name')
           .eq('user_id', page.data.user_id)
           .maybeSingle();
 
-        if (authorStigma.data?.user_name) {
-          authorName = decrypt(authorStigma.data.user_name);
-        }
-      }
-
-      let ogImageUrl = '';
-
-      if (page.data.og_image) {
-        if (page.data.og_image.startsWith('supabase:')) {
-          const targetPath = page.data.og_image.replace('supabase:', '').trim();
-          const publicUrl = supabaseAdmin.storage.from('og-image').getPublicUrl(targetPath);
-          ogImageUrl = publicUrl.data.publicUrl ?? '';
-        } else {
-          ogImageUrl = page.data.og_image;
+        if (!stigma.error && stigma.data?.user_name) {
+          authorName = decrypt(stigma.data.user_name);
         }
       }
 
       return Response.json({
-        board: board.data,
         content: {
           ...page.data,
+          slug: String(page.data.slug),
+          idx: page.data.sort_order,
           author_name: authorName,
-          og_image_url: ogImageUrl,
         },
+        isAuthor: Boolean(sessionClaims?.userId && page.data.user_id === sessionClaims.userId),
+        isStaff,
       });
     }
 
-    if (board.data.board_type === 'blog') {
-      const numericContentId = Number(normalizedContentId);
+    const post = await supabaseAdmin
+      .from('posts')
+      .select(
+        'id, slug, subject, summary, content_html, content_markdown, edited_at, created_at, idx, user_id, site_id, board_id, thumbnail_image, thumbnail_width, thumbnail_height, is_closed',
+      )
+      .eq('board_id', board.data.id)
+      .eq('slug', normalizedContentId)
+      .maybeSingle();
 
-      const post = await supabaseAdmin
-        .from('posts')
-        .select(
-          'id, user_id, slug, content_html, content_markdown, subject, summary, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, board_id, site_id, created_at',
-        )
-        .eq('board_id', board.data.id)
-        .eq('slug', Number.isFinite(numericContentId) ? numericContentId : -1)
-        .maybeSingle();
+    if (post.error || !post.data) {
+      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
 
-      if (post.error || !post.data) {
-        return Response.json({ error: '블로그 글을 찾을 수 없습니다.' }, { status: 404 });
-      }
+    const isAuthor = Boolean(sessionClaims?.userId && post.data.user_id === sessionClaims.userId);
 
-      let authorName = '';
+    if (post.data.is_closed === true && !isStaff) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
 
+    let authorName = '';
+
+    if (post.data.user_id) {
       const nickname = await supabaseAdmin
         .from('rhizome_stigmas')
         .select('nickname')
@@ -157,49 +139,37 @@ export async function GET(request: Request, context: RouteContext) {
         .eq('user_id', post.data.user_id)
         .maybeSingle();
 
-      if (nickname.data?.nickname) {
+      if (!nickname.error && nickname.data?.nickname) {
         authorName = nickname.data.nickname;
-      } else {
-        const authorStigma = await supabaseAdmin
+      }
+
+      if (!authorName) {
+        const stigma = await supabaseAdmin
           .from('stigmas')
           .select('user_name')
           .eq('user_id', post.data.user_id)
           .maybeSingle();
 
-        if (authorStigma.data?.user_name) {
-          authorName = decrypt(authorStigma.data.user_name);
+        if (!stigma.error && stigma.data?.user_name) {
+          authorName = decrypt(stigma.data.user_name);
         }
       }
-
-      let thumbnailImageUrl = '';
-
-      if (post.data.thumbnail_image) {
-        if (post.data.thumbnail_image.startsWith('supabase:')) {
-          const targetPath = post.data.thumbnail_image.replace('supabase:', '').trim();
-          const publicUrl = supabaseAdmin.storage.from('og-image').getPublicUrl(targetPath);
-          thumbnailImageUrl = publicUrl.data.publicUrl ?? '';
-        } else {
-          thumbnailImageUrl = post.data.thumbnail_image;
-        }
-      }
-
-      return Response.json({
-        board: board.data,
-        content: {
-          ...post.data,
-          slug: String(post.data.slug),
-          author_name: authorName,
-          thumbnail_image_url: thumbnailImageUrl,
-        },
-      });
     }
 
-    return Response.json({ error: '지원하지 않는 게시판 종류입니다.' }, { status: 400 });
+    return Response.json({
+      content: {
+        ...post.data,
+        slug: String(post.data.slug),
+        author_name: authorName,
+      },
+      isAuthor,
+      isStaff,
+    });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '콘텐츠 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '글을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '콘텐츠 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '글을 불러오지 못했습니다.' }, { status: 500 });
   }
 }

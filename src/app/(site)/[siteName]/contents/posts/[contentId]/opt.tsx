@@ -15,26 +15,40 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { formatDateTimeFull } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
-type ContentRow = {
-  id: string;
-  user_id: string;
-  slug: string;
-  content_html: string;
-  content_markdown: string | null;
-  subject: string;
-  summary: string | null;
-  edited_at: string;
-  thumbnail_image: string | null;
-  thumbnail_image_url: string | null;
-  thumbnail_width: number | null;
-  thumbnail_height: number | null;
-  idx: number;
-  board_id: string;
-  site_id: string;
-  created_at: string;
-  author_name: string;
+type StatusResponse = {
+  hasBoard: boolean;
+  boardName: string | null;
+};
+
+type PostResponse = {
+  content: {
+    id: string;
+    slug: string;
+    subject: string;
+    summary: string | null;
+    content_html: string;
+    content_markdown: string | null;
+    edited_at: string;
+    created_at: string;
+    idx: number;
+    board_id: string;
+    site_id: string;
+    user_id: string;
+    thumbnail_image: string | null;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
+    author_name: string;
+    is_closed?: boolean;
+  };
+  isAuthor?: boolean;
+  isStaff?: boolean;
+};
+
+type DeleteResponse = {
+  ok?: boolean;
+  error?: string;
 };
 
 type Props = {
@@ -45,30 +59,43 @@ type Props = {
 export default function Opt({ siteName, contentId }: Props) {
   const router = useRouter();
 
-  const [content, setContent] = useState<ContentRow | null>(null);
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [boardName, setBoardName] = useState('');
+  const [post, setPost] = useState<PostResponse['content'] | null>(null);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isStatusSubmitting, setIsStatusSubmitting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     async function loadContent() {
       try {
+        setErrorMessage('');
+
         const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const statusResult = await statusResponse.json();
+        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
 
         if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '블로그 상태를 확인하지 못했습니다.');
+          throw new Error(
+            'error' in statusResult
+              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
+              : '블로그 상태를 확인하지 못했습니다.',
+          );
         }
 
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          throw new Error('블로그 게시판을 찾을 수 없습니다.');
+        if (
+          !('hasBoard' in statusResult) ||
+          !('boardName' in statusResult) ||
+          !statusResult.hasBoard ||
+          !statusResult.boardName
+        ) {
+          throw new Error('블로그 상태를 확인하지 못했습니다.');
         }
 
         setBoardName(statusResult.boardName);
@@ -78,19 +105,28 @@ export default function Opt({ siteName, contentId }: Props) {
           credentials: 'include',
         });
 
-        const contentResult = await contentResponse.json();
+        const contentResult = (await contentResponse.json()) as PostResponse | { error?: string };
 
         if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '블로그 글 정보를 불러오지 못했습니다.');
+          throw new Error(
+            'error' in contentResult
+              ? contentResult.error || '블로그 글을 불러오지 못했습니다.'
+              : '블로그 글을 불러오지 못했습니다.',
+          );
         }
 
-        setContent(contentResult.content ?? null);
-        setThumbnailImageUrl(contentResult.content?.thumbnail_image_url ?? '');
+        if (!('content' in contentResult) || !contentResult.content) {
+          throw new Error('블로그 글을 불러오지 못했습니다.');
+        }
+
+        setPost(contentResult.content);
+        setIsAuthor(Boolean(contentResult.isAuthor));
+        setIsStaff(Boolean(contentResult.isStaff));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 글 정보를 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '블로그 글을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('블로그 글 정보를 불러오지 못했습니다.');
+          setErrorMessage('블로그 글을 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
@@ -102,6 +138,10 @@ export default function Opt({ siteName, contentId }: Props) {
 
   function handleMoveToEdit() {
     router.push(`/${siteName}/contents/posts/${contentId}/edit`);
+  }
+
+  function handleMoveToList() {
+    router.push(`/${siteName}/contents/posts`);
   }
 
   function handleOpenDeleteDialog() {
@@ -117,20 +157,20 @@ export default function Opt({ siteName, contentId }: Props) {
   }
 
   async function handleDelete() {
-    if (!boardName || isDeleting) {
+    if (!boardName) {
       return;
     }
 
-    setErrorMessage('');
-    setIsDeleting(true);
-
     try {
+      setErrorMessage('');
+      setIsDeleting(true);
+
       const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
         method: 'DELETE',
         credentials: 'include',
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as DeleteResponse;
 
       if (!response.ok) {
         throw new Error(result.error ?? '블로그 글 삭제에 실패했습니다.');
@@ -149,89 +189,144 @@ export default function Opt({ siteName, contentId }: Props) {
     }
   }
 
+  async function handleToggleClosed() {
+    if (!boardName || !post) {
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setIsStatusSubmitting(true);
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          isClosed: !post.is_closed,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '공개 상태 변경에 실패했습니다.');
+      }
+
+      setPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              is_closed: !previousPost.is_closed,
+            }
+          : previousPost,
+      );
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '공개 상태 변경에 실패했습니다.');
+      } else {
+        setErrorMessage('공개 상태 변경에 실패했습니다.');
+      }
+    } finally {
+      setIsStatusSubmitting(false);
+    }
+  }
+
   if (isLoading) {
     return null;
   }
 
-  if (!content) {
-    return errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null;
-  }
-
   return (
-    <Stack spacing={2}>
-      <Paper elevation={0} sx={{ p: 3 }}>
-        <Stack spacing={1.5}>
-          <Stack spacing={0.5}>
-            <Typography>제목</Typography>
-            <Typography>{content.subject}</Typography>
-          </Stack>
+    <>
+      <Stack spacing={3}>
+        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
-          <Stack spacing={0.5}>
-            <Typography>부제목</Typography>
-            <Typography>{content.summary ?? ''}</Typography>
-          </Stack>
+        {post ? (
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Stack spacing={2.5}>
+              <Box>
+                <Typography variant="body2">제목</Typography>
+                <Typography>{post.subject}</Typography>
+              </Box>
 
-          <Stack spacing={0.5}>
-            <Typography>작성자</Typography>
-            <Typography>{content.author_name}</Typography>
-          </Stack>
+              <Box>
+                <Typography variant="body2">부제목</Typography>
+                <Typography>{post.summary || '-'}</Typography>
+              </Box>
 
-          <Stack spacing={0.5}>
-            <Typography>개설일자</Typography>
-            <Typography>{formatDateTimeFull(content.created_at)}</Typography>
-          </Stack>
+              <Box>
+                <Typography variant="body2">작성일</Typography>
+                <Typography>{formatDate(post.created_at)}</Typography>
+              </Box>
 
-          <Stack spacing={0.5}>
-            <Typography>수정일자</Typography>
-            <Typography>{formatDateTimeFull(content.edited_at)}</Typography>
-          </Stack>
+              <Box>
+                <Typography variant="body2">수정일</Typography>
+                <Typography>{formatDate(post.edited_at)}</Typography>
+              </Box>
 
-          {thumbnailImageUrl && (
-            <Stack spacing={0.5}>
-              <Typography>오픈그래프 이미지</Typography>
-              <Box
-                component="img"
-                src={thumbnailImageUrl}
-                alt="오픈그래프 이미지"
-                sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-              />
+              <Box>
+                <Typography variant="body2">작성자</Typography>
+                <Typography>{post.author_name}</Typography>
+              </Box>
+
+              {post.thumbnail_image ? (
+                <Box>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    오픈그래프 이미지
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={post.thumbnail_image}
+                    alt="오픈그래프 이미지"
+                    sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                  />
+                </Box>
+              ) : null}
+
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  내용
+                </Typography>
+                <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+              </Box>
+
+              <Stack direction="row" spacing={1.5}>
+                <Button type="button" variant="outlined" onClick={handleMoveToList}>
+                  목록
+                </Button>
+
+                {isAuthor ? (
+                  <Button type="button" variant="contained" onClick={handleMoveToEdit}>
+                    수정
+                  </Button>
+                ) : null}
+
+                {isAuthor ? (
+                  <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
+                    삭제
+                  </Button>
+                ) : null}
+
+                {isAuthor || isStaff ? (
+                  <Button type="button" variant="outlined" onClick={handleToggleClosed} disabled={isStatusSubmitting}>
+                    {post.is_closed ? '공개 전환' : '비공개 전환'}
+                  </Button>
+                ) : null}
+              </Stack>
             </Stack>
-          )}
-
-          <Stack spacing={0.5}>
-            <Typography>내용</Typography>
-            <Box
-              dangerouslySetInnerHTML={{
-                __html: content.content_html,
-              }}
-            />
-          </Stack>
-        </Stack>
-      </Paper>
-
-      <Stack direction="row" spacing={1.5}>
-        <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
-          목록으로 이동
-        </Button>
-
-        <Button type="button" variant="contained" onClick={handleMoveToEdit} disabled={!boardName}>
-          수정하기
-        </Button>
-
-        <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog} disabled={!boardName}>
-          삭제하기
-        </Button>
+          </Paper>
+        ) : null}
       </Stack>
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-
-      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-        <DialogTitle>블로그 글을 삭제합니다</DialogTitle>
+      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>블로그 글 삭제</DialogTitle>
         <DialogContent>
-          <Typography>삭제 후 되돌릴 수 없습니다.</Typography>
+          <Typography>이 블로그 글을 삭제하시겠습니까?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
           <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isDeleting}>
@@ -239,6 +334,6 @@ export default function Opt({ siteName, contentId }: Props) {
           </Button>
         </DialogActions>
       </Dialog>
-    </Stack>
+    </>
   );
 }

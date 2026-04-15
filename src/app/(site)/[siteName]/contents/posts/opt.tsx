@@ -3,8 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@mui/material/Link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
   Dialog,
@@ -20,7 +25,21 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import { formatDateTimeFull } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
+
+type SiteType = 'blog' | 'community';
+
+type BoardRow = {
+  id: string;
+  board_key: string;
+  board_label: string;
+  board_type: string;
+  is_active: boolean;
+  sort_order: number;
+  markdown_status: string;
+  site_id: string;
+  created_at?: string;
+};
 
 type PostRow = {
   id: string;
@@ -37,6 +56,34 @@ type PostRow = {
   board_id: string;
   created_at: string;
   author_name: string;
+};
+
+type SitePublicResponse = {
+  rhizomes?: {
+    site_type?: SiteType;
+  };
+};
+
+type BoardsResponse = {
+  boards: BoardRow[];
+};
+
+type StatusResponse = {
+  hasBoard: boolean;
+  boardName: string | null;
+};
+
+type BoardContentsResponse = {
+  contents: PostRow[];
+};
+
+type BoardOrderResponse = {
+  ok?: boolean;
+  error?: string;
+};
+
+type ErrorResponse = {
+  error?: string;
 };
 
 type Props = {
@@ -58,11 +105,84 @@ function parsePage(value: string | null) {
   return Math.floor(parsedValue);
 }
 
+function isVisibleCommunityBoard(board: BoardRow) {
+  return board.board_key !== 'b' && board.board_key !== 'p';
+}
+
+function SortableBoardRow({
+  board,
+  onMoveToCommunityBoard,
+  onMoveToCommunityBoardEdit,
+}: {
+  board: BoardRow;
+  onMoveToCommunityBoard: (boardKey: string) => void;
+  onMoveToCommunityBoardEdit: (boardKey: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: board.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TableRow
+      ref={(node) => {
+        setNodeRef(node);
+      }}
+      style={style}
+    >
+      <TableCell>
+        <Box
+          {...attributes}
+          {...listeners}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'grab',
+            width: 'fit-content',
+          }}
+        >
+          <DragIndicatorIcon />
+        </Box>
+      </TableCell>
+
+      <TableCell>
+        <Button
+          type="button"
+          variant="text"
+          onClick={() => onMoveToCommunityBoard(board.board_key)}
+          sx={{
+            p: 0,
+            minWidth: 0,
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+          }}
+        >
+          {board.board_label}
+        </Button>
+      </TableCell>
+
+      <TableCell>{formatDate(board.created_at ?? '')}</TableCell>
+
+      <TableCell align="right">
+        <Button type="button" variant="outlined" onClick={() => onMoveToCommunityBoardEdit(board.board_key)}>
+          수정
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export default function Opt({ siteName }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [boards, setBoards] = useState<BoardRow[]>([]);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [boardName, setBoardName] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -70,7 +190,17 @@ export default function Opt({ siteName }: Props) {
   const [deleteTarget, setDeleteTarget] = useState<PostRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOrderingBoards, setIsOrderingBoards] = useState(false);
+  const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+  );
 
   const currentPage = parsePage(searchParams.get('page'));
 
@@ -110,51 +240,115 @@ export default function Opt({ siteName }: Props) {
   }, [pageGroupEnd, pageGroupStart]);
 
   useEffect(() => {
-    async function loadPosts() {
+    async function loadData() {
       try {
-        const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
+        setErrorMessage('');
+
+        const siteResponse = await fetch(`/api/site/public?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const statusResult = await statusResponse.json();
+        const siteResult = (await siteResponse.json()) as SitePublicResponse | ErrorResponse;
 
-        if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '블로그 상태를 확인하지 못했습니다.');
+        if (!siteResponse.ok) {
+          throw new Error(('error' in siteResult ? siteResult.error : '') || '사이트 정보를 불러오지 못했습니다.');
         }
 
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          setBoardName(null);
-          setPosts([]);
+        if (!('rhizomes' in siteResult)) {
+          throw new Error('사이트 정보를 불러오지 못했습니다.');
+        }
+
+        const nextSiteType = siteResult.rhizomes?.site_type;
+
+        if (nextSiteType !== 'blog' && nextSiteType !== 'community') {
+          throw new Error('사이트 정보를 불러오지 못했습니다.');
+        }
+
+        setSiteType(nextSiteType);
+
+        if (nextSiteType === 'blog') {
+          const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const statusResult = (await statusResponse.json()) as StatusResponse | ErrorResponse;
+
+          if (!statusResponse.ok) {
+            throw new Error(
+              ('error' in statusResult ? statusResult.error : '') || '블로그 상태를 확인하지 못했습니다.',
+            );
+          }
+
+          if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
+            throw new Error('블로그 상태를 확인하지 못했습니다.');
+          }
+
+          if (!statusResult.hasBoard || !statusResult.boardName) {
+            setBoardName(null);
+            setPosts([]);
+            setBoards([]);
+            setIsBoardOrderChanged(false);
+            return;
+          }
+
+          setBoardName(statusResult.boardName);
+
+          const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const boardResult = (await boardResponse.json()) as BoardContentsResponse | ErrorResponse;
+
+          if (!boardResponse.ok) {
+            throw new Error(
+              ('error' in boardResult ? boardResult.error : '') || '출간된 블로그 글 목록을 불러오지 못했습니다.',
+            );
+          }
+
+          if (!('contents' in boardResult) || !Array.isArray(boardResult.contents)) {
+            throw new Error('출간된 블로그 글 목록을 불러오지 못했습니다.');
+          }
+
+          setPosts(boardResult.contents);
+          setBoards([]);
+          setIsBoardOrderChanged(false);
           return;
         }
 
-        setBoardName(statusResult.boardName);
-
-        const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}`, {
+        const boardsResponse = await fetch(`/api/boards?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const boardResult = await boardResponse.json();
+        const boardsResult = (await boardsResponse.json()) as BoardsResponse | ErrorResponse;
 
-        if (!boardResponse.ok) {
-          throw new Error(boardResult.error ?? '블로그 글 목록을 불러오지 못했습니다.');
+        if (!boardsResponse.ok) {
+          throw new Error(('error' in boardsResult ? boardsResult.error : '') || '게시판을 불러오지 못했습니다.');
         }
 
-        setPosts(Array.isArray(boardResult.contents) ? (boardResult.contents as PostRow[]) : []);
+        if (!('boards' in boardsResult) || !Array.isArray(boardsResult.boards)) {
+          throw new Error('게시판을 불러오지 못했습니다.');
+        }
+
+        setBoards(boardsResult.boards.filter(isVisibleCommunityBoard));
+        setPosts([]);
+        setBoardName(null);
+        setIsBoardOrderChanged(false);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 글 목록을 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '목록을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('블로그 글 목록을 불러오지 못했습니다.');
+          setErrorMessage('목록을 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
       }
     }
 
-    void loadPosts();
+    void loadData();
   }, [siteName]);
 
   useEffect(() => {
@@ -189,39 +383,44 @@ export default function Opt({ siteName }: Props) {
     router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
   }
 
-  function handleMoveToDetail(slug: string) {
-    router.push(`/${siteName}/contents/posts/${slug}`);
+  function handleMoveToCommunityBoard(nextBoardName: string) {
+    router.push(`/${siteName}/contents/posts/c/${nextBoardName}`);
+  }
+
+  function handleMoveToCommunityBoardEdit(nextBoardName: string) {
+    router.push(`/${siteName}/contents/posts/c/${nextBoardName}/edit`);
+  }
+
+  function handleMoveToCommunityBoardNew() {
+    router.push(`/${siteName}/contents/posts/c/new`);
   }
 
   function handleToggleAllCurrentPage() {
-    if (isAllCurrentPageChecked) {
-      setSelectedIds((previousIds) => previousIds.filter((id) => !currentPageIds.includes(id)));
-      return;
-    }
-
-    setSelectedIds((previousIds) => Array.from(new Set([...previousIds, ...currentPageIds])));
-  }
-
-  function handleToggleOne(id: string) {
     setSelectedIds((previousIds) => {
-      if (previousIds.includes(id)) {
-        return previousIds.filter((selectedId) => selectedId !== id);
+      if (isAllCurrentPageChecked) {
+        return previousIds.filter((id) => !currentPageIds.includes(id));
       }
 
-      return [...previousIds, id];
+      return Array.from(new Set([...previousIds, ...currentPageIds]));
     });
   }
 
-  function handleOpenSingleDeleteDialog(post: PostRow) {
+  function handleToggleSingle(postId: string) {
+    setSelectedIds((previousIds) => {
+      if (previousIds.includes(postId)) {
+        return previousIds.filter((id) => id !== postId);
+      }
+
+      return [...previousIds, postId];
+    });
+  }
+
+  function handleOpenSingleDeleteDialog(targetPost: PostRow) {
     setDeleteMode('single');
-    setDeleteTarget(post);
+    setDeleteTarget(targetPost);
   }
 
   function handleOpenBulkDeleteDialog() {
-    if (selectedIds.length === 0) {
-      return;
-    }
-
     setDeleteMode('bulk');
     setDeleteTarget(null);
   }
@@ -235,36 +434,113 @@ export default function Opt({ siteName }: Props) {
     setDeleteTarget(null);
   }
 
-  async function handleDelete() {
-    if (!boardName || isDeleting) {
+  function handleBoardDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
       return;
     }
 
-    const targets =
-      deleteMode === 'single' && deleteTarget ? [deleteTarget] : posts.filter((post) => selectedIds.includes(post.id));
+    setBoards((previousBoards) => {
+      const oldIndex = previousBoards.findIndex((board) => board.id === active.id);
+      const newIndex = previousBoards.findIndex((board) => board.id === over.id);
 
-    if (targets.length === 0) {
+      if (oldIndex < 0 || newIndex < 0) {
+        return previousBoards;
+      }
+
+      setIsBoardOrderChanged(true);
+
+      return arrayMove(previousBoards, oldIndex, newIndex).map((board, index) => ({
+        ...board,
+        sort_order: index + 1,
+      }));
+    });
+  }
+
+  async function handleSaveBoardOrder() {
+    if (isOrderingBoards || boards.length === 0) {
       return;
     }
-
-    setErrorMessage('');
-    setIsDeleting(true);
 
     try {
-      for (const target of targets) {
+      setErrorMessage('');
+      setIsOrderingBoards(true);
+
+      const response = await fetch(`/api/boards/${siteName}/order`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          boards: boards.map((board, index) => ({
+            boardName: board.board_key,
+            sortOrder: index + 1,
+          })),
+        }),
+      });
+
+      const result = (await response.json()) as BoardOrderResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '게시판 순서 저장에 실패했습니다.');
+      }
+
+      setBoards((previousBoards) =>
+        previousBoards.map((board, index) => ({
+          ...board,
+          sort_order: index + 1,
+        })),
+      );
+      setIsBoardOrderChanged(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '게시판 순서 저장에 실패했습니다.');
+      } else {
+        setErrorMessage('게시판 순서 저장에 실패했습니다.');
+      }
+    } finally {
+      setIsOrderingBoards(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (isDeleting) {
+      return;
+    }
+
+    const deleteTargets =
+      deleteMode === 'single'
+        ? deleteTarget
+          ? [deleteTarget]
+          : []
+        : posts.filter((post) => selectedIds.includes(post.id));
+
+    if (deleteTargets.length === 0) {
+      setDeleteMode(null);
+      setDeleteTarget(null);
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setIsDeleting(true);
+
+      for (const target of deleteTargets) {
         const response = await fetch(`/api/boards/${boardName}/${target.slug}/delete?siteName=${siteName}`, {
           method: 'DELETE',
           credentials: 'include',
         });
 
-        const result = await response.json();
+        const result = (await response.json()) as { ok?: boolean; error?: string };
 
         if (!response.ok) {
           throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
         }
       }
 
-      const deletedIds = new Set(targets.map((target) => target.id));
+      const deletedIds = new Set(deleteTargets.map((target) => target.id));
 
       setPosts((previousPosts) => previousPosts.filter((post) => !deletedIds.has(post.id)));
       setSelectedIds((previousIds) => previousIds.filter((id) => !deletedIds.has(id)));
@@ -285,6 +561,64 @@ export default function Opt({ siteName }: Props) {
     return null;
   }
 
+  if (siteType === 'community') {
+    return (
+      <Stack spacing={2}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Button type="button" variant="contained" onClick={handleMoveToCommunityBoardNew}>
+            게시판 만들기
+          </Button>
+
+          {isBoardOrderChanged ? (
+            <Button type="button" variant="outlined" onClick={handleSaveBoardOrder} disabled={isOrderingBoards}>
+              순서 저장
+            </Button>
+          ) : (
+            <span />
+          )}
+        </Stack>
+
+        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+
+        {isBoardOrderChanged ? <Alert severity="warning">순서를 변경하시면 반드시 저장을 눌러주세요.</Alert> : null}
+
+        {boards.length === 0 ? (
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Typography>게시판이 없습니다.</Typography>
+          </Paper>
+        ) : (
+          <Paper elevation={0} sx={{ overflowX: 'auto' }}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
+              <SortableContext items={boards.map((board) => board.id)} strategy={verticalListSortingStrategy}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell width={64}></TableCell>
+                      <TableCell>게시판</TableCell>
+                      <TableCell>날짜</TableCell>
+                      <TableCell align="right">수정</TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {boards.map((board) => (
+                      <SortableBoardRow
+                        key={board.id}
+                        board={board}
+                        onMoveToCommunityBoard={handleMoveToCommunityBoard}
+                        onMoveToCommunityBoardEdit={handleMoveToCommunityBoardEdit}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </SortableContext>
+            </DndContext>
+          </Paper>
+        )}
+      </Stack>
+    );
+  }
+
   return (
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -301,9 +635,11 @@ export default function Opt({ siteName }: Props) {
         </Button>
       </Stack>
 
+      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+
       {posts.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>개설된 블로그 글이 없습니다</Typography>
+          <Typography>출간된 블로그 글이 없습니다.</Typography>
         </Paper>
       ) : (
         <Paper elevation={0} sx={{ overflowX: 'auto' }}>
@@ -326,16 +662,16 @@ export default function Opt({ siteName }: Props) {
 
             <TableBody>
               {currentPagePosts.map((post) => (
-                <TableRow key={post.id}>
+                <TableRow key={post.id} hover>
                   <TableCell padding="checkbox">
-                    <Checkbox checked={selectedIds.includes(post.id)} onChange={() => handleToggleOne(post.id)} />
+                    <Checkbox checked={selectedIds.includes(post.id)} onChange={() => handleToggleSingle(post.id)} />
                   </TableCell>
 
                   <TableCell>
                     <Button
                       type="button"
                       variant="text"
-                      onClick={() => handleMoveToDetail(post.slug)}
+                      onClick={() => router.push(`/${siteName}/contents/posts/${post.slug}`)}
                       sx={{
                         p: 0,
                         minWidth: 0,
@@ -347,7 +683,7 @@ export default function Opt({ siteName }: Props) {
                     </Button>
                   </TableCell>
 
-                  <TableCell>{formatDateTimeFull(post.created_at)}</TableCell>
+                  <TableCell>{formatDate(post.created_at)}</TableCell>
                   <TableCell>{post.author_name}</TableCell>
 
                   <TableCell align="right">
@@ -367,19 +703,16 @@ export default function Opt({ siteName }: Props) {
         </Paper>
       )}
 
-      {posts.length > PAGE_SIZE ? (
-        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
-          {pageGroupStart > 1 ? (
-            <Button type="button" variant="outlined" onClick={() => moveToPage(pageGroupStart - 1)}>
-              {'<<'}
-            </Button>
-          ) : null}
-
-          {safeCurrentPage > 1 ? (
-            <Button type="button" variant="outlined" onClick={() => moveToPage(safeCurrentPage - 1)}>
-              {'<'}
-            </Button>
-          ) : null}
+      {posts.length > 0 ? (
+        <Stack direction="row" spacing={1} justifyContent="center">
+          <Button
+            type="button"
+            variant="outlined"
+            disabled={safeCurrentPage <= 1}
+            onClick={() => moveToPage(safeCurrentPage - 1)}
+          >
+            이전
+          </Button>
 
           {pageNumberList.map((pageNumber) => (
             <Button
@@ -392,32 +725,29 @@ export default function Opt({ siteName }: Props) {
             </Button>
           ))}
 
-          {safeCurrentPage < totalPage ? (
-            <Button type="button" variant="outlined" onClick={() => moveToPage(safeCurrentPage + 1)}>
-              {'>'}
-            </Button>
-          ) : null}
-
-          {pageGroupEnd < totalPage ? (
-            <Button type="button" variant="outlined" onClick={() => moveToPage(pageGroupEnd + 1)}>
-              {'>>'}
-            </Button>
-          ) : null}
+          <Button
+            type="button"
+            variant="outlined"
+            disabled={safeCurrentPage >= totalPage}
+            onClick={() => moveToPage(safeCurrentPage + 1)}
+          >
+            다음
+          </Button>
         </Stack>
       ) : null}
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-
-      <Dialog open={Boolean(deleteMode)} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-        <DialogTitle>게시물을 삭제합니다</DialogTitle>
+      <Dialog open={deleteMode !== null} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
-          <Typography>삭제 후 되돌릴 수 없습니다.</Typography>
+          <Typography>
+            {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
-          <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" color="error" onClick={handleDelete} disabled={isDeleting}>
             삭제
           </Button>
         </DialogActions>

@@ -1,3 +1,4 @@
+import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -9,43 +10,19 @@ type RouteContext = {
 };
 
 type RequestBody = {
-  siteName: string | null;
-  slug?: string | null;
-  subject: string | null;
-  summary: string | null;
-  contentHtml: string | null;
-  contentMarkdown: string | null;
-  ogImage?: string | null;
-  attachmentSlug?: string | null;
-  attachmentOrigin?: string | null;
-  isComment?: boolean | null;
+  siteName?: string | null;
+  subject?: string | null;
+  summary?: string | null;
+  contentHtml?: string | null;
+  contentMarkdown?: string | null;
   thumbnailImage?: string | null;
-  thumbnailWidth?: number | string | null;
-  thumbnailHeight?: number | string | null;
+  thumbnailWidth?: number | null;
+  thumbnailHeight?: number | null;
+  isClosed?: boolean | null;
 };
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim() ?? '';
-}
-
-function normalizeNumber(value: number | string | null | undefined) {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-
-  if (typeof value === 'string') {
-    const normalizedValue = value.trim();
-
-    if (!normalizedValue) {
-      return null;
-    }
-
-    const parsedValue = Number(normalizedValue);
-
-    return Number.isFinite(parsedValue) ? parsedValue : null;
-  }
-
-  return null;
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -62,32 +39,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    const sessionClaims = await getSessionClaims();
+
+    if (!sessionClaims) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const requestUrl = new URL(request.url);
     const requestBody = (await request.json()) as RequestBody;
 
-    const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const slug = normalizeText(requestBody.slug);
-    const subject = normalizeText(requestBody.subject);
-    const summary = normalizeText(requestBody.summary);
-    const contentHtml = requestBody.contentHtml ?? '';
-    const contentMarkdown = requestBody.contentMarkdown ?? '';
-    const ogImage = normalizeText(requestBody.ogImage);
-    const attachmentSlug = normalizeText(requestBody.attachmentSlug);
-    const attachmentOrigin = normalizeText(requestBody.attachmentOrigin);
-    const isComment = requestBody.isComment;
-    const thumbnailImage = normalizeText(requestBody.thumbnailImage);
-    const thumbnailWidth = normalizeNumber(requestBody.thumbnailWidth);
-    const thumbnailHeight = normalizeNumber(requestBody.thumbnailHeight);
+    const siteNameFromQuery = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const siteNameFromBody = normalizeText(requestBody.siteName).toLowerCase();
+    const siteName = siteNameFromBody || siteNameFromQuery;
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (!subject) {
-      return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-    }
-
-    if (!contentHtml.trim()) {
-      return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -102,43 +68,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (session.case !== 'staff' && session.case !== 'member') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (!session.authUserId) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (!session.rhizomeStigmaId) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    const rhizomeStigma = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('is_approval, is_block')
-      .eq('id', session.rhizomeStigmaId)
-      .maybeSingle();
-
-    if (rhizomeStigma.error || !rhizomeStigma.data) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (session.case === 'member') {
-      if (rhizomeStigma.data.is_approval !== true || rhizomeStigma.data.is_block !== false) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
-    }
-
-    if (session.case === 'staff') {
-      if (rhizomeStigma.data.is_block === true) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
-    }
+    const isStaff = session.status !== 'FAIL' && session.case === 'staff';
 
     const board = await supabaseAdmin
       .from('boards')
@@ -152,105 +82,137 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      if (!slug) {
-        return Response.json({ error: '페이지 식별자를 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '페이지 수정은 이 경로에서 처리할 수 없습니다.' }, { status: 400 });
+    }
+
+    const post = await supabaseAdmin
+      .from('posts')
+      .select('id, user_id, is_closed')
+      .eq('board_id', board.data.id)
+      .eq('slug', normalizedContentId)
+      .maybeSingle();
+
+    if (post.error || !post.data) {
+      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const isAuthor = post.data.user_id === sessionClaims.userId;
+
+    if (!isAuthor && !isStaff) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const hasIsClosed = typeof requestBody.isClosed === 'boolean';
+    const hasContentFields =
+      requestBody.subject !== undefined ||
+      requestBody.summary !== undefined ||
+      requestBody.contentHtml !== undefined ||
+      requestBody.contentMarkdown !== undefined ||
+      requestBody.thumbnailImage !== undefined ||
+      requestBody.thumbnailWidth !== undefined ||
+      requestBody.thumbnailHeight !== undefined;
+
+    if (isStaff && !isAuthor) {
+      if (!hasIsClosed || hasContentFields) {
+        return Response.json({ error: '스텝은 비공개 상태만 변경할 수 있습니다.' }, { status: 403 });
       }
 
-      if (attachmentSlug && !attachmentOrigin) {
-        return Response.json({ error: '첨부파일 원본 이름을 확인해주세요.' }, { status: 400 });
-      }
-
-      if (typeof isComment !== 'boolean') {
-        return Response.json({ error: '댓글 쓰기 허용 값을 확인해주세요.' }, { status: 400 });
-      }
-
-      const currentPage = await supabaseAdmin
-        .from('pages')
-        .select('id, user_id')
-        .eq('board_id', board.data.id)
-        .eq('slug', normalizedContentId)
-        .maybeSingle();
-
-      if (currentPage.error || !currentPage.data) {
-        return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
-      }
-
-      if (currentPage.data.user_id !== session.authUserId) {
-        return Response.json({ error: '작성자만 수정할 수 있습니다.' }, { status: 403 });
-      }
-
-      const updatePage = await supabaseAdmin
-        .from('pages')
+      const updateClosedResult = await supabaseAdmin
+        .from('posts')
         .update({
-          slug,
-          subject,
-          summary: summary || null,
-          content_html: contentHtml,
-          content_markdown: contentMarkdown || null,
-          edited_at: new Date().toISOString(),
-          og_image: ogImage || null,
-          attachment_slug: attachmentSlug || null,
-          attachment_origin: attachmentOrigin || null,
-          is_comment: isComment,
+          is_closed: Boolean(requestBody.isClosed),
         })
-        .eq('id', currentPage.data.id);
+        .eq('id', post.data.id);
 
-      if (updatePage.error) {
-        return Response.json({ error: '페이지 수정에 실패했습니다.' }, { status: 500 });
+      if (updateClosedResult.error) {
+        return Response.json({ error: '공개 상태 변경에 실패했습니다.' }, { status: 500 });
       }
 
       return Response.json({
         ok: true,
-        slug,
+        isClosed: Boolean(requestBody.isClosed),
       });
     }
 
-    if (board.data.board_type === 'blog') {
-      const currentPost = await supabaseAdmin
-        .from('posts')
-        .select('id, user_id, slug')
-        .eq('board_id', board.data.id)
-        .eq('slug', normalizedContentId)
-        .maybeSingle();
+    const subject = requestBody.subject !== undefined ? normalizeText(requestBody.subject) : undefined;
+    const summary = requestBody.summary !== undefined ? normalizeText(requestBody.summary) : undefined;
+    const contentHtml = requestBody.contentHtml !== undefined ? (requestBody.contentHtml ?? '') : undefined;
+    const contentMarkdown = requestBody.contentMarkdown !== undefined ? (requestBody.contentMarkdown ?? '') : undefined;
+    const thumbnailImage =
+      requestBody.thumbnailImage !== undefined ? normalizeText(requestBody.thumbnailImage) || null : undefined;
+    const thumbnailWidth = requestBody.thumbnailWidth !== undefined ? (requestBody.thumbnailWidth ?? null) : undefined;
+    const thumbnailHeight =
+      requestBody.thumbnailHeight !== undefined ? (requestBody.thumbnailHeight ?? null) : undefined;
 
-      if (currentPost.error || !currentPost.data) {
-        return Response.json({ error: '블로그 글을 찾을 수 없습니다.' }, { status: 404 });
+    const updatePayload: {
+      subject?: string;
+      summary?: string | null;
+      content_html?: string;
+      content_markdown?: string | null;
+      thumbnail_image?: string | null;
+      thumbnail_width?: number | null;
+      thumbnail_height?: number | null;
+      edited_at?: string;
+      is_closed?: boolean;
+    } = {};
+
+    if (subject !== undefined) {
+      if (!subject) {
+        return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
       }
 
-      if (currentPost.data.user_id !== session.authUserId) {
-        return Response.json({ error: '작성자만 수정할 수 있습니다.' }, { status: 403 });
-      }
-
-      const updatePost = await supabaseAdmin
-        .from('posts')
-        .update({
-          subject,
-          summary: summary || null,
-          content_html: contentHtml,
-          content_markdown: contentMarkdown || null,
-          edited_at: new Date().toISOString(),
-          thumbnail_image: thumbnailImage || null,
-          thumbnail_width: thumbnailWidth,
-          thumbnail_height: thumbnailHeight,
-        })
-        .eq('id', currentPost.data.id);
-
-      if (updatePost.error) {
-        return Response.json({ error: '블로그 글 수정에 실패했습니다.' }, { status: 500 });
-      }
-
-      return Response.json({
-        ok: true,
-        slug: currentPost.data.slug,
-      });
+      updatePayload.subject = subject;
     }
 
-    return Response.json({ error: '지원하지 않는 게시판 종류입니다.' }, { status: 400 });
+    if (summary !== undefined) {
+      updatePayload.summary = summary || null;
+    }
+
+    if (contentHtml !== undefined) {
+      if (!contentHtml.trim()) {
+        return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+      }
+
+      updatePayload.content_html = contentHtml;
+    }
+
+    if (contentMarkdown !== undefined) {
+      updatePayload.content_markdown = contentMarkdown.trim() ? contentMarkdown : null;
+    }
+
+    if (thumbnailImage !== undefined) {
+      updatePayload.thumbnail_image = thumbnailImage;
+    }
+
+    if (thumbnailWidth !== undefined) {
+      updatePayload.thumbnail_width = thumbnailWidth;
+    }
+
+    if (thumbnailHeight !== undefined) {
+      updatePayload.thumbnail_height = thumbnailHeight;
+    }
+
+    if (hasIsClosed) {
+      updatePayload.is_closed = Boolean(requestBody.isClosed);
+    }
+
+    updatePayload.edited_at = new Date().toISOString();
+
+    const updateResult = await supabaseAdmin.from('posts').update(updatePayload).eq('id', post.data.id);
+
+    if (updateResult.error) {
+      return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      ok: true,
+      isClosed: hasIsClosed ? Boolean(requestBody.isClosed) : post.data.is_closed,
+    });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '콘텐츠 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '글 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '콘텐츠 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
   }
 }

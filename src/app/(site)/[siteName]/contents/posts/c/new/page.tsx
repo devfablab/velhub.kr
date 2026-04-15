@@ -6,7 +6,6 @@ import Opt from './opt';
 type RouteContext = {
   params: Promise<{
     siteName: string;
-    contentId: string;
   }>;
 };
 
@@ -15,9 +14,8 @@ function normalizeText(value: string | null | undefined) {
 }
 
 export default async function Page(context: RouteContext) {
-  const { siteName, contentId } = await context.params;
+  const { siteName } = await context.params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
-  const normalizedContentId = normalizeText(contentId);
 
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -27,7 +25,7 @@ export default async function Page(context: RouteContext) {
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
-  if (rhizome.data?.site_type !== 'blog') {
+  if (rhizome.data?.site_type !== 'community') {
     redirect(`/${normalizedSiteName}/contents/posts`);
   }
 
@@ -36,10 +34,10 @@ export default async function Page(context: RouteContext) {
       <Box sx={{ py: 8 }}>
         <Stack spacing={3}>
           <Typography variant="h4" component="h1">
-            블로그 글 수정
+            게시판 만들기
           </Typography>
 
-          <Opt siteName={normalizedSiteName} contentId={normalizedContentId} />
+          <Opt siteName={normalizedSiteName} />
         </Stack>
       </Box>
     </Container>

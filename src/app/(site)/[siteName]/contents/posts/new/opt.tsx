@@ -9,6 +9,17 @@ import ToastEditor from '@/components/editor/ToastEditor';
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
+type StatusResponse = {
+  hasBoard: boolean;
+  boardName: string | null;
+};
+
+type CreateResponse = {
+  ok?: boolean;
+  slug?: string;
+  error?: string;
+};
+
 type Props = {
   siteName: string;
 };
@@ -134,10 +145,18 @@ export default function Opt({ siteName }: Props) {
         credentials: 'include',
       });
 
-      const statusResult = await statusResponse.json();
+      const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
 
       if (!statusResponse.ok) {
-        throw new Error(statusResult.error ?? '블로그 상태를 확인하지 못했습니다.');
+        throw new Error(
+          'error' in statusResult
+            ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
+            : '블로그 상태를 확인하지 못했습니다.',
+        );
+      }
+
+      if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
+        throw new Error('블로그 상태를 확인하지 못했습니다.');
       }
 
       const targetUrl =
@@ -163,7 +182,7 @@ export default function Opt({ siteName }: Props) {
         }),
       });
 
-      const createResult = await createResponse.json();
+      const createResult = (await createResponse.json()) as CreateResponse;
 
       if (!createResponse.ok) {
         if (thumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
@@ -179,15 +198,19 @@ export default function Opt({ siteName }: Props) {
           });
         }
 
-        throw new Error(createResult.error ?? '블로그 글 출간에 실패했습니다.');
+        throw new Error(createResult.error ?? '블로그 글 개설에 실패했습니다.');
+      }
+
+      if (!createResult.slug) {
+        throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '블로그 글 출간에 실패했습니다.');
+        setErrorMessage(unknownError.message || '블로그 글 개설에 실패했습니다.');
       } else {
-        setErrorMessage('블로그 글 출간에 실패했습니다.');
+        setErrorMessage('블로그 글 개설에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);

@@ -9,24 +9,38 @@ import ToastEditor from '@/components/editor/ToastEditor';
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
-type ContentRow = {
-  id: string;
-  user_id: string;
-  slug: string;
-  content_html: string;
-  content_markdown: string | null;
-  subject: string;
-  summary: string | null;
-  edited_at: string;
-  thumbnail_image: string | null;
-  thumbnail_image_url: string | null;
-  thumbnail_width: number | null;
-  thumbnail_height: number | null;
-  idx: number;
-  board_id: string;
-  site_id: string;
-  created_at: string;
-  author_name: string;
+type StatusResponse = {
+  hasBoard: boolean;
+  boardName: string | null;
+};
+
+type ContentResponse = {
+  content: {
+    id: string;
+    slug: string;
+    subject: string;
+    summary: string | null;
+    content_html: string;
+    content_markdown: string | null;
+    edited_at: string;
+    created_at: string;
+    idx: number;
+    board_id: string;
+    site_id: string;
+    user_id: string;
+    thumbnail_image: string | null;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
+    author_name: string;
+    is_closed?: boolean;
+  };
+  isAuthor?: boolean;
+  isStaff?: boolean;
+};
+
+type EditResponse = {
+  ok?: boolean;
+  error?: string;
 };
 
 type Props = {
@@ -46,8 +60,8 @@ export default function Opt({ siteName, contentId }: Props) {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [boardName, setBoardName] = useState<string | null>(null);
+  const [boardName, setBoardName] = useState('');
+  const [slug, setSlug] = useState('');
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
@@ -56,26 +70,39 @@ export default function Opt({ siteName, contentId }: Props) {
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [originalThumbnailImage, setOriginalThumbnailImage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   useEffect(() => {
     async function loadContent() {
       try {
+        setErrorMessage('');
+
         const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const statusResult = await statusResponse.json();
+        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
 
         if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '블로그 상태를 확인하지 못했습니다.');
+          throw new Error(
+            'error' in statusResult
+              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
+              : '블로그 상태를 확인하지 못했습니다.',
+          );
         }
 
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          throw new Error('블로그 게시판을 찾을 수 없습니다.');
+        if (
+          !('hasBoard' in statusResult) ||
+          !('boardName' in statusResult) ||
+          !statusResult.hasBoard ||
+          !statusResult.boardName
+        ) {
+          throw new Error('블로그 상태를 확인하지 못했습니다.');
         }
 
         setBoardName(statusResult.boardName);
@@ -85,27 +112,39 @@ export default function Opt({ siteName, contentId }: Props) {
           credentials: 'include',
         });
 
-        const contentResult = await contentResponse.json();
+        const contentResult = (await contentResponse.json()) as ContentResponse | { error?: string };
 
         if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '블로그 글 정보를 불러오지 못했습니다.');
+          throw new Error(
+            'error' in contentResult
+              ? contentResult.error || '블로그 글을 불러오지 못했습니다.'
+              : '블로그 글을 불러오지 못했습니다.',
+          );
         }
 
-        const content = contentResult.content as ContentRow;
+        if (!('content' in contentResult) || !contentResult.content) {
+          throw new Error('블로그 글을 불러오지 못했습니다.');
+        }
 
-        setSubject(content.subject ?? '');
-        setSummary(content.summary ?? '');
-        setContentHtml(content.content_html ?? '');
-        setContentMarkdown(content.content_markdown ?? '');
-        setThumbnailImage(content.thumbnail_image ?? '');
-        setThumbnailImageUrl(content.thumbnail_image_url ?? '');
-        setThumbnailWidth(content.thumbnail_width ?? null);
-        setThumbnailHeight(content.thumbnail_height ?? null);
+        if (!contentResult.isAuthor) {
+          throw new Error('접근 권한이 없습니다.');
+        }
+
+        setSlug(contentResult.content.slug);
+        setSubject(contentResult.content.subject ?? '');
+        setSummary(contentResult.content.summary ?? '');
+        setContentHtml(contentResult.content.content_html ?? '');
+        setContentMarkdown(contentResult.content.content_markdown ?? '');
+        setThumbnailImage(contentResult.content.thumbnail_image ?? '');
+        setThumbnailImageUrl(contentResult.content.thumbnail_image ?? '');
+        setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
+        setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
+        setOriginalThumbnailImage(contentResult.content.thumbnail_image ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 글 정보를 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '블로그 글을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('블로그 글 정보를 불러오지 못했습니다.');
+          setErrorMessage('블로그 글을 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
@@ -144,19 +183,6 @@ export default function Opt({ siteName, contentId }: Props) {
     setIsUploadingThumbnail(true);
 
     try {
-      if (thumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
-        await fetch('/api/attachment/delete/og-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: getSupabaseOgImagePath(thumbnailImage),
-          }),
-        });
-      }
-
       const imageUrl = URL.createObjectURL(selectedFile);
 
       const imageSize = await new Promise<{ width: number; height: number }>((resolve, reject) => {
@@ -209,6 +235,17 @@ export default function Opt({ siteName, contentId }: Props) {
     }
   }
 
+  async function handleRemoveThumbnail() {
+    if (isUploadingThumbnail) {
+      return;
+    }
+
+    setThumbnailImage('');
+    setThumbnailImageUrl('');
+    setThumbnailWidth(null);
+    setThumbnailHeight(null);
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -220,14 +257,13 @@ export default function Opt({ siteName, contentId }: Props) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          siteName,
           subject,
           summary,
           contentHtml,
@@ -238,13 +274,43 @@ export default function Opt({ siteName, contentId }: Props) {
         }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as EditResponse;
 
       if (!response.ok) {
+        if (thumbnailImage && thumbnailImage !== originalThumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
+          await fetch('/api/attachment/delete/og-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              path: getSupabaseOgImagePath(thumbnailImage),
+            }),
+          });
+        }
+
         throw new Error(result.error ?? '블로그 글 수정에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/contents/posts/${result.slug}`);
+      if (
+        originalThumbnailImage &&
+        originalThumbnailImage !== thumbnailImage &&
+        isSupabaseOgImageValue(originalThumbnailImage)
+      ) {
+        await fetch('/api/attachment/delete/og-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            path: getSupabaseOgImagePath(originalThumbnailImage),
+          }),
+        });
+      }
+
+      router.replace(`/${siteName}/contents/posts/${slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 수정에 실패했습니다.');
@@ -286,9 +352,22 @@ export default function Opt({ siteName, contentId }: Props) {
             onChange={handleThumbnailFileChange}
           />
 
-          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
-            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
+          <Stack direction="row" spacing={1.5}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleClickThumbnailUpload}
+              disabled={isUploadingThumbnail}
+            >
+              {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+            </Button>
+
+            {thumbnailImageUrl ? (
+              <Button type="button" variant="outlined" color="error" onClick={handleRemoveThumbnail}>
+                이미지 삭제
+              </Button>
+            ) : null}
+          </Stack>
         </Box>
 
         <Box>
@@ -303,7 +382,7 @@ export default function Opt({ siteName, contentId }: Props) {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button type="submit" variant="contained" disabled={isSubmitting || !boardName}>
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
             저장
           </Button>
 

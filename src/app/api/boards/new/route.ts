@@ -14,20 +14,35 @@ function normalizeText(value: string | null | undefined) {
   return value?.trim() ?? '';
 }
 
-function normalizeKey(value: string | null | undefined) {
-  return value?.trim().toLowerCase() ?? '';
+function normalizeBoardKey(rawValue: string | null | undefined) {
+  return (rawValue ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/g, '')
+    .replace(/-+$/g, '');
+}
+
+function hasInvalidBoardKeyCharacters(value: string) {
+  return /[^a-z0-9-]/.test(value);
+}
+
+function isAllowedBoardType(value: string) {
+  return value === 'board' || value === 'blog' || value === 'page' || value === 'community';
 }
 
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
 
-    const siteName = normalizeKey(requestBody.siteName);
-    const boardKey = normalizeKey(requestBody.boardKey);
+    const siteName = normalizeText(requestBody.siteName).toLowerCase();
+    const boardKey = normalizeBoardKey(requestBody.boardKey);
     const boardLabel = normalizeText(requestBody.boardLabel);
-    const boardType = normalizeKey(requestBody.boardType);
-    const isActive = requestBody.isActive;
-    const markdownStatus = normalizeKey(requestBody.markdownStatus);
+    const boardType = normalizeText(requestBody.boardType).toLowerCase();
+    const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
+    const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -37,25 +52,34 @@ export async function POST(request: Request) {
       return Response.json({ error: '게시판 식별자를 입력해주세요.' }, { status: 400 });
     }
 
+    if (hasInvalidBoardKeyCharacters(boardKey)) {
+      return Response.json(
+        {
+          error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (/^\d/.test(boardKey)) {
+      return Response.json({ error: '게시판 식별자는 숫자로 시작할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (boardKey.length < 5 || boardKey.length > 15) {
+      return Response.json({ error: '게시판 식별자는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
+    }
+
     if (!boardLabel) {
       return Response.json({ error: '게시판 이름을 입력해주세요.' }, { status: 400 });
     }
 
-    if (!boardType) {
-      return Response.json({ error: '게시판 종류를 입력해주세요.' }, { status: 400 });
-    }
-
-    if (typeof isActive !== 'boolean') {
-      return Response.json({ error: '활성화 상태를 확인해주세요.' }, { status: 400 });
-    }
-
-    if (!markdownStatus) {
-      return Response.json({ error: '마크다운 상태를 입력해주세요.' }, { status: 400 });
+    if (!isAllowedBoardType(boardType)) {
+      return Response.json({ error: '게시판 종류가 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -65,30 +89,26 @@ export async function POST(request: Request) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
+    if (session.status === 'FAIL' || session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    const duplicateBoardKey = await supabaseAdmin
+    const duplicateBoard = await supabaseAdmin
       .from('boards')
       .select('id')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', boardKey)
       .maybeSingle();
 
-    if (duplicateBoardKey.error) {
-      return Response.json({ error: '게시판 중복 확인에 실패했습니다.' }, { status: 500 });
+    if (duplicateBoard.error) {
+      return Response.json({ error: '게시판 식별자 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (duplicateBoardKey.data) {
+    if (duplicateBoard.data) {
       return Response.json({ error: '이미 존재하는 게시판 식별자입니다.' }, { status: 400 });
     }
 
-    const sortOrder = await supabaseAdmin
+    const lastBoard = await supabaseAdmin
       .from('boards')
       .select('sort_order')
       .eq('site_id', rhizome.data.id)
@@ -96,28 +116,28 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle();
 
-    if (sortOrder.error) {
-      return Response.json({ error: '게시판 정렬값 확인에 실패했습니다.' }, { status: 500 });
+    if (lastBoard.error) {
+      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextSortOrder = typeof sortOrder.data?.sort_order === 'number' ? sortOrder.data.sort_order + 1 : 1;
+    const nextSortOrder = typeof lastBoard.data?.sort_order === 'number' ? Number(lastBoard.data.sort_order) + 1 : 1;
 
     const insertBoard = await supabaseAdmin
       .from('boards')
       .insert({
         board_key: boardKey,
         board_label: boardLabel,
-        board_type: boardType,
+        board_type: boardType === 'community' ? 'board' : boardType,
         is_active: isActive,
         sort_order: nextSortOrder,
-        markdown_status: markdownStatus,
         site_id: rhizome.data.id,
+        markdown_status: markdownStatus,
       })
       .select('id, board_key')
       .maybeSingle();
 
     if (insertBoard.error || !insertBoard.data) {
-      return Response.json({ error: '게시판 개설에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -127,9 +147,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '게시판 개설에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '게시판 생성에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '게시판 개설에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
   }
 }

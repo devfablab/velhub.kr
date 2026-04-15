@@ -39,11 +39,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (session.case !== 'staff') {
+    if (session.status === 'FAIL' || session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -59,11 +55,13 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      const deletePages = await supabaseAdmin.from('pages').delete().eq('board_id', board.data.id);
+      return Response.json({ error: '페이지는 이 경로에서 삭제할 수 없습니다.' }, { status: 400 });
+    }
 
-      if (deletePages.error) {
-        return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
-      }
+    const deletePosts = await supabaseAdmin.from('posts').delete().eq('board_id', board.data.id);
+
+    if (deletePosts.error) {
+      return Response.json({ error: '게시판 삭제에 실패했습니다.' }, { status: 500 });
     }
 
     const deleteBoard = await supabaseAdmin.from('boards').delete().eq('id', board.data.id);

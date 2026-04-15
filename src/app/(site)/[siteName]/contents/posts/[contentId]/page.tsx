@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { Box, Container, Stack, Typography } from '@mui/material';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import Opt from './opt';
 
 type RouteContext = {
@@ -8,8 +10,26 @@ type RouteContext = {
   }>;
 };
 
+function normalizeText(value: string | null | undefined) {
+  return value?.trim() ?? '';
+}
+
 export default async function Page(context: RouteContext) {
   const { siteName, contentId } = await context.params;
+  const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const normalizedContentId = normalizeText(contentId);
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const rhizome = await supabaseAdmin
+    .from('rhizomes')
+    .select('site_type')
+    .eq('site_key', normalizedSiteName)
+    .maybeSingle();
+
+  if (rhizome.data?.site_type !== 'blog') {
+    redirect(`/${normalizedSiteName}/contents/posts`);
+  }
 
   return (
     <Container maxWidth="md">
@@ -19,7 +39,7 @@ export default async function Page(context: RouteContext) {
             블로그 글 보기
           </Typography>
 
-          <Opt siteName={siteName} contentId={contentId} />
+          <Opt siteName={normalizedSiteName} contentId={normalizedContentId} />
         </Stack>
       </Box>
     </Container>

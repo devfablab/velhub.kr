@@ -9,29 +9,22 @@ type RouteContext = {
 
 type RequestBody = {
   siteName: string | null;
-  sortOrder: number | string | null;
+  boards: {
+    boardName: string | null;
+    sortOrder: number | null;
+  }[];
 };
 
 function normalizeText(value: string | null | undefined) {
   return value?.trim() ?? '';
 }
 
-function normalizeSortOrder(value: number | string | null | undefined) {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : NaN;
+function normalizeSortOrder(value: number | null | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
   }
 
-  if (typeof value === 'string') {
-    const normalizedValue = value.trim();
-
-    if (!normalizedValue) {
-      return NaN;
-    }
-
-    return Number(normalizedValue);
-  }
-
-  return NaN;
+  return Math.floor(value);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -46,19 +39,28 @@ export async function PATCH(request: Request, context: RouteContext) {
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const sortOrder = normalizeSortOrder(requestBody.sortOrder);
+    const boards = Array.isArray(requestBody.boards) ? requestBody.boards : [];
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!Number.isFinite(sortOrder)) {
-      return Response.json({ error: 'sort_order가 유효하지 않습니다.' }, { status: 400 });
+    if (boards.length === 0) {
+      return Response.json({ error: '정렬할 게시판이 없습니다.' }, { status: 400 });
+    }
+
+    const normalizedBoards = boards.map((item) => ({
+      boardName: normalizeText(item.boardName).toLowerCase(),
+      sortOrder: normalizeSortOrder(item.sortOrder),
+    }));
+
+    if (normalizedBoards.some((item) => !item.boardName || item.sortOrder === null || item.sortOrder < 1)) {
+      return Response.json({ error: '게시판 정렬값이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -68,34 +70,34 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
+    if (session.status === 'FAIL' || session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    const boardList = await supabaseAdmin.from('boards').select('id, board_key').eq('site_id', rhizome.data.id);
+
+    if (boardList.error) {
+      return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const board = await supabaseAdmin
-      .from('boards')
-      .select('id')
-      .eq('site_id', rhizome.data.id)
-      .eq('board_key', normalizedBoardName)
-      .maybeSingle();
+    const boardKeySet = new Set((boardList.data ?? []).map((item) => item.board_key));
 
-    if (board.error || !board.data) {
-      return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    if (normalizedBoards.some((item) => !boardKeySet.has(item.boardName))) {
+      return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 404 });
     }
 
-    const updateBoardOrder = await supabaseAdmin
-      .from('boards')
-      .update({
-        sort_order: sortOrder,
-      })
-      .eq('id', board.data.id);
+    for (const board of normalizedBoards) {
+      const updateBoard = await supabaseAdmin
+        .from('boards')
+        .update({
+          sort_order: board.sortOrder,
+        })
+        .eq('site_id', rhizome.data.id)
+        .eq('board_key', board.boardName);
 
-    if (updateBoardOrder.error) {
-      return Response.json({ error: '게시판 정렬 저장에 실패했습니다.' }, { status: 500 });
+      if (updateBoard.error) {
+        return Response.json({ error: '게시판 정렬 저장에 실패했습니다.' }, { status: 500 });
+      }
     }
 
     return Response.json({
