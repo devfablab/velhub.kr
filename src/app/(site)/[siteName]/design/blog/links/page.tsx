@@ -1,6 +1,7 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
+import { Box, Container, Stack } from '@mui/material';
 import BlogDesignBreadcrumb from '../breadcrumb';
 import Opt from './opt';
+import StaffTabs from '../../../tabs';
 
 type PageProps = {
   params: Promise<{
@@ -13,11 +14,9 @@ export default async function Page({ params }: PageProps) {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ py: 8 }}>
+      <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
-            소셜 링크 관리
-          </Typography>
+          <StaffTabs pageTitle="소셜 링크 관리" />
 
           <BlogDesignBreadcrumb siteName={siteName} current="links" />
 

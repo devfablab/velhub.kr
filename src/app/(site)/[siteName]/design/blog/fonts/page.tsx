@@ -1,4 +1,5 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
+import { Box, Container, Stack } from '@mui/material';
+import StaffTabs from '../../../tabs';
 import BlogDesignBreadcrumb from '../breadcrumb';
 import Opt from './opt';
 
@@ -13,11 +14,9 @@ export default async function Page(context: RouteContext) {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ py: 8 }}>
+      <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
-            기본 서체 설정
-          </Typography>
+          <StaffTabs pageTitle="기본 서체 설정" />
 
           <BlogDesignBreadcrumb siteName={siteName} current="fonts" />
 

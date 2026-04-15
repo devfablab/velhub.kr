@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -21,6 +22,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { formatDateTimeFull } from '@/lib/utils';
 
@@ -147,6 +150,10 @@ export default function Opt({ siteName }: Props) {
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   async function loadTeams() {
     const response = await fetch(`/api/team/members?siteName=${encodeURIComponent(siteName)}`, {
@@ -415,6 +422,12 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Stack spacing={3}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          팀원 목록
+        </Typography>
+      )}
+
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
       <Paper sx={{ p: 3 }}>

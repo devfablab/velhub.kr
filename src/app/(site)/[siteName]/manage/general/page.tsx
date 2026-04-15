@@ -1,6 +1,7 @@
 import { Box, Container, Stack, Typography } from '@mui/material';
 import SiteManageBreadcrumb from '../breadcrumb';
 import Opt from './opt';
+import StaffTabs from '../../tabs';
 
 type RouteContext = {
   params: Promise<{
@@ -12,12 +13,10 @@ export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
+    <Container maxWidth="md">
+      <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
-            설정
-          </Typography>
+          <StaffTabs pageTitle="기본 설정" />
 
           <SiteManageBreadcrumb siteName={siteName} current="general" />
 

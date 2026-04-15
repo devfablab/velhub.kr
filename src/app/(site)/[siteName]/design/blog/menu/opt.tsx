@@ -12,6 +12,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -96,6 +98,10 @@ export default function Opt({ siteName }: Props) {
   const [successMessage, setSuccessMessage] = useState('');
   const [renameTarget, setRenameTarget] = useState<MenuRow | null>(null);
   const [renameValue, setRenameValue] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadMenus() {
@@ -266,6 +272,12 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          메뉴 설정
+        </Typography>
+      )}
+
       <Stack spacing={3}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>

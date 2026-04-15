@@ -17,6 +17,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { formatDate, formatDateTimeFull } from '@/lib/utils';
@@ -80,6 +82,10 @@ export default function Opt({ siteName }: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadInfo() {
@@ -289,6 +295,12 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Stack spacing={2}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          기본 설정
+        </Typography>
+      )}
+
       <Paper elevation={0} sx={{ p: 2 }}>
         <Stack spacing={1.5} alignItems="center">
           {profilePictureUrl ? (

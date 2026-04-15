@@ -14,6 +14,8 @@ import {
   Select,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 type ApplyScope = 'subject' | 'description' | 'both';
@@ -88,6 +90,9 @@ export default function Opt({ siteName }: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadFonts() {
@@ -254,10 +259,18 @@ export default function Opt({ siteName }: Props) {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper elevation={0}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          기본 서체 설정
+        </Typography>
+      )}
+
       <Stack spacing={3}>
         <FormControl>
-          <Typography sx={{ mb: 1 }}>적용 범위</Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            적용 범위
+          </Typography>
           <RadioGroup row value={applyScope} onChange={(event) => setApplyScope(event.target.value as ApplyScope)}>
             <FormControlLabel value="subject" control={<Radio />} label="제목" />
             <FormControlLabel value="description" control={<Radio />} label="본문" />

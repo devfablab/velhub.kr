@@ -24,6 +24,9 @@ import {
   Select,
   Stack,
   TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
@@ -168,6 +171,9 @@ export default function Opt({ siteName }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -344,6 +350,12 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Stack spacing={3}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          소셜 링크 관리
+        </Typography>
+      )}
+
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
