@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import HeaderSettings from '@/components/headers/Settings';
+import HeaderConcierge from '@/components/headers/Concierge';
 // import '../globals.sass';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <HeaderSettings />
+      <HeaderConcierge />
       {children}
     </>
   );

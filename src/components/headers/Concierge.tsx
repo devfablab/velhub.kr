@@ -7,6 +7,7 @@ import {
   Avatar,
   Box,
   Divider,
+  Drawer,
   IconButton,
   Link,
   ListItemIcon,
@@ -15,6 +16,8 @@ import {
   MenuItem,
   Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
@@ -22,62 +25,47 @@ import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
 import LogoutIcon from '@mui/icons-material/Logout';
 import HomeIcon from '@mui/icons-material/Home';
 import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LoginIcon from '@mui/icons-material/Login';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import Anchor from '@/components/Anchor';
 
-type UserProfile = {
-  name: string;
-  email: string;
-  avatarUrl: string | null;
+type HeaderResponse = {
+  isLoggedIn: boolean;
+  email: string | null;
+  userName: string | null;
+  avatar: string | null;
+  themeMode: ThemeMode | null;
+  role: string | null;
 };
 
-function getDisplayName(userMetadata: Record<string, unknown> | undefined, email: string | undefined) {
-  const name =
-    typeof userMetadata?.name === 'string'
-      ? userMetadata.name
-      : typeof userMetadata?.full_name === 'string'
-        ? userMetadata.full_name
-        : typeof userMetadata?.user_name === 'string'
-          ? userMetadata.user_name
-          : typeof userMetadata?.preferred_username === 'string'
-            ? userMetadata.preferred_username
-            : '';
+type UserProfile = {
+  isLoggedIn: boolean;
+  name: string | null;
+  email: string | null;
+  avatarUrl: string | null;
+  role: string | null;
+};
 
-  if (name.trim()) {
-    return name.trim();
-  }
+export default function HeaderConcierge() {
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
-  if (email) {
-    return email.split('@')[0] ?? '사용자';
-  }
-
-  return '';
-}
-
-function getAvatarUrl(userMetadata: Record<string, unknown> | undefined) {
-  const avatarUrl =
-    typeof userMetadata?.avatar_url === 'string'
-      ? userMetadata.avatar_url
-      : typeof userMetadata?.picture === 'string'
-        ? userMetadata.picture
-        : typeof userMetadata?.avatar === 'string'
-          ? userMetadata.avatar
-          : null;
-
-  return avatarUrl;
-}
-
-export default function HeaderSettings() {
   const { themeMode, setThemeMode } = useThemeMode();
 
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
+  const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: '',
-    email: '',
+    isLoggedIn: false,
+    name: null,
+    email: null,
     avatarUrl: null,
+    role: null,
   });
 
   const supabase = useMemo(() => getSupabaseBrowser(), []);
@@ -87,40 +75,40 @@ export default function HeaderSettings() {
   }, []);
 
   useEffect(() => {
-    async function loadUserProfile() {
-      const userResult = await supabase.auth.getUser();
+    async function loadHeader() {
+      const response = await fetch('/api/header/concierge', {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-      if (userResult.error || !userResult.data.user) {
+      const result = (await response.json()) as HeaderResponse | { error?: string };
+
+      if (!response.ok || !('isLoggedIn' in result)) {
+        setUserProfile({
+          isLoggedIn: false,
+          name: null,
+          email: null,
+          avatarUrl: null,
+          role: null,
+        });
         return;
       }
 
-      const authUser = userResult.data.user;
-      const userMetadata = authUser.user_metadata as Record<string, unknown> | undefined;
-
       setUserProfile({
-        name: getDisplayName(userMetadata, authUser.email),
-        email: authUser.email ?? '',
-        avatarUrl: getAvatarUrl(userMetadata),
+        isLoggedIn: result.isLoggedIn,
+        name: result.userName,
+        email: result.email,
+        avatarUrl: result.avatar,
+        role: result.role,
       });
     }
 
-    void loadUserProfile();
+    void loadHeader();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session?.user) {
-        return;
-      }
-
-      const authUser = session.user;
-      const userMetadata = authUser.user_metadata as Record<string, unknown> | undefined;
-
-      setUserProfile({
-        name: getDisplayName(userMetadata, authUser.email),
-        email: authUser.email ?? '',
-        avatarUrl: getAvatarUrl(userMetadata),
-      });
+    } = supabase.auth.onAuthStateChange(async () => {
+      await loadHeader();
     });
 
     return () => {
@@ -129,6 +117,11 @@ export default function HeaderSettings() {
   }, [supabase]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
+    if (isMobile) {
+      setIsThemeModeDrawerOpen(true);
+      return;
+    }
+
     setThemeModeAnchorElement(event.currentTarget);
   }
 
@@ -136,12 +129,22 @@ export default function HeaderSettings() {
     setThemeModeAnchorElement(null);
   }
 
+  function handleCloseThemeModeDrawer() {
+    setIsThemeModeDrawerOpen(false);
+  }
+
   function handleSelectThemeMode(nextThemeMode: ThemeMode) {
     setThemeMode(nextThemeMode);
     handleCloseThemeModeMenu();
+    handleCloseThemeModeDrawer();
   }
 
   function handleOpenProfileMenu(event: React.MouseEvent<HTMLElement>) {
+    if (isMobile) {
+      setIsProfileDrawerOpen(true);
+      return;
+    }
+
     setProfileAnchorElement(event.currentTarget);
   }
 
@@ -149,8 +152,13 @@ export default function HeaderSettings() {
     setProfileAnchorElement(null);
   }
 
+  function handleCloseProfileDrawer() {
+    setIsProfileDrawerOpen(false);
+  }
+
   async function handleLogout() {
     handleCloseProfileMenu();
+    handleCloseProfileDrawer();
 
     const signOutResult = await supabase.auth.signOut({
       scope: 'local',
@@ -199,32 +207,59 @@ export default function HeaderSettings() {
           {renderThemeModeIcon()}
         </IconButton>
 
-        <Menu
-          anchorEl={themeModeAnchorElement}
-          open={Boolean(themeModeAnchorElement)}
-          onClose={handleCloseThemeModeMenu}
-        >
-          <MenuItem onClick={() => handleSelectThemeMode('light')}>
-            <ListItemIcon>
-              <LightModeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>라이트모드</ListItemText>
-          </MenuItem>
+        {isMobile ? (
+          <Drawer anchor="right" open={isThemeModeDrawerOpen} onClose={handleCloseThemeModeDrawer}>
+            <Box sx={{ minWidth: 280, py: 1 }}>
+              <MenuItem onClick={() => handleSelectThemeMode('light')}>
+                <ListItemIcon>
+                  <LightModeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>라이트모드</ListItemText>
+              </MenuItem>
 
-          <MenuItem onClick={() => handleSelectThemeMode('system')}>
-            <ListItemIcon>
-              <BrightnessAutoIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>시스템</ListItemText>
-          </MenuItem>
+              <MenuItem onClick={() => handleSelectThemeMode('system')}>
+                <ListItemIcon>
+                  <BrightnessAutoIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>시스템</ListItemText>
+              </MenuItem>
 
-          <MenuItem onClick={() => handleSelectThemeMode('dark')}>
-            <ListItemIcon>
-              <DarkModeIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>다크모드</ListItemText>
-          </MenuItem>
-        </Menu>
+              <MenuItem onClick={() => handleSelectThemeMode('dark')}>
+                <ListItemIcon>
+                  <DarkModeIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>다크모드</ListItemText>
+              </MenuItem>
+            </Box>
+          </Drawer>
+        ) : (
+          <Menu
+            anchorEl={themeModeAnchorElement}
+            open={Boolean(themeModeAnchorElement)}
+            onClose={handleCloseThemeModeMenu}
+          >
+            <MenuItem onClick={() => handleSelectThemeMode('light')}>
+              <ListItemIcon>
+                <LightModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>라이트모드</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('system')}>
+              <ListItemIcon>
+                <BrightnessAutoIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>시스템</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('dark')}>
+              <ListItemIcon>
+                <DarkModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>다크모드</ListItemText>
+            </MenuItem>
+          </Menu>
+        )}
 
         <IconButton onClick={handleOpenProfileMenu}>
           {userProfile.avatarUrl ? (
@@ -236,30 +271,111 @@ export default function HeaderSettings() {
           )}
         </IconButton>
 
-        <Menu anchorEl={profileAnchorElement} open={Boolean(profileAnchorElement)} onClose={handleCloseProfileMenu}>
-          <Box sx={{ px: 2, py: 1 }}>
-            {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
-            <Typography>{userProfile.email}</Typography>
-          </Box>
+        {isMobile ? (
+          <Drawer anchor="right" open={isProfileDrawerOpen} onClose={handleCloseProfileDrawer}>
+            <Box sx={{ minWidth: 320, py: 1 }}>
+              {userProfile.isLoggedIn ? (
+                <>
+                  <Box sx={{ px: 2, py: 1 }}>
+                    {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
+                    {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
+                  </Box>
 
-          <Divider />
+                  <Divider />
+                </>
+              ) : null}
 
-          <MenuItem onClick={handleCloseProfileMenu}>
-            <ListItemIcon>
-              <HomeIcon fontSize="small" />
-            </ListItemIcon>
-            <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
-              라운지
-            </Link>
-          </MenuItem>
+              <MenuItem onClick={handleCloseProfileDrawer}>
+                <ListItemIcon>
+                  <HomeIcon fontSize="small" />
+                </ListItemIcon>
+                <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
+                  라운지
+                </Link>
+              </MenuItem>
 
-          <MenuItem onClick={handleLogout}>
-            <ListItemIcon>
-              <LogoutIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>로그아웃</ListItemText>
-          </MenuItem>
-        </Menu>
+              {userProfile.role === 'admin' ? (
+                <MenuItem onClick={handleCloseProfileDrawer}>
+                  <ListItemIcon>
+                    <AdminPanelSettingsIcon fontSize="small" />
+                  </ListItemIcon>
+                  <Link href="/concierge/admin/dashboard" underline="none" sx={{ flex: '1 0 0%' }}>
+                    관리
+                  </Link>
+                </MenuItem>
+              ) : null}
+
+              {userProfile.isLoggedIn ? (
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>로그아웃</ListItemText>
+                </MenuItem>
+              ) : (
+                <MenuItem onClick={handleCloseProfileDrawer}>
+                  <ListItemIcon>
+                    <LoginIcon fontSize="small" />
+                  </ListItemIcon>
+                  <Link href="/auth/sign-in" underline="none" sx={{ flex: '1 0 0%' }}>
+                    로그인
+                  </Link>
+                </MenuItem>
+              )}
+            </Box>
+          </Drawer>
+        ) : (
+          <Menu anchorEl={profileAnchorElement} open={Boolean(profileAnchorElement)} onClose={handleCloseProfileMenu}>
+            {userProfile.isLoggedIn ? (
+              <>
+                <Box sx={{ px: 2, py: 1 }}>
+                  {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
+                  {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
+                </Box>
+
+                <Divider />
+              </>
+            ) : null}
+
+            <MenuItem onClick={handleCloseProfileMenu}>
+              <ListItemIcon>
+                <HomeIcon fontSize="small" />
+              </ListItemIcon>
+              <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
+                라운지
+              </Link>
+            </MenuItem>
+
+            {userProfile.role === 'admin' ? (
+              <MenuItem onClick={handleCloseProfileMenu}>
+                <ListItemIcon>
+                  <AdminPanelSettingsIcon fontSize="small" />
+                </ListItemIcon>
+                <Link href="/concierge/admin/dashboard" underline="none" sx={{ flex: '1 0 0%' }}>
+                  관리
+                </Link>
+              </MenuItem>
+            ) : null}
+
+            {userProfile.isLoggedIn ? (
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>로그아웃</ListItemText>
+              </MenuItem>
+            ) : (
+              <MenuItem onClick={handleCloseProfileMenu}>
+                <ListItemIcon>
+                  <LoginIcon fontSize="small" />
+                </ListItemIcon>
+                <Link href="/auth/sign-in" underline="none" sx={{ flex: '1 0 0%' }}>
+                  로그인
+                </Link>
+              </MenuItem>
+            )}
+          </Menu>
+        )}
       </Toolbar>
     </AppBar>
   );
