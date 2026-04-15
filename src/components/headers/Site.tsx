@@ -346,7 +346,7 @@ export default function HeaderSite() {
                       <DashboardIcon fontSize="small" />
                     </ListItemIcon>
                     <Link href={`/${siteName}/staff`} underline="none" sx={{ flex: '1 0 0%' }}>
-                      관리홈
+                      관리 홈
                     </Link>
                   </MenuItem>
 
