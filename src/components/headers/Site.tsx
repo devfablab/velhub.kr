@@ -370,16 +370,7 @@ export default function HeaderSite() {
                       underline="none"
                       sx={{ flex: '1 0 0%' }}
                     >
-                      {siteType === 'blog' ? '블로그 폰트' : '커뮤니티 메뉴'}
-                    </Link>
-                  </MenuItem>
-
-                  <MenuItem onClick={handleCloseProfileDrawer}>
-                    <ListItemIcon>
-                      <BarChartIcon fontSize="small" />
-                    </ListItemIcon>
-                    <Link href={`/${siteName}/stats`} underline="none" sx={{ flex: '1 0 0%' }}>
-                      통계
+                      디자인
                     </Link>
                   </MenuItem>
 
@@ -398,10 +389,30 @@ export default function HeaderSite() {
 
                   <MenuItem onClick={handleCloseProfileDrawer}>
                     <ListItemIcon>
-                      <ReportGmailerrorredIcon fontSize="small" />
+                      <FontDownloadIcon fontSize="small" />
                     </ListItemIcon>
-                    <Link href={`/${siteName}/filtered`} underline="none" sx={{ flex: '1 0 0%' }}>
-                      제한된 콘텐츠
+                    <Link href={`/${siteName}/contents/posts`} underline="none" sx={{ flex: '1 0 0%' }}>
+                      콘텐츠 관리
+                    </Link>
+                  </MenuItem>
+
+                  {siteType === 'community' && (
+                    <MenuItem onClick={handleCloseProfileDrawer}>
+                      <ListItemIcon>
+                        <ReportGmailerrorredIcon fontSize="small" />
+                      </ListItemIcon>
+                      <Link href={`/${siteName}/filtered`} underline="none" sx={{ flex: '1 0 0%' }}>
+                        제한된 콘텐츠
+                      </Link>
+                    </MenuItem>
+                  )}
+
+                  <MenuItem onClick={handleCloseProfileDrawer}>
+                    <ListItemIcon>
+                      <BarChartIcon fontSize="small" />
+                    </ListItemIcon>
+                    <Link href={`/${siteName}/stats`} underline="none" sx={{ flex: '1 0 0%' }}>
+                      통계
                     </Link>
                   </MenuItem>
 
