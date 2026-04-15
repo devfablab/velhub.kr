@@ -161,7 +161,7 @@ export default function Opt({ siteName }: Props) {
 
       const targetUrl =
         statusResult.hasBoard && statusResult.boardName
-          ? `/api/boards/${statusResult.boardName}/new`
+          ? `/api/boards/${statusResult.boardName}/new?siteName=${siteName}`
           : '/api/posts/new';
 
       const createResponse = await fetch(targetUrl, {
@@ -198,19 +198,19 @@ export default function Opt({ siteName }: Props) {
           });
         }
 
-        throw new Error(createResult.error ?? '블로그 글 개설에 실패했습니다.');
+        throw new Error(createResult.error ?? '블로그 글 출간에 실패했습니다.');
       }
 
       if (!createResult.slug) {
-        throw new Error('블로그 글 개설에 실패했습니다.');
+        throw new Error('블로그 글 출간에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '블로그 글 개설에 실패했습니다.');
+        setErrorMessage(unknownError.message || '블로그 글 출간에 실패했습니다.');
       } else {
-        setErrorMessage('블로그 글 개설에 실패했습니다.');
+        setErrorMessage('블로그 글 출간에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
