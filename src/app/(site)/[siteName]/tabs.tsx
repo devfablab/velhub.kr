@@ -32,6 +32,7 @@ type HeaderSiteResponse = {
 type StaffTabItem = {
   label: string;
   href: string;
+  startsWith?: boolean;
 };
 
 function isStaffRole(role: string | null) {
@@ -105,16 +106,16 @@ export default function StaffTabs({ pageTitle }: Props) {
 
   const tabItems: StaffTabItem[] = [
     { label: '관리 홈', href: `/${siteName}/staff` },
-    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage/general` },
+    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
     {
       label: '디자인',
-      href: siteType === 'blog' ? `/${siteName}/design/blog/fonts` : `/${siteName}/design/community/menu`,
+      href: `/${siteName}/design`,
     },
     {
       label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/team/members` : `/${siteName}/members`,
+      href: siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`,
     },
-    { label: '콘텐츠 관리', href: `/${siteName}/contents/posts` },
+    { label: '콘텐츠 관리', href: `/${siteName}/contents` },
     ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/filtered` }] : []),
     { label: '통계', href: `/${siteName}/stats` },
   ];
