@@ -13,18 +13,18 @@ export const metadata: Metadata = {
 const Pre = localFont({
   src: './fonts/PretendardVariable.woff2',
   style: 'normal',
-  variable: '--square',
+  variable: '--pre',
 });
 
-const Square = localFont({
+const Neo = localFont({
   src: './fonts/NanumSquareNeoVF.woff2',
   style: 'normal',
-  variable: '--square',
+  variable: '--neo',
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko-KR" className={`${Pre.variable} ${Square.variable}`}>
+    <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable}`}>
       <body>
         <AppRouterCacheProvider>
           <ThemeProviderClient>{children}</ThemeProviderClient>

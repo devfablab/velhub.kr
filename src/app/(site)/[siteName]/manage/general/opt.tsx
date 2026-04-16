@@ -343,7 +343,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>사이트 식별자</Typography>
+          <Typography variant="subtitle2">사이트 식별자</Typography>
           {editingField === 'site_key' ? (
             <Stack
               direction="row"
@@ -397,7 +397,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>사이트명</Typography>
+          <Typography variant="subtitle2">사이트명</Typography>
           {editingField === 'site_label' ? (
             <Stack
               direction="row"
@@ -441,7 +441,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>사이트 설명</Typography>
+          <Typography variant="subtitle2">사이트 설명</Typography>
           {editingField === 'summary' ? (
             <>
               <TextField
@@ -486,7 +486,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>테마</Typography>
+          <Typography variant="subtitle2">테마</Typography>
           {editingField === 'theme_type' ? (
             <>
               <RadioGroup value={String(draftValue || 'default')} onChange={handleTextChange}>
@@ -526,7 +526,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
+          <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
           {editingField === 'visibility_type' ? (
             <Stack
               direction="row"
@@ -568,7 +568,7 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
+              <Typography variant="subtitle2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
               <Button
                 type="button"
                 variant="outlined"
@@ -583,7 +583,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>운영중단</Typography>
+          <Typography variant="subtitle2">운영중단</Typography>
           {editingField === 'is_shutdown' ? (
             <Stack
               direction="row"
@@ -620,7 +620,7 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
+              <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
               <Button type="button" variant="outlined" onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}>
                 변경
               </Button>

@@ -2,6 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import localFont from 'next/font/local';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
@@ -72,6 +73,18 @@ export function useThemeMode() {
   return useContext(ThemeModeContext);
 }
 
+const Pre = localFont({
+  src: './fonts/PretendardVariable.woff2',
+  style: 'normal',
+  variable: '--pre',
+});
+
+const Neo = localFont({
+  src: './fonts/NanumSquareNeoVF.woff2',
+  style: 'normal',
+  variable: '--neo',
+});
+
 export default function ThemeProviderClient({
   children,
 }: Readonly<{
@@ -140,6 +153,74 @@ export default function ThemeProviderClient({
     return createTheme({
       palette: {
         mode: getResolvedMode(themeMode),
+      },
+      typography: {
+        fontFamily: 'var(--pre)',
+      },
+      components: {
+        MuiTypography: {
+          styleOverrides: {
+            h1: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 600,
+              fontVariationSettings: '"wght" 600',
+            },
+            h2: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 600,
+              fontVariationSettings: '"wght" 600',
+            },
+            h3: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+            h4: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+            h5: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+            h6: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+            subtitle1: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 400,
+              fontVariationSettings: '"wght" 400',
+            },
+            subtitle2: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+            body1: {
+              fontFamily: 'var(--pre)',
+              fontWeight: 400,
+              fontVariationSettings: '"wght" 400',
+            },
+            body2: {
+              fontFamily: 'var(--pre)',
+              fontWeight: 400,
+              fontVariationSettings: '"wght" 400',
+            },
+          },
+        },
+        MuiTableCell: {
+          styleOverrides: {
+            head: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
+            },
+          },
+        },
       },
     });
   }, [themeMode]);
