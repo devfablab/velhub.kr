@@ -18,6 +18,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  styled,
   Switch,
   TextField,
   Typography,
@@ -44,6 +45,18 @@ type PlanRow = {
 };
 
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 function isSupabaseAvatarValue(value: string) {
   return value.startsWith(SUPABASE_AVATAR_PREFIX);
@@ -505,11 +518,10 @@ export default function Opt() {
                 />
               ) : null}
 
-              <input
+              <VisuallyHiddenInput
                 ref={fileInputReference}
                 type="file"
                 accept="image/*"
-                style={{ display: 'none' }}
                 onChange={handleProfilePictureFileChange}
               />
 

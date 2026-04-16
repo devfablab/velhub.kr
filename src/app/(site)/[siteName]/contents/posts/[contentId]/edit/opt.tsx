@@ -1,9 +1,20 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Box, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import Link from '@mui/material/Link';
+import {
+  Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  styled,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
@@ -43,6 +54,18 @@ type EditResponse = {
   ok?: boolean;
   error?: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 function isSupabaseOgImageValue(value: string) {
   return value.startsWith('supabase:');
@@ -353,11 +376,10 @@ export default function Opt() {
             />
           ) : null}
 
-          <input
+          <VisuallyHiddenInput
             ref={fileInputReference}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
             onChange={handleThumbnailFileChange}
           />
 

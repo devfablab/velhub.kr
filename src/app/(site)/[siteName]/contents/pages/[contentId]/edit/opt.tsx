@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   Paper,
   Stack,
+  styled,
   Switch,
   TextField,
   Typography,
@@ -42,6 +43,18 @@ type ContentRow = {
   author_name: string;
   is_comment: boolean;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 function normalizeSlug(rawValue: string) {
   return rawValue
@@ -399,11 +412,10 @@ export default function Opt() {
             />
           ) : null}
 
-          <input
+          <VisuallyHiddenInput
             ref={fileInputReference}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
             onChange={handleOgImageFileChange}
           />
 

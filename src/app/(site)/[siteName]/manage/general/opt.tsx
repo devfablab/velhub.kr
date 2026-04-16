@@ -10,6 +10,7 @@ import {
   InputAdornment,
   Paper,
   Stack,
+  styled,
   Switch,
   Table,
   TableBody,
@@ -21,7 +22,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -56,6 +56,18 @@ type SitesInfo = {
 };
 
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 function isSupabaseAvatarValue(value: string) {
   return value.startsWith(SUPABASE_AVATAR_PREFIX);
@@ -308,11 +320,10 @@ export default function Opt() {
             <Avatar src="/broken-image.jpg" alt={siteInfo.site_label ?? ''} sx={{ width: 96, height: 96 }} />
           )}
 
-          <input
+          <VisuallyHiddenInput
             ref={fileInputReference}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
             onChange={handleProfilePictureFileChange}
           />
 
@@ -353,6 +364,15 @@ export default function Opt() {
               />
               <Button
                 type="button"
+                onClick={() => cancelEdit()}
+                size="large"
+                variant="outlined"
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
                 variant="contained"
                 onClick={() => void saveField('site_key')}
                 disabled={isSubmitting}
@@ -360,9 +380,6 @@ export default function Opt() {
                 size="large"
               >
                 수정 완료
-              </Button>
-              <Button type="button" onClick={() => cancelEdit()} size="large">
-                취소
               </Button>
             </Stack>
           ) : (
@@ -391,6 +408,15 @@ export default function Opt() {
               <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth size="small" />
               <Button
                 type="button"
+                onClick={() => cancelEdit()}
+                size="large"
+                variant="outlined"
+                sx={{ whiteSpace: 'nowrap' }}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
                 variant="contained"
                 onClick={() => void saveField('site_label')}
                 disabled={isSubmitting}
@@ -398,9 +424,6 @@ export default function Opt() {
                 sx={{ whiteSpace: 'nowrap' }}
               >
                 수정 완료
-              </Button>
-              <Button type="button" onClick={() => cancelEdit()} size="large">
-                취소
               </Button>
             </Stack>
           ) : (
@@ -435,6 +458,9 @@ export default function Opt() {
                   alignItems: 'center',
                 }}
               >
+                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                  취소
+                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -442,9 +468,6 @@ export default function Opt() {
                   disabled={isSubmitting}
                 >
                   수정 완료
-                </Button>
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
                 </Button>
               </Stack>
             </>
@@ -473,6 +496,9 @@ export default function Opt() {
                   alignItems: 'center',
                 }}
               >
+                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                  취소
+                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -480,9 +506,6 @@ export default function Opt() {
                   disabled={isSubmitting}
                 >
                   변경 완료
-                </Button>
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
                 </Button>
               </Stack>
             </>
@@ -525,6 +548,9 @@ export default function Opt() {
                   alignItems: 'center',
                 }}
               >
+                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                  취소
+                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -533,9 +559,6 @@ export default function Opt() {
                   sx={{ whiteSpace: 'nowrap' }}
                 >
                   변경 완료
-                </Button>
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
                 </Button>
               </Stack>
             </Stack>
@@ -578,6 +601,9 @@ export default function Opt() {
                   alignItems: 'center',
                 }}
               >
+                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                  취소
+                </Button>
                 <Button
                   type="button"
                   variant="contained"
@@ -585,9 +611,6 @@ export default function Opt() {
                   disabled={isSubmitting}
                 >
                   변경 완료
-                </Button>
-                <Button type="button" onClick={() => cancelEdit()}>
-                  취소
                 </Button>
               </Stack>
             </Stack>

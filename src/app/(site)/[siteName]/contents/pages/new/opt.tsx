@@ -1,14 +1,37 @@
 'use client';
 
 import { useRef, useState, type JSX } from 'react';
-import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Box, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import Link from '@mui/material/Link';
+import {
+  Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  styled,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 function normalizeSlug(rawValue: string) {
   return rawValue
@@ -317,11 +340,10 @@ export default function Opt() {
             />
           ) : null}
 
-          <input
+          <VisuallyHiddenInput
             ref={fileInputReference}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
             onChange={handleOgImageFileChange}
           />
 

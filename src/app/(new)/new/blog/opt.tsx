@@ -17,6 +17,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  styled,
   Switch,
   TextField,
   Typography,
@@ -39,6 +40,18 @@ type PlanRow = {
   price: number;
   product_type: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const SUPABASE_AVATAR_PREFIX = 'supabase:';
 
@@ -460,11 +473,10 @@ export default function Opt() {
                 />
               ) : null}
 
-              <input
+              <VisuallyHiddenInput
                 ref={fileInputReference}
                 type="file"
                 accept="image/*"
-                style={{ display: 'none' }}
                 onChange={handleProfilePictureFileChange}
               />
 
