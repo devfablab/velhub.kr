@@ -73,7 +73,7 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
     const session = await verifySession({ siteId: site.id });
 
-    if (session.status === 'FAIL' || !session.authUserId || !session.stigmaId) {
+    if (!session.authUserId) {
       return Response.json({
         siteName: site.site_key,
         siteType: isSiteType(site.site_type) ? site.site_type : null,
@@ -84,13 +84,14 @@ export async function GET(request: Request) {
         themeMode: null,
         globalRole: null,
         siteRole: null,
+        sessionCase: session.case ?? null,
       });
     }
 
     const accountResult = await supabaseAdmin
       .from('stigmas')
       .select('email, user_name, avatar, role')
-      .eq('id', session.stigmaId)
+      .eq('user_id', session.authUserId)
       .maybeSingle();
 
     if (accountResult.error || !accountResult.data) {
@@ -109,7 +110,7 @@ export async function GET(request: Request) {
 
     let membership: MembershipRow | null = null;
 
-    if (session.rhizomeStigmaId) {
+    if ((session.case === 'staff' || session.case === 'member') && session.rhizomeStigmaId) {
       const membershipResult = await supabaseAdmin
         .from('rhizome_stigmas')
         .select('role')
@@ -136,7 +137,7 @@ export async function GET(request: Request) {
       themeMode: isThemeMode(profile?.theme_mode ?? null) ? profile?.theme_mode : null,
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole: normalizeText(membership?.role).toLowerCase() || null,
-      sessionCase: session.case,
+      sessionCase: session.case ?? null,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

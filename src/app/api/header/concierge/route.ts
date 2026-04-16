@@ -38,7 +38,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (session.status === 'FAIL' || !session.authUserId || !session.stigmaId) {
+    if (!session.authUserId) {
       return Response.json({
         isLoggedIn: false,
         email: null,
@@ -54,7 +54,7 @@ export async function GET() {
     const accountResult = await supabaseAdmin
       .from('stigmas')
       .select('email, user_name, avatar, role')
-      .eq('id', session.stigmaId)
+      .eq('user_id', session.authUserId)
       .maybeSingle();
 
     if (accountResult.error || !accountResult.data) {
@@ -81,6 +81,8 @@ export async function GET() {
       avatar: account.avatar ?? null,
       themeMode: isThemeMode(profile?.theme_mode ?? null) ? profile?.theme_mode : null,
       role: normalizeText(account.role).toLowerCase() || null,
+      sessionCase: session.case ?? null,
+      isAdmin: session.case === 'admin',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
