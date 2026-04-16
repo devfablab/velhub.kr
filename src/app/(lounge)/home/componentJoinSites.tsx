@@ -25,15 +25,15 @@ function getSectionTitle(siteType: SiteType) {
 
 function getRoleLabel(role: string) {
   if (role === 'owner') {
-    return 'owner';
+    return '운영자';
   }
 
   if (role === 'manager') {
-    return 'manager';
+    return '매니저';
   }
 
   if (role === 'member') {
-    return 'member';
+    return '멤버';
   }
 
   return role;
@@ -54,7 +54,7 @@ export default function ComponentJoinSites({ siteType, joinSites }: Props) {
         {filteredSites.map((site) => (
           <Paper key={site.id} elevation={0} sx={{ p: 2 }}>
             <Stack direction="row" spacing={2} alignItems="center">
-              <Avatar src={site.avatar ?? undefined} alt={site.site_label} />
+              <Avatar src={site.avatar ?? '/broken-image.jpg'} alt={site.site_label} />
 
               <Stack sx={{ minWidth: 0, flex: 1 }}>
                 <Link href={`/${site.site_key}`} underline="hover">
