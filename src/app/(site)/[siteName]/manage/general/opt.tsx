@@ -36,7 +36,7 @@ type EditableField =
   | 'theme_type'
   | 'is_shutdown';
 
-type RhizomesInfo = {
+type SiteInfoInfo = {
   created_at: string;
   site_key: string;
   site_label: string | null;
@@ -71,7 +71,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [rhizomes, setRhizomes] = useState<RhizomesInfo | null>(null);
+  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(null);
   const [sites, setSites] = useState<SitesInfo | null>(null);
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [draftValue, setDraftValue] = useState<string | boolean>('');
@@ -100,7 +100,7 @@ export default function Opt() {
           throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
         }
 
-        setRhizomes(result.rhizomes);
+        setSiteInfo(result.siteInfo);
         setSites(result.sites);
         setProfilePictureUrl(result.profilePictureUrl ?? '');
       } catch (unknownError) {
@@ -152,13 +152,13 @@ export default function Opt() {
       throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
     }
 
-    setRhizomes(result.rhizomes);
+    setSiteInfo(result.siteInfo);
     setSites(result.sites);
     setProfilePictureUrl(result.profilePictureUrl ?? '');
   }
 
   async function saveField(field: EditableField, value?: string | boolean) {
-    if (!rhizomes || isSubmitting) {
+    if (!siteInfo || isSubmitting) {
       return;
     }
 
@@ -211,7 +211,7 @@ export default function Opt() {
     const inputElement = event.currentTarget;
     const selectedFile = inputElement.files?.[0];
 
-    if (!selectedFile || !rhizomes || isUploadingAvatar) {
+    if (!selectedFile || !siteInfo || isUploadingAvatar) {
       inputElement.value = '';
       return;
     }
@@ -221,7 +221,7 @@ export default function Opt() {
     setIsUploadingAvatar(true);
 
     try {
-      if (rhizomes.profile_picture && isSupabaseAvatarValue(rhizomes.profile_picture)) {
+      if (siteInfo.profile_picture && isSupabaseAvatarValue(siteInfo.profile_picture)) {
         const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
           method: 'POST',
           headers: {
@@ -229,7 +229,7 @@ export default function Opt() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            path: getSupabaseAvatarPath(rhizomes.profile_picture),
+            path: getSupabaseAvatarPath(siteInfo.profile_picture),
           }),
         });
 
@@ -288,7 +288,7 @@ export default function Opt() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  if (isLoading || !rhizomes || !sites) {
+  if (isLoading || !siteInfo || !sites) {
     return null;
   }
 
@@ -305,7 +305,7 @@ export default function Opt() {
           {profilePictureUrl ? (
             <Avatar src={profilePictureUrl} alt="사이트 아바타" sx={{ width: 96, height: 96 }} />
           ) : (
-            <Avatar src="/broken-image.jpg" alt={rhizomes.site_label ?? ''} sx={{ width: 96, height: 96 }} />
+            <Avatar src="/broken-image.jpg" alt={siteInfo.site_label ?? ''} sx={{ width: 96, height: 96 }} />
           )}
 
           <input
@@ -324,7 +324,7 @@ export default function Opt() {
 
       <Paper elevation={0}>
         <Typography>
-          {rhizomes.site_label} {formatDate(rhizomes.created_at)}에 개설
+          {siteInfo.site_label} {formatDate(siteInfo.created_at)}에 개설
         </Typography>
       </Paper>
 
@@ -367,8 +367,8 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.site_key}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('site_key', rhizomes.site_key)}>
+              <Typography>{siteInfo.site_key}</Typography>
+              <Button type="button" variant="outlined" onClick={() => startEdit('site_key', siteInfo.site_key)}>
                 수정
               </Button>
             </Stack>
@@ -405,8 +405,8 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.site_label ?? ''}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('site_label', rhizomes.site_label)}>
+              <Typography>{siteInfo.site_label ?? ''}</Typography>
+              <Button type="button" variant="outlined" onClick={() => startEdit('site_label', siteInfo.site_label)}>
                 수정
               </Button>
             </Stack>
@@ -450,8 +450,8 @@ export default function Opt() {
             </>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.summary ?? ''}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('summary', rhizomes.summary)}>
+              <Typography>{siteInfo.summary ?? ''}</Typography>
+              <Button type="button" variant="outlined" onClick={() => startEdit('summary', siteInfo.summary)}>
                 수정
               </Button>
             </Stack>
@@ -488,8 +488,8 @@ export default function Opt() {
             </>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.theme_type}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('theme_type', rhizomes.theme_type)}>
+              <Typography>{siteInfo.theme_type}</Typography>
+              <Button type="button" variant="outlined" onClick={() => startEdit('theme_type', siteInfo.theme_type)}>
                 변경
               </Button>
             </Stack>
@@ -499,7 +499,7 @@ export default function Opt() {
 
       <Paper elevation={3} sx={{ p: 2 }}>
         <Stack spacing={1}>
-          <Typography>{rhizomes.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
+          <Typography>{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
           {editingField === 'visibility_type' ? (
             <Stack
               direction="row"
@@ -541,11 +541,11 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
+              <Typography>{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
               <Button
                 type="button"
                 variant="outlined"
-                onClick={() => startEdit('visibility_type', rhizomes.visibility_type)}
+                onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
               >
                 변경
               </Button>
@@ -593,8 +593,8 @@ export default function Opt() {
             </Stack>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{rhizomes.is_shutdown ? '중단함' : '운영중'}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('is_shutdown', rhizomes.is_shutdown)}>
+              <Typography>{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
+              <Button type="button" variant="outlined" onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}>
                 변경
               </Button>
             </Stack>
