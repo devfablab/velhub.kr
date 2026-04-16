@@ -13,6 +13,13 @@ export function formatDate(value: DateInput): string {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
 
+export function formatDateSimple(value: DateInput): string {
+  const date = parseDate(value);
+  if (!date) return '';
+
+  return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}.`;
+}
+
 export function formatDateTimeDetail(value: DateInput): string {
   const date = parseDate(value);
   if (!date) return '';

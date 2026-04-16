@@ -8,10 +8,11 @@ import Box from '@mui/material/Box';
 import { useParams, usePathname } from 'next/navigation';
 import { IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import { normalizeText } from '@/lib/utils';
 
 type Props = {
-  pageTitle: string;
+  pageTitle?: string;
 };
 
 type SiteType = 'blog' | 'community';
@@ -121,21 +122,39 @@ export default function StaffTabs({ pageTitle }: Props) {
   ];
 
   const currentValue = getTabValue(pathname, tabItems);
+  const isStaffHome = pathname === `/${siteName}/staff`;
 
   return (
     <>
       {isMobile ? (
         <Box sx={{ position: 'relative' }}>
-          <IconButton href={`/${siteName}/staff`} aria-label="뒤로가기" size="small">
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography
-            variant="h6"
-            component="h1"
-            sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
-          >
-            {pageTitle}
-          </Typography>
+          {isStaffHome ? (
+            <>
+              <IconButton href={`/${siteName}`} aria-label="홈으로 이동" size="small">
+                <CloseIcon />
+              </IconButton>
+              <Typography
+                variant="h6"
+                component="h1"
+                sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              >
+                카페 관리
+              </Typography>
+            </>
+          ) : (
+            <>
+              <IconButton href={`/${siteName}/staff`} aria-label="뒤로가기" size="small">
+                <ArrowBackIcon />
+              </IconButton>
+              <Typography
+                variant="h6"
+                component="h1"
+                sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+              >
+                {pageTitle}
+              </Typography>
+            </>
+          )}
         </Box>
       ) : (
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

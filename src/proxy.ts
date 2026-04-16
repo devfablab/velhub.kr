@@ -31,7 +31,14 @@ function isManagePath(pathname: string) {
 
   return (
     segments.length >= 2 &&
-    (segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'team' || segments[1] === 'manage')
+    (segments[1] === 'contents' ||
+      segments[1] === 'design' ||
+      segments[1] === 'team' ||
+      segments[1] === 'manage' ||
+      segments[1] === 'staff' ||
+      segments[1] === 'stats' ||
+      segments[1] === 'members' ||
+      segments[1] === 'filtered')
   );
 }
 
@@ -81,7 +88,16 @@ function isSiteStaffOnlyPath(pathname: string) {
     return false;
   }
 
-  return segments[1] === 'contents' || segments[1] === 'design' || segments[1] === 'team' || segments[1] === 'manage';
+  return (
+    segments[1] === 'contents' ||
+    segments[1] === 'design' ||
+    segments[1] === 'team' ||
+    segments[1] === 'manage' ||
+    segments[1] === 'staff' ||
+    segments[1] === 'stats' ||
+    segments[1] === 'members' ||
+    segments[1] === 'filtered'
+  );
 }
 
 function isInviteBlogPath(pathname: string) {
