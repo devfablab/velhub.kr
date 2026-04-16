@@ -192,7 +192,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     return Response.json({
-      rhizomes: access.rhizome,
+      siteInfo: access.rhizome,
       profilePictureUrl,
       sites: {
         updated_at: sites.data.updated_at,
