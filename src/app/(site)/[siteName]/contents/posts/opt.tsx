@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from '@mui/material/Link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -24,8 +24,10 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { formatDate } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 
 type SiteType = 'blog' | 'community';
 
@@ -84,10 +86,6 @@ type BoardOrderResponse = {
 
 type ErrorResponse = {
   error?: string;
-};
-
-type Props = {
-  siteName: string;
 };
 
 type DeleteMode = 'single' | 'bulk' | null;
@@ -176,10 +174,16 @@ function SortableBoardRow({
   );
 }
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [boards, setBoards] = useState<BoardRow[]>([]);
@@ -564,6 +568,12 @@ export default function Opt({ siteName }: Props) {
   if (siteType === 'community') {
     return (
       <Stack spacing={2}>
+        {isNotMobile && (
+          <Typography variant="h4" component="h1">
+            게시판 목록
+          </Typography>
+        )}
+
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Button type="button" variant="contained" onClick={handleMoveToCommunityBoardNew}>
             게시판 만들기
@@ -621,6 +631,12 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Stack spacing={2}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          {siteType === 'blog' ? '블로그 글 목록' : '게시판 목록'}
+        </Typography>
+      )}
+
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         {selectedIds.length > 0 ? (
           <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>

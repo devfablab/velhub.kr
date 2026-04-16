@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
-type CommentProvider = 'none' | 'giscus' | 'disqus';
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
 type RequestBody = {
   siteKey: string | null;
@@ -41,7 +41,7 @@ function isThemeType(value: unknown): value is ThemeType {
 }
 
 function isCommentProvider(value: unknown): value is CommentProvider {
-  return value === 'none' || value === 'giscus' || value === 'disqus';
+  return value === 'none' || value === 'giscus' || value === 'disqus' || value === 'velhub';
 }
 
 export async function POST(request: Request) {

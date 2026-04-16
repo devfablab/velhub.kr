@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -14,8 +14,10 @@ import {
   Paper,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { formatDateTimeDetail } from '@/lib/utils';
+import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 
 type ContentRow = {
   id: string;
@@ -38,13 +40,15 @@ type ContentRow = {
   is_comment: boolean;
 };
 
-type Props = {
-  siteName: string;
-  contentId: string;
-};
-
-export default function Opt({ siteName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [content, setContent] = useState<ContentRow | null>(null);
   const [boardName, setBoardName] = useState<string | null>(null);
@@ -160,6 +164,11 @@ export default function Opt({ siteName, contentId }: Props) {
 
   return (
     <Stack spacing={2}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          페이지 보기
+        </Typography>
+      )}
       <Paper elevation={0} sx={{ p: 3 }}>
         <Stack spacing={1.5}>
           <Stack spacing={0.5}>

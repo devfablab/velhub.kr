@@ -9,7 +9,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   Stack,
   TextField,
   Typography,
@@ -213,6 +212,7 @@ export default function PasswordChange() {
               autoComplete="current-password"
               value={currentPassword}
               onChange={handleCurrentPasswordChange}
+              size="small"
               fullWidth
             />
 
@@ -223,6 +223,7 @@ export default function PasswordChange() {
               autoComplete="new-password"
               value={nextPassword}
               onChange={handleNextPasswordChange}
+              size="small"
               fullWidth
             />
 
@@ -233,6 +234,7 @@ export default function PasswordChange() {
               autoComplete="new-password"
               value={nextPasswordConfirm}
               onChange={handleNextPasswordConfirmChange}
+              size="small"
               fullWidth
             />
 

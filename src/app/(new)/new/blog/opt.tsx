@@ -12,6 +12,7 @@ import {
   DialogTitle,
   FormControlLabel,
   FormLabel,
+  InputAdornment,
   Paper,
   Radio,
   RadioGroup,
@@ -27,7 +28,7 @@ type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textare
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
-type CommentProvider = 'none' | 'giscus' | 'disqus';
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
 type PlanRow = {
   id: string;
@@ -90,6 +91,8 @@ export default function Opt() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
 
+  const [baseUrl, setBaseUrl] = useState('');
+
   useEffect(() => {
     async function loadPlans() {
       try {
@@ -124,6 +127,10 @@ export default function Opt() {
     }
 
     void loadPlans();
+  }, []);
+
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
   }, []);
 
   function openErrorDialog(message: string) {
@@ -166,7 +173,7 @@ export default function Opt() {
   function handleCommentProviderChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value;
 
-    if (nextValue !== 'none' && nextValue !== 'giscus' && nextValue !== 'disqus') {
+    if (nextValue !== 'none' && nextValue !== 'giscus' && nextValue !== 'disqus' && nextValue !== 'velhub') {
       return;
     }
 
@@ -405,11 +412,26 @@ export default function Opt() {
                 onChange={handleSiteKeyChange}
                 fullWidth
                 helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          onClick={handleCheckSiteKey}
+                          disabled={isCheckingSiteKey}
+                          size="small"
+                        >
+                          중복 확인
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-
-              <Button type="button" variant="outlined" onClick={handleCheckSiteKey} disabled={isCheckingSiteKey}>
-                사이트 식별자 확인
-              </Button>
 
               {siteKeyStatusMessage ? <Alert severity="success">{siteKeyStatusMessage}</Alert> : null}
             </Stack>
@@ -419,6 +441,7 @@ export default function Opt() {
               value={siteLabel}
               onChange={handleSiteLabelChange}
               fullWidth
+              size="small"
               helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
             />
 
@@ -455,7 +478,15 @@ export default function Opt() {
               </Button>
             </Stack>
 
-            <TextField label="요약" value={summary} onChange={handleSummaryChange} fullWidth multiline minRows={4} />
+            <TextField
+              label="요약"
+              size="small"
+              value={summary}
+              onChange={handleSummaryChange}
+              fullWidth
+              multiline
+              minRows={4}
+            />
 
             <Stack spacing={1}>
               <FormLabel>테마</FormLabel>
@@ -481,9 +512,10 @@ export default function Opt() {
             <Stack spacing={1}>
               <FormLabel>댓글 방식 (댓글 서비스 제공자)</FormLabel>
               <RadioGroup value={commentProvider} onChange={handleCommentProviderChange}>
+                <FormControlLabel value="velhub" control={<Radio />} label="velhub (데브허브 유저 전용)" />
                 <FormControlLabel value="disqus" control={<Radio />} label="disqus" />
                 <FormControlLabel value="giscus" control={<Radio />} label="giscus" />
-                <FormControlLabel value="none" control={<Radio />} label="none" />
+                <FormControlLabel value="none" control={<Radio />} label="댓글 사용 안함" />
               </RadioGroup>
             </Stack>
 
@@ -504,6 +536,7 @@ export default function Opt() {
               variant="contained"
               disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
               fullWidth
+              size="large"
             >
               블로그 개설
             </Button>
@@ -511,7 +544,9 @@ export default function Opt() {
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
             {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
 
-            <Typography variant="body2">개설이 완료되면 소유자 권한이 부여됩니다.</Typography>
+            <Alert variant="filled" severity="info">
+              개설이 완료되면 사이트 운영자 권한이 부여됩니다.
+            </Alert>
           </Stack>
         </Box>
       </Paper>

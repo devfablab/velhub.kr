@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -13,8 +13,10 @@ import {
   Paper,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { formatDate } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 
 type StatusResponse = {
   hasBoard: boolean;
@@ -50,13 +52,15 @@ type DeleteResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  contentId: string;
-};
-
-export default function Opt({ siteName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [boardName, setBoardName] = useState('');
   const [post, setPost] = useState<PostResponse['content'] | null>(null);
@@ -240,6 +244,12 @@ export default function Opt({ siteName, contentId }: Props) {
   return (
     <>
       <Stack spacing={3}>
+        {isNotMobile && (
+          <Typography variant="h4" component="h1">
+            블로그 글 보기
+          </Typography>
+        )}
+
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
         {post ? (

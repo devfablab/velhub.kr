@@ -116,6 +116,7 @@ function SortableItem({
             value={item.service}
             onChange={(event) => onServiceChange(item.localId, event.target.value as ServiceValue | '')}
             displayEmpty
+            size="small"
             sx={{ minWidth: 80, flexShrink: 0 }}
             renderValue={(selectedValue) => {
               if (!selectedValue) {
@@ -150,8 +151,11 @@ function SortableItem({
             value={item.account}
             onChange={(event) => onAccountChange(item.localId, event.target.value)}
             fullWidth
-            InputProps={{
-              startAdornment: <InputAdornment position="start">{serviceMeta?.prefix ?? ''}</InputAdornment>,
+            size="small"
+            slotProps={{
+              input: {
+                startAdornment: <InputAdornment position="start">{serviceMeta?.prefix ?? ''}</InputAdornment>,
+              },
             }}
           />
 

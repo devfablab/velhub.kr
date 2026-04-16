@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Button, Paper, Stack, Typography } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
+import { Alert, Button, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { normalizeText } from '@/lib/utils';
 
 type PageRow = {
   id: string;
@@ -18,10 +19,6 @@ type PageRow = {
   user_id: string;
   site_id: string;
   board_id: string;
-};
-
-type Props = {
-  siteName: string;
 };
 
 type SortableItemProps = {
@@ -53,7 +50,7 @@ function SortableItem({ page, onClick }: SortableItemProps) {
   );
 }
 
-export default function Opt({ siteName }: Props) {
+export default function Opt() {
   const router = useRouter();
 
   const sensors = useSensors(
@@ -63,6 +60,13 @@ export default function Opt({ siteName }: Props) {
       },
     }),
   );
+
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [pages, setPages] = useState<PageRow[]>([]);
   const [boardName, setBoardName] = useState<string | null>(null);
@@ -188,6 +192,11 @@ export default function Opt({ siteName }: Props) {
 
   return (
     <Stack spacing={2}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1">
+          페이지
+        </Typography>
+      )}
       <Stack direction="row" justifyContent="flex-end">
         <Button LinkComponent={Link} type="button" variant="contained" href={`/${siteName}/contents/pages/new`}>
           페이지 추가

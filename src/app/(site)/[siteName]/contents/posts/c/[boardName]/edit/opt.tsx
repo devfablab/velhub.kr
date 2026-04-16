@@ -1,9 +1,20 @@
 'use client';
 
 import { useEffect, useState, type JSX } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Button, InputAdornment, Paper, Stack, TextField } from '@mui/material';
+import {
+  Alert,
+  Button,
+  InputAdornment,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { normalizeText } from '@/lib/utils';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -23,11 +34,6 @@ type EditBoardResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  boardName: string;
-};
-
 function normalizeBoardKey(rawValue: string) {
   return rawValue
     .trim()
@@ -43,8 +49,15 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-export default function Opt({ siteName, boardName }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
@@ -282,6 +295,12 @@ export default function Opt({ siteName, boardName }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          게시판 수정
+        </Typography>
+      )}
+
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth />
 
@@ -290,15 +309,17 @@ export default function Opt({ siteName, boardName }: Props) {
           value={boardKey}
           onChange={handleBoardKeyChange}
           fullWidth
-          InputProps={{
-            startAdornment: <InputAdornment position="start">/contents/posts/c/</InputAdornment>,
-            endAdornment: (
-              <InputAdornment position="end">
-                <Button type="button" variant="outlined" onClick={handleCheckBoardKey} disabled={isChecking}>
-                  중복 체크
-                </Button>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: <InputAdornment position="start">/contents/posts/c/</InputAdornment>,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button type="button" variant="outlined" onClick={handleCheckBoardKey} disabled={isChecking}>
+                    중복 체크
+                  </Button>
+                </InputAdornment>
+              ),
+            },
           }}
         />
 

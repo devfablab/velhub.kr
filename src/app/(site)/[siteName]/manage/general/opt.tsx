@@ -338,7 +338,7 @@ export default function Opt() {
               direction="row"
               spacing={2}
               sx={{
-                alignItems: 'center',
+                alignItems: 'flex-start',
               }}
             >
               <TextField
@@ -346,6 +346,7 @@ export default function Opt() {
                 onChange={handleTextChange}
                 fullWidth
                 size="small"
+                helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
                 slotProps={{
                   input: {
                     startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
@@ -420,7 +421,14 @@ export default function Opt() {
           <Typography>사이트 설명</Typography>
           {editingField === 'summary' ? (
             <>
-              <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth multiline minRows={4} />
+              <TextField
+                value={String(draftValue)}
+                onChange={handleTextChange}
+                fullWidth
+                multiline
+                size="small"
+                minRows={4}
+              />
               <Stack
                 direction="row"
                 spacing={2}
@@ -458,7 +466,7 @@ export default function Opt() {
           <Typography>테마</Typography>
           {editingField === 'theme_type' ? (
             <>
-              <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth />
+              <TextField value={String(draftValue)} onChange={handleTextChange} size="small" fullWidth />
               <Stack
                 direction="row"
                 spacing={2}

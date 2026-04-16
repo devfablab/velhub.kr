@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, type JSX } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -16,13 +17,15 @@ type CreateResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  boardName: string;
-};
-
-export default function Opt({ siteName, boardName }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
@@ -88,6 +91,12 @@ export default function Opt({ siteName, boardName }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          새 글 쓰기
+        </Typography>
+      )}
+
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth />

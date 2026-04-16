@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
+import { Alert, Box, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -43,11 +44,6 @@ type EditResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  contentId: string;
-};
-
 function isSupabaseOgImageValue(value: string) {
   return value.startsWith('supabase:');
 }
@@ -56,9 +52,16 @@ function getSupabaseOgImagePath(value: string) {
   return value.replace('supabase:', '').trim();
 }
 
-export default function Opt({ siteName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [boardName, setBoardName] = useState('');
   const [slug, setSlug] = useState('');
@@ -328,6 +331,12 @@ export default function Opt({ siteName, contentId }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          블로그 글 수정
+        </Typography>
+      )}
+
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth />

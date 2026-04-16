@@ -2,9 +2,10 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
+import { Alert, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -35,14 +36,16 @@ type EditResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  boardName: string;
-  contentId: string;
-};
-
-export default function Opt({ siteName, boardName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [slug, setSlug] = useState('');
   const [subject, setSubject] = useState('');
@@ -50,8 +53,6 @@ export default function Opt({ siteName, boardName, contentId }: Props) {
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
   const [isClosed, setIsClosed] = useState(false);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -88,8 +89,6 @@ export default function Opt({ siteName, boardName, contentId }: Props) {
         setContentHtml(result.content.content_html ?? '');
         setContentMarkdown(result.content.content_markdown ?? '');
         setIsClosed(Boolean(result.content.is_closed));
-        setIsAuthor(Boolean(result.isAuthor));
-        setIsStaff(Boolean(result.isStaff));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '글을 불러오지 못했습니다.');
@@ -162,6 +161,12 @@ export default function Opt({ siteName, boardName, contentId }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          글 수정
+        </Typography>
+      )}
+
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth />

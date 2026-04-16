@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
@@ -336,6 +337,7 @@ export default function TotpSetup() {
                     type="text"
                     value={verifyCode}
                     onChange={handleVerifyCodeChange}
+                    size="small"
                     fullWidth
                   />
 

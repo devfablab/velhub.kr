@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
-import { Box, Container, Stack, Typography } from '@mui/material';
+import { Box, Container, Stack } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import StaffTabs from '@/app/(site)/[siteName]/tabs';
+import SiteContentsBreadcrumb from '../../../breadcrumb';
 import Opt from './opt';
 
 type RouteContext = {
@@ -16,25 +18,25 @@ export default async function Page(context: RouteContext) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin
+  const siteInfo = await supabaseAdmin
     .from('rhizomes')
     .select('site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
-  if (rhizome.data?.site_type !== 'community') {
+  if (siteInfo.data?.site_type !== 'community') {
     redirect(`/${normalizedSiteName}/contents/posts`);
   }
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ py: 8 }}>
+      <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
-            게시판 만들기
-          </Typography>
+          <StaffTabs pageTitle="게시판 만들기" />
 
-          <Opt siteName={normalizedSiteName} />
+          <SiteContentsBreadcrumb />
+
+          <Opt />
         </Stack>
       </Box>
     </Container>

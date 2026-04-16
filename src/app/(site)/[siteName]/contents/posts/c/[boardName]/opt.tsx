@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@mui/material/Link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   Alert,
   Button,
@@ -19,8 +18,10 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { formatDate } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 
 type ContentRow = {
   id: string;
@@ -56,11 +57,6 @@ type DeleteResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  boardName: string;
-};
-
 const PAGE_SIZE = 10;
 const PAGE_GROUP_SIZE = 5;
 
@@ -74,10 +70,17 @@ function parsePage(value: string | null) {
   return Math.floor(parsedValue);
 }
 
-export default function Opt({ siteName, boardName }: Props) {
+export default function Opt() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [boardLabel, setBoardLabel] = useState('');
   const [contents, setContents] = useState<ContentRow[]>([]);
@@ -292,6 +295,12 @@ export default function Opt({ siteName, boardName }: Props) {
   return (
     <>
       <Stack spacing={2}>
+        {isNotMobile && (
+          <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+            글 목록
+          </Typography>
+        )}
+
         <Typography>{boardLabel}</Typography>
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -311,7 +320,7 @@ export default function Opt({ siteName, boardName }: Props) {
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
         <Paper elevation={0} sx={{ overflowX: 'auto' }}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox">

@@ -2,9 +2,22 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, FormControlLabel, Paper, Stack, Switch, TextField, Typography } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  Alert,
+  Box,
+  Button,
+  FormControlLabel,
+  Paper,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
+import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -30,11 +43,6 @@ type ContentRow = {
   is_comment: boolean;
 };
 
-type Props = {
-  siteName: string;
-  contentId: string;
-};
-
 function normalizeSlug(rawValue: string) {
   return rawValue
     .trim()
@@ -58,8 +66,16 @@ function getSupabaseOgImagePath(value: string) {
   return value.replace('supabase:', '').trim();
 }
 
-export default function Opt({ siteName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
+
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -348,6 +364,12 @@ export default function Opt({ siteName, contentId }: Props) {
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          페이지 수정
+        </Typography>
+      )}
+
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <Stack spacing={1}>
           <TextField label="페이지 식별자 (필수)" value={slug} onChange={handleSlugChange} fullWidth />

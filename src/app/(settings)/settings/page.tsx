@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation';
 import { Box, Container, Stack, Typography } from '@mui/material';
-import { getSessionClaims } from '@/lib/session';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';

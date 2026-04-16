@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -14,8 +13,10 @@ import {
   Paper,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import { formatDate } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 
 type ContentResponse = {
   content: {
@@ -48,14 +49,16 @@ type DeleteResponse = {
   error?: string;
 };
 
-type Props = {
-  siteName: string;
-  boardName: string;
-  contentId: string;
-};
-
-export default function Opt({ siteName, boardName, contentId }: Props) {
+export default function Opt() {
   const router = useRouter();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
+  const contentId = normalizeText(params.contentId);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [content, setContent] = useState<ContentResponse['content'] | null>(null);
   const [isAuthor, setIsAuthor] = useState(false);
@@ -206,6 +209,12 @@ export default function Opt({ siteName, boardName, contentId }: Props) {
   return (
     <>
       <Stack spacing={3}>
+        {isNotMobile && (
+          <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+            글 보기
+          </Typography>
+        )}
+
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
         {content ? (

@@ -311,6 +311,7 @@ export default function Opt() {
             value={renameValue}
             onChange={handleRenameValueChange}
             fullWidth
+            size="small"
             sx={{ mt: 1 }}
           />
         </DialogContent>

@@ -344,7 +344,13 @@ export default function UserInfo() {
             ) : (
               <Box component="form" onSubmit={handleSubmitUserName}>
                 <Stack spacing={1.5}>
-                  <TextField label="활동명" value={userNameDraft} onChange={handleUserNameChange} fullWidth />
+                  <TextField
+                    label="활동명"
+                    size="small"
+                    value={userNameDraft}
+                    onChange={handleUserNameChange}
+                    fullWidth
+                  />
 
                   <Stack direction="row" spacing={1.5}>
                     <Button type="submit" variant="contained" disabled={isSubmittingUserName}>
@@ -368,7 +374,7 @@ export default function UserInfo() {
             {!isEditingBio ? (
               <>
                 <Typography variant="subtitle2">자기소개</Typography>
-                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{bio || '-'}</Typography>
+                {bio && <Typography sx={{ whiteSpace: 'pre-wrap' }}>{bio}</Typography>}
                 <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
                   자기소개 수정
                 </Button>
@@ -382,6 +388,7 @@ export default function UserInfo() {
                     onChange={handleBioChange}
                     fullWidth
                     multiline
+                    size="small"
                     minRows={4}
                   />
 
