@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Alert, Avatar, Box, Grid, Paper, Stack, Typography } from '@mui/material';
+import { useParams, usePathname } from 'next/navigation';
+import { Alert, Avatar, Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
 
 type StaffResponse = {
   site?: {
     avatar: string | null;
     name: string | null;
+    siteType: string;
     createdAt: string | null;
     ownerName: string | null;
   };
@@ -19,6 +20,28 @@ type StaffResponse = {
   error?: string;
 };
 
+type StaffMenuItem = {
+  label: string;
+  href: string;
+  startsWith?: boolean;
+};
+
+function getMenuValue(pathname: string, menuItems: StaffMenuItem[]) {
+  const matchedItem = menuItems.find((menuItem) => {
+    return pathname === menuItem.href || pathname.startsWith(`${menuItem.href}/`);
+  });
+
+  return matchedItem?.href ?? false;
+}
+
+function LinkButton({ label, href }: { label: string; href: string }) {
+  return (
+    <Button href={href} variant="outlined" fullWidth>
+      {label}
+    </Button>
+  );
+}
+
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -26,6 +49,7 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [siteAvatar, setSiteAvatar] = useState<string | null>(null);
+  const [siteType, setSiteType] = useState('');
   const [siteNameText, setSiteNameText] = useState('');
   const [siteCreatedAt, setSiteCreatedAt] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState('');
@@ -50,6 +74,7 @@ export default function Opt() {
 
         setSiteAvatar(result.site?.avatar ?? null);
         setSiteNameText(result.site?.name ?? '');
+        setSiteType(result.site?.siteType ?? '');
         setSiteCreatedAt(result.site?.createdAt ?? null);
         setOwnerName(result.site?.ownerName ?? '');
         setMemberCount(result.stats?.memberCount ?? 0);
@@ -78,9 +103,33 @@ export default function Opt() {
     return null;
   }
 
+  const tabItems: StaffMenuItem[] = [
+    { label: '관리 홈', href: `/${siteName}/staff` },
+    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
+    {
+      label: '디자인',
+      href: `/${siteName}/design`,
+    },
+    {
+      label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+      href: siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`,
+    },
+    { label: '콘텐츠 관리', href: `/${siteName}/contents` },
+    ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/filtered` }] : []),
+    { label: '통계', href: `/${siteName}/stats` },
+  ];
+
   return (
-    <Stack spacing={2}>
+    <Grid spacing={2}>
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+
+      <Grid container spacing={1}>
+        {tabItems.map((tabItem) => (
+          <Grid size={{ xs: 4 }} key={tabItem.href}>
+            <LinkButton key={tabItem.href} label={tabItem.label} href={tabItem.href} />
+          </Grid>
+        ))}
+      </Grid>
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
@@ -110,6 +159,6 @@ export default function Opt() {
           </Grid>
         </Grid>
       </Grid>
-    </Stack>
+    </Grid>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams, usePathname } from 'next/navigation';
 import Link from '@mui/material/Link';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { useParams, usePathname } from 'next/navigation';
 import { IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
@@ -138,7 +138,7 @@ export default function StaffTabs({ pageTitle }: Props) {
                 component="h1"
                 sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
               >
-                카페 관리
+                커뮤니티 관리
               </Typography>
             </>
           ) : (

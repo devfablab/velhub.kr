@@ -1,0 +1,36 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { useMediaQuery, useTheme } from '@mui/material';
+import { normalizeText } from '@/lib/utils';
+import HeaderSite from '@/components/headers/Site';
+
+const HIDE_PREFIXES = ['/contents', '/design', '/manage', '/staff', '/team', '/stats', '/members', '/filtered'];
+
+function shouldHideHeader(pathname: string, siteName: string) {
+  const normalizedSiteName = normalizeText(siteName);
+  const basePath = `/${normalizedSiteName}`;
+
+  return HIDE_PREFIXES.some((prefix) => {
+    const targetPath = `${basePath}${prefix}`;
+    return pathname === targetPath || pathname.startsWith(`${targetPath}/`);
+  });
+}
+
+export default function HeaderSiteGuard() {
+  const pathname = usePathname();
+  const siteName = normalizeText(pathname.split('/')[1]);
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
+
+  if (!siteName || !isMobile) {
+    return <HeaderSite />;
+  }
+
+  if (shouldHideHeader(pathname, siteName)) {
+    return null;
+  }
+
+  return <HeaderSite />;
+}

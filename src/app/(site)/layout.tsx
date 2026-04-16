@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import HeaderSite from '@/components/headers/Site';
+import HeaderSiteGuard from './[siteName]/headerSiteGuard';
 // import '../globals.sass';
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <HeaderSite />
+      <HeaderSiteGuard />
       {children}
     </>
   );

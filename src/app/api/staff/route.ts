@@ -6,12 +6,13 @@ import { normalizeText } from '@/lib/utils';
 type SiteRow = {
   id: string;
   profile_picture: string | null;
+  site_type: string;
   site_label: string | null;
-  created_at: string | null;
+  created_at: string;
 };
 
 type AccountRow = {
-  user_name: string | null;
+  user_name: string;
 };
 
 function decryptValue(value: string | null | undefined) {
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, profile_picture, site_label, created_at')
+      .select('id, profile_picture, site_type, site_label, created_at')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -112,6 +113,7 @@ export async function GET(request: Request) {
         avatar: site.profile_picture ?? null,
         name: site.site_label ?? null,
         createdAt: site.created_at ?? null,
+        siteType: site.site_type,
         ownerName,
       },
       stats: {
