@@ -305,9 +305,7 @@ export default function Opt() {
           {profilePictureUrl ? (
             <Avatar src={profilePictureUrl} alt="사이트 아바타" sx={{ width: 96, height: 96 }} />
           ) : (
-            <Avatar sx={{ width: 96, height: 96 }}>
-              <PersonIcon />
-            </Avatar>
+            <Avatar src="/broken-image.jpg" alt={rhizomes.site_label ?? ''} sx={{ width: 96, height: 96 }} />
           )}
 
           <input
