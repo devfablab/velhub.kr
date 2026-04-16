@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import { Alert, Avatar, Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, Grid, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
 
 type StaffResponse = {
@@ -45,6 +45,9 @@ function LinkButton({ label, href }: { label: string; href: string }) {
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -123,13 +126,15 @@ export default function Opt() {
     <Grid spacing={2}>
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
-      <Grid container spacing={1}>
-        {tabItems.map((tabItem) => (
-          <Grid size={{ xs: 4 }} key={tabItem.href}>
-            <LinkButton key={tabItem.href} label={tabItem.label} href={tabItem.href} />
-          </Grid>
-        ))}
-      </Grid>
+      {isMobile && (
+        <Grid container spacing={1}>
+          {tabItems.map((tabItem) => (
+            <Grid size={{ xs: 4 }} key={tabItem.href}>
+              <LinkButton key={tabItem.href} label={tabItem.label} href={tabItem.href} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
