@@ -9,6 +9,8 @@ import {
   FormControlLabel,
   InputAdornment,
   Paper,
+  Radio,
+  RadioGroup,
   Stack,
   styled,
   Switch,
@@ -487,7 +489,9 @@ export default function Opt() {
           <Typography>테마</Typography>
           {editingField === 'theme_type' ? (
             <>
-              <TextField value={String(draftValue)} onChange={handleTextChange} size="small" fullWidth />
+              <RadioGroup value={String(draftValue || 'default')} onChange={handleTextChange}>
+                <FormControlLabel value="default" control={<Radio />} label="default" />
+              </RadioGroup>
               <Stack
                 direction="row"
                 spacing={2}
