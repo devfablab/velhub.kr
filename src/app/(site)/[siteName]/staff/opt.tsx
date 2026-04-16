@@ -107,7 +107,7 @@ export default function Opt() {
   }
 
   const tabItems: StaffMenuItem[] = [
-    { label: '관리 홈', href: `/${siteName}/staff` },
+    ...(siteType === 'blog' ? [{ label: '블로그 이동', href: `/${siteName}` }] : []),
     { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
     {
       label: '디자인',
