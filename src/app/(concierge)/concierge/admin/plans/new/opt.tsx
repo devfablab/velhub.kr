@@ -126,7 +126,11 @@ export default function Opt() {
           저장
         </Button>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
       </Stack>
     </Paper>
   );

@@ -500,7 +500,11 @@ export default function Opt() {
                 }}
               />
 
-              {siteKeyStatusMessage ? <Alert severity="success">{siteKeyStatusMessage}</Alert> : null}
+              {siteKeyStatusMessage ? (
+                <Alert severity="success" variant="outlined">
+                  {siteKeyStatusMessage}
+                </Alert>
+              ) : null}
             </Stack>
 
             <Stack spacing={1.5}>
@@ -530,7 +534,11 @@ export default function Opt() {
                 }}
               />
 
-              {siteLabelStatusMessage ? <Alert severity="success">{siteLabelStatusMessage}</Alert> : null}
+              {siteLabelStatusMessage ? (
+                <Alert severity="success" variant="outlined">
+                  {siteLabelStatusMessage}
+                </Alert>
+              ) : null}
             </Stack>
 
             <Stack spacing={1.5} alignItems="flex-start">
@@ -628,8 +636,16 @@ export default function Opt() {
               블로그 개설
             </Button>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
 
             <Alert variant="filled" severity="info">
               개설이 완료되면 사이트 운영자 권한이 부여됩니다.

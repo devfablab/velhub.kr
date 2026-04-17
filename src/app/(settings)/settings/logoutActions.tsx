@@ -149,7 +149,11 @@ export default function LogoutActions() {
               모든 디바이스 로그아웃
             </Button>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
           </Stack>
         </AccordionDetails>
       </Accordion>

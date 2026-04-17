@@ -588,7 +588,11 @@ export default function Opt() {
           )}
         </Stack>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
 
         {isBoardOrderChanged ? <Alert severity="warning">순서를 변경하시면 반드시 저장을 눌러주세요.</Alert> : null}
 
@@ -651,7 +655,11 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       {posts.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>

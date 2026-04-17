@@ -491,7 +491,11 @@ export default function Opt() {
                 />
               </Stack>
 
-              {siteKeyStatusMessage ? <Alert severity="success">{siteKeyStatusMessage}</Alert> : null}
+              {siteKeyStatusMessage ? (
+                <Alert severity="success" variant="outlined">
+                  {siteKeyStatusMessage}
+                </Alert>
+              ) : null}
             </Stack>
 
             <TextField
@@ -624,8 +628,16 @@ export default function Opt() {
               커뮤니티 개설
             </Button>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
 
             <Alert variant="filled" severity="info">
               개설이 완료되면 사이트 운영자 권한이 부여됩니다.

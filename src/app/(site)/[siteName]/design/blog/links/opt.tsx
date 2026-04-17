@@ -361,7 +361,11 @@ export default function Opt() {
         </Typography>
       )}
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>

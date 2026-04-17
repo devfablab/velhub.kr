@@ -299,8 +299,16 @@ export default function Opt() {
           </Button>
         </Stack>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-        {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
+        {successMessage ? (
+          <Alert severity="success" variant="outlined">
+            {successMessage}
+          </Alert>
+        ) : null}
       </Stack>
 
       <Dialog open={Boolean(renameTarget)} onClose={handleCloseRenameDialog} fullWidth maxWidth="xs">

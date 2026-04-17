@@ -68,7 +68,11 @@ export default function SectionJoinSites() {
   }
 
   if (errorMessage) {
-    return <Alert severity="error">{errorMessage}</Alert>;
+    return (
+      <Alert severity="error" variant="filled">
+        {errorMessage}
+      </Alert>
+    );
   }
 
   if (!isLoggedIn) {

@@ -192,7 +192,11 @@ export default function Opt() {
         </Table>
       </Paper>
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       <Dialog open={Boolean(deleteTarget)} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
         <DialogTitle>요금제를 삭제합니다</DialogTitle>

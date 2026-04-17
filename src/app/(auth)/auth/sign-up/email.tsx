@@ -283,7 +283,11 @@ export default function EmailSignUp() {
             </Link>
           </Box>
 
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
         </Stack>
       </Box>
     </Paper>

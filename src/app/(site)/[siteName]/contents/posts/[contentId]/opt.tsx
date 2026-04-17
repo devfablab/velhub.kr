@@ -250,7 +250,11 @@ export default function Opt() {
           </Typography>
         )}
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
 
         {post ? (
           <Paper elevation={0} sx={{ p: 3 }}>

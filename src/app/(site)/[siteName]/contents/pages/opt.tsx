@@ -219,7 +219,11 @@ export default function Opt() {
         </DndContext>
       )}
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       <Button component={Link} href="/settings" underline="none" variant="outlined">
         설정으로 이동

@@ -284,19 +284,9 @@ export default function TotpSetup() {
 
         <AccordionDetails>
           <Stack spacing={2.5}>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={() => void handleSetOrReset()}
-              disabled={isSetting}
-              fullWidth
-            >
-              {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
-            </Button>
-
             {pendingSetup ? (
               <Stack spacing={2.5}>
-                <Typography variant="body2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
+                <Typography variant="subtitle2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
 
                 {qrCodeImageSource ? (
                   <Box
@@ -311,18 +301,20 @@ export default function TotpSetup() {
                   />
                 ) : null}
 
-                <Typography variant="body2">QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</Typography>
+                <Typography variant="subtitle2">QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</Typography>
 
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     wordBreak: 'break-all',
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold',
                   }}
                 >
                   {pendingSetup.secret}
                 </Typography>
 
-                <Alert severity="info">
+                <Alert severity="warning" variant="filled">
                   앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
                 </Alert>
 
@@ -345,10 +337,28 @@ export default function TotpSetup() {
                   </Stack>
                 </Box>
               </Stack>
-            ) : null}
+            ) : (
+              <Button
+                type="button"
+                variant="contained"
+                onClick={() => void handleSetOrReset()}
+                disabled={isSetting}
+                fullWidth
+              >
+                {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
+              </Button>
+            )}
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
           </Stack>
         </AccordionDetails>
       </Accordion>

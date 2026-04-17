@@ -358,8 +358,16 @@ export default function EmailSignIn() {
               </Link>
             </Box>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {decisionState === 'idle' && decisionMessage ? <Alert severity="success">{decisionMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {decisionState === 'idle' && decisionMessage ? (
+              <Alert severity="success" variant="outlined">
+                {decisionMessage}
+              </Alert>
+            ) : null}
           </Stack>
         </Box>
       </Paper>

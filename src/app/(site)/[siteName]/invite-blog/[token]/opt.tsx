@@ -197,7 +197,11 @@ export default function Opt({ siteName, token }: Props) {
   return (
     <Paper sx={{ p: 3 }}>
       <Stack spacing={3}>
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
 
         {invite ? (
           <>
@@ -223,7 +227,9 @@ export default function Opt({ siteName, token }: Props) {
 
             {isMatchedUser ? (
               <Stack spacing={1.5}>
-                <Alert severity="success">현재 로그인한 계정으로 초대를 수락할 수 있습니다.</Alert>
+                <Alert severity="success" variant="outlined">
+                  현재 로그인한 계정으로 초대를 수락할 수 있습니다.
+                </Alert>
                 <Box>
                   <Button type="button" variant="contained" onClick={handleJoin} disabled={isSubmitting}>
                     초대 수락하기

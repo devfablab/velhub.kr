@@ -427,7 +427,11 @@ export default function Opt() {
           </Button>
         </Stack>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
       </Stack>
     </Paper>
   );

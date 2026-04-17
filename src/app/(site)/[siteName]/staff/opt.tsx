@@ -116,7 +116,11 @@ export default function Opt() {
 
   return (
     <Grid spacing={2}>
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       {isMobile && (
         <Grid container spacing={1}>

@@ -159,7 +159,11 @@ export default function Opt() {
   }
 
   if (!content) {
-    return errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null;
+    return errorMessage ? (
+      <Alert severity="error" variant="filled">
+        {errorMessage}
+      </Alert>
+    ) : null;
   }
 
   return (
@@ -252,7 +256,11 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
         <DialogTitle>페이지를 삭제합니다</DialogTitle>

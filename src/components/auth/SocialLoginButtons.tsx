@@ -127,7 +127,11 @@ export default function SocialLoginButtons() {
           GitHub 아이디로 {actionText}
         </Button>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
       </Stack>
     </Paper>
   );

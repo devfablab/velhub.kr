@@ -317,7 +317,11 @@ export default function Opt() {
           </Button>
         </Stack>
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
 
         <Paper elevation={0} sx={{ overflowX: 'auto' }}>
           <Table size="small">

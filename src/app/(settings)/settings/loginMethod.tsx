@@ -174,8 +174,16 @@ export default function LoginMethod() {
               기본 로그인 방식 변경
             </Button>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
           </Stack>
         </AccordionDetails>
       </Accordion>

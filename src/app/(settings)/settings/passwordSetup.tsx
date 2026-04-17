@@ -148,8 +148,16 @@ export default function PasswordSetup() {
               비밀번호 설정 메일 보내기
             </Button>
 
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
           </Stack>
         </AccordionDetails>
       </Accordion>

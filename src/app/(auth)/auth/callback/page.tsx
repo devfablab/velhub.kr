@@ -384,7 +384,11 @@ export default function Page() {
                 <Typography>로그인 정보를 확인하고 있습니다.</Typography>
               ) : null}
 
-              {processingState === 'failed' ? <Alert severity="error">{errorMessage}</Alert> : null}
+              {processingState === 'failed' ? (
+                <Alert severity="error" variant="filled">
+                  {errorMessage}
+                </Alert>
+              ) : null}
             </Paper>
           </Stack>
         </Box>
