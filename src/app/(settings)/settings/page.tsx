@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Typography } from '@mui/material';
+import { Box, Container, Grid, Link, Stack, Typography } from '@mui/material';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';
@@ -10,9 +10,14 @@ export default async function Page() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
-        <Typography variant="h4" component="h1">
-          개인정보 설정
-        </Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
+          <Typography variant="h5" component="h1">
+            개인정보 설정
+          </Typography>
+          <Link href="/settings/advanced" color="primary" variant="subtitle2" underline="always">
+            추가설정
+          </Link>
+        </Stack>
 
         <Grid container spacing={2} sx={{ marginTop: 3 }}>
           <UserInfo />

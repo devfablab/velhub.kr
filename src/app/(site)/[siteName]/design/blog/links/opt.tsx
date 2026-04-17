@@ -356,7 +356,7 @@ export default function Opt() {
   return (
     <Stack spacing={3}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           소셜 링크 관리
         </Typography>
       )}

@@ -182,6 +182,15 @@ export default function ThemeProviderClient({
             },
           },
         },
+        MuiFormLabel: {
+          styleOverrides: {
+            root: {
+              fontFamily: 'var(--neo)',
+              fontWeight: 600,
+              fontVariationSettings: '"wght" 600',
+            },
+          },
+        },
       },
     });
   }, [themeMode]);

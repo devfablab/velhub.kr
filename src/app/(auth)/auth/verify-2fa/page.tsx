@@ -136,7 +136,7 @@ export default function Page() {
       <Container maxWidth="sm">
         <Box sx={{ py: 8 }}>
           <Stack spacing={4}>
-            <Typography variant="h4" component="h1">
+            <Typography variant="h5" component="h1">
               2단계 인증 확인
             </Typography>
 
@@ -153,7 +153,7 @@ export default function Page() {
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
         <Stack spacing={4}>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h5" component="h1">
             2단계 인증 확인
           </Typography>
 

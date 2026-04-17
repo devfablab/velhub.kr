@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function PasswordSetup() {
   const supabase = getSupabaseBrowser();
@@ -102,7 +103,13 @@ export default function PasswordSetup() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Grid size={12}>
+        <Stack justifyContent="center" alignItems="center">
+          <LoadingIndicator />
+        </Stack>
+      </Grid>
+    );
   }
 
   if (hasPassword) {

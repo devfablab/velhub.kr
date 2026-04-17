@@ -569,7 +569,7 @@ export default function Opt() {
     return (
       <Stack spacing={2}>
         {isNotMobile && (
-          <Typography variant="h4" component="h1">
+          <Typography variant="h5" component="h1">
             게시판 목록
           </Typography>
         )}
@@ -636,7 +636,7 @@ export default function Opt() {
   return (
     <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           {siteType === 'blog' ? '블로그 글 목록' : '게시판 목록'}
         </Typography>
       )}

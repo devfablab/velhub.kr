@@ -273,7 +273,7 @@ export default function Opt() {
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           메뉴 설정
         </Typography>
       )}

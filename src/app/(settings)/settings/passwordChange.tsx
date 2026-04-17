@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -177,7 +178,13 @@ export default function PasswordChange() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Grid size={12}>
+        <Stack justifyContent="center" alignItems="center">
+          <LoadingIndicator />
+        </Stack>
+      </Grid>
+    );
   }
 
   if (!hasPassword) {

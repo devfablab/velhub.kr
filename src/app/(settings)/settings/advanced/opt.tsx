@@ -1,23 +1,25 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Alert,
+  Box,
   Button,
   FormControlLabel,
   FormLabel,
-  Paper,
-  Radio,
-  RadioGroup,
   Snackbar,
   Stack,
   Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
-
-type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type AdvancedUserResponse = {
   profile?: {
@@ -36,12 +38,14 @@ export default function Opt() {
   const [themeMode, setLocalThemeMode] = useState<ThemeMode>('system');
   const [autoLogin, setAutoLogin] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
 
   useEffect(() => {
     async function loadInfo() {
       try {
         setErrorMessage('');
+        setSuccessMessage('');
 
         const response = await fetch('/api/info/advanced/user', {
           method: 'GET',
@@ -63,8 +67,10 @@ export default function Opt() {
         setAutoLogin(result.profile.auto_login);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
+          setIsSnackbarOpen(true);
           setErrorMessage(unknownError.message || '추가 설정 정보를 불러오지 못했습니다.');
         } else {
+          setIsSnackbarOpen(true);
           setErrorMessage('추가 설정 정보를 불러오지 못했습니다.');
         }
       } finally {
@@ -75,17 +81,15 @@ export default function Opt() {
     void loadInfo();
   }, [router]);
 
-  function handleThemeModeChange(event: InputChangeEvent) {
-    const nextValue = event.currentTarget.value;
-
-    if (nextValue !== 'light' && nextValue !== 'system' && nextValue !== 'dark') {
+  function handleThemeModeChange(_event: React.MouseEvent<HTMLElement>, nextValue: ThemeMode | null) {
+    if (!nextValue) {
       return;
     }
 
     setLocalThemeMode(nextValue);
   }
 
-  function handleAutoLoginChange(event: InputChangeEvent) {
+  function handleAutoLoginChange(event: React.ChangeEvent<HTMLInputElement>) {
     setAutoLogin(event.currentTarget.checked);
   }
 
@@ -96,6 +100,7 @@ export default function Opt() {
 
     try {
       setErrorMessage('');
+      setSuccessMessage('');
       setIsSubmitting(true);
 
       const response = await fetch('/api/info/advanced/user/edit', {
@@ -122,11 +127,14 @@ export default function Opt() {
       }
 
       setThemeMode(themeMode);
+      setSuccessMessage('설정 수정에 성공했습니다');
       setIsSnackbarOpen(true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
+        setIsSnackbarOpen(true);
         setErrorMessage(unknownError.message || '추가 설정 수정에 실패했습니다.');
       } else {
+        setIsSnackbarOpen(true);
         setErrorMessage('추가 설정 수정에 실패했습니다.');
       }
     } finally {
@@ -135,60 +143,81 @@ export default function Opt() {
   }
 
   function handleCloseSnackbar() {
+    setSuccessMessage('');
+    setErrorMessage('');
     setIsSnackbarOpen(false);
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Stack sx={{ marginTop: 12 }} justifyContent="center" alignItems="center">
+        <LoadingIndicator />
+      </Stack>
+    );
   }
 
   return (
-    <>
-      <Paper elevation={0} sx={{ p: 3 }}>
-        <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
-            추가 설정
-          </Typography>
+    <Stack spacing={3} sx={{ marginTop: 3 }}>
+      <Stack spacing={1}>
+        <FormLabel>테마 모드</FormLabel>
 
-          <Stack spacing={1}>
-            <FormLabel>테마 모드</FormLabel>
-            <RadioGroup value={themeMode} onChange={handleThemeModeChange}>
-              <FormControlLabel value="light" control={<Radio />} label="라이트" />
-              <FormControlLabel value="system" control={<Radio />} label="시스템" />
-              <FormControlLabel value="dark" control={<Radio />} label="다크" />
-            </RadioGroup>
-          </Stack>
+        <Box sx={{ width: '100%' }}>
+          <ToggleButtonGroup
+            value={themeMode}
+            exclusive
+            onChange={handleThemeModeChange}
+            fullWidth
+            aria-label="테마 모드"
+          >
+            <ToggleButton value="light" aria-label="라이트모드">
+              <Stack direction="row" spacing={1} alignItems="center">
+                <LightModeIcon fontSize="small" />
+                <Typography>Light</Typography>
+              </Stack>
+            </ToggleButton>
 
-          <Stack spacing={1}>
-            <FormLabel>자동 로그인</FormLabel>
-            <FormControlLabel
-              control={<Switch checked={autoLogin} onChange={handleAutoLoginChange} />}
-              label={autoLogin ? '사용함 (7일)' : '사용 안함 (24시간)'}
-            />
-          </Stack>
+            <ToggleButton value="system" aria-label="시스템설정">
+              <Stack direction="row" spacing={1} alignItems="center">
+                <SettingsBrightnessIcon fontSize="small" />
+                <Typography>System</Typography>
+              </Stack>
+            </ToggleButton>
 
-          <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-            수정 완료
-          </Button>
+            <ToggleButton value="dark" aria-label="다크모드">
+              <Stack direction="row" spacing={1} alignItems="center">
+                <DarkModeIcon fontSize="small" />
+                <Typography>Dark</Typography>
+              </Stack>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      </Stack>
 
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
-        </Stack>
-      </Paper>
+      <Stack spacing={1}>
+        <FormLabel>자동 로그인</FormLabel>
+        <FormControlLabel
+          control={<Switch checked={autoLogin} onChange={handleAutoLoginChange} />}
+          label={autoLogin ? '사용함 (7일)' : '사용 안함 (24시간)'}
+        />
+      </Stack>
+
+      <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+        수정 완료
+      </Button>
 
       <Snackbar
         open={isSnackbarOpen}
-        autoHideDuration={3000}
         onClose={handleCloseSnackbar}
+        autoHideDuration={3000}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        message={errorMessage ? undefined : successMessage || undefined}
       >
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
-          설정 수정에 성공했습니다
-        </Alert>
+        {errorMessage ? (
+          <Alert onClose={handleCloseSnackbar} severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : undefined}
       </Snackbar>
-    </>
+    </Stack>
   );
 }

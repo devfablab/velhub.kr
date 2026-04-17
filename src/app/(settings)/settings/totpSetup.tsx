@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -249,7 +250,13 @@ export default function TotpSetup() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Grid size={12}>
+        <Stack justifyContent="center" alignItems="center">
+          <LoadingIndicator />
+        </Stack>
+      </Grid>
+    );
   }
 
   let statusLabel = '미설정';
