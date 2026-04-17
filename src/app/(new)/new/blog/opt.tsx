@@ -85,6 +85,7 @@ export default function Opt() {
   const [siteKey, setSiteKey] = useState('');
   const [siteKeyStatusMessage, setSiteKeyStatusMessage] = useState('');
   const [siteLabel, setSiteLabel] = useState('');
+  const [siteLabelStatusMessage, setSiteLabelStatusMessage] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [summary, setSummary] = useState('');
@@ -96,6 +97,7 @@ export default function Opt() {
   const [planType, setPlanType] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
+  const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
@@ -167,6 +169,9 @@ export default function Opt() {
 
   function handleSiteLabelChange(event: InputChangeEvent) {
     setSiteLabel(event.currentTarget.value);
+    setSiteLabelStatusMessage('');
+    setErrorMessage('');
+    setSuccessMessage('');
   }
 
   function handleSummaryChange(event: TextAreaChangeEvent | InputChangeEvent) {
@@ -263,6 +268,54 @@ export default function Opt() {
     }
   }
 
+  async function handleCheckSiteLabel() {
+    if (isCheckingSiteLabel) {
+      return;
+    }
+
+    const trimmedSiteLabel = siteLabel.trim();
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setSiteLabelStatusMessage('');
+
+    if (!trimmedSiteLabel) {
+      openErrorDialog('사이트명을 입력해주세요.');
+      return;
+    }
+
+    setIsCheckingSiteLabel(true);
+
+    try {
+      const response = await fetch('/api/site/check-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteLabel: trimmedSiteLabel,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '사이트명 확인에 실패했습니다.');
+      }
+
+      setSiteLabelStatusMessage('사용 가능한 사이트명입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        openErrorDialog(unknownError.message || '사이트명 확인에 실패했습니다.');
+      } else {
+        openErrorDialog('사이트명 확인에 실패했습니다.');
+      }
+    } finally {
+      setIsCheckingSiteLabel(false);
+    }
+  }
+
   async function handleProfilePictureFileChange(event: InputChangeEvent) {
     const inputElement = event.currentTarget;
     const selectedFile = inputElement.files?.[0];
@@ -344,7 +397,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans) {
+    if (isSubmitting || isCheckingSiteKey || isCheckingSiteLabel || isUploadingAvatar || isLoadingPlans) {
       return;
     }
 
@@ -356,6 +409,7 @@ export default function Opt() {
     setErrorMessage('');
     setSuccessMessage('');
     setSiteKeyStatusMessage('');
+    setSiteLabelStatusMessage('');
 
     if (!normalizedSiteKey) {
       openErrorDialog('사이트 식별자를 입력해주세요.');
@@ -449,14 +503,35 @@ export default function Opt() {
               {siteKeyStatusMessage ? <Alert severity="success">{siteKeyStatusMessage}</Alert> : null}
             </Stack>
 
-            <TextField
-              label="사이트명"
-              value={siteLabel}
-              onChange={handleSiteLabelChange}
-              fullWidth
-              size="small"
-              helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
-            />
+            <Stack spacing={1.5}>
+              <TextField
+                label="사이트명"
+                value={siteLabel}
+                onChange={handleSiteLabelChange}
+                fullWidth
+                size="small"
+                helperText="입력하지 않으면 사이트 식별자를 기준으로 자동 생성됩니다."
+                slotProps={{
+                  input: {
+                    endAdornment: siteLabel.trim() ? (
+                      <InputAdornment position="end">
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          onClick={handleCheckSiteLabel}
+                          disabled={isCheckingSiteLabel}
+                          size="small"
+                        >
+                          중복 확인
+                        </Button>
+                      </InputAdornment>
+                    ) : undefined,
+                  },
+                }}
+              />
+
+              {siteLabelStatusMessage ? <Alert severity="success">{siteLabelStatusMessage}</Alert> : null}
+            </Stack>
 
             <Stack spacing={1.5} alignItems="flex-start">
               {profilePictureUrl ? (
@@ -546,7 +621,7 @@ export default function Opt() {
             <Button
               type="submit"
               variant="contained"
-              disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
+              disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel || isUploadingAvatar || isLoadingPlans}
               fullWidth
               size="large"
             >

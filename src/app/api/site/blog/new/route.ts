@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
@@ -44,6 +45,46 @@ function isCommentProvider(value: unknown): value is CommentProvider {
   return value === 'none' || value === 'giscus' || value === 'disqus' || value === 'velhub';
 }
 
+async function resolveUniqueSiteLabel(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, baseLabel: string) {
+  const normalizedBaseLabel = normalizeText(baseLabel);
+
+  if (!normalizedBaseLabel) {
+    return '';
+  }
+
+  const exactResult = await supabaseAdmin
+    .from('rhizomes')
+    .select('id')
+    .eq('site_label', normalizedBaseLabel)
+    .maybeSingle();
+
+  if (exactResult.error) {
+    throw new Error('사이트명 확인에 실패했습니다.');
+  }
+
+  if (!exactResult.data) {
+    return normalizedBaseLabel;
+  }
+
+  const likePattern = `${normalizedBaseLabel}%`;
+
+  const similarResult = await supabaseAdmin.from('rhizomes').select('site_label').like('site_label', likePattern);
+
+  if (similarResult.error) {
+    throw new Error('사이트명 확인에 실패했습니다.');
+  }
+
+  const usedLabels = new Set((similarResult.data ?? []).map((row) => normalizeText(row.site_label)).filter(Boolean));
+
+  let nextNumber = 1;
+
+  while (usedLabels.has(`${normalizedBaseLabel}${nextNumber}`)) {
+    nextNumber += 1;
+  }
+
+  return `${normalizedBaseLabel}${nextNumber}`;
+}
+
 export async function POST(request: Request) {
   try {
     const sessionClaims = await getSessionClaims();
@@ -55,7 +96,7 @@ export async function POST(request: Request) {
     const requestBody = (await request.json()) as RequestBody;
 
     const normalizedSiteKey = normalizeSiteKey(requestBody.siteKey?.trim() ?? '');
-    const trimmedSiteLabel = requestBody.siteLabel?.trim() ?? '';
+    const trimmedSiteLabel = normalizeText(requestBody.siteLabel);
     const trimmedProfilePicture = requestBody.profilePicture?.trim() ?? '';
     const trimmedSummary = requestBody.summary?.trim() ?? '';
     const trimmedPlanType = requestBody.planType?.trim() ?? '';
@@ -88,8 +129,6 @@ export async function POST(request: Request) {
     if (!trimmedPlanType) {
       return Response.json({ error: '요금제를 선택해주세요.' }, { status: 400 });
     }
-
-    const finalSiteLabel = trimmedSiteLabel || normalizedSiteKey;
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -156,6 +195,28 @@ export async function POST(request: Request) {
       return Response.json({ error: '유효하지 않은 요금제입니다.' }, { status: 400 });
     }
 
+    let finalSiteLabel = '';
+
+    if (trimmedSiteLabel) {
+      const siteLabelResult = await supabaseAdmin
+        .from('rhizomes')
+        .select('id')
+        .eq('site_label', trimmedSiteLabel)
+        .maybeSingle();
+
+      if (siteLabelResult.error) {
+        return Response.json({ error: '사이트명 확인에 실패했습니다.' }, { status: 500 });
+      }
+
+      if (siteLabelResult.data) {
+        return Response.json({ error: '이미 사용 중인 사이트명입니다.' }, { status: 400 });
+      }
+
+      finalSiteLabel = trimmedSiteLabel;
+    } else {
+      finalSiteLabel = await resolveUniqueSiteLabel(supabaseAdmin, normalizedSiteKey);
+    }
+
     const rpcResult = await supabaseAdmin.rpc('create_blog_site', {
       p_owner_particle_id: particlesResult.data.id,
       p_owner_stigma_id: stigmaResult.data.id,
@@ -179,6 +240,7 @@ export async function POST(request: Request) {
       ok: true,
       siteId: rpcResult.data,
       siteKey: normalizedSiteKey,
+      siteLabel: finalSiteLabel,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

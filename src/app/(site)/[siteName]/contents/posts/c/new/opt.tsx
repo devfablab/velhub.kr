@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
 import {
@@ -58,6 +58,7 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('');
 
   function handleBoardLabelChange(event: InputChangeEvent) {
     setBoardLabel(event.currentTarget.value);
@@ -217,6 +218,10 @@ export default function Opt() {
     }
   }
 
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
       {isNotMobile && (
@@ -233,9 +238,14 @@ export default function Opt() {
           value={boardKey}
           onChange={handleBoardKeyChange}
           fullWidth
+          helperText={`관리자용: ${baseUrl}/${siteName}/contents/posts/c/${boardKey}`}
           slotProps={{
             input: {
-              startAdornment: <InputAdornment position="start">/contents/posts/c/</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">
+                  {baseUrl}/{siteName}/
+                </InputAdornment>
+              ),
               endAdornment: (
                 <InputAdornment position="end">
                   <Button type="button" variant="outlined" onClick={handleCheckBoardKey} disabled={isChecking}>
