@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const Pre = localFont({
   src: './fonts/PretendardVariable.woff2',
   style: 'normal',
-  variable: '--square',
+  variable: '--pre',
 });
 
 const Neo = localFont({
