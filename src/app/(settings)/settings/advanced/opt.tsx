@@ -201,7 +201,7 @@ export default function Opt() {
         />
       </Stack>
 
-      <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+      <Button type="button" variant="contained" size="large" onClick={handleSubmit} disabled={isSubmitting}>
         수정 완료
       </Button>
 

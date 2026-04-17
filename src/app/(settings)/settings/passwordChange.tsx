@@ -248,7 +248,7 @@ export default function PasswordChange() {
                 비밀번호 변경시 자동으로 로그아웃됩니다.
               </Alert>
 
-              <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+              <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth size="large">
                 비밀번호 변경
               </Button>
 

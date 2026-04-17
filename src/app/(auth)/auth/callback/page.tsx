@@ -16,6 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ProcessingState = 'idle' | 'processing' | 'confirm' | 'failed';
 
@@ -371,29 +372,31 @@ export default function Page() {
   }
 
   return (
-    <>
-      <Container maxWidth="sm">
-        <Box sx={{ py: 8 }}>
-          <Stack spacing={4}>
-            <Typography variant="h5" component="h1">
-              소셜 로그인 처리
-            </Typography>
+    <Container maxWidth="sm">
+      <Box sx={{ py: 8 }}>
+        <Stack spacing={4}>
+          <Typography variant="h5" component="h1">
+            소셜 로그인 처리
+          </Typography>
 
-            <Paper elevation={0} sx={{ p: 3 }}>
-              {processingState === 'idle' || processingState === 'processing' ? (
-                <Typography>로그인 정보를 확인하고 있습니다.</Typography>
-              ) : null}
-
-              {processingState === 'failed' ? (
-                <Alert severity="error" variant="filled">
-                  {errorMessage}
+          <Paper elevation={0} sx={{ p: 3 }}>
+            {processingState === 'idle' || processingState === 'processing' ? (
+              <Stack spacing={5} alignItems="center">
+                <Alert variant="outlined" severity="info">
+                  로그인 정보를 확인하고 있습니다.
                 </Alert>
-              ) : null}
-            </Paper>
-          </Stack>
-        </Box>
-      </Container>
+                <LoadingIndicator />
+              </Stack>
+            ) : null}
 
+            {processingState === 'failed' ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+          </Paper>
+        </Stack>
+      </Box>
       <Dialog open={processingState === 'confirm'} onClose={handleCancelSocialLogin} fullWidth maxWidth="xs">
         <DialogTitle>소셜 로그인 확인</DialogTitle>
         <DialogContent>
@@ -408,6 +411,6 @@ export default function Page() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Container>
   );
 }
