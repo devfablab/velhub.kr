@@ -7,7 +7,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Alert,
-  Box,
   Button,
   Dialog,
   DialogActions,

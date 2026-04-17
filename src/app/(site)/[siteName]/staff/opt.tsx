@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Alert, Avatar, Box, Button, Grid, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
 
@@ -25,14 +25,6 @@ type StaffMenuItem = {
   href: string;
   startsWith?: boolean;
 };
-
-function getMenuValue(pathname: string, menuItems: StaffMenuItem[]) {
-  const matchedItem = menuItems.find((menuItem) => {
-    return pathname === menuItem.href || pathname.startsWith(`${menuItem.href}/`);
-  });
-
-  return matchedItem?.href ?? false;
-}
 
 function LinkButton({ label, href }: { label: string; href: string }) {
   return (

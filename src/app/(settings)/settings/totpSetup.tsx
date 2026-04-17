@@ -42,7 +42,6 @@ export default function TotpSetup() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSetting, setIsSetting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
 
   const [currentLevel, setCurrentLevel] = useState<AssuranceLevel>(null);
   const [totpFactors, setTotpFactors] = useState<TotpFactor[]>([]);
@@ -140,7 +139,7 @@ export default function TotpSetup() {
   }
 
   async function handleSetOrReset() {
-    if (isSetting || isRemoving) {
+    if (isSetting) {
       return;
     }
 
@@ -289,7 +288,7 @@ export default function TotpSetup() {
               type="button"
               variant="contained"
               onClick={() => void handleSetOrReset()}
-              disabled={isSetting || isRemoving}
+              disabled={isSetting}
               fullWidth
             >
               {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}

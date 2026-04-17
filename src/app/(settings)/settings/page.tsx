@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Stack, Typography } from '@mui/material';
+import { Box, Container, Grid, Typography } from '@mui/material';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';
