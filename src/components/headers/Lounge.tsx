@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -26,10 +26,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PersonIcon from '@mui/icons-material/Person';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 
 type HeaderResponse = {
   isLoggedIn: boolean;
@@ -52,6 +52,7 @@ export default function HeaderLounge() {
   const isMobile = !isNotMobile;
 
   const { themeMode, setThemeMode } = useThemeMode();
+  const { isReady, authVersion } = useAuthState();
 
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
@@ -64,8 +65,6 @@ export default function HeaderLounge() {
     avatarUrl: null,
     isLoggedIn: false,
   });
-
-  const supabase = useMemo(() => getSupabaseBrowser(), []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -102,18 +101,12 @@ export default function HeaderLounge() {
       }
     }
 
+    if (!isReady) {
+      return;
+    }
+
     void loadHeader();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      await loadHeader();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setThemeMode, supabase]);
+  }, [authVersion, isReady, setThemeMode]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -159,6 +152,7 @@ export default function HeaderLounge() {
     handleCloseProfileMenu();
     handleCloseProfileDrawer();
 
+    const supabase = getSupabaseBrowser();
     const signOutResult = await supabase.auth.signOut({
       scope: 'local',
     });
@@ -182,7 +176,7 @@ export default function HeaderLounge() {
     return <BrightnessAutoIcon />;
   }
 
-  if (!isMounted) {
+  if (!isMounted || !isReady) {
     return null;
   }
 

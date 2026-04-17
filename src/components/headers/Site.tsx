@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -27,7 +27,6 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PersonIcon from '@mui/icons-material/Person';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -40,6 +39,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import { normalizeText } from '@/lib/utils';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 
 type SiteType = 'blog' | 'community';
@@ -66,18 +67,6 @@ type UserProfile = {
   siteRole: string | null;
 };
 
-function normalizeText(value: string | string[] | undefined) {
-  if (typeof value === 'string') {
-    return value.trim();
-  }
-
-  if (Array.isArray(value)) {
-    return value[0]?.trim() ?? '';
-  }
-
-  return '';
-}
-
 function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
 }
@@ -91,6 +80,7 @@ export default function HeaderSite() {
   const isMobile = !isNotMobile;
 
   const { themeMode, setThemeMode } = useThemeMode();
+  const { isReady, authVersion } = useAuthState();
 
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
@@ -106,8 +96,6 @@ export default function HeaderSite() {
     globalRole: null,
     siteRole: null,
   });
-
-  const supabase = useMemo(() => getSupabaseBrowser(), []);
 
   useEffect(() => {
     setIsMounted(true);
@@ -155,18 +143,12 @@ export default function HeaderSite() {
       }
     }
 
+    if (!isReady) {
+      return;
+    }
+
     void loadHeader();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
-      await loadHeader();
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [setThemeMode, siteName, supabase]);
+  }, [authVersion, isReady, setThemeMode, siteName]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -212,6 +194,7 @@ export default function HeaderSite() {
     handleCloseProfileMenu();
     handleCloseProfileDrawer();
 
+    const supabase = getSupabaseBrowser();
     const signOutResult = await supabase.auth.signOut({
       scope: 'local',
     });
@@ -237,7 +220,7 @@ export default function HeaderSite() {
 
   const isSiteStaff = isStaffRole(userProfile.siteRole);
 
-  if (!isMounted) {
+  if (!isMounted || !isReady) {
     return null;
   }
 

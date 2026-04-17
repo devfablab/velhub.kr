@@ -1,11 +1,9 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import localFont from 'next/font/local';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
-import { inherits } from 'util';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 
 export type ThemeMode = 'light' | 'system' | 'dark';
 
@@ -51,69 +49,34 @@ function getResolvedMode(themeMode: ThemeMode) {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function applyDocumentTheme(themeMode: ThemeMode) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  const resolvedMode = getResolvedMode(themeMode);
-
-  document.documentElement.setAttribute('data-theme-mode', themeMode);
-  document.documentElement.style.colorScheme = resolvedMode;
-
-  if (resolvedMode === 'dark') {
-    document.body.style.backgroundColor = '#121212';
-    document.body.style.color = '#ffffff';
-  } else {
-    document.body.style.backgroundColor = '#ffffff';
-    document.body.style.color = '#000000';
-  }
-}
-
 export function useThemeMode() {
   return useContext(ThemeModeContext);
 }
-
-const Pre = localFont({
-  src: './fonts/PretendardVariable.woff2',
-  style: 'normal',
-  variable: '--pre',
-});
-
-const Neo = localFont({
-  src: './fonts/NanumSquareNeoVF.woff2',
-  style: 'normal',
-  variable: '--neo',
-});
 
 export default function ThemeProviderClient({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { isAuthenticated } = useAuthState();
+
   const [isMounted, setIsMounted] = useState(false);
   const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
 
   useEffect(() => {
     const initialThemeMode = getStoredThemeMode();
-
     setThemeModeState(initialThemeMode);
-    applyDocumentTheme(initialThemeMode);
     setIsMounted(true);
 
     const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
 
     function handleSystemChange() {
-      const storedThemeMode = getStoredThemeMode();
-
-      if (storedThemeMode === 'system') {
+      if (getStoredThemeMode() === 'system') {
         setThemeModeState('system');
-        applyDocumentTheme('system');
       }
     }
 
     mediaQueryList.addEventListener('change', handleSystemChange);
-
     return () => {
       mediaQueryList.removeEventListener('change', handleSystemChange);
     };
@@ -122,17 +85,12 @@ export default function ThemeProviderClient({
   function setThemeMode(nextThemeMode: ThemeMode) {
     window.localStorage.setItem(THEME_MODE_STORAGE_KEY, nextThemeMode);
     setThemeModeState(nextThemeMode);
-    applyDocumentTheme(nextThemeMode);
 
-    const supabase = getSupabaseBrowser();
+    if (!isAuthenticated) {
+      return;
+    }
 
     void (async () => {
-      const userResult = await supabase.auth.getUser();
-
-      if (userResult.error || !userResult.data.user) {
-        return;
-      }
-
       try {
         await fetch('/api/theme-mode', {
           method: 'POST',
@@ -151,9 +109,11 @@ export default function ThemeProviderClient({
   }
 
   const theme = useMemo(() => {
+    const mode = getResolvedMode(themeMode);
+
     return createTheme({
       palette: {
-        mode: getResolvedMode(themeMode),
+        mode,
       },
       typography: {
         fontFamily: 'var(--pre)',

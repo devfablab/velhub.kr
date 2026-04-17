@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
+import AuthStateProvider from '@/components/auth/AuthStateProvider';
 // import './globals.sass';
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 const Pre = localFont({
   src: './fonts/PretendardVariable.woff2',
   style: 'normal',
-  variable: '--pre',
+  variable: '--square',
 });
 
 const Neo = localFont({
@@ -26,9 +27,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable}`}>
       <body>
-        <AppRouterCacheProvider>
-          <ThemeProviderClient>{children}</ThemeProviderClient>
-        </AppRouterCacheProvider>
+        <AuthStateProvider>
+          <AppRouterCacheProvider>
+            <ThemeProviderClient>{children}</ThemeProviderClient>
+          </AppRouterCacheProvider>
+        </AuthStateProvider>
       </body>
     </html>
   );

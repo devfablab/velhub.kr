@@ -60,6 +60,12 @@ function isSitePath(pathname: string) {
   return pathname.startsWith('/');
 }
 
+function isInviteBlogPath(pathname: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 3 && segments[1] === 'invite-blog';
+}
+
 async function fetchSessionRoute(request: NextRequest, pathname: string, query: Record<string, string>) {
   const targetUrl = new URL(pathname, request.url);
 
@@ -141,8 +147,8 @@ function redirectWithPath(request: NextRequest, pathname: string) {
 
 export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
-  const isLoggedIn = Boolean(sessionClaims?.userId);
   const pathname = request.nextUrl.pathname;
+  const isLoggedIn = Boolean(sessionClaims?.userId);
 
   if (pathname.startsWith('/settings/advanced')) {
     if (!isLoggedIn) {
@@ -208,6 +214,10 @@ export async function proxy(request: NextRequest) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (!siteName) {
+      return response;
+    }
+
+    if (isInviteBlogPath(pathname)) {
       return response;
     }
 
