@@ -284,7 +284,7 @@ export default function Opt() {
         </Alert>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+            <Stack spacing={2}>
               <Paper elevation={3} sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
                 <Typography>홈</Typography>
               </Paper>
