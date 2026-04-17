@@ -36,7 +36,7 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const particleResult = await supabaseAdmin.from('particles').select('id').eq('user_id', authUserId).maybeSingle();
+  const particleResult = await supabaseAdmin.from('particles').select('id').eq('id', authUserId).maybeSingle();
   const stigmaResult = await supabaseAdmin.from('stigmas').select('id, role').eq('user_id', authUserId).maybeSingle();
 
   const particleId = particleResult.error || !particleResult.data ? null : (particleResult.data.id as string);

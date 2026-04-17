@@ -1,102 +1,120 @@
-import { getCurrentStigma, getRhizomeStigma, getSiteByName, getSitePathKind } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
+import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
 
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-    const pathname = normalizeText(requestUrl.searchParams.get('pathname'));
 
     if (!siteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+      return Response.json(
+        {
+          ok: false,
+          status: 400,
+          error: 'siteName이 유효하지 않습니다.',
+        },
+        { status: 400 },
+      );
     }
 
-    if (!pathname) {
-      return Response.json({ error: 'pathname이 유효하지 않습니다.' }, { status: 400 });
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json(
+        {
+          ok: false,
+          status: 401,
+          error: '로그인이 필요합니다.',
+        },
+        { status: 401 },
+      );
     }
 
-    const stigma = await getCurrentStigma();
-
-    if (!stigma) {
-      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    if (currentStigma.role === 'admin') {
+      return Response.json({
+        ok: true,
+        allow: true,
+        redirectTo: null,
+        stigmaId: currentStigma.stigmaId,
+        role: currentStigma.role,
+      });
     }
 
     const site = await getSiteByName(siteName);
 
     if (!site) {
-      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json(
+        {
+          ok: false,
+          status: 404,
+          error: '사이트 정보를 불러오지 못했습니다.',
+        },
+        { status: 404 },
+      );
     }
 
-    const pathKind = getSitePathKind(pathname, siteName);
-    const rhizomeStigma = await getRhizomeStigma(site.id, stigma.stigmaId);
+    const rhizomeStigma = await getRhizomeStigma(site.id, currentStigma.stigmaId);
 
-    if (!rhizomeStigma || rhizomeStigma.role !== 'member') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (!rhizomeStigma) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '접근 권한이 없습니다.',
+        },
+        { status: 403 },
+      );
     }
 
-    if (site.isShutdown) {
-      if (pathKind === 'forbidden') {
-        return Response.json({
-          ok: true,
-          allow: true,
-          redirectTo: null,
-          siteId: site.id,
-          stigmaId: stigma.stigmaId,
-          role: rhizomeStigma.role,
-        });
-      }
-
-      return Response.json({
-        ok: true,
-        allow: false,
-        redirectTo: `/${siteName}/forbidden`,
-        siteId: site.id,
-        stigmaId: stigma.stigmaId,
-        role: rhizomeStigma.role,
-      });
+    if (rhizomeStigma.isBlock) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '접근 권한이 없습니다.',
+        },
+        { status: 403 },
+      );
     }
 
-    if (pathKind === 'forbidden') {
-      return Response.json({
-        ok: true,
-        allow: false,
-        redirectTo: `/${siteName}`,
-        siteId: site.id,
-        stigmaId: stigma.stigmaId,
-        role: rhizomeStigma.role,
-      });
-    }
-
-    if (
-      pathKind === 'home' ||
-      pathKind === 'board' ||
-      pathKind === 'content' ||
-      pathKind === 'board_new' ||
-      pathKind === 'content_edit'
-    ) {
-      return Response.json({
-        ok: true,
-        allow: true,
-        redirectTo: null,
-        siteId: site.id,
-        stigmaId: stigma.stigmaId,
-        role: rhizomeStigma.role,
-      });
+    if (!rhizomeStigma.isApproval) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '접근 권한이 없습니다.',
+        },
+        { status: 403 },
+      );
     }
 
     return Response.json({
       ok: true,
-      allow: false,
-      redirectTo: `/${siteName}`,
+      allow: true,
+      redirectTo: null,
       siteId: site.id,
-      stigmaId: stigma.stigmaId,
+      stigmaId: currentStigma.stigmaId,
       role: rhizomeStigma.role,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '세션 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json(
+        {
+          ok: false,
+          status: 500,
+          error: unknownError.message || '권한 확인에 실패했습니다.',
+        },
+        { status: 500 },
+      );
     }
 
-    return Response.json({ error: '세션 확인에 실패했습니다.' }, { status: 500 });
+    return Response.json(
+      {
+        ok: false,
+        status: 500,
+        error: '권한 확인에 실패했습니다.',
+      },
+      { status: 500 },
+    );
   }
 }
