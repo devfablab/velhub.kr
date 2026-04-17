@@ -336,7 +336,7 @@ export default function Opt() {
       </Paper>
 
       <Paper elevation={0}>
-        <Typography>
+        <Typography variant="subtitle2">
           {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
           {formatDate(siteInfo.created_at)}에 개설
         </Typography>
