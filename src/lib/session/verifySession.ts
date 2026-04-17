@@ -1,6 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '../utils';
+import { normalizeText } from '@/lib/utils';
 
 type VerifySessionStatus = 'SUCCESS' | 'FAIL';
 type VerifySessionCase = 'admin' | 'guest-public' | 'guest-site' | 'member' | 'staff';
@@ -36,8 +36,7 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const particleResult = await supabaseAdmin.from('particles').select('id').eq('id', authUserId).maybeSingle();
-
+  const particleResult = await supabaseAdmin.from('particles').select('id').eq('user_id', authUserId).maybeSingle();
   const stigmaResult = await supabaseAdmin.from('stigmas').select('id, role').eq('user_id', authUserId).maybeSingle();
 
   const particleId = particleResult.error || !particleResult.data ? null : (particleResult.data.id as string);
@@ -54,7 +53,7 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
   }
 
   const stigmaId = stigmaResult.data.id as string;
-  const stigmaRole = stigmaResult.data.role as string | null;
+  const stigmaRole = normalizeText(stigmaResult.data.role);
 
   if (stigmaRole === 'admin') {
     return {
@@ -97,7 +96,7 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
   }
 
   const rhizomeStigmaId = rhizomeStigmaResult.data.id as string;
-  const rhizomeRole = rhizomeStigmaResult.data.role as string | null;
+  const rhizomeRole = normalizeText(rhizomeStigmaResult.data.role);
 
   if (rhizomeRole === 'owner' || rhizomeRole === 'manager') {
     return {

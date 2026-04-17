@@ -1,26 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-
-function getSupabaseUrl() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  if (!supabaseUrl) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL이 설정되지 않았습니다.');
-  }
-
-  return supabaseUrl;
-}
-
-function getSupabaseBrowserKey() {
-  const supabasePublishableKey =
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabasePublishableKey) {
-    throw new Error('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY 또는 NEXT_PUBLIC_SUPABASE_ANON_KEY가 설정되지 않았습니다.');
-  }
-
-  return supabasePublishableKey;
-}
+import { updateSession } from '@/lib/session';
 
 function isManagePath(pathname: string) {
   if (pathname.startsWith('/api')) {
@@ -35,10 +14,10 @@ function isManagePath(pathname: string) {
       segments[1] === 'design' ||
       segments[1] === 'team' ||
       segments[1] === 'manage' ||
-      segments[1] === 'staff' ||
-      segments[1] === 'stats' ||
       segments[1] === 'members' ||
-      segments[1] === 'filtered')
+      segments[1] === 'filtered' ||
+      segments[1] === 'stats' ||
+      segments[1] === 'staff')
   );
 }
 
@@ -79,37 +58,6 @@ function isSitePath(pathname: string) {
   }
 
   return pathname.startsWith('/');
-}
-
-function isSiteStaffOnlyPath(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-
-  if (segments.length < 2) {
-    return false;
-  }
-
-  return (
-    segments[1] === 'contents' ||
-    segments[1] === 'design' ||
-    segments[1] === 'team' ||
-    segments[1] === 'manage' ||
-    segments[1] === 'staff' ||
-    segments[1] === 'stats' ||
-    segments[1] === 'members' ||
-    segments[1] === 'filtered'
-  );
-}
-
-function isInviteBlogPath(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-
-  return segments.length >= 3 && segments[1] === 'invite-blog';
-}
-
-function isForbiddenPath(pathname: string) {
-  const segments = pathname.split('/').filter(Boolean);
-
-  return segments.length >= 2 && segments[1] === 'forbidden';
 }
 
 async function fetchSessionRoute(request: NextRequest, pathname: string, query: Record<string, string>) {
@@ -192,35 +140,19 @@ function redirectWithPath(request: NextRequest, pathname: string) {
 }
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
+  const { response, sessionClaims } = await updateSession(request);
+  const isLoggedIn = Boolean(sessionClaims?.userId);
+  const pathname = request.nextUrl.pathname;
 
-  const supabase = createServerClient(getSupabaseUrl(), getSupabaseBrowserKey(), {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookies) {
-        cookies.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
+  if (pathname.startsWith('/settings/advanced')) {
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/');
+    }
 
-        response = NextResponse.next({
-          request,
-        });
+    return response;
+  }
 
-        cookies.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
-
-  const claims = await supabase.auth.getClaims();
-  const isLoggedIn = Boolean(claims.data?.claims?.sub);
-
-  if (request.nextUrl.pathname.startsWith('/new') || request.nextUrl.pathname.startsWith('/settings')) {
+  if (pathname.startsWith('/new') || pathname.startsWith('/settings')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
@@ -228,7 +160,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isConciergeAdminPath(request.nextUrl.pathname)) {
+  if (isConciergeAdminPath(pathname)) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
@@ -246,12 +178,12 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isManagePath(request.nextUrl.pathname)) {
+  if (isManagePath(pathname)) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    const siteName = getSiteNameFromPath(request.nextUrl.pathname).trim().toLowerCase();
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (!siteName) {
       return redirectWithPath(request, '/');
@@ -272,125 +204,44 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isSitePath(request.nextUrl.pathname)) {
-    const siteName = getSiteNameFromPath(request.nextUrl.pathname).trim().toLowerCase();
+  if (isSitePath(pathname)) {
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (!siteName) {
       return response;
     }
 
-    if (isInviteBlogPath(request.nextUrl.pathname)) {
+    const rhizomeState = await fetchRhizomeState(request, siteName);
+
+    if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
       return response;
     }
 
-    const rhizome = await fetchRhizomeState(request, siteName);
+    const visibilityType = rhizomeState.result.rhizomes.visibility_type ?? 'public';
+    const isShutdown = Boolean(rhizomeState.result.rhizomes.is_shutdown);
 
-    if (!rhizome.response.ok || !rhizome.result?.rhizomes) {
-      return response;
+    if (isShutdown) {
+      return redirectWithPath(request, '/');
     }
 
-    const isPublicReadable =
-      rhizome.result.rhizomes.visibility_type === 'public' && rhizome.result.rhizomes.is_shutdown === false;
-
-    if (!isPublicReadable) {
+    if (visibilityType === 'private') {
       if (!isLoggedIn) {
-        return redirectWithPath(request, `/${siteName}/forbidden`);
-      }
-
-      const staff = await fetchSessionRoute(request, '/api/session/staff', {
-        siteName,
-      });
-
-      if (!staff.response.ok) {
-        return redirectWithPath(request, `/${siteName}/forbidden`);
-      }
-
-      if (isForbiddenPath(request.nextUrl.pathname)) {
-        return response;
-      }
-
-      return response;
-    }
-
-    if (isForbiddenPath(request.nextUrl.pathname)) {
-      return redirectWithPath(request, `/${siteName}`);
-    }
-
-    if (isSiteStaffOnlyPath(request.nextUrl.pathname)) {
-      if (!isLoggedIn) {
-        return redirectWithPath(request, `/${siteName}`);
-      }
-
-      const staff = await fetchSessionRoute(request, '/api/session/staff', {
-        siteName,
-      });
-
-      if (!staff.response.ok) {
-        return redirectWithPath(request, `/${siteName}`);
-      }
-
-      return response;
-    }
-
-    if (isLoggedIn) {
-      const staff = await fetchSessionRoute(request, '/api/session/staff', {
-        siteName,
-      });
-
-      if (staff.response.ok) {
-        return response;
+        return redirectWithPath(request, '/auth/sign-in');
       }
 
       const member = await fetchSessionRoute(request, '/api/session/member', {
         siteName,
-        pathname: request.nextUrl.pathname,
       });
 
-      if (member.response.ok && member.result?.allow) {
-        return response;
+      if (member.response.status === 401) {
+        return redirectWithPath(request, '/auth/sign-in');
       }
 
-      if (member.response.ok && member.result && member.result.allow === false) {
-        return redirectWithPath(request, member.result.redirectTo || `/${siteName}`);
+      if (!member.response.ok) {
+        return redirectWithPath(request, `/${siteName}/forbidden`);
       }
-
-      const guestSite = await fetchSessionRoute(request, '/api/session/guest-site', {
-        siteName,
-        pathname: request.nextUrl.pathname,
-      });
-
-      if (guestSite.response.ok && guestSite.result?.allow) {
-        return response;
-      }
-
-      if (guestSite.response.ok && guestSite.result && guestSite.result.allow === false) {
-        return redirectWithPath(request, guestSite.result.redirectTo || `/${siteName}/join`);
-      }
-
-      return redirectWithPath(request, `/${siteName}`);
     }
-
-    const guestPublic = await fetchSessionRoute(request, '/api/session/guest-public', {
-      siteName,
-      pathname: request.nextUrl.pathname,
-    });
-
-    if (guestPublic.response.ok && guestPublic.result?.allow) {
-      return response;
-    }
-
-    if (guestPublic.response.ok && guestPublic.result && guestPublic.result.allow === false) {
-      return redirectWithPath(request, guestPublic.result.redirectTo || '/auth/sign-in');
-    }
-
-    return redirectWithPath(request, '/auth/sign-in');
   }
 
   return response;
 }
-
-export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|\\.well-known|api/session/admin|api/session/staff|api/session/member|api/session/guest-site|api/session/guest-public|api/site/public|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-};
