@@ -9,6 +9,7 @@ import {
   Alert,
   Box,
   Button,
+  Grid,
   Stack,
   TextField,
   Typography,
@@ -184,71 +185,70 @@ export default function PasswordChange() {
   }
 
   return (
-    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box
-          sx={{
-            width: '100%',
-            pr: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            비밀번호 변경
-          </Typography>
-        </Box>
-      </AccordionSummary>
-
-      <AccordionDetails>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={2.5}>
-            <TextField
-              id="currentPassword"
-              label="현재 비밀번호"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={handleCurrentPasswordChange}
-              size="small"
-              fullWidth
-            />
-
-            <TextField
-              id="nextPassword"
-              label="새 비밀번호"
-              type="password"
-              autoComplete="new-password"
-              value={nextPassword}
-              onChange={handleNextPasswordChange}
-              size="small"
-              fullWidth
-            />
-
-            <TextField
-              id="nextPasswordConfirm"
-              label="새 비밀번호 확인"
-              type="password"
-              autoComplete="new-password"
-              value={nextPasswordConfirm}
-              onChange={handleNextPasswordConfirmChange}
-              size="small"
-              fullWidth
-            />
-
-            <Typography variant="body2">비밀번호 변경시 자동으로 로그아웃됩니다.</Typography>
-
-            <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+    <Grid size={12}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack
+            alignContent="center"
+            justifyContent="space-between"
+            gap={2}
+            direction="row"
+            sx={{ width: '100%', pr: 1 }}
+          >
+            <Typography variant="subtitle2" component="span">
               비밀번호 변경
-            </Button>
-
-            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            </Typography>
           </Stack>
-        </Box>
-      </AccordionDetails>
-    </Accordion>
+        </AccordionSummary>
+
+        <AccordionDetails>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={2.5}>
+              <TextField
+                id="currentPassword"
+                label="현재 비밀번호"
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={handleCurrentPasswordChange}
+                size="small"
+                fullWidth
+              />
+
+              <TextField
+                id="nextPassword"
+                label="새 비밀번호"
+                type="password"
+                autoComplete="new-password"
+                value={nextPassword}
+                onChange={handleNextPasswordChange}
+                size="small"
+                fullWidth
+              />
+
+              <TextField
+                id="nextPasswordConfirm"
+                label="새 비밀번호 확인"
+                type="password"
+                autoComplete="new-password"
+                value={nextPasswordConfirm}
+                onChange={handleNextPasswordConfirmChange}
+                size="small"
+                fullWidth
+              />
+
+              <Typography variant="body2">비밀번호 변경시 자동으로 로그아웃됩니다.</Typography>
+
+              <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
+                비밀번호 변경
+              </Button>
+
+              {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+              {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+            </Stack>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
   );
 }

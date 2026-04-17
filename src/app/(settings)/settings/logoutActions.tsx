@@ -13,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   Stack,
   Typography,
 } from '@mui/material';
@@ -109,30 +110,28 @@ export default function LogoutActions() {
   }
 
   return (
-    <>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
+    <Grid size={12}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Box
-            sx={{
-              width: '100%',
-              pr: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 2,
-            }}
+          <Stack
+            alignContent="center"
+            justifyContent="space-between"
+            gap={2}
+            direction="row"
+            sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="h6" component="h2">
+            <Typography variant="subtitle2" component="span">
               로그아웃
             </Typography>
-          </Box>
+          </Stack>
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={2.5}>
+          <Stack spacing={1} direction="row">
             <Button
               type="button"
-              variant="outlined"
+              variant="contained"
+              color="warning"
               onClick={handleLogoutCurrentDevice}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
               fullWidth
@@ -142,7 +141,7 @@ export default function LogoutActions() {
 
             <Button
               type="button"
-              variant="contained"
+              variant="outlined"
               color="error"
               onClick={handleOpenConfirm}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
@@ -176,6 +175,6 @@ export default function LogoutActions() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Grid>
   );
 }

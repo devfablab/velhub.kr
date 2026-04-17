@@ -9,6 +9,7 @@ import {
   Box,
   Button,
   Chip,
+  Grid,
   Stack,
   Typography,
 } from '@mui/material';
@@ -110,46 +111,49 @@ export default function PasswordSetup() {
   }
 
   return (
-    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box
-          sx={{
-            width: '100%',
-            pr: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            비밀번호 설정
-          </Typography>
-
-          <Chip label="미설정" size="small" color="warning" />
-        </Box>
-      </AccordionSummary>
-
-      <AccordionDetails>
-        <Stack spacing={2.5}>
-          <Typography variant="body2">비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.</Typography>
-
-          <Typography variant="body2">주의: 설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.</Typography>
-
-          <Button
-            type="button"
-            variant="contained"
-            onClick={handleSendPasswordSetupEmail}
-            disabled={isSubmitting}
-            fullWidth
+    <Grid size={12}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack
+            alignContent="center"
+            justifyContent="space-between"
+            gap={2}
+            direction="row"
+            sx={{ width: '100%', pr: 1 }}
           >
-            비밀번호 설정 메일 보내기
-          </Button>
+            <Typography variant="subtitle2" component="span">
+              비밀번호 설정
+            </Typography>
 
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
-        </Stack>
-      </AccordionDetails>
-    </Accordion>
+            <Chip label="미설정" size="small" color="warning" />
+          </Stack>
+        </AccordionSummary>
+
+        <AccordionDetails>
+          <Stack spacing={2.5}>
+            <Alert severity="info" variant="filled">
+              비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.
+            </Alert>
+
+            <Alert severity="warning" variant="outlined">
+              설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.
+            </Alert>
+
+            <Button
+              type="button"
+              variant="contained"
+              onClick={handleSendPasswordSetupEmail}
+              disabled={isSubmitting}
+              fullWidth
+            >
+              비밀번호 설정 메일 보내기
+            </Button>
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
   );
 }

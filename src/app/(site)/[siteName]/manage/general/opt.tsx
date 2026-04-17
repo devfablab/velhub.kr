@@ -316,11 +316,11 @@ export default function Opt() {
 
       <Paper elevation={0} sx={{ p: 2 }}>
         <Stack spacing={1.5} alignItems="center">
-          {profilePictureUrl ? (
-            <Avatar src={profilePictureUrl} alt="사이트 아바타" sx={{ width: 96, height: 96 }} />
-          ) : (
-            <Avatar src="/broken-image.jpg" alt={siteInfo.site_label ?? ''} sx={{ width: 96, height: 96 }} />
-          )}
+          <Avatar
+            src={profilePictureUrl || '/broken-image.jpg'}
+            alt={siteInfo.site_label ?? ''}
+            sx={{ width: 96, height: 96 }}
+          />
 
           <VisuallyHiddenInput
             ref={fileInputReference}
@@ -347,7 +347,7 @@ export default function Opt() {
           {editingField === 'site_key' ? (
             <Stack
               direction="row"
-              spacing={2}
+              spacing={1}
               sx={{
                 alignItems: 'flex-start',
               }}

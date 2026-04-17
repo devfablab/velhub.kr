@@ -10,6 +10,7 @@ import {
   Box,
   Button,
   Chip,
+  Grid,
   Stack,
   TextField,
   Typography,
@@ -264,95 +265,94 @@ export default function TotpSetup() {
   }
 
   return (
-    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box
-          sx={{
-            width: '100%',
-            pr: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            앱 기반 2단계 인증
-          </Typography>
-
-          <Chip label={statusLabel} size="small" color={statusColor} />
-        </Box>
-      </AccordionSummary>
-
-      <AccordionDetails>
-        <Stack spacing={2.5}>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => void handleSetOrReset()}
-            disabled={isSetting || isRemoving}
-            fullWidth
+    <Grid size={12}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack
+            alignContent="center"
+            justifyContent="space-between"
+            gap={2}
+            direction="row"
+            sx={{ width: '100%', pr: 1 }}
           >
-            {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
-          </Button>
+            <Typography variant="subtitle2" component="span">
+              앱 기반 2단계 인증
+            </Typography>
 
-          {pendingSetup ? (
-            <Stack spacing={2.5}>
-              <Typography variant="body2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
+            <Chip label={statusLabel} size="small" color={statusColor} />
+          </Stack>
+        </AccordionSummary>
 
-              {qrCodeImageSource ? (
-                <Box
-                  component="img"
-                  src={qrCodeImageSource}
-                  alt="앱 기반 2단계 인증 QR 코드"
-                  sx={{
-                    width: '100%',
-                    maxWidth: 240,
-                    alignSelf: 'center',
-                  }}
-                />
-              ) : null}
+        <AccordionDetails>
+          <Stack spacing={2.5}>
+            <Button
+              type="button"
+              variant="contained"
+              onClick={() => void handleSetOrReset()}
+              disabled={isSetting || isRemoving}
+              fullWidth
+            >
+              {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
+            </Button>
 
-              <Typography variant="body2">QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</Typography>
+            {pendingSetup ? (
+              <Stack spacing={2.5}>
+                <Typography variant="body2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
 
-              <Typography
-                variant="body2"
-                sx={{
-                  wordBreak: 'break-all',
-                }}
-              >
-                {pendingSetup.secret}
-              </Typography>
-
-              <Alert severity="info">
-                앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
-              </Alert>
-
-              <Box component="form" onSubmit={handleVerify}>
-                <Stack spacing={2.5}>
-                  <TextField
-                    id="verifyCode"
-                    label="인증 코드"
-                    placeholder="XXXXXX"
-                    type="text"
-                    value={verifyCode}
-                    onChange={handleVerifyCodeChange}
-                    size="small"
-                    fullWidth
+                {qrCodeImageSource ? (
+                  <Box
+                    component="img"
+                    src={qrCodeImageSource}
+                    alt="앱 기반 2단계 인증 QR 코드"
+                    sx={{
+                      width: '100%',
+                      maxWidth: 240,
+                      alignSelf: 'center',
+                    }}
                   />
+                ) : null}
 
-                  <Button type="submit" variant="outlined" disabled={isVerifying} fullWidth>
-                    인증 코드 확인
-                  </Button>
-                </Stack>
-              </Box>
-            </Stack>
-          ) : null}
+                <Typography variant="body2">QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</Typography>
 
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
-        </Stack>
-      </AccordionDetails>
-    </Accordion>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {pendingSetup.secret}
+                </Typography>
+
+                <Alert severity="info">
+                  앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
+                </Alert>
+
+                <Box component="form" onSubmit={handleVerify}>
+                  <Stack spacing={2.5}>
+                    <TextField
+                      id="verifyCode"
+                      label="인증 코드"
+                      placeholder="XXXXXX"
+                      type="text"
+                      value={verifyCode}
+                      onChange={handleVerifyCodeChange}
+                      size="small"
+                      fullWidth
+                    />
+
+                    <Button type="submit" variant="outlined" disabled={isVerifying} fullWidth>
+                      인증 코드 확인
+                    </Button>
+                  </Stack>
+                </Box>
+              </Stack>
+            ) : null}
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
   );
 }

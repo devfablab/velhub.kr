@@ -10,6 +10,7 @@ import {
   Box,
   Button,
   Chip,
+  Grid,
   Stack,
   styled,
   TextField,
@@ -297,77 +298,61 @@ export default function UserInfo() {
   const hasUnsetField = !userName || !avatar || !bio;
 
   return (
-    <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={0}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Box
-          sx={{
-            width: '100%',
-            pr: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Typography variant="h6" component="h2">
-            기본정보
-          </Typography>
+    <Grid size={12}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack
+            alignContent="center"
+            justifyContent="space-between"
+            gap={2}
+            direction="row"
+            sx={{ width: '100%', pr: 1 }}
+          >
+            <Typography variant="subtitle2" component="span">
+              기본정보
+            </Typography>
 
-          <Chip
-            label={hasUnsetField ? '미설정 항목 있음' : '설정됨'}
-            size="small"
-            color={hasUnsetField ? 'warning' : 'success'}
-          />
-        </Box>
-      </AccordionSummary>
-
-      <AccordionDetails>
-        <Stack spacing={3}>
-          <Stack spacing={1.5} alignItems="flex-start">
-            {avatarUrl ? (
-              <Avatar src={avatarUrl} alt={userName || '아바타'} sx={{ width: 80, height: 80 }} />
-            ) : (
-              <Avatar sx={{ width: 80, height: 80 }}>
-                <PersonIcon />
-              </Avatar>
-            )}
-
-            <VisuallyHiddenInput
-              ref={fileInputReference}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarFileChange}
+            <Chip
+              label={hasUnsetField ? '미설정 항목 있음' : '설정됨'}
+              size="small"
+              color={hasUnsetField ? 'warning' : 'success'}
             />
-
-            <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isSubmittingAvatar}>
-              아바타 수정
-            </Button>
           </Stack>
+        </AccordionSummary>
 
-          <Stack spacing={1.5}>
-            {!isEditingUserName ? (
-              <>
-                <Typography variant="subtitle2">활동명</Typography>
-                <Typography>{userName || '-'}</Typography>
-                <Button type="button" variant="outlined" onClick={() => setIsEditingUserName(true)}>
-                  활동명 수정
-                </Button>
-              </>
-            ) : (
-              <Box component="form" onSubmit={handleSubmitUserName}>
-                <Stack spacing={1.5}>
-                  <TextField
-                    label="활동명"
-                    size="small"
-                    value={userNameDraft}
-                    onChange={handleUserNameChange}
-                    fullWidth
-                  />
+        <AccordionDetails>
+          <Stack spacing={3}>
+            <Stack spacing={1.5} alignItems="flex-start">
+              <Avatar src={avatarUrl || '/broken-image.jpg'} alt={userName || ''} sx={{ width: 80, height: 80 }} />
 
-                  <Stack direction="row" spacing={1.5}>
-                    <Button type="submit" variant="contained" disabled={isSubmittingUserName}>
-                      저장
-                    </Button>
+              <VisuallyHiddenInput
+                ref={fileInputReference}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarFileChange}
+              />
+
+              <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isSubmittingAvatar}>
+                아바타 수정
+              </Button>
+            </Stack>
+
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">활동명</Typography>
+              {!isEditingUserName ? (
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" component="span">
+                    {userName}
+                  </Typography>
+                  <Button type="button" variant="outlined" onClick={() => setIsEditingUserName(true)}>
+                    활동명 수정
+                  </Button>
+                </Stack>
+              ) : (
+                <Box component="form" onSubmit={handleSubmitUserName}>
+                  <Stack spacing={1} direction="row">
+                    <TextField size="small" value={userNameDraft} onChange={handleUserNameChange} fullWidth />
+
                     <Button
                       type="button"
                       variant="outlined"
@@ -376,51 +361,61 @@ export default function UserInfo() {
                     >
                       취소
                     </Button>
-                  </Stack>
-                </Stack>
-              </Box>
-            )}
-          </Stack>
-
-          <Stack spacing={1.5}>
-            {!isEditingBio ? (
-              <>
-                <Typography variant="subtitle2">자기소개</Typography>
-                {bio && <Typography sx={{ whiteSpace: 'pre-wrap' }}>{bio}</Typography>}
-                <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
-                  자기소개 수정
-                </Button>
-              </>
-            ) : (
-              <Box component="form" onSubmit={handleSubmitBio}>
-                <Stack spacing={1.5}>
-                  <TextField
-                    label="자기소개"
-                    value={bioDraft}
-                    onChange={handleBioChange}
-                    fullWidth
-                    multiline
-                    size="small"
-                    minRows={4}
-                  />
-
-                  <Stack direction="row" spacing={1.5}>
-                    <Button type="submit" variant="contained" disabled={isSubmittingBio}>
+                    <Button type="submit" variant="contained" disabled={isSubmittingUserName}>
                       저장
                     </Button>
-                    <Button type="button" variant="outlined" onClick={handleCancelBio} disabled={isSubmittingBio}>
-                      취소
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">자기소개</Typography>
+              {!isEditingBio ? (
+                <Stack spacing={1.5}>
+                  {bio ? (
+                    <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                      {bio}
+                    </Typography>
+                  ) : (
+                    <Typography variant="body1">자기소개 등록이 필요합니다</Typography>
+                  )}
+                  <Stack spacing={1.5} alignItems="flex-end">
+                    <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
+                      자기소개 수정
                     </Button>
                   </Stack>
                 </Stack>
-              </Box>
-            )}
-          </Stack>
+              ) : (
+                <Box component="form" onSubmit={handleSubmitBio}>
+                  <Stack spacing={1.5}>
+                    <TextField
+                      value={bioDraft}
+                      onChange={handleBioChange}
+                      fullWidth
+                      multiline
+                      size="small"
+                      minRows={4}
+                    />
 
-          {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-          {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
-        </Stack>
-      </AccordionDetails>
-    </Accordion>
+                    <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                      <Button type="button" variant="outlined" onClick={handleCancelBio} disabled={isSubmittingBio}>
+                        취소
+                      </Button>
+                      <Button type="submit" variant="contained" disabled={isSubmittingBio}>
+                        저장
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+
+            {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Grid>
   );
 }

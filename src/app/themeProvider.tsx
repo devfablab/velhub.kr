@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import localFont from 'next/font/local';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { inherits } from 'util';
 
 export type ThemeMode = 'light' | 'system' | 'dark';
 

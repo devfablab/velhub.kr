@@ -262,13 +262,7 @@ export default function HeaderConcierge() {
         )}
 
         <IconButton onClick={handleOpenProfileMenu}>
-          {userProfile.avatarUrl ? (
-            <Avatar src={userProfile.avatarUrl} alt={userProfile.name || '프로필'} />
-          ) : (
-            <Avatar>
-              <PersonIcon />
-            </Avatar>
-          )}
+          <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
         </IconButton>
 
         {isMobile ? (
