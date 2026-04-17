@@ -237,7 +237,9 @@ export default function PasswordChange() {
                 fullWidth
               />
 
-              <Typography variant="body2">비밀번호 변경시 자동으로 로그아웃됩니다.</Typography>
+              <Alert severity="error" variant="filled">
+                비밀번호 변경시 자동으로 로그아웃됩니다.
+              </Alert>
 
               <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth>
                 비밀번호 변경
