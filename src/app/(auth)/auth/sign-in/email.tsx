@@ -331,9 +331,7 @@ export default function EmailSignIn() {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
               <Anchor
                 href={
-                  inviteToken
-                    ? `/auth/sign-up?inviteToken=${encodeURIComponent(inviteToken)}&siteName=${encodeURIComponent(inviteSiteName)}`
-                    : '/auth/sign-up'
+                  inviteToken ? `/auth/sign-up?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-up'
                 }
               >
                 회원가입

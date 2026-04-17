@@ -264,9 +264,7 @@ export default function EmailSignUp() {
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Anchor
               href={
-                inviteToken
-                  ? `/auth/sign-in?inviteToken=${encodeURIComponent(inviteToken)}&siteName=${encodeURIComponent(inviteSiteName)}`
-                  : '/auth/sign-in'
+                inviteToken ? `/auth/sign-in?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-in'
               }
             >
               로그인 하기

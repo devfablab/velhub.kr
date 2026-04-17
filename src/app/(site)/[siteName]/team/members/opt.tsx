@@ -139,7 +139,7 @@ export default function Opt() {
   const isMobile = !isNotMobile;
 
   async function loadTeams() {
-    const response = await fetch(`/api/team/members?siteName=${encodeURIComponent(siteName)}`, {
+    const response = await fetch(`/api/team/members?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
     });
@@ -158,7 +158,7 @@ export default function Opt() {
   }
 
   async function loadInvites() {
-    const response = await fetch(`/api/team/members/invite?siteName=${encodeURIComponent(siteName)}`, {
+    const response = await fetch(`/api/team/members/invite?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
     });

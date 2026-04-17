@@ -85,13 +85,10 @@ export default function Opt({ siteName, token }: Props) {
       try {
         setErrorMessage('');
 
-        const inviteResponse = await fetch(
-          `/api/design/blog/team/invite/${token}?siteName=${encodeURIComponent(siteName)}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        );
+        const inviteResponse = await fetch(`/api/design/blog/team/invite/${token}?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
 
         const inviteResult = (await inviteResponse.json()) as InviteResponse | { error?: string };
 
@@ -152,7 +149,7 @@ export default function Opt({ siteName, token }: Props) {
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/design/blog/team/invite/${token}?siteName=${encodeURIComponent(siteName)}`, {
+      const response = await fetch(`/api/design/blog/team/invite/${token}?siteName=${siteName}`, {
         method: 'POST',
         credentials: 'include',
       });
