@@ -162,7 +162,6 @@ export async function PATCH(request: Request) {
       .select('id, user_id, is_block, block_count, role')
       .eq('id', teamId)
       .eq('site_id', access.siteId)
-      .in('role', ['owner', 'manager'])
       .maybeSingle();
 
     if (team.error || !team.data) {
