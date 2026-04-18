@@ -321,162 +321,154 @@ export default function Opt() {
   }
 
   return (
-    <>
-      <Stack spacing={2}>
-        {isNotMobile && (
-          <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-            글 목록
-          </Typography>
+    <Stack spacing={2}>
+      {isNotMobile && (
+        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+          글 목록
+        </Typography>
+      )}
+
+      <Typography>{board?.board_label ?? ''}</Typography>
+
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        {selectedIds.length > 0 ? (
+          <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
+            글 삭제
+          </Button>
+        ) : (
+          <span />
         )}
 
-        <Typography>{board?.board_label ?? ''}</Typography>
-
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          {selectedIds.length > 0 ? (
-            <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-              글 삭제
-            </Button>
-          ) : (
-            <span />
-          )}
-
-          <Button type="button" variant="contained" onClick={handleMoveToNew}>
-            새 글 쓰기
-          </Button>
-        </Stack>
-
-        <Stack direction="row" justifyContent="flex-end" alignItems="center">
-          <TextField
-            select
-            label="보기 방식"
-            value={currentSize}
-            onChange={(event) => {
-              router.push(getListHref(1, Number(event.target.value)));
-            }}
-            size="small"
-            sx={{ minWidth: 180 }}
-          >
-            {SIZE_OPTIONS.map((sizeOption) => (
-              <MenuItem key={sizeOption} value={sizeOption}>
-                {sizeOption}개씩
-                {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
-
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-
-        <Box sx={{ position: 'relative' }}>
-          <TableContainer elevation={3} component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={isAllCurrentPageChecked}
-                      indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
-                      onChange={handleToggleAllCurrentPage}
-                    />
-                  </TableCell>
-                  <TableCell>제목</TableCell>
-                  <TableCell>작성일</TableCell>
-                  <TableCell>작성자</TableCell>
-                  <TableCell>공개여부</TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {contents.map((content) => (
-                  <TableRow key={content.id}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={selectedIds.includes(content.id)}
-                        onChange={() => handleToggleOne(content.id)}
-                      />
-                    </TableCell>
-
-                    <TableCell>
-                      <Button
-                        LinkComponent={NextLink}
-                        type="button"
-                        variant="text"
-                        href={`/${siteName}/contents/posts/c/${boardName}/${content.slug}`}
-                        sx={{
-                          p: 0,
-                          minWidth: 0,
-                          justifyContent: 'flex-start',
-                          textAlign: 'left',
-                        }}
-                      >
-                        {content.subject}
-                      </Button>
-                    </TableCell>
-
-                    <TableCell>{formatDate(content.created_at)}</TableCell>
-                    <TableCell>{content.author_name}</TableCell>
-                    <TableCell>{content.is_closed === true ? '비공개' : '공개'}</TableCell>
-
-                    <TableCell align="right">
-                      <Button
-                        type="button"
-                        color="error"
-                        variant="outlined"
-                        onClick={() => handleOpenSingleDeleteDialog(content)}
-                      >
-                        글 삭제
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {contents.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      글이 없습니다.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <Backdrop
-            open={isFetching}
-            sx={{
-              position: 'absolute',
-              zIndex: 1,
-              color: '#fff',
-            }}
-          >
-            <Stack spacing={2} alignItems="center">
-              <Stack justifyContent="center" alignItems="center">
-                <LoadingIndicator />
-              </Stack>
-            </Stack>
-          </Backdrop>
-        </Box>
-
-        {totalPage > 1 ? (
-          <Stack alignItems="center">
-            <Pagination
-              page={safeCurrentPage}
-              count={totalPage}
-              color="primary"
-              siblingCount={1}
-              boundaryCount={1}
-              renderItem={(item) => (
-                <PaginationItem {...item} component={NextLink} href={getListHref(item.page ?? 1)} />
-              )}
-            />
-          </Stack>
-        ) : null}
+        <Button type="button" variant="contained" onClick={handleMoveToNew}>
+          새 글 쓰기
+        </Button>
       </Stack>
 
+      <Stack direction="row" justifyContent="flex-end" alignItems="center">
+        <TextField
+          select
+          label="보기 방식"
+          value={currentSize}
+          onChange={(event) => {
+            router.push(getListHref(1, Number(event.target.value)));
+          }}
+          size="small"
+          sx={{ minWidth: 180 }}
+        >
+          {SIZE_OPTIONS.map((sizeOption) => (
+            <MenuItem key={sizeOption} value={sizeOption}>
+              {sizeOption}개씩
+              {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Stack>
+
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
+
+      <Box sx={{ position: 'relative' }}>
+        <TableContainer elevation={3} component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    checked={isAllCurrentPageChecked}
+                    indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
+                    onChange={handleToggleAllCurrentPage}
+                  />
+                </TableCell>
+                <TableCell>제목</TableCell>
+                <TableCell>작성일</TableCell>
+                <TableCell>작성자</TableCell>
+                <TableCell>공개여부</TableCell>
+                <TableCell />
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {contents.map((content) => (
+                <TableRow key={content.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox checked={selectedIds.includes(content.id)} onChange={() => handleToggleOne(content.id)} />
+                  </TableCell>
+
+                  <TableCell>
+                    <Button
+                      LinkComponent={NextLink}
+                      type="button"
+                      variant="text"
+                      href={`/${siteName}/contents/posts/c/${boardName}/${content.slug}`}
+                      sx={{
+                        p: 0,
+                        minWidth: 0,
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                      }}
+                    >
+                      {content.subject}
+                    </Button>
+                  </TableCell>
+
+                  <TableCell>{formatDate(content.created_at)}</TableCell>
+                  <TableCell>{content.author_name}</TableCell>
+                  <TableCell>{content.is_closed === true ? '비공개' : '공개'}</TableCell>
+
+                  <TableCell align="right">
+                    <Button
+                      type="button"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => handleOpenSingleDeleteDialog(content)}
+                    >
+                      글 삭제
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {contents.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center">
+                    글이 없습니다.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Backdrop
+          open={isFetching}
+          sx={{
+            position: 'absolute',
+            zIndex: 1,
+            color: '#fff',
+          }}
+        >
+          <Stack spacing={2} alignItems="center">
+            <Stack justifyContent="center" alignItems="center">
+              <LoadingIndicator />
+            </Stack>
+          </Stack>
+        </Backdrop>
+      </Box>
+
+      {totalPage > 1 ? (
+        <Stack alignItems="center">
+          <Pagination
+            page={safeCurrentPage}
+            count={totalPage}
+            color="primary"
+            siblingCount={1}
+            boundaryCount={1}
+            renderItem={(item) => <PaginationItem {...item} component={NextLink} href={getListHref(item.page ?? 1)} />}
+          />
+        </Stack>
+      ) : null}
       <Dialog open={deleteMode !== null} onClose={handleCloseDeleteDialog}>
         <DialogTitle>글 삭제</DialogTitle>
         <DialogContent>
@@ -493,6 +485,6 @@ export default function Opt() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Stack>
   );
 }
