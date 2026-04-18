@@ -804,7 +804,7 @@ export default function Opt() {
                   <TableCell>작성일</TableCell>
                   <TableCell>작성자</TableCell>
                   <TableCell>공개여부</TableCell>
-                  <TableCell align="right">글 삭제</TableCell>
+                  <TableCell />
                 </TableRow>
               </TableHead>
 
