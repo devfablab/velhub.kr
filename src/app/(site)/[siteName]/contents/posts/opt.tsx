@@ -1,14 +1,16 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
-import Link from '@mui/material/Link';
+import NextLink from 'next/link';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
   Alert,
+  Backdrop,
   Box,
   Button,
   Checkbox,
@@ -16,18 +18,24 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
+  Pagination,
+  PaginationItem,
   Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type SiteType = 'blog' | 'community';
 
@@ -41,6 +49,7 @@ type BoardRow = {
   markdown_status: string;
   site_id: string;
   created_at?: string;
+  post_per_page?: number | null;
 };
 
 type PostRow = {
@@ -58,12 +67,17 @@ type PostRow = {
   board_id: string;
   created_at: string;
   author_name: string;
+  is_closed: boolean;
 };
 
 type SitePublicResponse = {
   rhizomes?: {
     site_type?: SiteType;
   };
+};
+
+type HeaderSiteResponse = {
+  siteRole: string | null;
 };
 
 type BoardsResponse = {
@@ -76,7 +90,13 @@ type StatusResponse = {
 };
 
 type BoardContentsResponse = {
+  board: BoardRow;
   contents: PostRow[];
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPage: number;
+  filter?: 'all' | 'private';
 };
 
 type BoardOrderResponse = {
@@ -90,8 +110,7 @@ type ErrorResponse = {
 
 type DeleteMode = 'single' | 'bulk' | null;
 
-const PAGE_SIZE = 10;
-const PAGE_GROUP_SIZE = 5;
+const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
 function parsePage(value: string | null) {
   const parsedValue = Number(value);
@@ -103,8 +122,22 @@ function parsePage(value: string | null) {
   return Math.floor(parsedValue);
 }
 
+function parseSize(value: string | null) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return null;
+  }
+
+  return Math.floor(parsedValue);
+}
+
 function isVisibleCommunityBoard(board: BoardRow) {
   return board.board_key !== 'b' && board.board_key !== 'p';
+}
+
+function isStaffRole(role: string | null) {
+  return role === 'owner' || role === 'manager';
 }
 
 function SortableBoardRow({
@@ -186,8 +219,10 @@ export default function Opt() {
   const isMobile = !isNotMobile;
 
   const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [isStaff, setIsStaff] = useState(false);
   const [boards, setBoards] = useState<BoardRow[]>([]);
   const [posts, setPosts] = useState<PostRow[]>([]);
+  const [board, setBoard] = useState<BoardRow | null>(null);
   const [boardName, setBoardName] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
@@ -197,6 +232,10 @@ export default function Opt() {
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [totalPage, setTotalPage] = useState(1);
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'private'>('all');
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -207,20 +246,16 @@ export default function Opt() {
   );
 
   const currentPage = parsePage(searchParams.get('page'));
+  const sizeParam = parseSize(searchParams.get('size'));
+  const filterParam = normalizeText(searchParams.get('filter')).toLowerCase();
 
-  const totalPage = useMemo(() => {
-    const pageCount = Math.ceil(posts.length / PAGE_SIZE);
-    return pageCount > 0 ? pageCount : 1;
-  }, [posts.length]);
+  const defaultPostPerPage =
+    typeof board?.post_per_page === 'number' && Number.isFinite(board.post_per_page) ? board.post_per_page : 5;
 
+  const currentSize = sizeParam ?? defaultPostPerPage;
   const safeCurrentPage = currentPage > totalPage ? totalPage : currentPage;
 
-  const currentPagePosts = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * PAGE_SIZE;
-    return posts.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [posts, safeCurrentPage]);
-
-  const currentPageIds = useMemo(() => currentPagePosts.map((post) => post.id), [currentPagePosts]);
+  const currentPageIds = useMemo(() => posts.map((post) => post.id), [posts]);
 
   const isAllCurrentPageChecked = useMemo(() => {
     return currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.includes(id));
@@ -230,22 +265,13 @@ export default function Opt() {
     return currentPageIds.some((id) => selectedIds.includes(id));
   }, [currentPageIds, selectedIds]);
 
-  const pageGroupStart = Math.floor((safeCurrentPage - 1) / PAGE_GROUP_SIZE) * PAGE_GROUP_SIZE + 1;
-  const pageGroupEnd = Math.min(pageGroupStart + PAGE_GROUP_SIZE - 1, totalPage);
-
-  const pageNumberList = useMemo(() => {
-    const numbers: number[] = [];
-
-    for (let pageNumber = pageGroupStart; pageNumber <= pageGroupEnd; pageNumber += 1) {
-      numbers.push(pageNumber);
-    }
-
-    return numbers;
-  }, [pageGroupEnd, pageGroupStart]);
-
   useEffect(() => {
     async function loadData() {
       try {
+        if (hasLoaded) {
+          setIsFetching(true);
+        }
+
         setErrorMessage('');
 
         const siteResponse = await fetch(`/api/site/public?siteName=${siteName}`, {
@@ -271,7 +297,28 @@ export default function Opt() {
 
         setSiteType(nextSiteType);
 
+        const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const headerResult = (await headerResponse.json()) as HeaderSiteResponse | ErrorResponse;
+        const nextIsStaff =
+          headerResponse.ok && 'siteRole' in headerResult ? isStaffRole(headerResult.siteRole) : false;
+
+        setIsStaff(nextIsStaff);
+
         if (nextSiteType === 'blog') {
+          if (filterParam === 'private' && !nextIsStaff) {
+            setBoard(null);
+            setBoardName(null);
+            setPosts([]);
+            setBoards([]);
+            setTotalPage(1);
+            setErrorMessage('접근 권한이 없습니다.');
+            return;
+          }
+
           const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
@@ -290,19 +337,26 @@ export default function Opt() {
           }
 
           if (!statusResult.hasBoard || !statusResult.boardName) {
+            setBoard(null);
             setBoardName(null);
             setPosts([]);
             setBoards([]);
+            setTotalPage(1);
             setIsBoardOrderChanged(false);
             return;
           }
 
           setBoardName(statusResult.boardName);
 
-          const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
+          const boardResponse = await fetch(
+            `/api/boards/${statusResult.boardName}?siteName=${siteName}&page=${currentPage}${
+              sizeParam ? `&size=${sizeParam}` : ''
+            }${filterParam ? `&filter=${filterParam}` : ''}`,
+            {
+              method: 'GET',
+              credentials: 'include',
+            },
+          );
 
           const boardResult = (await boardResponse.json()) as BoardContentsResponse | ErrorResponse;
 
@@ -312,15 +366,24 @@ export default function Opt() {
             );
           }
 
-          if (!('contents' in boardResult) || !Array.isArray(boardResult.contents)) {
+          if (!('contents' in boardResult) || !Array.isArray(boardResult.contents) || !('board' in boardResult)) {
             throw new Error('출간된 블로그 글 목록을 불러오지 못했습니다.');
           }
 
+          setBoard(boardResult.board);
           setPosts(boardResult.contents);
           setBoards([]);
+          setTotalPage(Number(boardResult.totalPage) > 0 ? Number(boardResult.totalPage) : 1);
+          setCurrentFilter(boardResult.filter === 'private' ? 'private' : 'all');
           setIsBoardOrderChanged(false);
           return;
         }
+
+        setBoard(null);
+        setBoardName(null);
+        setPosts([]);
+        setTotalPage(1);
+        setCurrentFilter('all');
 
         const boardsResponse = await fetch(`/api/boards?siteName=${siteName}`, {
           method: 'GET',
@@ -338,8 +401,6 @@ export default function Opt() {
         }
 
         setBoards(boardsResult.boards.filter(isVisibleCommunityBoard));
-        setPosts([]);
-        setBoardName(null);
         setIsBoardOrderChanged(false);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -348,18 +409,24 @@ export default function Opt() {
           setErrorMessage('목록을 불러오지 못했습니다.');
         }
       } finally {
+        setHasLoaded(true);
         setIsLoading(false);
+        setIsFetching(false);
       }
     }
 
     void loadData();
-  }, [siteName]);
+  }, [siteName, currentPage, sizeParam, filterParam]);
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => posts.some((post) => post.id === id)));
   }, [posts]);
 
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
     if (currentPage > totalPage) {
       const nextSearchParams = new URLSearchParams(searchParams.toString());
 
@@ -372,19 +439,30 @@ export default function Opt() {
       const nextQuery = nextSearchParams.toString();
       router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     }
-  }, [currentPage, pathname, router, searchParams, totalPage]);
+  }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
 
-  function moveToPage(pageNumber: number) {
+  function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'private' }) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
+    const nextPage = page ?? safeCurrentPage;
+    const nextSize = size ?? currentSize;
+    const nextFilter = filter ?? currentFilter;
 
-    if (pageNumber <= 1) {
+    if (nextPage <= 1) {
       nextSearchParams.delete('page');
     } else {
-      nextSearchParams.set('page', String(pageNumber));
+      nextSearchParams.set('page', String(nextPage));
+    }
+
+    nextSearchParams.set('size', String(nextSize));
+
+    if (nextFilter === 'private') {
+      nextSearchParams.set('filter', 'private');
+    } else {
+      nextSearchParams.delete('filter');
     }
 
     const nextQuery = nextSearchParams.toString();
-    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+    return nextQuery ? `${pathname}?${nextQuery}` : pathname;
   }
 
   function handleMoveToCommunityBoard(nextBoardName: string) {
@@ -540,7 +618,7 @@ export default function Opt() {
         const result = (await response.json()) as { ok?: boolean; error?: string };
 
         if (!response.ok) {
-          throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
+          throw new Error(result.error ?? '글 삭제에 실패했습니다.');
         }
       }
 
@@ -552,9 +630,9 @@ export default function Opt() {
       setDeleteTarget(null);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');
+        setErrorMessage(unknownError.message || '글 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('게시물 삭제에 실패했습니다.');
+        setErrorMessage('글 삭제에 실패했습니다.');
       }
     } finally {
       setIsDeleting(false);
@@ -637,22 +715,66 @@ export default function Opt() {
     <Stack spacing={2}>
       {isNotMobile && (
         <Typography variant="h5" component="h1">
-          {siteType === 'blog' ? '블로그 글 목록' : '게시판 목록'}
+          글 목록
         </Typography>
       )}
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         {selectedIds.length > 0 ? (
           <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-            게시물 삭제
+            글 삭제
           </Button>
         ) : (
           <span />
         )}
 
-        <Button LinkComponent={Link} type="button" variant="contained" href={`/${siteName}/contents/posts/new`}>
+        <Button LinkComponent={NextLink} type="button" variant="contained" href={`/${siteName}/contents/posts/new`}>
           글쓰기
         </Button>
+      </Stack>
+
+      <Stack direction={isMobile ? 'column' : 'row'} spacing={1} justifyContent="space-between" alignItems="center">
+        {isStaff ? (
+          <Stack direction="row" spacing={1}>
+            <Button
+              LinkComponent={NextLink}
+              type="button"
+              variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+              href={getListHref({ page: 1, filter: 'all' })}
+            >
+              전체보기
+            </Button>
+
+            <Button
+              LinkComponent={NextLink}
+              type="button"
+              variant={currentFilter === 'private' ? 'contained' : 'outlined'}
+              href={getListHref({ page: 1, filter: 'private' })}
+            >
+              비공개만 보기
+            </Button>
+          </Stack>
+        ) : (
+          <span />
+        )}
+
+        <TextField
+          select
+          label="보기 방식"
+          value={currentSize}
+          onChange={(event) => {
+            router.push(getListHref({ page: 1, size: Number(event.target.value) }));
+          }}
+          size="small"
+          sx={{ minWidth: 180 }}
+        >
+          {SIZE_OPTIONS.map((sizeOption) => (
+            <MenuItem key={sizeOption} value={sizeOption}>
+              {sizeOption}개씩
+              {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
+            </MenuItem>
+          ))}
+        </TextField>
       </Stack>
 
       {errorMessage ? (
@@ -666,105 +788,113 @@ export default function Opt() {
           <Typography>출간된 블로그 글이 없습니다.</Typography>
         </Paper>
       ) : (
-        <Paper elevation={0} sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={isAllCurrentPageChecked}
-                    indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
-                    onChange={handleToggleAllCurrentPage}
-                  />
-                </TableCell>
-                <TableCell>제목</TableCell>
-                <TableCell>작성일</TableCell>
-                <TableCell>작성자</TableCell>
-                <TableCell align="right">게시물 삭제</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {currentPagePosts.map((post) => (
-                <TableRow key={post.id} hover>
+        <Box sx={{ position: 'relative' }}>
+          <TableContainer elevation={3} component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
                   <TableCell padding="checkbox">
-                    <Checkbox checked={selectedIds.includes(post.id)} onChange={() => handleToggleSingle(post.id)} />
+                    <Checkbox
+                      checked={isAllCurrentPageChecked}
+                      indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
+                      onChange={handleToggleAllCurrentPage}
+                    />
                   </TableCell>
-
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="text"
-                      onClick={() => router.push(`/${siteName}/contents/posts/${post.slug}`)}
-                      sx={{
-                        p: 0,
-                        minWidth: 0,
-                        justifyContent: 'flex-start',
-                        textAlign: 'left',
-                      }}
-                    >
-                      {post.subject}
-                    </Button>
-                  </TableCell>
-
-                  <TableCell>{formatDate(post.created_at)}</TableCell>
-                  <TableCell>{post.author_name}</TableCell>
-
-                  <TableCell align="right">
-                    <Button
-                      type="button"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleOpenSingleDeleteDialog(post)}
-                    >
-                      삭제
-                    </Button>
-                  </TableCell>
+                  <TableCell>제목</TableCell>
+                  <TableCell>작성일</TableCell>
+                  <TableCell>작성자</TableCell>
+                  <TableCell>공개여부</TableCell>
+                  <TableCell align="right">글 삭제</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Paper>
+              </TableHead>
+
+              <TableBody>
+                {posts.map((post) => (
+                  <TableRow key={post.id} hover>
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={selectedIds.includes(post.id)} onChange={() => handleToggleSingle(post.id)} />
+                    </TableCell>
+
+                    <TableCell>
+                      <Button
+                        LinkComponent={NextLink}
+                        type="button"
+                        variant="text"
+                        href={`/${siteName}/contents/posts/${post.slug}`}
+                        sx={{
+                          p: 0,
+                          minWidth: 0,
+                          justifyContent: 'flex-start',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {post.subject}
+                      </Button>
+                    </TableCell>
+
+                    <TableCell>{formatDate(post.created_at)}</TableCell>
+                    <TableCell>{post.author_name}</TableCell>
+                    <TableCell>{post.is_closed === true ? '비공개' : '공개'}</TableCell>
+
+                    <TableCell align="right">
+                      <Button
+                        type="button"
+                        color="error"
+                        variant="outlined"
+                        onClick={() => handleOpenSingleDeleteDialog(post)}
+                      >
+                        삭제
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Backdrop
+            open={isFetching}
+            sx={{
+              position: 'absolute',
+              zIndex: 1,
+              color: '#fff',
+            }}
+          >
+            <Stack spacing={2} alignItems="center">
+              <Stack justifyContent="center" alignItems="center">
+                <LoadingIndicator />
+              </Stack>
+            </Stack>
+          </Backdrop>
+        </Box>
       )}
 
-      {posts.length > 0 ? (
-        <Stack direction="row" spacing={1} justifyContent="center">
-          <Button
-            type="button"
-            variant="outlined"
-            disabled={safeCurrentPage <= 1}
-            onClick={() => moveToPage(safeCurrentPage - 1)}
-          >
-            이전
-          </Button>
-
-          {pageNumberList.map((pageNumber) => (
-            <Button
-              key={pageNumber}
-              type="button"
-              variant={pageNumber === safeCurrentPage ? 'contained' : 'outlined'}
-              onClick={() => moveToPage(pageNumber)}
-            >
-              {pageNumber}
-            </Button>
-          ))}
-
-          <Button
-            type="button"
-            variant="outlined"
-            disabled={safeCurrentPage >= totalPage}
-            onClick={() => moveToPage(safeCurrentPage + 1)}
-          >
-            다음
-          </Button>
+      {totalPage > 1 ? (
+        <Stack alignItems="center">
+          <Pagination
+            page={safeCurrentPage}
+            count={totalPage}
+            color="primary"
+            siblingCount={1}
+            boundaryCount={1}
+            renderItem={(item) => (
+              <PaginationItem
+                {...item}
+                component={NextLink}
+                href={getListHref({
+                  page: item.page ?? 1,
+                })}
+              />
+            )}
+          />
         </Stack>
       ) : null}
 
       <Dialog open={deleteMode !== null} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>게시물 삭제</DialogTitle>
+        <DialogTitle>글 삭제</DialogTitle>
         <DialogContent>
           <Typography>
-            {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+            {deleteMode === 'single' ? '이 글을 삭제하시겠습니까?' : '선택한 글을 삭제하시겠습니까?'}
           </Typography>
         </DialogContent>
         <DialogActions>

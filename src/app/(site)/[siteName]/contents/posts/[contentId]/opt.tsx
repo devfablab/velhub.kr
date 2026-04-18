@@ -334,9 +334,13 @@ export default function Opt() {
       </Stack>
 
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>블로그 글 삭제</DialogTitle>
+        <DialogTitle>글 비공개</DialogTitle>
         <DialogContent>
-          <Typography>이 블로그 글을 삭제하시겠습니까?</Typography>
+          <Typography>
+            이 글을 비공개하시겠습니까?
+            <br />
+            비공개시 스텝만 보실 수 있습니다.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>

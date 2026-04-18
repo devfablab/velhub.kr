@@ -11,7 +11,10 @@ export function LoadingIndicator() {
           </linearGradient>
         </defs>
       </svg>
-      <CircularProgress aria-label="Loading…" sx={{ 'svg circle': { stroke: 'url(#loading_gradient)' } }} />
+      <CircularProgress
+        aria-label="데이터를 불러오는 중입니다"
+        sx={{ 'svg circle': { stroke: 'url(#loading_gradient)' } }}
+      />
     </>
   );
 }

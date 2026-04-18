@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_type, visibility_type, is_shutdown')
+      .select('id, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -28,15 +28,18 @@ export async function GET(request: Request) {
     });
 
     const isStaff = session.status !== 'FAIL' && session.case === 'staff';
-    const isPublicReadable = rhizome.data.visibility_type === 'public' && rhizome.data.is_shutdown === false;
 
-    if (!isPublicReadable && !isStaff) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
+      if (!isStaff) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
     }
 
     const boards = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at')
+      .select(
+        'id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at, post_per_page',
+      )
       .eq('site_id', rhizome.data.id)
       .order('sort_order', { ascending: true });
 

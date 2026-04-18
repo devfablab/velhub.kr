@@ -9,6 +9,7 @@ type RequestBody = {
   boardType: string | null;
   isActive: boolean | null;
   markdownStatus: string | null;
+  postPerPage?: number | null;
 };
 
 function normalizeBoardKey(rawValue: string | null | undefined) {
@@ -30,6 +31,24 @@ function isAllowedBoardType(value: string) {
   return value === 'board' || value === 'blog' || value === 'page' || value === 'community';
 }
 
+function normalizePostPerPage(value: number | null | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 5;
+  }
+
+  const normalizedValue = Math.floor(value);
+
+  if (normalizedValue < 5) {
+    return 5;
+  }
+
+  if (normalizedValue > 50) {
+    return 50;
+  }
+
+  return normalizedValue;
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
@@ -40,6 +59,7 @@ export async function POST(request: Request) {
     const boardType = normalizeText(requestBody.boardType).toLowerCase();
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
+    const postPerPage = normalizePostPerPage(requestBody.postPerPage);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -129,6 +149,7 @@ export async function POST(request: Request) {
         sort_order: nextSortOrder,
         site_id: rhizome.data.id,
         markdown_status: markdownStatus,
+        post_per_page: postPerPage,
       })
       .select('id, board_key')
       .maybeSingle();

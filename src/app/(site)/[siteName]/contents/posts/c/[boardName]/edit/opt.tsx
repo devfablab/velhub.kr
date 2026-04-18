@@ -7,6 +7,7 @@ import {
   Alert,
   Button,
   InputAdornment,
+  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -25,6 +26,7 @@ type BoardResponse = {
     board_key: string;
     board_label: string;
     board_type: string;
+    post_per_page?: number | null;
   };
 };
 
@@ -33,6 +35,8 @@ type EditBoardResponse = {
   boardName?: string;
   error?: string;
 };
+
+const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
 function normalizeBoardKey(rawValue: string) {
   return rawValue
@@ -61,6 +65,7 @@ export default function Opt() {
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
+  const [postPerPage, setPostPerPage] = useState(5);
   const [originalBoardKey, setOriginalBoardKey] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -70,6 +75,7 @@ export default function Opt() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
 
   useEffect(() => {
     async function loadBoard() {
@@ -97,6 +103,11 @@ export default function Opt() {
 
         setBoardLabel(result.board.board_label ?? '');
         setBoardKey(result.board.board_key ?? '');
+        setPostPerPage(
+          typeof result.board.post_per_page === 'number' && Number.isFinite(result.board.post_per_page)
+            ? result.board.post_per_page
+            : 5,
+        );
         setOriginalBoardKey(result.board.board_key ?? '');
         setCheckedBoardKey(result.board.board_key ?? '');
         setIsChecked(true);
@@ -135,6 +146,10 @@ export default function Opt() {
     setIsChecked(false);
     setIsAvailable(false);
     setCheckedBoardKey('');
+  }
+
+  function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setPostPerPage(Number(event.target.value));
   }
 
   async function handleCheckBoardKey() {
@@ -259,11 +274,13 @@ export default function Opt() {
         },
         credentials: 'include',
         body: JSON.stringify({
+          siteName,
           boardKey: normalizedBoardKey,
           boardLabel: normalizedBoardLabel,
           boardType: 'community',
           isActive: true,
           markdownStatus: 'markdown_default',
+          postPerPage,
         }),
       });
 
@@ -289,6 +306,10 @@ export default function Opt() {
     }
   }
 
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
   if (isLoading) {
     return null;
   }
@@ -302,19 +323,29 @@ export default function Opt() {
       )}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth />
-
         <TextField
           label="게시판 식별자"
           value={boardKey}
           onChange={handleBoardKeyChange}
           fullWidth
+          size="medium"
+          helperText={`스텝 관리화면: ${baseUrl}/${siteName}/contents/posts/c/${boardKey}`}
           slotProps={{
             input: {
-              startAdornment: <InputAdornment position="start">/contents/posts/c/</InputAdornment>,
+              startAdornment: (
+                <InputAdornment position="start">
+                  {baseUrl}/{siteName}/
+                </InputAdornment>
+              ),
               endAdornment: (
                 <InputAdornment position="end">
-                  <Button type="button" variant="outlined" onClick={handleCheckBoardKey} disabled={isChecking}>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleCheckBoardKey}
+                    disabled={isChecking}
+                    size="small"
+                  >
                     중복 체크
                   </Button>
                 </InputAdornment>
@@ -322,6 +353,23 @@ export default function Opt() {
             },
           }}
         />
+
+        <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth size="small" />
+
+        <TextField
+          select
+          label="목록 표시 개수"
+          value={postPerPage}
+          onChange={handlePostPerPageChange}
+          fullWidth
+          size="small"
+        >
+          {POST_PER_PAGE_OPTIONS.map((count) => (
+            <MenuItem key={count} value={count}>
+              {count}개씩
+            </MenuItem>
+          ))}
+        </TextField>
 
         <Stack direction="row" spacing={1.5}>
           <Button type="submit" variant="contained" disabled={isSubmitting}>

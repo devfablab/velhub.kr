@@ -26,6 +26,34 @@ type PostRow = {
   is_closed?: boolean | null;
 };
 
+function parsePage(value: string | null) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return 1;
+  }
+
+  return Math.floor(parsedValue);
+}
+
+function parseSize(value: string | null, fallbackValue: number) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return fallbackValue;
+  }
+
+  if (parsedValue < 5) {
+    return 5;
+  }
+
+  if (parsedValue > 50) {
+    return 50;
+  }
+
+  return Math.floor(parsedValue);
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -37,6 +65,8 @@ export async function GET(request: Request, context: RouteContext) {
 
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const page = parsePage(requestUrl.searchParams.get('page'));
+    const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase();
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -59,15 +89,18 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.status !== 'FAIL' && session.case === 'staff';
-    const isPublicReadable = rhizome.data.visibility_type === 'public' && rhizome.data.is_shutdown === false;
 
-    if (!isPublicReadable && !isStaff) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
+      if (!isStaff) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
     }
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at')
+      .select(
+        'id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at, post_per_page',
+      )
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -76,38 +109,64 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const defaultSize =
+      typeof board.data.post_per_page === 'number' && Number.isFinite(board.data.post_per_page)
+        ? Math.min(Math.max(Math.floor(board.data.post_per_page), 5), 50)
+        : 5;
+
+    const size = parseSize(requestUrl.searchParams.get('size'), defaultSize);
+    const from = (page - 1) * size;
+    const to = from + size - 1;
+
     if (board.data.board_type === 'page') {
       const pages = await supabaseAdmin
         .from('pages')
-        .select('id, slug, subject, summary, edited_at, sort_order, user_id, site_id, board_id, created_at')
+        .select('id, slug, subject, summary, edited_at, sort_order, user_id, site_id, board_id, created_at', {
+          count: 'exact',
+        })
         .eq('board_id', board.data.id)
-        .order('sort_order', { ascending: true });
+        .order('sort_order', { ascending: true })
+        .range(from, to);
 
       if (pages.error) {
         return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
       }
 
+      const totalCount = pages.count ?? 0;
+      const totalPage = totalCount > 0 ? Math.ceil(totalCount / size) : 1;
+
       return Response.json({
         board: board.data,
         contents: pages.data ?? [],
+        page,
+        size,
+        totalCount,
+        totalPage,
       });
     }
 
-    const posts = await supabaseAdmin
+    let postQuery = supabaseAdmin
       .from('posts')
       .select(
         'id, slug, subject, summary, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed',
+        { count: 'exact' },
       )
       .eq('board_id', board.data.id)
       .order('created_at', { ascending: false });
+
+    if (!isStaff) {
+      postQuery = postQuery.neq('is_closed', true);
+    } else if (filter === 'private') {
+      postQuery = postQuery.eq('is_closed', true);
+    }
+
+    const posts = await postQuery.range(from, to);
 
     if (posts.error) {
       return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const allPosts = (posts.data ?? []) as PostRow[];
-    const visiblePosts = isStaff ? allPosts : allPosts.filter((post) => post.is_closed !== true);
-
+    const visiblePosts = (posts.data ?? []) as PostRow[];
     const userIdList = Array.from(new Set(visiblePosts.map((post) => post.user_id).filter(Boolean)));
 
     let nicknameMap = new Map<string, string>();
@@ -142,6 +201,9 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
+    const totalCount = posts.count ?? 0;
+    const totalPage = totalCount > 0 ? Math.ceil(totalCount / size) : 1;
+
     return Response.json({
       board: board.data,
       contents: visiblePosts.map((post) => ({
@@ -149,6 +211,11 @@ export async function GET(request: Request, context: RouteContext) {
         slug: String(post.slug),
         author_name: nicknameMap.get(post.user_id) || userNameMap.get(post.user_id) || '',
       })),
+      page,
+      size,
+      totalCount,
+      totalPage,
+      filter: isStaff && filter === 'private' ? 'private' : 'all',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

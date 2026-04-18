@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
 import {
@@ -71,9 +71,53 @@ export default function Opt() {
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [hasBoard, setHasBoard] = useState(false);
+  const [boardName, setBoardName] = useState<string | null>(null);
+  const [isStatusLoading, setIsStatusLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
+  useEffect(() => {
+    async function loadStatus() {
+      try {
+        setErrorMessage('');
+        setIsStatusLoading(true);
+
+        const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
+
+        if (!statusResponse.ok) {
+          throw new Error(
+            'error' in statusResult
+              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
+              : '블로그 상태를 확인하지 못했습니다.',
+          );
+        }
+
+        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
+          throw new Error('블로그 상태를 확인하지 못했습니다.');
+        }
+
+        setHasBoard(statusResult.hasBoard);
+        setBoardName(statusResult.boardName);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '블로그 상태를 확인하지 못했습니다.');
+        } else {
+          setErrorMessage('블로그 상태를 확인하지 못했습니다.');
+        }
+      } finally {
+        setIsStatusLoading(false);
+      }
+    }
+
+    void loadStatus();
+  }, [siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -159,7 +203,12 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting) {
+    if (isSubmitting || isStatusLoading) {
+      return;
+    }
+
+    if (!hasBoard || !boardName) {
+      setErrorMessage('최초 글은 스텝만 작성 가능합니다');
       return;
     }
 
@@ -167,31 +216,7 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
-      const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-      if (!statusResponse.ok) {
-        throw new Error(
-          'error' in statusResult
-            ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-            : '블로그 상태를 확인하지 못했습니다.',
-        );
-      }
-
-      if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-        throw new Error('블로그 상태를 확인하지 못했습니다.');
-      }
-
-      const targetUrl =
-        statusResult.hasBoard && statusResult.boardName
-          ? `/api/boards/${statusResult.boardName}/new?siteName=${siteName}`
-          : '/api/posts/new';
-
-      const createResponse = await fetch(targetUrl, {
+      const createResponse = await fetch(`/api/boards/${boardName}/new`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,23 +250,45 @@ export default function Opt() {
           });
         }
 
-        throw new Error(createResult.error ?? '블로그 글 출간에 실패했습니다.');
+        throw new Error(createResult.error ?? '블로그 글 개설에 실패했습니다.');
       }
 
       if (!createResult.slug) {
-        throw new Error('블로그 글 출간에 실패했습니다.');
+        throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '블로그 글 출간에 실패했습니다.');
+        setErrorMessage(unknownError.message || '블로그 글 개설에 실패했습니다.');
       } else {
-        setErrorMessage('블로그 글 출간에 실패했습니다.');
+        setErrorMessage('블로그 글 개설에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isStatusLoading) {
+    return null;
+  }
+
+  if (!hasBoard) {
+    return (
+      <Paper elevation={0} sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <Alert severity="error" variant="filled">
+            최초 글은 스텝만 작성 가능합니다
+          </Alert>
+
+          <Box>
+            <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
+              목록으로 이동
+            </Button>
+          </Box>
+        </Stack>
+      </Paper>
+    );
   }
 
   return (
@@ -253,8 +300,8 @@ export default function Opt() {
       )}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
-        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth />
+        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
         <Box>
           <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>

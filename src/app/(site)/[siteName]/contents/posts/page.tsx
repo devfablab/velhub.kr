@@ -32,7 +32,7 @@ export default async function Page(context: RouteContext) {
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs pageTitle={siteInfo.data.site_type === 'blog' ? '블로그 글 목록' : '게시판 목록'} />
+          <StaffTabs pageTitle={siteInfo.data.site_type === 'blog' ? '글 목록' : '게시판 목록'} />
 
           <SiteContentsBreadcrumb />
 

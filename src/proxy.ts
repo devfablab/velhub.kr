@@ -10,8 +10,7 @@ function isManagePath(pathname: string) {
 
   return (
     segments.length >= 2 &&
-    (segments[1] === 'contents' ||
-      segments[1] === 'design' ||
+    (segments[1] === 'design' ||
       segments[1] === 'team' ||
       segments[1] === 'manage' ||
       segments[1] === 'members' ||
@@ -19,6 +18,16 @@ function isManagePath(pathname: string) {
       segments[1] === 'stats' ||
       segments[1] === 'staff')
   );
+}
+
+function isContentsPath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 3 && segments[1] === 'contents' && segments[2] === 'posts';
 }
 
 function getSiteNameFromPath(pathname: string) {
@@ -36,6 +45,7 @@ function isReservedRootPath(pathname: string) {
 
   return (
     firstSegment === '' ||
+    firstSegment === '_next' ||
     firstSegment === '.well-known' ||
     firstSegment === 'auth' ||
     firstSegment === 'settings' ||
@@ -204,6 +214,32 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!staff.response.ok) {
+      return redirectWithPath(request, `/${siteName}`);
+    }
+
+    return response;
+  }
+
+  if (isContentsPath(pathname)) {
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
+    if (!siteName) {
+      return redirectWithPath(request, '/');
+    }
+
+    const contents = await fetchSessionRoute(request, '/api/posts/status', {
+      siteName,
+    });
+
+    if (contents.response.status === 401) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    if (!contents.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
 

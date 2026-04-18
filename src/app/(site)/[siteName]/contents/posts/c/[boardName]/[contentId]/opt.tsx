@@ -229,10 +229,12 @@ export default function Opt() {
                 <Typography>{content.subject}</Typography>
               </Box>
 
-              <Box>
-                <Typography variant="body2">부제목</Typography>
-                <Typography>{content.summary || '-'}</Typography>
-              </Box>
+              {content.summary && (
+                <Box>
+                  <Typography variant="body2">부제목</Typography>
+                  <Typography>{content.summary}</Typography>
+                </Box>
+              )}
 
               <Box>
                 <Typography variant="body2">작성일</Typography>

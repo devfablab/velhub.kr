@@ -2,14 +2,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
+import NextLink from 'next/link';
 import {
   Alert,
+  Backdrop,
   Button,
   Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
+  Pagination,
+  PaginationItem,
   Paper,
   Stack,
   Table,
@@ -17,6 +23,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
@@ -44,8 +51,13 @@ type BoardResponse = {
     board_key: string;
     board_label: string;
     created_at?: string;
+    post_per_page?: number | null;
   };
   contents?: ContentRow[];
+  page?: number;
+  size?: number;
+  totalCount?: number;
+  totalPage?: number;
 };
 
 type ErrorResponse = {
@@ -57,14 +69,25 @@ type DeleteResponse = {
   error?: string;
 };
 
-const PAGE_SIZE = 10;
-const PAGE_GROUP_SIZE = 5;
+const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+type DeleteMode = 'single' | 'bulk' | null;
 
 function parsePage(value: string | null) {
   const parsedValue = Number(value);
 
   if (!Number.isFinite(parsedValue) || parsedValue < 1) {
     return 1;
+  }
+
+  return Math.floor(parsedValue);
+}
+
+function parseSize(value: string | null) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return null;
   }
 
   return Math.floor(parsedValue);
@@ -82,30 +105,28 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = !isNotMobile;
 
-  const [boardLabel, setBoardLabel] = useState('');
+  const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
   const [contents, setContents] = useState<ContentRow[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [deleteMode, setDeleteMode] = useState<'single' | 'bulk' | null>(null);
+  const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContentRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [totalPage, setTotalPage] = useState(1);
 
   const currentPage = parsePage(searchParams.get('page'));
+  const sizeParam = parseSize(searchParams.get('size'));
 
-  const totalPage = useMemo(() => {
-    const pageCount = Math.ceil(contents.length / PAGE_SIZE);
-    return pageCount > 0 ? pageCount : 1;
-  }, [contents.length]);
+  const defaultPostPerPage =
+    typeof board?.post_per_page === 'number' && Number.isFinite(board.post_per_page) ? board.post_per_page : 5;
 
+  const currentSize = sizeParam ?? defaultPostPerPage;
   const safeCurrentPage = currentPage > totalPage ? totalPage : currentPage;
 
-  const currentPageContents = useMemo(() => {
-    const startIndex = (safeCurrentPage - 1) * PAGE_SIZE;
-    return contents.slice(startIndex, startIndex + PAGE_SIZE);
-  }, [contents, safeCurrentPage]);
-
-  const currentPageIds = useMemo(() => currentPageContents.map((content) => content.id), [currentPageContents]);
+  const currentPageIds = useMemo(() => contents.map((content) => content.id), [contents]);
 
   const isAllCurrentPageChecked = useMemo(() => {
     return currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.includes(id));
@@ -115,39 +136,38 @@ export default function Opt() {
     return currentPageIds.some((id) => selectedIds.includes(id));
   }, [currentPageIds, selectedIds]);
 
-  const pageGroupStart = Math.floor((safeCurrentPage - 1) / PAGE_GROUP_SIZE) * PAGE_GROUP_SIZE + 1;
-  const pageGroupEnd = Math.min(pageGroupStart + PAGE_GROUP_SIZE - 1, totalPage);
-
-  const pageNumberList = useMemo(() => {
-    const numbers: number[] = [];
-
-    for (let pageNumber = pageGroupStart; pageNumber <= pageGroupEnd; pageNumber += 1) {
-      numbers.push(pageNumber);
-    }
-
-    return numbers;
-  }, [pageGroupEnd, pageGroupStart]);
-
   useEffect(() => {
     async function loadBoard() {
       try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          const errorResult = (await response.json()) as ErrorResponse;
-
-          throw new Error(errorResult.error || '게시판을 불러오지 못했습니다.');
+        if (hasLoaded) {
+          setIsFetching(true);
         }
 
-        const result = (await response.json()) as BoardResponse;
+        setErrorMessage('');
 
-        setBoardLabel(result.board?.board_label ?? '');
+        const response = await fetch(
+          `/api/boards/${boardName}?siteName=${siteName}&page=${currentPage}${sizeParam ? `&size=${sizeParam}` : ''}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          },
+        );
+
+        const result = (await response.json()) as BoardResponse | ErrorResponse;
+
+        if (!response.ok) {
+          throw new Error(
+            'error' in result ? result.error || '게시판을 불러오지 못했습니다.' : '게시판을 불러오지 못했습니다.',
+          );
+        }
+
+        if (!('board' in result) || !result.board) {
+          throw new Error('게시판을 불러오지 못했습니다.');
+        }
+
+        setBoard(result.board);
         setContents(Array.isArray(result.contents) ? result.contents : []);
+        setTotalPage(typeof result.totalPage === 'number' && result.totalPage > 0 ? result.totalPage : 1);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시판을 불러오지 못했습니다.');
@@ -155,18 +175,24 @@ export default function Opt() {
           setErrorMessage('게시판을 불러오지 못했습니다.');
         }
       } finally {
+        setHasLoaded(true);
         setIsLoading(false);
+        setIsFetching(false);
       }
     }
 
     void loadBoard();
-  }, [boardName, siteName]);
+  }, [boardName, siteName, currentPage, sizeParam]);
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => contents.some((content) => content.id === id)));
   }, [contents]);
 
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
     if (currentPage > totalPage) {
       const nextSearchParams = new URLSearchParams(searchParams.toString());
 
@@ -179,10 +205,11 @@ export default function Opt() {
       const nextQuery = nextSearchParams.toString();
       router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     }
-  }, [currentPage, pathname, router, searchParams, totalPage]);
+  }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
 
-  function moveToPage(pageNumber: number) {
+  function getListHref(pageNumber: number, size?: number) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
+    const nextSize = size ?? currentSize;
 
     if (pageNumber <= 1) {
       nextSearchParams.delete('page');
@@ -190,16 +217,14 @@ export default function Opt() {
       nextSearchParams.set('page', String(pageNumber));
     }
 
+    nextSearchParams.set('size', String(nextSize));
+
     const nextQuery = nextSearchParams.toString();
-    router.push(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+    return nextQuery ? `${pathname}?${nextQuery}` : pathname;
   }
 
   function handleMoveToNew() {
     router.push(`/${siteName}/contents/posts/c/${boardName}/new`);
-  }
-
-  function handleMoveToDetail(contentId: string) {
-    router.push(`/${siteName}/contents/posts/c/${boardName}/${contentId}`);
   }
 
   function handleToggleAllCurrentPage() {
@@ -301,7 +326,7 @@ export default function Opt() {
           </Typography>
         )}
 
-        <Typography>{boardLabel}</Typography>
+        <Typography>{board?.board_label ?? ''}</Typography>
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           {selectedIds.length > 0 ? (
@@ -317,13 +342,33 @@ export default function Opt() {
           </Button>
         </Stack>
 
+        <Stack direction="row" justifyContent="flex-end" alignItems="center">
+          <TextField
+            select
+            label="보기 방식"
+            value={currentSize}
+            onChange={(event) => {
+              router.push(getListHref(1, Number(event.target.value)));
+            }}
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            {SIZE_OPTIONS.map((sizeOption) => (
+              <MenuItem key={sizeOption} value={sizeOption}>
+                {sizeOption}개씩
+                {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Stack>
+
         {errorMessage ? (
           <Alert severity="error" variant="filled">
             {errorMessage}
           </Alert>
         ) : null}
 
-        <Paper elevation={0} sx={{ overflowX: 'auto' }}>
+        <Paper elevation={0} sx={{ overflowX: 'auto', position: 'relative' }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -342,7 +387,7 @@ export default function Opt() {
             </TableHead>
 
             <TableBody>
-              {currentPageContents.map((content) => (
+              {contents.map((content) => (
                 <TableRow key={content.id}>
                   <TableCell padding="checkbox">
                     <Checkbox checked={selectedIds.includes(content.id)} onChange={() => handleToggleOne(content.id)} />
@@ -350,9 +395,10 @@ export default function Opt() {
 
                   <TableCell>
                     <Button
+                      LinkComponent={NextLink}
                       type="button"
                       variant="text"
-                      onClick={() => handleMoveToDetail(content.slug)}
+                      href={`/${siteName}/contents/posts/c/${boardName}/${content.slug}`}
                       sx={{
                         p: 0,
                         minWidth: 0,
@@ -380,7 +426,7 @@ export default function Opt() {
                 </TableRow>
               ))}
 
-              {currentPageContents.length === 0 ? (
+              {contents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center">
                     글이 없습니다.
@@ -389,38 +435,36 @@ export default function Opt() {
               ) : null}
             </TableBody>
           </Table>
+
+          <Backdrop
+            open={isFetching}
+            sx={{
+              position: 'absolute',
+              zIndex: 1,
+              color: '#fff',
+            }}
+          >
+            <Stack spacing={2} alignItems="center">
+              <CircularProgress color="inherit" />
+              <Typography variant="h4" component="p" fontWeight={700}>
+                불러오는 중입니다…
+              </Typography>
+            </Stack>
+          </Backdrop>
         </Paper>
 
-        {contents.length > 0 ? (
-          <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={() => moveToPage(pageGroupStart - 1)}
-              disabled={pageGroupStart <= 1}
-            >
-              이전
-            </Button>
-
-            {pageNumberList.map((pageNumber) => (
-              <Button
-                key={pageNumber}
-                type="button"
-                variant={pageNumber === safeCurrentPage ? 'contained' : 'outlined'}
-                onClick={() => moveToPage(pageNumber)}
-              >
-                {pageNumber}
-              </Button>
-            ))}
-
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={() => moveToPage(pageGroupEnd + 1)}
-              disabled={pageGroupEnd >= totalPage}
-            >
-              다음
-            </Button>
+        {totalPage > 1 ? (
+          <Stack alignItems="center">
+            <Pagination
+              page={safeCurrentPage}
+              count={totalPage}
+              color="primary"
+              siblingCount={1}
+              boundaryCount={1}
+              renderItem={(item) => (
+                <PaginationItem {...item} component={NextLink} href={getListHref(item.page ?? 1)} />
+              )}
+            />
           </Stack>
         ) : null}
       </Stack>
