@@ -260,21 +260,25 @@ export default function HeaderConcierge() {
         )}
 
         <IconButton onClick={handleOpenProfileMenu}>
-          <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+          <Avatar
+            src={userProfile.avatarUrl || '/broken-image.jpg'}
+            alt={userProfile.name || ''}
+            sx={{ width: 20, height: 20 }}
+          />
         </IconButton>
 
         {isMobile ? (
           <Drawer anchor="right" open={isProfileDrawerOpen} onClose={handleCloseProfileDrawer}>
             <Box sx={{ minWidth: 320, py: 1 }}>
               {userProfile.isLoggedIn ? (
-                <>
+                <Box>
                   <Box sx={{ px: 2, py: 1 }}>
                     {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
                     {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
                   </Box>
 
                   <Divider />
-                </>
+                </Box>
               ) : null}
 
               <MenuItem onClick={handleCloseProfileDrawer}>
@@ -319,14 +323,14 @@ export default function HeaderConcierge() {
         ) : (
           <Menu anchorEl={profileAnchorElement} open={Boolean(profileAnchorElement)} onClose={handleCloseProfileMenu}>
             {userProfile.isLoggedIn ? (
-              <>
+              <Box>
                 <Box sx={{ px: 2, py: 1 }}>
                   {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
                   {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
                 </Box>
 
                 <Divider />
-              </>
+              </Box>
             ) : null}
 
             <MenuItem onClick={handleCloseProfileMenu}>

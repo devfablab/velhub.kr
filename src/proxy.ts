@@ -46,6 +46,8 @@ function isReservedRootPath(pathname: string) {
   return (
     firstSegment === '' ||
     firstSegment === '_next' ||
+    firstSegment === 'favicon.ico' ||
+    firstSegment === 'broken-image.jpg' ||
     firstSegment === '.well-known' ||
     firstSegment === 'auth' ||
     firstSegment === 'settings' ||
