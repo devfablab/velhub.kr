@@ -255,12 +255,6 @@ export default function Opt() {
 
   return (
     <Stack spacing={3}>
-      {isNotMobile && (
-        <Typography variant="h4" component="h1">
-          페이지 보기
-        </Typography>
-      )}
-
       <Paper elevation={0} sx={{ p: 3, pr: 0, pl: 0 }}>
         <Stack spacing={2.5}>
           <Typography variant="h5" component="h2">
