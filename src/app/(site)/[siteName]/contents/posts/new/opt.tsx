@@ -339,12 +339,17 @@ export default function Opt() {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            저장
-          </Button>
-
-          <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
+          <Button
+            component={Link}
+            href={`/${siteName}/contents/posts`}
+            underline="none"
+            variant="outlined"
+            size="large"
+          >
             취소
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+            저장
           </Button>
         </Stack>
 

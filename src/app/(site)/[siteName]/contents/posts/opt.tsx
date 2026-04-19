@@ -13,6 +13,7 @@ import {
   Backdrop,
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
   Dialog,
   DialogActions,
@@ -785,7 +786,7 @@ export default function Opt() {
                       <TableCell width={64}></TableCell>
                       <TableCell>게시판</TableCell>
                       <TableCell>날짜</TableCell>
-                      <TableCell align="right">수정</TableCell>
+                      <TableCell />
                     </TableRow>
                   </TableHead>
 
@@ -832,16 +833,21 @@ export default function Opt() {
         </Stack>
       </Stack>
 
-      <Stack direction={isMobile ? 'column' : 'row'} spacing={1} justifyContent="space-between" alignItems="center">
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
+        alignItems="center"
+      >
         {isStaff ? (
-          <Stack direction="row" spacing={1}>
+          <ButtonGroup size="medium">
             <Button
               LinkComponent={NextLink}
               type="button"
               variant={currentFilter === 'all' ? 'contained' : 'outlined'}
               href={getListHref({ page: 1, filter: 'all' })}
             >
-              전체보기
+              전체글
             </Button>
 
             <Button
@@ -850,16 +856,13 @@ export default function Opt() {
               variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
               href={getListHref({ page: 1, filter: 'deleted' })}
             >
-              삭제된 글 보기
+              삭제글
             </Button>
-          </Stack>
-        ) : (
-          <span />
-        )}
+          </ButtonGroup>
+        ) : null}
 
         <TextField
           select
-          label="보기 방식"
           value={currentSize}
           onChange={(event) => {
             router.push(getListHref({ page: 1, size: Number(event.target.value) }));

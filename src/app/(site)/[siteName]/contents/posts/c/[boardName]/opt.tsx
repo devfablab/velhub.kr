@@ -8,6 +8,7 @@ import {
   Backdrop,
   Box,
   Button,
+  ButtonGroup,
   Checkbox,
   CircularProgress,
   Dialog,
@@ -431,15 +432,15 @@ export default function Opt() {
 
   return (
     <Stack spacing={2}>
-      {isNotMobile && (
+      {isNotMobile ? (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
           {board?.board_label ? board.board_label : '글 목록'}
         </Typography>
+      ) : (
+        <Typography variant="h5" component="h2">
+          {board?.board_label}
+        </Typography>
       )}
-
-      <Typography variant="h5" component="h2">
-        {board?.board_label}
-      </Typography>
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
@@ -455,15 +456,20 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Stack direction="row" spacing={1}>
+      <Stack
+        direction="row"
+        spacing={1}
+        justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
+        alignItems="center"
+      >
+        <ButtonGroup size="medium">
           <Button
             LinkComponent={NextLink}
             type="button"
             variant={currentFilter === 'all' ? 'contained' : 'outlined'}
             href={getListHref({ page: 1, filter: 'all' })}
           >
-            전체보기
+            전체글
           </Button>
 
           <Button
@@ -472,13 +478,12 @@ export default function Opt() {
             variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
             href={getListHref({ page: 1, filter: 'deleted' })}
           >
-            삭제된 글 보기
+            삭제글
           </Button>
-        </Stack>
+        </ButtonGroup>
 
         <TextField
           select
-          label="보기 방식"
           value={currentSize}
           onChange={(event) => {
             router.push(getListHref({ page: 1, size: Number(event.target.value) }));

@@ -315,7 +315,7 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper elevation={0} sx={{ p: 3, pr: 0, pl: 0 }}>
       {isNotMobile && (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
           게시판 수정
