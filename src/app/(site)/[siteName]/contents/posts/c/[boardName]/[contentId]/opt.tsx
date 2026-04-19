@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
@@ -10,13 +10,17 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Paper,
   Stack,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
+
+type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type ContentResponse = {
   content: {
@@ -34,17 +38,16 @@ type ContentResponse = {
     user_id: string;
     author_name: string;
     is_closed?: boolean;
+    closed_by: string | null;
+    closed_at: string | null;
+    closed_message: string | null;
+    closed_by_name: string;
   };
   isAuthor?: boolean;
   isStaff?: boolean;
 };
 
-type ToggleResponse = {
-  ok?: boolean;
-  error?: string;
-};
-
-type DeleteResponse = {
+type ActionResponse = {
   ok?: boolean;
   error?: string;
 };
@@ -58,15 +61,14 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const [content, setContent] = useState<ContentResponse['content'] | null>(null);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isStatusSubmitting, setIsStatusSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
+  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+  const [closedMessage, setClosedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -92,8 +94,6 @@ export default function Opt() {
         }
 
         setContent(result.content);
-        setIsAuthor(Boolean(result.isAuthor));
-        setIsStaff(Boolean(result.isStaff));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '글을 불러오지 못했습니다.');
@@ -112,93 +112,122 @@ export default function Opt() {
     router.push(`/${siteName}/contents/posts/c/${boardName}`);
   }
 
-  function handleMoveToEdit() {
-    router.push(`/${siteName}/contents/posts/c/${boardName}/${contentId}/edit`);
-  }
-
   function handleOpenDeleteDialog() {
     setIsDeleteDialogOpen(true);
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
   function handleCloseDeleteDialog() {
-    if (isDeleting) {
+    if (isSubmitting) {
       return;
     }
 
     setIsDeleteDialogOpen(false);
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
-  async function handleToggleClosed() {
+  function handleOpenRestoreDialog() {
+    setIsRestoreDialogOpen(true);
+    setDialogErrorMessage('');
+  }
+
+  function handleCloseRestoreDialog() {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsRestoreDialogOpen(false);
+    setDialogErrorMessage('');
+  }
+
+  function handleClosedMessageChange(event: InputChangeEvent) {
+    setClosedMessage(event.currentTarget.value);
+    setDialogErrorMessage('');
+  }
+
+  async function handleDelete() {
     if (!content) {
       return;
     }
 
-    try {
-      setErrorMessage('');
-      setIsStatusSubmitting(true);
+    if (closedMessage.trim().length < 10) {
+      setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
+      return;
+    }
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+    try {
+      setIsSubmitting(true);
+      setDialogErrorMessage('');
+      setErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({
-          isClosed: !content.is_closed,
+          action: 'close',
+          closedMessage: closedMessage.trim(),
         }),
       });
 
-      const result = (await response.json()) as ToggleResponse;
+      const result = (await response.json()) as ActionResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '공개 상태 변경에 실패했습니다.');
-      }
-
-      setContent((previousContent) =>
-        previousContent
-          ? {
-              ...previousContent,
-              is_closed: !previousContent.is_closed,
-            }
-          : previousContent,
-      );
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '공개 상태 변경에 실패했습니다.');
-      } else {
-        setErrorMessage('공개 상태 변경에 실패했습니다.');
-      }
-    } finally {
-      setIsStatusSubmitting(false);
-    }
-  }
-
-  async function handleDelete() {
-    try {
-      setErrorMessage('');
-      setIsDeleting(true);
-
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as DeleteResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '글 삭제에 실패했습니다.');
+        throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/c/${boardName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '글 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('글 삭제에 실패했습니다.');
+        setDialogErrorMessage('게시물 삭제에 실패했습니다.');
       }
     } finally {
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleRestore() {
+    if (!content) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setDialogErrorMessage('');
+      setErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'restore',
+        }),
+      });
+
+      const result = (await response.json()) as ActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '게시물 복구에 실패했습니다.');
+      }
+
+      router.replace(`/${siteName}/contents/posts/c/${boardName}`);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
+      } else {
+        setDialogErrorMessage('게시물 복구에 실패했습니다.');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -222,81 +251,133 @@ export default function Opt() {
         ) : null}
 
         {content ? (
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper elevation={0} sx={{ p: 3, pr: 0, pl: 0 }}>
             <Stack spacing={2.5}>
-              <Box>
-                <Typography variant="body2">제목</Typography>
-                <Typography>{content.subject}</Typography>
-              </Box>
+              <Typography variant="h5" component="h2">
+                {content.subject}
+              </Typography>
 
-              {content.summary && (
+              {content.summary ? (
                 <Box>
-                  <Typography variant="body2">부제목</Typography>
-                  <Typography>{content.summary}</Typography>
+                  <Typography variant="h6" component="h3">
+                    {content.summary}
+                  </Typography>
                 </Box>
-              )}
+              ) : null}
 
-              <Box>
-                <Typography variant="body2">작성일</Typography>
-                <Typography>{formatDate(content.created_at)}</Typography>
-              </Box>
+              <Stack direction="row" gap={3} flexWrap="wrap">
+                <Stack direction="row" gap={1}>
+                  <Typography variant="subtitle2">작성</Typography>
+                  <Typography variant="body2">
+                    {content.author_name} / {formatDateTimeDetail(content.created_at)}
+                  </Typography>
+                </Stack>
 
-              <Box>
-                <Typography variant="body2">수정일</Typography>
-                <Typography>{formatDate(content.edited_at)}</Typography>
-              </Box>
+                <Stack direction="row" gap={1}>
+                  <Typography variant="subtitle2">수정</Typography>
+                  <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
+                </Stack>
+              </Stack>
+              <Divider />
+              {content.is_closed ? (
+                <>
+                  <Stack gap={1}>
+                    <Stack direction="row" gap={1}>
+                      <Typography variant="subtitle2">삭제 정보</Typography>
+                      <Typography variant="body2">
+                        {content.closed_by_name || ''} /{' '}
+                        {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                      </Typography>
+                    </Stack>
+                    <Stack>
+                      <Typography variant="subtitle2">삭제 사유</Typography>
+                      <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                        {content.closed_message || ''}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                  <Divider />
+                </>
+              ) : null}
 
-              <Box>
-                <Typography variant="body2">작성자</Typography>
-                <Typography>{content.author_name}</Typography>
-              </Box>
+              <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
 
-              <Box>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                  내용
-                </Typography>
-                <Box dangerouslySetInnerHTML={{ __html: content.content_html }} />
-              </Box>
-
-              <Stack direction="row" spacing={1.5}>
-                <Button type="button" variant="outlined" onClick={handleMoveToList}>
+              <Stack direction="row" spacing={1.5} justifyContent="space-between">
+                <Button type="button" variant="contained" onClick={handleMoveToList}>
                   목록
                 </Button>
 
-                {isAuthor ? (
-                  <Button type="button" variant="contained" onClick={handleMoveToEdit}>
-                    수정
+                {content.is_closed ? (
+                  <Button type="button" variant="outlined" color="warning" onClick={handleOpenRestoreDialog}>
+                    복구
                   </Button>
-                ) : null}
-
-                {isAuthor ? (
+                ) : (
                   <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
                     삭제
                   </Button>
-                ) : null}
-
-                {isAuthor || isStaff ? (
-                  <Button type="button" variant="outlined" onClick={handleToggleClosed} disabled={isStatusSubmitting}>
-                    {content.is_closed ? '공개 전환' : '비공개 전환'}
-                  </Button>
-                ) : null}
+                )}
               </Stack>
             </Stack>
           </Paper>
         ) : null}
       </Stack>
 
-      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>글 삭제</DialogTitle>
+      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+        <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
-          <Typography>이 글을 삭제하시겠습니까?</Typography>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Alert severity="info" variant="filled">
+              삭제시 언제든 복구가 가능합니다.
+              <br />
+              삭제사유를 입력해 주세요. (필수)
+            </Alert>
+
+            <TextField
+              label="삭제 사유"
+              value={closedMessage}
+              onChange={handleClosedMessageChange}
+              fullWidth
+              multiline
+              minRows={3}
+              size="small"
+            />
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
         </DialogContent>
         <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isSubmitting}>
             취소
           </Button>
-          <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isSubmitting}>
             삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
+        <DialogTitle>게시물 복구</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다</Typography>
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleCloseRestoreDialog} disabled={isSubmitting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" color="primary" onClick={handleRestore} disabled={isSubmitting}>
+            확인
           </Button>
         </DialogActions>
       </Dialog>

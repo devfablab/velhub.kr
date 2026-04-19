@@ -1,3 +1,4 @@
+import verifySession from '@/lib/session/verifySession';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -9,7 +10,16 @@ type RouteContext = {
   }>;
 };
 
-export async function DELETE(request: Request, context: RouteContext) {
+type PatchRequestBody = {
+  action?: 'close' | 'restore' | null;
+  closedMessage?: string | null;
+};
+
+function normalizeClosedMessage(value: string | null | undefined) {
+  return (value ?? '').trim();
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
@@ -29,6 +39,14 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const requestBody = (await request.json()) as PatchRequestBody;
+    const action = requestBody.action;
+    const closedMessage = normalizeClosedMessage(requestBody.closedMessage);
+
+    if (action !== 'close' && action !== 'restore') {
+      return Response.json({ error: 'action이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
 
@@ -38,11 +56,17 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
+
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
+
+    const isStaff = session.status !== 'FAIL' && session.case === 'staff';
 
     const board = await supabaseAdmin
       .from('boards')
@@ -56,12 +80,12 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 삭제는 이 경로에서 처리할 수 없습니다.' }, { status: 400 });
+      return Response.json({ error: '페이지는 이 경로에서 처리할 수 없습니다.' }, { status: 400 });
     }
 
     const post = await supabaseAdmin
       .from('posts')
-      .select('id, user_id, thumbnail_image')
+      .select('id, user_id, is_closed, closed_by, closed_message')
       .eq('board_id', board.data.id)
       .eq('slug', normalizedContentId)
       .maybeSingle();
@@ -70,24 +94,93 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (post.data.user_id !== sessionClaims.userId) {
+    const isAuthor = post.data.user_id === sessionClaims.userId;
+
+    if (action === 'close') {
+      if (rhizome.data.site_type === 'blog') {
+        if (!isAuthor && !isStaff) {
+          return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+        }
+      } else {
+        if (!isStaff) {
+          return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+        }
+      }
+
+      if (post.data.is_closed === true) {
+        return Response.json({ error: '이미 삭제된 게시물입니다.' }, { status: 400 });
+      }
+
+      if (isStaff && closedMessage.length < 10) {
+        return Response.json({ error: '삭제 사유를 10자 이상 입력해주세요.' }, { status: 400 });
+      }
+
+      const closeResult = await supabaseAdmin
+        .from('posts')
+        .update({
+          is_closed: true,
+          closed_by: sessionClaims.userId,
+          closed_at: new Date().toISOString(),
+          closed_message: isStaff ? closedMessage : null,
+        })
+        .eq('id', post.data.id)
+        .select('id, is_closed, closed_by, closed_at, closed_message')
+        .maybeSingle();
+
+      if (closeResult.error || !closeResult.data) {
+        return Response.json({ error: '게시물 삭제에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        post: closeResult.data,
+      });
+    }
+
+    if (!isStaff) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const deleteResult = await supabaseAdmin.from('posts').delete().eq('id', post.data.id);
+    if (post.data.is_closed !== true) {
+      return Response.json({ error: '삭제된 게시물이 아닙니다.' }, { status: 400 });
+    }
 
-    if (deleteResult.error) {
-      return Response.json({ error: '글 삭제에 실패했습니다.' }, { status: 500 });
+    const isSelfDeleted = post.data.closed_by === post.data.user_id;
+    const isRecoverable =
+      !isSelfDeleted ||
+      (isSelfDeleted &&
+        typeof post.data.closed_message === 'string' &&
+        normalizeClosedMessage(post.data.closed_message).length >= 10);
+
+    if (!isRecoverable) {
+      return Response.json({ error: '이 게시물은 복구할 수 없습니다.' }, { status: 400 });
+    }
+
+    const restoreResult = await supabaseAdmin
+      .from('posts')
+      .update({
+        is_closed: false,
+        closed_by: null,
+        closed_at: null,
+        closed_message: null,
+      })
+      .eq('id', post.data.id)
+      .select('id, is_closed, closed_by, closed_at, closed_message')
+      .maybeSingle();
+
+    if (restoreResult.error || !restoreResult.data) {
+      return Response.json({ error: '게시물 복구에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
+      post: restoreResult.data,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '글 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '게시물 처리에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '글 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '게시물 처리에 실패했습니다.' }, { status: 500 });
   }
 }

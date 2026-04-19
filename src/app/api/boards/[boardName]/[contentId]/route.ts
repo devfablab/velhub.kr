@@ -14,6 +14,31 @@ function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
 }
 
+async function getDisplayNameByUserId(
+  siteId: string,
+  userId: string,
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+) {
+  const nicknameResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname')
+    .eq('site_id', siteId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (!nicknameResult.error && nicknameResult.data?.nickname) {
+    return nicknameResult.data.nickname as string;
+  }
+
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('user_name').eq('user_id', userId).maybeSingle();
+
+  if (!stigmaResult.error && stigmaResult.data?.user_name) {
+    return decrypt(stigmaResult.data.user_name as string);
+  }
+
+  return '';
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
@@ -52,6 +77,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.status !== 'FAIL' && session.case === 'staff';
+    const sessionUserId = session.status !== 'FAIL' ? session.userId : null;
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
@@ -81,30 +107,9 @@ export async function GET(request: Request, context: RouteContext) {
         return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      let authorName = '';
-
-      if (page.data.user_id) {
-        const nicknameResult = await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('nickname')
-          .eq('site_id', rhizome.data.id)
-          .eq('user_id', page.data.user_id)
-          .maybeSingle();
-
-        if (!nicknameResult.error && nicknameResult.data?.nickname) {
-          authorName = nicknameResult.data.nickname as string;
-        } else {
-          const stigmaResult = await supabaseAdmin
-            .from('stigmas')
-            .select('user_name')
-            .eq('user_id', page.data.user_id)
-            .maybeSingle();
-
-          if (!stigmaResult.error && stigmaResult.data?.user_name) {
-            authorName = decrypt(stigmaResult.data.user_name as string);
-          }
-        }
-      }
+      const authorName = page.data.user_id
+        ? await getDisplayNameByUserId(rhizome.data.id as string, page.data.user_id as string, supabaseAdmin)
+        : '';
 
       return Response.json({
         board: board.data,
@@ -113,6 +118,8 @@ export async function GET(request: Request, context: RouteContext) {
           slug: String(page.data.slug),
           author_name: authorName,
         },
+        isAuthor: sessionUserId === page.data.user_id,
+        isStaff,
       });
     }
 
@@ -122,9 +129,6 @@ export async function GET(request: Request, context: RouteContext) {
       ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
 
-    console.log('normalizedContentId: ', normalizedContentId);
-    console.log('post: ', post);
-
     if (post.error || !post.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -133,30 +137,14 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    let authorName = '';
+    const authorName = post.data.user_id
+      ? await getDisplayNameByUserId(rhizome.data.id as string, post.data.user_id as string, supabaseAdmin)
+      : '';
 
-    if (post.data.user_id) {
-      const nicknameResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('nickname')
-        .eq('site_id', rhizome.data.id)
-        .eq('user_id', post.data.user_id)
-        .maybeSingle();
-
-      if (!nicknameResult.error && nicknameResult.data?.nickname) {
-        authorName = nicknameResult.data.nickname as string;
-      } else {
-        const stigmaResult = await supabaseAdmin
-          .from('stigmas')
-          .select('user_name')
-          .eq('user_id', post.data.user_id)
-          .maybeSingle();
-
-        if (!stigmaResult.error && stigmaResult.data?.user_name) {
-          authorName = decrypt(stigmaResult.data.user_name as string);
-        }
-      }
-    }
+    const closedByName =
+      post.data.closed_by && typeof post.data.closed_by === 'string'
+        ? await getDisplayNameByUserId(rhizome.data.id as string, post.data.closed_by as string, supabaseAdmin)
+        : '';
 
     return Response.json({
       board: board.data,
@@ -164,7 +152,10 @@ export async function GET(request: Request, context: RouteContext) {
         ...post.data,
         slug: String(post.data.slug),
         author_name: authorName,
+        closed_by_name: closedByName,
       },
+      isAuthor: sessionUserId === post.data.user_id,
+      isStaff,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

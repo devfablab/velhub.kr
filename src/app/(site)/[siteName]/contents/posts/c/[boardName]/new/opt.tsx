@@ -112,7 +112,7 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button type="submit" variant="contained" disabled={isSubmitting}>
             저장
           </Button>

@@ -24,6 +24,9 @@ type PostRow = {
   board_id: string;
   created_at: string;
   is_closed?: boolean | null;
+  closed_by?: string | null;
+  closed_at?: string | null;
+  closed_message?: string | null;
 };
 
 function parsePage(value: string | null) {
@@ -148,7 +151,7 @@ export async function GET(request: Request, context: RouteContext) {
     let postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed',
+        'id, slug, subject, summary, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message',
         { count: 'exact' },
       )
       .eq('board_id', board.data.id)
@@ -156,7 +159,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (!isStaff) {
       postQuery = postQuery.neq('is_closed', true);
-    } else if (filter === 'private') {
+    } else if (filter === 'deleted') {
       postQuery = postQuery.eq('is_closed', true);
     }
 
@@ -167,7 +170,14 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const visiblePosts = (posts.data ?? []) as PostRow[];
-    const userIdList = Array.from(new Set(visiblePosts.map((post) => post.user_id).filter(Boolean)));
+
+    const userIdList = Array.from(
+      new Set(
+        visiblePosts
+          .flatMap((post) => [post.user_id, post.closed_by])
+          .filter((value): value is string => typeof value === 'string' && value.length > 0),
+      ),
+    );
 
     let nicknameMap = new Map<string, string>();
     let userNameMap = new Map<string, string>();
@@ -210,12 +220,16 @@ export async function GET(request: Request, context: RouteContext) {
         ...post,
         slug: String(post.slug),
         author_name: nicknameMap.get(post.user_id) || userNameMap.get(post.user_id) || '',
+        closed_by_name:
+          post.closed_by && (nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '')
+            ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || ''
+            : '',
       })),
       page,
       size,
       totalCount,
       totalPage,
-      filter: isStaff && filter === 'private' ? 'private' : 'all',
+      filter: isStaff && filter === 'deleted' ? 'deleted' : 'all',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

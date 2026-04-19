@@ -224,10 +224,6 @@ export default function Opt() {
           {errorMessage}
         </Alert>
       ) : null}
-
-      <Button component={Link} href="/settings" underline="none" variant="outlined">
-        설정으로 이동
-      </Button>
     </Stack>
   );
 }

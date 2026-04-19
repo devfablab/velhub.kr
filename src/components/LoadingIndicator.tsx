@@ -1,6 +1,10 @@
 import { CircularProgress } from '@mui/material';
 
-export function LoadingIndicator() {
+type Props = {
+  size?: number;
+};
+
+export function LoadingIndicator({ size }: Props) {
   return (
     <>
       <svg width={0} height={0}>
@@ -13,6 +17,7 @@ export function LoadingIndicator() {
       </svg>
       <CircularProgress
         aria-label="데이터를 불러오는 중입니다"
+        size={size ? size : undefined}
         sx={{ 'svg circle': { stroke: 'url(#loading_gradient)' } }}
       />
     </>

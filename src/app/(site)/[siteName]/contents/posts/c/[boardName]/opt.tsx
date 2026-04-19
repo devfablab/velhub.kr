@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
 import {
@@ -14,6 +14,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   MenuItem,
   Pagination,
   PaginationItem,
@@ -30,8 +31,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+
+type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type ContentRow = {
   id: string;
@@ -46,6 +49,10 @@ type ContentRow = {
   user_id: string;
   author_name: string;
   is_closed?: boolean;
+  closed_by: string | null;
+  closed_at: string | null;
+  closed_message: string | null;
+  closed_by_name: string;
 };
 
 type BoardResponse = {
@@ -61,6 +68,7 @@ type BoardResponse = {
   size?: number;
   totalCount?: number;
   totalPage?: number;
+  filter?: 'all' | 'deleted';
 };
 
 type ErrorResponse = {
@@ -72,9 +80,10 @@ type DeleteResponse = {
   error?: string;
 };
 
-const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-
 type DeleteMode = 'single' | 'bulk' | null;
+type DialogMode = 'delete' | 'restore' | null;
+
+const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
 function parsePage(value: string | null) {
   const parsedValue = Number(value);
@@ -106,22 +115,27 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
   const [contents, setContents] = useState<ContentRow[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContentRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [totalPage, setTotalPage] = useState(1);
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>('all');
+  const [closedMessage, setClosedMessage] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   const currentPage = parsePage(searchParams.get('page'));
   const sizeParam = parseSize(searchParams.get('size'));
+  const filterParam = normalizeText(searchParams.get('filter')).toLowerCase();
 
   const defaultPostPerPage =
     typeof board?.post_per_page === 'number' && Number.isFinite(board.post_per_page) ? board.post_per_page : 5;
@@ -149,7 +163,9 @@ export default function Opt() {
         setErrorMessage('');
 
         const response = await fetch(
-          `/api/boards/${boardName}?siteName=${siteName}&page=${currentPage}${sizeParam ? `&size=${sizeParam}` : ''}`,
+          `/api/boards/${boardName}?siteName=${siteName}&page=${currentPage}${
+            sizeParam ? `&size=${sizeParam}` : ''
+          }${filterParam ? `&filter=${filterParam}` : ''}`,
           {
             method: 'GET',
             credentials: 'include',
@@ -171,6 +187,7 @@ export default function Opt() {
         setBoard(result.board);
         setContents(Array.isArray(result.contents) ? result.contents : []);
         setTotalPage(typeof result.totalPage === 'number' && result.totalPage > 0 ? result.totalPage : 1);
+        setCurrentFilter(result.filter === 'deleted' ? 'deleted' : 'all');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시판을 불러오지 못했습니다.');
@@ -185,7 +202,7 @@ export default function Opt() {
     }
 
     void loadBoard();
-  }, [boardName, siteName, currentPage, sizeParam]);
+  }, [boardName, siteName, currentPage, sizeParam, filterParam, reloadKey]);
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => contents.some((content) => content.id === id)));
@@ -210,17 +227,25 @@ export default function Opt() {
     }
   }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
 
-  function getListHref(pageNumber: number, size?: number) {
+  function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'deleted' }) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
+    const nextPage = page ?? safeCurrentPage;
     const nextSize = size ?? currentSize;
+    const nextFilter = filter ?? currentFilter;
 
-    if (pageNumber <= 1) {
+    if (nextPage <= 1) {
       nextSearchParams.delete('page');
     } else {
-      nextSearchParams.set('page', String(pageNumber));
+      nextSearchParams.set('page', String(nextPage));
     }
 
     nextSearchParams.set('size', String(nextSize));
+
+    if (nextFilter === 'deleted') {
+      nextSearchParams.set('filter', 'deleted');
+    } else {
+      nextSearchParams.delete('filter');
+    }
 
     const nextQuery = nextSearchParams.toString();
     return nextQuery ? `${pathname}?${nextQuery}` : pathname;
@@ -252,6 +277,9 @@ export default function Opt() {
   function handleOpenSingleDeleteDialog(content: ContentRow) {
     setDeleteMode('single');
     setDeleteTarget(content);
+    setDialogMode('delete');
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
   function handleOpenBulkDeleteDialog() {
@@ -261,6 +289,17 @@ export default function Opt() {
 
     setDeleteMode('bulk');
     setDeleteTarget(null);
+    setDialogMode('delete');
+    setClosedMessage('');
+    setDialogErrorMessage('');
+  }
+
+  function handleOpenRestoreDialog(content: ContentRow) {
+    setDeleteMode('single');
+    setDeleteTarget(content);
+    setDialogMode('restore');
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
   function handleCloseDeleteDialog() {
@@ -270,9 +309,66 @@ export default function Opt() {
 
     setDeleteMode(null);
     setDeleteTarget(null);
+    setDialogMode(null);
+    setClosedMessage('');
+    setDialogErrorMessage('');
+  }
+
+  function handleClosedMessageChange(event: InputChangeEvent) {
+    setClosedMessage(event.currentTarget.value);
+    setDialogErrorMessage('');
   }
 
   async function handleDelete() {
+    if (isDeleting) {
+      return;
+    }
+
+    if (dialogMode === 'restore') {
+      if (!deleteTarget) {
+        return;
+      }
+
+      try {
+        setErrorMessage('');
+        setIsDeleting(true);
+
+        const response = await fetch(`/api/boards/${boardName}/${deleteTarget.slug}/delete?siteName=${siteName}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'restore',
+          }),
+        });
+
+        const result = (await response.json()) as DeleteResponse;
+
+        if (!response.ok) {
+          throw new Error(result.error ?? '게시물 복구에 실패했습니다.');
+        }
+
+        setDeleteMode(null);
+        setDeleteTarget(null);
+        setDialogMode(null);
+        setClosedMessage('');
+        setDialogErrorMessage('');
+        setReloadKey((previousValue) => previousValue + 1);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
+        } else {
+          setDialogErrorMessage('게시물 복구에 실패했습니다.');
+        }
+      } finally {
+        setIsDeleting(false);
+      }
+
+      return;
+    }
+
     const targets =
       deleteMode === 'single' && deleteTarget
         ? [deleteTarget]
@@ -282,34 +378,47 @@ export default function Opt() {
       return;
     }
 
+    if (closedMessage.trim().length < 10) {
+      setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
+      return;
+    }
+
     try {
       setErrorMessage('');
       setIsDeleting(true);
 
       for (const target of targets) {
         const response = await fetch(`/api/boards/${boardName}/${target.slug}/delete?siteName=${siteName}`, {
-          method: 'DELETE',
+          method: 'PATCH',
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'close',
+            closedMessage: closedMessage.trim(),
+          }),
         });
 
         const result = (await response.json()) as DeleteResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '글 삭제에 실패했습니다.');
+          throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
         }
       }
 
-      const deletedIds = new Set(targets.map((target) => target.id));
-
-      setContents((previousContents) => previousContents.filter((content) => !deletedIds.has(content.id)));
-      setSelectedIds((previousIds) => previousIds.filter((id) => !deletedIds.has(id)));
       setDeleteMode(null);
       setDeleteTarget(null);
+      setDialogMode(null);
+      setClosedMessage('');
+      setDialogErrorMessage('');
+      setSelectedIds([]);
+      setReloadKey((previousValue) => previousValue + 1);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '글 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('글 삭제에 실패했습니다.');
+        setDialogErrorMessage('게시물 삭제에 실패했습니다.');
       }
     } finally {
       setIsDeleting(false);
@@ -324,16 +433,18 @@ export default function Opt() {
     <Stack spacing={2}>
       {isNotMobile && (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-          글 목록
+          {board?.board_label ? board.board_label : '글 목록'}
         </Typography>
       )}
 
-      <Typography>{board?.board_label ?? ''}</Typography>
+      <Typography variant="h5" component="h2">
+        {board?.board_label}
+      </Typography>
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        {selectedIds.length > 0 ? (
+        {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
           <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-            글 삭제
+            삭제
           </Button>
         ) : (
           <span />
@@ -344,13 +455,33 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      <Stack direction="row" justifyContent="flex-end" alignItems="center">
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" spacing={1}>
+          <Button
+            LinkComponent={NextLink}
+            type="button"
+            variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+            href={getListHref({ page: 1, filter: 'all' })}
+          >
+            전체보기
+          </Button>
+
+          <Button
+            LinkComponent={NextLink}
+            type="button"
+            variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+            href={getListHref({ page: 1, filter: 'deleted' })}
+          >
+            삭제된 글 보기
+          </Button>
+        </Stack>
+
         <TextField
           select
           label="보기 방식"
           value={currentSize}
           onChange={(event) => {
-            router.push(getListHref(1, Number(event.target.value)));
+            router.push(getListHref({ page: 1, size: Number(event.target.value) }));
           }}
           size="small"
           sx={{ minWidth: 180 }}
@@ -385,7 +516,10 @@ export default function Opt() {
                 <TableCell>제목</TableCell>
                 <TableCell>작성일</TableCell>
                 <TableCell>작성자</TableCell>
-                <TableCell>공개여부</TableCell>
+                <TableCell>상태</TableCell>
+                <TableCell>삭제자</TableCell>
+                <TableCell>삭제일</TableCell>
+                <TableCell>삭제사유</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -398,63 +532,108 @@ export default function Opt() {
                   </TableCell>
 
                   <TableCell>
-                    <Button
-                      LinkComponent={NextLink}
-                      type="button"
-                      variant="text"
+                    <Link
                       href={`/${siteName}/contents/posts/c/${boardName}/${content.slug}`}
                       sx={{
-                        p: 0,
-                        minWidth: 0,
-                        justifyContent: 'flex-start',
-                        textAlign: 'left',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {content.subject}
-                    </Button>
+                    </Link>
                   </TableCell>
 
-                  <TableCell>{formatDate(content.created_at)}</TableCell>
-                  <TableCell>{content.author_name}</TableCell>
-                  <TableCell>{content.is_closed === true ? '비공개' : '공개'}</TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {formatDateTimeDetail(content.created_at)}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {content.author_name}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {content.is_closed === true && '삭제됨'}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {content.closed_by_name}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {content.closed_message}
+                  </TableCell>
 
                   <TableCell align="right">
-                    <Button
-                      type="button"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleOpenSingleDeleteDialog(content)}
-                    >
-                      글 삭제
-                    </Button>
+                    {content.is_closed ? (
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        color="warning"
+                        onClick={() => handleOpenRestoreDialog(content)}
+                      >
+                        복구
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        color="error"
+                        variant="outlined"
+                        onClick={() => handleOpenSingleDeleteDialog(content)}
+                      >
+                        삭제
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
 
               {contents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    글이 없습니다.
+                  <TableCell colSpan={9} align="center">
+                    {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
                   </TableCell>
                 </TableRow>
               ) : null}
             </TableBody>
           </Table>
-        </TableContainer>
-        <Backdrop
-          open={isFetching}
-          sx={{
-            position: 'absolute',
-            zIndex: 1,
-            color: '#fff',
-          }}
-        >
-          <Stack spacing={2} alignItems="center">
-            <Stack justifyContent="center" alignItems="center">
-              <LoadingIndicator />
+
+          <Backdrop
+            open={isFetching}
+            sx={{
+              position: 'absolute',
+              zIndex: 1,
+              color: '#fff',
+            }}
+          >
+            <Stack spacing={2} alignItems="center">
+              <Stack justifyContent="center" alignItems="center">
+                <LoadingIndicator />
+              </Stack>
             </Stack>
-          </Stack>
-        </Backdrop>
+          </Backdrop>
+        </TableContainer>
       </Box>
 
       {totalPage > 1 ? (
@@ -465,23 +644,72 @@ export default function Opt() {
             color="primary"
             siblingCount={1}
             boundaryCount={1}
-            renderItem={(item) => <PaginationItem {...item} component={NextLink} href={getListHref(item.page ?? 1)} />}
+            renderItem={(item) => (
+              <PaginationItem {...item} component={NextLink} href={getListHref({ page: item.page ?? 1 })} />
+            )}
           />
         </Stack>
       ) : null}
-      <Dialog open={deleteMode !== null} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>글 삭제</DialogTitle>
+      <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+        <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
-          <Typography>
-            {deleteMode === 'single' ? '이 글을 삭제하시겠습니까?' : '선택한 글을 삭제하시겠습니까?'}
-          </Typography>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Alert severity="info" variant="filled">
+              삭제시 언제든 복구가 가능합니다.
+              <br />
+              삭제사유를 입력해 주세요. (필수)
+            </Alert>
+
+            <TextField
+              label="삭제 사유"
+              value={closedMessage}
+              onChange={handleClosedMessageChange}
+              fullWidth
+              multiline
+              minRows={3}
+              size="small"
+            />
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="outlined">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
-          <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
             삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+        <DialogTitle>게시물 복구</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>
+              해당 게시물을 복구하시겠습니까?
+              <br />
+              복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+            </Typography>
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+            확인
           </Button>
         </DialogActions>
       </Dialog>

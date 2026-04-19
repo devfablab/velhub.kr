@@ -32,7 +32,7 @@ export default async function Page(context: RouteContext) {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ py: 8 }}>
+      <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
           <StaffTabs pageTitle="글 수정" />
 

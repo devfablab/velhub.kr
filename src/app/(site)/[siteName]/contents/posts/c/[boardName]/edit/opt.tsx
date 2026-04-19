@@ -371,18 +371,12 @@ export default function Opt() {
           ))}
         </TextField>
 
-        <Stack direction="row" spacing={1.5}>
+        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+          <Button component={Link} href={`/${siteName}/contents/posts/c/${boardName}`}>
+            취소
+          </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting}>
             저장
-          </Button>
-
-          <Button
-            component={Link}
-            href={`/${siteName}/contents/posts/c/${boardName}`}
-            underline="none"
-            variant="outlined"
-          >
-            취소
           </Button>
         </Stack>
 

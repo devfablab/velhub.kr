@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -34,8 +34,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+
+type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type SiteType = 'blog' | 'community';
 
@@ -68,6 +70,10 @@ type PostRow = {
   created_at: string;
   author_name: string;
   is_closed: boolean;
+  closed_by: string | null;
+  closed_at: string | null;
+  closed_message: string | null;
+  closed_by_name: string;
 };
 
 type SitePublicResponse = {
@@ -96,7 +102,7 @@ type BoardContentsResponse = {
   size: number;
   totalCount: number;
   totalPage: number;
-  filter?: 'all' | 'private';
+  filter?: 'all' | 'deleted';
 };
 
 type BoardOrderResponse = {
@@ -109,6 +115,7 @@ type ErrorResponse = {
 };
 
 type DeleteMode = 'single' | 'bulk' | null;
+type DialogMode = 'delete' | 'restore' | null;
 
 const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -226,16 +233,20 @@ export default function Opt() {
   const [boardName, setBoardName] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<PostRow | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [totalPage, setTotalPage] = useState(1);
-  const [currentFilter, setCurrentFilter] = useState<'all' | 'private'>('all');
+  const [currentFilter, setCurrentFilter] = useState<'all' | 'deleted'>('all');
   const [isFetching, setIsFetching] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [closedMessage, setClosedMessage] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -309,7 +320,7 @@ export default function Opt() {
         setIsStaff(nextIsStaff);
 
         if (nextSiteType === 'blog') {
-          if (filterParam === 'private' && !nextIsStaff) {
+          if (filterParam === 'deleted' && !nextIsStaff) {
             setBoard(null);
             setBoardName(null);
             setPosts([]);
@@ -374,7 +385,7 @@ export default function Opt() {
           setPosts(boardResult.contents);
           setBoards([]);
           setTotalPage(Number(boardResult.totalPage) > 0 ? Number(boardResult.totalPage) : 1);
-          setCurrentFilter(boardResult.filter === 'private' ? 'private' : 'all');
+          setCurrentFilter(boardResult.filter === 'deleted' ? 'deleted' : 'all');
           setIsBoardOrderChanged(false);
           return;
         }
@@ -416,7 +427,7 @@ export default function Opt() {
     }
 
     void loadData();
-  }, [siteName, currentPage, sizeParam, filterParam]);
+  }, [siteName, currentPage, sizeParam, filterParam, reloadKey]);
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => posts.some((post) => post.id === id)));
@@ -441,7 +452,7 @@ export default function Opt() {
     }
   }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
 
-  function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'private' }) {
+  function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'deleted' }) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     const nextPage = page ?? safeCurrentPage;
     const nextSize = size ?? currentSize;
@@ -455,8 +466,8 @@ export default function Opt() {
 
     nextSearchParams.set('size', String(nextSize));
 
-    if (nextFilter === 'private') {
-      nextSearchParams.set('filter', 'private');
+    if (nextFilter === 'deleted') {
+      nextSearchParams.set('filter', 'deleted');
     } else {
       nextSearchParams.delete('filter');
     }
@@ -500,11 +511,25 @@ export default function Opt() {
   function handleOpenSingleDeleteDialog(targetPost: PostRow) {
     setDeleteMode('single');
     setDeleteTarget(targetPost);
+    setDialogMode('delete');
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
   function handleOpenBulkDeleteDialog() {
     setDeleteMode('bulk');
     setDeleteTarget(null);
+    setDialogMode('delete');
+    setClosedMessage('');
+    setDialogErrorMessage('');
+  }
+
+  function handleOpenRestoreDialog(targetPost: PostRow) {
+    setDeleteMode('single');
+    setDeleteTarget(targetPost);
+    setDialogMode('restore');
+    setClosedMessage('');
+    setDialogErrorMessage('');
   }
 
   function handleCloseDeleteDialog() {
@@ -514,6 +539,14 @@ export default function Opt() {
 
     setDeleteMode(null);
     setDeleteTarget(null);
+    setDialogMode(null);
+    setClosedMessage('');
+    setDialogErrorMessage('');
+  }
+
+  function handleClosedMessageChange(event: InputChangeEvent) {
+    setClosedMessage(event.currentTarget.value);
+    setDialogErrorMessage('');
   }
 
   function handleBoardDragEnd(event: DragEndEvent) {
@@ -592,6 +625,51 @@ export default function Opt() {
       return;
     }
 
+    if (dialogMode === 'restore') {
+      if (!deleteTarget) {
+        return;
+      }
+
+      try {
+        setErrorMessage('');
+        setIsDeleting(true);
+
+        const response = await fetch(`/api/boards/${boardName}/${deleteTarget.slug}/delete?siteName=${siteName}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'restore',
+          }),
+        });
+
+        const result = (await response.json()) as { ok?: boolean; error?: string };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? '게시물 복구에 실패했습니다.');
+        }
+
+        setDeleteMode(null);
+        setDeleteTarget(null);
+        setDialogMode(null);
+        setClosedMessage('');
+        setDialogErrorMessage('');
+        setReloadKey((previousValue) => previousValue + 1);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
+        } else {
+          setDialogErrorMessage('게시물 복구에 실패했습니다.');
+        }
+      } finally {
+        setIsDeleting(false);
+      }
+
+      return;
+    }
+
     const deleteTargets =
       deleteMode === 'single'
         ? deleteTarget
@@ -602,6 +680,14 @@ export default function Opt() {
     if (deleteTargets.length === 0) {
       setDeleteMode(null);
       setDeleteTarget(null);
+      setDialogMode(null);
+      setClosedMessage('');
+      setDialogErrorMessage('');
+      return;
+    }
+
+    if (isStaff && closedMessage.trim().length < 10) {
+      setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
       return;
     }
 
@@ -611,28 +697,36 @@ export default function Opt() {
 
       for (const target of deleteTargets) {
         const response = await fetch(`/api/boards/${boardName}/${target.slug}/delete?siteName=${siteName}`, {
-          method: 'DELETE',
+          method: 'PATCH',
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'close',
+            closedMessage: isStaff ? closedMessage.trim() : null,
+          }),
         });
 
         const result = (await response.json()) as { ok?: boolean; error?: string };
 
         if (!response.ok) {
-          throw new Error(result.error ?? '글 삭제에 실패했습니다.');
+          throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
         }
       }
 
-      const deletedIds = new Set(deleteTargets.map((target) => target.id));
-
-      setPosts((previousPosts) => previousPosts.filter((post) => !deletedIds.has(post.id)));
-      setSelectedIds((previousIds) => previousIds.filter((id) => !deletedIds.has(id)));
       setDeleteMode(null);
       setDeleteTarget(null);
+      setDialogMode(null);
+      setClosedMessage('');
+      setDialogErrorMessage('');
+      setSelectedIds([]);
+      setReloadKey((previousValue) => previousValue + 1);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '글 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('글 삭제에 실패했습니다.');
+        setDialogErrorMessage('게시물 삭제에 실패했습니다.');
       }
     } finally {
       setIsDeleting(false);
@@ -653,9 +747,11 @@ export default function Opt() {
         )}
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Button type="button" variant="contained" onClick={handleMoveToCommunityBoardNew}>
-            게시판 만들기
-          </Button>
+          <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
+            <Button type="button" variant="contained" onClick={handleMoveToCommunityBoardNew}>
+              게시판 만들기
+            </Button>
+          </Stack>
 
           {isBoardOrderChanged ? (
             <Button type="button" variant="outlined" onClick={handleSaveBoardOrder} disabled={isOrderingBoards}>
@@ -720,17 +816,19 @@ export default function Opt() {
       )}
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        {selectedIds.length > 0 ? (
+        {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
           <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-            글 삭제
+            삭제
           </Button>
         ) : (
           <span />
         )}
 
-        <Button LinkComponent={NextLink} type="button" variant="contained" href={`/${siteName}/contents/posts/new`}>
-          글쓰기
-        </Button>
+        <Stack direction="row" justifyContent="flex-end">
+          <Button LinkComponent={NextLink} type="button" variant="contained" href={`/${siteName}/contents/posts/new`}>
+            글쓰기
+          </Button>
+        </Stack>
       </Stack>
 
       <Stack direction={isMobile ? 'column' : 'row'} spacing={1} justifyContent="space-between" alignItems="center">
@@ -748,10 +846,10 @@ export default function Opt() {
             <Button
               LinkComponent={NextLink}
               type="button"
-              variant={currentFilter === 'private' ? 'contained' : 'outlined'}
-              href={getListHref({ page: 1, filter: 'private' })}
+              variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+              href={getListHref({ page: 1, filter: 'deleted' })}
             >
-              비공개만 보기
+              삭제된 글 보기
             </Button>
           </Stack>
         ) : (
@@ -785,7 +883,9 @@ export default function Opt() {
 
       {posts.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>출간된 블로그 글이 없습니다.</Typography>
+          <Typography>
+            {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}
+          </Typography>
         </Paper>
       ) : (
         <Box sx={{ position: 'relative' }}>
@@ -803,7 +903,10 @@ export default function Opt() {
                   <TableCell>제목</TableCell>
                   <TableCell>작성일</TableCell>
                   <TableCell>작성자</TableCell>
-                  <TableCell>공개여부</TableCell>
+                  <TableCell>상태</TableCell>
+                  <TableCell>삭제자</TableCell>
+                  <TableCell>삭제일</TableCell>
+                  <TableCell>삭제사유</TableCell>
                   <TableCell />
                 </TableRow>
               </TableHead>
@@ -834,17 +937,26 @@ export default function Opt() {
 
                     <TableCell>{formatDate(post.created_at)}</TableCell>
                     <TableCell>{post.author_name}</TableCell>
-                    <TableCell>{post.is_closed === true ? '비공개' : '공개'}</TableCell>
+                    <TableCell>{post.is_closed === true ? '삭제됨' : '정상'}</TableCell>
+                    <TableCell>{post.closed_by_name || '-'}</TableCell>
+                    <TableCell>{post.closed_at ? formatDateTimeDetail(post.closed_at) : '-'}</TableCell>
+                    <TableCell>{post.closed_message || '-'}</TableCell>
 
                     <TableCell align="right">
-                      <Button
-                        type="button"
-                        color="error"
-                        variant="outlined"
-                        onClick={() => handleOpenSingleDeleteDialog(post)}
-                      >
-                        삭제
-                      </Button>
+                      {post.is_closed ? (
+                        <Button type="button" variant="outlined" onClick={() => handleOpenRestoreDialog(post)}>
+                          복구
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          color="error"
+                          variant="outlined"
+                          onClick={() => handleOpenSingleDeleteDialog(post)}
+                        >
+                          삭제
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -890,19 +1002,66 @@ export default function Opt() {
         </Stack>
       ) : null}
 
-      <Dialog open={deleteMode !== null} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>글 삭제</DialogTitle>
+      <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+        <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
-          <Typography>
-            {deleteMode === 'single' ? '이 글을 삭제하시겠습니까?' : '선택한 글을 삭제하시겠습니까?'}
-          </Typography>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Alert severity="info" variant="filled">
+              삭제시 언제든 복구가 가능합니다. 삭제사유를 입력해 주세요. (필수)
+            </Alert>
+
+            {isStaff ? (
+              <TextField
+                label="삭제 사유"
+                value={closedMessage}
+                onChange={handleClosedMessageChange}
+                fullWidth
+                multiline
+                minRows={3}
+                size="small"
+              />
+            ) : (
+              <Typography>
+                {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+              </Typography>
+            )}
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
-          <Button type="button" color="error" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
             삭제
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+        <DialogTitle>게시물 복구</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다</Typography>
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+            확인
           </Button>
         </DialogActions>
       </Dialog>
