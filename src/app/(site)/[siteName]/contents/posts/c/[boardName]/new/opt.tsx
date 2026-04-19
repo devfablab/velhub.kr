@@ -90,9 +90,9 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3, pr: 0, pl: 0 }}>
+    <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+        <Typography variant="h4" component="h1">
           새 글 쓰기
         </Typography>
       )}
@@ -113,13 +113,7 @@ export default function Opt() {
         </Stack>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button
-            component={Link}
-            href={`/${siteName}/contents/posts/c/${boardName}`}
-            underline="none"
-            variant="outlined"
-            size="large"
-          >
+          <Button component={Link} href={`/${siteName}/contents/posts/c/${boardName}`} size="large">
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
@@ -133,6 +127,6 @@ export default function Opt() {
           </Alert>
         ) : null}
       </Stack>
-    </Paper>
+    </Stack>
   );
 }

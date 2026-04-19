@@ -30,6 +30,16 @@ function isContentsPath(pathname: string) {
   return segments.length >= 3 && segments[1] === 'contents' && segments[2] === 'posts';
 }
 
+function isCategoryManagePath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length >= 4 && segments[1] === 'contents' && segments[2] === 'posts' && segments[3] === 'category';
+}
+
 function getSiteNameFromPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
@@ -129,6 +139,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
     rhizomes?: {
       visibility_type?: string | null;
       is_shutdown?: boolean | null;
+      site_type?: string | null;
     };
   } | null = null;
 
@@ -137,6 +148,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
       rhizomes?: {
         visibility_type?: string | null;
         is_shutdown?: boolean | null;
+        site_type?: string | null;
       };
     };
   } catch {
@@ -231,6 +243,14 @@ export async function proxy(request: NextRequest) {
 
     if (!siteName) {
       return redirectWithPath(request, '/');
+    }
+
+    if (isCategoryManagePath(pathname)) {
+      const rhizomeState = await fetchRhizomeState(request, siteName);
+
+      if (rhizomeState.response.ok && rhizomeState.result?.rhizomes?.site_type === 'community') {
+        return redirectWithPath(request, `/${siteName}/contents/posts`);
+      }
     }
 
     const contents = await fetchSessionRoute(request, '/api/posts/status', {

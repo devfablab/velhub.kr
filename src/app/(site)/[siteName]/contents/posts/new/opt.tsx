@@ -7,7 +7,14 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
   Paper,
+  Select,
   Stack,
   styled,
   TextField,
@@ -15,6 +22,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
@@ -29,6 +37,23 @@ type StatusResponse = {
 type CreateResponse = {
   ok?: boolean;
   slug?: string;
+  error?: string;
+};
+
+type CategoryRow = {
+  id: string;
+  category_key: string;
+  category_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  sort_order: number;
+  board_id: string;
+  site_id: string;
+  created_at?: string;
+};
+
+type CategoryListResponse = {
+  categories?: CategoryRow[];
   error?: string;
 };
 
@@ -59,7 +84,6 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
@@ -73,6 +97,8 @@ export default function Opt() {
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
   const [hasBoard, setHasBoard] = useState(false);
   const [boardName, setBoardName] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isStatusLoading, setIsStatusLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +131,23 @@ export default function Opt() {
 
         setHasBoard(statusResult.hasBoard);
         setBoardName(statusResult.boardName);
+
+        if (statusResult.hasBoard && statusResult.boardName) {
+          const categoryResponse = await fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
+
+          if (!categoryResponse.ok) {
+            throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
+          }
+
+          setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
+        } else {
+          setCategories([]);
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '블로그 상태를 확인하지 못했습니다.');
@@ -125,6 +168,11 @@ export default function Opt() {
 
   function handleSummaryChange(event: InputChangeEvent) {
     setSummary(event.currentTarget.value);
+  }
+
+  function handleCategoryChange(event: SelectChangeEvent<string[]>) {
+    const value = event.target.value;
+    setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
   }
 
   function handleClickThumbnailUpload() {
@@ -231,6 +279,7 @@ export default function Opt() {
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
+          categories: selectedCategories,
         }),
       });
 
@@ -275,7 +324,7 @@ export default function Opt() {
 
   if (!hasBoard) {
     return (
-      <Paper elevation={0} sx={{ p: 3 }}>
+      <Paper sx={{ p: 3 }}>
         <Stack spacing={2}>
           <Alert severity="error" variant="filled">
             최초 글은 스텝만 작성 가능합니다
@@ -292,9 +341,9 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+        <Typography variant="h4" component="h1">
           블로그 글쓰기
         </Typography>
       )}
@@ -303,8 +352,34 @@ export default function Opt() {
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
+        <FormControl fullWidth size="small">
+          <InputLabel id="post-category-select-label">카테고리</InputLabel>
+          <Select
+            labelId="post-category-select-label"
+            multiple
+            value={selectedCategories}
+            onChange={handleCategoryChange}
+            input={<OutlinedInput label="카테고리" />}
+            renderValue={(selected) =>
+              categories
+                .filter((category) => selected.includes(category.category_key))
+                .map((category) => category.category_label)
+                .join(', ')
+            }
+          >
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.category_key}>
+                <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                <ListItemText primary={category.category_label} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            오픈그래프 이미지
+          </Typography>
 
           {thumbnailImageUrl ? (
             <Box
@@ -328,7 +403,7 @@ export default function Opt() {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
+          <Typography variant="subtitle2">내용 (필수)</Typography>
           <ToastEditor
             initialValue={contentHtml}
             initialMarkdown={contentMarkdown}
@@ -339,13 +414,7 @@ export default function Opt() {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href={`/${siteName}/contents/posts`}
-            underline="none"
-            variant="outlined"
-            size="large"
-          >
+          <Button component={Link} href={`/${siteName}/contents/posts`} size="large">
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
@@ -359,6 +428,6 @@ export default function Opt() {
           </Alert>
         ) : null}
       </Stack>
-    </Paper>
+    </Stack>
   );
 }

@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation';
 import { Box, Container, Stack } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import StaffTabs from '@/app/(site)/[siteName]/tabs';
-import SiteContentsBreadcrumb from '../../../breadcrumb';
+import StaffTabs from '../../../tabs';
+import SiteContentsBreadcrumb from '../../breadcrumb';
 import Opt from './opt';
 
 type RouteContext = {
@@ -32,7 +32,7 @@ export default async function Page(context: RouteContext) {
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs pageTitle="블로그 글 수정" />
+          <StaffTabs pageTitle="카테고리 설정" />
 
           <SiteContentsBreadcrumb />
 

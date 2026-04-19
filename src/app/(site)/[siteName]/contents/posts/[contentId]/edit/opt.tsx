@@ -1,13 +1,20 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
   Button,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
   Paper,
+  Select,
   Stack,
   styled,
   TextField,
@@ -15,6 +22,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
@@ -27,31 +35,51 @@ type StatusResponse = {
 };
 
 type ContentResponse = {
-  content: {
+  content?: {
     id: string;
     slug: string;
     subject: string;
     summary: string | null;
     content_html: string;
     content_markdown: string | null;
-    edited_at: string;
-    created_at: string;
-    idx: number;
-    board_id: string;
-    site_id: string;
-    user_id: string;
     thumbnail_image: string | null;
     thumbnail_width: number | null;
     thumbnail_height: number | null;
-    author_name: string;
-    is_closed?: boolean;
   };
-  isAuthor?: boolean;
-  isStaff?: boolean;
+  categories?: Array<{
+    id: string;
+    category_key: string;
+    category_label: string;
+    summary: string | null;
+    thumbnail_image: string | null;
+    sort_order: number;
+    board_id: string;
+    site_id: string;
+    created_at?: string;
+  }>;
+  error?: string;
 };
 
 type EditResponse = {
   ok?: boolean;
+  slug?: string;
+  error?: string;
+};
+
+type CategoryRow = {
+  id: string;
+  category_key: string;
+  category_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  sort_order: number;
+  board_id: string;
+  site_id: string;
+  created_at?: string;
+};
+
+type CategoryListResponse = {
+  categories?: CategoryRow[];
   error?: string;
 };
 
@@ -77,17 +105,15 @@ function getSupabaseOgImagePath(value: string) {
 
 export default function Opt() {
   const router = useRouter();
-  const fileInputReference = useRef<HTMLInputElement | null>(null);
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const contentId = normalizeText(params.contentId);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
-  const [boardName, setBoardName] = useState('');
-  const [slug, setSlug] = useState('');
+  const fileInputReference = useRef<HTMLInputElement | null>(null);
+
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
@@ -96,16 +122,20 @@ export default function Opt() {
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
-  const [originalThumbnailImage, setOriginalThumbnailImage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [hasBoard, setHasBoard] = useState(false);
+  const [boardName, setBoardName] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
 
   useEffect(() => {
-    async function loadContent() {
+    async function loadData() {
       try {
         setErrorMessage('');
+        setIsLoading(true);
 
         const statusResponse = await fetch(`/api/posts/status?siteName=${siteName}`, {
           method: 'GET',
@@ -122,62 +152,81 @@ export default function Opt() {
           );
         }
 
-        if (
-          !('hasBoard' in statusResult) ||
-          !('boardName' in statusResult) ||
-          !statusResult.hasBoard ||
-          !statusResult.boardName
-        ) {
+        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
           throw new Error('블로그 상태를 확인하지 못했습니다.');
         }
 
+        setHasBoard(statusResult.hasBoard);
         setBoardName(statusResult.boardName);
 
-        const contentResponse = await fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        if (!statusResult.hasBoard || !statusResult.boardName) {
+          return;
+        }
 
-        const contentResult = (await contentResponse.json()) as ContentResponse | { error?: string };
+        const [contentResponse, categoryResponse] = await Promise.all([
+          fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          }),
+          fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          }),
+        ]);
+
+        const contentResult = (await contentResponse.json()) as ContentResponse;
+        const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
 
         if (!contentResponse.ok) {
-          throw new Error(
-            'error' in contentResult
-              ? contentResult.error || '블로그 글을 불러오지 못했습니다.'
-              : '블로그 글을 불러오지 못했습니다.',
-          );
+          throw new Error(contentResult.error ?? '글 정보를 불러오지 못했습니다.');
         }
 
-        if (!('content' in contentResult) || !contentResult.content) {
-          throw new Error('블로그 글을 불러오지 못했습니다.');
+        if (!contentResult.content) {
+          throw new Error('글 정보를 불러오지 못했습니다.');
         }
 
-        if (!contentResult.isAuthor) {
-          throw new Error('접근 권한이 없습니다.');
+        if (!categoryResponse.ok) {
+          throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
         }
 
-        setSlug(contentResult.content.slug);
         setSubject(contentResult.content.subject ?? '');
         setSummary(contentResult.content.summary ?? '');
         setContentHtml(contentResult.content.content_html ?? '');
         setContentMarkdown(contentResult.content.content_markdown ?? '');
         setThumbnailImage(contentResult.content.thumbnail_image ?? '');
-        setThumbnailImageUrl(contentResult.content.thumbnail_image ?? '');
         setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
         setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
-        setOriginalThumbnailImage(contentResult.content.thumbnail_image ?? '');
+        setSelectedCategories(
+          Array.isArray(contentResult.categories)
+            ? contentResult.categories.map((category) => category.category_key)
+            : [],
+        );
+        setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
+
+        if (contentResult.content.thumbnail_image && isSupabaseOgImageValue(contentResult.content.thumbnail_image)) {
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+          const imagePath = getSupabaseOgImagePath(contentResult.content.thumbnail_image);
+
+          if (supabaseUrl && imagePath) {
+            setThumbnailImageUrl(`${supabaseUrl}/storage/v1/object/public/og-image/${imagePath}`);
+          } else {
+            setThumbnailImageUrl('');
+          }
+        } else {
+          setThumbnailImageUrl('');
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 글을 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '글 정보를 불러오지 못했습니다.');
         } else {
-          setErrorMessage('블로그 글을 불러오지 못했습니다.');
+          setErrorMessage('글 정보를 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
       }
     }
 
-    void loadContent();
+    void loadData();
   }, [contentId, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
@@ -186,6 +235,11 @@ export default function Opt() {
 
   function handleSummaryChange(event: InputChangeEvent) {
     setSummary(event.currentTarget.value);
+  }
+
+  function handleCategoryChange(event: SelectChangeEvent<string[]>) {
+    const value = event.target.value;
+    setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
   }
 
   function handleClickThumbnailUpload() {
@@ -230,6 +284,8 @@ export default function Opt() {
         image.src = imageUrl;
       });
 
+      const previousThumbnailImage = thumbnailImage;
+
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -243,6 +299,19 @@ export default function Opt() {
 
       if (!response.ok) {
         throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
+      }
+
+      if (previousThumbnailImage && isSupabaseOgImageValue(previousThumbnailImage)) {
+        await fetch('/api/attachment/delete/og-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            path: getSupabaseOgImagePath(previousThumbnailImage),
+          }),
+        });
       }
 
       setThumbnailImage(result.ogImage ?? '');
@@ -261,21 +330,15 @@ export default function Opt() {
     }
   }
 
-  async function handleRemoveThumbnail() {
-    if (isUploadingThumbnail) {
-      return;
-    }
-
-    setThumbnailImage('');
-    setThumbnailImageUrl('');
-    setThumbnailWidth(null);
-    setThumbnailHeight(null);
-  }
-
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || !boardName) {
+    if (isSubmitting || isLoading) {
+      return;
+    }
+
+    if (!hasBoard || !boardName) {
+      setErrorMessage('블로그 게시판을 찾을 수 없습니다.');
       return;
     }
 
@@ -283,13 +346,14 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+      const editResponse = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
+          siteName,
           subject,
           summary,
           contentHtml,
@@ -297,46 +361,17 @@ export default function Opt() {
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
+          categories: selectedCategories,
         }),
       });
 
-      const result = (await response.json()) as EditResponse;
+      const editResult = (await editResponse.json()) as EditResponse;
 
-      if (!response.ok) {
-        if (thumbnailImage && thumbnailImage !== originalThumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
-          await fetch('/api/attachment/delete/og-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              path: getSupabaseOgImagePath(thumbnailImage),
-            }),
-          });
-        }
-
-        throw new Error(result.error ?? '블로그 글 수정에 실패했습니다.');
+      if (!editResponse.ok) {
+        throw new Error(editResult.error ?? '블로그 글 수정에 실패했습니다.');
       }
 
-      if (
-        originalThumbnailImage &&
-        originalThumbnailImage !== thumbnailImage &&
-        isSupabaseOgImageValue(originalThumbnailImage)
-      ) {
-        await fetch('/api/attachment/delete/og-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: getSupabaseOgImagePath(originalThumbnailImage),
-          }),
-        });
-      }
-
-      router.replace(`/${siteName}/contents/posts/${slug}`);
+      router.replace(`/${siteName}/contents/posts/${contentId}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 수정에 실패했습니다.');
@@ -352,8 +387,26 @@ export default function Opt() {
     return null;
   }
 
+  if (!hasBoard) {
+    return (
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <Alert severity="error" variant="filled">
+            블로그 게시판을 찾을 수 없습니다.
+          </Alert>
+
+          <Box>
+            <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
+              목록으로 이동
+            </Button>
+          </Box>
+        </Stack>
+      </Paper>
+    );
+  }
+
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper sx={{ p: 3 }}>
       {isNotMobile && (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
           블로그 글 수정
@@ -361,8 +414,32 @@ export default function Opt() {
       )}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
-        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth />
+        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+
+        <FormControl fullWidth size="small">
+          <InputLabel id="post-category-select-label">카테고리</InputLabel>
+          <Select
+            labelId="post-category-select-label"
+            multiple
+            value={selectedCategories}
+            onChange={handleCategoryChange}
+            input={<OutlinedInput label="카테고리" />}
+            renderValue={(selected) =>
+              categories
+                .filter((category) => selected.includes(category.category_key))
+                .map((category) => category.category_label)
+                .join(', ')
+            }
+          >
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.category_key}>
+                <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                <ListItemText primary={category.category_label} />
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <Box>
           <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
@@ -383,22 +460,9 @@ export default function Opt() {
             onChange={handleThumbnailFileChange}
           />
 
-          <Stack direction="row" spacing={1.5}>
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={handleClickThumbnailUpload}
-              disabled={isUploadingThumbnail}
-            >
-              {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-            </Button>
-
-            {thumbnailImageUrl ? (
-              <Button type="button" variant="outlined" color="error" onClick={handleRemoveThumbnail}>
-                이미지 삭제
-              </Button>
-            ) : null}
-          </Stack>
+          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
+            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+          </Button>
         </Box>
 
         <Box>
@@ -413,17 +477,17 @@ export default function Opt() {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            저장
-          </Button>
-
           <Button
             component={Link}
             href={`/${siteName}/contents/posts/${contentId}`}
             underline="none"
             variant="outlined"
+            size="large"
           >
             취소
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+            저장
           </Button>
         </Stack>
 

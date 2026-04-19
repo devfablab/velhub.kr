@@ -818,13 +818,22 @@ export default function Opt() {
       )}
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-          <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-            삭제
+        <Stack direction="row" gap={1}>
+          <Button
+            LinkComponent={NextLink}
+            type="button"
+            variant="outlined"
+            color="inherit"
+            href={`/${siteName}/contents/posts/category`}
+          >
+            카테고리 관리
           </Button>
-        ) : (
-          <span />
-        )}
+          {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+            <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
+              삭제
+            </Button>
+          ) : null}
+        </Stack>
 
         <Stack direction="row" justifyContent="flex-end">
           <Button LinkComponent={NextLink} type="button" variant="contained" href={`/${siteName}/contents/posts/new`}>

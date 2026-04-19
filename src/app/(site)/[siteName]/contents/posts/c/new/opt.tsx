@@ -232,9 +232,9 @@ export default function Opt() {
   }, []);
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
+        <Typography variant="h4" component="h1">
           게시판 만들기
         </Typography>
       )}
@@ -308,6 +308,6 @@ export default function Opt() {
           </Alert>
         ) : null}
       </Stack>
-    </Paper>
+    </Stack>
   );
 }

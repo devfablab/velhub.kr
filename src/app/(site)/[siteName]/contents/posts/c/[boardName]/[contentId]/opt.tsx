@@ -250,74 +250,71 @@ export default function Opt() {
       ) : null}
 
       {content ? (
-        <Paper elevation={0} sx={{ p: 3, pr: 0, pl: 0 }}>
-          <Stack spacing={2.5}>
-            <Typography variant="h5" component="h2">
-              {content.subject}
-            </Typography>
+        <Stack spacing={2.5}>
+          <Typography variant="h5" component="h2">
+            {content.subject}
+          </Typography>
 
-            {content.summary ? (
-              <Box>
-                <Typography variant="h6" component="h3">
-                  {content.summary}
-                </Typography>
-              </Box>
-            ) : null}
+          {content.summary ? (
+            <Box>
+              <Typography variant="h6" component="h3">
+                {content.summary}
+              </Typography>
+            </Box>
+          ) : null}
 
-            <Stack direction="row" gap={3} flexWrap="wrap">
-              <Stack direction="row" gap={1}>
-                <Typography variant="subtitle2">작성</Typography>
-                <Typography variant="body2">
-                  {content.author_name} / {formatDateTimeDetail(content.created_at)}
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" gap={1}>
-                <Typography variant="subtitle2">수정</Typography>
-                <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
-              </Stack>
+          <Stack direction="row" gap={3} flexWrap="wrap">
+            <Stack direction="row" gap={1}>
+              <Typography variant="subtitle2">작성</Typography>
+              <Typography variant="body2">
+                {content.author_name} / {formatDateTimeDetail(content.created_at)}
+              </Typography>
             </Stack>
-            <Divider />
-            {content.is_closed ? (
-              <>
-                <Stack gap={1}>
-                  <Stack direction="row" gap={1}>
-                    <Typography variant="subtitle2">삭제 정보</Typography>
-                    <Typography variant="body2">
-                      {content.closed_by_name || ''} /{' '}
-                      {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
-                    </Typography>
-                  </Stack>
-                  <Stack>
-                    <Typography variant="subtitle2">삭제 사유</Typography>
-                    <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {content.closed_message || ''}
-                    </Typography>
-                  </Stack>
-                </Stack>
-                <Divider />
-              </>
-            ) : null}
 
-            <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
-
-            <Stack direction="row" spacing={1.5} justifyContent="space-between">
-              <Button type="button" variant="contained" onClick={handleMoveToList}>
-                목록
-              </Button>
-
-              {content.is_closed ? (
-                <Button type="button" variant="outlined" color="warning" onClick={handleOpenRestoreDialog}>
-                  복구
-                </Button>
-              ) : (
-                <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
-                  삭제
-                </Button>
-              )}
+            <Stack direction="row" gap={1}>
+              <Typography variant="subtitle2">수정</Typography>
+              <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
             </Stack>
           </Stack>
-        </Paper>
+          <Divider />
+          {content.is_closed ? (
+            <>
+              <Stack gap={1}>
+                <Stack direction="row" gap={1}>
+                  <Typography variant="subtitle2">삭제 정보</Typography>
+                  <Typography variant="body2">
+                    {content.closed_by_name || ''} / {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                  </Typography>
+                </Stack>
+                <Stack>
+                  <Typography variant="subtitle2">삭제 사유</Typography>
+                  <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {content.closed_message || ''}
+                  </Typography>
+                </Stack>
+              </Stack>
+              <Divider />
+            </>
+          ) : null}
+
+          <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
+
+          <Stack direction="row" spacing={1.5} justifyContent="space-between">
+            <Button type="button" variant="contained" onClick={handleMoveToList}>
+              목록
+            </Button>
+
+            {content.is_closed ? (
+              <Button type="button" variant="outlined" color="warning" onClick={handleOpenRestoreDialog}>
+                복구
+              </Button>
+            ) : (
+              <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
+                삭제
+              </Button>
+            )}
+          </Stack>
+        </Stack>
       ) : null}
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>게시물 삭제</DialogTitle>
