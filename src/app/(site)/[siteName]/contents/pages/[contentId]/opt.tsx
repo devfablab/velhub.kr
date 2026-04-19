@@ -111,6 +111,10 @@ export default function Opt() {
           );
         }
 
+        if (!('content' in contentResult)) {
+          throw new Error('페이지 정보를 불러오지 못했습니다.');
+        }
+
         setContent(contentResult.content ?? null);
         setProfileImageUrl(contentResult.content?.og_image_url ?? '');
       } catch (unknownError) {

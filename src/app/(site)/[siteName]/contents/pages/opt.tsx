@@ -34,7 +34,7 @@ function SortableItem({ page, onClick }: SortableItemProps) {
   return (
     <Paper
       ref={setNodeRef}
-      elevation={0}
+      elevation={3}
       sx={{
         p: 2,
         cursor: 'grab',
@@ -204,17 +204,21 @@ export default function Opt() {
       </Stack>
 
       {pages.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>페이지가 없습니다</Typography>
-        </Paper>
+        <Typography variant="subtitle2">페이지가 없습니다</Typography>
+      ) : pages.length === 1 ? (
+        <>
+          {pages.map((page: PageRow) => (
+            <Link href={`/${siteName}/contents/pages/${page.slug}`} variant="subtitle2" key={page.id}>
+              {page.subject}
+            </Link>
+          ))}
+        </>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={items} strategy={verticalListSortingStrategy}>
-            <Paper elevation={3} sx={{ p: 1 }}>
-              {pages.map((page: PageRow) => (
-                <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
-              ))}
-            </Paper>
+            {pages.map((page: PageRow) => (
+              <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
+            ))}
           </SortableContext>
         </DndContext>
       )}
