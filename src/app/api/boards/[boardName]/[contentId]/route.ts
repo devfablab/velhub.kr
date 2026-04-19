@@ -77,7 +77,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.status !== 'FAIL' && session.case === 'staff';
-    const sessionUserId = session.status !== 'FAIL' ? session.userId : null;
+    const sessionUserId = session.status !== 'FAIL' ? session.authUserId : null;
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {

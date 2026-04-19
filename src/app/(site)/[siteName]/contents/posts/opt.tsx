@@ -18,6 +18,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   MenuItem,
   Pagination,
   PaginationItem,
@@ -903,10 +904,9 @@ export default function Opt() {
                   <TableCell>제목</TableCell>
                   <TableCell>작성일</TableCell>
                   <TableCell>작성자</TableCell>
-                  <TableCell>상태</TableCell>
-                  <TableCell>삭제자</TableCell>
-                  <TableCell>삭제일</TableCell>
-                  <TableCell>삭제사유</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
                   <TableCell />
                 </TableRow>
               </TableHead>
@@ -919,32 +919,31 @@ export default function Opt() {
                     </TableCell>
 
                     <TableCell>
-                      <Button
-                        LinkComponent={NextLink}
+                      <Link
                         type="button"
-                        variant="text"
                         href={`/${siteName}/contents/posts/${post.slug}`}
-                        sx={{
-                          p: 0,
-                          minWidth: 0,
-                          justifyContent: 'flex-start',
-                          textAlign: 'left',
-                        }}
+                        sx={{ whiteSpace: 'nowrap' }}
                       >
                         {post.subject}
-                      </Button>
+                      </Link>
                     </TableCell>
 
-                    <TableCell>{formatDate(post.created_at)}</TableCell>
-                    <TableCell>{post.author_name}</TableCell>
-                    <TableCell>{post.is_closed === true ? '삭제됨' : '정상'}</TableCell>
-                    <TableCell>{post.closed_by_name || '-'}</TableCell>
-                    <TableCell>{post.closed_at ? formatDateTimeDetail(post.closed_at) : '-'}</TableCell>
-                    <TableCell>{post.closed_message || '-'}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.created_at)}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.author_name}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.closed_by_name || ''}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {post.closed_at ? formatDateTimeDetail(post.closed_at) : ''}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{post.closed_message || ''}</TableCell>
 
                     <TableCell align="right">
                       {post.is_closed ? (
-                        <Button type="button" variant="outlined" onClick={() => handleOpenRestoreDialog(post)}>
+                        <Button
+                          type="button"
+                          color="warning"
+                          variant="outlined"
+                          onClick={() => handleOpenRestoreDialog(post)}
+                        >
                           복구
                         </Button>
                       ) : (
@@ -1007,7 +1006,9 @@ export default function Opt() {
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Alert severity="info" variant="filled">
-              삭제시 언제든 복구가 가능합니다. 삭제사유를 입력해 주세요. (필수)
+              삭제시 언제든 복구가 가능합니다.
+              <br />
+              삭제사유를 입력해 주세요. (필수)
             </Alert>
 
             {isStaff ? (
@@ -1021,7 +1022,7 @@ export default function Opt() {
                 size="small"
               />
             ) : (
-              <Typography>
+              <Typography variant="subtitle2">
                 {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
               </Typography>
             )}
@@ -1037,7 +1038,7 @@ export default function Opt() {
           <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isDeleting}>
             삭제
           </Button>
         </DialogActions>
@@ -1047,7 +1048,11 @@ export default function Opt() {
         <DialogTitle>게시물 복구</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다</Typography>
+            <Typography>
+              해당 게시물을 복구하시겠습니까?
+              <br />
+              복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+            </Typography>
 
             {dialogErrorMessage ? (
               <Alert severity="error" variant="filled">
@@ -1060,7 +1065,7 @@ export default function Opt() {
           <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
             취소
           </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+          <Button type="button" variant="contained" color="warning" onClick={handleDelete} disabled={isDeleting}>
             확인
           </Button>
         </DialogActions>

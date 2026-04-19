@@ -516,10 +516,27 @@ export default function Opt() {
                 <TableCell>제목</TableCell>
                 <TableCell>작성일</TableCell>
                 <TableCell>작성자</TableCell>
-                <TableCell>상태</TableCell>
-                <TableCell>삭제자</TableCell>
-                <TableCell>삭제일</TableCell>
-                <TableCell>삭제사유</TableCell>
+                <TableCell
+                  sx={{
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  삭제자
+                </TableCell>
+                <TableCell
+                  sx={{
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  삭제일
+                </TableCell>
+                <TableCell
+                  sx={{
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  삭제사유
+                </TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -555,13 +572,6 @@ export default function Opt() {
                     }}
                   >
                     {content.author_name}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {content.is_closed === true && '삭제됨'}
                   </TableCell>
                   <TableCell
                     sx={{

@@ -150,10 +150,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     let postQuery = supabaseAdmin
       .from('posts')
-      .select(
-        'id, slug, subject, summary, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message',
-        { count: 'exact' },
-      )
+      .select('*', { count: 'exact' })
       .eq('board_id', board.data.id)
       .order('created_at', { ascending: false });
 
