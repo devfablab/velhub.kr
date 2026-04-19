@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   FormControlLabel,
+  InputAdornment,
   Paper,
   Stack,
   styled,
@@ -108,6 +109,7 @@ export default function Opt() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('');
 
   useEffect(() => {
     async function loadContent() {
@@ -371,12 +373,16 @@ export default function Opt() {
     }
   }
 
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
   if (isLoading) {
     return null;
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper elevation={0} sx={{ p: 3, pl: 0, pr: 0 }}>
       {isNotMobile && (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
           페이지 수정
@@ -385,23 +391,51 @@ export default function Opt() {
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <Stack spacing={1}>
-          <TextField label="페이지 식별자 (필수)" value={slug} onChange={handleSlugChange} fullWidth />
-          <Button type="button" variant="outlined" onClick={() => void handleCheckSlug()} disabled={isCheckingSlug}>
-            중복 확인
-          </Button>
+          <TextField
+            label="페이지 식별자 (필수)"
+            value={slug}
+            onChange={handleSlugChange}
+            fullWidth
+            size="medium"
+            helperText={`스텝 관리화면: ${baseUrl}/${siteName}/contents/pages/${slug}`}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {baseUrl}/{siteName}/p/
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={() => void handleCheckSlug()}
+                      disabled={isCheckingSlug}
+                      size="small"
+                    >
+                      중복 확인
+                    </Button>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
           {slugMessage ? <Alert severity={isSlugAvailable ? 'success' : 'error'}>{slugMessage}</Alert> : null}
         </Stack>
 
-        <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
-        <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth />
+        <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+        <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
         <FormControlLabel
           control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
-          label="댓글 쓰기 허용"
+          label={isComment ? '댓글 허용' : '댓글 금지'}
         />
 
         <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
+          <Typography sx={{ mb: 1 }} variant="subtitle2">
+            오픈그래프 이미지
+          </Typography>
 
           {ogImageUrl ? (
             <Box
@@ -425,7 +459,9 @@ export default function Opt() {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1 }}>페이지 내용 (필수)</Typography>
+          <Typography sx={{ mb: 1 }} variant="subtitle2">
+            페이지 내용 (필수)
+          </Typography>
           <ToastEditor
             initialValue={contentHtml}
             initialMarkdown={contentMarkdown}
@@ -435,18 +471,18 @@ export default function Opt() {
           />
         </Box>
 
-        <Stack direction="row" spacing={1.5}>
-          <Button type="submit" variant="contained" disabled={isSubmitting || !boardName}>
-            저장
-          </Button>
-
+        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button
             component={Link}
             href={`/${siteName}/contents/pages/${contentId}`}
             underline="none"
             variant="outlined"
+            size="large"
           >
             취소
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting || !boardName} size="large">
+            저장
           </Button>
         </Stack>
 

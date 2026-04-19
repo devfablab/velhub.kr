@@ -99,9 +99,7 @@ export async function GET(request: Request, context: RouteContext) {
     if (board.data.board_type === 'page') {
       const pageQuery = supabaseAdmin.from('pages').select('*').eq('board_id', board.data.id);
 
-      const page = isNumericSlug(normalizedContentId)
-        ? await pageQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
-        : await pageQuery.eq('id', normalizedContentId).maybeSingle();
+      const page = await pageQuery.eq('slug', normalizedContentId).maybeSingle();
 
       if (page.error || !page.data) {
         return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });

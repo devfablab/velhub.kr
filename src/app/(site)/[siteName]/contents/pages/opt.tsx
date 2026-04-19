@@ -205,7 +205,7 @@ export default function Opt() {
 
       {pages.length === 0 ? (
         <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography>개설된 페이지가 없습니다</Typography>
+          <Typography>페이지가 없습니다</Typography>
         </Paper>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

@@ -241,7 +241,7 @@ export default function Opt() {
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField
-          label="게시판 식별자"
+          label="게시판 식별자 (필수)"
           value={boardKey}
           onChange={handleBoardKeyChange}
           fullWidth
@@ -275,7 +275,7 @@ export default function Opt() {
 
         <TextField
           select
-          label="목록 표시 개수"
+          label="목록 표시 개수 (필수)"
           value={postPerPage}
           onChange={handlePostPerPageChange}
           fullWidth

@@ -479,7 +479,7 @@ export default function Opt() {
                 onChange={handleSiteKeyChange}
                 fullWidth
                 helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                size="small"
+                size="medium"
                 slotProps={{
                   input: {
                     startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,

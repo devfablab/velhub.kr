@@ -19,6 +19,10 @@ function normalizeClosedMessage(value: string | null | undefined) {
   return (value ?? '').trim();
 }
 
+function isNumericSlug(value: string) {
+  return /^\d+$/.test(value);
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
@@ -80,15 +84,76 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지는 이 경로에서 처리할 수 없습니다.' }, { status: 400 });
+      if (!isStaff) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+
+      const pageQuery = supabaseAdmin.from('pages').select('*').eq('board_id', board.data.id);
+
+      const page = await pageQuery.eq('slug', normalizedContentId).maybeSingle();
+
+      if (page.error || !page.data) {
+        return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      if (action === 'close') {
+        if (page.data.is_closed === true) {
+          return Response.json({ error: '이미 삭제된 페이지입니다.' }, { status: 400 });
+        }
+
+        const closeResult = await supabaseAdmin
+          .from('pages')
+          .update({
+            is_closed: true,
+            closed_by: sessionClaims.userId,
+            closed_at: new Date().toISOString(),
+            closed_message: null,
+          })
+          .eq('id', page.data.id)
+          .select('id, is_closed, closed_by, closed_at, closed_message')
+          .maybeSingle();
+
+        if (closeResult.error || !closeResult.data) {
+          return Response.json({ error: '페이지 삭제에 실패했습니다.' }, { status: 500 });
+        }
+
+        return Response.json({
+          ok: true,
+          content: closeResult.data,
+        });
+      }
+
+      if (page.data.is_closed !== true) {
+        return Response.json({ error: '삭제된 페이지가 아닙니다.' }, { status: 400 });
+      }
+
+      const restoreResult = await supabaseAdmin
+        .from('pages')
+        .update({
+          is_closed: false,
+          closed_by: null,
+          closed_at: null,
+          closed_message: null,
+        })
+        .eq('id', page.data.id)
+        .select('id, is_closed, closed_by, closed_at, closed_message')
+        .maybeSingle();
+
+      if (restoreResult.error || !restoreResult.data) {
+        return Response.json({ error: '페이지 복구에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        content: restoreResult.data,
+      });
     }
 
-    const post = await supabaseAdmin
-      .from('posts')
-      .select('id, user_id, is_closed, closed_by, closed_message')
-      .eq('board_id', board.data.id)
-      .eq('slug', normalizedContentId)
-      .maybeSingle();
+    const postQuery = supabaseAdmin.from('posts').select('*').eq('board_id', board.data.id);
+
+    const post = isNumericSlug(normalizedContentId)
+      ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
+      : await postQuery.eq('id', normalizedContentId).maybeSingle();
 
     if (post.error || !post.data) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
@@ -133,7 +198,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       return Response.json({
         ok: true,
-        post: closeResult.data,
+        content: closeResult.data,
       });
     }
 
@@ -174,13 +239,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return Response.json({
       ok: true,
-      post: restoreResult.data,
+      content: restoreResult.data,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '게시물 처리에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '콘텐츠 처리에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '게시물 처리에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '콘텐츠 처리에 실패했습니다.' }, { status: 500 });
   }
 }

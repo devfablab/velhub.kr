@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
 import {
   Alert,
   Box,
   Button,
+  InputAdornment,
   Paper,
   Stack,
   styled,
@@ -15,8 +16,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import ToastEditor from '@/components/editor/ToastEditor';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -80,6 +81,7 @@ export default function Opt() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('');
 
   function handleSlugChange(event: InputChangeEvent) {
     const normalizedValue = normalizeSlug(event.currentTarget.value);
@@ -308,6 +310,10 @@ export default function Opt() {
     }
   }
 
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
       {isNotMobile && (
@@ -318,15 +324,41 @@ export default function Opt() {
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <Stack spacing={1}>
-          <TextField label="페이지 식별자 (필수)" value={slug} onChange={handleSlugChange} fullWidth />
-          <Button type="button" variant="outlined" onClick={() => void handleCheckSlug()} disabled={isCheckingSlug}>
-            중복 확인
-          </Button>
+          <TextField
+            label="페이지 식별자 (필수)"
+            value={slug}
+            onChange={handleSlugChange}
+            fullWidth
+            size="medium"
+            helperText={`스텝 관리화면: ${baseUrl}/${siteName}/contents/pages/${slug}`}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    {baseUrl}/{siteName}/p/{slug}
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      onClick={() => void handleCheckSlug()}
+                      disabled={isCheckingSlug}
+                      size="small"
+                    >
+                      중복 확인
+                    </Button>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
           {slugMessage ? <Alert severity={isSlugAvailable ? 'success' : 'error'}>{slugMessage}</Alert> : null}
         </Stack>
 
-        <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth />
-        <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth />
+        <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+        <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
         <Box>
           <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
@@ -347,7 +379,13 @@ export default function Opt() {
             onChange={handleOgImageFileChange}
           />
 
-          <Button type="button" variant="outlined" onClick={handleClickOgImageUpload} disabled={isUploadingOgImage}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={handleClickOgImageUpload}
+            disabled={isUploadingOgImage}
+            size="small"
+          >
             {ogImageUrl ? '이미지 교체' : '이미지 추가'}
           </Button>
         </Box>
@@ -363,13 +401,18 @@ export default function Opt() {
           />
         </Box>
 
-        <Stack direction="row" spacing={1.5}>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            저장
-          </Button>
-
-          <Button component={Link} href={`/${siteName}/contents/pages`} underline="none" variant="outlined">
+        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+          <Button
+            component={Link}
+            href={`/${siteName}/contents/pages`}
+            underline="none"
+            variant="outlined"
+            size="large"
+          >
             취소
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+            저장
           </Button>
         </Stack>
 
