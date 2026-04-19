@@ -6,10 +6,11 @@ import Link from '@mui/material/Link';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { IconButton, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Props = {
   pageTitle?: string;
@@ -46,6 +47,54 @@ function getTabValue(pathname: string, tabItems: StaffTabItem[]) {
   });
 
   return matchedItem?.href ?? false;
+}
+
+function getMobileBackHref(pathname: string, siteName: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  if (segments[0] !== siteName) {
+    return `/${siteName}/staff`;
+  }
+
+  if (segments[1] !== 'contents' || segments[2] !== 'posts') {
+    return `/${siteName}/staff`;
+  }
+
+  const depth = segments.length;
+
+  if (depth === 4 && segments[3] === 'new') {
+    return `/${siteName}/contents/posts`;
+  }
+
+  if (depth === 4) {
+    return `/${siteName}/contents/posts`;
+  }
+
+  if (segments[3] !== 'c') {
+    return `/${siteName}/staff`;
+  }
+
+  if (depth === 5 && segments[4] === 'new') {
+    return `/${siteName}/contents/posts/c`;
+  }
+
+  if (depth === 5) {
+    return `/${siteName}/contents/posts/c`;
+  }
+
+  if (depth === 6 && (segments[5] === 'new' || segments[5] === 'edit')) {
+    return `/${siteName}/contents/posts/c/${segments[4]}`;
+  }
+
+  if (depth === 6) {
+    return `/${siteName}/contents/posts/c/${segments[4]}`;
+  }
+
+  if (depth === 7 && segments[6] === 'edit') {
+    return `/${siteName}/contents/posts/c/${segments[4]}/${segments[5]}`;
+  }
+
+  return `/${siteName}/staff`;
 }
 
 function LinkTab({ label, href, value }: { label: string; href: string; value: string }) {
@@ -102,7 +151,33 @@ export default function StaffTabs({ pageTitle }: Props) {
   }, [siteName]);
 
   if (!isReady || !isAllowed || !siteName || !siteType) {
-    return null;
+    return (
+      <>
+        {isMobile ? (
+          <Box sx={{ position: 'relative' }}>
+            <IconButton href={`/${siteName}`} aria-label="홈으로 이동" size="small" disabled>
+              <CloseIcon />
+            </IconButton>
+            <Stack
+              alignItems="center"
+              sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', margin: 0 }}
+            >
+              <Stack justifyContent="center" alignItems="center" sx={{ margin: 0 }}>
+                <LoadingIndicator size={32} />
+              </Stack>
+            </Stack>
+          </Box>
+        ) : (
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Stack alignItems="center" sx={{ height: '48px' }}>
+              <Stack justifyContent="center" alignItems="center">
+                <LoadingIndicator />
+              </Stack>
+            </Stack>
+          </Box>
+        )}
+      </>
+    );
   }
 
   const tabItems: StaffTabItem[] = [
@@ -123,6 +198,7 @@ export default function StaffTabs({ pageTitle }: Props) {
 
   const currentValue = getTabValue(pathname, tabItems);
   const isStaffHome = pathname === `/${siteName}/staff`;
+  const mobileBackHref = getMobileBackHref(pathname, siteName);
 
   return (
     <>
@@ -143,7 +219,7 @@ export default function StaffTabs({ pageTitle }: Props) {
             </>
           ) : (
             <>
-              <IconButton href={`/${siteName}/staff`} aria-label="뒤로가기" size="small">
+              <IconButton href={mobileBackHref} aria-label="뒤로가기" size="small">
                 <ArrowBackIcon />
               </IconButton>
               <Typography
@@ -158,7 +234,7 @@ export default function StaffTabs({ pageTitle }: Props) {
         </Box>
       ) : (
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={currentValue} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+          <Tabs value={currentValue} variant="scrollable">
             {tabItems.map((tabItem) => (
               <LinkTab key={tabItem.href} label={tabItem.label} href={tabItem.href} value={tabItem.href} />
             ))}
