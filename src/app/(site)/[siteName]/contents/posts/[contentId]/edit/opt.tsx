@@ -34,38 +34,6 @@ type StatusResponse = {
   boardName: string | null;
 };
 
-type ContentResponse = {
-  content?: {
-    id: string;
-    slug: string;
-    subject: string;
-    summary: string | null;
-    content_html: string;
-    content_markdown: string | null;
-    thumbnail_image: string | null;
-    thumbnail_width: number | null;
-    thumbnail_height: number | null;
-  };
-  categories?: Array<{
-    id: string;
-    category_key: string;
-    category_label: string;
-    summary: string | null;
-    thumbnail_image: string | null;
-    sort_order: number;
-    board_id: string;
-    site_id: string;
-    created_at?: string;
-  }>;
-  error?: string;
-};
-
-type EditResponse = {
-  ok?: boolean;
-  slug?: string;
-  error?: string;
-};
-
 type CategoryRow = {
   id: string;
   category_key: string;
@@ -78,8 +46,50 @@ type CategoryRow = {
   created_at?: string;
 };
 
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
+type ContentResponse = {
+  content?: {
+    id: string;
+    slug: string;
+    subject: string;
+    summary: string | null;
+    content_html: string;
+    content_markdown: string | null;
+    thumbnail_image: string | null;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
+  };
+  categories?: CategoryRow[];
+  series?: SeriesRow | null;
+  error?: string;
+};
+
+type EditResponse = {
+  ok?: boolean;
+  slug?: string;
+  error?: string;
+};
+
 type CategoryListResponse = {
   categories?: CategoryRow[];
+  error?: string;
+};
+
+type SeriesListResponse = {
+  series?: SeriesRow[];
   error?: string;
 };
 
@@ -125,7 +135,10 @@ export default function Opt() {
   const [hasBoard, setHasBoard] = useState(false);
   const [boardName, setBoardName] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [isSeriesLocked, setIsSeriesLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +176,7 @@ export default function Opt() {
           return;
         }
 
-        const [contentResponse, categoryResponse] = await Promise.all([
+        const [contentResponse, categoryResponse, seriesResponse] = await Promise.all([
           fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
@@ -172,10 +185,15 @@ export default function Opt() {
             method: 'GET',
             credentials: 'include',
           }),
+          fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          }),
         ]);
 
         const contentResult = (await contentResponse.json()) as ContentResponse;
         const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
+        const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
 
         if (!contentResponse.ok) {
           throw new Error(contentResult.error ?? '글 정보를 불러오지 못했습니다.');
@@ -189,11 +207,15 @@ export default function Opt() {
           throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
         }
 
-        setSubject(contentResult.content.subject ?? '');
-        setSummary(contentResult.content.summary ?? '');
-        setContentHtml(contentResult.content.content_html ?? '');
-        setContentMarkdown(contentResult.content.content_markdown ?? '');
-        setThumbnailImage(contentResult.content.thumbnail_image ?? '');
+        if (!seriesResponse.ok) {
+          throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+        }
+
+        setSubject(contentResult.content.subject);
+        setSummary(contentResult.content.summary || '');
+        setContentHtml(contentResult.content.content_html);
+        setContentMarkdown(contentResult.content.content_markdown || '');
+        setThumbnailImage(contentResult.content.thumbnail_image || '');
         setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
         setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
         setSelectedCategories(
@@ -202,6 +224,9 @@ export default function Opt() {
             : [],
         );
         setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
+        setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
+        setSelectedSeriesKey(contentResult.series?.series_key || '');
+        setIsSeriesLocked(Boolean(contentResult.series?.series_key));
 
         if (contentResult.content.thumbnail_image && isSupabaseOgImageValue(contentResult.content.thumbnail_image)) {
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -240,6 +265,14 @@ export default function Opt() {
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
     const value = event.target.value;
     setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+  }
+
+  function handleSeriesChange(event: SelectChangeEvent<string>) {
+    if (isSeriesLocked) {
+      return;
+    }
+
+    setSelectedSeriesKey(event.target.value);
   }
 
   function handleClickThumbnailUpload() {
@@ -362,6 +395,7 @@ export default function Opt() {
           thumbnailWidth,
           thumbnailHeight,
           categories: selectedCategories,
+          seriesKey: selectedSeriesKey || null,
         }),
       });
 
@@ -407,15 +441,43 @@ export default function Opt() {
 
   return (
     <Paper sx={{ p: 3 }}>
-      {isNotMobile && (
+      {isNotMobile ? (
         <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
           블로그 글 수정
         </Typography>
-      )}
+      ) : null}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+
+        <FormControl fullWidth size="small">
+          <InputLabel id="post-series-select-label">시리즈</InputLabel>
+          <Select
+            labelId="post-series-select-label"
+            value={selectedSeriesKey}
+            onChange={handleSeriesChange}
+            input={<OutlinedInput label="시리즈" />}
+            disabled={isSeriesLocked}
+          >
+            <MenuItem value="">
+              <ListItemText primary="선택 안함" />
+            </MenuItem>
+            {seriesList
+              .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
+              .map((series) => (
+                <MenuItem key={series.id} value={series.series_key}>
+                  <ListItemText primary={series.series_label} />
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+
+        {isSeriesLocked ? (
+          <Alert severity="info" variant="outlined">
+            시리즈가 설정된 글은 시리즈를 변경할 수 없습니다.
+          </Alert>
+        ) : null}
 
         <FormControl fullWidth size="small">
           <InputLabel id="post-category-select-label">카테고리</InputLabel>

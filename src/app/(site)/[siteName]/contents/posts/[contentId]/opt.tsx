@@ -46,6 +46,20 @@ type CategoryRow = {
   created_at?: string;
 };
 
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
 type PostResponse = {
   content: {
     id: string;
@@ -65,9 +79,9 @@ type PostResponse = {
     thumbnail_height: number | null;
     author_name: string;
     is_closed: boolean;
-    categories?: string[] | null;
   };
   categories?: CategoryRow[];
+  series?: SeriesRow | null;
   isAuthor?: boolean;
   isStaff?: boolean;
   error?: string;
@@ -118,6 +132,7 @@ export default function Opt() {
   const [boardName, setBoardName] = useState('');
   const [post, setPost] = useState<PostResponse['content'] | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [series, setSeries] = useState<SeriesRow | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
@@ -190,6 +205,7 @@ export default function Opt() {
         }
 
         setPost(contentResult.content);
+        setSeries(contentResult.series || null);
         setIsAuthor(Boolean(contentResult.isAuthor));
         setIsStaff(Boolean(contentResult.isStaff));
         setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
@@ -279,7 +295,7 @@ export default function Opt() {
       return;
     }
 
-    if (isStaff && closedMessage.trim().length < 10) {
+    if (closedMessage.trim().length < 10) {
       setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
       return;
     }
@@ -297,7 +313,7 @@ export default function Opt() {
         credentials: 'include',
         body: JSON.stringify({
           action: 'close',
-          closedMessage: closedMessage.trim() || null,
+          closedMessage: closedMessage.trim(),
         }),
       });
 
@@ -375,7 +391,7 @@ export default function Opt() {
       setDialogErrorMessage('');
       setIsCategorySubmitting(true);
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -391,6 +407,7 @@ export default function Opt() {
           thumbnailWidth: post.thumbnail_width,
           thumbnailHeight: post.thumbnail_height,
           categories: selectedCategories,
+          seriesKey: series?.series_key || null,
         }),
       });
 
@@ -417,123 +434,127 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          블로그 글 보기
-        </Typography>
-      )}
+    <>
+      <Stack spacing={3}>
+        {isNotMobile ? (
+          <Typography variant="h5" component="h1">
+            블로그 글 보기
+          </Typography>
+        ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
 
-      {post ? (
-        <Stack spacing={2.5}>
-          <Box>
-            <Typography variant="subtitle2">제목</Typography>
-            <Typography variant="body2">{post.subject}</Typography>
-          </Box>
+        {post ? (
+          <Paper sx={{ p: 3 }}>
+            <Stack spacing={2.5}>
+              <Box>
+                <Typography variant="subtitle2">제목</Typography>
+                <Typography variant="body2">{post.subject}</Typography>
+              </Box>
 
-          {post.summary ? (
-            <Box>
-              <Typography variant="subtitle2">부제목</Typography>
-              <Typography variant="body2">{post.summary}</Typography>
-            </Box>
-          ) : null}
-
-          <Box>
-            <Typography variant="subtitle2">작성일</Typography>
-            <Typography variant="body2">{formatDate(post.created_at)}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2">수정일</Typography>
-            <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2">작성자</Typography>
-            <Typography variant="body2">{post.author_name}</Typography>
-          </Box>
-
-          {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
-            <Box>
-              <Typography variant="subtitle2">카테고리</Typography>
-              <Typography variant="body2">
-                {categories
-                  .filter((category) => selectedCategories.includes(category.category_key))
-                  .map((category) => category.category_label)
-                  .join(', ')}
-              </Typography>
-            </Box>
-          ) : null}
-
-          {post.thumbnail_image ? (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                오픈그래프 이미지
-              </Typography>
-              <Box
-                component="img"
-                src={getOgImageUrl(post.thumbnail_image)}
-                alt="오픈그래프 이미지"
-                sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-              />
-            </Box>
-          ) : null}
-
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              내용
-            </Typography>
-            <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
-          </Box>
-
-          <Stack direction="row" spacing={1.5} justifyContent="space-between">
-            <Stack direction="row" gap={1}>
-              <Button type="button" variant="outlined" color="primary" size="large" onClick={handleMoveToList}>
-                목록
-              </Button>
-
-              {isAuthor || isStaff ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  color="inherit"
-                  size="large"
-                  onClick={handleOpenCategoryDialog}
-                >
-                  카테고리 설정
-                </Button>
+              {post.summary ? (
+                <Box>
+                  <Typography variant="subtitle2">부제목</Typography>
+                  <Typography variant="body2">{post.summary}</Typography>
+                </Box>
               ) : null}
+
+              <Box>
+                <Typography variant="subtitle2">작성일</Typography>
+                <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle2">수정일</Typography>
+                <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle2">작성자</Typography>
+                <Typography variant="body2">{post.author_name}</Typography>
+              </Box>
+
+              {series ? (
+                <Box>
+                  <Typography variant="subtitle2">시리즈</Typography>
+                  <Typography variant="body2">{series.series_label}</Typography>
+                </Box>
+              ) : null}
+
+              {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
+                <Box>
+                  <Typography variant="subtitle2">카테고리</Typography>
+                  <Typography variant="body2">
+                    {categories
+                      .filter((category) => selectedCategories.includes(category.category_key))
+                      .map((category) => category.category_label)
+                      .join(', ')}
+                  </Typography>
+                </Box>
+              ) : null}
+
+              {post.thumbnail_image ? (
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    오픈그래프 이미지
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={getOgImageUrl(post.thumbnail_image)}
+                    alt="오픈그래프 이미지"
+                    sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                  />
+                </Box>
+              ) : null}
+
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  내용
+                </Typography>
+                <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+              </Box>
+
+              <Stack direction="row" spacing={1.5}>
+                <Button type="button" variant="outlined" onClick={handleMoveToList}>
+                  목록
+                </Button>
+
+                {!post.is_closed && isAuthor ? (
+                  <Button type="button" variant="contained" onClick={handleMoveToEdit}>
+                    수정
+                  </Button>
+                ) : null}
+
+                {isAuthor || isStaff ? (
+                  <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
+                    카테고리 설정
+                  </Button>
+                ) : null}
+
+                {post.is_closed ? (
+                  <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
+                    복구
+                  </Button>
+                ) : (
+                  <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
+                    삭제
+                  </Button>
+                )}
+              </Stack>
             </Stack>
+          </Paper>
+        ) : null}
+      </Stack>
 
-            {!post.is_closed && isAuthor ? (
-              <Button type="button" variant="contained" color="primary" size="large" onClick={handleMoveToEdit}>
-                수정
-              </Button>
-            ) : null}
-
-            {post.is_closed ? (
-              <Button type="button" variant="outlined" size="large" color="warning" onClick={handleOpenRestoreDialog}>
-                복구
-              </Button>
-            ) : (
-              <Button type="button" color="error" variant="outlined" size="large" onClick={handleOpenDeleteDialog}>
-                삭제
-              </Button>
-            )}
-          </Stack>
-        </Stack>
-      ) : null}
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <Alert severity="info" variant="filled">
+            <Alert severity="info" variant="outlined">
               삭제시 언제든 복구가 가능합니다.
               <br />
               삭제사유를 입력해 주세요. (필수)
@@ -557,7 +578,13 @@ export default function Opt() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+          <Button
+            type="button"
+            variant="outlined"
+            color="inherit"
+            onClick={handleCloseDeleteDialog}
+            disabled={isDeleting}
+          >
             취소
           </Button>
           <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
@@ -570,9 +597,7 @@ export default function Opt() {
         <DialogTitle>게시물 복구</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            해당 게시물을 복구하시겠습니까?
-            <br />
-            복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+            해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
           </Typography>
           {dialogErrorMessage ? (
             <Alert severity="error" variant="filled" sx={{ mt: 2 }}>
@@ -599,7 +624,6 @@ export default function Opt() {
               <Select
                 labelId="detail-post-category-select-label"
                 multiple
-                size="small"
                 value={selectedCategories}
                 onChange={handleCategoryChange}
                 input={<OutlinedInput label="카테고리" />}
@@ -635,6 +659,6 @@ export default function Opt() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Stack>
+    </>
   );
 }

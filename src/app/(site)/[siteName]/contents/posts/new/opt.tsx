@@ -57,6 +57,25 @@ type CategoryListResponse = {
   error?: string;
 };
 
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
+type SeriesListResponse = {
+  series?: SeriesRow[];
+  error?: string;
+};
+
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -98,7 +117,9 @@ export default function Opt() {
   const [hasBoard, setHasBoard] = useState(false);
   const [boardName, setBoardName] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const [isStatusLoading, setIsStatusLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -133,20 +154,33 @@ export default function Opt() {
         setBoardName(statusResult.boardName);
 
         if (statusResult.hasBoard && statusResult.boardName) {
-          const categoryResponse = await fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
+          const [categoryResponse, seriesResponse] = await Promise.all([
+            fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
+              method: 'GET',
+              credentials: 'include',
+            }),
+            fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
+              method: 'GET',
+              credentials: 'include',
+            }),
+          ]);
 
           const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
+          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
 
           if (!categoryResponse.ok) {
             throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
           }
 
+          if (!seriesResponse.ok) {
+            throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+          }
+
           setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
+          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
         } else {
           setCategories([]);
+          setSeriesList([]);
         }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -173,6 +207,10 @@ export default function Opt() {
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
     const value = event.target.value;
     setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+  }
+
+  function handleSeriesChange(event: SelectChangeEvent<string>) {
+    setSelectedSeriesKey(event.target.value);
   }
 
   function handleClickThumbnailUpload() {
@@ -280,6 +318,7 @@ export default function Opt() {
           thumbnailWidth,
           thumbnailHeight,
           categories: selectedCategories,
+          seriesKey: selectedSeriesKey || null,
         }),
       });
 
@@ -324,33 +363,52 @@ export default function Opt() {
 
   if (!hasBoard) {
     return (
-      <Paper sx={{ p: 3 }}>
-        <Stack spacing={2}>
-          <Alert severity="error" variant="filled">
-            최초 글은 스텝만 작성 가능합니다
-          </Alert>
+      <Stack spacing={2}>
+        <Alert severity="error" variant="filled">
+          최초 글은 스텝만 작성 가능합니다
+        </Alert>
 
-          <Box>
-            <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
-              목록으로 이동
-            </Button>
-          </Box>
-        </Stack>
-      </Paper>
+        <Box>
+          <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
+            목록으로 이동
+          </Button>
+        </Box>
+      </Stack>
     );
   }
 
   return (
     <Stack spacing={2}>
-      {isNotMobile && (
-        <Typography variant="h4" component="h1">
+      {isNotMobile ? (
+        <Typography variant="h5" component="h1">
           블로그 글쓰기
         </Typography>
-      )}
+      ) : null}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+
+        <FormControl fullWidth size="small">
+          <InputLabel id="post-series-select-label">시리즈</InputLabel>
+          <Select
+            labelId="post-series-select-label"
+            value={selectedSeriesKey}
+            onChange={handleSeriesChange}
+            input={<OutlinedInput label="시리즈" />}
+          >
+            <MenuItem value="">
+              <ListItemText primary="선택 안함" />
+            </MenuItem>
+            {seriesList
+              .filter((series) => !series.is_completed)
+              .map((series) => (
+                <MenuItem key={series.id} value={series.series_key}>
+                  <ListItemText primary={series.series_label} />
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
 
         <FormControl fullWidth size="small">
           <InputLabel id="post-category-select-label">카테고리</InputLabel>
@@ -377,9 +435,7 @@ export default function Opt() {
         </FormControl>
 
         <Box>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            오픈그래프 이미지
-          </Typography>
+          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
 
           {thumbnailImageUrl ? (
             <Box
@@ -403,7 +459,7 @@ export default function Opt() {
         </Box>
 
         <Box>
-          <Typography variant="subtitle2">내용 (필수)</Typography>
+          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
           <ToastEditor
             initialValue={contentHtml}
             initialMarkdown={contentMarkdown}
@@ -414,7 +470,13 @@ export default function Opt() {
         </Box>
 
         <Stack direction="row" spacing={1.5}>
-          <Button component={Link} href={`/${siteName}/contents/posts`} size="large">
+          <Button
+            component={Link}
+            href={`/${siteName}/contents/posts`}
+            underline="none"
+            variant="outlined"
+            size="large"
+          >
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting} size="large">

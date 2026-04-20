@@ -6,9 +6,12 @@ import Link from '@mui/material/Link';
 import {
   Alert,
   Button,
+  FormControl,
+  FormControlLabel,
   InputAdornment,
   MenuItem,
-  Paper,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -25,6 +28,8 @@ type CreateBoardResponse = {
   boardName?: string;
   error?: string;
 };
+
+type PostType = 'none' | 'prefix' | 'series';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -50,11 +55,11 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
   const [postPerPage, setPostPerPage] = useState(5);
+  const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -80,6 +85,10 @@ export default function Opt() {
 
   function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostPerPage(Number(event.target.value));
+  }
+
+  function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setPostType(event.target.value as PostType);
   }
 
   async function handleCheckBoardKey() {
@@ -202,6 +211,7 @@ export default function Opt() {
           isActive: true,
           markdownStatus: 'markdown_default',
           postPerPage,
+          postType,
         }),
       });
 
@@ -234,12 +244,22 @@ export default function Opt() {
   return (
     <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           게시판 만들기
         </Typography>
       )}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
+        {successMessage ? (
+          <Alert severity="success" variant="outlined">
+            {successMessage}
+          </Alert>
+        ) : null}
         <TextField
           label="게시판 식별자 (필수)"
           value={boardKey}
@@ -288,6 +308,24 @@ export default function Opt() {
           ))}
         </TextField>
 
+        <FormControl>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            말머리/연재 설정
+          </Typography>
+          <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+            <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
+            <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+            <FormControlLabel value="series" control={<Radio />} label="연재형" />
+          </RadioGroup>
+        </FormControl>
+
+        <Alert severity="warning" variant="outlined">
+          말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.
+        </Alert>
+        <Alert severity="info" variant="outlined">
+          말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.
+        </Alert>
+
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button component={Link} href={`/${siteName}/contents/posts`} underline="none" variant="outlined">
             취소
@@ -296,17 +334,6 @@ export default function Opt() {
             저장
           </Button>
         </Stack>
-
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
       </Stack>
     </Stack>
   );

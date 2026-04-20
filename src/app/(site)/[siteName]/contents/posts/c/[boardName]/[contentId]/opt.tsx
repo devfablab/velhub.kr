@@ -10,7 +10,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Paper,
   Stack,
   TextField,
@@ -18,11 +17,25 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { formatDate, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type ContentResponse = {
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
+type PostResponse = {
   content: {
     id: string;
     slug: string;
@@ -36,15 +49,16 @@ type ContentResponse = {
     board_id: string;
     site_id: string;
     user_id: string;
+    thumbnail_image: string | null;
+    thumbnail_width: number | null;
+    thumbnail_height: number | null;
     author_name: string;
-    is_closed?: boolean;
-    closed_by: string | null;
-    closed_at: string | null;
-    closed_message: string | null;
-    closed_by_name: string;
+    is_closed: boolean;
   };
+  series?: SeriesRow | null;
   isAuthor?: boolean;
   isStaff?: boolean;
+  error?: string;
 };
 
 type ActionResponse = {
@@ -52,24 +66,51 @@ type ActionResponse = {
   error?: string;
 };
 
+function isSupabaseOgImageValue(value: string) {
+  return value.startsWith('supabase:');
+}
+
+function getSupabaseOgImagePath(value: string) {
+  return value.replace('supabase:', '').trim();
+}
+
+function getOgImageUrl(value: string) {
+  if (!isSupabaseOgImageValue(value)) {
+    return value;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const imagePath = getSupabaseOgImagePath(value);
+
+  if (!supabaseUrl || !imagePath) {
+    return '';
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/og-image/${imagePath}`;
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(params.boardName);
+  const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
-  const [content, setContent] = useState<ContentResponse['content'] | null>(null);
+  const [post, setPost] = useState<PostResponse['content'] | null>(null);
+  const [series, setSeries] = useState<SeriesRow | null>(null);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
-  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [closedMessage, setClosedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
 
   useEffect(() => {
     async function loadContent() {
@@ -81,19 +122,20 @@ export default function Opt() {
           credentials: 'include',
         });
 
-        const result = (await response.json()) as ContentResponse | { error?: string };
+        const result = (await response.json()) as PostResponse;
 
         if (!response.ok) {
-          throw new Error(
-            'error' in result ? result.error || '글을 불러오지 못했습니다.' : '글을 불러오지 못했습니다.',
-          );
+          throw new Error(result.error ?? '글을 불러오지 못했습니다.');
         }
 
-        if (!('content' in result) || !result.content) {
+        if (!result.content) {
           throw new Error('글을 불러오지 못했습니다.');
         }
 
-        setContent(result.content);
+        setPost(result.content);
+        setSeries(result.series || null);
+        setIsAuthor(Boolean(result.isAuthor));
+        setIsStaff(Boolean(result.isStaff));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '글을 불러오지 못했습니다.');
@@ -108,18 +150,22 @@ export default function Opt() {
     void loadContent();
   }, [boardName, contentId, siteName]);
 
+  function handleMoveToEdit() {
+    router.push(`/${siteName}/contents/posts/c/${boardName}/${contentId}/edit`);
+  }
+
   function handleMoveToList() {
     router.push(`/${siteName}/contents/posts/c/${boardName}`);
   }
 
   function handleOpenDeleteDialog() {
-    setIsDeleteDialogOpen(true);
     setClosedMessage('');
     setDialogErrorMessage('');
+    setIsDeleteDialogOpen(true);
   }
 
   function handleCloseDeleteDialog() {
-    if (isSubmitting) {
+    if (isDeleting) {
       return;
     }
 
@@ -129,12 +175,12 @@ export default function Opt() {
   }
 
   function handleOpenRestoreDialog() {
-    setIsRestoreDialogOpen(true);
     setDialogErrorMessage('');
+    setIsRestoreDialogOpen(true);
   }
 
   function handleCloseRestoreDialog() {
-    if (isSubmitting) {
+    if (isRestoring) {
       return;
     }
 
@@ -148,26 +194,22 @@ export default function Opt() {
   }
 
   async function handleDelete() {
-    if (!content) {
-      return;
-    }
-
     if (closedMessage.trim().length < 10) {
       setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
       return;
     }
 
     try {
-      setIsSubmitting(true);
-      setDialogErrorMessage('');
       setErrorMessage('');
+      setDialogErrorMessage('');
+      setIsDeleting(true);
 
       const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
         method: 'PATCH',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           action: 'close',
           closedMessage: closedMessage.trim(),
@@ -177,37 +219,33 @@ export default function Opt() {
       const result = (await response.json()) as ActionResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
+        throw new Error(result.error ?? '글 삭제에 실패했습니다.');
       }
 
       router.replace(`/${siteName}/contents/posts/c/${boardName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '게시물 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '글 삭제에 실패했습니다.');
       } else {
-        setDialogErrorMessage('게시물 삭제에 실패했습니다.');
+        setDialogErrorMessage('글 삭제에 실패했습니다.');
       }
     } finally {
-      setIsSubmitting(false);
+      setIsDeleting(false);
     }
   }
 
   async function handleRestore() {
-    if (!content) {
-      return;
-    }
-
     try {
-      setIsSubmitting(true);
-      setDialogErrorMessage('');
       setErrorMessage('');
+      setDialogErrorMessage('');
+      setIsRestoring(true);
 
       const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
         method: 'PATCH',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           action: 'restore',
         }),
@@ -216,18 +254,26 @@ export default function Opt() {
       const result = (await response.json()) as ActionResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '게시물 복구에 실패했습니다.');
+        throw new Error(result.error ?? '글 복구에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/contents/posts/c/${boardName}`);
+      setPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              is_closed: false,
+            }
+          : previousPost,
+      );
+      setIsRestoreDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '글 복구에 실패했습니다.');
       } else {
-        setDialogErrorMessage('게시물 복구에 실패했습니다.');
+        setDialogErrorMessage('글 복구에 실패했습니다.');
       }
     } finally {
-      setIsSubmitting(false);
+      setIsRestoring(false);
     }
   }
 
@@ -237,82 +283,89 @@ export default function Opt() {
 
   return (
     <Stack spacing={3}>
-      {isNotMobile && (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-          글 보기
-        </Typography>
-      )}
-
       {errorMessage ? (
         <Alert severity="error" variant="filled">
           {errorMessage}
         </Alert>
       ) : null}
 
-      {content ? (
+      {post ? (
         <Stack spacing={2.5}>
-          <Typography variant="h5" component="h2">
-            {content.subject}
-          </Typography>
+          <Box>
+            <Typography variant="h5" component="h1">
+              {post.subject}
+            </Typography>
+            {post.summary && (
+              <Typography variant="h6" component="h2">
+                {post.summary}
+              </Typography>
+            )}
+          </Box>
 
-          {content.summary ? (
+          {series ? (
             <Box>
-              <Typography variant="h6" component="h3">
-                {content.summary}
+              <Typography variant="subtitle2" component="p">
+                {series.series_label}
               </Typography>
             </Box>
           ) : null}
 
-          <Stack direction="row" gap={3} flexWrap="wrap">
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2">작성</Typography>
-              <Typography variant="body2">
-                {content.author_name} / {formatDateTimeDetail(content.created_at)}
-              </Typography>
-            </Stack>
+          <Box>
+            <Typography variant="subtitle2">작성일</Typography>
+            <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+          </Box>
 
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2">수정</Typography>
-              <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
-            </Stack>
-          </Stack>
-          <Divider />
-          {content.is_closed ? (
-            <>
-              <Stack gap={1}>
-                <Stack direction="row" gap={1}>
-                  <Typography variant="subtitle2">삭제 정보</Typography>
-                  <Typography variant="body2">
-                    {content.closed_by_name || ''} / {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
-                  </Typography>
-                </Stack>
-                <Stack>
-                  <Typography variant="subtitle2">삭제 사유</Typography>
-                  <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {content.closed_message || ''}
-                  </Typography>
-                </Stack>
-              </Stack>
-              <Divider />
-            </>
+          <Box>
+            <Typography variant="subtitle2">수정일</Typography>
+            <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2">작성자</Typography>
+            <Typography variant="body2">{post.author_name}</Typography>
+          </Box>
+
+          {post.thumbnail_image ? (
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                오픈그래프 이미지
+              </Typography>
+              <Box
+                component="img"
+                src={getOgImageUrl(post.thumbnail_image)}
+                alt="오픈그래프 이미지"
+                sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+              />
+            </Box>
           ) : null}
 
-          <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              내용
+            </Typography>
+            <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+          </Box>
 
-          <Stack direction="row" spacing={1.5} justifyContent="space-between">
-            <Button type="button" variant="contained" onClick={handleMoveToList}>
+          <Stack direction="row" spacing={1.5}>
+            <Button type="button" variant="outlined" onClick={handleMoveToList}>
               목록
             </Button>
 
-            {content.is_closed ? (
-              <Button type="button" variant="outlined" color="warning" onClick={handleOpenRestoreDialog}>
+            {!post.is_closed && isAuthor ? (
+              <Button type="button" variant="contained" onClick={handleMoveToEdit}>
+                수정
+              </Button>
+            ) : null}
+
+            {post.is_closed ? (
+              <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
                 복구
               </Button>
-            ) : (
+            ) : isAuthor || isStaff ? (
               <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
                 삭제
               </Button>
-            )}
+            ) : null}
           </Stack>
         </Stack>
       ) : null}
@@ -320,7 +373,7 @@ export default function Opt() {
         <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <Alert severity="info" variant="filled">
+            <Alert severity="info" variant="outlined">
               삭제시 언제든 복구가 가능합니다.
               <br />
               삭제사유를 입력해 주세요. (필수)
@@ -344,10 +397,16 @@ export default function Opt() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outlined"
+            color="inherit"
+            onClick={handleCloseDeleteDialog}
+            disabled={isDeleting}
+          >
             취소
           </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isSubmitting}>
+          <Button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isDeleting}>
             삭제
           </Button>
         </DialogActions>
@@ -356,21 +415,20 @@ export default function Opt() {
       <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
         <DialogTitle>게시물 복구</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다</Typography>
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
+          <Typography variant="body2">
+            해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+          </Typography>
+          {dialogErrorMessage ? (
+            <Alert severity="error" variant="filled" sx={{ mt: 2 }}>
+              {dialogErrorMessage}
+            </Alert>
+          ) : null}
         </DialogContent>
         <DialogActions>
-          <Button type="button" onClick={handleCloseRestoreDialog} disabled={isSubmitting}>
+          <Button type="button" onClick={handleCloseRestoreDialog} disabled={isRestoring}>
             취소
           </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleRestore} disabled={isSubmitting}>
+          <Button type="button" variant="contained" color="warning" onClick={handleRestore} disabled={isRestoring}>
             확인
           </Button>
         </DialogActions>

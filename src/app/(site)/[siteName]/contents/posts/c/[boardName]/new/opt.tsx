@@ -1,9 +1,26 @@
 'use client';
 
-import { useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
-import { Alert, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Stack,
+  styled,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
@@ -12,27 +29,108 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 
 type CreateResponse = {
   ok?: boolean;
-  contentId?: string;
   slug?: string;
   error?: string;
 };
+
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
+type SeriesListResponse = {
+  series?: SeriesRow[];
+  error?: string;
+};
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+function isSupabaseOgImageValue(value: string) {
+  return value.startsWith('supabase:');
+}
+
+function getSupabaseOgImagePath(value: string) {
+  return value.replace('supabase:', '').trim();
+}
 
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(params.boardName);
+  const boardName = normalizeText(params.boardName).toLowerCase();
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
+
+  const fileInputReference = useRef<HTMLInputElement | null>(null);
 
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [thumbnailImage, setThumbnailImage] = useState('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    async function loadSeries() {
+      try {
+        setErrorMessage('');
+        const response = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as SeriesListResponse & {
+          board?: { post_type?: 'none' | 'prefix' | 'series' };
+        };
+
+        if (!response.ok) {
+          throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
+        }
+
+        setSeriesList(Array.isArray(result.series) ? result.series : []);
+        setPostType(result.board?.post_type ?? 'none');
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadSeries();
+  }, [boardName, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -42,34 +140,129 @@ export default function Opt() {
     setSummary(event.currentTarget.value);
   }
 
-  async function handleSubmit(event: FormSubmitEvent) {
-    event.preventDefault();
+  function handleSeriesChange(event: SelectChangeEvent<string>) {
+    setSelectedSeriesKey(event.target.value);
+  }
 
-    if (isSubmitting) {
+  function handleClickThumbnailUpload() {
+    if (isUploadingThumbnail) {
       return;
     }
 
-    try {
-      setErrorMessage('');
-      setIsSubmitting(true);
+    fileInputReference.current?.click();
+  }
 
-      const response = await fetch(`/api/boards/${boardName}/new?siteName=${siteName}`, {
+  async function handleThumbnailFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || isUploadingThumbnail) {
+      inputElement.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setIsUploadingThumbnail(true);
+
+    try {
+      const imageUrl = URL.createObjectURL(selectedFile);
+
+      const imageSize = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+        const image = new Image();
+
+        image.onload = () => {
+          resolve({
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          });
+          URL.revokeObjectURL(imageUrl);
+        };
+
+        image.onerror = () => {
+          reject(new Error('썸네일 이미지 정보를 불러오지 못했습니다.'));
+          URL.revokeObjectURL(imageUrl);
+        };
+
+        image.src = imageUrl;
+      });
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/attachment/add/og-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
+      }
+
+      setThumbnailImage(result.ogImage ?? '');
+      setThumbnailImageUrl(result.url ?? '');
+      setThumbnailWidth(imageSize.width);
+      setThumbnailHeight(imageSize.height);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '썸네일 이미지 업로드에 실패했습니다.');
+      } else {
+        setErrorMessage('썸네일 이미지 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingThumbnail(false);
+      inputElement.value = '';
+    }
+  }
+
+  async function handleSubmit(event: FormSubmitEvent) {
+    event.preventDefault();
+
+    if (isSubmitting || isLoading) {
+      return;
+    }
+
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`/api/boards/${boardName}/new`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
+          siteName,
           subject,
           summary,
           contentHtml,
           contentMarkdown,
+          thumbnailImage: thumbnailImage || null,
+          thumbnailWidth,
+          thumbnailHeight,
+          seriesKey: selectedSeriesKey || null,
         }),
       });
 
       const result = (await response.json()) as CreateResponse;
 
       if (!response.ok) {
+        if (thumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
+          await fetch('/api/attachment/delete/og-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              path: getSupabaseOgImagePath(thumbnailImage),
+            }),
+          });
+        }
+
         throw new Error(result.error ?? '글 작성에 실패했습니다.');
       }
 
@@ -89,10 +282,14 @@ export default function Opt() {
     }
   }
 
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           새 글 쓰기
         </Typography>
       )}
@@ -101,8 +298,52 @@ export default function Opt() {
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
-        <Stack spacing={1}>
-          <Typography>내용 (필수)</Typography>
+        {postType === 'series' ? (
+          <FormControl fullWidth size="small">
+            <InputLabel id="community-post-series-select-label">시리즈</InputLabel>
+            <Select
+              labelId="community-post-series-select-label"
+              value={selectedSeriesKey}
+              onChange={handleSeriesChange}
+              input={<OutlinedInput label="시리즈" />}
+            >
+              {seriesList
+                .filter((series) => !series.is_completed)
+                .map((series) => (
+                  <MenuItem key={series.id} value={series.series_key}>
+                    <ListItemText primary={series.series_label} />
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+        ) : null}
+
+        <Box>
+          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
+
+          {thumbnailImageUrl ? (
+            <Box
+              component="img"
+              src={thumbnailImageUrl}
+              alt="오픈그래프 이미지"
+              sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+            />
+          ) : null}
+
+          <VisuallyHiddenInput
+            ref={fileInputReference}
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailFileChange}
+          />
+
+          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
+            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+          </Button>
+        </Box>
+
+        <Box>
+          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
           <ToastEditor
             initialValue={contentHtml}
             initialMarkdown={contentMarkdown}
@@ -110,10 +351,16 @@ export default function Opt() {
             onHtmlChange={setContentHtml}
             onMarkdownChange={setContentMarkdown}
           />
-        </Stack>
+        </Box>
 
-        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button component={Link} href={`/${siteName}/contents/posts/c/${boardName}`} size="large">
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            component={Link}
+            href={`/${siteName}/contents/posts/c/${boardName}`}
+            underline="none"
+            variant="outlined"
+            size="large"
+          >
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting} size="large">

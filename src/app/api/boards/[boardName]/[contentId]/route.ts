@@ -71,7 +71,12 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      const pageQuery = supabaseAdmin.from('pages').select('*').eq('board_id', board.data.id);
+      const pageQuery = supabaseAdmin
+        .from('pages')
+        .select(
+          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
+        )
+        .eq('board_id', board.data.id);
 
       const page = isNumericSlug(normalizedContentId)
         ? await pageQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
@@ -111,8 +116,6 @@ export async function GET(request: Request, context: RouteContext) {
         content: {
           ...page.data,
           slug: String(page.data.slug),
-          content_html: page.data.content_html ?? '',
-          content_markdown: page.data.content_markdown ?? '',
           author_name: authorName,
         },
         isAuthor: session.status !== 'FAIL' ? page.data.user_id === session.particleId : false,
@@ -120,7 +123,12 @@ export async function GET(request: Request, context: RouteContext) {
       });
     }
 
-    const postQuery = supabaseAdmin.from('posts').select('*').eq('board_id', board.data.id);
+    const postQuery = supabaseAdmin
+      .from('posts')
+      .select(
+        'id, slug, subject, summary, content_html, content_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed, categories, series_id',
+      )
+      .eq('board_id', board.data.id);
 
     const post = isNumericSlug(normalizedContentId)
       ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
@@ -191,16 +199,47 @@ export async function GET(request: Request, context: RouteContext) {
       categories = categoryResult.data ?? [];
     }
 
+    let series: {
+      id: string;
+      created_at: string;
+      series_key: string;
+      series_label: string;
+      summary: string | null;
+      thumbnail_image: string | null;
+      board_id: string;
+      site_id: string;
+      last_published_at: string | null;
+      is_completed: boolean;
+      user_id: string | null;
+    } | null = null;
+
+    if (post.data.series_id) {
+      const seriesResult = await supabaseAdmin
+        .from('board_series')
+        .select(
+          'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+        )
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', board.data.id)
+        .eq('id', post.data.series_id)
+        .maybeSingle();
+
+      if (seriesResult.error) {
+        return Response.json({ error: '시리즈 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      series = seriesResult.data ?? null;
+    }
+
     return Response.json({
       board: board.data,
       content: {
         ...post.data,
         slug: String(post.data.slug),
-        content_html: post.data.content_html ?? '',
-        content_markdown: post.data.content_markdown ?? '',
         author_name: authorName,
       },
       categories,
+      series,
       isAuthor: session.status !== 'FAIL' ? post.data.user_id === session.particleId : false,
       isStaff,
     });

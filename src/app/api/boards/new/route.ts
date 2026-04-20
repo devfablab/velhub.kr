@@ -10,6 +10,7 @@ type RequestBody = {
   isActive: boolean | null;
   markdownStatus: string | null;
   postPerPage?: number | null;
+  postType?: 'none' | 'prefix' | 'series' | null;
 };
 
 function normalizeBoardKey(rawValue: string | null | undefined) {
@@ -49,6 +50,10 @@ function normalizePostPerPage(value: number | null | undefined) {
   return normalizedValue;
 }
 
+function isAllowedPostType(value: unknown): value is 'none' | 'prefix' | 'series' {
+  return value === 'none' || value === 'prefix' || value === 'series';
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
@@ -60,6 +65,7 @@ export async function POST(request: Request) {
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
     const postPerPage = normalizePostPerPage(requestBody.postPerPage);
+    const postType = requestBody.postType ?? 'none';
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -92,6 +98,10 @@ export async function POST(request: Request) {
 
     if (!isAllowedBoardType(boardType)) {
       return Response.json({ error: '게시판 종류가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!isAllowedPostType(postType)) {
+      return Response.json({ error: '말머리/연재 설정 값이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -150,6 +160,7 @@ export async function POST(request: Request) {
         site_id: rhizome.data.id,
         markdown_status: markdownStatus,
         post_per_page: postPerPage,
+        post_type: rhizome.data.site_type === 'community' ? postType : 'none',
       })
       .select('id, board_key')
       .maybeSingle();

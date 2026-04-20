@@ -18,10 +18,35 @@ type RequestBody = {
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
   categories?: string[] | null;
+  seriesKey?: string | null;
 };
 
 function isValidCategoryKey(value: string) {
   if (value.length < 2 || value.length > 16) {
+    return false;
+  }
+
+  if (!/[a-z]/.test(value)) {
+    return false;
+  }
+
+  if (/[^a-z0-9\-_]/.test(value)) {
+    return false;
+  }
+
+  if (value.startsWith('_') || value.endsWith('_')) {
+    return false;
+  }
+
+  if (value.includes('__')) {
+    return false;
+  }
+
+  return true;
+}
+
+function isValidSeriesKey(value: string) {
+  if (value.length < 5 || value.length > 16) {
     return false;
   }
 
@@ -61,6 +86,7 @@ export async function POST(request: Request, context: RouteContext) {
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
+    const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -92,6 +118,10 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
     }
 
+    if (seriesKey && !isValidSeriesKey(seriesKey)) {
+      return Response.json({ error: '시리즈 식별자가 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin
@@ -108,17 +138,13 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL' || session.case !== 'staff') {
+    if (session.status === 'FAIL' || (session.case !== 'staff' && session.case !== 'member')) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (rhizome.data.site_type !== 'blog') {
-      return Response.json({ error: '블로그에서만 글을 작성할 수 있습니다.' }, { status: 403 });
     }
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, site_id')
+      .select('id, board_key, board_type, site_id, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -127,8 +153,8 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (board.data.board_type !== 'blog') {
-      return Response.json({ error: '블로그 게시판만 글을 작성할 수 있습니다.' }, { status: 403 });
+    if (board.data.board_type === 'page') {
+      return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
     }
 
     let categoryIds: string[] = [];
@@ -156,6 +182,40 @@ export async function POST(request: Request, context: RouteContext) {
       categoryIds = categoryKeys.map((categoryKey) => categoryMap.get(categoryKey) as string);
     }
 
+    let seriesId: string | null = null;
+
+    if (seriesKey) {
+      if (board.data.post_type !== 'series') {
+        return Response.json({ error: '연재형 게시판에서만 시리즈를 선택할 수 있습니다.' }, { status: 400 });
+      }
+
+      const seriesResult = await supabaseAdmin
+        .from('board_series')
+        .select('id, is_completed, user_id')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', board.data.id)
+        .eq('series_key', seriesKey)
+        .maybeSingle();
+
+      if (seriesResult.error || !seriesResult.data) {
+        return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      if (seriesResult.data.is_completed) {
+        return Response.json({ error: '완결된 시리즈는 선택할 수 없습니다.' }, { status: 400 });
+      }
+
+      if (seriesResult.data.user_id && seriesResult.data.user_id !== session.particleId) {
+        return Response.json({ error: '해당 시리즈를 선택할 권한이 없습니다.' }, { status: 403 });
+      }
+
+      seriesId = seriesResult.data.id;
+    }
+
+    if (!seriesKey && board.data.post_type === 'series') {
+      return Response.json({ error: '연재형 게시판은 시리즈를 선택해야 합니다.' }, { status: 400 });
+    }
+
     const lastPost = await supabaseAdmin
       .from('posts')
       .select('idx, slug')
@@ -177,8 +237,8 @@ export async function POST(request: Request, context: RouteContext) {
         slug: nextSlug,
         subject,
         summary: summary || null,
-        content: contentHtml,
-        markdown: contentMarkdown,
+        content_html: contentHtml,
+        content_markdown: contentMarkdown,
         thumbnail_image: thumbnailImage || null,
         thumbnail_width: thumbnailWidth,
         thumbnail_height: thumbnailHeight,
@@ -188,12 +248,22 @@ export async function POST(request: Request, context: RouteContext) {
         board_id: board.data.id,
         is_closed: false,
         categories: categoryIds,
+        series_id: seriesId,
       })
       .select('id, slug')
       .maybeSingle();
 
     if (insertPost.error || !insertPost.data) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (seriesId) {
+      await supabaseAdmin
+        .from('board_series')
+        .update({
+          last_published_at: new Date().toISOString(),
+        })
+        .eq('id', seriesId);
     }
 
     return Response.json({

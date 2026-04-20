@@ -19,6 +19,7 @@ type RequestBody = {
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
   categories?: string[] | null;
+  seriesKey?: string | null;
   isClosed?: boolean | null;
 };
 
@@ -28,6 +29,30 @@ function isNumericSlug(value: string) {
 
 function isValidCategoryKey(value: string) {
   if (value.length < 2 || value.length > 16) {
+    return false;
+  }
+
+  if (!/[a-z]/.test(value)) {
+    return false;
+  }
+
+  if (/[^a-z0-9\-_]/.test(value)) {
+    return false;
+  }
+
+  if (value.startsWith('_') || value.endsWith('_')) {
+    return false;
+  }
+
+  if (value.includes('__')) {
+    return false;
+  }
+
+  return true;
+}
+
+function isValidSeriesKey(value: string) {
+  if (value.length < 5 || value.length > 16) {
     return false;
   }
 
@@ -72,6 +97,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
+    const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
     const isClosed = typeof requestBody.isClosed === 'boolean' ? requestBody.isClosed : null;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
@@ -96,6 +122,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (requestBody.subject !== undefined && !subject) {
+      return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (
+      (requestBody.contentHtml !== undefined && !contentHtml) ||
+      (requestBody.contentMarkdown !== undefined && !contentMarkdown)
+    ) {
+      return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (seriesKey && !isValidSeriesKey(seriesKey)) {
+      return Response.json({ error: '시리즈 식별자가 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
@@ -112,13 +153,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (rhizome.data.site_type !== 'blog') {
-      return Response.json({ error: '블로그에서만 글을 수정할 수 있습니다.' }, { status: 403 });
-    }
-
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, site_id')
+      .select('id, board_key, board_type, site_id, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -127,13 +164,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (board.data.board_type !== 'blog') {
-      return Response.json({ error: '블로그 게시판만 글을 수정할 수 있습니다.' }, { status: 403 });
+    if (board.data.board_type === 'page') {
+      return Response.json({ error: '페이지 게시판에는 글을 수정할 수 없습니다.' }, { status: 403 });
     }
 
     const postQuery = supabaseAdmin
       .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed')
+      .select('id, slug, user_id, board_id, site_id, is_closed, series_id')
       .eq('board_id', board.data.id);
 
     const currentPost = isNumericSlug(normalizedContentId)
@@ -153,7 +190,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     let categoryIds: string[] = [];
 
-    if (categoryKeys.length > 0) {
+    if (requestBody.categories !== undefined && categoryKeys.length > 0) {
       const categoryResult = await supabaseAdmin
         .from('board_categories')
         .select('id, category_key')
@@ -176,19 +213,76 @@ export async function PATCH(request: Request, context: RouteContext) {
       categoryIds = categoryKeys.map((categoryKey) => categoryMap.get(categoryKey) as string);
     }
 
+    let seriesId: string | null | undefined = undefined;
+
+    if (requestBody.seriesKey !== undefined) {
+      if (seriesKey && board.data.post_type !== 'series') {
+        return Response.json({ error: '연재형 게시판에서만 시리즈를 선택할 수 있습니다.' }, { status: 400 });
+      }
+
+      if (!seriesKey && board.data.post_type === 'series') {
+        return Response.json({ error: '연재형 게시판은 시리즈를 선택해야 합니다.' }, { status: 400 });
+      }
+
+      if (currentPost.data.series_id && seriesKey) {
+        const currentSeries = await supabaseAdmin
+          .from('board_series')
+          .select('series_key')
+          .eq('id', currentPost.data.series_id)
+          .maybeSingle();
+
+        if (currentSeries.error || !currentSeries.data) {
+          return Response.json({ error: '시리즈 정보를 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        if (currentSeries.data.series_key !== seriesKey) {
+          return Response.json({ error: '시리즈가 설정된 글은 시리즈를 변경할 수 없습니다.' }, { status: 400 });
+        }
+
+        seriesId = currentPost.data.series_id;
+      } else if (currentPost.data.series_id && !seriesKey) {
+        return Response.json({ error: '시리즈가 설정된 글은 시리즈를 변경할 수 없습니다.' }, { status: 400 });
+      } else if (!currentPost.data.series_id && seriesKey) {
+        const seriesResult = await supabaseAdmin
+          .from('board_series')
+          .select('id, is_completed, user_id')
+          .eq('site_id', rhizome.data.id)
+          .eq('board_id', board.data.id)
+          .eq('series_key', seriesKey)
+          .maybeSingle();
+
+        if (seriesResult.error || !seriesResult.data) {
+          return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+        }
+
+        if (seriesResult.data.is_completed) {
+          return Response.json({ error: '완결된 시리즈는 선택할 수 없습니다.' }, { status: 400 });
+        }
+
+        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.particleId) {
+          return Response.json({ error: '해당 시리즈를 선택할 권한이 없습니다.' }, { status: 403 });
+        }
+
+        seriesId = seriesResult.data.id;
+      } else {
+        seriesId = null;
+      }
+    }
+
     const updatePayload: {
       subject?: string;
       summary?: string | null;
-      content?: string;
-      markdown?: string;
+      content_html?: string;
+      content_markdown?: string;
       thumbnail_image?: string | null;
       thumbnail_width?: number | null;
       thumbnail_height?: number | null;
       categories?: string[];
+      series_id?: string | null;
       is_closed?: boolean;
     } = {};
 
-    if (subject) {
+    if (requestBody.subject !== undefined) {
       updatePayload.subject = subject;
     }
 
@@ -196,12 +290,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       updatePayload.summary = summary || null;
     }
 
-    if (contentHtml) {
-      updatePayload.content = contentHtml;
+    if (requestBody.contentHtml !== undefined) {
+      updatePayload.content_html = contentHtml;
     }
 
-    if (contentMarkdown) {
-      updatePayload.markdown = contentMarkdown;
+    if (requestBody.contentMarkdown !== undefined) {
+      updatePayload.content_markdown = contentMarkdown;
     }
 
     if (requestBody.thumbnailImage !== undefined) {
@@ -214,11 +308,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       updatePayload.categories = categoryIds;
     }
 
-    if (isClosed !== null) {
-      if (!isStaff && !isAuthor) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
+    if (seriesId !== undefined) {
+      updatePayload.series_id = seriesId;
+    }
 
+    if (isClosed !== null) {
       updatePayload.is_closed = isClosed;
     }
 
@@ -226,11 +320,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       .from('posts')
       .update(updatePayload)
       .eq('id', currentPost.data.id)
-      .select('id, slug')
+      .select('id, slug, series_id')
       .maybeSingle();
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (seriesId) {
+      await supabaseAdmin
+        .from('board_series')
+        .update({
+          last_published_at: new Date().toISOString(),
+        })
+        .eq('id', seriesId);
     }
 
     return Response.json({

@@ -16,6 +16,7 @@ type RequestBody = {
   isActive?: boolean | null;
   markdownStatus?: string | null;
   postPerPage?: number | null;
+  postType?: 'none' | 'prefix' | 'series' | null;
 };
 
 function normalizeBoardKey(rawValue: string | null | undefined) {
@@ -55,6 +56,10 @@ function normalizePostPerPage(value: number | null | undefined) {
   return normalizedValue;
 }
 
+function isAllowedPostType(value: unknown): value is 'none' | 'prefix' | 'series' {
+  return value === 'none' || value === 'prefix' || value === 'series';
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -73,6 +78,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
     const postPerPage = normalizePostPerPage(requestBody.postPerPage);
+    const postType = requestBody.postType ?? 'none';
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -107,9 +113,13 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판 종류가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (!isAllowedPostType(postType)) {
+      return Response.json({ error: '말머리/연재 설정 값이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -125,7 +135,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const currentBoard = await supabaseAdmin
       .from('boards')
-      .select('id, board_key')
+      .select('id, board_key, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -155,6 +165,18 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    let nextPostType = currentBoard.data.post_type;
+
+    if (rhizome.data.site_type === 'community') {
+      const currentPostType = currentBoard.data.post_type;
+
+      if (currentPostType === 'none') {
+        nextPostType = postType;
+      } else if (postType !== currentPostType) {
+        return Response.json({ error: '말머리/연재 여부는 설정되면 변경하실 수 없습니다.' }, { status: 400 });
+      }
+    }
+
     const updateBoard = await supabaseAdmin
       .from('boards')
       .update({
@@ -164,6 +186,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         is_active: isActive,
         markdown_status: markdownStatus,
         post_per_page: postPerPage,
+        post_type: nextPostType,
       })
       .eq('id', currentBoard.data.id)
       .select('id, board_key')

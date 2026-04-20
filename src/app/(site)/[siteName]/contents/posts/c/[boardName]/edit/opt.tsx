@@ -6,9 +6,12 @@ import Link from '@mui/material/Link';
 import {
   Alert,
   Button,
+  FormControl,
+  FormControlLabel,
   InputAdornment,
   MenuItem,
-  Paper,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -27,6 +30,7 @@ type BoardResponse = {
     board_label: string;
     board_type: string;
     post_per_page?: number | null;
+    post_type: 'none' | 'prefix' | 'series';
   };
 };
 
@@ -35,6 +39,8 @@ type EditBoardResponse = {
   boardName?: string;
   error?: string;
 };
+
+type PostType = 'none' | 'prefix' | 'series';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -61,11 +67,12 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
   const [postPerPage, setPostPerPage] = useState(5);
+  const [postType, setPostType] = useState<PostType>('none');
+  const [isPostTypeLocked, setIsPostTypeLocked] = useState(false);
   const [originalBoardKey, setOriginalBoardKey] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -108,6 +115,8 @@ export default function Opt() {
             ? result.board.post_per_page
             : 5,
         );
+        setPostType(result.board.post_type);
+        setIsPostTypeLocked(result.board.post_type !== 'none');
         setOriginalBoardKey(result.board.board_key ?? '');
         setCheckedBoardKey(result.board.board_key ?? '');
         setIsChecked(true);
@@ -150,6 +159,14 @@ export default function Opt() {
 
   function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostPerPage(Number(event.target.value));
+  }
+
+  function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    if (isPostTypeLocked) {
+      return;
+    }
+
+    setPostType(event.target.value as PostType);
   }
 
   async function handleCheckBoardKey() {
@@ -281,6 +298,7 @@ export default function Opt() {
           isActive: true,
           markdownStatus: 'markdown_default',
           postPerPage,
+          postType,
         }),
       });
 
@@ -317,7 +335,7 @@ export default function Opt() {
   return (
     <Stack spacing={2}>
       {isNotMobile && (
-        <Typography variant="h4" component="h1">
+        <Typography variant="h5" component="h1">
           게시판 수정
         </Typography>
       )}
@@ -370,6 +388,23 @@ export default function Opt() {
             </MenuItem>
           ))}
         </TextField>
+
+        <FormControl>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            말머리/연재 설정
+          </Typography>
+          <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+            <FormControlLabel value="none" control={<Radio />} label="선택 안함" disabled={isPostTypeLocked} />
+            <FormControlLabel value="prefix" control={<Radio />} label="말머리형" disabled={isPostTypeLocked} />
+            <FormControlLabel value="series" control={<Radio />} label="연재형" disabled={isPostTypeLocked} />
+          </RadioGroup>
+        </FormControl>
+
+        {!isPostTypeLocked ? (
+          <Alert severity="warning" variant="outlined">
+            말머리/연재 여부는 설정되면 변경하실 수 없습니다. 유의해 주세요.
+          </Alert>
+        ) : null}
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button component={Link} href={`/${siteName}/contents/posts/c/${boardName}`}>
