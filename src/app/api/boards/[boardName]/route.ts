@@ -27,6 +27,7 @@ type PostRow = {
   closed_by?: string | null;
   closed_at?: string | null;
   closed_message?: string | null;
+  prefix_id?: string | null;
 };
 
 function parsePage(value: string | null) {
@@ -208,6 +209,31 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
+    const prefixIds = Array.from(
+      new Set(
+        visiblePosts
+          .map((post) => post.prefix_id)
+          .filter((value): value is string => typeof value === 'string' && Boolean(value)),
+      ),
+    );
+
+    let prefixLabelMap = new Map<string, string>();
+
+    if (prefixIds.length > 0) {
+      const prefixResult = await supabaseAdmin
+        .from('board_prefixes')
+        .select('id, prefix_label')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', board.data.id)
+        .in('id', prefixIds);
+
+      if (!prefixResult.error) {
+        prefixLabelMap = new Map(
+          (prefixResult.data ?? []).map((prefix) => [prefix.id as string, (prefix.prefix_label as string) ?? '']),
+        );
+      }
+    }
+
     const totalCount = posts.count ?? 0;
     const totalPage = totalCount > 0 ? Math.ceil(totalCount / size) : 1;
 
@@ -216,6 +242,7 @@ export async function GET(request: Request, context: RouteContext) {
       contents: visiblePosts.map((post) => ({
         ...post,
         slug: String(post.slug),
+        prefix_label: post.prefix_id ? prefixLabelMap.get(post.prefix_id) || null : null,
         author_name: nicknameMap.get(post.user_id) || userNameMap.get(post.user_id) || '',
         closed_by_name:
           post.closed_by && (nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '')

@@ -10,7 +10,6 @@ import {
   Button,
   ButtonGroup,
   Checkbox,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -32,7 +31,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -54,6 +53,8 @@ type ContentRow = {
   closed_at: string | null;
   closed_message: string | null;
   closed_by_name: string;
+  prefix_id: string | null;
+  prefix_label: string | null;
 };
 
 type BoardResponse = {
@@ -63,6 +64,7 @@ type BoardResponse = {
     board_label: string;
     created_at?: string;
     post_per_page?: number | null;
+    post_type: 'none' | 'prefix' | 'series';
   };
   contents?: ContentRow[];
   page?: number;
@@ -256,6 +258,10 @@ export default function Opt() {
     router.push(`/${siteName}/contents/posts/c/${boardName}/new`);
   }
 
+  function handleMoveToPrefixManage() {
+    router.push(`/${siteName}/contents/posts/c/${boardName}/prefix`);
+  }
+
   function handleToggleAllCurrentPage() {
     if (isAllCurrentPageChecked) {
       setSelectedIds((previousIds) => previousIds.filter((id) => !currentPageIds.includes(id)));
@@ -443,13 +449,19 @@ export default function Opt() {
       )}
 
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-          <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-            삭제
-          </Button>
-        ) : (
-          <span />
-        )}
+        <Stack direction="row" spacing={1}>
+          {board?.post_type === 'prefix' ? (
+            <Button type="button" variant="outlined" onClick={handleMoveToPrefixManage}>
+              말머리 관리
+            </Button>
+          ) : null}
+
+          {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+            <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
+              삭제
+            </Button>
+          ) : null}
+        </Stack>
 
         <Button type="button" variant="contained" onClick={handleMoveToNew}>
           새 글 쓰기
@@ -521,27 +533,9 @@ export default function Opt() {
                 <TableCell>제목</TableCell>
                 <TableCell>작성일</TableCell>
                 <TableCell>작성자</TableCell>
-                <TableCell
-                  sx={{
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  삭제자
-                </TableCell>
-                <TableCell
-                  sx={{
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  삭제일
-                </TableCell>
-                <TableCell
-                  sx={{
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  삭제사유
-                </TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -560,45 +554,18 @@ export default function Opt() {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      {content.subject}
+                      {content.prefix_label ? <Box component="span">[{content.prefix_label}] </Box> : null}
+                      <Box component="span">{content.subject}</Box>
                     </Link>
                   </TableCell>
 
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {formatDateTimeDetail(content.created_at)}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {content.author_name}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {content.closed_by_name}
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
                   </TableCell>
-                  <TableCell
-                    sx={{
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {content.closed_message}
-                  </TableCell>
+                  <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{content.closed_message}</TableCell>
 
                   <TableCell align="right">
                     {content.is_closed ? (
@@ -665,6 +632,7 @@ export default function Opt() {
           />
         </Stack>
       ) : null}
+
       <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>

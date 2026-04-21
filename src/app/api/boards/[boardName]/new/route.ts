@@ -19,6 +19,7 @@ type RequestBody = {
   thumbnailHeight?: number | null;
   categories?: string[] | null;
   seriesKey?: string | null;
+  prefixId?: string | null;
 };
 
 function isValidCategoryKey(value: string) {
@@ -87,6 +88,7 @@ export async function POST(request: Request, context: RouteContext) {
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
+    const prefixId = normalizeText(requestBody.prefixId);
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -216,6 +218,32 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '연재형 게시판은 시리즈를 선택해야 합니다.' }, { status: 400 });
     }
 
+    let resolvedPrefixId: string | null = null;
+
+    if (prefixId) {
+      if (board.data.post_type !== 'prefix') {
+        return Response.json({ error: '말머리형 게시판에서만 말머리를 선택할 수 있습니다.' }, { status: 400 });
+      }
+
+      const prefixResult = await supabaseAdmin
+        .from('board_prefixes')
+        .select('id')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', board.data.id)
+        .eq('id', prefixId)
+        .maybeSingle();
+
+      if (prefixResult.error || !prefixResult.data) {
+        return Response.json({ error: '말머리를 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      resolvedPrefixId = prefixResult.data.id;
+    }
+
+    if (!prefixId && board.data.post_type === 'prefix') {
+      return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
+    }
+
     const lastPost = await supabaseAdmin
       .from('posts')
       .select('idx, slug')
@@ -249,6 +277,7 @@ export async function POST(request: Request, context: RouteContext) {
         is_closed: false,
         categories: categoryIds,
         series_id: seriesId,
+        prefix_id: resolvedPrefixId,
       })
       .select('id, slug')
       .maybeSingle();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Alert,
@@ -10,13 +10,16 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
+  FormControl,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -33,6 +36,15 @@ type SeriesRow = {
   last_published_at: string | null;
   is_completed: boolean;
   user_id: string | null;
+};
+
+type PrefixRow = {
+  id: string;
+  created_at: string;
+  prefix_key: number;
+  prefix_label: string;
+  board_id: string;
+  site_id: string;
 };
 
 type PostResponse = {
@@ -54,10 +66,20 @@ type PostResponse = {
     thumbnail_height: number | null;
     author_name: string;
     is_closed: boolean;
+    prefix_id: string | null;
+    prefix_label: string | null;
+  };
+  board?: {
+    post_type: 'none' | 'prefix' | 'series';
   };
   series?: SeriesRow | null;
   isAuthor?: boolean;
   isStaff?: boolean;
+  error?: string;
+};
+
+type PrefixListResponse = {
+  prefixes?: PrefixRow[];
   error?: string;
 };
 
@@ -101,16 +123,29 @@ export default function Opt() {
 
   const [post, setPost] = useState<PostResponse['content'] | null>(null);
   const [series, setSeries] = useState<SeriesRow | null>(null);
+  const [prefixes, setPrefixes] = useState<PrefixRow[]>([]);
+  const [selectedPrefixId, setSelectedPrefixId] = useState('');
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isChangingPrefix, setIsChangingPrefix] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
+  const [isPrefixDialogOpen, setIsPrefixDialogOpen] = useState(false);
   const [closedMessage, setClosedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
+
+  const selectedPrefixLabel = useMemo(() => {
+    if (!selectedPrefixId) {
+      return '';
+    }
+
+    return prefixes.find((prefix) => prefix.id === selectedPrefixId)?.prefix_label ?? '';
+  }, [prefixes, selectedPrefixId]);
 
   useEffect(() => {
     async function loadContent() {
@@ -134,8 +169,25 @@ export default function Opt() {
 
         setPost(result.content);
         setSeries(result.series || null);
+        setPostType(result.board?.post_type ?? 'none');
+        setSelectedPrefixId(result.content.prefix_id ?? '');
         setIsAuthor(Boolean(result.isAuthor));
         setIsStaff(Boolean(result.isStaff));
+
+        if ((result.board?.post_type ?? 'none') === 'prefix') {
+          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
+
+          if (!prefixResponse.ok) {
+            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
+          }
+
+          setPrefixes(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '글을 불러오지 못했습니다.');
@@ -188,8 +240,28 @@ export default function Opt() {
     setDialogErrorMessage('');
   }
 
+  function handleOpenPrefixDialog() {
+    setDialogErrorMessage('');
+    setSelectedPrefixId(post?.prefix_id ?? '');
+    setIsPrefixDialogOpen(true);
+  }
+
+  function handleClosePrefixDialog() {
+    if (isChangingPrefix) {
+      return;
+    }
+
+    setDialogErrorMessage('');
+    setIsPrefixDialogOpen(false);
+  }
+
   function handleClosedMessageChange(event: InputChangeEvent) {
     setClosedMessage(event.currentTarget.value);
+    setDialogErrorMessage('');
+  }
+
+  function handlePrefixChange(event: SelectChangeEvent<string>) {
+    setSelectedPrefixId(event.target.value);
     setDialogErrorMessage('');
   }
 
@@ -277,6 +349,62 @@ export default function Opt() {
     }
   }
 
+  async function handleChangePrefix() {
+    if (!post) {
+      return;
+    }
+
+    if (!selectedPrefixId) {
+      setDialogErrorMessage('말머리를 선택해주세요.');
+      return;
+    }
+
+    try {
+      setDialogErrorMessage('');
+      setIsChangingPrefix(true);
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: post.subject,
+          summary: post.summary,
+          contentHtml: post.content_html,
+          contentMarkdown: post.content_markdown,
+          prefixId: selectedPrefixId,
+        }),
+      });
+
+      const result = (await response.json()) as ActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '말머리 변경에 실패했습니다.');
+      }
+
+      setPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              prefix_id: selectedPrefixId,
+              prefix_label: selectedPrefixLabel || null,
+            }
+          : previousPost,
+      );
+      setIsPrefixDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDialogErrorMessage(unknownError.message || '말머리 변경에 실패했습니다.');
+      } else {
+        setDialogErrorMessage('말머리 변경에 실패했습니다.');
+      }
+    } finally {
+      setIsChangingPrefix(false);
+    }
+  }
+
   if (isLoading) {
     return null;
   }
@@ -293,7 +421,8 @@ export default function Opt() {
         <Stack spacing={2.5}>
           <Box>
             <Typography variant="h5" component="h1">
-              {post.subject}
+              {post.prefix_label ? <Box component="span">[{post.prefix_label}] </Box> : null}
+              <Box component="span">{post.subject}</Box>
             </Typography>
             {post.summary && (
               <Typography variant="h6" component="h2">
@@ -357,6 +486,12 @@ export default function Opt() {
               </Button>
             ) : null}
 
+            {!post.is_closed && postType === 'prefix' && (isAuthor || isStaff) ? (
+              <Button type="button" variant="outlined" onClick={handleOpenPrefixDialog}>
+                말머리 변경
+              </Button>
+            ) : null}
+
             {post.is_closed ? (
               <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
                 복구
@@ -369,6 +504,7 @@ export default function Opt() {
           </Stack>
         </Stack>
       ) : null}
+
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>게시물 삭제</DialogTitle>
         <DialogContent>
@@ -430,6 +566,40 @@ export default function Opt() {
           </Button>
           <Button type="button" variant="contained" color="warning" onClick={handleRestore} disabled={isRestoring}>
             확인
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={isPrefixDialogOpen} onClose={handleClosePrefixDialog} fullWidth maxWidth="xs">
+        <DialogTitle>말머리 변경</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <FormControl fullWidth size="small">
+              <Select value={selectedPrefixId} onChange={handlePrefixChange} displayEmpty>
+                <MenuItem value="" disabled>
+                  말머리를 선택해주세요.
+                </MenuItem>
+                {prefixes.map((prefix) => (
+                  <MenuItem key={prefix.id} value={prefix.id}>
+                    {prefix.prefix_label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleClosePrefixDialog} disabled={isChangingPrefix}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" onClick={handleChangePrefix} disabled={isChangingPrefix}>
+            저장
           </Button>
         </DialogActions>
       </Dialog>

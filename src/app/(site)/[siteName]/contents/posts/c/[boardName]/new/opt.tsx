@@ -47,8 +47,29 @@ type SeriesRow = {
   user_id: string | null;
 };
 
+type PrefixRow = {
+  id: string;
+  created_at: string;
+  prefix_key: number;
+  prefix_label: string;
+  board_id: string;
+  site_id: string;
+};
+
+type BoardInfoResponse = {
+  board?: {
+    post_type: 'none' | 'prefix' | 'series';
+  };
+  error?: string;
+};
+
 type SeriesListResponse = {
   series?: SeriesRow[];
+  error?: string;
+};
+
+type PrefixListResponse = {
+  prefixes?: PrefixRow[];
   error?: string;
 };
 
@@ -92,7 +113,9 @@ export default function Opt() {
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,24 +123,53 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    async function loadSeries() {
+    async function loadBoardData() {
       try {
         setErrorMessage('');
-        const response = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
+
+        const boardResponse = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const result = (await response.json()) as SeriesListResponse & {
-          board?: { post_type?: 'none' | 'prefix' | 'series' };
-        };
+        const boardResult = (await boardResponse.json()) as BoardInfoResponse;
 
-        if (!response.ok) {
-          throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
+        if (!boardResponse.ok) {
+          throw new Error(boardResult.error ?? '게시판 정보를 불러오지 못했습니다.');
         }
 
-        setSeriesList(Array.isArray(result.series) ? result.series : []);
-        setPostType(result.board?.post_type ?? 'none');
+        const nextPostType = boardResult.board?.post_type ?? 'none';
+        setPostType(nextPostType);
+
+        if (nextPostType === 'series') {
+          const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
+
+          if (!seriesResponse.ok) {
+            throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+          }
+
+          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
+        }
+
+        if (nextPostType === 'prefix') {
+          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
+
+          if (!prefixResponse.ok) {
+            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
+          }
+
+          setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
@@ -129,7 +181,7 @@ export default function Opt() {
       }
     }
 
-    void loadSeries();
+    void loadBoardData();
   }, [boardName, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
@@ -142,6 +194,10 @@ export default function Opt() {
 
   function handleSeriesChange(event: SelectChangeEvent<string>) {
     setSelectedSeriesKey(event.target.value);
+  }
+
+  function handlePrefixChange(event: SelectChangeEvent<string>) {
+    setSelectedPrefixId(event.target.value);
   }
 
   function handleClickThumbnailUpload() {
@@ -224,6 +280,16 @@ export default function Opt() {
       return;
     }
 
+    if (postType === 'prefix' && !selectedPrefixId) {
+      setErrorMessage('말머리를 선택해주세요.');
+      return;
+    }
+
+    if (postType === 'series' && !selectedSeriesKey) {
+      setErrorMessage('시리즈를 선택해주세요.');
+      return;
+    }
+
     setErrorMessage('');
     setIsSubmitting(true);
 
@@ -244,6 +310,7 @@ export default function Opt() {
           thumbnailWidth,
           thumbnailHeight,
           seriesKey: selectedSeriesKey || null,
+          prefixId: selectedPrefixId || null,
         }),
       });
 
@@ -297,6 +364,24 @@ export default function Opt() {
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+
+        {postType === 'prefix' ? (
+          <FormControl fullWidth size="small">
+            <InputLabel id="community-post-prefix-select-label">말머리</InputLabel>
+            <Select
+              labelId="community-post-prefix-select-label"
+              value={selectedPrefixId}
+              onChange={handlePrefixChange}
+              input={<OutlinedInput label="말머리" />}
+            >
+              {prefixList.map((prefix) => (
+                <MenuItem key={prefix.id} value={prefix.id}>
+                  <ListItemText primary={prefix.prefix_label} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : null}
 
         {postType === 'series' ? (
           <FormControl fullWidth size="small">

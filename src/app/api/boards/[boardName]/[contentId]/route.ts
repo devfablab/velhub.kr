@@ -61,7 +61,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, markdown_status, site_id')
+      .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -126,7 +126,7 @@ export async function GET(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed, categories, series_id',
+        'id, slug, subject, summary, content_html, content_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, idx, user_id, site_id, board_id, created_at, is_closed, categories, series_id, prefix_id',
       )
       .eq('board_id', board.data.id);
 
@@ -231,12 +231,31 @@ export async function GET(request: Request, context: RouteContext) {
       series = seriesResult.data ?? null;
     }
 
+    let prefixLabel: string | null = null;
+
+    if (post.data.prefix_id) {
+      const prefixResult = await supabaseAdmin
+        .from('board_prefixes')
+        .select('prefix_label')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_id', board.data.id)
+        .eq('id', post.data.prefix_id)
+        .maybeSingle();
+
+      if (prefixResult.error) {
+        return Response.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      prefixLabel = (prefixResult.data?.prefix_label as string | null) ?? null;
+    }
+
     return Response.json({
       board: board.data,
       content: {
         ...post.data,
         slug: String(post.data.slug),
         author_name: authorName,
+        prefix_label: prefixLabel,
       },
       categories,
       series,

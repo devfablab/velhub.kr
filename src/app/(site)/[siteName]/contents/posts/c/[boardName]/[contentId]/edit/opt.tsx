@@ -3,12 +3,33 @@
 import { useEffect, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Button, Paper, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Alert,
+  Button,
+  FormControl,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
+
+type PrefixRow = {
+  id: string;
+  created_at: string;
+  prefix_key: number;
+  prefix_label: string;
+  board_id: string;
+  site_id: string;
+};
 
 type ContentResponse = {
   content: {
@@ -26,9 +47,19 @@ type ContentResponse = {
     user_id: string;
     author_name: string;
     is_closed?: boolean;
+    prefix_id: string | null;
+    prefix_label: string | null;
+  };
+  board?: {
+    post_type: 'none' | 'prefix' | 'series';
   };
   isAuthor?: boolean;
   isStaff?: boolean;
+};
+
+type PrefixListResponse = {
+  prefixes?: PrefixRow[];
+  error?: string;
 };
 
 type EditResponse = {
@@ -45,7 +76,6 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const [slug, setSlug] = useState('');
   const [subject, setSubject] = useState('');
@@ -53,6 +83,9 @@ export default function Opt() {
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
   const [isClosed, setIsClosed] = useState(false);
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
+  const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -89,6 +122,23 @@ export default function Opt() {
         setContentHtml(result.content.content_html ?? '');
         setContentMarkdown(result.content.content_markdown ?? '');
         setIsClosed(Boolean(result.content.is_closed));
+        setPostType(result.board?.post_type ?? 'none');
+        setSelectedPrefixId(result.content.prefix_id ?? '');
+
+        if ((result.board?.post_type ?? 'none') === 'prefix') {
+          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          });
+
+          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
+
+          if (!prefixResponse.ok) {
+            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
+          }
+
+          setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '글을 불러오지 못했습니다.');
@@ -111,10 +161,19 @@ export default function Opt() {
     setSummary(event.currentTarget.value);
   }
 
+  function handlePrefixChange(event: SelectChangeEvent<string>) {
+    setSelectedPrefixId(event.target.value);
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
     if (isSubmitting) {
+      return;
+    }
+
+    if (postType === 'prefix' && !selectedPrefixId) {
+      setErrorMessage('말머리를 선택해주세요.');
       return;
     }
 
@@ -134,6 +193,7 @@ export default function Opt() {
           contentHtml,
           contentMarkdown,
           isClosed,
+          prefixId: selectedPrefixId || null,
         }),
       });
 
@@ -171,6 +231,21 @@ export default function Opt() {
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
+        {postType === 'prefix' ? (
+          <FormControl fullWidth size="small">
+            <Select value={selectedPrefixId} onChange={handlePrefixChange} displayEmpty>
+              <MenuItem value="" disabled>
+                말머리를 선택해주세요.
+              </MenuItem>
+              {prefixList.map((prefix) => (
+                <MenuItem key={prefix.id} value={prefix.id}>
+                  {prefix.prefix_label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : null}
+
         <Stack spacing={1}>
           <Typography>내용 (필수)</Typography>
           <ToastEditor
@@ -183,13 +258,7 @@ export default function Opt() {
         </Stack>
 
         <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href={`/${siteName}/contents/posts/c/${boardName}/${contentId}`}
-            size="large"
-            underline="none"
-            variant="outlined"
-          >
+          <Button component={Link} href={`/${siteName}/contents/posts/c/${boardName}/${contentId}`} size="large">
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting} size="large">

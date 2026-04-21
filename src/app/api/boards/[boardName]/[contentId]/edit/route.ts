@@ -20,6 +20,7 @@ type RequestBody = {
   thumbnailHeight?: number | null;
   categories?: string[] | null;
   seriesKey?: string | null;
+  prefixId?: string | null;
   isClosed?: boolean | null;
 };
 
@@ -91,13 +92,16 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const requestBody = (await request.json()) as RequestBody;
 
-    const siteName = normalizeText(requestBody.siteName).toLowerCase();
+    const requestUrl = new URL(request.url);
+    const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
+    const prefixId = normalizeText(requestBody.prefixId);
     const isClosed = typeof requestBody.isClosed === 'boolean' ? requestBody.isClosed : null;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
@@ -170,7 +174,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const postQuery = supabaseAdmin
       .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed, series_id')
+      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id')
       .eq('board_id', board.data.id);
 
     const currentPost = isNumericSlug(normalizedContentId)
@@ -269,6 +273,36 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    let resolvedPrefixId: string | null | undefined = undefined;
+
+    if (requestBody.prefixId !== undefined) {
+      if (prefixId && board.data.post_type !== 'prefix') {
+        return Response.json({ error: '말머리형 게시판에서만 말머리를 선택할 수 있습니다.' }, { status: 400 });
+      }
+
+      if (!prefixId && board.data.post_type === 'prefix') {
+        return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
+      }
+
+      if (prefixId) {
+        const prefixResult = await supabaseAdmin
+          .from('board_prefixes')
+          .select('id')
+          .eq('site_id', rhizome.data.id)
+          .eq('board_id', board.data.id)
+          .eq('id', prefixId)
+          .maybeSingle();
+
+        if (prefixResult.error || !prefixResult.data) {
+          return Response.json({ error: '말머리를 찾을 수 없습니다.' }, { status: 404 });
+        }
+
+        resolvedPrefixId = prefixResult.data.id;
+      } else {
+        resolvedPrefixId = null;
+      }
+    }
+
     const updatePayload: {
       subject?: string;
       summary?: string | null;
@@ -279,6 +313,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       thumbnail_height?: number | null;
       categories?: string[];
       series_id?: string | null;
+      prefix_id?: string | null;
       is_closed?: boolean;
     } = {};
 
@@ -312,7 +347,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       updatePayload.series_id = seriesId;
     }
 
+    if (resolvedPrefixId !== undefined) {
+      updatePayload.prefix_id = resolvedPrefixId;
+    }
+
     if (isClosed !== null) {
+      if (!isStaff && !isAuthor) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+
       updatePayload.is_closed = isClosed;
     }
 
