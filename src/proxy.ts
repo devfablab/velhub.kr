@@ -40,6 +40,16 @@ function isCategoryManagePath(pathname: string) {
   return segments.length >= 4 && segments[1] === 'contents' && segments[2] === 'posts' && segments[3] === 'category';
 }
 
+function isJoinPath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length === 2 && segments[1] === 'join';
+}
+
 function getSiteNameFromPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
@@ -262,6 +272,42 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!contents.response.ok) {
+      return redirectWithPath(request, `/${siteName}`);
+    }
+
+    return response;
+  }
+
+  if (isJoinPath(pathname)) {
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
+    if (!siteName) {
+      return redirectWithPath(request, '/');
+    }
+
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const rhizomeState = await fetchRhizomeState(request, siteName);
+
+    if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
+      return redirectWithPath(request, '/');
+    }
+
+    if (rhizomeState.result.rhizomes.site_type !== 'community') {
+      return redirectWithPath(request, `/${siteName}`);
+    }
+
+    const member = await fetchSessionRoute(request, '/api/session/member', {
+      siteName,
+    });
+
+    if (member.response.status === 401) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    if (member.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
 
