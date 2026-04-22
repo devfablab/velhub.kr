@@ -13,7 +13,6 @@ import {
   ListItemText,
   MenuItem,
   OutlinedInput,
-  Paper,
   Select,
   Stack,
   styled,
@@ -87,14 +86,6 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
-
-function isSupabaseOgImageValue(value: string) {
-  return value.startsWith('supabase:');
-}
-
-function getSupabaseOgImagePath(value: string) {
-  return value.replace('supabase:', '').trim();
-}
 
 export default function Opt() {
   const router = useRouter();
@@ -255,13 +246,14 @@ export default function Opt() {
         image.src = imageUrl;
       });
 
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
       const response = await fetch('/api/attachment/add/og-image', {
         method: 'POST',
         credentials: 'include',
-        body: formData,
+        body: (() => {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          return formData;
+        })(),
       });
 
       const result = await response.json();
@@ -270,8 +262,8 @@ export default function Opt() {
         throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
       }
 
-      setThumbnailImage(result.ogImage ?? '');
-      setThumbnailImageUrl(result.url ?? '');
+      setThumbnailImage(typeof result.ogImage === 'string' ? result.ogImage : '');
+      setThumbnailImageUrl(typeof result.url === 'string' ? result.url : '');
       setThumbnailWidth(imageSize.width);
       setThumbnailHeight(imageSize.height);
     } catch (unknownError) {
@@ -325,7 +317,7 @@ export default function Opt() {
       const createResult = (await createResponse.json()) as CreateResponse;
 
       if (!createResponse.ok) {
-        if (thumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
+        if (thumbnailImage) {
           await fetch('/api/attachment/delete/og-image', {
             method: 'POST',
             headers: {
@@ -333,7 +325,7 @@ export default function Opt() {
             },
             credentials: 'include',
             body: JSON.stringify({
-              path: getSupabaseOgImagePath(thumbnailImage),
+              path: thumbnailImage,
             }),
           });
         }
