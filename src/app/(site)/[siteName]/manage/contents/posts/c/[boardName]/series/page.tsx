@@ -33,7 +33,7 @@ export default async function Page(context: RouteContext) {
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs pageTitle="시리즈 관리" />
+          <StaffTabs pageTitle="연재 관리" />
 
           <SiteContentsBreadcrumb />
 

@@ -70,7 +70,7 @@ async function getUniqueSeriesLabel({
       .maybeSingle();
 
     if (duplicatedSeries.error) {
-      throw new Error('시리즈명을 확인하지 못했습니다.');
+      throw new Error('연재명을 확인하지 못했습니다.');
     }
 
     if (!duplicatedSeries.data) {
@@ -111,14 +111,14 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (!seriesKey) {
-      return Response.json({ error: '시리즈 식별자를 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '연재 식별자를 입력해주세요.' }, { status: 400 });
     }
 
     if (!isValidSeriesKey(seriesKey)) {
       return Response.json(
         {
           error:
-            '시리즈 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
+            '연재 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
         },
         { status: 400 },
       );
@@ -152,7 +152,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     const currentSeries = await supabaseAdmin
@@ -166,7 +166,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (currentSeries.error || !currentSeries.data) {
-      return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const duplicatedSeriesKey = await supabaseAdmin
@@ -179,11 +179,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (duplicatedSeriesKey.error) {
-      return Response.json({ error: '시리즈 식별자를 확인하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 식별자를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     if (duplicatedSeriesKey.data) {
-      return Response.json({ error: '이미 존재하는 시리즈 식별자입니다.' }, { status: 409 });
+      return Response.json({ error: '이미 존재하는 연재 식별자입니다.' }, { status: 409 });
     }
 
     const nextSeriesLabel = await getUniqueSeriesLabel({
@@ -195,7 +195,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     });
 
     if (currentSeries.data.is_completed === true && requestBody.isCompleted === false) {
-      return Response.json({ error: '완결된 시리즈는 다시 연재중으로 변경할 수 없습니다.' }, { status: 400 });
+      return Response.json({ error: '완결된 연재는 다시 연재중으로 변경할 수 없습니다.' }, { status: 400 });
     }
 
     const updateSeries = await supabaseAdmin
@@ -215,7 +215,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (updateSeries.error || !updateSeries.data) {
-      return Response.json({ error: '시리즈 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 수정에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -224,9 +224,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '시리즈 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '연재 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '시리즈 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 수정에 실패했습니다.' }, { status: 500 });
   }
 }

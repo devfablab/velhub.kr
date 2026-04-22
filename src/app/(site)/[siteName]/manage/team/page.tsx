@@ -9,5 +9,5 @@ type PageProps = {
 export default async function Page({ params }: PageProps) {
   const { siteName } = await params;
 
-  redirect(`/${siteName}/team/members`);
+  redirect(`/${siteName}/manage/team/members`);
 }

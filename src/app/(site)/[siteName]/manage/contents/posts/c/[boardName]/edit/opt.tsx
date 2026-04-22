@@ -404,7 +404,13 @@ export default function Opt() {
           <Alert severity="warning" variant="outlined">
             말머리/연재 여부는 설정되면 변경하실 수 없습니다. 유의해 주세요.
           </Alert>
-        ) : null}
+        ) : (
+          <Alert severity="error" variant="filled">
+            {postType === 'prefix' ? '말머리형으로' : '연재형으로'} 설정되어 있습니다.
+            <br />
+            한번 말머리/연재 여부가 설정되면 변경하실 수 없습니다.
+          </Alert>
+        )}
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button component={Link} href={`/${siteName}/manage/contents/posts/c/${boardName}`}>

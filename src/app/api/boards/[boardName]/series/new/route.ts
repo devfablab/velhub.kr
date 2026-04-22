@@ -65,7 +65,7 @@ async function getUniqueSeriesLabel({
       .maybeSingle();
 
     if (duplicatedSeries.error) {
-      throw new Error('시리즈명을 확인하지 못했습니다.');
+      throw new Error('연재명을 확인하지 못했습니다.');
     }
 
     if (!duplicatedSeries.data) {
@@ -100,14 +100,14 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (!seriesKey) {
-      return Response.json({ error: '시리즈 식별자를 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '연재 식별자를 입력해주세요.' }, { status: 400 });
     }
 
     if (!isValidSeriesKey(seriesKey)) {
       return Response.json(
         {
           error:
-            '시리즈 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
+            '연재 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
         },
         { status: 400 },
       );
@@ -141,7 +141,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     const duplicatedSeriesKey = await supabaseAdmin
@@ -153,11 +153,11 @@ export async function POST(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (duplicatedSeriesKey.error) {
-      return Response.json({ error: '시리즈 식별자를 확인하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 식별자를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     if (duplicatedSeriesKey.data) {
-      return Response.json({ error: '이미 존재하는 시리즈 식별자입니다.' }, { status: 409 });
+      return Response.json({ error: '이미 존재하는 연재 식별자입니다.' }, { status: 409 });
     }
 
     const nextSeriesLabel = await getUniqueSeriesLabel({
@@ -188,7 +188,7 @@ export async function POST(request: Request, context: RouteContext) {
     console.log('insertSeries: ', insertSeries);
 
     if (insertSeries.error || !insertSeries.data) {
-      return Response.json({ error: '시리즈 추가에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 추가에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -197,9 +197,9 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '시리즈 추가에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '연재 추가에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '시리즈 추가에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 추가에 실패했습니다.' }, { status: 500 });
   }
 }

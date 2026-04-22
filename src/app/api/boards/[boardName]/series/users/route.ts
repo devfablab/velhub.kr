@@ -67,7 +67,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     const membersResult = await supabaseAdmin

@@ -465,7 +465,7 @@ export default function Opt() {
               <TableCell>가입일</TableCell>
               <TableCell>역할</TableCell>
               <TableCell sx={{ whiteSpace: 'nowrap' }}>차단 여부</TableCell>
-              <TableCell colSpan={2}>관리</TableCell>
+              <TableCell />
             </TableRow>
           </TableHead>
           <TableBody>

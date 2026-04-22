@@ -121,7 +121,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (seriesKey && !isValidSeriesKey(seriesKey)) {
-      return Response.json({ error: '시리즈 식별자가 유효하지 않습니다.' }, { status: 400 });
+      return Response.json({ error: '연재 식별자가 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -188,7 +188,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (seriesKey) {
       if (board.data.post_type !== 'series') {
-        return Response.json({ error: '연재형 게시판에서만 시리즈를 선택할 수 있습니다.' }, { status: 400 });
+        return Response.json({ error: '연재형 게시판에서만 연재를 선택할 수 있습니다.' }, { status: 400 });
       }
 
       const seriesResult = await supabaseAdmin
@@ -200,22 +200,22 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (seriesResult.error || !seriesResult.data) {
-        return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+        return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
       }
 
       if (seriesResult.data.is_completed) {
-        return Response.json({ error: '완결된 시리즈는 선택할 수 없습니다.' }, { status: 400 });
+        return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
       }
 
       if (seriesResult.data.user_id && seriesResult.data.user_id !== session.particleId) {
-        return Response.json({ error: '해당 시리즈를 선택할 권한이 없습니다.' }, { status: 403 });
+        return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
       }
 
       seriesId = seriesResult.data.id;
     }
 
     if (!seriesKey && board.data.post_type === 'series') {
-      return Response.json({ error: '연재형 게시판은 시리즈를 선택해야 합니다.' }, { status: 400 });
+      return Response.json({ error: '연재형 게시판은 연재를 선택해야 합니다.' }, { status: 400 });
     }
 
     let resolvedPrefixId: string | null = null;

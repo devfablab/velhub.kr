@@ -31,6 +31,20 @@ type PrefixRow = {
   site_id: string;
 };
 
+type SeriesRow = {
+  id: string;
+  created_at: string;
+  series_key: string;
+  series_label: string;
+  summary: string | null;
+  thumbnail_image: string | null;
+  board_id: string;
+  site_id: string;
+  last_published_at: string | null;
+  is_completed: boolean;
+  user_id: string | null;
+};
+
 type ContentResponse = {
   content: {
     id: string;
@@ -53,6 +67,7 @@ type ContentResponse = {
   board?: {
     post_type: 'none' | 'prefix' | 'series';
   };
+  series?: SeriesRow | null;
   isAuthor?: boolean;
   isStaff?: boolean;
 };
@@ -84,6 +99,7 @@ export default function Opt() {
   const [contentMarkdown, setContentMarkdown] = useState('');
   const [isClosed, setIsClosed] = useState(false);
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [series, setSeries] = useState<SeriesRow | null>(null);
   const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -124,6 +140,7 @@ export default function Opt() {
         setIsClosed(Boolean(result.content.is_closed));
         setPostType(result.board?.post_type ?? 'none');
         setSelectedPrefixId(result.content.prefix_id ?? '');
+        setSeries(result.series || null);
 
         if ((result.board?.post_type ?? 'none') === 'prefix') {
           const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
@@ -228,6 +245,16 @@ export default function Opt() {
       )}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+        {series && (
+          <>
+            <Typography variant="h6" component="h2">
+              {series.series_label}
+            </Typography>
+            <Alert variant="outlined" severity="warning">
+              연재명은 변경하실 수 없습니다.
+            </Alert>
+          </>
+        )}
         <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 

@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     });
 
     if (uploadResult.error) {
-      return Response.json({ error: '시리즈 이미지 업로드에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 이미지 업로드에 실패했습니다.' }, { status: 500 });
     }
 
     const publicUrlResult = supabaseAdmin.storage.from('series').getPublicUrl(filePath);
@@ -43,6 +43,6 @@ export async function POST(request: Request) {
       url: publicUrlResult.data.publicUrl ?? '',
     });
   } catch {
-    return Response.json({ error: '시리즈 이미지 업로드에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 이미지 업로드에 실패했습니다.' }, { status: 500 });
   }
 }

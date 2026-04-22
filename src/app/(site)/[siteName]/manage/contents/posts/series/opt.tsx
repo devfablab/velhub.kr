@@ -272,20 +272,20 @@ export default function Opt() {
         const result = (await response.json()) as SeriesListResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '시리즈 목록을 불러오지 못했습니다.');
+          throw new Error(result.error ?? '연재 목록을 불러오지 못했습니다.');
         }
 
         if (!result.board) {
-          throw new Error('시리즈 목록을 불러오지 못했습니다.');
+          throw new Error('연재 목록을 불러오지 못했습니다.');
         }
 
         setBoard(result.board);
         setSeriesList(Array.isArray(result.series) ? result.series : []);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '시리즈 목록을 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '연재 목록을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('시리즈 목록을 불러오지 못했습니다.');
+          setErrorMessage('연재 목록을 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
@@ -339,11 +339,11 @@ export default function Opt() {
       const result = (await response.json()) as SeriesDetailResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈 정보를 불러오지 못했습니다.');
+        throw new Error(result.error ?? '연재 정보를 불러오지 못했습니다.');
       }
 
       if (!result.series) {
-        throw new Error('시리즈 정보를 불러오지 못했습니다.');
+        throw new Error('연재 정보를 불러오지 못했습니다.');
       }
 
       const nextThumbnailImage = result.series.thumbnail_image || '';
@@ -367,9 +367,9 @@ export default function Opt() {
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '시리즈 정보를 불러오지 못했습니다.');
+        setErrorMessage(unknownError.message || '연재 정보를 불러오지 못했습니다.');
       } else {
-        setErrorMessage('시리즈 정보를 불러오지 못했습니다.');
+        setErrorMessage('연재 정보를 불러오지 못했습니다.');
       }
     }
   }
@@ -532,11 +532,11 @@ export default function Opt() {
       const result = (await response.json()) as SeriesImageUploadResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈 이미지 업로드에 실패했습니다.');
+        throw new Error(result.error ?? '연재 이미지 업로드에 실패했습니다.');
       }
 
       if (!result.thumbnailImage) {
-        throw new Error('시리즈 이미지 업로드에 실패했습니다.');
+        throw new Error('연재 이미지 업로드에 실패했습니다.');
       }
 
       setThumbnailImage(result.thumbnailImage);
@@ -547,9 +547,9 @@ export default function Opt() {
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈 이미지 업로드에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재 이미지 업로드에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈 이미지 업로드에 실패했습니다.');
+        setDialogErrorMessage('연재 이미지 업로드에 실패했습니다.');
       }
     } finally {
       setIsUploadingImage(false);
@@ -580,7 +580,7 @@ export default function Opt() {
       const result = (await response.json()) as { ok?: boolean; error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈 이미지 삭제에 실패했습니다.');
+        throw new Error(result.error ?? '연재 이미지 삭제에 실패했습니다.');
       }
 
       setThumbnailImage('');
@@ -591,9 +591,9 @@ export default function Opt() {
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈 이미지 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재 이미지 삭제에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈 이미지 삭제에 실패했습니다.');
+        setDialogErrorMessage('연재 이미지 삭제에 실패했습니다.');
       }
     } finally {
       setIsDeletingImage(false);
@@ -608,14 +608,14 @@ export default function Opt() {
     const nextSeriesKey = normalizeText(seriesKey).toLowerCase();
 
     if (!nextSeriesKey) {
-      setDialogErrorMessage('시리즈 식별자를 입력해주세요.');
+      setDialogErrorMessage('연재 식별자를 입력해주세요.');
       setDialogHelperMessage('');
       return;
     }
 
     if (!isValidSeriesKey(nextSeriesKey)) {
       setDialogErrorMessage(
-        '시리즈 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
+        '연재 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
       );
       setDialogHelperMessage('');
       setIsKeyChecked(false);
@@ -645,11 +645,11 @@ export default function Opt() {
       const result = (await response.json()) as SeriesCheckResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈 식별자 중복 확인에 실패했습니다.');
+        throw new Error(result.error ?? '연재 식별자 중복 확인에 실패했습니다.');
       }
 
       if (!result.available) {
-        setDialogErrorMessage('이미 존재하는 시리즈 식별자입니다.');
+        setDialogErrorMessage('이미 존재하는 연재 식별자입니다.');
         setDialogHelperMessage('');
         setIsKeyChecked(false);
         setCheckedSeriesKey('');
@@ -657,14 +657,14 @@ export default function Opt() {
       }
 
       setDialogErrorMessage('');
-      setDialogHelperMessage('사용 가능한 시리즈 식별자입니다.');
+      setDialogHelperMessage('사용 가능한 연재 식별자입니다.');
       setIsKeyChecked(true);
       setCheckedSeriesKey(nextSeriesKey);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈 식별자 중복 확인에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재 식별자 중복 확인에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈 식별자 중복 확인에 실패했습니다.');
+        setDialogErrorMessage('연재 식별자 중복 확인에 실패했습니다.');
       }
       setDialogHelperMessage('');
       setIsKeyChecked(false);
@@ -685,7 +685,7 @@ export default function Opt() {
       setIsLabelChecked(true);
       setCheckedSeriesLabel('');
       setDialogErrorMessage('');
-      setDialogHelperMessage('시리즈명을 입력하지 않으면 식별자 기준으로 자동 등록됩니다.');
+      setDialogHelperMessage('연재명을 입력하지 않으면 식별자 기준으로 자동 등록됩니다.');
       return;
     }
 
@@ -711,11 +711,11 @@ export default function Opt() {
       const result = (await response.json()) as SeriesCheckResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈명 중복 확인에 실패했습니다.');
+        throw new Error(result.error ?? '연재명 중복 확인에 실패했습니다.');
       }
 
       if (!result.available) {
-        setDialogErrorMessage('이미 존재하는 시리즈명입니다.');
+        setDialogErrorMessage('이미 존재하는 연재명입니다.');
         setDialogHelperMessage('');
         setIsLabelChecked(false);
         setCheckedSeriesLabel('');
@@ -723,14 +723,14 @@ export default function Opt() {
       }
 
       setDialogErrorMessage('');
-      setDialogHelperMessage('사용 가능한 시리즈명입니다.');
+      setDialogHelperMessage('사용 가능한 연재명입니다.');
       setIsLabelChecked(true);
       setCheckedSeriesLabel(nextSeriesLabel);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈명 중복 확인에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재명 중복 확인에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈명 중복 확인에 실패했습니다.');
+        setDialogErrorMessage('연재명 중복 확인에 실패했습니다.');
       }
       setDialogHelperMessage('');
       setIsLabelChecked(false);
@@ -749,20 +749,20 @@ export default function Opt() {
     const nextSeriesLabel = normalizeText(seriesLabel);
 
     if (!nextSeriesKey) {
-      setDialogErrorMessage('시리즈 식별자를 입력해주세요.');
+      setDialogErrorMessage('연재 식별자를 입력해주세요.');
       setDialogHelperMessage('');
       return;
     }
 
     if (!isKeyChecked || checkedSeriesKey !== nextSeriesKey) {
-      setDialogErrorMessage('시리즈 식별자 중복 검사를 해주세요.');
+      setDialogErrorMessage('연재 식별자 중복 검사를 해주세요.');
       setDialogHelperMessage('');
       return;
     }
 
     if (nextSeriesLabel) {
       if (!isLabelChecked || checkedSeriesLabel !== nextSeriesLabel) {
-        setDialogErrorMessage('시리즈명 중복 검사를 해주세요.');
+        setDialogErrorMessage('연재명 중복 검사를 해주세요.');
         setDialogHelperMessage('');
         return;
       }
@@ -796,18 +796,18 @@ export default function Opt() {
         const result = (await response.json()) as SeriesSaveResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '시리즈 추가에 실패했습니다.');
+          throw new Error(result.error ?? '연재 추가에 실패했습니다.');
         }
 
         if (!result.series) {
-          throw new Error('시리즈 추가에 실패했습니다.');
+          throw new Error('연재 추가에 실패했습니다.');
         }
 
         setSeriesList((previousSeries) => [result.series as SeriesRow, ...previousSeries]);
         setDialogMode(null);
         setSelectedSeries(null);
         resetDialogFields();
-        setSnackbarMessage('시리즈가 등록되었습니다.');
+        setSnackbarMessage('연재가 등록되었습니다.');
         return;
       }
 
@@ -824,11 +824,11 @@ export default function Opt() {
         const result = (await response.json()) as SeriesSaveResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '시리즈 수정에 실패했습니다.');
+          throw new Error(result.error ?? '연재 수정에 실패했습니다.');
         }
 
         if (!result.series) {
-          throw new Error('시리즈 수정에 실패했습니다.');
+          throw new Error('연재 수정에 실패했습니다.');
         }
 
         setSeriesList((previousSeries) =>
@@ -837,13 +837,13 @@ export default function Opt() {
         setDialogMode(null);
         setSelectedSeries(null);
         resetDialogFields();
-        setSnackbarMessage('시리즈가 수정되었습니다.');
+        setSnackbarMessage('연재가 수정되었습니다.');
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈 저장에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재 저장에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈 저장에 실패했습니다.');
+        setDialogErrorMessage('연재 저장에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -871,19 +871,19 @@ export default function Opt() {
       const result = (await response.json()) as SeriesDeleteResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '시리즈 삭제에 실패했습니다.');
+        throw new Error(result.error ?? '연재 삭제에 실패했습니다.');
       }
 
       setSeriesList((previousSeries) => previousSeries.filter((series) => series.id !== selectedSeries.id));
       setDialogMode(null);
       setSelectedSeries(null);
       resetDialogFields();
-      setSnackbarMessage('시리즈가 삭제되었습니다.');
+      setSnackbarMessage('연재가 삭제되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setDialogErrorMessage(unknownError.message || '시리즈 삭제에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || '연재 삭제에 실패했습니다.');
       } else {
-        setDialogErrorMessage('시리즈 삭제에 실패했습니다.');
+        setDialogErrorMessage('연재 삭제에 실패했습니다.');
       }
     } finally {
       setIsSubmitting(false);
@@ -898,7 +898,7 @@ export default function Opt() {
     <Stack spacing={2}>
       {isNotMobile ? (
         <Typography variant="h5" component="h1">
-          시리즈 관리
+          연재 관리
         </Typography>
       ) : null}
 
@@ -913,7 +913,7 @@ export default function Opt() {
         )}
         <Stack direction="row" justifyContent="flex-end" alignItems="center">
           <Button type="button" variant="contained" onClick={handleOpenNewDialog}>
-            시리즈 추가
+            연재 추가
           </Button>
         </Stack>
       </Stack>
@@ -926,7 +926,7 @@ export default function Opt() {
 
       {sortedSeries.length === 0 ? (
         <Paper sx={{ p: 3 }}>
-          <Typography>등록된 시리즈가 없습니다.</Typography>
+          <Typography>등록된 연재가 없습니다.</Typography>
         </Paper>
       ) : (
         <TableContainer component={Paper}>
@@ -934,7 +934,7 @@ export default function Opt() {
             <TableHead>
               <TableRow>
                 <TableCell>식별자</TableCell>
-                <TableCell>시리즈명</TableCell>
+                <TableCell>연재명</TableCell>
                 <TableCell>완결</TableCell>
                 <TableCell>마지막 연재</TableCell>
                 <TableCell>생성일</TableCell>
@@ -981,12 +981,12 @@ export default function Opt() {
       )}
 
       <Dialog open={dialogMode === 'new' || dialogMode === 'edit'} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{dialogMode === 'new' ? '시리즈 추가' : '시리즈 수정'}</DialogTitle>
+        <DialogTitle>{dialogMode === 'new' ? '연재 추가' : '연재 수정'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
             <Stack direction="row" spacing={1} alignItems="flex-start">
               <TextField
-                label="시리즈 식별자"
+                label="연재 식별자"
                 value={seriesKey}
                 onChange={handleSeriesKeyChange}
                 fullWidth
@@ -1005,13 +1005,7 @@ export default function Opt() {
             </Stack>
 
             <Stack direction="row" spacing={1} alignItems="flex-start">
-              <TextField
-                label="시리즈명"
-                value={seriesLabel}
-                onChange={handleSeriesLabelChange}
-                fullWidth
-                size="small"
-              />
+              <TextField label="연재명" value={seriesLabel} onChange={handleSeriesLabelChange} fullWidth size="small" />
               <Button
                 type="button"
                 variant="outlined"
@@ -1024,7 +1018,7 @@ export default function Opt() {
             </Stack>
 
             <TextField
-              label="시리즈 설명"
+              label="연재 설명"
               value={summary}
               onChange={handleSummaryChange}
               fullWidth
@@ -1073,7 +1067,7 @@ export default function Opt() {
             </Stack>
 
             <Stack spacing={1}>
-              <Typography variant="subtitle2">시리즈 썸네일 이미지</Typography>
+              <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
 
               <Stack direction="row" spacing={1}>
                 <Button component="label" variant="outlined" disabled={isUploadingImage}>
@@ -1103,7 +1097,7 @@ export default function Opt() {
                 <Box
                   component="img"
                   src={thumbnailImageUrl}
-                  alt="시리즈 썸네일"
+                  alt="연재 썸네일"
                   sx={{ width: '100%', maxWidth: 320, display: 'block', borderRadius: 1 }}
                 />
               ) : null}
@@ -1118,7 +1112,7 @@ export default function Opt() {
 
                 {isCompleted && (
                   <Alert severity="warning" variant="outlined">
-                    완결 처리된 시리즈는 다시 연재중으로 변경할 수 없습니다.
+                    완결 처리된 연재는 다시 연재중으로 변경할 수 없습니다.
                   </Alert>
                 )}
               </>
@@ -1157,10 +1151,10 @@ export default function Opt() {
       </Dialog>
 
       <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-        <DialogTitle>시리즈 삭제</DialogTitle>
+        <DialogTitle>연재 삭제</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography variant="body2">해당 시리즈를 삭제하시겠습니까?</Typography>
+            <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
             {dialogErrorMessage ? (
               <Alert severity="error" variant="filled">

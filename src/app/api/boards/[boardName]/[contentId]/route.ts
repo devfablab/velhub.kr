@@ -225,7 +225,7 @@ export async function GET(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (seriesResult.error) {
-        return Response.json({ error: '시리즈 정보를 불러오지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
       series = seriesResult.data ?? null;

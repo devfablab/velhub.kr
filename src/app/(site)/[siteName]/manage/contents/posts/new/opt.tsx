@@ -164,7 +164,7 @@ export default function Opt() {
           }
 
           if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
           }
 
           setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
@@ -382,12 +382,12 @@ export default function Opt() {
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
         <FormControl fullWidth size="small">
-          <InputLabel id="post-series-select-label">시리즈</InputLabel>
+          <InputLabel id="post-series-select-label">연재</InputLabel>
           <Select
             labelId="post-series-select-label"
             value={selectedSeriesKey}
             onChange={handleSeriesChange}
-            input={<OutlinedInput label="시리즈" />}
+            input={<OutlinedInput label="연재" />}
           >
             <MenuItem value="">
               <ListItemText primary="선택 안함" />

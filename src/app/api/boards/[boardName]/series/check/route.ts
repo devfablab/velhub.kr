@@ -63,7 +63,7 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json(
         {
           error:
-            '시리즈 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
+            '연재 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
         },
         { status: 400 },
       );
@@ -97,7 +97,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     let ignoreSeriesId: string | null = null;
@@ -112,7 +112,7 @@ export async function GET(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (currentSeries.error) {
-        return Response.json({ error: '시리즈 정보를 확인하지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '연재 정보를 확인하지 못했습니다.' }, { status: 500 });
       }
 
       ignoreSeriesId = currentSeries.data?.id ?? null;

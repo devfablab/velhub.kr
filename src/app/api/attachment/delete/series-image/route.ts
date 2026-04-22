@@ -25,13 +25,13 @@ export async function POST(request: Request) {
     const deleteResult = await supabaseAdmin.storage.from('series').remove([path]);
 
     if (deleteResult.error) {
-      return Response.json({ error: '시리즈 이미지 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 이미지 삭제에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
     });
   } catch {
-    return Response.json({ error: '시리즈 이미지 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 이미지 삭제에 실패했습니다.' }, { status: 500 });
   }
 }

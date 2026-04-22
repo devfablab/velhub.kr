@@ -59,7 +59,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     const seriesResult = await supabaseAdmin
@@ -73,7 +73,7 @@ export async function GET(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (seriesResult.error || !seriesResult.data) {
-      return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     let selectedUser: {
@@ -124,9 +124,9 @@ export async function GET(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '시리즈 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '시리즈 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 }

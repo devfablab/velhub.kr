@@ -142,7 +142,7 @@ export default function Opt() {
           const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
 
           if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
           }
 
           setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
@@ -293,7 +293,7 @@ export default function Opt() {
     }
 
     if (postType === 'series' && !selectedSeriesKey) {
-      setErrorMessage('시리즈를 선택해주세요.');
+      setErrorMessage('연재를 선택해주세요.');
       return;
     }
 
@@ -391,23 +391,28 @@ export default function Opt() {
         ) : null}
 
         {postType === 'series' ? (
-          <FormControl fullWidth size="small">
-            <InputLabel id="community-post-series-select-label">시리즈</InputLabel>
-            <Select
-              labelId="community-post-series-select-label"
-              value={selectedSeriesKey}
-              onChange={handleSeriesChange}
-              input={<OutlinedInput label="시리즈" />}
-            >
-              {seriesList
-                .filter((series) => !series.is_completed)
-                .map((series) => (
-                  <MenuItem key={series.id} value={series.series_key}>
-                    <ListItemText primary={series.series_label} />
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
+          <>
+            <FormControl fullWidth size="small">
+              <InputLabel id="community-post-series-select-label">연재</InputLabel>
+              <Select
+                labelId="community-post-series-select-label"
+                value={selectedSeriesKey}
+                onChange={handleSeriesChange}
+                input={<OutlinedInput label="연재" />}
+              >
+                {seriesList
+                  .filter((series) => !series.is_completed)
+                  .map((series) => (
+                    <MenuItem key={series.id} value={series.series_key}>
+                      <ListItemText primary={series.series_label} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <Alert variant="outlined" severity="warning">
+              연재는 한번 설정되면 변경이 되지 않습니다. 주의하세요.
+            </Alert>
+          </>
         ) : null}
 
         <Box>

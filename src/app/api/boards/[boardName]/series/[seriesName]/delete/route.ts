@@ -58,7 +58,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판은 시리즈를 사용할 수 없습니다.' }, { status: 403 });
+      return Response.json({ error: '페이지 게시판은 연재를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     const currentSeries = await supabaseAdmin
@@ -70,7 +70,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (currentSeries.error || !currentSeries.data) {
-      return Response.json({ error: '시리즈를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const linkedPost = await supabaseAdmin
@@ -83,17 +83,17 @@ export async function DELETE(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (linkedPost.error) {
-      return Response.json({ error: '시리즈 삭제 가능 여부를 확인하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 삭제 가능 여부를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     if (linkedPost.data) {
-      return Response.json({ error: '이미 연재가 시작된 시리즈는 삭제할 수 없습니다.' }, { status: 400 });
+      return Response.json({ error: '이미 연재가 시작된 연재는 삭제할 수 없습니다.' }, { status: 400 });
     }
 
     const deleteSeries = await supabaseAdmin.from('board_series').delete().eq('id', currentSeries.data.id);
 
     if (deleteSeries.error) {
-      return Response.json({ error: '시리즈 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '연재 삭제에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -101,9 +101,9 @@ export async function DELETE(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '시리즈 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '연재 삭제에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '시리즈 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '연재 삭제에 실패했습니다.' }, { status: 500 });
   }
 }

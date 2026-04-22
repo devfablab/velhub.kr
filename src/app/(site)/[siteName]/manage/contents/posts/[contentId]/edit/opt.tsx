@@ -208,7 +208,7 @@ export default function Opt() {
         }
 
         if (!seriesResponse.ok) {
-          throw new Error(seriesResult.error ?? '시리즈 목록을 불러오지 못했습니다.');
+          throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
         }
 
         setSubject(contentResult.content.subject);
@@ -379,7 +379,7 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
-      const editResponse = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
+      const editResponse = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -452,12 +452,12 @@ export default function Opt() {
         <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
         <FormControl fullWidth size="small">
-          <InputLabel id="post-series-select-label">시리즈</InputLabel>
+          <InputLabel id="post-series-select-label">연재</InputLabel>
           <Select
             labelId="post-series-select-label"
             value={selectedSeriesKey}
             onChange={handleSeriesChange}
-            input={<OutlinedInput label="시리즈" />}
+            input={<OutlinedInput label="연재" />}
             disabled={isSeriesLocked}
           >
             <MenuItem value="">
@@ -475,7 +475,7 @@ export default function Opt() {
 
         {isSeriesLocked ? (
           <Alert severity="info" variant="outlined">
-            시리즈가 설정된 글은 시리즈를 변경할 수 없습니다.
+            연재가 설정된 글은 연재를 변경할 수 없습니다.
           </Alert>
         ) : null}
 

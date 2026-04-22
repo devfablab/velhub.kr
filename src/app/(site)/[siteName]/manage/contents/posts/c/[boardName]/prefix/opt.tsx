@@ -336,7 +336,7 @@ export default function Opt() {
                   <TableCell>번호</TableCell>
                   <TableCell>말머리명</TableCell>
                   <TableCell>생성일</TableCell>
-                  <TableCell align="right">관리</TableCell>
+                  <TableCell />
                 </TableRow>
               </TableHead>
               <TableBody>

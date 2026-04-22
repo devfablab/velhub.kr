@@ -92,6 +92,11 @@ type CategoryListResponse = {
   error?: string;
 };
 
+type SeriesListResponse = {
+  series?: SeriesRow[];
+  error?: string;
+};
+
 type ActionResponse = {
   ok?: boolean;
   error?: string;
@@ -110,16 +115,21 @@ export default function Opt() {
   const [post, setPost] = useState<PostResponse['content'] | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [series, setSeries] = useState<SeriesRow | null>(null);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [isSeriesLocked, setIsSeriesLocked] = useState(false);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
+  const [isSeriesSubmitting, setIsSeriesSubmitting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isSeriesDialogOpen, setIsSeriesDialogOpen] = useState(false);
   const [closedMessage, setClosedMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
@@ -155,7 +165,7 @@ export default function Opt() {
 
         setBoardName(statusResult.boardName);
 
-        const [contentResponse, categoryResponse] = await Promise.all([
+        const [contentResponse, categoryResponse, seriesResponse] = await Promise.all([
           fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
@@ -164,10 +174,15 @@ export default function Opt() {
             method: 'GET',
             credentials: 'include',
           }),
+          fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
+            method: 'GET',
+            credentials: 'include',
+          }),
         ]);
 
         const contentResult = (await contentResponse.json()) as PostResponse;
         const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
+        const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
 
         if (!contentResponse.ok) {
           throw new Error(contentResult.error ?? '블로그 글을 불러오지 못했습니다.');
@@ -181,8 +196,15 @@ export default function Opt() {
           throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
         }
 
+        if (!seriesResponse.ok) {
+          throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
+        }
+
         setPost(contentResult.content);
         setSeries(contentResult.series || null);
+        setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
+        setSelectedSeriesKey(contentResult.series?.series_key || '');
+        setIsSeriesLocked(Boolean(contentResult.series?.series_key));
         setIsAuthor(Boolean(contentResult.isAuthor));
         setIsStaff(Boolean(contentResult.isStaff));
         setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
@@ -257,9 +279,31 @@ export default function Opt() {
     setIsCategoryDialogOpen(false);
   }
 
+  function handleOpenSeriesDialog() {
+    setDialogErrorMessage('');
+    setIsSeriesDialogOpen(true);
+  }
+
+  function handleCloseSeriesDialog() {
+    if (isSeriesSubmitting) {
+      return;
+    }
+
+    setDialogErrorMessage('');
+    setIsSeriesDialogOpen(false);
+  }
+
   function handleCategoryChange(event: SelectChangeEvent<string[]>) {
     const value = event.target.value;
     setSelectedCategories(typeof value === 'string' ? value.split(',') : value);
+  }
+
+  function handleSeriesChange(event: SelectChangeEvent<string>) {
+    if (isSeriesLocked) {
+      return;
+    }
+
+    setSelectedSeriesKey(event.target.value);
   }
 
   function handleClosedMessageChange(event: InputChangeEvent) {
@@ -368,7 +412,7 @@ export default function Opt() {
       setDialogErrorMessage('');
       setIsCategorySubmitting(true);
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -406,126 +450,181 @@ export default function Opt() {
     }
   }
 
+  async function handleSaveSeries() {
+    if (!boardName || !post) {
+      return;
+    }
+
+    try {
+      setDialogErrorMessage('');
+      setIsSeriesSubmitting(true);
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit?siteName=${siteName}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          subject: post.subject,
+          summary: post.summary,
+          contentHtml: post.content_html,
+          contentMarkdown: post.content_markdown,
+          thumbnailImage: post.thumbnail_image,
+          thumbnailWidth: post.thumbnail_width,
+          thumbnailHeight: post.thumbnail_height,
+          categories: selectedCategories,
+          seriesKey: selectedSeriesKey || null,
+        }),
+      });
+
+      const result = (await response.json()) as ActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '연재 설정 저장에 실패했습니다.');
+      }
+
+      const nextSeries = seriesList.find((seriesItem) => seriesItem.series_key === selectedSeriesKey) ?? null;
+
+      setSeries(nextSeries);
+      setIsSeriesLocked(Boolean(nextSeries?.series_key));
+      setIsSeriesDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDialogErrorMessage(unknownError.message || '연재 설정 저장에 실패했습니다.');
+      } else {
+        setDialogErrorMessage('연재 설정 저장에 실패했습니다.');
+      }
+    } finally {
+      setIsSeriesSubmitting(false);
+    }
+  }
+
   if (isLoading) {
     return null;
   }
 
   return (
-    <>
-      <Stack spacing={3}>
-        {isNotMobile ? (
-          <Typography variant="h5" component="h1">
-            블로그 글 보기
-          </Typography>
-        ) : null}
+    <Stack spacing={3}>
+      {isNotMobile ? (
+        <Typography variant="h5" component="h1">
+          블로그 글 보기
+        </Typography>
+      ) : null}
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
+      {errorMessage ? (
+        <Alert severity="error" variant="filled">
+          {errorMessage}
+        </Alert>
+      ) : null}
 
-        {post ? (
-          <Paper sx={{ p: 3 }}>
-            <Stack spacing={2.5}>
+      {post ? (
+        <Paper sx={{ p: 3 }}>
+          <Stack spacing={2.5}>
+            <Box>
+              <Typography variant="subtitle2">제목</Typography>
+              <Typography variant="body2">{post.subject}</Typography>
+            </Box>
+
+            {post.summary ? (
               <Box>
-                <Typography variant="subtitle2">제목</Typography>
-                <Typography variant="body2">{post.subject}</Typography>
+                <Typography variant="subtitle2">부제목</Typography>
+                <Typography variant="body2">{post.summary}</Typography>
               </Box>
+            ) : null}
 
-              {post.summary ? (
-                <Box>
-                  <Typography variant="subtitle2">부제목</Typography>
-                  <Typography variant="body2">{post.summary}</Typography>
-                </Box>
-              ) : null}
+            <Box>
+              <Typography variant="subtitle2">작성일</Typography>
+              <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+            </Box>
 
+            <Box>
+              <Typography variant="subtitle2">수정일</Typography>
+              <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle2">작성자</Typography>
+              <Typography variant="body2">{post.author_name}</Typography>
+            </Box>
+
+            {series ? (
               <Box>
-                <Typography variant="subtitle2">작성일</Typography>
-                <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+                <Typography variant="subtitle2">연재</Typography>
+                <Typography variant="body2">{series.series_label}</Typography>
               </Box>
+            ) : null}
 
+            {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
               <Box>
-                <Typography variant="subtitle2">수정일</Typography>
-                <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+                <Typography variant="subtitle2">카테고리</Typography>
+                <Typography variant="body2">
+                  {categories
+                    .filter((category) => selectedCategories.includes(category.category_key))
+                    .map((category) => category.category_label)
+                    .join(', ')}
+                </Typography>
               </Box>
+            ) : null}
 
-              <Box>
-                <Typography variant="subtitle2">작성자</Typography>
-                <Typography variant="body2">{post.author_name}</Typography>
-              </Box>
-
-              {series ? (
-                <Box>
-                  <Typography variant="subtitle2">시리즈</Typography>
-                  <Typography variant="body2">{series.series_label}</Typography>
-                </Box>
-              ) : null}
-
-              {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
-                <Box>
-                  <Typography variant="subtitle2">카테고리</Typography>
-                  <Typography variant="body2">
-                    {categories
-                      .filter((category) => selectedCategories.includes(category.category_key))
-                      .map((category) => category.category_label)
-                      .join(', ')}
-                  </Typography>
-                </Box>
-              ) : null}
-
-              {post.thumbnail_image ? (
-                <Box>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    오픈그래프 이미지
-                  </Typography>
-                  <Box
-                    component="img"
-                    src={getOgImageUrl(post.thumbnail_image)}
-                    alt="오픈그래프 이미지"
-                    sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-                  />
-                </Box>
-              ) : null}
-
+            {post.thumbnail_image ? (
               <Box>
                 <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  내용
+                  오픈그래프 이미지
                 </Typography>
-                <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+                <Box
+                  component="img"
+                  src={getOgImageUrl(post.thumbnail_image)}
+                  alt="오픈그래프 이미지"
+                  sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                />
               </Box>
+            ) : null}
 
-              <Stack direction="row" spacing={1.5}>
-                <Button type="button" variant="outlined" onClick={handleMoveToList}>
-                  목록
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                내용
+              </Typography>
+              <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+            </Box>
+
+            <Stack direction="row" spacing={1.5}>
+              <Button type="button" variant="outlined" onClick={handleMoveToList}>
+                목록
+              </Button>
+
+              {!post.is_closed && isAuthor ? (
+                <Button type="button" variant="contained" onClick={handleMoveToEdit}>
+                  수정
                 </Button>
+              ) : null}
 
-                {!post.is_closed && isAuthor ? (
-                  <Button type="button" variant="contained" onClick={handleMoveToEdit}>
-                    수정
-                  </Button>
-                ) : null}
+              {isAuthor || isStaff ? (
+                <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
+                  카테고리 설정
+                </Button>
+              ) : null}
 
-                {isAuthor || isStaff ? (
-                  <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
-                    카테고리 설정
-                  </Button>
-                ) : null}
+              {isAuthor || isStaff ? (
+                <Button type="button" variant="outlined" onClick={handleOpenSeriesDialog}>
+                  연재 설정
+                </Button>
+              ) : null}
 
-                {post.is_closed ? (
-                  <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
-                    복구
-                  </Button>
-                ) : (
-                  <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
-                    삭제
-                  </Button>
-                )}
-              </Stack>
+              {post.is_closed ? (
+                <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
+                  복구
+                </Button>
+              ) : (
+                <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
+                  삭제
+                </Button>
+              )}
             </Stack>
-          </Paper>
-        ) : null}
-      </Stack>
+          </Stack>
+        </Paper>
+      ) : null}
 
       <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
         <DialogTitle>게시물 삭제</DialogTitle>
@@ -636,6 +735,56 @@ export default function Opt() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+
+      <Dialog open={isSeriesDialogOpen} onClose={handleCloseSeriesDialog} fullWidth maxWidth="sm">
+        <DialogTitle>연재 설정</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="detail-post-series-select-label">연재</InputLabel>
+              <Select
+                labelId="detail-post-series-select-label"
+                value={selectedSeriesKey}
+                onChange={handleSeriesChange}
+                input={<OutlinedInput label="연재" />}
+                disabled={isSeriesLocked}
+              >
+                <MenuItem value="">
+                  <ListItemText primary="선택 안함" />
+                </MenuItem>
+
+                {seriesList
+                  .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
+                  .map((seriesItem) => (
+                    <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                      <ListItemText primary={seriesItem.series_label} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+
+            {isSeriesLocked ? (
+              <Alert severity="info" variant="outlined">
+                연재가 설정된 글은 연재를 변경할 수 없습니다.
+              </Alert>
+            ) : null}
+
+            {dialogErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {dialogErrorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleCloseSeriesDialog} disabled={isSeriesSubmitting}>
+            취소
+          </Button>
+          <Button type="button" variant="contained" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
+            저장
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Stack>
   );
 }

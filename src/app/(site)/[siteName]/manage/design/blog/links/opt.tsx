@@ -117,7 +117,7 @@ function SortableItem({
             onChange={(event) => onServiceChange(item.localId, event.target.value as ServiceValue | '')}
             displayEmpty
             size="small"
-            sx={{ minWidth: 80, flexShrink: 0 }}
+            sx={{ height: 40 }}
             renderValue={(selectedValue) => {
               if (!selectedValue) {
                 return <Box sx={{ width: 24, height: 24 }} />;
@@ -139,9 +139,7 @@ function SortableItem({
 
               return (
                 <MenuItem key={option.value} value={option.value}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <ServiceIcon aria-label={option.label} />
-                  </Box>
+                  <ServiceIcon aria-label={option.label} />
                 </MenuItem>
               );
             })}
@@ -388,7 +386,9 @@ export default function Opt() {
           링크 추가
         </Button>
       </Box>
-      <Alert severity="warning">순서를 변경하시면 반드시 하단 저장을 눌러주세요.</Alert>
+      <Alert severity="warning" variant="outlined">
+        순서를 변경하시면 반드시 하단 저장을 눌러주세요.
+      </Alert>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button type="button" variant="contained" onClick={handleSave} disabled={isSaving}>
           저장
