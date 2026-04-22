@@ -11,7 +11,7 @@ type HCaptchaProps = {
 export default function HCaptchaBox({ onTokenChange, resetKey }: HCaptchaProps) {
   const captchaReference = useRef<HCaptcha>(null);
 
-  const hCaptchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
+  const hCaptchaSiteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY!;
 
   useEffect(() => {
     if (!captchaReference.current) {
@@ -21,10 +21,6 @@ export default function HCaptchaBox({ onTokenChange, resetKey }: HCaptchaProps) 
     captchaReference.current.resetCaptcha();
     onTokenChange('');
   }, [resetKey, onTokenChange]);
-
-  if (!hCaptchaSiteKey) {
-    return <p>hCaptcha 설정값이 없습니다.</p>;
-  }
 
   return (
     <HCaptcha

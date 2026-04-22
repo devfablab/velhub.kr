@@ -458,7 +458,7 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={3}>
           <Stack spacing={1.5}>

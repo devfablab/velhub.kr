@@ -306,70 +306,67 @@ export default function EmailSignIn() {
   }
 
   return (
-    <>
-      <Paper elevation={0} sx={{ p: 3 }}>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={2.5}>
-            <TextField
-              label="이메일"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={handleEmailChange}
-              fullWidth
-            />
+    <Paper elevation={0} sx={{ p: 3 }}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={2.5}>
+          <TextField
+            label="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            fullWidth
+          />
 
-            <TextField
-              label="비밀번호"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={handlePasswordChange}
-              fullWidth
-            />
+          <TextField
+            label="비밀번호"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={handlePasswordChange}
+            fullWidth
+          />
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-              <Anchor
-                href={
-                  inviteToken ? `/auth/sign-up?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-up'
-                }
-              >
-                회원가입
-              </Anchor>
-              <Anchor href="/auth/find-password">비밀번호 찾기</Anchor>
-            </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+            <Anchor
+              href={
+                inviteToken ? `/auth/sign-up?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-up'
+              }
+            >
+              회원가입
+            </Anchor>
+            <Anchor href="/auth/find-password">비밀번호 찾기</Anchor>
+          </Box>
 
-            {isCaptchaRequired ? (
-              <Stack spacing={1}>
-                <Typography variant="body2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
-                <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
-              </Stack>
-            ) : null}
+          {isCaptchaRequired ? (
+            <Stack spacing={1}>
+              <Typography variant="body2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
+              <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
+            </Stack>
+          ) : null}
 
-            <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-                로그인
-              </Button>
+          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
+            <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+              로그인
+            </Button>
 
-              <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
-                라운지로 이동
-              </Link>
-            </Box>
+            <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
+              라운지로 이동
+            </Link>
+          </Box>
 
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {decisionState === 'idle' && decisionMessage ? (
-              <Alert severity="success" variant="outlined">
-                {decisionMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </Box>
-      </Paper>
-
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
+          {decisionState === 'idle' && decisionMessage ? (
+            <Alert severity="success" variant="outlined">
+              {decisionMessage}
+            </Alert>
+          ) : null}
+        </Stack>
+      </Box>
       <Dialog
         open={decisionState === 'confirm-enable-email-login'}
         onClose={handleCancelDecision}
@@ -404,6 +401,6 @@ export default function EmailSignIn() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Paper>
   );
 }

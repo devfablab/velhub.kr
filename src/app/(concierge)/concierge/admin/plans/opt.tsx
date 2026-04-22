@@ -14,6 +14,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableRow,
   Typography,
 } from '@mui/material';
@@ -150,7 +151,7 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      <Paper elevation={0}>
+      <TableContainer component={Paper}>
         <Table>
           <TableBody>
             {plans.map((planRow) => (
@@ -180,17 +181,9 @@ export default function Opt() {
                 </TableCell>
               </TableRow>
             ))}
-
-            {plans.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>
-                  <Typography>등록된 요금제가 없습니다.</Typography>
-                </TableCell>
-              </TableRow>
-            ) : null}
           </TableBody>
         </Table>
-      </Paper>
+      </TableContainer>
 
       {errorMessage ? (
         <Alert severity="error" variant="filled">
