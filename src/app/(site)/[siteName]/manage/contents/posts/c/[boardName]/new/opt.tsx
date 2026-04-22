@@ -410,7 +410,7 @@ export default function Opt() {
               </Select>
             </FormControl>
             <Alert variant="outlined" severity="warning">
-              연재는 한번 설정되면 변경이 되지 않습니다. 주의하세요.
+              연재는 한번 설정되면 변경하실 수 없습니다. 주의하세요.
             </Alert>
           </>
         ) : null}
