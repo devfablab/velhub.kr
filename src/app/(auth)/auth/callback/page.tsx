@@ -84,7 +84,7 @@ export default function Page() {
       }
 
       const acceptInviteResponse = await fetch(
-        `/api/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
+        `/api/manage/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
         {
           method: 'POST',
           credentials: 'include',
@@ -302,7 +302,7 @@ export default function Page() {
       }
 
       if (inviteToken) {
-        const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+        const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
           method: 'POST',
           credentials: 'include',
         });

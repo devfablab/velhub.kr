@@ -1,13 +1,16 @@
 import { Box, Container, Stack } from '@mui/material';
+import StaffTabs from '../../../../tabs';
+import BlogDesignBreadcrumb from '../breadcrumb';
 import Opt from './opt';
-import StaffTabs from '../tabs';
 
-export default function Page() {
+export default async function Page() {
   return (
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs />
+          <StaffTabs pageTitle="기본 서체 설정" />
+
+          <BlogDesignBreadcrumb />
 
           <Opt />
         </Stack>

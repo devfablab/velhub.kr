@@ -42,9 +42,15 @@ function isStaffRole(role: string | null) {
 }
 
 function getTabValue(pathname: string, tabItems: StaffTabItem[]) {
-  const matchedItem = tabItems.find((tabItem) => {
-    return pathname === tabItem.href || pathname.startsWith(`${tabItem.href}/`);
-  });
+  const exactMatchedItem = tabItems.find((tabItem) => pathname === tabItem.href);
+
+  if (exactMatchedItem) {
+    return exactMatchedItem.href;
+  }
+
+  const matchedItem = [...tabItems]
+    .filter((tabItem) => pathname.startsWith(`${tabItem.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0];
 
   return matchedItem?.href ?? false;
 }
@@ -53,48 +59,48 @@ function getMobileBackHref(pathname: string, siteName: string) {
   const segments = pathname.split('/').filter(Boolean);
 
   if (segments[0] !== siteName) {
-    return `/${siteName}/staff`;
+    return `/${siteName}/manage`;
   }
 
   if (segments[1] !== 'contents' || segments[2] !== 'posts') {
-    return `/${siteName}/staff`;
+    return `/${siteName}/manage`;
   }
 
   const depth = segments.length;
 
   if (depth === 4 && segments[3] === 'new') {
-    return `/${siteName}/contents/posts`;
+    return `/${siteName}/manage/contents/posts`;
   }
 
   if (depth === 4) {
-    return `/${siteName}/contents/posts`;
+    return `/${siteName}/manage/contents/posts`;
   }
 
   if (segments[3] !== 'c') {
-    return `/${siteName}/staff`;
+    return `/${siteName}/manage`;
   }
 
   if (depth === 5 && segments[4] === 'new') {
-    return `/${siteName}/contents/posts/c`;
+    return `/${siteName}/manage/contents/posts/c`;
   }
 
   if (depth === 5) {
-    return `/${siteName}/contents/posts/c`;
+    return `/${siteName}/manage/contents/posts/c`;
   }
 
   if (depth === 6 && (segments[5] === 'new' || segments[5] === 'edit')) {
-    return `/${siteName}/contents/posts/c/${segments[4]}`;
+    return `/${siteName}/manage/contents/posts/c/${segments[4]}`;
   }
 
   if (depth === 6) {
-    return `/${siteName}/contents/posts/c/${segments[4]}`;
+    return `/${siteName}/manage/contents/posts/c/${segments[4]}`;
   }
 
   if (depth === 7 && segments[6] === 'edit') {
-    return `/${siteName}/contents/posts/c/${segments[4]}/${segments[5]}`;
+    return `/${siteName}/manage/contents/posts/c/${segments[4]}/${segments[5]}`;
   }
 
-  return `/${siteName}/staff`;
+  return `/${siteName}/manage`;
 }
 
 function LinkTab({ label, href, value }: { label: string; href: string; value: string }) {
@@ -181,23 +187,23 @@ export default function StaffTabs({ pageTitle }: Props) {
   }
 
   const tabItems: StaffTabItem[] = [
-    { label: '관리 홈', href: `/${siteName}/staff` },
-    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
+    { label: '관리 홈', href: `/${siteName}/manage` },
+    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage/settings` },
     {
       label: '디자인',
-      href: `/${siteName}/design`,
+      href: `/${siteName}/manage/design`,
     },
     {
       label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`,
+      href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
     },
-    { label: '콘텐츠 관리', href: `/${siteName}/contents` },
-    ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/filtered` }] : []),
-    { label: '통계', href: `/${siteName}/stats` },
+    { label: '콘텐츠 관리', href: `/${siteName}/manage/contents` },
+    ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/manage/filtered` }] : []),
+    { label: '통계', href: `/${siteName}/manage/stats` },
   ];
 
   const currentValue = getTabValue(pathname, tabItems);
-  const isStaffHome = pathname === `/${siteName}/staff`;
+  const isStaffHome = pathname === `/${siteName}/manage`;
   const mobileBackHref = getMobileBackHref(pathname, siteName);
 
   return (

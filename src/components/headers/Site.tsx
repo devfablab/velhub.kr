@@ -322,7 +322,7 @@ export default function HeaderSite() {
                     <ListItemIcon>
                       <DashboardIcon fontSize="small" />
                     </ListItemIcon>
-                    <Link href={`/${siteName}/staff`} underline="none" sx={{ flex: '1 0 0%' }}>
+                    <Link href={`/${siteName}/manage`} underline="none" sx={{ flex: '1 0 0%' }}>
                       관리 홈
                     </Link>
                   </MenuItem>
@@ -331,7 +331,7 @@ export default function HeaderSite() {
                     <ListItemIcon>
                       {siteType === 'blog' ? <ArticleIcon fontSize="small" /> : <ForumIcon fontSize="small" />}
                     </ListItemIcon>
-                    <Link href={`/${siteName}/manage`} underline="none" sx={{ flex: '1 0 0%' }}>
+                    <Link href={`/${siteName}/manage/settings`} underline="none" sx={{ flex: '1 0 0%' }}>
                       {siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영'}
                     </Link>
                   </MenuItem>
@@ -342,7 +342,9 @@ export default function HeaderSite() {
                     </ListItemIcon>
                     <Link
                       href={
-                        siteType === 'blog' ? `/${siteName}/design/blog/fonts` : `/${siteName}/design/community/menu`
+                        siteType === 'blog'
+                          ? `/${siteName}/manage/design/blog/fonts`
+                          : `/${siteName}/manage/design/community/menu`
                       }
                       underline="none"
                       sx={{ flex: '1 0 0%' }}
@@ -356,7 +358,7 @@ export default function HeaderSite() {
                       {siteType === 'blog' ? <GroupsIcon fontSize="small" /> : <PeopleIcon fontSize="small" />}
                     </ListItemIcon>
                     <Link
-                      href={siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`}
+                      href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}
                       underline="none"
                       sx={{ flex: '1 0 0%' }}
                     >
@@ -368,7 +370,7 @@ export default function HeaderSite() {
                     <ListItemIcon>
                       <FontDownloadIcon fontSize="small" />
                     </ListItemIcon>
-                    <Link href={`/${siteName}/contents/posts`} underline="none" sx={{ flex: '1 0 0%' }}>
+                    <Link href={`/${siteName}/manage/contents/posts`} underline="none" sx={{ flex: '1 0 0%' }}>
                       콘텐츠 관리
                     </Link>
                   </MenuItem>
@@ -378,7 +380,7 @@ export default function HeaderSite() {
                       <ListItemIcon>
                         <ReportGmailerrorredIcon fontSize="small" />
                       </ListItemIcon>
-                      <Link href={`/${siteName}/filtered`} underline="none" sx={{ flex: '1 0 0%' }}>
+                      <Link href={`/${siteName}/manage/filtered`} underline="none" sx={{ flex: '1 0 0%' }}>
                         제한된 콘텐츠
                       </Link>
                     </MenuItem>
@@ -388,7 +390,7 @@ export default function HeaderSite() {
                     <ListItemIcon>
                       <BarChartIcon fontSize="small" />
                     </ListItemIcon>
-                    <Link href={`/${siteName}/stats`} underline="none" sx={{ flex: '1 0 0%' }}>
+                    <Link href={`/${siteName}/manage/stats`} underline="none" sx={{ flex: '1 0 0%' }}>
                       통계
                     </Link>
                   </MenuItem>
@@ -464,7 +466,7 @@ export default function HeaderSite() {
                     <ListItemIcon>
                       <DashboardIcon fontSize="small" />
                     </ListItemIcon>
-                    <Link href={`/${siteName}/staff`} underline="none" sx={{ flex: '1 0 0%' }}>
+                    <Link href={`/${siteName}/manage`} underline="none" sx={{ flex: '1 0 0%' }}>
                       사이트 설정
                     </Link>
                   </MenuItem>,

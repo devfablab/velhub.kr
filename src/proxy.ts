@@ -8,36 +8,7 @@ function isManagePath(pathname: string) {
 
   const segments = pathname.split('/').filter(Boolean);
 
-  return (
-    segments.length >= 2 &&
-    (segments[1] === 'design' ||
-      segments[1] === 'team' ||
-      segments[1] === 'manage' ||
-      segments[1] === 'members' ||
-      segments[1] === 'filtered' ||
-      segments[1] === 'stats' ||
-      segments[1] === 'staff')
-  );
-}
-
-function isContentsPath(pathname: string) {
-  if (pathname.startsWith('/api')) {
-    return false;
-  }
-
-  const segments = pathname.split('/').filter(Boolean);
-
-  return segments.length >= 3 && segments[1] === 'contents' && segments[2] === 'posts';
-}
-
-function isCategoryManagePath(pathname: string) {
-  if (pathname.startsWith('/api')) {
-    return false;
-  }
-
-  const segments = pathname.split('/').filter(Boolean);
-
-  return segments.length >= 4 && segments[1] === 'contents' && segments[2] === 'posts' && segments[3] === 'category';
+  return segments.length >= 2 && segments[1] === 'manage';
 }
 
 function isJoinPath(pathname: string) {
@@ -184,15 +155,15 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoggedIn = Boolean(sessionClaims?.userId);
 
-  if (pathname.startsWith('/settings/advanced')) {
-    if (!isLoggedIn) {
+  if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up') {
+    if (isLoggedIn) {
       return redirectWithPath(request, '/');
     }
 
     return response;
   }
 
-  if (pathname.startsWith('/new') || pathname.startsWith('/settings')) {
+  if (pathname.startsWith('/settings') || pathname.startsWith('/new')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
@@ -238,40 +209,6 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!staff.response.ok) {
-      return redirectWithPath(request, `/${siteName}`);
-    }
-
-    return response;
-  }
-
-  if (isContentsPath(pathname)) {
-    if (!isLoggedIn) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-
-    if (!siteName) {
-      return redirectWithPath(request, '/');
-    }
-
-    if (isCategoryManagePath(pathname)) {
-      const rhizomeState = await fetchRhizomeState(request, siteName);
-
-      if (rhizomeState.response.ok && rhizomeState.result?.rhizomes?.site_type === 'community') {
-        return redirectWithPath(request, `/${siteName}/contents/posts`);
-      }
-    }
-
-    const contents = await fetchSessionRoute(request, '/api/posts/status', {
-      siteName,
-    });
-
-    if (contents.response.status === 401) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    if (!contents.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
 
@@ -329,31 +266,6 @@ export async function proxy(request: NextRequest) {
 
     if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
       return response;
-    }
-
-    const visibilityType = rhizomeState.result.rhizomes.visibility_type ?? 'public';
-    const isShutdown = Boolean(rhizomeState.result.rhizomes.is_shutdown);
-
-    if (isShutdown) {
-      return redirectWithPath(request, '/');
-    }
-
-    if (visibilityType === 'private') {
-      if (!isLoggedIn) {
-        return redirectWithPath(request, '/auth/sign-in');
-      }
-
-      const member = await fetchSessionRoute(request, '/api/session/member', {
-        siteName,
-      });
-
-      if (member.response.status === 401) {
-        return redirectWithPath(request, '/auth/sign-in');
-      }
-
-      if (!member.response.ok) {
-        return redirectWithPath(request, `/${siteName}/forbidden`);
-      }
     }
   }
 

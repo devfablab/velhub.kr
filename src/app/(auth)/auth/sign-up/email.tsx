@@ -51,7 +51,7 @@ export default function EmailSignUp() {
         setIsInviteLoading(true);
         setErrorMessage('');
 
-        const response = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+        const response = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -178,7 +178,7 @@ export default function EmailSignUp() {
       }
 
       if (inviteToken) {
-        const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+        const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
           method: 'POST',
           credentials: 'include',
         });

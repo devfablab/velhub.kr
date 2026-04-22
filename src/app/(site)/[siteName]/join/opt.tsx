@@ -40,7 +40,7 @@ export default function Opt({ siteName }: Props) {
       setErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch('/api/members/join', {
+      const response = await fetch('/api/manage/members/join', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

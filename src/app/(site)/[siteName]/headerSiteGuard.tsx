@@ -5,11 +5,11 @@ import { useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import HeaderSite from '@/components/headers/Site';
 
-const HIDE_PREFIXES = ['/contents', '/design', '/manage', '/staff', '/team', '/stats', '/members', '/filtered'];
+const HIDE_PREFIXES = ['/contents', '/design', '/manage', '/', '/team', '/stats', '/members', '/filtered'];
 
 function shouldHideHeader(pathname: string, siteName: string) {
   const normalizedSiteName = normalizeText(siteName);
-  const basePath = `/${normalizedSiteName}`;
+  const basePath = `/${normalizedSiteName}/manage`;
 
   return HIDE_PREFIXES.some((prefix) => {
     const targetPath = `${basePath}${prefix}`;

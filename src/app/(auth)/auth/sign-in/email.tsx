@@ -60,7 +60,7 @@ export default function EmailSignIn() {
       return false;
     }
 
-    const acceptInviteResponse = await fetch(`/api/design/blog/team/invite/${inviteToken}`, {
+    const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
       method: 'POST',
       credentials: 'include',
     });
