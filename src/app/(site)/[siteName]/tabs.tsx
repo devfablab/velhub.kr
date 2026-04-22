@@ -189,16 +189,17 @@ export default function StaffTabs({ pageTitle }: Props) {
   const tabItems: StaffTabItem[] = [
     { label: '관리 홈', href: `/${siteName}/manage` },
     { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage/settings` },
-    {
-      label: '디자인',
-      href: `/${siteName}/manage/design`,
-    },
+    ...(siteType === 'community' ? [{ label: '가입 관리', href: `/${siteName}/manage/join` }] : []),
     {
       label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
       href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
     },
     { label: '콘텐츠 관리', href: `/${siteName}/manage/contents` },
     ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/manage/filtered` }] : []),
+    {
+      label: '디자인',
+      href: `/${siteName}/manage/design`,
+    },
     { label: '통계', href: `/${siteName}/manage/stats` },
   ];
 
