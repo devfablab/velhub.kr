@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState, type JSX } from 'react';
@@ -12,7 +13,6 @@ import {
   Paper,
   Radio,
   RadioGroup,
-  Select,
   Snackbar,
   Stack,
   Switch,
@@ -240,7 +240,7 @@ export default function Opt() {
     setJoinType(nextValue);
   }
 
-  function handlePolicyPostChange(event: any) {
+  function handlePolicyPostChange(event: TextFieldChangeEvent) {
     const nextValue = event.target.value;
 
     if (
@@ -255,7 +255,7 @@ export default function Opt() {
     setPolicyPost(nextValue);
   }
 
-  function handlePolicyCommentChange(event: any) {
+  function handlePolicyCommentChange(event: TextFieldChangeEvent) {
     const nextValue = event.target.value;
 
     if (
