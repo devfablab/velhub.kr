@@ -44,8 +44,6 @@ type PlanRow = {
   product_type: string;
 };
 
-const SUPABASE_AVATAR_PREFIX = 'supabase:';
-
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -57,14 +55,6 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
-
-function isSupabaseAvatarValue(value: string) {
-  return value.startsWith(SUPABASE_AVATAR_PREFIX);
-}
-
-function getSupabaseAvatarPath(value: string) {
-  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
-}
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -312,7 +302,7 @@ export default function Opt() {
     setIsUploadingAvatar(true);
 
     try {
-      if (profilePicture && isSupabaseAvatarValue(profilePicture)) {
+      if (profilePicture) {
         const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
           method: 'POST',
           headers: {
@@ -320,7 +310,7 @@ export default function Opt() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            path: getSupabaseAvatarPath(profilePicture),
+            path: profilePicture,
           }),
         });
 
@@ -451,201 +441,198 @@ export default function Opt() {
   }
 
   return (
-    <>
-      <Paper elevation={0} sx={{ p: 3 }}>
-        <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={3}>
-            <Stack spacing={1.5}>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  alignItems: 'flex-start',
+    <Paper elevation={0} sx={{ p: 3 }}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={3}>
+          <Stack spacing={1.5}>
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{
+                alignItems: 'flex-start',
+              }}
+            >
+              <TextField
+                label="사이트 식별자"
+                value={siteKey}
+                onChange={handleSiteKeyChange}
+                fullWidth
+                helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                size="medium"
+                slotProps={{
+                  input: {
+                    startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          onClick={handleCheckSiteKey}
+                          disabled={isCheckingSiteKey}
+                          size="small"
+                        >
+                          중복 확인
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
                 }}
-              >
-                <TextField
-                  label="사이트 식별자"
-                  value={siteKey}
-                  onChange={handleSiteKeyChange}
-                  fullWidth
-                  helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                  size="medium"
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            onClick={handleCheckSiteKey}
-                            disabled={isCheckingSiteKey}
-                            size="small"
-                          >
-                            중복 확인
-                          </Button>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              </Stack>
-
-              {siteKeyStatusMessage ? (
-                <Alert severity="success" variant="outlined">
-                  {siteKeyStatusMessage}
-                </Alert>
-              ) : null}
+              />
             </Stack>
 
-            <TextField
-              label="사이트명"
-              value={siteLabel}
-              onChange={handleSiteLabelChange}
-              fullWidth
-              size="small"
-              helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
+            {siteKeyStatusMessage ? (
+              <Alert severity="success" variant="outlined">
+                {siteKeyStatusMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+
+          <TextField
+            label="사이트명"
+            value={siteLabel}
+            onChange={handleSiteLabelChange}
+            fullWidth
+            size="small"
+            helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
+          />
+
+          <Stack spacing={1.5} alignItems="flex-start">
+            {profilePictureUrl ? (
+              <Box
+                component="img"
+                src={profilePictureUrl}
+                alt="사이트 프로필 이미지"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : null}
+
+            <VisuallyHiddenInput
+              ref={fileInputReference}
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureFileChange}
             />
-
-            <Stack spacing={1.5} alignItems="flex-start">
-              {profilePictureUrl ? (
-                <Box
-                  component="img"
-                  src={profilePictureUrl}
-                  alt="사이트 프로필 이미지"
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                  }}
-                />
-              ) : null}
-
-              <VisuallyHiddenInput
-                ref={fileInputReference}
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePictureFileChange}
-              />
-
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={handleClickProfilePictureUpload}
-                disabled={isUploadingAvatar}
-              >
-                프로필 이미지 업로드
-              </Button>
-            </Stack>
-
-            <TextField
-              label="요약"
-              value={summary}
-              onChange={handleSummaryChange}
-              fullWidth
-              multiline
-              minRows={4}
-              size="small"
-            />
-
-            <Stack spacing={1}>
-              <FormLabel>테마</FormLabel>
-              <RadioGroup value={themeType} onChange={handleThemeTypeChange}>
-                <FormControlLabel value="default" control={<Radio />} label="default" />
-              </RadioGroup>
-            </Stack>
-
-            <Stack spacing={1}>
-              <FormLabel>요금제</FormLabel>
-              <RadioGroup value={planType} onChange={handlePlanTypeChange}>
-                {plans.map((planRow) => (
-                  <FormControlLabel
-                    key={planRow.id}
-                    value={planRow.id}
-                    control={<Radio />}
-                    label={`${planRow.plan_label} (${planRow.price.toLocaleString()}원)`}
-                  />
-                ))}
-              </RadioGroup>
-            </Stack>
-
-            <Stack spacing={1}>
-              <FormLabel>가입 방식</FormLabel>
-              <RadioGroup value={joinType} onChange={handleJoinTypeChange}>
-                <FormControlLabel value="open" control={<Radio />} label="오픈가입" />
-                <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
-              </RadioGroup>
-            </Stack>
-
-            <TextField
-              select
-              label="글 작성 정책"
-              value={policyPost}
-              onChange={handlePolicyPostChange}
-              fullWidth
-              size="small"
-            >
-              <MenuItem value="comment_0">가입 후 바로 글쓰기 가능</MenuItem>
-              <MenuItem value="comment_1">댓글 1개 등록 후 글쓰기 가능</MenuItem>
-              <MenuItem value="comment_3">댓글 3개 등록 후 글쓰기 가능</MenuItem>
-              <MenuItem value="comment_5">댓글 5개 등록 후 글쓰기 가능</MenuItem>
-            </TextField>
-
-            <TextField
-              select
-              label="댓글 작성 정책"
-              value={policyComment}
-              onChange={handlePolicyCommentChange}
-              fullWidth
-              size="small"
-            >
-              <MenuItem value="estimate_0">가입 후 바로 댓글쓰기 가능</MenuItem>
-              <MenuItem value="estimate_1">가입 6시간 이후 댓글쓰기 가능</MenuItem>
-              <MenuItem value="estimate_3">가입 12시간 이후 댓글쓰기 가능</MenuItem>
-              <MenuItem value="estimate_5">가입 24시간 이후 댓글쓰기 가능</MenuItem>
-            </TextField>
-
-            <Stack direction="row" spacing={3}>
-              <FormControlLabel
-                control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
-                label={visibilityType === 'public' ? '공개' : '비공개'}
-              />
-
-              <FormControlLabel
-                control={<Switch checked={isShutdown} onChange={handleIsShutdownChange} />}
-                label={isShutdown ? '중단' : '운영'}
-              />
-            </Stack>
 
             <Button
-              type="submit"
-              variant="contained"
-              disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
-              fullWidth
-              size="large"
+              type="button"
+              variant="outlined"
+              onClick={handleClickProfilePictureUpload}
+              disabled={isUploadingAvatar}
             >
-              커뮤니티 개설
+              프로필 이미지 업로드
             </Button>
-
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
-
-            <Alert variant="filled" severity="info">
-              개설이 완료되면 사이트 운영자 권한이 부여됩니다.
-            </Alert>
           </Stack>
-        </Box>
-      </Paper>
 
+          <TextField
+            label="요약"
+            value={summary}
+            onChange={handleSummaryChange}
+            fullWidth
+            multiline
+            minRows={4}
+            size="small"
+          />
+
+          <Stack spacing={1}>
+            <FormLabel>테마</FormLabel>
+            <RadioGroup value={themeType} onChange={handleThemeTypeChange}>
+              <FormControlLabel value="default" control={<Radio />} label="default" />
+            </RadioGroup>
+          </Stack>
+
+          <Stack spacing={1}>
+            <FormLabel>요금제</FormLabel>
+            <RadioGroup value={planType} onChange={handlePlanTypeChange}>
+              {plans.map((planRow) => (
+                <FormControlLabel
+                  key={planRow.id}
+                  value={planRow.id}
+                  control={<Radio />}
+                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()}원)`}
+                />
+              ))}
+            </RadioGroup>
+          </Stack>
+
+          <Stack spacing={1}>
+            <FormLabel>가입 방식</FormLabel>
+            <RadioGroup value={joinType} onChange={handleJoinTypeChange}>
+              <FormControlLabel value="open" control={<Radio />} label="오픈가입" />
+              <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
+            </RadioGroup>
+          </Stack>
+
+          <TextField
+            select
+            label="글 작성 정책"
+            value={policyPost}
+            onChange={handlePolicyPostChange}
+            fullWidth
+            size="small"
+          >
+            <MenuItem value="comment_0">가입 후 바로 글쓰기 가능</MenuItem>
+            <MenuItem value="comment_1">댓글 1개 등록 후 글쓰기 가능</MenuItem>
+            <MenuItem value="comment_3">댓글 3개 등록 후 글쓰기 가능</MenuItem>
+            <MenuItem value="comment_5">댓글 5개 등록 후 글쓰기 가능</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="댓글 작성 정책"
+            value={policyComment}
+            onChange={handlePolicyCommentChange}
+            fullWidth
+            size="small"
+          >
+            <MenuItem value="estimate_0">가입 후 바로 댓글쓰기 가능</MenuItem>
+            <MenuItem value="estimate_1">가입 6시간 이후 댓글쓰기 가능</MenuItem>
+            <MenuItem value="estimate_3">가입 12시간 이후 댓글쓰기 가능</MenuItem>
+            <MenuItem value="estimate_5">가입 24시간 이후 댓글쓰기 가능</MenuItem>
+          </TextField>
+
+          <Stack direction="row" spacing={3}>
+            <FormControlLabel
+              control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
+              label={visibilityType === 'public' ? '공개' : '비공개'}
+            />
+
+            <FormControlLabel
+              control={<Switch checked={isShutdown} onChange={handleIsShutdownChange} />}
+              label={isShutdown ? '중단' : '운영'}
+            />
+          </Stack>
+
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
+            fullWidth
+            size="large"
+          >
+            커뮤니티 개설
+          </Button>
+
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
+          {successMessage ? (
+            <Alert severity="success" variant="outlined">
+              {successMessage}
+            </Alert>
+          ) : null}
+
+          <Alert variant="filled" severity="info">
+            개설이 완료되면 사이트 운영자 권한이 부여됩니다.
+          </Alert>
+        </Stack>
+      </Box>
       <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs">
         <DialogTitle>개설할 수 없습니다</DialogTitle>
         <DialogContent>
@@ -657,6 +644,6 @@ export default function Opt() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Paper>
   );
 }

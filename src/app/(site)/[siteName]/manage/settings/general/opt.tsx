@@ -57,8 +57,6 @@ type SitesInfo = {
   log: string;
 };
 
-const SUPABASE_AVATAR_PREFIX = 'supabase:';
-
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -70,14 +68,6 @@ const VisuallyHiddenInput = styled('input')({
   whiteSpace: 'nowrap',
   width: 1,
 });
-
-function isSupabaseAvatarValue(value: string) {
-  return value.startsWith(SUPABASE_AVATAR_PREFIX);
-}
-
-function getSupabaseAvatarPath(value: string) {
-  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
-}
 
 export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
@@ -98,7 +88,6 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadInfo() {
@@ -235,7 +224,7 @@ export default function Opt() {
     setIsUploadingAvatar(true);
 
     try {
-      if (siteInfo.profile_picture && isSupabaseAvatarValue(siteInfo.profile_picture)) {
+      if (siteInfo.profile_picture) {
         const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
           method: 'POST',
           headers: {
@@ -243,7 +232,7 @@ export default function Opt() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            path: getSupabaseAvatarPath(siteInfo.profile_picture),
+            path: siteInfo.profile_picture,
           }),
         });
 

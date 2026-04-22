@@ -1,9 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type JSX } from 'react';
-
 import { useParams } from 'next/navigation';
-
 import {
   Alert,
   Box,
@@ -28,116 +26,81 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-
 import { styled } from '@mui/material/styles';
-
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type BoardRow = {
   id: string;
-
   board_key: string;
-
   board_label: string;
-
   board_type: string;
-
   post_type?: 'none' | 'prefix' | 'series';
-
   site_id: string;
-
   created_at?: string;
 };
 
 type SeriesRow = {
   id: string;
-
   created_at: string;
-
   series_key: string;
-
   series_label: string;
-
   summary: string | null;
-
   thumbnail_image: string | null;
-
   board_id: string;
-
   site_id: string;
-
   last_published_at: string | null;
-
   is_completed: boolean;
-
   user_id: string | null;
 };
 
 type SeriesUserSearchRow = {
   particleId: string;
-
   email: string;
-
   userName: string;
-
   nickname: string;
 };
 
 type SeriesListResponse = {
   board?: BoardRow;
-
   series?: SeriesRow[];
-
   error?: string;
 };
 
 type SeriesDetailResponse = {
   board?: BoardRow;
-
   series?: SeriesRow;
-
   selectedUser?: SeriesUserSearchRow | null;
-
   error?: string;
 };
 
 type SeriesSaveResponse = {
   ok?: boolean;
-
   series?: SeriesRow;
-
   error?: string;
 };
 
 type SeriesDeleteResponse = {
   ok?: boolean;
-
   error?: string;
 };
 
 type SeriesCheckResponse = {
   ok?: boolean;
-
   available?: boolean;
-
   error?: string;
 };
 
 type SeriesImageUploadResponse = {
   ok?: boolean;
-
   thumbnailImage?: string;
-
   url?: string;
-
   error?: string;
 };
 
 type SeriesUserSearchResponse = {
   users?: SeriesUserSearchRow[];
-
   error?: string;
 };
 
@@ -145,21 +108,13 @@ type DialogMode = 'new' | 'edit' | 'delete' | null;
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
-
   clipPath: 'inset(50%)',
-
   height: 1,
-
   overflow: 'hidden',
-
   position: 'absolute',
-
   bottom: 0,
-
   left: 0,
-
   whiteSpace: 'nowrap',
-
   width: 1,
 });
 
@@ -187,57 +142,34 @@ function isValidSeriesKey(value: string) {
   return true;
 }
 
-function getStoragePath(value: string) {
-  if (!value.startsWith('supabase:')) {
-    return '';
-  }
-
-  return value.replace('supabase:', '');
-}
-
 function getSeriesImageUrl(value: string) {
-  const path = getStoragePath(value);
-
-  if (!path) {
-    return '';
-  }
-
+  const imagePath = normalizeText(value);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
-  if (!supabaseUrl) {
+  if (!supabaseUrl || !imagePath) {
     return '';
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/series/${path}`;
+  return `${supabaseUrl}/storage/v1/object/public/series/${imagePath}`;
 }
 
 function buildCheckUrl({
   boardName,
-
   siteName,
-
   type,
-
   value,
-
   ignoreSeriesName,
 }: {
   boardName: string;
-
   siteName: string;
-
   type: 'key' | 'label';
-
   value: string;
-
   ignoreSeriesName?: string;
 }) {
   const searchParams = new URLSearchParams();
 
   searchParams.set('siteName', siteName);
-
   searchParams.set('type', type);
-
   searchParams.set('value', value);
 
   if (ignoreSeriesName) {
@@ -251,77 +183,46 @@ export default function Opt() {
   const params = useParams();
 
   const siteName = normalizeText(params.siteName);
-
   const boardName = normalizeText(params.boardName).toLowerCase();
 
   const theme = useTheme();
-
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
   const [board, setBoard] = useState<BoardRow | null>(null);
-
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
-
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
-
   const [selectedSeries, setSelectedSeries] = useState<SeriesRow | null>(null);
-
   const [seriesKey, setSeriesKey] = useState('');
-
   const [seriesLabel, setSeriesLabel] = useState('');
-
   const [summary, setSummary] = useState('');
-
   const [thumbnailImage, setThumbnailImage] = useState('');
-
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-
   const [selectedUser, setSelectedUser] = useState<SeriesUserSearchRow | null>(null);
-
   const [isCompleted, setIsCompleted] = useState(false);
-
   const [isLoading, setIsLoading] = useState(true);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-
   const [isDeletingImage, setIsDeletingImage] = useState(false);
-
   const [isCheckingKey, setIsCheckingKey] = useState(false);
-
   const [isCheckingLabel, setIsCheckingLabel] = useState(false);
-
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-
   const [userSearchKeyword, setUserSearchKeyword] = useState('');
-
   const [searchedUsers, setSearchedUsers] = useState<SeriesUserSearchRow[]>([]);
-
   const [isUserSearching, setIsUserSearching] = useState(false);
-
   const [errorMessage, setErrorMessage] = useState('');
-
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
-
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
-
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
   const [isKeyChecked, setIsKeyChecked] = useState(false);
-
   const [isLabelChecked, setIsLabelChecked] = useState(false);
-
   const [checkedSeriesKey, setCheckedSeriesKey] = useState('');
-
   const [checkedSeriesLabel, setCheckedSeriesLabel] = useState('');
 
   const sortedSeries = useMemo(() => {
     return [...seriesList].sort((a, b) => {
       const aLastPublishedAt = a.last_published_at ? new Date(a.last_published_at).getTime() : 0;
-
       const bLastPublishedAt = b.last_published_at ? new Date(b.last_published_at).getTime() : 0;
 
       if (aLastPublishedAt !== bLastPublishedAt) {
@@ -339,7 +240,6 @@ export default function Opt() {
 
         const response = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
           method: 'GET',
-
           credentials: 'include',
         });
 
@@ -354,7 +254,6 @@ export default function Opt() {
         }
 
         setBoard(result.board);
-
         setSeriesList(Array.isArray(result.series) ? result.series : []);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -372,33 +271,19 @@ export default function Opt() {
 
   function resetDialogFields() {
     setSeriesKey('');
-
     setSeriesLabel('');
-
     setSummary('');
-
     setThumbnailImage('');
-
     setThumbnailImageUrl('');
-
     setSelectedUser(null);
-
     setIsCompleted(false);
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
-
     setIsKeyChecked(false);
-
     setIsLabelChecked(false);
-
     setCheckedSeriesKey('');
-
     setCheckedSeriesLabel('');
-
     setUserSearchKeyword('');
-
     setSearchedUsers([]);
 
     if (fileInputReference.current) {
@@ -408,21 +293,17 @@ export default function Opt() {
 
   function handleOpenNewDialog() {
     setDialogMode('new');
-
     setSelectedSeries(null);
-
     resetDialogFields();
   }
 
   async function handleOpenEditDialog(series: SeriesRow) {
     try {
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
 
       const response = await fetch(`/api/boards/${boardName}/series/${series.series_key}?siteName=${siteName}`, {
         method: 'GET',
-
         credentials: 'include',
       });
 
@@ -439,29 +320,17 @@ export default function Opt() {
       const nextThumbnailImage = result.series.thumbnail_image || '';
 
       setSelectedSeries(result.series);
-
       setSeriesKey(result.series.series_key);
-
       setSeriesLabel(result.series.series_label);
-
       setSummary(result.series.summary || '');
-
       setThumbnailImage(nextThumbnailImage);
-
       setThumbnailImageUrl(getSeriesImageUrl(nextThumbnailImage));
-
       setSelectedUser(result.selectedUser ?? null);
-
       setIsCompleted(result.series.is_completed);
-
       setIsKeyChecked(true);
-
       setIsLabelChecked(true);
-
       setCheckedSeriesKey(result.series.series_key);
-
       setCheckedSeriesLabel(result.series.series_label);
-
       setDialogMode('edit');
 
       if (fileInputReference.current) {
@@ -478,11 +347,8 @@ export default function Opt() {
 
   function handleOpenDeleteDialog(series: SeriesRow) {
     setSelectedSeries(series);
-
     setDialogMode('delete');
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
   }
 
@@ -492,21 +358,15 @@ export default function Opt() {
     }
 
     setDialogMode(null);
-
     setSelectedSeries(null);
-
     resetDialogFields();
   }
 
   function handleSeriesKeyChange(event: InputChangeEvent) {
     setSeriesKey(event.currentTarget.value);
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
-
     setIsKeyChecked(false);
-
     setCheckedSeriesKey('');
   }
 
@@ -514,29 +374,22 @@ export default function Opt() {
     const nextValue = event.currentTarget.value;
 
     setSeriesLabel(nextValue);
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
 
     if (!normalizeText(nextValue)) {
       setIsLabelChecked(true);
-
       setCheckedSeriesLabel('');
-
       return;
     }
 
     setIsLabelChecked(false);
-
     setCheckedSeriesLabel('');
   }
 
   function handleSummaryChange(event: InputChangeEvent) {
     setSummary(event.currentTarget.value);
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
   }
 
@@ -546,9 +399,7 @@ export default function Opt() {
     }
 
     setIsCompleted(event.target.checked);
-
     setDialogErrorMessage('');
-
     setDialogHelperMessage('');
   }
 
@@ -562,11 +413,8 @@ export default function Opt() {
     }
 
     setUserSearchKeyword('');
-
     setSearchedUsers([]);
-
     setDialogErrorMessage('');
-
     setIsUserDialogOpen(true);
   }
 
@@ -580,7 +428,6 @@ export default function Opt() {
 
   function handleSelectUser(user: SeriesUserSearchRow) {
     setSelectedUser(user);
-
     setIsUserDialogOpen(false);
   }
 
@@ -597,24 +444,19 @@ export default function Opt() {
 
     if (!keyword) {
       setSearchedUsers([]);
-
       return;
     }
 
     try {
       setDialogErrorMessage('');
-
       setIsUserSearching(true);
 
       const searchParams = new URLSearchParams();
-
       searchParams.set('siteName', siteName);
-
       searchParams.set('query', keyword);
 
       const response = await fetch(`/api/boards/${board.board_key}/series/users?${searchParams.toString()}`, {
         method: 'GET',
-
         credentials: 'include',
       });
 
@@ -641,26 +483,20 @@ export default function Opt() {
 
     if (!selectedFile || isUploadingImage) {
       event.target.value = '';
-
       return;
     }
 
     try {
       setIsUploadingImage(true);
-
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
 
       const formData = new FormData();
-
       formData.append('file', selectedFile);
 
       const response = await fetch('/api/attachment/add/series-image', {
         method: 'POST',
-
         credentials: 'include',
-
         body: formData,
       });
 
@@ -675,7 +511,6 @@ export default function Opt() {
       }
 
       setThumbnailImage(result.thumbnailImage);
-
       setThumbnailImageUrl(result.url ?? '');
 
       if (fileInputReference.current) {
@@ -697,34 +532,19 @@ export default function Opt() {
       return;
     }
 
-    const deletePath = getStoragePath(thumbnailImage);
-
-    if (!deletePath) {
-      setThumbnailImage('');
-
-      setThumbnailImageUrl('');
-
-      return;
-    }
-
     try {
       setIsDeletingImage(true);
-
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
 
       const response = await fetch('/api/attachment/delete/series-image', {
         method: 'POST',
-
         credentials: 'include',
-
         headers: {
           'Content-Type': 'application/json',
         },
-
         body: JSON.stringify({
-          path: deletePath,
+          path: thumbnailImage,
         }),
       });
 
@@ -735,7 +555,6 @@ export default function Opt() {
       }
 
       setThumbnailImage('');
-
       setThumbnailImageUrl('');
 
       if (fileInputReference.current) {
@@ -761,9 +580,7 @@ export default function Opt() {
 
     if (!nextSeriesKey) {
       setDialogErrorMessage('시리즈 식별자를 입력해주세요.');
-
       setDialogHelperMessage('');
-
       return;
     }
 
@@ -771,39 +588,27 @@ export default function Opt() {
       setDialogErrorMessage(
         '시리즈 식별자는 5자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
       );
-
       setDialogHelperMessage('');
-
       setIsKeyChecked(false);
-
       setCheckedSeriesKey('');
-
       return;
     }
 
     try {
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
-
       setIsCheckingKey(true);
 
       const response = await fetch(
         buildCheckUrl({
           boardName: board.board_key,
-
           siteName,
-
           type: 'key',
-
           value: nextSeriesKey,
-
           ignoreSeriesName: dialogMode === 'edit' && selectedSeries ? selectedSeries.series_key : '',
         }),
-
         {
           method: 'GET',
-
           credentials: 'include',
         },
       );
@@ -816,22 +621,15 @@ export default function Opt() {
 
       if (!result.available) {
         setDialogErrorMessage('이미 존재하는 시리즈 식별자입니다.');
-
         setDialogHelperMessage('');
-
         setIsKeyChecked(false);
-
         setCheckedSeriesKey('');
-
         return;
       }
 
       setDialogErrorMessage('');
-
       setDialogHelperMessage('사용 가능한 시리즈 식별자입니다.');
-
       setIsKeyChecked(true);
-
       setCheckedSeriesKey(nextSeriesKey);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -841,9 +639,7 @@ export default function Opt() {
       }
 
       setDialogHelperMessage('');
-
       setIsKeyChecked(false);
-
       setCheckedSeriesKey('');
     } finally {
       setIsCheckingKey(false);
@@ -859,39 +655,27 @@ export default function Opt() {
 
     if (!nextSeriesLabel) {
       setIsLabelChecked(true);
-
       setCheckedSeriesLabel('');
-
       setDialogErrorMessage('');
-
       setDialogHelperMessage('시리즈명을 입력하지 않으면 식별자 기준으로 자동 등록됩니다.');
-
       return;
     }
 
     try {
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
-
       setIsCheckingLabel(true);
 
       const response = await fetch(
         buildCheckUrl({
           boardName: board.board_key,
-
           siteName,
-
           type: 'label',
-
           value: nextSeriesLabel,
-
           ignoreSeriesName: dialogMode === 'edit' && selectedSeries ? selectedSeries.series_key : '',
         }),
-
         {
           method: 'GET',
-
           credentials: 'include',
         },
       );
@@ -904,22 +688,15 @@ export default function Opt() {
 
       if (!result.available) {
         setDialogErrorMessage('이미 존재하는 시리즈명입니다.');
-
         setDialogHelperMessage('');
-
         setIsLabelChecked(false);
-
         setCheckedSeriesLabel('');
-
         return;
       }
 
       setDialogErrorMessage('');
-
       setDialogHelperMessage('사용 가능한 시리즈명입니다.');
-
       setIsLabelChecked(true);
-
       setCheckedSeriesLabel(nextSeriesLabel);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -929,9 +706,7 @@ export default function Opt() {
       }
 
       setDialogHelperMessage('');
-
       setIsLabelChecked(false);
-
       setCheckedSeriesLabel('');
     } finally {
       setIsCheckingLabel(false);
@@ -944,68 +719,50 @@ export default function Opt() {
     }
 
     const nextSeriesKey = normalizeText(seriesKey).toLowerCase();
-
     const nextSeriesLabel = normalizeText(seriesLabel);
 
     if (!nextSeriesKey) {
       setDialogErrorMessage('시리즈 식별자를 입력해주세요.');
-
       setDialogHelperMessage('');
-
       return;
     }
 
     if (!isKeyChecked || checkedSeriesKey !== nextSeriesKey) {
       setDialogErrorMessage('시리즈 식별자 중복 검사를 해주세요.');
-
       setDialogHelperMessage('');
-
       return;
     }
 
     if (nextSeriesLabel) {
       if (!isLabelChecked || checkedSeriesLabel !== nextSeriesLabel) {
         setDialogErrorMessage('시리즈명 중복 검사를 해주세요.');
-
         setDialogHelperMessage('');
-
         return;
       }
     }
 
     try {
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
-
       setIsSubmitting(true);
 
       const requestBody = {
         siteName,
-
         seriesKey: nextSeriesKey,
-
         seriesLabel: nextSeriesLabel || null,
-
         summary,
-
         thumbnailImage,
-
         userId: selectedUser?.particleId || null,
-
         isCompleted,
       };
 
       if (dialogMode === 'new') {
         const response = await fetch(`/api/boards/${board.board_key}/series/new`, {
           method: 'POST',
-
           headers: {
             'Content-Type': 'application/json',
           },
-
           credentials: 'include',
-
           body: JSON.stringify(requestBody),
         });
 
@@ -1020,28 +777,20 @@ export default function Opt() {
         }
 
         setSeriesList((previousSeries) => [result.series as SeriesRow, ...previousSeries]);
-
         setDialogMode(null);
-
         setSelectedSeries(null);
-
         resetDialogFields();
-
         setSnackbarMessage('시리즈가 등록되었습니다.');
-
         return;
       }
 
       if (dialogMode === 'edit' && selectedSeries) {
         const response = await fetch(`/api/boards/${board.board_key}/series/${selectedSeries.series_key}/edit`, {
           method: 'PATCH',
-
           headers: {
             'Content-Type': 'application/json',
           },
-
           credentials: 'include',
-
           body: JSON.stringify(requestBody),
         });
 
@@ -1060,11 +809,8 @@ export default function Opt() {
         );
 
         setDialogMode(null);
-
         setSelectedSeries(null);
-
         resetDialogFields();
-
         setSnackbarMessage('시리즈가 수정되었습니다.');
       }
     } catch (unknownError) {
@@ -1085,17 +831,13 @@ export default function Opt() {
 
     try {
       setDialogErrorMessage('');
-
       setDialogHelperMessage('');
-
       setIsSubmitting(true);
 
       const response = await fetch(
         `/api/boards/${board.board_key}/series/${selectedSeries.series_key}/delete?siteName=${siteName}`,
-
         {
           method: 'DELETE',
-
           credentials: 'include',
         },
       );
@@ -1107,13 +849,9 @@ export default function Opt() {
       }
 
       setSeriesList((previousSeries) => previousSeries.filter((series) => series.id !== selectedSeries.id));
-
       setDialogMode(null);
-
       setSelectedSeries(null);
-
       resetDialogFields();
-
       setSnackbarMessage('시리즈가 삭제되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -1215,6 +953,7 @@ export default function Opt() {
           </Table>
         </TableContainer>
       )}
+
       <Dialog open={dialogMode === 'new' || dialogMode === 'edit'} onClose={handleCloseDialog} fullWidth maxWidth="sm">
         <DialogTitle>{dialogMode === 'new' ? '시리즈 추가' : '시리즈 수정'}</DialogTitle>
         <DialogContent>
@@ -1344,20 +1083,20 @@ export default function Opt() {
               ) : null}
             </Stack>
 
-            {dialogMode !== 'new' && (
+            {dialogMode !== 'new' ? (
               <>
                 <FormControlLabel
                   control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
                   label="완결"
                 />
 
-                {isCompleted && (
+                {isCompleted ? (
                   <Alert severity="warning" variant="outlined">
                     완결 처리된 시리즈는 다시 연재중으로 변경할 수 없습니다.
                   </Alert>
-                )}
+                ) : null}
               </>
-            )}
+            ) : null}
 
             {dialogHelperMessage ? (
               <Alert severity="info" variant="outlined">

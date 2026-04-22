@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       ok: true,
       path: filePath,
       url: publicUrlResult.data.publicUrl ?? '',
-      avatar: `supabase:${filePath}`,
+      avatar: filePath,
     });
   } catch (unknownError) {
     console.error('avatar upload 예외:', unknownError);

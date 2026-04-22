@@ -18,12 +18,11 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { getSupabaseBrowser } from '@/lib/supabase';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
-
-const SUPABASE_AVATAR_PREFIX = 'supabase:';
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -37,16 +36,13 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-function isSupabaseAvatarValue(value: string) {
-  return value.startsWith(SUPABASE_AVATAR_PREFIX);
-}
-
-function getSupabaseAvatarPath(value: string) {
-  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
+function isExternalAvatarValue(value: string) {
+  return value.startsWith('http://') || value.startsWith('https://');
 }
 
 export default function UserInfo() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const supabase = getSupabaseBrowser();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -103,6 +99,22 @@ export default function UserInfo() {
 
     void loadBasicInfo();
   }, []);
+
+  function getAvatarDisplayUrl() {
+    const value = avatarUrl || avatar;
+
+    if (!value) {
+      return '/broken-image.jpg';
+    }
+
+    if (isExternalAvatarValue(value)) {
+      return value;
+    }
+
+    const publicUrlResult = supabase.storage.from('avatar').getPublicUrl(value);
+
+    return publicUrlResult.data.publicUrl || '/broken-image.jpg';
+  }
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);
@@ -219,7 +231,9 @@ export default function UserInfo() {
     setIsSubmittingAvatar(true);
 
     try {
-      if (avatar && isSupabaseAvatarValue(avatar)) {
+      const currentAvatarValue = avatarUrl || avatar;
+
+      if (currentAvatarValue && !isExternalAvatarValue(currentAvatarValue)) {
         const deleteResponse = await fetch('/api/attachment/delete/avatar/user', {
           method: 'POST',
           headers: {
@@ -227,7 +241,7 @@ export default function UserInfo() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            path: getSupabaseAvatarPath(avatar),
+            path: currentAvatarValue,
           }),
         });
 
@@ -329,7 +343,7 @@ export default function UserInfo() {
         <AccordionDetails>
           <Stack spacing={3}>
             <Stack spacing={1.5} alignItems="flex-start">
-              <Avatar src={avatarUrl || '/broken-image.jpg'} alt={userName || ''} sx={{ width: 80, height: 80 }} />
+              <Avatar src={getAvatarDisplayUrl()} alt={userName || ''} sx={{ width: 80, height: 80 }} />
 
               <VisuallyHiddenInput
                 ref={fileInputReference}

@@ -25,7 +25,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { formatDate, normalizeText } from '@/lib/utils';
+import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -96,29 +96,6 @@ type ActionResponse = {
   ok?: boolean;
   error?: string;
 };
-
-function isSupabaseOgImageValue(value: string) {
-  return value.startsWith('supabase:');
-}
-
-function getSupabaseOgImagePath(value: string) {
-  return value.replace('supabase:', '').trim();
-}
-
-function getOgImageUrl(value: string) {
-  if (!isSupabaseOgImageValue(value)) {
-    return value;
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-  const imagePath = getSupabaseOgImagePath(value);
-
-  if (!supabaseUrl || !imagePath) {
-    return '';
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/og-image/${imagePath}`;
-}
 
 export default function Opt() {
   const router = useRouter();

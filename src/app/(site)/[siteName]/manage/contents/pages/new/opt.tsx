@@ -49,14 +49,6 @@ function normalizeBoardName(rawValue: string | null) {
   return rawValue?.trim().toLowerCase() ?? '';
 }
 
-function isSupabaseOgImageValue(value: string) {
-  return value.startsWith('supabase:');
-}
-
-function getSupabaseOgImagePath(value: string) {
-  return value.replace('supabase:', '').trim();
-}
-
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -64,7 +56,6 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
@@ -196,8 +187,8 @@ export default function Opt() {
         throw new Error(result.error ?? '오픈그래프 이미지 업로드에 실패했습니다.');
       }
 
-      setOgImage(result.ogImage ?? '');
-      setOgImageUrl(result.url ?? '');
+      setOgImage(typeof result.ogImage === 'string' ? result.ogImage : '');
+      setOgImageUrl(typeof result.url === 'string' ? result.url : '');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '오픈그래프 이미지 업로드에 실패했습니다.');
@@ -285,7 +276,7 @@ export default function Opt() {
       const createResult = await createResponse.json();
 
       if (!createResponse.ok) {
-        if (ogImage && isSupabaseOgImageValue(ogImage)) {
+        if (ogImage) {
           await fetch('/api/attachment/delete/og-image', {
             method: 'POST',
             headers: {
@@ -293,7 +284,7 @@ export default function Opt() {
             },
             credentials: 'include',
             body: JSON.stringify({
-              path: getSupabaseOgImagePath(ogImage),
+              path: ogImage,
             }),
           });
         }
@@ -338,7 +329,7 @@ export default function Opt() {
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    {baseUrl}/{siteName}/p/{slug}
+                    {baseUrl}/{siteName}/p/
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -357,7 +348,11 @@ export default function Opt() {
               },
             }}
           />
-          {slugMessage ? <Alert severity={isSlugAvailable ? 'success' : 'error'}>{slugMessage}</Alert> : null}
+          {slugMessage ? (
+            <Alert severity={isSlugAvailable ? 'success' : 'error'} variant={isSlugAvailable ? 'outlined' : 'filled'}>
+              {slugMessage}
+            </Alert>
+          ) : null}
         </Stack>
 
         <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />

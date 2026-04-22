@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
     return Response.json({
       ok: true,
-      ogImage: `supabase:${filePath}`,
+      ogImage: filePath,
       url: publicUrlResult.data.publicUrl ?? '',
     });
   } catch {

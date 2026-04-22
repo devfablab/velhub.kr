@@ -85,14 +85,6 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-function isSupabaseOgImageValue(value: string) {
-  return value.startsWith('supabase:');
-}
-
-function getSupabaseOgImagePath(value: string) {
-  return value.replace('supabase:', '').trim();
-}
-
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -242,6 +234,8 @@ export default function Opt() {
         image.src = imageUrl;
       });
 
+      const previousThumbnailImage = thumbnailImage;
+
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -257,8 +251,21 @@ export default function Opt() {
         throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
       }
 
-      setThumbnailImage(result.ogImage ?? '');
-      setThumbnailImageUrl(result.url ?? '');
+      if (previousThumbnailImage) {
+        await fetch('/api/attachment/delete/og-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            path: previousThumbnailImage,
+          }),
+        });
+      }
+
+      setThumbnailImage(typeof result.ogImage === 'string' ? result.ogImage : '');
+      setThumbnailImageUrl(typeof result.url === 'string' ? result.url : '');
       setThumbnailWidth(imageSize.width);
       setThumbnailHeight(imageSize.height);
     } catch (unknownError) {
@@ -317,7 +324,7 @@ export default function Opt() {
       const result = (await response.json()) as CreateResponse;
 
       if (!response.ok) {
-        if (thumbnailImage && isSupabaseOgImageValue(thumbnailImage)) {
+        if (thumbnailImage) {
           await fetch('/api/attachment/delete/og-image', {
             method: 'POST',
             headers: {
@@ -325,7 +332,7 @@ export default function Opt() {
             },
             credentials: 'include',
             body: JSON.stringify({
-              path: getSupabaseOgImagePath(thumbnailImage),
+              path: thumbnailImage,
             }),
           });
         }

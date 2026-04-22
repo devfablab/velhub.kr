@@ -178,17 +178,12 @@ export async function GET(_request: Request, context: RouteContext) {
       }
     }
 
-    const rawProfilePicture = access.rhizome.profile_picture ?? '';
+    const rawProfilePicture = normalizeText(access.rhizome.profile_picture);
     let profilePictureUrl = '';
 
     if (rawProfilePicture) {
-      if (rawProfilePicture.startsWith('supabase:')) {
-        const targetPath = rawProfilePicture.replace('supabase:', '').trim();
-        const publicUrl = access.supabaseAdmin.storage.from('avatar').getPublicUrl(targetPath);
-        profilePictureUrl = publicUrl.data.publicUrl ?? '';
-      } else {
-        profilePictureUrl = rawProfilePicture;
-      }
+      const publicUrl = access.supabaseAdmin.storage.from('avatar').getPublicUrl(rawProfilePicture);
+      profilePictureUrl = publicUrl.data.publicUrl ?? '';
     }
 
     return Response.json({

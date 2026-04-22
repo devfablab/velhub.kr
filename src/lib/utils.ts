@@ -1,3 +1,5 @@
+import { getSupabaseBrowser } from './supabase';
+
 type DateInput = string | Date | null | undefined;
 
 const parseDate = (value: DateInput): Date | null => {
@@ -96,4 +98,16 @@ export function normalizeText(value: string | string[] | null | undefined) {
   }
 
   return '';
+}
+
+export function getOgImageUrl(value: string) {
+  const imagePath = normalizeText(value);
+
+  if (!imagePath) {
+    return '';
+  }
+
+  const { data } = getSupabaseBrowser().storage.from('og-image').getPublicUrl(imagePath);
+
+  return data.publicUrl || '';
 }

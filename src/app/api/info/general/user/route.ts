@@ -10,21 +10,14 @@ type RequestBody = {
 };
 
 const AVATAR_BUCKET = 'avatar';
-const SUPABASE_AVATAR_PREFIX = 'supabase:';
 
-function isSupabaseAvatarValue(value: string) {
-  return value.startsWith(SUPABASE_AVATAR_PREFIX);
-}
-
-function getSupabaseAvatarPath(value: string) {
-  return value.replace(SUPABASE_AVATAR_PREFIX, '').trim();
+function isExternalAvatarUrl(value: string) {
+  return value.startsWith('http://') || value.startsWith('https://');
 }
 
 function getSupabaseAvatarPublicUrl(path: string) {
   const supabaseAdmin = getSupabaseAdmin();
-
   const publicUrlResult = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-
   return publicUrlResult.data.publicUrl ?? '';
 }
 
@@ -53,12 +46,7 @@ export async function GET() {
     let avatarUrl = '';
 
     if (rawAvatarValue) {
-      if (isSupabaseAvatarValue(rawAvatarValue)) {
-        const avatarPath = getSupabaseAvatarPath(rawAvatarValue);
-        avatarUrl = avatarPath ? getSupabaseAvatarPublicUrl(avatarPath) : '';
-      } else {
-        avatarUrl = rawAvatarValue;
-      }
+      avatarUrl = isExternalAvatarUrl(rawAvatarValue) ? rawAvatarValue : getSupabaseAvatarPublicUrl(rawAvatarValue);
     }
 
     return Response.json({
@@ -117,10 +105,7 @@ export async function POST(request: Request) {
 
     const currentMetadata = (authUserResult.data.user.user_metadata ?? {}) as Record<string, unknown>;
 
-    const avatarUrl =
-      avatar && isSupabaseAvatarValue(avatar)
-        ? getSupabaseAvatarPublicUrl(getSupabaseAvatarPath(avatar))
-        : avatar || null;
+    const avatarUrl = avatar ? (isExternalAvatarUrl(avatar) ? avatar : getSupabaseAvatarPublicUrl(avatar)) : null;
 
     const authUpdateResult = await supabaseAdmin.auth.admin.updateUserById(sessionClaims.userId, {
       user_metadata: {

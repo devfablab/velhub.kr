@@ -147,28 +147,15 @@ function isValidSeriesKey(value: string) {
   return true;
 }
 
-function getStoragePath(value: string) {
-  if (!value.startsWith('supabase:')) {
-    return '';
-  }
-
-  return value.replace('supabase:', '');
-}
-
 function getSeriesImageUrl(value: string) {
-  const path = getStoragePath(value);
-
-  if (!path) {
-    return '';
-  }
-
+  const imagePath = normalizeText(value);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
-  if (!supabaseUrl) {
+  if (!supabaseUrl || !imagePath) {
     return '';
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/series/${path}`;
+  return `${supabaseUrl}/storage/v1/object/public/series/${imagePath}`;
 }
 
 function buildCheckUrl({
@@ -574,14 +561,6 @@ export default function Opt() {
       return;
     }
 
-    const deletePath = getStoragePath(thumbnailImage);
-
-    if (!deletePath) {
-      setThumbnailImage('');
-      setThumbnailImageUrl('');
-      return;
-    }
-
     try {
       setIsDeletingImage(true);
       setDialogErrorMessage('');
@@ -594,7 +573,7 @@ export default function Opt() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          path: deletePath,
+          path: thumbnailImage,
         }),
       });
 

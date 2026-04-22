@@ -137,28 +137,15 @@ function isValidCategoryKey(value: string) {
   return true;
 }
 
-function getStoragePath(value: string) {
-  if (!value.startsWith('supabase:')) {
-    return '';
-  }
-
-  return value.replace('supabase:', '');
-}
-
 function getCategoryImageUrl(value: string) {
-  const path = getStoragePath(value);
-
-  if (!path) {
-    return '';
-  }
-
+  const imagePath = normalizeText(value);
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 
-  if (!supabaseUrl) {
+  if (!supabaseUrl || !imagePath) {
     return '';
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/category/${path}`;
+  return `${supabaseUrl}/storage/v1/object/public/category/${imagePath}`;
 }
 
 function buildCheckUrl({
@@ -547,14 +534,6 @@ export default function Opt() {
       return;
     }
 
-    const deletePath = getStoragePath(thumbnailImage);
-
-    if (!deletePath) {
-      setThumbnailImage('');
-      setThumbnailImageUrl('');
-      return;
-    }
-
     try {
       setIsDeletingImage(true);
       setDialogErrorMessage('');
@@ -567,7 +546,7 @@ export default function Opt() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          path: deletePath,
+          path: thumbnailImage,
         }),
       });
 
@@ -992,7 +971,11 @@ export default function Opt() {
         </Alert>
       ) : null}
 
-      {isOrderChanged ? <Alert severity="warning">순서를 변경하시면 반드시 저장을 눌러주세요.</Alert> : null}
+      {isOrderChanged ? (
+        <Alert severity="warning" variant="outlined">
+          순서를 변경하시면 반드시 저장을 눌러주세요.
+        </Alert>
+      ) : null}
 
       {sortedCategories.length === 0 ? (
         <Paper sx={{ p: 3 }}>
@@ -1148,7 +1131,7 @@ export default function Opt() {
             ) : null}
 
             {dialogSuccessMessage ? (
-              <Alert severity="success" variant="filled">
+              <Alert severity="success" variant="outlined">
                 {dialogSuccessMessage}
               </Alert>
             ) : null}
