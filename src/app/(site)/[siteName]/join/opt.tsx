@@ -433,7 +433,7 @@ export default function Opt({ siteName }: Props) {
                   ) : null}
 
                   <Stack direction="row" spacing={1}>
-                    <Button component="label" type="button" variant="outlined" disabled={Boolean(uploadingQuestionId)}>
+                    <Button component="label" variant="outlined" disabled={Boolean(uploadingQuestionId)}>
                       {answers[question.id]?.answer_image ? '이미지 교체' : '이미지 업로드'}
                       <input
                         hidden
