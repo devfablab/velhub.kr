@@ -149,11 +149,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
     }
 
-    if (access.session.status === 'FAIL') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (access.session.case !== 'guest-public' && access.session.case !== 'staff') {
+    if (access.session.case !== 'guest-site' && access.session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
