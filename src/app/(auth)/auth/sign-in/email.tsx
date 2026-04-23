@@ -36,6 +36,7 @@ export default function EmailSignIn() {
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+  const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,6 +59,11 @@ export default function EmailSignIn() {
   async function runInviteAccept() {
     if (!inviteToken) {
       return false;
+    }
+
+    if (inviteType === 'community') {
+      router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
+      return true;
     }
 
     const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
@@ -305,6 +311,22 @@ export default function EmailSignIn() {
     setDecisionMessage('');
   }
 
+  const inviteParams = new URLSearchParams();
+
+  if (inviteToken) {
+    inviteParams.set('inviteToken', inviteToken);
+  }
+
+  if (inviteSiteName) {
+    inviteParams.set('siteName', inviteSiteName);
+  }
+
+  if (inviteType) {
+    inviteParams.set('inviteType', inviteType);
+  }
+
+  const signUpHref = inviteParams.toString() ? `/auth/sign-up?${inviteParams.toString()}` : '/auth/sign-up';
+
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
@@ -328,13 +350,7 @@ export default function EmailSignIn() {
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-            <Anchor
-              href={
-                inviteToken ? `/auth/sign-up?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-up'
-              }
-            >
-              회원가입
-            </Anchor>
+            <Anchor href={signUpHref}>회원가입</Anchor>
             <Anchor href="/auth/find-password">비밀번호 찾기</Anchor>
           </Box>
 

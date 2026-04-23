@@ -28,7 +28,7 @@ export default function SectionJoinSites() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const response = await fetch('/api/user-join-sites', {
+        const response = await fetch('/api/home/user-join-sites', {
           method: 'GET',
           credentials: 'include',
         });

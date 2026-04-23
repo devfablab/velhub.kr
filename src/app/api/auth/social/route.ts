@@ -117,7 +117,6 @@ export async function POST(request: Request) {
         bio: null,
         avatar,
         role: 'user',
-        join_sites: null,
         email: encryptedEmail,
       });
 

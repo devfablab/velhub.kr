@@ -49,6 +49,7 @@ export default function Page() {
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+  const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [processingState, setProcessingState] = useState<ProcessingState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -81,6 +82,33 @@ export default function Page() {
     async function runInviteAccept() {
       if (!inviteToken) {
         return false;
+      }
+
+      if (inviteType === 'community') {
+        const acceptInviteResponse = await fetch(
+          `/api/manage/members/invite/${inviteToken}?siteName=${inviteSiteName}`,
+          {
+            method: 'POST',
+            credentials: 'include',
+          },
+        );
+
+        const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
+
+        if (!acceptInviteResponse.ok) {
+          throw new Error(
+            'error' in acceptInviteResult
+              ? acceptInviteResult.error || '초대 처리에 실패했습니다.'
+              : '초대 처리에 실패했습니다.',
+          );
+        }
+
+        if (!('siteName' in acceptInviteResult) || !acceptInviteResult.siteName) {
+          throw new Error('초대 처리에 실패했습니다.');
+        }
+
+        router.replace(`/${acceptInviteResult.siteName}`);
+        return true;
       }
 
       const acceptInviteResponse = await fetch(
@@ -131,10 +159,12 @@ export default function Page() {
         throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
       }
 
-      const inviteAccepted = await runInviteAccept();
+      if (inviteType !== 'community') {
+        const inviteAccepted = await runInviteAccept();
 
-      if (inviteAccepted) {
-        return;
+        if (inviteAccepted) {
+          return;
+        }
       }
 
       const assuranceLevelResult = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -148,6 +178,11 @@ export default function Page() {
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
         router.replace('/auth/verify-2fa');
+        return;
+      }
+
+      if (inviteType === 'community' && inviteToken && inviteSiteName) {
+        router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
         return;
       }
 
@@ -269,7 +304,7 @@ export default function Page() {
     return () => {
       isCancelled = true;
     };
-  }, [router, inviteToken, inviteSiteName]);
+  }, [router, inviteToken, inviteSiteName, inviteType]);
 
   async function handleConfirmSocialLogin() {
     if (!pendingSocialSave) {
@@ -301,11 +336,19 @@ export default function Page() {
         throw new Error(socialSaveResult.error ?? '소셜 로그인 저장 처리에 실패했습니다.');
       }
 
+      if (inviteToken && inviteType === 'community') {
+        router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
+        return;
+      }
+
       if (inviteToken) {
-        const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
-          method: 'POST',
-          credentials: 'include',
-        });
+        const acceptInviteResponse = await fetch(
+          `/api/manage/design/blog/team/invite/${inviteToken}?siteName=${inviteSiteName}`,
+          {
+            method: 'POST',
+            credentials: 'include',
+          },
+        );
 
         const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
 
@@ -363,12 +406,21 @@ export default function Page() {
       scope: 'local',
     });
 
+    const params = new URLSearchParams();
+
     if (inviteToken) {
-      router.replace(`/auth/sign-in?inviteToken=${inviteToken}&siteName=${inviteSiteName}`);
-      return;
+      params.set('inviteToken', inviteToken);
     }
 
-    router.replace('/auth/sign-in');
+    if (inviteSiteName) {
+      params.set('siteName', inviteSiteName);
+    }
+
+    if (inviteType) {
+      params.set('inviteType', inviteType);
+    }
+
+    router.replace(`/auth/sign-in${params.toString() ? `?${params.toString()}` : ''}`);
   }
 
   return (

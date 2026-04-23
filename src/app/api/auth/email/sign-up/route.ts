@@ -94,9 +94,10 @@ export async function POST(request: Request) {
         avatar: null,
         user_id: authUserId,
         role: 'user',
-        join_sites: null,
         email: encryptedEmail,
       });
+
+      console.log('stigmasInsertResult: ', stigmasInsertResult);
 
       if (stigmasInsertResult.error) {
         console.error('stigmas 생성 실패:', stigmasInsertResult.error);

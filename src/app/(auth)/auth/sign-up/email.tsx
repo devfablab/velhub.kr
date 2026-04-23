@@ -31,6 +31,7 @@ export default function EmailSignUp() {
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+  const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,10 +52,16 @@ export default function EmailSignUp() {
         setIsInviteLoading(true);
         setErrorMessage('');
 
-        const response = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
+        const response =
+          inviteType === 'community'
+            ? await fetch(`/api/manage/members/invite/${inviteToken}?siteName=${inviteSiteName}`, {
+                method: 'GET',
+                credentials: 'include',
+              })
+            : await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
+                method: 'GET',
+                credentials: 'include',
+              });
 
         const result = (await response.json()) as InviteResponse | { error?: string };
 
@@ -82,7 +89,7 @@ export default function EmailSignUp() {
     }
 
     void loadInvite();
-  }, [inviteToken]);
+  }, [inviteToken, inviteSiteName, inviteType]);
 
   function handleUserNameChange(event: InputChangeEvent) {
     setUserName(event.currentTarget.value);
@@ -177,6 +184,11 @@ export default function EmailSignUp() {
         throw new Error(saveResult.error ?? '회원가입 저장 처리에 실패했습니다.');
       }
 
+      if (inviteToken && inviteType === 'community') {
+        router.replace(`/${inviteSiteName}/invite-community/${inviteToken}`);
+        return;
+      }
+
       if (inviteToken) {
         const acceptInviteResponse = await fetch(`/api/manage/design/blog/team/invite/${inviteToken}`, {
           method: 'POST',
@@ -217,6 +229,22 @@ export default function EmailSignUp() {
       setIsSubmitting(false);
     }
   }
+
+  const inviteParams = new URLSearchParams();
+
+  if (inviteToken) {
+    inviteParams.set('inviteToken', inviteToken);
+  }
+
+  if (inviteSiteName) {
+    inviteParams.set('siteName', inviteSiteName);
+  }
+
+  if (inviteType) {
+    inviteParams.set('inviteType', inviteType);
+  }
+
+  const signInHref = inviteParams.toString() ? `/auth/sign-in?${inviteParams.toString()}` : '/auth/sign-in';
 
   return (
     <Paper elevation={0} sx={{ p: 3 }}>
@@ -262,13 +290,7 @@ export default function EmailSignUp() {
           />
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Anchor
-              href={
-                inviteToken ? `/auth/sign-in?inviteToken=${inviteToken}&siteName=${inviteSiteName}` : '/auth/sign-in'
-              }
-            >
-              로그인 하기
-            </Anchor>
+            <Anchor href={signInHref}>로그인 하기</Anchor>
           </Box>
 
           <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
