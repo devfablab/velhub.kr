@@ -636,7 +636,7 @@ export default function Opt() {
       <Dialog open={isInviteListDialogOpen} onClose={handleCloseInviteListDialog} fullWidth maxWidth="md">
         <DialogTitle>초대 현황</DialogTitle>
         <DialogContent>
-          <TableContainer component={Paper} sx={{ mt: 1 }}>
+          <TableContainer component={Paper} sx={{ mt: 1 }} variant="outlined">
             <Table size="small">
               <TableHead>
                 <TableRow>
