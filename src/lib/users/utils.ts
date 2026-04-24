@@ -44,12 +44,21 @@ type MembershipRow = {
   banned_at: string | null;
   banned_by: string | null;
   blocked_by?: string | null;
+  block_reason?: string | null;
+  kick_reason?: string | null;
+  ban_reason?: string | null;
+  withdrawn_at?: string | null;
+  withdraw_reason?: string | null;
+  cleared_at?: string | null;
+  cleared_by?: string | null;
+  clear_reason?: string | null;
 };
 
 type StigmaRow = {
   id: string;
   email: string | null;
   avatar: string | null;
+  user_name?: string | null;
 };
 
 type LevelRow = {
@@ -228,6 +237,78 @@ export async function getPublicActiveMemberships(siteId: string) {
   } as const;
 }
 
+export async function getBlockedMemberships(siteId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('*')
+    .eq('site_id', siteId)
+    .eq('is_block', true)
+    .is('kicked_at', null)
+    .is('banned_at', null)
+    .order('blocked_at', { ascending: false });
+
+  if (membershipResult.error) {
+    return {
+      ok: false,
+      error: '활동정지 멤버 정보를 불러오지 못했습니다.',
+    } as const;
+  }
+
+  return {
+    ok: true,
+    memberships: (membershipResult.data ?? []) as MembershipRow[],
+  } as const;
+}
+
+export async function getWithdrawnMemberships(siteId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('*')
+    .eq('site_id', siteId)
+    .is('banned_at', null)
+    .or('kicked_at.not.is.null,withdrawn_at.not.is.null,cleared_at.not.is.null')
+    .order('created_at', { ascending: false });
+
+  if (membershipResult.error) {
+    return {
+      ok: false,
+      error: '탈퇴 멤버 정보를 불러오지 못했습니다.',
+    } as const;
+  }
+
+  return {
+    ok: true,
+    memberships: (membershipResult.data ?? []) as MembershipRow[],
+  } as const;
+}
+
+export async function getBannedMemberships(siteId: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('*')
+    .eq('site_id', siteId)
+    .not('banned_at', 'is', null)
+    .order('banned_at', { ascending: false });
+
+  if (membershipResult.error) {
+    return {
+      ok: false,
+      error: '가입불가 멤버 정보를 불러오지 못했습니다.',
+    } as const;
+  }
+
+  return {
+    ok: true,
+    memberships: (membershipResult.data ?? []) as MembershipRow[],
+  } as const;
+}
+
 export async function getPublicActiveMembership(siteId: string, userId: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -306,7 +387,7 @@ export async function getStigmasByIds(userIds: string[]) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, email, avatar').in('id', userIds);
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, email, avatar, user_name').in('id', userIds);
 
   if (stigmaResult.error) {
     return {
@@ -372,4 +453,14 @@ export function buildMemberResponse(
         }
       : null,
   };
+}
+
+export function getStigmaDisplayName(stigma: StigmaRow | null | undefined) {
+  const userName = decryptNullable(stigma?.user_name ?? null);
+
+  if (userName) {
+    return userName;
+  }
+
+  return decryptNullable(stigma?.email ?? null) || '';
 }

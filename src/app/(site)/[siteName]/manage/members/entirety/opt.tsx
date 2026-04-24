@@ -8,6 +8,10 @@ import {
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   MenuItem,
   Paper,
@@ -60,6 +64,9 @@ type UserMembershipRow = {
   kicked_by: string | null;
   banned_at: string | null;
   banned_by: string | null;
+  block_reason?: string | null;
+  kick_reason?: string | null;
+  ban_reason?: string | null;
 };
 
 type UserLevelRow = {
@@ -111,6 +118,7 @@ type DetailSearchType = 'post_count' | 'comment_count' | 'checkin_count' | 'date
 type CountPeriod = 'all' | 'recent_1month' | 'custom';
 type CountCompare = 'gte' | 'lte';
 type DateSearchType = 'approval_at' | 'last_checkin_at';
+type ActionType = 'block' | 'kick' | 'ban' | null;
 
 type AppliedSearch =
   | {
@@ -137,14 +145,6 @@ type AppliedSearch =
 
 function getDisplayNickname(user: UserRow) {
   return user.membership.nickname || user.email || '';
-}
-
-function getLevelDisplayName(level: ManageLevelRow | UserLevelRow | null) {
-  if (!level) {
-    return '';
-  }
-
-  return normalizeText(level.name) || `lv ${level.lv}`;
 }
 
 function getNormalizedKeyword(value: string) {
@@ -227,10 +227,13 @@ export default function Opt() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLevelChanging, setIsLevelChanging] = useState(false);
-  const [isBlocking, setIsBlocking] = useState(false);
-  const [isKicking, setIsKicking] = useState(false);
+  const [isActionSubmitting, setIsActionSubmitting] = useState(false);
+
+  const [actionType, setActionType] = useState<ActionType>(null);
+  const [actionReason, setActionReason] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   async function loadUsers() {
@@ -595,77 +598,108 @@ export default function Opt() {
     }
   }
 
-  async function handleBlockUsers() {
+  function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
       setErrorMessage('멤버를 선택해주세요.');
       return;
     }
 
-    try {
-      setErrorMessage('');
-      setIsBlocking(true);
-
-      for (const userId of selectedUserIds) {
-        const response = await fetch(`/api/users/${siteName}/${userId}/block`, {
-          method: 'PATCH',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '활동 정지 처리에 실패했습니다.');
-        }
-      }
-
-      await loadUsers();
-      setSelectedUserIds([]);
-      setSnackbarMessage('활동 정지 처리되었습니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '활동 정지 처리에 실패했습니다.');
-      } else {
-        setErrorMessage('활동 정지 처리에 실패했습니다.');
-      }
-    } finally {
-      setIsBlocking(false);
-    }
+    setDialogErrorMessage('');
+    setActionReason('');
+    setActionType(nextActionType);
   }
 
-  async function handleKickUsers() {
-    if (selectedUserIds.length === 0) {
-      setErrorMessage('멤버를 선택해주세요.');
+  function handleCloseActionDialog() {
+    if (isActionSubmitting) {
+      return;
+    }
+
+    setDialogErrorMessage('');
+    setActionReason('');
+    setActionType(null);
+  }
+
+  function getActionTitle() {
+    if (actionType === 'block') {
+      return '활동 정지';
+    }
+
+    if (actionType === 'kick') {
+      return '강제 탈퇴';
+    }
+
+    if (actionType === 'ban') {
+      return '가입 불가';
+    }
+
+    return '';
+  }
+
+  function getActionReasonLabel() {
+    if (actionType === 'block') {
+      return '활동정지 사유';
+    }
+
+    if (actionType === 'kick') {
+      return '강제탈퇴 사유';
+    }
+
+    if (actionType === 'ban') {
+      return '가입불가 사유';
+    }
+
+    return '';
+  }
+
+  async function handleSubmitAction() {
+    if (!actionType) {
+      return;
+    }
+
+    const trimmedReason = normalizeText(actionReason);
+
+    if (!trimmedReason) {
+      setDialogErrorMessage(`${getActionReasonLabel()}를 입력해주세요.`);
       return;
     }
 
     try {
+      setDialogErrorMessage('');
       setErrorMessage('');
-      setIsKicking(true);
+      setIsActionSubmitting(true);
 
       for (const userId of selectedUserIds) {
-        const response = await fetch(`/api/users/${siteName}/${userId}/kick`, {
+        const response = await fetch(`/api/users/${siteName}/${userId}/${actionType}`, {
           method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           credentials: 'include',
+          body: JSON.stringify({
+            reason: trimmedReason,
+          }),
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error ?? '강제 탈퇴 처리에 실패했습니다.');
+          throw new Error(result.error ?? `${getActionTitle()} 처리에 실패했습니다.`);
         }
       }
 
       await loadUsers();
       setSelectedUserIds([]);
-      setSnackbarMessage('강제 탈퇴 처리되었습니다.');
+      setActionType(null);
+      setActionReason('');
+      setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '강제 탈퇴 처리에 실패했습니다.');
+        setDialogErrorMessage(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`);
       } else {
-        setErrorMessage('강제 탈퇴 처리에 실패했습니다.');
+        setDialogErrorMessage(`${getActionTitle()} 처리에 실패했습니다.`);
       }
     } finally {
-      setIsKicking(false);
+      setIsActionSubmitting(false);
     }
   }
 
@@ -677,7 +711,7 @@ export default function Opt() {
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Stack spacing={2.5}>
         <Typography variant="h5" component="h1">
-          전체 멤버 관리
+          활동 멤버 관리
         </Typography>
 
         {errorMessage ? (
@@ -953,11 +987,32 @@ export default function Opt() {
             <Button type="button" variant="outlined" onClick={handleChangeLevel} disabled={isLevelChanging}>
               변경
             </Button>
-            <Button type="button" variant="outlined" color="warning" onClick={handleBlockUsers} disabled={isBlocking}>
+            <Button
+              type="button"
+              variant="outlined"
+              color="warning"
+              onClick={() => handleOpenActionDialog('block')}
+              disabled={isActionSubmitting}
+            >
               활동 정지
             </Button>
-            <Button type="button" variant="outlined" color="error" onClick={handleKickUsers} disabled={isKicking}>
+            <Button
+              type="button"
+              variant="outlined"
+              color="error"
+              onClick={() => handleOpenActionDialog('kick')}
+              disabled={isActionSubmitting}
+            >
               강제 탈퇴
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="error"
+              onClick={() => handleOpenActionDialog('ban')}
+              disabled={isActionSubmitting}
+            >
+              가입 불가
             </Button>
           </Stack>
 
@@ -1028,6 +1083,37 @@ export default function Opt() {
             </Table>
           </TableContainer>
         </Stack>
+
+        <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
+          <DialogTitle>{getActionTitle()}</DialogTitle>
+          <DialogContent>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <TextField
+                label={getActionReasonLabel()}
+                value={actionReason}
+                onChange={(event) => setActionReason(event.currentTarget.value)}
+                fullWidth
+                multiline
+                minRows={4}
+                size="small"
+              />
+
+              {dialogErrorMessage ? (
+                <Alert severity="error" variant="filled">
+                  {dialogErrorMessage}
+                </Alert>
+              ) : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button type="button" variant="outlined" onClick={handleCloseActionDialog} disabled={isActionSubmitting}>
+              취소
+            </Button>
+            <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+              확인
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={Boolean(snackbarMessage)}

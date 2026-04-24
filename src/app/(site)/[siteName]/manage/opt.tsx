@@ -150,7 +150,7 @@ export default function Opt() {
         <Grid container rowSpacing={1} size={{ xs: 12 }}>
           <Grid size={6}>
             <Paper sx={{ p: 3 }}>
-              <Typography variant="subtitle1">전체 멤버</Typography>
+              <Typography variant="subtitle1">활동 멤버</Typography>
               <Typography variant="body1">{memberCount} 명</Typography>
             </Paper>
           </Grid>

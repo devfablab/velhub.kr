@@ -269,7 +269,7 @@ export default function Opt() {
     <Stack spacing={3}>
       {isNotMobile && (
         <Typography variant="h5" component="h1">
-          전체 멤버 관리
+          활동 멤버 관리
         </Typography>
       )}
 
