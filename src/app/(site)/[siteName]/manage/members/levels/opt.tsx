@@ -452,7 +452,7 @@ export default function Opt() {
       ) : null}
 
       {!enabled ? (
-        <Paper elevation={0} sx={{ p: 3 }}>
+        <Paper variant="outlined">
           <Stack spacing={2}>
             <Typography variant="h6" component="h2">
               등업 시스템을 사용하시겠어요?
@@ -476,147 +476,136 @@ export default function Opt() {
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2}>
               {levels.map((level) => (
-                <Stack key={level.id} spacing={1.5}>
-                  <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                    <Box
-                      sx={{
-                        width: 25,
-                        minWidth: 25,
-                        height: 25,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {level.icon_url ? (
-                        <Box
-                          component="img"
-                          src={level.icon_url}
-                          alt={`lv${level.lv}`}
-                          sx={{
-                            width: 25,
-                            height: 25,
-                            objectFit: 'contain',
-                            display: 'block',
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="body2">{level.lv}</Typography>
-                      )}
-                    </Box>
+                <Stack key={level.id} direction="row" spacing={1.5}>
+                  <Box sx={{ pt: 1 }}>
+                    {level.icon_url ? (
+                      <Box
+                        component="img"
+                        src={level.icon_url}
+                        alt={`lv${level.lv}`}
+                        sx={{
+                          width: 25,
+                          height: 25,
+                          objectFit: 'contain',
+                          display: 'block',
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="body2">lv.{level.lv}</Typography>
+                    )}
+                  </Box>
 
-                    <Stack spacing={1.5} sx={{ flex: 1 }}>
-                      <Stack direction="row" spacing={1.5}>
-                        <TextField
-                          value={level.name ?? ''}
-                          onChange={(event) => handleNameChange(level.id, event)}
-                          fullWidth
-                          size="small"
-                          placeholder="등급명"
-                        />
-                        <TextField
-                          value={level.description ?? ''}
-                          onChange={(event) => handleDescriptionChange(level.id, event)}
-                          fullWidth
-                          size="small"
-                          placeholder="설명"
-                        />
-                        <Select
-                          value={level.lv === 1 ? 'manual' : level.requirement_type}
-                          onChange={(event) =>
-                            handleRequirementTypeChange(
-                              level.id,
-                              event.target.value === 'automatic' ? 'automatic' : 'manual',
-                            )
-                          }
-                          size="small"
-                          sx={{ minWidth: 180 }}
-                          disabled={level.lv === 1}
-                        >
-                          {requirementTypeOptions.map((option) => (
-                            <MenuItem key={option.value} value={option.value}>
-                              {option.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleClearLevel(level.id)}
-                        >
-                          삭제
-                        </Button>
-                      </Stack>
-
-                      {level.lv !== 1 && level.requirement_type === 'automatic' ? (
-                        <Stack
-                          direction={isNotMobile ? 'row' : 'column'}
-                          spacing={1}
-                          alignItems={isNotMobile ? 'center' : 'flex-start'}
-                        >
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2">게시글</Typography>
-                            <TextField
-                              type="number"
-                              value={level.required_posts}
-                              onChange={(event) => handleNumericChange(level.id, 'required_posts', event)}
-                              size="small"
-                              sx={{ width: 90 }}
-                            />
-                            <Typography variant="body2">개,</Typography>
-                          </Stack>
-
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2">댓글</Typography>
-                            <TextField
-                              type="number"
-                              value={level.required_comments}
-                              onChange={(event) => handleNumericChange(level.id, 'required_comments', event)}
-                              size="small"
-                              sx={{ width: 90 }}
-                            />
-                            <Typography variant="body2">개,</Typography>
-                          </Stack>
-
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2">방문</Typography>
-                            <TextField
-                              type="number"
-                              value={level.required_checkins}
-                              onChange={(event) => handleNumericChange(level.id, 'required_checkins', event)}
-                              size="small"
-                              sx={{ width: 90 }}
-                            />
-                            <Typography variant="body2">회,</Typography>
-                          </Stack>
-
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2">좋아요</Typography>
-                            <TextField
-                              type="number"
-                              value={level.required_likes}
-                              onChange={(event) => handleNumericChange(level.id, 'required_likes', event)}
-                              size="small"
-                              sx={{ width: 90 }}
-                            />
-                            <Typography variant="body2">회,</Typography>
-                          </Stack>
-
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="body2">가입</Typography>
-                            <TextField
-                              type="number"
-                              value={level.required_days}
-                              onChange={(event) => handleNumericChange(level.id, 'required_days', event)}
-                              size="small"
-                              sx={{ width: 90 }}
-                            />
-                            <Typography variant="body2">일 후 만족 시 자동등업</Typography>
-                          </Stack>
-                        </Stack>
-                      ) : null}
+                  <Stack spacing={1.5} sx={{ flex: 1 }}>
+                    <Stack direction="row" spacing={1.5}>
+                      <TextField
+                        value={level.name ?? ''}
+                        onChange={(event) => handleNameChange(level.id, event)}
+                        sx={{ width: 270 }}
+                        size="small"
+                        placeholder="등급명"
+                      />
+                      <TextField
+                        value={level.description ?? ''}
+                        onChange={(event) => handleDescriptionChange(level.id, event)}
+                        fullWidth
+                        size="small"
+                        placeholder="설명"
+                      />
+                      <Select
+                        value={level.lv === 1 ? 'manual' : level.requirement_type}
+                        onChange={(event) =>
+                          handleRequirementTypeChange(
+                            level.id,
+                            event.target.value === 'automatic' ? 'automatic' : 'manual',
+                          )
+                        }
+                        size="small"
+                        sx={{ minWidth: 120 }}
+                        disabled={level.lv === 1}
+                      >
+                        {requirementTypeOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Button type="button" variant="outlined" color="error" onClick={() => handleClearLevel(level.id)}>
+                        삭제
+                      </Button>
                     </Stack>
+
+                    {level.lv !== 1 && level.requirement_type === 'automatic' ? (
+                      <Stack
+                        direction={isNotMobile ? 'row' : 'column'}
+                        spacing={1}
+                        alignItems={isNotMobile ? 'center' : 'flex-start'}
+                      >
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2">게시글</Typography>
+                          <TextField
+                            type="text"
+                            inputMode="numeric"
+                            value={level.required_posts}
+                            onChange={(event) => handleNumericChange(level.id, 'required_posts', event)}
+                            size="small"
+                            sx={{ width: 60 }}
+                          />
+                          <Typography variant="body2">개,</Typography>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2">댓글</Typography>
+                          <TextField
+                            type="text"
+                            inputMode="numeric"
+                            value={level.required_comments}
+                            onChange={(event) => handleNumericChange(level.id, 'required_comments', event)}
+                            size="small"
+                            sx={{ width: 60 }}
+                          />
+                          <Typography variant="body2">개,</Typography>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2">방문</Typography>
+                          <TextField
+                            type="text"
+                            inputMode="numeric"
+                            value={level.required_checkins}
+                            onChange={(event) => handleNumericChange(level.id, 'required_checkins', event)}
+                            size="small"
+                            sx={{ width: 60 }}
+                          />
+                          <Typography variant="body2">회,</Typography>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2">좋아요</Typography>
+                          <TextField
+                            type="text"
+                            inputMode="numeric"
+                            value={level.required_likes}
+                            onChange={(event) => handleNumericChange(level.id, 'required_likes', event)}
+                            size="small"
+                            sx={{ width: 60 }}
+                          />
+                          <Typography variant="body2">회,</Typography>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="body2">가입</Typography>
+                          <TextField
+                            type="text"
+                            inputMode="numeric"
+                            value={level.required_days}
+                            onChange={(event) => handleNumericChange(level.id, 'required_days', event)}
+                            size="small"
+                            sx={{ width: 60 }}
+                          />
+                          <Typography variant="body2">일 후 만족 시 자동등업</Typography>
+                        </Stack>
+                      </Stack>
+                    ) : null}
                   </Stack>
                 </Stack>
               ))}

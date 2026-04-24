@@ -456,7 +456,7 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} variant="outlined">
         <Table size="small">
           <TableHead>
             <TableRow>

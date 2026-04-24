@@ -982,7 +982,7 @@ export default function Opt() {
           <Typography>등록된 카테고리가 없습니다.</Typography>
         </Paper>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} variant="outlined">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext
               items={sortedCategories.map((category) => category.id)}

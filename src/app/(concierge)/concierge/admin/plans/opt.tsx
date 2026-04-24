@@ -151,7 +151,7 @@ export default function Opt() {
         </Button>
       </Stack>
 
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} variant="outlined">
         <Table>
           <TableBody>
             {plans.map((planRow) => (

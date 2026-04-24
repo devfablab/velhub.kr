@@ -329,7 +329,7 @@ export default function Opt() {
             <Typography>등록된 말머리가 없습니다.</Typography>
           </Paper>
         ) : (
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} variant="outlined">
             <Table>
               <TableHead>
                 <TableRow>

@@ -903,7 +903,7 @@ export default function Opt() {
           <Typography>등록된 연재가 없습니다.</Typography>
         </Paper>
       ) : (
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} variant="outlined">
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -1164,7 +1164,7 @@ export default function Opt() {
               </Button>
             </Stack>
 
-            <TableContainer component={Paper}>
+            <TableContainer component={Paper} variant="outlined">
               <Table>
                 <TableHead>
                   <TableRow>
