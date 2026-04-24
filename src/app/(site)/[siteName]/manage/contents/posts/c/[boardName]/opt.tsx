@@ -519,7 +519,7 @@ export default function Opt() {
       ) : null}
 
       <Box sx={{ position: 'relative' }}>
-        <TableContainer elevation={3} component={Paper}>
+        <TableContainer variant="outlined" component={Paper}>
           <Table size="small">
             <TableHead>
               <TableRow>

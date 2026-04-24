@@ -125,7 +125,7 @@ export default function Page() {
             새 비밀번호 설정
           </Typography>
 
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2.5}>
                 <TextField

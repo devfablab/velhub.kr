@@ -773,11 +773,11 @@ export default function Opt() {
         {isBoardOrderChanged ? <Alert severity="warning">순서를 변경하시면 반드시 저장을 눌러주세요.</Alert> : null}
 
         {boards.length === 0 ? (
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography>게시판이 없습니다.</Typography>
           </Paper>
         ) : (
-          <Paper elevation={0} sx={{ overflowX: 'auto' }}>
+          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
               <SortableContext items={boards.map((board) => board.id)} strategy={verticalListSortingStrategy}>
                 <Table>
@@ -900,14 +900,14 @@ export default function Opt() {
       ) : null}
 
       {posts.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 3 }}>
+        <Paper variant="outlined" sx={{ p: 3 }}>
           <Typography>
             {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}
           </Typography>
         </Paper>
       ) : (
         <Box sx={{ position: 'relative' }}>
-          <TableContainer elevation={3} component={Paper}>
+          <TableContainer variant="outlined" component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>

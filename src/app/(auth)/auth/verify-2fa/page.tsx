@@ -140,7 +140,7 @@ export default function Page() {
               2단계 인증 확인
             </Typography>
 
-            <Paper elevation={0} sx={{ p: 3 }}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
               <Typography>인증 정보를 확인하고 있습니다.</Typography>
             </Paper>
           </Stack>
@@ -157,7 +157,7 @@ export default function Page() {
             2단계 인증 확인
           </Typography>
 
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Box component="form" onSubmit={handleSubmit}>
               <Stack spacing={2.5}>
                 <TextField

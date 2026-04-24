@@ -74,7 +74,7 @@ export default function SectionPendingInvites() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper variant="outlined" sx={{ p: 3 }}>
       <Stack spacing={2}>
         <Typography variant="h6" component="h2">
           초대장이 날라왔어요 😎

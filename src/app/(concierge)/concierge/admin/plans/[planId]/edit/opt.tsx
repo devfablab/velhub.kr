@@ -152,7 +152,7 @@ export default function Opt({ planId }: Props) {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper variant="outlined" sx={{ p: 3 }}>
       <Stack component="form" spacing={2} onSubmit={handleSubmit}>
         <TextField label="요금제 카테고리 영문명" value={categoryKey} onChange={handleCategoryKeyChange} fullWidth />
 

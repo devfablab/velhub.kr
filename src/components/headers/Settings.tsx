@@ -173,7 +173,7 @@ export default function HeaderSettings() {
   return (
     <AppBar
       position="static"
-      elevation={0}
+      variant="outlined"
       sx={{
         bgcolor: 'background.paper',
         color: 'text.primary',

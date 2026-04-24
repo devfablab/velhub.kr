@@ -183,7 +183,7 @@ export default function HeaderLounge() {
   return (
     <AppBar
       position="static"
-      elevation={0}
+      variant="outlined"
       sx={{
         bgcolor: 'background.paper',
         color: 'text.primary',

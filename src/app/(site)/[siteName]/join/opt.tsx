@@ -365,7 +365,7 @@ export default function Opt({ siteName }: Props) {
   return (
     <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
       {joinNotice ? (
-        <Paper elevation={3} sx={{ p: 2 }}>
+        <Paper variant="outlined" sx={{ p: 2 }}>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
             {joinNotice}
           </Typography>

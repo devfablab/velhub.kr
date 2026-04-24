@@ -303,7 +303,7 @@ export default function Opt() {
         </Typography>
       )}
 
-      <Paper elevation={0} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1.5} alignItems="center">
           <Avatar
             src={profilePictureUrl || '/broken-image.jpg'}
@@ -324,14 +324,14 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={0}>
+      <Paper variant="outlined">
         <Typography variant="subtitle2">
           {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
           {formatDate(siteInfo.created_at)}에 개설
         </Typography>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">사이트 식별자</Typography>
           {editingField === 'site_key' ? (
@@ -385,7 +385,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">사이트명</Typography>
           {editingField === 'site_label' ? (
@@ -429,7 +429,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">사이트 설명</Typography>
           {editingField === 'summary' ? (
@@ -474,7 +474,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">테마</Typography>
           {editingField === 'theme_type' ? (
@@ -514,7 +514,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
           {editingField === 'visibility_type' ? (
@@ -571,7 +571,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 2 }}>
+      <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
           <Typography variant="subtitle2">운영중단</Typography>
           {editingField === 'is_shutdown' ? (
@@ -619,7 +619,7 @@ export default function Opt() {
         </Stack>
       </Paper>
 
-      <Paper elevation={0}>
+      <Paper variant="outlined">
         <Table size="small">
           <TableHead>
             <TableRow>

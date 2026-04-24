@@ -108,7 +108,7 @@ export default async function Page(context: RouteContext) {
             )}
           </Stack>
 
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Stack spacing={2}>
               <Stack spacing={0.5}>
                 <Typography>요금제 카테고리 영문명</Typography>
@@ -142,7 +142,7 @@ export default async function Page(context: RouteContext) {
             </Stack>
           </Paper>
 
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             {feature ? (
               <Stack spacing={2}>
                 <Stack spacing={0.5}>

@@ -34,7 +34,7 @@ function SortableItem({ page, onClick }: SortableItemProps) {
   return (
     <Paper
       ref={setNodeRef}
-      elevation={3}
+      variant="outlined"
       sx={{
         p: 2,
         cursor: 'grab',

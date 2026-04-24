@@ -319,7 +319,7 @@ export default function UserInfo() {
 
   return (
     <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters elevation={3}>
+      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"

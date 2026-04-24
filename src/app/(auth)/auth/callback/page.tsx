@@ -431,7 +431,7 @@ export default function Page() {
             소셜 로그인 처리
           </Typography>
 
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             {processingState === 'idle' || processingState === 'processing' ? (
               <Stack spacing={5} alignItems="center">
                 <Alert variant="outlined" severity="info">

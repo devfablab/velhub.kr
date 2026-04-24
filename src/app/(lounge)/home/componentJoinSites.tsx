@@ -69,7 +69,7 @@ export default function ComponentJoinSites({ siteType, joinSites }: Props) {
 
       <Stack spacing={1.5}>
         {filteredSites.map((site) => (
-          <Paper key={site.id} elevation={0} sx={{ p: 2 }}>
+          <Paper key={site.id} variant="outlined" sx={{ p: 2 }}>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar src={getAvatarUrl(site.avatar)} alt={site.site_label} />
 

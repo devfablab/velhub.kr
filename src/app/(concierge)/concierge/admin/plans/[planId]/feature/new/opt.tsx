@@ -155,7 +155,7 @@ export default function Opt({ planId }: Props) {
   return (
     <Stack spacing={3}>
       {plan ? (
-        <Paper elevation={0} sx={{ p: 3 }}>
+        <Paper variant="outlined" sx={{ p: 3 }}>
           <Stack spacing={1.5}>
             <Typography>{plan.category_label}</Typography>
             <Typography>{plan.plan_label}</Typography>
@@ -165,7 +165,7 @@ export default function Opt({ planId }: Props) {
         </Paper>
       ) : null}
 
-      <Paper elevation={0} sx={{ p: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3 }}>
         <Stack component="form" spacing={2} onSubmit={handleSubmit}>
           <Stack spacing={1}>
             <Typography>에디터에 이미지 삽입 가능</Typography>

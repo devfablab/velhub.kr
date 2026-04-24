@@ -159,7 +159,7 @@ export default function Opt() {
     return (
       <Stack spacing={2.5}>
         {joinNotice ? (
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               가입 안내
             </Typography>
@@ -169,7 +169,7 @@ export default function Opt() {
           </Paper>
         ) : null}
 
-        <Paper elevation={0} sx={{ p: 3 }}>
+        <Paper variant="outlined" sx={{ p: 3 }}>
           <Stack spacing={2}>
             <Typography variant="body2">초대받은 이메일: {inviteEmail}</Typography>
 
@@ -201,7 +201,7 @@ export default function Opt() {
     return (
       <Stack spacing={2}>
         {joinNotice ? (
-          <Paper elevation={0} sx={{ p: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               가입 안내
             </Typography>
@@ -227,7 +227,7 @@ export default function Opt() {
   return (
     <Stack spacing={2.5}>
       {joinNotice ? (
-        <Paper elevation={0} sx={{ p: 3 }}>
+        <Paper variant="outlined" sx={{ p: 3 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             가입 안내
           </Typography>
@@ -237,7 +237,7 @@ export default function Opt() {
         </Paper>
       ) : null}
 
-      <Paper elevation={0} sx={{ p: 3 }}>
+      <Paper variant="outlined" sx={{ p: 3 }}>
         <Box component="form" onSubmit={handleSubmit}>
           <Stack spacing={2.5}>
             <Typography variant="body2">

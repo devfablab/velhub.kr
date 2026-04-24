@@ -530,7 +530,7 @@ export default function Opt() {
               </Alert>
 
               {joinQuestions.map((question, questionIndex) => (
-                <Paper key={question.id} elevation={3} sx={{ p: 2 }}>
+                <Paper key={question.id} variant="outlined" sx={{ p: 2 }}>
                   <Stack spacing={2}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="subtitle2">질문 {questionIndex + 1}</Typography>

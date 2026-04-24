@@ -260,7 +260,7 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0}>
+    <Paper variant="outlined">
       {isNotMobile && (
         <Typography variant="h5" component="h1">
           기본 서체 설정

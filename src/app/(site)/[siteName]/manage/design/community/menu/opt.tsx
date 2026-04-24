@@ -45,7 +45,7 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
   return (
     <Paper
       ref={setNodeRef}
-      elevation={3}
+      variant="outlined"
       sx={{
         p: 2,
         minWidth: 160,
@@ -271,7 +271,7 @@ export default function Opt() {
   }
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper variant="outlined" sx={{ p: 3 }}>
       {isNotMobile && (
         <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
           메뉴 설정
@@ -285,7 +285,7 @@ export default function Opt() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
             <Stack spacing={2}>
-              <Paper elevation={3} sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
+              <Paper variant="outlined" sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
                 <Typography>홈</Typography>
               </Paper>
 

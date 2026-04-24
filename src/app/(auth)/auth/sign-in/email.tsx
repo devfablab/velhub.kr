@@ -328,7 +328,7 @@ export default function EmailSignIn() {
   const signUpHref = inviteParams.toString() ? `/auth/sign-up?${inviteParams.toString()}` : '/auth/sign-up';
 
   return (
-    <Paper elevation={0} sx={{ p: 3 }}>
+    <Paper variant="outlined" sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
         <Stack spacing={2.5}>
           <TextField

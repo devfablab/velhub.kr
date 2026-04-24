@@ -134,7 +134,7 @@ export default function Opt() {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
-          <Paper elevation={0} sx={{ pt: 3 }}>
+          <Paper variant="outlined" sx={{ pt: 3 }}>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar src={siteAvatar ?? '/broken-image.jpg'} alt={siteNameText} sx={{ width: 72, height: 72 }} />
 
