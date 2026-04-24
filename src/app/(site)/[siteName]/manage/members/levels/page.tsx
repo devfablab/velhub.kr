@@ -8,7 +8,7 @@ export default async function Page() {
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs pageTitle="전체 멤버 관리" />
+          <StaffTabs pageTitle="멤버 등급 관리" />
 
           <SiteMembersBreadcrumb />
 
