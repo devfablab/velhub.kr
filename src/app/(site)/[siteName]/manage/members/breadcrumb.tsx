@@ -21,7 +21,10 @@ export default function SiteMembersBreadcrumb() {
   const crumbs: Crumb[] = useMemo(
     () => [
       { href: `/${siteName}/manage/members/entirety`, label: '전체멤버' },
-      { href: `/${siteName}/manage/members/banned`, label: '활동정지' },
+      { href: `/${siteName}/manage/members/blocked`, label: '활동정지' },
+      { href: `/${siteName}/manage/members/kicked`, label: '강제탈퇴' },
+      { href: `/${siteName}/manage/members/banned`, label: '가입불가' },
+      { href: `/${siteName}/manage/members/invite`, label: '초대관리' },
       { href: `/${siteName}/manage/members/levels`, label: '멤버등급 관리' },
     ],
     [siteName],

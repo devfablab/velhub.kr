@@ -27,6 +27,13 @@ type MembershipRow = {
   role: string | null;
 };
 
+type CheckinRow = {
+  last_checkin_at: string | null;
+  checkin_count: number | null;
+};
+
+const CHECKIN_INTERVAL_MS = 30 * 60 * 1000;
+
 function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
@@ -47,6 +54,20 @@ function isThemeMode(value: string | null | undefined): value is ThemeMode {
 
 function isSiteType(value: string | null | undefined): value is SiteType {
   return value === 'blog' || value === 'community';
+}
+
+function shouldIncreaseCheckin(lastCheckinAt: string | null | undefined) {
+  if (!lastCheckinAt) {
+    return true;
+  }
+
+  const lastCheckinTime = new Date(lastCheckinAt).getTime();
+
+  if (Number.isNaN(lastCheckinTime)) {
+    return true;
+  }
+
+  return Date.now() - lastCheckinTime >= CHECKIN_INTERVAL_MS;
 }
 
 export async function GET(request: Request) {
@@ -86,6 +107,36 @@ export async function GET(request: Request) {
         siteRole: null,
         sessionCase: session.case ?? null,
       });
+    }
+
+    if ((session.case === 'staff' || session.case === 'member') && session.rhizomeStigmaId) {
+      const checkinResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('last_checkin_at, checkin_count')
+        .eq('id', session.rhizomeStigmaId)
+        .maybeSingle();
+
+      if (checkinResult.error || !checkinResult.data) {
+        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const checkin = checkinResult.data as CheckinRow;
+      const nowIsoString = new Date().toISOString();
+      const nextCheckinCount = shouldIncreaseCheckin(checkin.last_checkin_at)
+        ? (Number(checkin.checkin_count ?? 0) || 0) + 1
+        : Number(checkin.checkin_count ?? 0) || 0;
+
+      const updateCheckinResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .update({
+          last_checkin_at: nowIsoString,
+          checkin_count: nextCheckinCount,
+        })
+        .eq('id', session.rhizomeStigmaId);
+
+      if (updateCheckinResult.error) {
+        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
     }
 
     const accountResult = await supabaseAdmin
