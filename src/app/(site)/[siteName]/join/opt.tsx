@@ -7,6 +7,7 @@ import {
   Box,
   Button,
   FormControlLabel,
+  InputAdornment,
   Paper,
   Radio,
   RadioGroup,
@@ -40,7 +41,14 @@ type JoinResponse = {
     join_type: string;
     policy_post: string;
     policy_comment: string;
+    rejected_at?: string | null;
   };
+  error?: string;
+};
+
+type NicknameCheckResponse = {
+  ok?: boolean;
+  isAvailable?: boolean;
   error?: string;
 };
 
@@ -64,6 +72,12 @@ export default function Opt({ siteName }: Props) {
   const [joinQuestionStatus, setJoinQuestionStatus] = useState('');
   const [joinQuestions, setJoinQuestions] = useState<JoinQuestionRow[]>([]);
   const [answers, setAnswers] = useState<Record<string, AnswerRow>>({});
+  const [isRejectedHistory, setIsRejectedHistory] = useState(false);
+  const [nicknameErrorMessage, setNicknameErrorMessage] = useState('');
+  const [nicknameSuccessMessage, setNicknameSuccessMessage] = useState('');
+  const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+  const [checkedNickname, setCheckedNickname] = useState('');
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -111,6 +125,7 @@ export default function Opt({ siteName }: Props) {
             {},
           ),
         );
+        setIsRejectedHistory(Boolean(join.rejected_at));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '가입 정보를 불러오지 못했습니다.');
@@ -126,8 +141,70 @@ export default function Opt({ siteName }: Props) {
   }, [siteName]);
 
   function handleNicknameChange(event: InputChangeEvent) {
-    setNickname(event.currentTarget.value);
+    const nextValue = event.currentTarget.value;
+
+    setNickname(nextValue);
+    setIsNicknameChecked(false);
+    setCheckedNickname('');
+    setNicknameErrorMessage('');
+    setNicknameSuccessMessage('');
     setErrorMessage('');
+  }
+
+  async function handleCheckNickname() {
+    const trimmedNickname = nickname.trim();
+
+    if (!trimmedNickname) {
+      setNicknameErrorMessage('닉네임을 입력해주세요.');
+      setNicknameSuccessMessage('');
+      setIsNicknameChecked(false);
+      setCheckedNickname('');
+      return;
+    }
+
+    try {
+      setIsCheckingNickname(true);
+      setNicknameErrorMessage('');
+      setNicknameSuccessMessage('');
+
+      const response = await fetch(
+        `/api/manage/join/approved/check-nickname?siteName=${siteName}&nickname=${encodeURIComponent(trimmedNickname)}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        },
+      );
+
+      const result = (await response.json()) as NicknameCheckResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '닉네임을 확인하지 못했습니다.');
+      }
+
+      if (result.isAvailable === false) {
+        setNicknameErrorMessage('이미 사용 중인 닉네임입니다.');
+        setNicknameSuccessMessage('');
+        setIsNicknameChecked(false);
+        setCheckedNickname('');
+        return;
+      }
+
+      setNicknameSuccessMessage('사용 가능한 닉네임입니다.');
+      setNicknameErrorMessage('');
+      setIsNicknameChecked(true);
+      setCheckedNickname(trimmedNickname);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setNicknameErrorMessage(unknownError.message || '닉네임을 확인하지 못했습니다.');
+      } else {
+        setNicknameErrorMessage('닉네임을 확인하지 못했습니다.');
+      }
+      setNicknameSuccessMessage('');
+      setIsNicknameChecked(false);
+      setCheckedNickname('');
+    } finally {
+      setIsCheckingNickname(false);
+    }
   }
 
   function handleAnswerTextChange(questionId: string, event: TextFieldChangeEvent) {
@@ -273,8 +350,22 @@ export default function Opt({ siteName }: Props) {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || uploadingQuestionId) {
+    if (isSubmitting || uploadingQuestionId || isCheckingNickname) {
       return;
+    }
+
+    const trimmedNickname = nickname.trim();
+
+    if (trimmedNickname) {
+      if (!isNicknameChecked || checkedNickname !== trimmedNickname) {
+        setErrorMessage('닉네임 중복 확인을 해주세요.');
+        return;
+      }
+
+      if (nicknameErrorMessage) {
+        setErrorMessage('닉네임을 확인해주세요.');
+        return;
+      }
     }
 
     const normalizedAnsweredQuestions = joinQuestions.map((question) => {
@@ -372,16 +463,47 @@ export default function Opt({ siteName }: Props) {
         </Paper>
       ) : null}
 
+      {isRejectedHistory ? (
+        <Alert variant="filled" severity="warning">
+          가입 반려 이력이 있는 사용자입니다.
+        </Alert>
+      ) : null}
+
       <Alert variant="outlined" severity="info">
         닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.
       </Alert>
 
-      <TextField label="닉네임" value={nickname} onChange={handleNicknameChange} fullWidth size="small" />
+      <TextField
+        label="닉네임"
+        value={nickname}
+        onChange={handleNicknameChange}
+        fullWidth
+        size="medium"
+        error={Boolean(nicknameErrorMessage)}
+        helperText={nicknameErrorMessage || nicknameSuccessMessage || ' '}
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleCheckNickname}
+                  disabled={!nickname.trim() || isCheckingNickname}
+                  size="small"
+                >
+                  중복 확인
+                </Button>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
 
       {joinQuestionStatus === 'enabled' ? (
         <Stack spacing={2}>
-          <Alert variant="outlined" severity="info">
-            다음 지문에 답해 주세요.
+          <Alert variant="outlined" severity="warning">
+            다음 지문에 답해 주세요. (필수입력)
           </Alert>
           {joinQuestions.map((question, index) => (
             <Stack key={question.id} spacing={1.5}>

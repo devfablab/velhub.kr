@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Alert, Box, Button, Link, Paper, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, FormControlLabel, Link, Paper, Stack, Switch, TextField } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
@@ -24,6 +24,8 @@ type AcceptInviteResponse = {
   siteName: string;
 };
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export default function EmailSignUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,6 +40,7 @@ export default function EmailSignUp() {
   const [isInviteEmailLocked, setIsInviteEmailLocked] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [bypassEmailConfirm, setBypassEmailConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInviteLoading, setIsInviteLoading] = useState(false);
@@ -175,6 +178,7 @@ export default function EmailSignUp() {
           authUserId: authUser.id,
           email: authUser.email ?? trimmedEmail,
           userName: trimmedUserName,
+          bypassEmailConfirm: isDevelopment ? bypassEmailConfirm : false,
         }),
       });
 
@@ -182,6 +186,17 @@ export default function EmailSignUp() {
 
       if (!saveResponse.ok) {
         throw new Error(saveResult.error ?? '회원가입 저장 처리에 실패했습니다.');
+      }
+
+      if (isDevelopment && bypassEmailConfirm) {
+        const signInResult = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+
+        if (signInResult.error) {
+          throw new Error(signInResult.error.message);
+        }
       }
 
       if (inviteToken && inviteType === 'community') {
@@ -288,6 +303,18 @@ export default function EmailSignUp() {
             onChange={handlePasswordConfirmChange}
             fullWidth
           />
+
+          {isDevelopment ? (
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={bypassEmailConfirm}
+                  onChange={(event) => setBypassEmailConfirm(event.target.checked)}
+                />
+              }
+              label="이메일 인증 바이패스"
+            />
+          ) : null}
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Anchor href={signInHref}>로그인 하기</Anchor>

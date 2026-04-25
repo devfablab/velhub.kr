@@ -126,6 +126,52 @@ function normalizeJoinQuestions(value: unknown) {
   return normalizedQuestions;
 }
 
+async function getNextAutoNickname(params: { siteId: string; stigmaId: string; baseNickname: string }) {
+  const { siteId, stigmaId, baseNickname } = params;
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const exactResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('id, nickname, user_id')
+    .eq('site_id', siteId)
+    .eq('nickname', baseNickname);
+
+  if (exactResult.error) {
+    throw new Error('닉네임을 확인하지 못했습니다.');
+  }
+
+  const hasExactDuplicate = (exactResult.data ?? []).some((row) => row.user_id !== stigmaId);
+
+  if (!hasExactDuplicate) {
+    return baseNickname;
+  }
+
+  const likeResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname, user_id')
+    .eq('site_id', siteId)
+    .like('nickname', `${baseNickname}%`);
+
+  if (likeResult.error) {
+    throw new Error('닉네임을 확인하지 못했습니다.');
+  }
+
+  const usedNicknameSet = new Set(
+    (likeResult.data ?? [])
+      .filter((row) => row.user_id !== stigmaId)
+      .map((row) => normalizeText(row.nickname))
+      .filter(Boolean),
+  );
+
+  let nextNumber = 2;
+
+  while (usedNicknameSet.has(`${baseNickname}${nextNumber}`)) {
+    nextNumber += 1;
+  }
+
+  return `${baseNickname}${nextNumber}`;
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
@@ -208,7 +254,43 @@ export async function POST(request: Request) {
     }
 
     const fallbackNickname = stigma.data.user_name ? decrypt(stigma.data.user_name as string) : '';
-    const finalNickname = nickname || fallbackNickname || null;
+    const isAutoNickname = !nickname;
+    let finalNickname = nickname || fallbackNickname || null;
+
+    if (finalNickname) {
+      if (isAutoNickname) {
+        try {
+          finalNickname = await getNextAutoNickname({
+            siteId: rhizome.data.id,
+            stigmaId: stigma.data.id,
+            baseNickname: finalNickname,
+          });
+        } catch (error) {
+          if (error instanceof Error) {
+            return Response.json({ error: error.message }, { status: 500 });
+          }
+
+          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+        }
+      } else {
+        const duplicateNicknameResult = await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', rhizome.data.id)
+          .eq('nickname', finalNickname)
+          .neq('user_id', stigma.data.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (duplicateNicknameResult.error) {
+          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        if (duplicateNicknameResult.data) {
+          return Response.json({ error: '이미 사용 중인 닉네임입니다.' }, { status: 400 });
+        }
+      }
+    }
 
     const existingRhizomeStigma = await supabaseAdmin
       .from('rhizome_stigmas')

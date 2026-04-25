@@ -33,7 +33,7 @@ export default async function Page(context: RouteContext) {
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
         <Stack spacing={3}>
-          <Typography variant="h4" component="h1">
+          <Typography variant="h5" component="h1">
             커뮤니티 가입
           </Typography>
 
