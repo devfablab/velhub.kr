@@ -62,7 +62,7 @@ export default function Opt() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   async function loadUsers() {
-    const response = await fetch(`/api/manage/members/banned?siteName=${siteName}`, {
+    const response = await fetch(`/api/manage/join/banned?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
     });

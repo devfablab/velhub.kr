@@ -22,9 +22,7 @@ export default function SiteMembersBreadcrumb() {
     () => [
       { href: `/${siteName}/manage/members/entirety`, label: '활동멤버' },
       { href: `/${siteName}/manage/members/blocked`, label: '활동정지' },
-      { href: `/${siteName}/manage/members/banned`, label: '가입불가' },
       { href: `/${siteName}/manage/members/withdrawn`, label: '탈퇴멤버' },
-      { href: `/${siteName}/manage/members/invite`, label: '초대관리' },
       { href: `/${siteName}/manage/members/levels`, label: '멤버등급 관리' },
     ],
     [siteName],

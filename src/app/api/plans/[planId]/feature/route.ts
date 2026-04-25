@@ -8,15 +8,19 @@ type RouteContext = {
 };
 
 type RequestBody = {
-  isEditorImage: boolean | null;
-  isMember: boolean | null;
-  isBoardAttachment: boolean | null;
-  countSubpage: number | string | null;
-  countBoard: number | string | null;
-  countUser: number | string | null;
+  isEditorImage: boolean;
+  isMember: boolean;
+  isBoardAttachment: boolean;
+  countSubpage: number;
+  countBoard: number;
+  countUser: number;
+  countManager: number;
+  countBoardManager: number;
+  countBoardGeneralManager: number;
+  countBoardAssistantManager: number;
 };
 
-function normalizeCount(value: number | string | null | undefined) {
+function normalizeCount(value: number | string) {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : NaN;
   }
@@ -82,7 +86,9 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const feature = await supabaseAdmin
       .from('plan_features')
-      .select('id, is_editor_image, is_member, is_board_attachment, count_subpage, count_board, count_user, plan_id')
+      .select(
+        'id, is_editor_image, is_member, is_board_attachment, count_subpage, count_board, count_user, count_manager, count_board_manager, count_board_general_manager, count_board_assistant_manager, plan_id',
+      )
       .eq('plan_id', planId)
       .maybeSingle();
 
@@ -131,6 +137,10 @@ export async function POST(request: Request, context: RouteContext) {
     const countSubpage = normalizeCount(requestBody.countSubpage);
     const countBoard = normalizeCount(requestBody.countBoard);
     const countUser = normalizeCount(requestBody.countUser);
+    const countManager = normalizeCount(requestBody.countManager);
+    const countBoardManager = normalizeCount(requestBody.countBoardManager);
+    const countBoardGeneralManager = normalizeCount(requestBody.countBoardGeneralManager);
+    const countBoardAssistantManager = normalizeCount(requestBody.countBoardAssistantManager);
 
     if (typeof isEditorImage !== 'boolean') {
       return Response.json({ error: '에디터 이미지 삽입 가능 여부를 선택해주세요.' }, { status: 400 });
@@ -154,6 +164,22 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!Number.isFinite(countUser)) {
       return Response.json({ error: '추가 가능한 회원수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countManager)) {
+      return Response.json({ error: '추가 가능한 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardManager)) {
+      return Response.json({ error: '추가 가능한 전체 게시판 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardGeneralManager)) {
+      return Response.json({ error: '추가 가능한 개별 게시판 총괄 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardAssistantManager)) {
+      return Response.json({ error: '추가 가능한 개별 게시판 부 매니저수를 입력해주세요.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -187,6 +213,11 @@ export async function POST(request: Request, context: RouteContext) {
         count_subpage: countSubpage,
         count_board: countBoard,
         count_user: countUser,
+        count_manager: countManager,
+        count_board_manager: countBoardManager,
+        count_board_general_manager: countBoardGeneralManager,
+        count_board_assistant_manager: countBoardAssistantManager,
+
         plan_id: planId,
       })
       .select('id')
@@ -231,6 +262,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     const countSubpage = normalizeCount(requestBody.countSubpage);
     const countBoard = normalizeCount(requestBody.countBoard);
     const countUser = normalizeCount(requestBody.countUser);
+    const countManager = normalizeCount(requestBody.countManager);
+    const countBoardManager = normalizeCount(requestBody.countBoardManager);
+    const countBoardGeneralManager = normalizeCount(requestBody.countBoardGeneralManager);
+    const countBoardAssistantManager = normalizeCount(requestBody.countBoardAssistantManager);
 
     if (typeof isEditorImage !== 'boolean') {
       return Response.json({ error: '에디터 이미지 삽입 가능 여부를 선택해주세요.' }, { status: 400 });
@@ -256,6 +291,22 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '추가 가능한 회원수를 입력해주세요.' }, { status: 400 });
     }
 
+    if (!Number.isFinite(countManager)) {
+      return Response.json({ error: '추가 가능한 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardManager)) {
+      return Response.json({ error: '추가 가능한 전체 게시판 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardGeneralManager)) {
+      return Response.json({ error: '추가 가능한 개별 게시판 총괄 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!Number.isFinite(countBoardAssistantManager)) {
+      return Response.json({ error: '추가 가능한 개별 게시판 부 매니저수를 입력해주세요.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const feature = await supabaseAdmin.from('plan_features').select('id').eq('plan_id', planId).maybeSingle();
@@ -277,6 +328,10 @@ export async function PATCH(request: Request, context: RouteContext) {
         count_subpage: countSubpage,
         count_board: countBoard,
         count_user: countUser,
+        count_manager: countManager,
+        count_board_manager: countBoardManager,
+        count_board_general_manager: countBoardGeneralManager,
+        count_board_assistant_manager: countBoardAssistantManager,
       })
       .eq('plan_id', planId);
 

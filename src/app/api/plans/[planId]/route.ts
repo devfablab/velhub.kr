@@ -11,19 +11,19 @@ type RouteContext = {
 type ProductType = 'service' | 'custom';
 
 type RequestBody = {
-  categoryKey: string | null;
-  categoryLabel: string | null;
-  planKey: string | null;
-  planLabel: string | null;
-  price: number | string | null;
-  productType: ProductType | null;
+  categoryKey: string;
+  categoryLabel: string;
+  planKey: string;
+  planLabel: string;
+  price: number | string;
+  productType: ProductType;
 };
 
-function normalizeKey(value: string | null | undefined) {
-  return value?.trim().toLowerCase() ?? '';
+function normalizeKey(value: string) {
+  return value?.trim().toLowerCase();
 }
 
-function normalizePrice(value: number | string | null | undefined) {
+function normalizePrice(value: number | string) {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : NaN;
   }

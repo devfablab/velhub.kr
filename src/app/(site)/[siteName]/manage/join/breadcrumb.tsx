@@ -22,7 +22,9 @@ export default function SiteJoinBreadcrumb() {
     () => [
       { href: `/${siteName}/manage/join/conditions`, label: '가입정보관리' },
       { href: `/${siteName}/manage/join/approved`, label: '가입신청관리' },
+      { href: `/${siteName}/manage/join/invite`, label: '초대관리' },
       { href: `/${siteName}/manage/join/banned`, label: '가입불가관리' },
+      { href: `/${siteName}/manage/join/managers`, label: '매니저관리' },
     ],
     [siteName],
   );

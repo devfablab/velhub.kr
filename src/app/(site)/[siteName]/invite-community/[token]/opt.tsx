@@ -50,7 +50,7 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/manage/members/invite/${token}?siteName=${siteName}`, {
+        const response = await fetch(`/api/manage/join/invite/${token}?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -96,7 +96,7 @@ export default function Opt() {
       setErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch(`/api/manage/members/invite/${token}?siteName=${siteName}`, {
+      const response = await fetch(`/api/manage/join/invite/${token}?siteName=${siteName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

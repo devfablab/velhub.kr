@@ -188,7 +188,7 @@ export default function StaffTabs({ pageTitle }: Props) {
 
   const tabItems: StaffTabItem[] = [
     { label: '관리 홈', href: `/${siteName}/manage` },
-    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage/settings` },
+    { label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보', href: `/${siteName}/manage/settings` },
     ...(siteType === 'community' ? [{ label: '가입 관리', href: `/${siteName}/manage/join` }] : []),
     {
       label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',

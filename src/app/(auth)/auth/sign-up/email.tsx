@@ -54,7 +54,7 @@ export default function EmailSignUp() {
 
         const response =
           inviteType === 'community'
-            ? await fetch(`/api/manage/members/invite/${inviteToken}?siteName=${inviteSiteName}`, {
+            ? await fetch(`/api/manage/join/invite/${inviteToken}?siteName=${inviteSiteName}`, {
                 method: 'GET',
                 credentials: 'include',
               })

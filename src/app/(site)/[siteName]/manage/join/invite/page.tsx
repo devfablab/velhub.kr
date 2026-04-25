@@ -1,6 +1,6 @@
 import { Box, Container, Stack } from '@mui/material';
 import StaffTabs from '../../../tabs';
-import SiteMembersBreadcrumb from '../breadcrumb';
+import SiteJoinBreadcrumb from '../breadcrumb';
 import Opt from './opt';
 
 export default async function Page() {
@@ -8,9 +8,9 @@ export default async function Page() {
     <Container maxWidth="md">
       <Box sx={{ pt: 1, pb: 8 }}>
         <Stack spacing={3}>
-          <StaffTabs pageTitle="가입불가 멤버 관리" />
+          <StaffTabs pageTitle="초대 관리" />
 
-          <SiteMembersBreadcrumb />
+          <SiteJoinBreadcrumb />
 
           <Opt />
         </Stack>

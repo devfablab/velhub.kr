@@ -87,13 +87,10 @@ export default function Page() {
       }
 
       if (inviteType === 'community') {
-        const acceptInviteResponse = await fetch(
-          `/api/manage/members/invite/${inviteToken}?siteName=${inviteSiteName}`,
-          {
-            method: 'POST',
-            credentials: 'include',
-          },
-        );
+        const acceptInviteResponse = await fetch(`/api/manage/join/invite/${inviteToken}?siteName=${inviteSiteName}`, {
+          method: 'POST',
+          credentials: 'include',
+        });
 
         const acceptInviteResult = (await acceptInviteResponse.json()) as AcceptInviteResponse | { error?: string };
 

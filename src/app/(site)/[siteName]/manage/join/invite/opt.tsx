@@ -93,7 +93,7 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
   async function loadInvites() {
-    const response = await fetch(`/api/manage/members/invite?siteName=${siteName}`, {
+    const response = await fetch(`/api/manage/join/invite?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
     });
@@ -176,7 +176,7 @@ export default function Opt() {
       setIsInviteSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch('/api/manage/members/invite', {
+      const response = await fetch('/api/manage/join/invite', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -222,7 +222,7 @@ export default function Opt() {
       setIsCancelSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch('/api/manage/members/invite', {
+      const response = await fetch('/api/manage/join/invite', {
         method: 'PATCH',
         credentials: 'include',
         headers: {
