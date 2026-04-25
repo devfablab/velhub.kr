@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Alert,
@@ -47,6 +47,12 @@ export default function EmailSignIn() {
   const [decisionMessage, setDecisionMessage] = useState('');
   const [decisionState, setDecisionState] = useState<SignInDecision>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReturnPath(sessionStorage.getItem('route:returnPath'));
+  }, []);
 
   function handleEmailChange(event: InputChangeEvent) {
     setEmail(event.currentTarget.value);
@@ -146,6 +152,11 @@ export default function EmailSignIn() {
 
     if (inviteSiteName) {
       router.replace(`/${inviteSiteName}`);
+      return;
+    }
+
+    if (returnPath) {
+      router.replace(returnPath);
       return;
     }
 

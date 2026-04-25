@@ -56,6 +56,8 @@ export default function Page() {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [pendingSocialSave, setPendingSocialSave] = useState<PendingSocialSave | null>(null);
 
+  const [returnPath, setReturnPath] = useState<string | null>(null);
+
   useEffect(() => {
     let isCancelled = false;
 
@@ -306,6 +308,10 @@ export default function Page() {
     };
   }, [router, inviteToken, inviteSiteName, inviteType]);
 
+  useEffect(() => {
+    setReturnPath(sessionStorage.getItem('route:returnPath'));
+  }, []);
+
   async function handleConfirmSocialLogin() {
     if (!pendingSocialSave) {
       return;
@@ -384,6 +390,11 @@ export default function Page() {
 
       if (inviteSiteName) {
         router.replace(`/${inviteSiteName}`);
+        return;
+      }
+
+      if (returnPath) {
+        router.replace(returnPath);
         return;
       }
 
