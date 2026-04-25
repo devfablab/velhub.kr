@@ -26,6 +26,13 @@ type JoinQuestionRow = {
   options: string[];
 };
 
+type ExistingRhizomeStigmaRow = {
+  id: string;
+  is_approval: boolean | null;
+  rejected_at: string | null;
+  rejected_by: string | null;
+};
+
 function normalizeAnsweredQuestions(value: unknown) {
   if (!Array.isArray(value)) {
     return [] as AnsweredQuestionRow[];
@@ -205,7 +212,7 @@ export async function POST(request: Request) {
 
     const existingRhizomeStigma = await supabaseAdmin
       .from('rhizome_stigmas')
-      .select('id')
+      .select('id, is_approval, rejected_at, rejected_by')
       .eq('site_id', rhizome.data.id)
       .eq('user_id', stigma.data.id)
       .maybeSingle();
@@ -214,7 +221,9 @@ export async function POST(request: Request) {
       return Response.json({ error: '가입 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (existingRhizomeStigma.data) {
+    const existingMembership = (existingRhizomeStigma.data ?? null) as ExistingRhizomeStigmaRow | null;
+
+    if (existingMembership?.is_approval === true) {
       return Response.json({ error: '이미 가입된 사용자입니다.' }, { status: 400 });
     }
 
@@ -281,6 +290,28 @@ export async function POST(request: Request) {
       }
     }
 
+    if (existingMembership) {
+      const updateRhizomeStigma = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .update({
+          nickname: finalNickname,
+          answered_questions: joinQuestionStatus === 'enabled' ? answeredQuestions : [],
+          rejected_at: null,
+          rejected_by: null,
+          is_re_approval: true,
+        })
+        .eq('id', existingMembership.id);
+
+      if (updateRhizomeStigma.error) {
+        return Response.json({ error: '가입에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        siteName: rhizome.data.site_key,
+      });
+    }
+
     const insertRhizomeStigma = await supabaseAdmin
       .from('rhizome_stigmas')
       .insert({
@@ -296,11 +327,14 @@ export async function POST(request: Request) {
         post_count: 0,
         comment_count: 0,
         checkin_count: 0,
-        last_visit_at: new Date().toISOString(),
+        last_checkin_at: new Date().toISOString(),
         answered_questions: joinQuestionStatus === 'enabled' ? answeredQuestions : [],
         staff_note: null,
         handled_by: null,
         handled_at: null,
+        rejected_at: null,
+        rejected_by: null,
+        is_re_approval: false,
       })
       .select('id')
       .maybeSingle();

@@ -70,7 +70,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    const isStaff = session.status !== 'FAIL' && session.case === 'staff';
+    const isStaff = session.case === 'staff';
 
     const board = await supabaseAdmin
       .from('boards')

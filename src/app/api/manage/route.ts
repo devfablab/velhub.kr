@@ -56,7 +56,7 @@ export async function GET(request: Request) {
 
     const session = await verifySession({ siteId: site.id });
 
-    if (session.status === 'FAIL' || session.case !== 'staff') {
+    if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

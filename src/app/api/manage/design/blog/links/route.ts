@@ -45,7 +45,7 @@ async function checkAccess(siteName: string) {
     siteId: rhizome.data.id,
   });
 
-  if (session.status === 'FAIL' || session.case !== 'staff') {
+  if (session.case !== 'staff') {
     return {
       ok: false,
       status: 403,

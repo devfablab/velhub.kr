@@ -60,10 +60,6 @@ export async function POST(request: Request) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
     if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }

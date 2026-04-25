@@ -57,7 +57,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL' || session.case !== 'staff' || !session.particleId) {
+    if (session.case !== 'staff' || !session.authUserId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -97,7 +97,7 @@ export async function POST(request: Request, context: RouteContext) {
         visibility_member: visibilityMember,
         search_keywords: normalizedSearchKeywords || null,
         updated_at: new Date().toISOString(),
-        updated_by: session.particleId,
+        updated_by: session.authUserId,
         log: logMessage,
       })
       .eq('site_id', rhizome.data.id);

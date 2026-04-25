@@ -23,6 +23,10 @@ type JoinQuestionRow = {
   options: string[];
 };
 
+type MembershipRow = {
+  rejected_at: string | null;
+};
+
 function normalizeQuestionText(value: unknown) {
   if (typeof value !== 'string') {
     return '';
@@ -149,7 +153,9 @@ export async function GET(request: Request) {
       return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
     }
 
-    if (access.session.case !== 'guest-site' && access.session.case !== 'staff') {
+    console.log('access.session.case: ', access.session.case);
+
+    if (access.session.case !== 'guest-site') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -169,6 +175,24 @@ export async function GET(request: Request) {
       return Response.json({ error: '커뮤니티 가입 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    let rejectedAt: string | null = null;
+
+    if (access.session.case === 'guest-site' && access.session.stigmaId) {
+      const membershipResult = await access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('rejected_at')
+        .eq('site_id', access.rhizome.id)
+        .eq('user_id', access.session.stigmaId)
+        .maybeSingle();
+
+      if (membershipResult.error) {
+        return Response.json({ error: '커뮤니티 가입 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const membership = (membershipResult.data ?? null) as MembershipRow | null;
+      rejectedAt = membership?.rejected_at ?? null;
+    }
+
     return Response.json({
       ok: true,
       siteType: access.rhizome.site_type,
@@ -182,6 +206,7 @@ export async function GET(request: Request) {
         join_type: normalizeText(community.data.join_type) || 'open',
         policy_post: normalizeText(community.data.policy_post) || 'comment_1',
         policy_comment: normalizeText(community.data.policy_comment) || 'estimate_0',
+        rejected_at: rejectedAt,
       },
     });
   } catch (unknownError) {
@@ -216,7 +241,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
     }
 
-    if (access.session.status === 'FAIL' || access.session.case !== 'staff' || !access.session.particleId) {
+    if (access.session.case !== 'staff' || !access.session.authUserId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

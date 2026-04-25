@@ -153,7 +153,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.status === 'FAIL') {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -185,10 +185,25 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const isStaff = session.case === 'staff';
-    const isAuthor = currentPost.data.user_id === session.particleId;
+    const membershipResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id, role, is_approval, is_block')
+      .eq('site_id', rhizome.data.id)
+      .eq('user_id', session.stigmaId)
+      .maybeSingle();
 
-    if (!isStaff && !isAuthor) {
+    const membership = membershipResult.error || !membershipResult.data ? null : membershipResult.data;
+    const membershipRole = normalizeText(membership?.role);
+    const isStaff = membershipRole === 'owner' || membershipRole === 'manager';
+    const isBlocked = membership?.is_block === true;
+    const isApprovedMember = membership?.is_approval === true;
+    const isAuthor = currentPost.data.user_id === session.authUserId;
+
+    if (isBlocked) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!isStaff && !(isAuthor && isApprovedMember)) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -263,7 +278,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
         }
 
-        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.particleId) {
+        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
           return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
         }
 
@@ -352,10 +367,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (isClosed !== null) {
-      if (!isStaff && !isAuthor) {
+      if (!isStaff) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
-
       updatePayload.is_closed = isClosed;
     }
 

@@ -42,14 +42,6 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '카테고리는 블로그에서만 사용할 수 있습니다.' }, { status: 403 });
     }
 
-    const session = await verifySession({
-      siteId: rhizome.data.id,
-    });
-
-    if (session.status === 'FAIL' || session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_label, board_type, site_id')

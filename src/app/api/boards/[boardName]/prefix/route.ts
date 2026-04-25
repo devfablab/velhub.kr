@@ -1,4 +1,3 @@
-import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -30,14 +29,6 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const session = await verifySession({
-      siteId: rhizome.data.id,
-    });
-
-    if (session.status === 'FAIL' || session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const board = await supabaseAdmin

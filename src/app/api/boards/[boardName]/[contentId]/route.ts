@@ -51,7 +51,7 @@ export async function GET(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    const isStaff = session.status !== 'FAIL' && session.case === 'staff';
+    const isStaff = session.case === 'staff';
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
@@ -118,7 +118,7 @@ export async function GET(request: Request, context: RouteContext) {
           slug: String(page.data.slug),
           author_name: authorName,
         },
-        isAuthor: session.status !== 'FAIL' ? page.data.user_id === session.particleId : false,
+        isAuthor: session.authUserId ? page.data.user_id === session.authUserId : false,
         isStaff,
       });
     }
@@ -259,7 +259,7 @@ export async function GET(request: Request, context: RouteContext) {
       },
       categories,
       series,
-      isAuthor: session.status !== 'FAIL' ? post.data.user_id === session.particleId : false,
+      isAuthor: session.authUserId ? post.data.user_id === session.authUserId : false,
       isStaff,
     });
   } catch (unknownError) {

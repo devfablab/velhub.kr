@@ -6,6 +6,7 @@ type EmailSignUpRequestBody = {
   authUserId: string | null;
   email: string | null;
   userName: string | null;
+  bypassEmailConfirm?: boolean | null;
 };
 
 function getSafeUserName(userName: string | null, email: string) {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
     const authUserId = requestBody.authUserId?.trim() ?? '';
     const email = requestBody.email?.trim().toLowerCase() ?? '';
     const userName = requestBody.userName?.trim() ?? '';
+    const bypassEmailConfirm = process.env.NODE_ENV === 'development' && requestBody.bypassEmailConfirm === true;
 
     if (!authUserId) {
       return Response.json({ error: 'authUserId가 유효하지 않습니다.' }, { status: 400 });
@@ -44,6 +46,17 @@ export async function POST(request: Request) {
     const encryptedUserName = encrypt(safeUserName);
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    if (bypassEmailConfirm) {
+      const confirmUserResult = await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+        email_confirm: true,
+      });
+
+      if (confirmUserResult.error) {
+        console.error('이메일 인증 바이패스 실패:', confirmUserResult.error);
+        return Response.json({ error: '이메일 인증 바이패스 처리에 실패했습니다.' }, { status: 500 });
+      }
+    }
 
     const particlesUpsertResult = await supabaseAdmin.from('particles').upsert(
       {
@@ -96,8 +109,6 @@ export async function POST(request: Request) {
         role: 'user',
         email: encryptedEmail,
       });
-
-      console.log('stigmasInsertResult: ', stigmasInsertResult);
 
       if (stigmasInsertResult.error) {
         console.error('stigmas 생성 실패:', stigmasInsertResult.error);

@@ -88,14 +88,6 @@ async function checkAccess(siteName: string) {
     siteId: rhizome.data.id,
   });
 
-  if (session.status === 'FAIL') {
-    return {
-      ok: false,
-      status: 403,
-      error: '접근 권한이 없습니다.',
-    } as const;
-  }
-
   if (session.case !== 'staff') {
     return {
       ok: false,
