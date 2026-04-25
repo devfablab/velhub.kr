@@ -445,7 +445,7 @@ export default function Opt() {
       }
 
       setSuccessMessage('블로그가 개설되었습니다.');
-      router.replace('/');
+      router.replace(`/${siteKey}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         openErrorDialog(unknownError.message || '블로그 개설에 실패했습니다.');

@@ -428,7 +428,7 @@ export default function Opt() {
       }
 
       setSuccessMessage('커뮤니티가 개설되었습니다.');
-      router.replace('/');
+      router.replace(`/${siteKey}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         openErrorDialog(unknownError.message || '커뮤니티 개설에 실패했습니다.');
