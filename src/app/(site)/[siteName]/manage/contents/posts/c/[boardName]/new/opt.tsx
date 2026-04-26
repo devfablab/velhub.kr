@@ -700,10 +700,17 @@ export default function Opt() {
 
         {isGalleryBoard || isFeedBoard ? (
           <Box>
-            <Typography sx={{ mb: 1 }}>
-              이미지 업로드 (최대 6개). 이미지 하나 이상 필수 등록. 순서 변경 불가함. 이미지 올리는 순서대로 정렬됨. 맨
-              나중에 등록된게 앞에 나옴.
-            </Typography>
+            <ul>
+              <Typography variant="body2" component="li">
+                이미지는 최대 6개까지 등록할 수 있습니다.
+              </Typography>
+              <Typography variant="body2" component="li">
+                1개 이상 등록해야 하며, 순서 변경은 불가능합니다.
+              </Typography>
+              <Typography variant="body2" component="li">
+                이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.
+              </Typography>
+            </ul>
 
             <VisuallyHiddenInput
               ref={galleryInputReference}
