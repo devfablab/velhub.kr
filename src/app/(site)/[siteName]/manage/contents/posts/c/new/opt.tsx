@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
 import {
@@ -29,7 +29,23 @@ type CreateBoardResponse = {
   error?: string;
 };
 
+type BoardsResponse = {
+  boards?: Array<{
+    id: string;
+    board_key: string;
+    board_label: string;
+    board_type: string;
+  }>;
+  limit?: {
+    maxBoardCount: number;
+    currentBoardCount: number;
+    canCreateBoard: boolean;
+  };
+  error?: string;
+};
+
 type PostType = 'none' | 'prefix' | 'series';
+type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -58,6 +74,7 @@ export default function Opt() {
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
+  const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
   const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);
@@ -68,6 +85,13 @@ export default function Opt() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+  const [maxBoardCount, setMaxBoardCount] = useState(0);
+  const [currentBoardCount, setCurrentBoardCount] = useState(0);
+  const [canCreateBoard, setCanCreateBoard] = useState(true);
+
+  const canUsePostType = useMemo(() => {
+    return boardType === 'basic';
+  }, [boardType]);
 
   function handleBoardLabelChange(event: InputChangeEvent) {
     setBoardLabel(event.currentTarget.value);
@@ -83,12 +107,39 @@ export default function Opt() {
     setSuccessMessage('');
   }
 
-  function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleBoardTypeChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const nextBoardType = event.target.value as BoardType;
+
+    setBoardType(nextBoardType);
+
+    if (nextBoardType !== 'basic') {
+      setPostType('none');
+    }
+  }
+
+  function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setPostPerPage(Number(event.target.value));
   }
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostType(event.target.value as PostType);
+  }
+
+  async function loadBoardLimit() {
+    const response = await fetch(`/api/boards?siteName=${siteName}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    const result = (await response.json()) as BoardsResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
+    }
+
+    setMaxBoardCount(result.limit?.maxBoardCount ?? 0);
+    setCurrentBoardCount(result.limit?.currentBoardCount ?? 0);
+    setCanCreateBoard(result.limit?.canCreateBoard ?? false);
   }
 
   async function handleCheckBoardKey() {
@@ -174,6 +225,12 @@ export default function Opt() {
     const normalizedBoardLabel = boardLabel.trim();
     const normalizedBoardKey = normalizeBoardKey(boardKey);
 
+    if (!canCreateBoard) {
+      setErrorMessage('더 이상 게시판을 생성할 수 없습니다.');
+      setSuccessMessage('');
+      return;
+    }
+
     if (!normalizedBoardLabel) {
       setErrorMessage('게시판 이름을 입력해주세요.');
       setSuccessMessage('');
@@ -207,11 +264,11 @@ export default function Opt() {
           siteName,
           boardKey: normalizedBoardKey,
           boardLabel: normalizedBoardLabel,
-          boardType: 'community',
+          boardType,
           isActive: true,
           markdownStatus: 'markdown_default',
           postPerPage,
-          postType,
+          postType: canUsePostType ? postType : 'none',
         }),
       });
 
@@ -241,25 +298,59 @@ export default function Opt() {
     setBaseUrl(window.location.origin);
   }, []);
 
+  useEffect(() => {
+    void (async () => {
+      try {
+        setErrorMessage('');
+        await loadBoardLimit();
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
+        }
+      }
+    })();
+  }, [siteName]);
+
   return (
     <Stack spacing={2}>
-      {isNotMobile && (
+      {isNotMobile ? (
         <Typography variant="h5" component="h1">
           게시판 만들기
         </Typography>
-      )}
+      ) : null}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+        {!canCreateBoard ? (
+          <Alert severity="error" variant="filled">
+            더 이상 게시판을 생성할 수 없습니다.
+          </Alert>
+        ) : null}
+
+        {maxBoardCount > 0 ? (
+          <Typography variant="body2">{`생성된 게시판: ${currentBoardCount}개 / ${maxBoardCount}개`}</Typography>
+        ) : null}
+
         {errorMessage ? (
           <Alert severity="error" variant="filled">
             {errorMessage}
           </Alert>
         ) : null}
+
         {successMessage ? (
           <Alert severity="success" variant="outlined">
             {successMessage}
           </Alert>
         ) : null}
+
+        <TextField select label="게시판 종류" value={boardType} onChange={handleBoardTypeChange} fullWidth size="small">
+          <MenuItem value="basic">일반 게시판</MenuItem>
+          <MenuItem value="gallery">갤러리 게시판</MenuItem>
+          <MenuItem value="youtube">유튜브 영상 공유 게시판</MenuItem>
+          <MenuItem value="feed">피드 게시판</MenuItem>
+        </TextField>
+
         <TextField
           label="게시판 식별자 (필수)"
           value={boardKey}
@@ -280,7 +371,7 @@ export default function Opt() {
                     type="button"
                     variant="outlined"
                     onClick={handleCheckBoardKey}
-                    disabled={isChecking}
+                    disabled={isChecking || !canCreateBoard}
                     size="small"
                   >
                     중복 확인
@@ -308,29 +399,33 @@ export default function Opt() {
           ))}
         </TextField>
 
-        <FormControl>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            말머리/연재 설정
-          </Typography>
-          <RadioGroup row value={postType} onChange={handlePostTypeChange}>
-            <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
-            <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
-            <FormControlLabel value="series" control={<Radio />} label="연재형" />
-          </RadioGroup>
-        </FormControl>
+        {canUsePostType ? (
+          <>
+            <FormControl>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                말머리/연재 설정
+              </Typography>
+              <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+                <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
+                <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                <FormControlLabel value="series" control={<Radio />} label="연재형" />
+              </RadioGroup>
+            </FormControl>
 
-        <Alert severity="warning" variant="outlined">
-          말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.
-        </Alert>
-        <Alert severity="info" variant="outlined">
-          말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.
-        </Alert>
+            <Alert severity="warning" variant="outlined">
+              말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.
+            </Alert>
+            <Alert severity="info" variant="outlined">
+              말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.
+            </Alert>
+          </>
+        ) : null}
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button component={Link} href={`/${siteName}/manage/contents/posts`} underline="none" variant="outlined">
             취소
           </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
+          <Button type="submit" variant="contained" disabled={isSubmitting || !canCreateBoard}>
             저장
           </Button>
         </Stack>

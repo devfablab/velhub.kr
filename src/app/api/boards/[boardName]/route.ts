@@ -9,50 +9,11 @@ type RouteContext = {
   }>;
 };
 
-type PostRow = {
-  id: string;
-  slug: number;
-  subject: string;
-  summary: string | null;
-  edited_at: string;
-  thumbnail_image: string | null;
-  thumbnail_width: number | null;
-  thumbnail_height: number | null;
-  idx: number;
-  user_id: string;
-  site_id: string;
-  board_id: string;
-  created_at: string;
-  is_closed?: boolean | null;
-  closed_by?: string | null;
-  closed_at?: string | null;
-  closed_message?: string | null;
-  prefix_id?: string | null;
-};
-
-function parsePage(value: string | null) {
-  const parsedValue = Number(value);
-
-  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
-    return 1;
-  }
-
-  return Math.floor(parsedValue);
-}
-
-function parseSize(value: string | null, fallbackValue: number) {
+function parsePositiveInt(value: string | null, fallbackValue: number) {
   const parsedValue = Number(value);
 
   if (!Number.isFinite(parsedValue) || parsedValue < 1) {
     return fallbackValue;
-  }
-
-  if (parsedValue < 5) {
-    return 5;
-  }
-
-  if (parsedValue > 50) {
-    return 50;
   }
 
   return Math.floor(parsedValue);
@@ -69,8 +30,9 @@ export async function GET(request: Request, context: RouteContext) {
 
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-    const page = parsePage(requestUrl.searchParams.get('page'));
-    const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase();
+    const page = parsePositiveInt(requestUrl.searchParams.get('page'), 1);
+    const size = parsePositiveInt(requestUrl.searchParams.get('size'), 10);
+    const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase() === 'deleted' ? 'deleted' : 'all';
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -93,6 +55,7 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.case === 'staff';
+    const authUserId = session.authUserId ?? null;
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
@@ -102,9 +65,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select(
-        'id, board_key, board_label, board_type, is_active, sort_order, markdown_status, site_id, created_at, post_per_page, post_type',
-      )
+      .select('id, board_key, board_label, board_type, created_at, post_per_page, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -113,153 +74,221 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const defaultSize =
-      typeof board.data.post_per_page === 'number' && Number.isFinite(board.data.post_per_page)
-        ? Math.min(Math.max(Math.floor(board.data.post_per_page), 5), 50)
-        : 5;
-
-    const size = parseSize(requestUrl.searchParams.get('size'), defaultSize);
-    const from = (page - 1) * size;
-    const to = from + size - 1;
-
     if (board.data.board_type === 'page') {
-      const pages = await supabaseAdmin
+      const from = (page - 1) * size;
+      const to = from + size - 1;
+
+      const pageQuery = supabaseAdmin
         .from('pages')
-        .select('id, slug, subject, summary, edited_at, sort_order, user_id, site_id, board_id, created_at', {
-          count: 'exact',
-        })
+        .select(
+          'id, slug, subject, summary, edited_at, sort_order, user_id, board_id, site_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
+          { count: 'exact' },
+        )
         .eq('board_id', board.data.id)
         .order('sort_order', { ascending: true })
         .range(from, to);
 
-      if (pages.error) {
+      const pagesResult = await pageQuery;
+
+      if (pagesResult.error) {
         return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const totalCount = pages.count ?? 0;
-      const totalPage = totalCount > 0 ? Math.ceil(totalCount / size) : 1;
+      const userIds = Array.from(
+        new Set(
+          (pagesResult.data ?? []).map((pageRow) => pageRow.user_id).filter((value): value is string => Boolean(value)),
+        ),
+      );
+
+      const rhizomeStigmasResult =
+        userIds.length > 0
+          ? await supabaseAdmin
+              .from('rhizome_stigmas')
+              .select('user_id, nickname')
+              .eq('site_id', rhizome.data.id)
+              .in('user_id', userIds)
+          : { data: [], error: null };
+
+      if (rhizomeStigmasResult.error) {
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const stigmaResult =
+        userIds.length > 0
+          ? await supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIds)
+          : { data: [], error: null };
+
+      if (stigmaResult.error) {
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const nicknameMap = new Map(
+        (rhizomeStigmasResult.data ?? []).map((row) => [row.user_id as string, normalizeText(row.nickname)]),
+      );
+
+      const userNameMap = new Map(
+        (stigmaResult.data ?? []).map((row) => {
+          let decryptedUserName = '';
+          try {
+            decryptedUserName = row.user_name ? decrypt(row.user_name as string) : '';
+          } catch {
+            decryptedUserName = '';
+          }
+          return [row.user_id as string, decryptedUserName];
+        }),
+      );
+
+      const contents = (pagesResult.data ?? []).map((pageRow) => ({
+        ...pageRow,
+        author_name: nicknameMap.get(pageRow.user_id as string) || userNameMap.get(pageRow.user_id as string) || '',
+        is_closed: false,
+        closed_by: null,
+        closed_at: null,
+        closed_message: null,
+        closed_by_name: '',
+        prefix_id: null,
+        prefix_label: null,
+      }));
+
+      const totalCount = pagesResult.count ?? 0;
+      const totalPage = Math.max(1, Math.ceil(totalCount / size));
 
       return Response.json({
         board: board.data,
-        contents: pages.data ?? [],
+        contents,
         page,
         size,
         totalCount,
         totalPage,
+        filter,
       });
     }
 
-    let postQuery = supabaseAdmin
-      .from('posts')
-      .select('*', { count: 'exact' })
-      .eq('board_id', board.data.id)
-      .order('created_at', { ascending: false });
+    const from = (page - 1) * size;
+    const to = from + size - 1;
 
-    if (!isStaff) {
-      postQuery = postQuery.neq('is_closed', true);
-    } else if (filter === 'deleted') {
-      postQuery = postQuery.eq('is_closed', true);
+    const postsQuery = supabaseAdmin
+      .from('posts')
+      .select(
+        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status',
+        { count: 'exact' },
+      )
+      .eq('board_id', board.data.id)
+      .order('idx', { ascending: false });
+
+    if (filter === 'deleted') {
+      postsQuery.eq('is_closed', true).eq('published_status', 'published');
+    } else {
+      if (!isStaff) {
+        postsQuery.eq('is_closed', false);
+      }
+
+      if (authUserId) {
+        postsQuery.or(`published_status.eq.published,and(published_status.eq.draft,user_id.eq.${authUserId})`);
+      } else {
+        postsQuery.eq('published_status', 'published');
+      }
     }
 
-    const posts = await postQuery.range(from, to);
+    postsQuery.range(from, to);
 
-    if (posts.error) {
+    const postsResult = await postsQuery;
+
+    if (postsResult.error) {
       return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const visiblePosts = (posts.data ?? []) as PostRow[];
-
-    const userIdList = Array.from(
+    const userIds = Array.from(
       new Set(
-        visiblePosts
+        (postsResult.data ?? [])
           .flatMap((post) => [post.user_id, post.closed_by])
-          .filter((value): value is string => typeof value === 'string' && value.length > 0),
+          .filter((value): value is string => Boolean(value)),
       ),
     );
-
-    let nicknameMap = new Map<string, string>();
-    let userNameMap = new Map<string, string>();
-
-    if (userIdList.length > 0) {
-      const nicknameList = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('user_id, nickname')
-        .eq('site_id', rhizome.data.id)
-        .in('user_id', userIdList);
-
-      if (!nicknameList.error) {
-        nicknameMap = new Map(
-          (nicknameList.data ?? [])
-            .filter((item) => item.user_id)
-            .map((item) => [item.user_id as string, (item.nickname as string | null) ?? '']),
-        );
-      }
-
-      const stigmaList = await supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIdList);
-
-      if (!stigmaList.error) {
-        userNameMap = new Map(
-          (stigmaList.data ?? [])
-            .filter((item) => item.user_id)
-            .map((item) => {
-              const encryptedUserName = (item.user_name as string | null) ?? '';
-              return [item.user_id as string, encryptedUserName ? decrypt(encryptedUserName) : ''];
-            }),
-        );
-      }
-    }
 
     const prefixIds = Array.from(
       new Set(
-        visiblePosts
-          .map((post) => post.prefix_id)
-          .filter((value): value is string => typeof value === 'string' && Boolean(value)),
+        (postsResult.data ?? []).map((post) => post.prefix_id).filter((value): value is string => Boolean(value)),
       ),
     );
 
-    let prefixLabelMap = new Map<string, string>();
+    const rhizomeStigmasResult =
+      userIds.length > 0
+        ? await supabaseAdmin
+            .from('rhizome_stigmas')
+            .select('user_id, nickname')
+            .eq('site_id', rhizome.data.id)
+            .in('user_id', userIds)
+        : { data: [], error: null };
 
-    if (prefixIds.length > 0) {
-      const prefixResult = await supabaseAdmin
-        .from('board_prefixes')
-        .select('id, prefix_label')
-        .eq('site_id', rhizome.data.id)
-        .eq('board_id', board.data.id)
-        .in('id', prefixIds);
-
-      if (!prefixResult.error) {
-        prefixLabelMap = new Map(
-          (prefixResult.data ?? []).map((prefix) => [prefix.id as string, (prefix.prefix_label as string) ?? '']),
-        );
-      }
+    if (rhizomeStigmasResult.error) {
+      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const totalCount = posts.count ?? 0;
-    const totalPage = totalCount > 0 ? Math.ceil(totalCount / size) : 1;
+    const stigmaResult =
+      userIds.length > 0
+        ? await supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIds)
+        : { data: [], error: null };
+
+    if (stigmaResult.error) {
+      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const prefixResult =
+      prefixIds.length > 0
+        ? await supabaseAdmin
+            .from('board_prefixes')
+            .select('id, prefix_label')
+            .eq('board_id', board.data.id)
+            .in('id', prefixIds)
+        : { data: [], error: null };
+
+    if (prefixResult.error) {
+      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const nicknameMap = new Map(
+      (rhizomeStigmasResult.data ?? []).map((row) => [row.user_id as string, normalizeText(row.nickname)]),
+    );
+
+    const userNameMap = new Map(
+      (stigmaResult.data ?? []).map((row) => {
+        let decryptedUserName = '';
+        try {
+          decryptedUserName = row.user_name ? decrypt(row.user_name as string) : '';
+        } catch {
+          decryptedUserName = '';
+        }
+        return [row.user_id as string, decryptedUserName];
+      }),
+    );
+
+    const prefixMap = new Map((prefixResult.data ?? []).map((row) => [row.id as string, row.prefix_label as string]));
+
+    const contents = (postsResult.data ?? []).map((post) => ({
+      ...post,
+      author_name: nicknameMap.get(post.user_id as string) || userNameMap.get(post.user_id as string) || '',
+      closed_by_name: post.closed_by ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '' : '',
+      prefix_label: post.prefix_id ? (prefixMap.get(post.prefix_id) ?? null) : null,
+    }));
+
+    const totalCount = postsResult.count ?? 0;
+    const totalPage = Math.max(1, Math.ceil(totalCount / size));
 
     return Response.json({
       board: board.data,
-      contents: visiblePosts.map((post) => ({
-        ...post,
-        slug: String(post.slug),
-        prefix_label: post.prefix_id ? prefixLabelMap.get(post.prefix_id) || null : null,
-        author_name: nicknameMap.get(post.user_id) || userNameMap.get(post.user_id) || '',
-        closed_by_name:
-          post.closed_by && (nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '')
-            ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || ''
-            : '',
-      })),
+      contents,
       page,
       size,
       totalCount,
       totalPage,
-      filter: isStaff && filter === 'deleted' ? 'deleted' : 'all',
+      filter,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '게시판을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
   }
 }

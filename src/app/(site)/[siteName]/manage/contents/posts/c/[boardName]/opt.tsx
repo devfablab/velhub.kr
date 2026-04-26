@@ -10,6 +10,7 @@ import {
   Button,
   ButtonGroup,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -55,6 +56,7 @@ type ContentRow = {
   closed_by_name: string;
   prefix_id: string | null;
   prefix_label: string | null;
+  published_status?: 'draft' | 'published';
 };
 
 type BoardResponse = {
@@ -362,40 +364,37 @@ export default function Opt() {
         setDialogMode(null);
         setClosedMessage('');
         setDialogErrorMessage('');
+        setSelectedIds((previousIds) => previousIds.filter((id) => id !== deleteTarget.id));
         setReloadKey((previousValue) => previousValue + 1);
+        return;
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setDialogErrorMessage(unknownError.message || '게시물 복구에 실패했습니다.');
         } else {
           setDialogErrorMessage('게시물 복구에 실패했습니다.');
         }
+        return;
       } finally {
         setIsDeleting(false);
       }
-
-      return;
     }
 
-    const targets =
-      deleteMode === 'single' && deleteTarget
-        ? [deleteTarget]
-        : contents.filter((content) => selectedIds.includes(content.id));
-
-    if (targets.length === 0) {
-      return;
-    }
-
-    if (closedMessage.trim().length < 10) {
-      setDialogErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
+    if (!closedMessage.trim()) {
+      setDialogErrorMessage('삭제 사유를 입력해주세요.');
       return;
     }
 
     try {
       setErrorMessage('');
+      setDialogErrorMessage('');
       setIsDeleting(true);
 
-      for (const target of targets) {
-        const response = await fetch(`/api/boards/${boardName}/${target.slug}/delete?siteName=${siteName}`, {
+      if (deleteMode === 'single') {
+        if (!deleteTarget) {
+          return;
+        }
+
+        const response = await fetch(`/api/boards/${boardName}/${deleteTarget.slug}/delete?siteName=${siteName}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: {
@@ -411,6 +410,34 @@ export default function Opt() {
 
         if (!response.ok) {
           throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
+        }
+      }
+
+      if (deleteMode === 'bulk') {
+        for (const selectedId of selectedIds) {
+          const selectedContent = contents.find((content) => content.id === selectedId);
+
+          if (!selectedContent) {
+            continue;
+          }
+
+          const response = await fetch(`/api/boards/${boardName}/${selectedContent.slug}/delete?siteName=${siteName}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'close',
+              closedMessage: closedMessage.trim(),
+            }),
+          });
+
+          const result = (await response.json()) as DeleteResponse;
+
+          if (!response.ok) {
+            throw new Error(result.error ?? '게시물 삭제에 실패했습니다.');
+          }
         }
       }
 
@@ -548,15 +575,26 @@ export default function Opt() {
                   </TableCell>
 
                   <TableCell>
-                    <Link
-                      href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
-                      sx={{
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {content.prefix_label ? <Box component="span">[{content.prefix_label}] </Box> : null}
-                      <Box component="span">{content.subject}</Box>
-                    </Link>
+                    <Stack spacing={0.75}>
+                      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                        <Typography variant="body2">{content.idx}</Typography>
+                        {content.published_status === 'draft' ? (
+                          <Chip label="임시저장글" color="warning" size="small" />
+                        ) : null}
+                        {content.prefix_label ? (
+                          <Chip label={content.prefix_label} size="small" variant="outlined" />
+                        ) : null}
+                      </Stack>
+
+                      <Link
+                        href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
+                        sx={{
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <Box component="span">{content.subject}</Box>
+                      </Link>
+                    </Stack>
                   </TableCell>
 
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
@@ -593,7 +631,7 @@ export default function Opt() {
 
               {contents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={8} align="center">
                     {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
                   </TableCell>
                 </TableRow>

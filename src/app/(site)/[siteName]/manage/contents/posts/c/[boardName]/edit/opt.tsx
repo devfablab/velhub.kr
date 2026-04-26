@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
 import {
@@ -23,24 +23,30 @@ import { normalizeText } from '@/lib/utils';
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
+type PostType = 'none' | 'prefix' | 'series';
+type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
+
 type BoardResponse = {
   board?: {
     id: string;
     board_key: string;
     board_label: string;
-    board_type: string;
-    post_per_page?: number | null;
-    post_type: 'none' | 'prefix' | 'series';
+    board_type: BoardType;
+    is_active: boolean;
+    sort_order: number;
+    markdown_status: string | null;
+    post_per_page: number | null;
+    post_type: PostType | null;
   };
-};
-
-type EditBoardResponse = {
-  ok?: boolean;
-  boardName?: string;
   error?: string;
 };
 
-type PostType = 'none' | 'prefix' | 'series';
+type UpdateBoardResponse = {
+  ok?: boolean;
+  boardId?: string;
+  boardName?: string;
+  error?: string;
+};
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -70,70 +76,23 @@ export default function Opt() {
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
+  const [originBoardKey, setOriginBoardKey] = useState('');
+  const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
   const [postType, setPostType] = useState<PostType>('none');
-  const [isPostTypeLocked, setIsPostTypeLocked] = useState(false);
-  const [originalBoardKey, setOriginalBoardKey] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [checkedBoardKey, setCheckedBoardKey] = useState('');
-  const [isChecking, setIsChecking] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
-  useEffect(() => {
-    async function loadBoard() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BoardResponse | { error?: string };
-
-        if (!response.ok) {
-          throw new Error(
-            'error' in result
-              ? result.error || '게시판 정보를 불러오지 못했습니다.'
-              : '게시판 정보를 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('board' in result) || !result.board) {
-          throw new Error('게시판 정보를 불러오지 못했습니다.');
-        }
-
-        setBoardLabel(result.board.board_label ?? '');
-        setBoardKey(result.board.board_key ?? '');
-        setPostPerPage(
-          typeof result.board.post_per_page === 'number' && Number.isFinite(result.board.post_per_page)
-            ? result.board.post_per_page
-            : 5,
-        );
-        setPostType(result.board.post_type);
-        setIsPostTypeLocked(result.board.post_type !== 'none');
-        setOriginalBoardKey(result.board.board_key ?? '');
-        setCheckedBoardKey(result.board.board_key ?? '');
-        setIsChecked(true);
-        setIsAvailable(true);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadBoard();
-  }, [boardName, siteName]);
+  const canUsePostType = useMemo(() => {
+    return boardType === 'basic';
+  }, [boardType]);
 
   function handleBoardLabelChange(event: InputChangeEvent) {
     setBoardLabel(event.currentTarget.value);
@@ -143,30 +102,46 @@ export default function Opt() {
     const normalizedValue = normalizeBoardKey(event.currentTarget.value);
 
     setBoardKey(normalizedValue);
-    setSuccessMessage('');
-
-    if (normalizedValue === originalBoardKey) {
-      setIsChecked(true);
-      setIsAvailable(true);
-      setCheckedBoardKey(normalizedValue);
-      return;
-    }
-
     setIsChecked(false);
     setIsAvailable(false);
     setCheckedBoardKey('');
+    setSuccessMessage('');
   }
 
-  function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setPostPerPage(Number(event.target.value));
   }
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
-    if (isPostTypeLocked) {
-      return;
+    setPostType(event.target.value as PostType);
+  }
+
+  async function loadBoard() {
+    const response = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    const result = (await response.json()) as BoardResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
     }
 
-    setPostType(event.target.value as PostType);
+    if (!result.board) {
+      throw new Error('게시판 정보를 불러오지 못했습니다.');
+    }
+
+    setBoardLabel(result.board.board_label);
+    setBoardKey(result.board.board_key);
+    setOriginBoardKey(result.board.board_key);
+    setBoardType(result.board.board_type);
+    setPostPerPage(result.board.post_per_page ?? 5);
+    setPostType(result.board.post_type ?? 'none');
+    setIsActive(result.board.is_active);
+    setIsChecked(true);
+    setIsAvailable(true);
+    setCheckedBoardKey(result.board.board_key);
   }
 
   async function handleCheckBoardKey() {
@@ -196,12 +171,12 @@ export default function Opt() {
       return;
     }
 
-    if (normalizedBoardKey === originalBoardKey) {
-      setErrorMessage('');
-      setSuccessMessage('현재 게시판 식별자 그대로 사용 가능합니다.');
+    if (normalizedBoardKey === originBoardKey) {
       setIsChecked(true);
       setIsAvailable(true);
       setCheckedBoardKey(normalizedBoardKey);
+      setErrorMessage('');
+      setSuccessMessage('현재 사용 중인 게시판 식별자입니다.');
       return;
     }
 
@@ -284,7 +259,7 @@ export default function Opt() {
       setSuccessMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch(`/api/boards/${boardName}/edit?siteName=${siteName}`, {
+      const response = await fetch(`/api/boards/${boardName}/edit`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -294,15 +269,15 @@ export default function Opt() {
           siteName,
           boardKey: normalizedBoardKey,
           boardLabel: normalizedBoardLabel,
-          boardType: 'community',
-          isActive: true,
+          boardType,
+          isActive,
           markdownStatus: 'markdown_default',
           postPerPage,
-          postType,
+          postType: canUsePostType ? postType : 'none',
         }),
       });
 
-      const result = (await response.json()) as EditBoardResponse;
+      const result = (await response.json()) as UpdateBoardResponse;
 
       if (!response.ok) {
         throw new Error(result.error ?? '게시판 수정에 실패했습니다.');
@@ -328,21 +303,60 @@ export default function Opt() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  if (isLoading) {
-    return null;
-  }
+  useEffect(() => {
+    void (async () => {
+      try {
+        setErrorMessage('');
+        await loadBoard();
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
+        }
+      }
+    })();
+  }, [siteName, boardName]);
 
   return (
     <Stack spacing={2}>
-      {isNotMobile && (
+      {isNotMobile ? (
         <Typography variant="h5" component="h1">
           게시판 수정
         </Typography>
-      )}
+      ) : null}
 
       <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+        {errorMessage ? (
+          <Alert severity="error" variant="filled">
+            {errorMessage}
+          </Alert>
+        ) : null}
+
+        {successMessage ? (
+          <Alert severity="success" variant="outlined">
+            {successMessage}
+          </Alert>
+        ) : null}
+
         <TextField
-          label="게시판 식별자"
+          label="게시판 종류"
+          value={
+            boardType === 'basic'
+              ? '일반 게시판 (변경 불가)'
+              : boardType === 'gallery'
+                ? '갤러리 게시판 (변경 불가)'
+                : boardType === 'youtube'
+                  ? '유튜브 영상 공유 게시판 (변경 불가)'
+                  : '피드 게시판 (변경 불가)'
+          }
+          fullWidth
+          size="small"
+          slotProps={{ input: { readOnly: true, disabled: true } }}
+        />
+
+        <TextField
+          label="게시판 식별자 (필수)"
           value={boardKey}
           onChange={handleBoardKeyChange}
           fullWidth
@@ -364,7 +378,7 @@ export default function Opt() {
                     disabled={isChecking}
                     size="small"
                   >
-                    중복 체크
+                    중복 확인
                   </Button>
                 </InputAdornment>
               ),
@@ -376,7 +390,7 @@ export default function Opt() {
 
         <TextField
           select
-          label="목록 표시 개수"
+          label="목록 표시 개수 (필수)"
           value={postPerPage}
           onChange={handlePostPerPageChange}
           fullWidth
@@ -389,48 +403,38 @@ export default function Opt() {
           ))}
         </TextField>
 
-        <FormControl>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            말머리/연재 설정
-          </Typography>
-          <RadioGroup row value={postType} onChange={handlePostTypeChange}>
-            <FormControlLabel value="none" control={<Radio />} label="선택 안함" disabled={isPostTypeLocked} />
-            <FormControlLabel value="prefix" control={<Radio />} label="말머리형" disabled={isPostTypeLocked} />
-            <FormControlLabel value="series" control={<Radio />} label="연재형" disabled={isPostTypeLocked} />
-          </RadioGroup>
-        </FormControl>
+        {canUsePostType ? (
+          <>
+            <FormControl>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                말머리/연재 설정
+              </Typography>
+              <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+                <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
+                <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                <FormControlLabel value="series" control={<Radio />} label="연재형" />
+              </RadioGroup>
+            </FormControl>
 
-        {!isPostTypeLocked ? (
-          <Alert severity="warning" variant="outlined">
-            말머리/연재 여부는 설정되면 변경하실 수 없습니다. 유의해 주세요.
-          </Alert>
-        ) : (
-          <Alert severity="error" variant="filled">
-            {postType === 'prefix' ? '말머리형으로' : '연재형으로'} 설정되어 있습니다.
-            <br />
-            한번 말머리/연재 여부가 설정되면 변경하실 수 없습니다.
-          </Alert>
-        )}
+            <Alert severity="warning" variant="outlined">
+              말머리/연재 여부는 한번 설정되면 변경하실 수 없습니다.
+            </Alert>
+          </>
+        ) : null}
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button component={Link} href={`/${siteName}/manage/contents/posts/c/${boardName}`}>
+          <Button
+            component={Link}
+            href={`/${siteName}/manage/contents/posts/c/${boardName}`}
+            underline="none"
+            variant="outlined"
+          >
             취소
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting}>
             저장
           </Button>
         </Stack>
-
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
       </Stack>
     </Stack>
   );

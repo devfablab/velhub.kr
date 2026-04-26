@@ -2,6 +2,19 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type PlanFeatureRow = {
+  count_board: number | null;
+  count_subpage: number | null;
+};
+
+function toNonNegativeInteger(value: number | null | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -15,7 +28,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, visibility_type, is_shutdown')
+      .select('id, visibility_type, is_shutdown, plan_type')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -47,8 +60,32 @@ export async function GET(request: Request) {
       return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const planFeatureResult = await supabaseAdmin
+      .from('plan_features')
+      .select('count_board, count_subpage')
+      .eq('plan_id', rhizome.data.plan_type)
+      .maybeSingle();
+
+    if (planFeatureResult.error || !planFeatureResult.data) {
+      return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const planFeature = planFeatureResult.data as PlanFeatureRow;
+    const maxBoardCount = Math.max(
+      0,
+      toNonNegativeInteger(planFeature.count_board) - toNonNegativeInteger(planFeature.count_subpage),
+    );
+
+    const boardRows = boards.data ?? [];
+    const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;
+
     return Response.json({
-      boards: boards.data ?? [],
+      boards: boardRows,
+      limit: {
+        maxBoardCount,
+        currentBoardCount,
+        canCreateBoard: currentBoardCount < maxBoardCount,
+      },
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

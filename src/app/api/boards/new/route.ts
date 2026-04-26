@@ -13,6 +13,11 @@ type RequestBody = {
   postType?: 'none' | 'prefix' | 'series' | null;
 };
 
+type PlanFeatureRow = {
+  count_board: number | null;
+  count_subpage: number | null;
+};
+
 function normalizeBoardKey(rawValue: string | null | undefined) {
   return (rawValue ?? '')
     .trim()
@@ -29,7 +34,7 @@ function hasInvalidBoardKeyCharacters(value: string) {
 }
 
 function isAllowedBoardType(value: string) {
-  return value === 'board' || value === 'blog' || value === 'page' || value === 'community';
+  return value === 'basic' || value === 'gallery' || value === 'youtube' || value === 'feed';
 }
 
 function normalizePostPerPage(value: number | null | undefined) {
@@ -54,6 +59,14 @@ function isAllowedPostType(value: unknown): value is 'none' | 'prefix' | 'series
   return value === 'none' || value === 'prefix' || value === 'series';
 }
 
+function toNonNegativeInteger(value: number | null | undefined) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.floor(value));
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
@@ -76,12 +89,7 @@ export async function POST(request: Request) {
     }
 
     if (hasInvalidBoardKeyCharacters(boardKey)) {
-      return Response.json(
-        {
-          error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다.",
-        },
-        { status: 400 },
-      );
+      return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
     }
 
     if (/^\d/.test(boardKey)) {
@@ -106,7 +114,11 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_type, plan_type')
+      .eq('site_key', siteName)
+      .maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -135,6 +147,37 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미 존재하는 게시판 식별자입니다.' }, { status: 400 });
     }
 
+    const planFeatureResult = await supabaseAdmin
+      .from('plan_features')
+      .select('count_board, count_subpage')
+      .eq('plan_id', rhizome.data.plan_type)
+      .maybeSingle();
+
+    if (planFeatureResult.error || !planFeatureResult.data) {
+      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
+    }
+
+    const planFeature = planFeatureResult.data as PlanFeatureRow;
+    const maxBoardCount = Math.max(
+      0,
+      toNonNegativeInteger(planFeature.count_board) - toNonNegativeInteger(planFeature.count_subpage),
+    );
+
+    const currentBoardsResult = await supabaseAdmin
+      .from('boards')
+      .select('id, board_type')
+      .eq('site_id', rhizome.data.id);
+
+    if (currentBoardsResult.error) {
+      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
+    }
+
+    const currentBoardCount = (currentBoardsResult.data ?? []).filter((board) => board.board_type !== 'page').length;
+
+    if (currentBoardCount >= maxBoardCount) {
+      return Response.json({ error: '더 이상 게시판을 생성할 수 없습니다.' }, { status: 400 });
+    }
+
     const lastBoard = await supabaseAdmin
       .from('boards')
       .select('sort_order')
@@ -154,7 +197,7 @@ export async function POST(request: Request) {
       .insert({
         board_key: boardKey,
         board_label: boardLabel,
-        board_type: boardType === 'community' ? 'board' : boardType,
+        board_type: boardType,
         is_active: isActive,
         sort_order: nextSortOrder,
         site_id: rhizome.data.id,

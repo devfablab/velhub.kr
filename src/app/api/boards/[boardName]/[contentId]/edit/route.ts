@@ -9,19 +9,41 @@ type RouteContext = {
   }>;
 };
 
+type PollOptionRow = {
+  id: number;
+  label: string;
+};
+
+type PollRow = {
+  question: string;
+  options: PollOptionRow[];
+};
+
+type ImageRow = {
+  path: string;
+  width: number | null;
+  height: number | null;
+};
+
 type RequestBody = {
   siteName: string | null;
+  action?: 'draft' | 'publish' | 'update' | null;
   subject?: string | null;
   summary?: string | null;
   contentHtml?: string | null;
   contentMarkdown?: string | null;
+  contentSimple?: string | null;
   thumbnailImage?: string | null;
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
+  youtubeUrl?: string | null;
+  youtubeCreatedAt?: string | null;
+  images?: unknown;
+  poll?: unknown;
   categories?: string[] | null;
+  hashtags?: string[] | null;
   seriesKey?: string | null;
   prefixId?: string | null;
-  isClosed?: boolean | null;
 };
 
 function isNumericSlug(value: string) {
@@ -76,6 +98,152 @@ function isValidSeriesKey(value: string) {
   return true;
 }
 
+function normalizeHashtags(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => normalizeText(item))
+        .filter(Boolean)
+        .map((item) => (item.startsWith('#') ? item.slice(1) : item))
+        .map((item) => item.replace(/\s+/g, ' '))
+        .filter(Boolean),
+    ),
+  );
+}
+
+function normalizeImages(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [] as ImageRow[];
+  }
+
+  const normalizedImages: ImageRow[] = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const rawItem = item as {
+      path?: unknown;
+      width?: unknown;
+      height?: unknown;
+    };
+
+    const path = normalizeText(rawItem.path);
+
+    if (!path) {
+      continue;
+    }
+
+    const width =
+      typeof rawItem.width === 'number' && Number.isFinite(rawItem.width) ? Math.floor(rawItem.width) : null;
+    const height =
+      typeof rawItem.height === 'number' && Number.isFinite(rawItem.height) ? Math.floor(rawItem.height) : null;
+
+    normalizedImages.push({
+      path,
+      width,
+      height,
+    });
+  }
+
+  return normalizedImages.slice(0, 6);
+}
+
+function normalizePoll(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const rawValue = value as {
+    question?: unknown;
+    options?: unknown;
+  };
+
+  const question = normalizeText(rawValue.question);
+
+  if (!question) {
+    return null;
+  }
+
+  if (!Array.isArray(rawValue.options)) {
+    return null;
+  }
+
+  const rawOptions = rawValue.options.map((item) => normalizeText(item));
+  const hasAnyOption = rawOptions.some(Boolean);
+
+  if (!hasAnyOption) {
+    return null;
+  }
+
+  const firstEmptyIndex = rawOptions.findIndex((item) => !item);
+
+  if (firstEmptyIndex !== -1 && rawOptions.slice(firstEmptyIndex + 1).some(Boolean)) {
+    return 'NON_SEQUENTIAL';
+  }
+
+  const options = rawOptions
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((label, index) => ({
+      id: index + 1,
+      label,
+    }));
+
+  if (options.length < 2) {
+    return 'INVALID_OPTION_COUNT';
+  }
+
+  return {
+    question,
+    options,
+  } satisfies PollRow;
+}
+
+function extractYoutubeId(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,
+    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const matchedValue = normalizedValue.match(pattern);
+
+    if (matchedValue?.[1]) {
+      return matchedValue[1];
+    }
+  }
+
+  return '';
+}
+
+function isValidDateTimeValue(value: string) {
+  return !Number.isNaN(new Date(value).getTime());
+}
+
+function buildFeedSubject(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue.length > 100 ? normalizedValue.slice(0, 100) : normalizedValue;
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
@@ -92,17 +260,25 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const requestBody = (await request.json()) as RequestBody;
 
-    const requestUrl = new URL(request.url);
-    const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-
+    const siteName = normalizeText(requestBody.siteName).toLowerCase();
+    const action =
+      requestBody.action === 'draft' || requestBody.action === 'publish' || requestBody.action === 'update'
+        ? requestBody.action
+        : 'update';
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
+    const contentSimple = normalizeText(requestBody.contentSimple);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
+    const youtubeUrl = normalizeText(requestBody.youtubeUrl);
+    const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
+    const youtubeId = extractYoutubeId(youtubeUrl);
     const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
     const prefixId = normalizeText(requestBody.prefixId);
-    const isClosed = typeof requestBody.isClosed === 'boolean' ? requestBody.isClosed : null;
+    const hashtags = normalizeHashtags(requestBody.hashtags);
+    const images = normalizeImages(requestBody.images);
+    const poll = normalizePoll(requestBody.poll);
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -126,24 +302,21 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (requestBody.subject !== undefined && !subject) {
-      return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-    }
-
-    if (
-      (requestBody.contentHtml !== undefined && !contentHtml) ||
-      (requestBody.contentMarkdown !== undefined && !contentMarkdown)
-    ) {
-      return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-    }
-
     if (seriesKey && !isValidSeriesKey(seriesKey)) {
       return Response.json({ error: '연재 식별자가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (poll === 'NON_SEQUENTIAL') {
+      return Response.json({ error: '투표 선택지는 순차적으로 입력해야 합니다.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_OPTION_COUNT') {
+      return Response.json({ error: '투표 선택지는 2개 이상 입력해야 합니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -153,7 +326,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (!session.authUserId || !session.stigmaId) {
+    if (!session.authUserId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -168,13 +341,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (board.data.board_type === 'page') {
-      return Response.json({ error: '페이지 게시판에는 글을 수정할 수 없습니다.' }, { status: 403 });
-    }
-
     const postQuery = supabaseAdmin
       .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id')
+      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll')
       .eq('board_id', board.data.id);
 
     const currentPost = isNumericSlug(normalizedContentId)
@@ -185,31 +354,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const membershipResult = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('id, role, is_approval, is_block')
-      .eq('site_id', rhizome.data.id)
-      .eq('user_id', session.stigmaId)
-      .maybeSingle();
-
-    const membership = membershipResult.error || !membershipResult.data ? null : membershipResult.data;
-    const membershipRole = normalizeText(membership?.role);
-    const isStaff = membershipRole === 'owner' || membershipRole === 'manager';
-    const isBlocked = membership?.is_block === true;
-    const isApprovedMember = membership?.is_approval === true;
+    const isStaff = session.case === 'staff';
     const isAuthor = currentPost.data.user_id === session.authUserId;
 
-    if (isBlocked) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (!isStaff && !(isAuthor && isApprovedMember)) {
+    if (!isStaff && !isAuthor) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     let categoryIds: string[] = [];
 
-    if (requestBody.categories !== undefined && categoryKeys.length > 0) {
+    if (categoryKeys.length > 0) {
       const categoryResult = await supabaseAdmin
         .from('board_categories')
         .select('id, category_key')
@@ -232,36 +386,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       categoryIds = categoryKeys.map((categoryKey) => categoryMap.get(categoryKey) as string);
     }
 
-    let seriesId: string | null | undefined = undefined;
+    let seriesId: string | null = currentPost.data.series_id ?? null;
 
-    if (requestBody.seriesKey !== undefined) {
-      if (seriesKey && (board.data.post_type === 'none' || board.data.post_type === 'prefix')) {
-        return Response.json({ error: '연재형 게시판에서만 연재를 선택할 수 있습니다.' }, { status: 400 });
-      }
-
-      if (!seriesKey && board.data.post_type === 'series') {
-        return Response.json({ error: '연재형 게시판은 연재를 선택해야 합니다.' }, { status: 400 });
-      }
-
-      if (currentPost.data.series_id && seriesKey) {
-        const currentSeries = await supabaseAdmin
-          .from('board_series')
-          .select('series_key')
-          .eq('id', currentPost.data.series_id)
-          .maybeSingle();
-
-        if (currentSeries.error || !currentSeries.data) {
-          return Response.json({ error: '연재 정보를 확인하지 못했습니다.' }, { status: 500 });
-        }
-
-        if (currentSeries.data.series_key !== seriesKey) {
-          return Response.json({ error: '연재가 설정된 글은 연재를 변경할 수 없습니다.' }, { status: 400 });
-        }
-
-        seriesId = currentPost.data.series_id;
-      } else if (currentPost.data.series_id && !seriesKey) {
-        return Response.json({ error: '연재가 설정된 글은 연재를 변경할 수 없습니다.' }, { status: 400 });
-      } else if (!currentPost.data.series_id && seriesKey) {
+    if (board.data.post_type === 'series') {
+      if (seriesKey) {
         const seriesResult = await supabaseAdmin
           .from('board_series')
           .select('id, is_completed, user_id')
@@ -283,22 +411,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         seriesId = seriesResult.data.id;
-      } else {
-        seriesId = null;
+      } else if (action !== 'draft') {
+        return Response.json({ error: '연재형 게시판은 연재를 선택해야 합니다.' }, { status: 400 });
       }
+    } else {
+      seriesId = null;
     }
 
-    let resolvedPrefixId: string | null | undefined = undefined;
+    let resolvedPrefixId: string | null = currentPost.data.prefix_id ?? null;
 
-    if (requestBody.prefixId !== undefined) {
-      if (prefixId && board.data.post_type !== 'prefix') {
-        return Response.json({ error: '말머리형 게시판에서만 말머리를 선택할 수 있습니다.' }, { status: 400 });
-      }
-
-      if (!prefixId && board.data.post_type === 'prefix') {
-        return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
-      }
-
+    if (board.data.post_type === 'prefix') {
       if (prefixId) {
         const prefixResult = await supabaseAdmin
           .from('board_prefixes')
@@ -313,82 +435,193 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         resolvedPrefixId = prefixResult.data.id;
-      } else {
-        resolvedPrefixId = null;
+      } else if (action !== 'draft') {
+        return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
+      }
+    } else {
+      resolvedPrefixId = null;
+    }
+
+    let finalSubject = subject;
+    let finalSummary = summary || null;
+    let finalContentHtml = contentHtml || null;
+    let finalContentMarkdown = contentMarkdown || null;
+    let finalContentSimple = contentSimple || null;
+    let finalThumbnailImage = thumbnailImage || null;
+    let finalThumbnailWidth = thumbnailWidth;
+    let finalThumbnailHeight = thumbnailHeight;
+    let finalYoutubeUrl = youtubeUrl || null;
+    let finalYoutubeId = youtubeId || null;
+    let finalYoutubeCreatedAt = youtubeCreatedAt || null;
+    let finalImages = images.length > 0 ? images : null;
+    let finalPoll = poll && typeof poll === 'object' ? poll : null;
+
+    if (board.data.board_type === 'basic') {
+      finalSummary = null;
+      finalContentSimple = null;
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalImages = null;
+
+      if (action !== 'draft') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalContentHtml || !finalContentMarkdown) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+      }
+
+      if (currentPost.data.poll && finalPoll) {
+        return Response.json({ error: '글이 게시된 이후에는 투표를 수정하실 수 없습니다.' }, { status: 400 });
       }
     }
+
+    if (board.data.board_type === 'gallery') {
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalPoll = null;
+      finalContentSimple = null;
+
+      if (action !== 'draft') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalImages || finalImages.length === 0) {
+          return Response.json({ error: '이미지를 하나 이상 등록해주세요.' }, { status: 400 });
+        }
+      }
+    }
+
+    if (board.data.board_type === 'youtube') {
+      finalContentHtml = null;
+      finalContentMarkdown = null;
+      finalContentSimple = null;
+      finalImages = null;
+      finalPoll = null;
+
+      if (action !== 'draft') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalSummary) {
+          return Response.json({ error: '간단 설명을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeUrl) {
+          return Response.json({ error: '유튜브 영상 주소를 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeId) {
+          return Response.json({ error: '유튜브 영상 주소가 올바르지 않습니다.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeCreatedAt || !isValidDateTimeValue(finalYoutubeCreatedAt)) {
+          return Response.json({ error: '유튜브 업로드 기준 날짜가 올바르지 않습니다.' }, { status: 400 });
+        }
+      }
+    }
+
+    if (board.data.board_type === 'feed') {
+      finalSummary = null;
+      finalThumbnailImage = null;
+      finalThumbnailWidth = null;
+      finalThumbnailHeight = null;
+      finalContentHtml = null;
+      finalContentMarkdown = null;
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalPoll = null;
+      finalSubject = buildFeedSubject(finalContentSimple ?? '');
+
+      if (action !== 'draft') {
+        if (!finalContentSimple) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalSubject) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+      }
+    }
+
+    const nowIsoString = new Date().toISOString();
+    const nextPublishedStatus =
+      action === 'draft' ? 'draft' : currentPost.data.published_status === 'draft' ? 'published' : 'published';
 
     const updatePayload: {
-      subject?: string;
-      summary?: string | null;
-      content_html?: string;
-      content_markdown?: string;
-      thumbnail_image?: string | null;
-      thumbnail_width?: number | null;
-      thumbnail_height?: number | null;
-      categories?: string[];
-      series_id?: string | null;
-      prefix_id?: string | null;
-      is_closed?: boolean;
-    } = {};
+      subject: string | null;
+      summary: string | null;
+      content_html: string | null;
+      content_markdown: string | null;
+      content_simple: string | null;
+      thumbnail_image: string | null;
+      thumbnail_width: number | null;
+      thumbnail_height: number | null;
+      youtube_url: string | null;
+      youtube_id: string | null;
+      youtube_created_at: string | null;
+      images: ImageRow[] | null;
+      poll: PollRow | null;
+      hashtags: string[];
+      categories: string[];
+      series_id: string | null;
+      prefix_id: string | null;
+      published_status: 'draft' | 'published';
+      published_at?: string | null;
+      edited_at?: string | null;
+    } = {
+      subject: finalSubject || null,
+      summary: finalSummary,
+      content_html: finalContentHtml,
+      content_markdown: finalContentMarkdown,
+      content_simple: finalContentSimple,
+      thumbnail_image: finalThumbnailImage,
+      thumbnail_width: finalThumbnailWidth,
+      thumbnail_height: finalThumbnailHeight,
+      youtube_url: finalYoutubeUrl,
+      youtube_id: finalYoutubeId,
+      youtube_created_at: finalYoutubeCreatedAt,
+      images: finalImages,
+      poll: finalPoll,
+      hashtags,
+      categories: categoryIds,
+      series_id: seriesId,
+      prefix_id: resolvedPrefixId,
+      published_status: nextPublishedStatus,
+    };
 
-    if (requestBody.subject !== undefined) {
-      updatePayload.subject = subject;
+    if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {
+      updatePayload.published_at = nowIsoString;
+      updatePayload.edited_at = null;
     }
 
-    if (requestBody.summary !== undefined) {
-      updatePayload.summary = summary || null;
-    }
-
-    if (requestBody.contentHtml !== undefined) {
-      updatePayload.content_html = contentHtml;
-    }
-
-    if (requestBody.contentMarkdown !== undefined) {
-      updatePayload.content_markdown = contentMarkdown;
-    }
-
-    if (requestBody.thumbnailImage !== undefined) {
-      updatePayload.thumbnail_image = thumbnailImage || null;
-      updatePayload.thumbnail_width = thumbnailWidth;
-      updatePayload.thumbnail_height = thumbnailHeight;
-    }
-
-    if (requestBody.categories !== undefined) {
-      updatePayload.categories = categoryIds;
-    }
-
-    if (seriesId !== undefined) {
-      updatePayload.series_id = seriesId;
-    }
-
-    if (resolvedPrefixId !== undefined) {
-      updatePayload.prefix_id = resolvedPrefixId;
-    }
-
-    if (isClosed !== null) {
-      if (!isStaff) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
-      updatePayload.is_closed = isClosed;
+    if (currentPost.data.published_status === 'published' && action === 'update') {
+      updatePayload.edited_at = nowIsoString;
     }
 
     const updatePost = await supabaseAdmin
       .from('posts')
       .update(updatePayload)
       .eq('id', currentPost.data.id)
-      .select('id, slug, series_id')
+      .select('id, slug, published_status')
       .maybeSingle();
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    if (seriesId) {
+    if (seriesId && nextPublishedStatus === 'published') {
       await supabaseAdmin
         .from('board_series')
         .update({
-          last_published_at: new Date().toISOString(),
+          last_published_at: nowIsoString,
         })
         .eq('id', seriesId);
     }
@@ -396,6 +629,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     return Response.json({
       ok: true,
       slug: String(updatePost.data.slug),
+      contentId: updatePost.data.id,
+      publishedStatus: updatePost.data.published_status,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

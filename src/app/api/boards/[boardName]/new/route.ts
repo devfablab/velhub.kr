@@ -8,16 +8,39 @@ type RouteContext = {
   }>;
 };
 
+type PollOptionRow = {
+  id: number;
+  label: string;
+};
+
+type PollRow = {
+  question: string;
+  options: PollOptionRow[];
+};
+
+type ImageRow = {
+  path: string;
+  width: number | null;
+  height: number | null;
+};
+
 type RequestBody = {
   siteName: string | null;
+  action?: 'draft' | 'publish' | null;
   subject?: string | null;
   summary?: string | null;
   contentHtml?: string | null;
   contentMarkdown?: string | null;
+  contentSimple?: string | null;
   thumbnailImage?: string | null;
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
+  youtubeUrl?: string | null;
+  youtubeCreatedAt?: string | null;
+  images?: unknown;
+  poll?: unknown;
   categories?: string[] | null;
+  hashtags?: string[] | null;
   seriesKey?: string | null;
   prefixId?: string | null;
 };
@@ -70,6 +93,152 @@ function isValidSeriesKey(value: string) {
   return true;
 }
 
+function normalizeHashtags(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .map((item) => normalizeText(item))
+        .filter(Boolean)
+        .map((item) => (item.startsWith('#') ? item.slice(1) : item))
+        .map((item) => item.replace(/\s+/g, ' '))
+        .filter(Boolean),
+    ),
+  );
+}
+
+function normalizeImages(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [] as ImageRow[];
+  }
+
+  const normalizedImages: ImageRow[] = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const rawItem = item as {
+      path?: unknown;
+      width?: unknown;
+      height?: unknown;
+    };
+
+    const path = normalizeText(rawItem.path);
+
+    if (!path) {
+      continue;
+    }
+
+    const width =
+      typeof rawItem.width === 'number' && Number.isFinite(rawItem.width) ? Math.floor(rawItem.width) : null;
+    const height =
+      typeof rawItem.height === 'number' && Number.isFinite(rawItem.height) ? Math.floor(rawItem.height) : null;
+
+    normalizedImages.push({
+      path,
+      width,
+      height,
+    });
+  }
+
+  return normalizedImages.slice(0, 6);
+}
+
+function normalizePoll(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const rawValue = value as {
+    question?: unknown;
+    options?: unknown;
+  };
+
+  const question = normalizeText(rawValue.question);
+
+  if (!question) {
+    return null;
+  }
+
+  if (!Array.isArray(rawValue.options)) {
+    return null;
+  }
+
+  const rawOptions = rawValue.options.map((item) => normalizeText(item));
+  const hasAnyOption = rawOptions.some(Boolean);
+
+  if (!hasAnyOption) {
+    return null;
+  }
+
+  const firstEmptyIndex = rawOptions.findIndex((item) => !item);
+
+  if (firstEmptyIndex !== -1 && rawOptions.slice(firstEmptyIndex + 1).some(Boolean)) {
+    return 'NON_SEQUENTIAL';
+  }
+
+  const options = rawOptions
+    .filter(Boolean)
+    .slice(0, 5)
+    .map((label, index) => ({
+      id: index + 1,
+      label,
+    }));
+
+  if (options.length < 2) {
+    return 'INVALID_OPTION_COUNT';
+  }
+
+  return {
+    question,
+    options,
+  } satisfies PollRow;
+}
+
+function extractYoutubeId(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,
+    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const matchedValue = normalizedValue.match(pattern);
+
+    if (matchedValue?.[1]) {
+      return matchedValue[1];
+    }
+  }
+
+  return '';
+}
+
+function isValidDateTimeValue(value: string) {
+  return !Number.isNaN(new Date(value).getTime());
+}
+
+function buildFeedSubject(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue.length > 100 ? normalizedValue.slice(0, 100) : normalizedValue;
+}
+
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -82,13 +251,21 @@ export async function POST(request: Request, context: RouteContext) {
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
+    const action = requestBody.action === 'draft' ? 'draft' : 'publish';
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
+    const contentSimple = normalizeText(requestBody.contentSimple);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
+    const youtubeUrl = normalizeText(requestBody.youtubeUrl);
+    const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
+    const youtubeId = extractYoutubeId(youtubeUrl);
     const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
     const prefixId = normalizeText(requestBody.prefixId);
+    const hashtags = normalizeHashtags(requestBody.hashtags);
+    const images = normalizeImages(requestBody.images);
+    const poll = normalizePoll(requestBody.poll);
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -112,16 +289,16 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!subject) {
-      return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-    }
-
-    if (!contentHtml || !contentMarkdown) {
-      return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-    }
-
     if (seriesKey && !isValidSeriesKey(seriesKey)) {
       return Response.json({ error: '연재 식별자가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (poll === 'NON_SEQUENTIAL') {
+      return Response.json({ error: '투표 선택지는 순차적으로 입력해야 합니다.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_OPTION_COUNT') {
+      return Response.json({ error: '투표 선택지는 2개 이상 입력해야 합니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -214,7 +391,7 @@ export async function POST(request: Request, context: RouteContext) {
       seriesId = seriesResult.data.id;
     }
 
-    if (!seriesKey && board.data.post_type === 'series') {
+    if (action === 'publish' && !seriesKey && board.data.post_type === 'series') {
       return Response.json({ error: '연재형 게시판은 연재를 선택해야 합니다.' }, { status: 400 });
     }
 
@@ -240,8 +417,113 @@ export async function POST(request: Request, context: RouteContext) {
       resolvedPrefixId = prefixResult.data.id;
     }
 
-    if (!prefixId && board.data.post_type === 'prefix') {
+    if (action === 'publish' && !prefixId && board.data.post_type === 'prefix') {
       return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
+    }
+
+    let finalSubject = subject;
+    let finalSummary = summary || null;
+    let finalContentHtml = contentHtml || null;
+    let finalContentMarkdown = contentMarkdown || null;
+    let finalContentSimple = contentSimple || null;
+    let finalThumbnailImage = thumbnailImage || null;
+    let finalThumbnailWidth = thumbnailWidth;
+    let finalThumbnailHeight = thumbnailHeight;
+    let finalYoutubeUrl = youtubeUrl || null;
+    let finalYoutubeId = youtubeId || null;
+    let finalYoutubeCreatedAt = youtubeCreatedAt || null;
+    let finalImages = images.length > 0 ? images : null;
+    let finalPoll = poll && typeof poll === 'object' ? poll : null;
+
+    if (board.data.board_type === 'basic') {
+      finalSummary = null;
+      finalContentSimple = null;
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalImages = null;
+
+      if (action === 'publish') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalContentHtml || !finalContentMarkdown) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+      }
+    }
+
+    if (board.data.board_type === 'gallery') {
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalPoll = null;
+      finalContentSimple = null;
+
+      if (action === 'publish') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalImages || finalImages.length === 0) {
+          return Response.json({ error: '이미지를 하나 이상 등록해주세요.' }, { status: 400 });
+        }
+      }
+    }
+
+    if (board.data.board_type === 'youtube') {
+      finalContentHtml = null;
+      finalContentMarkdown = null;
+      finalContentSimple = null;
+      finalImages = null;
+      finalPoll = null;
+
+      if (action === 'publish') {
+        if (!finalSubject) {
+          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalSummary) {
+          return Response.json({ error: '간단 설명을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeUrl) {
+          return Response.json({ error: '유튜브 영상 주소를 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeId) {
+          return Response.json({ error: '유튜브 영상 주소가 올바르지 않습니다.' }, { status: 400 });
+        }
+
+        if (!finalYoutubeCreatedAt || !isValidDateTimeValue(finalYoutubeCreatedAt)) {
+          return Response.json({ error: '유튜브 업로드 기준 날짜가 올바르지 않습니다.' }, { status: 400 });
+        }
+      }
+    }
+
+    if (board.data.board_type === 'feed') {
+      finalSummary = null;
+      finalThumbnailImage = null;
+      finalThumbnailWidth = null;
+      finalThumbnailHeight = null;
+      finalContentHtml = null;
+      finalContentMarkdown = null;
+      finalYoutubeUrl = null;
+      finalYoutubeId = null;
+      finalYoutubeCreatedAt = null;
+      finalPoll = null;
+      finalSubject = buildFeedSubject(finalContentSimple ?? '');
+
+      if (action === 'publish') {
+        if (!finalContentSimple) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+
+        if (!finalSubject) {
+          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
+        }
+      }
     }
 
     const lastPost = await supabaseAdmin
@@ -258,18 +540,26 @@ export async function POST(request: Request, context: RouteContext) {
 
     const nextIdx = typeof lastPost.data?.idx === 'number' ? Number(lastPost.data.idx) + 1 : 1;
     const nextSlug = typeof lastPost.data?.slug === 'number' ? Number(lastPost.data.slug) + 1 : Date.now();
+    const nowIsoString = new Date().toISOString();
 
     const insertPost = await supabaseAdmin
       .from('posts')
       .insert({
         slug: nextSlug,
-        subject,
-        summary: summary || null,
-        content_html: contentHtml,
-        content_markdown: contentMarkdown,
-        thumbnail_image: thumbnailImage || null,
-        thumbnail_width: thumbnailWidth,
-        thumbnail_height: thumbnailHeight,
+        subject: finalSubject || null,
+        summary: finalSummary,
+        content_html: finalContentHtml,
+        content_markdown: finalContentMarkdown,
+        content_simple: finalContentSimple,
+        thumbnail_image: finalThumbnailImage,
+        thumbnail_width: finalThumbnailWidth,
+        thumbnail_height: finalThumbnailHeight,
+        youtube_url: finalYoutubeUrl,
+        youtube_id: finalYoutubeId,
+        youtube_created_at: finalYoutubeCreatedAt,
+        images: finalImages,
+        poll: finalPoll,
+        hashtags,
         idx: nextIdx,
         user_id: session.authUserId,
         site_id: rhizome.data.id,
@@ -278,6 +568,8 @@ export async function POST(request: Request, context: RouteContext) {
         categories: categoryIds,
         series_id: seriesId,
         prefix_id: resolvedPrefixId,
+        published_status: action === 'draft' ? 'draft' : 'published',
+        published_at: action === 'publish' ? nowIsoString : null,
       })
       .select('id, slug')
       .maybeSingle();
@@ -286,11 +578,11 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });
     }
 
-    if (seriesId) {
+    if (seriesId && action === 'publish') {
       await supabaseAdmin
         .from('board_series')
         .update({
-          last_published_at: new Date().toISOString(),
+          last_published_at: nowIsoString,
         })
         .eq('id', seriesId);
     }
@@ -298,6 +590,8 @@ export async function POST(request: Request, context: RouteContext) {
     return Response.json({
       ok: true,
       slug: String(insertPost.data.slug),
+      contentId: insertPost.data.id,
+      publishedStatus: action === 'draft' ? 'draft' : 'published',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

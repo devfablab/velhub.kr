@@ -35,7 +35,7 @@ function hasInvalidBoardKeyCharacters(value: string) {
 }
 
 function isAllowedBoardType(value: string) {
-  return value === 'board' || value === 'blog' || value === 'page' || value === 'community';
+  return value === 'basic' || value === 'gallery' || value === 'youtube' || value === 'feed';
 }
 
 function normalizePostPerPage(value: number | null | undefined) {
@@ -89,12 +89,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     if (hasInvalidBoardKeyCharacters(boardKey)) {
-      return Response.json(
-        {
-          error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다.",
-        },
-        { status: 400 },
-      );
+      return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
     }
 
     if (/^\d/.test(boardKey)) {
@@ -135,7 +130,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const currentBoard = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, post_type')
+      .select('id, board_key, post_type, board_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -182,7 +177,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .update({
         board_key: boardKey,
         board_label: boardLabel,
-        board_type: boardType === 'community' ? 'board' : boardType,
+        board_type: currentBoard.data.board_type,
         is_active: isActive,
         markdown_status: markdownStatus,
         post_per_page: postPerPage,

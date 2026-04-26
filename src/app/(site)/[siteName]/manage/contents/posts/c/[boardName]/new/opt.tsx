@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from '@mui/material/Link';
 import {
@@ -30,6 +30,8 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 type CreateResponse = {
   ok?: boolean;
   slug?: string;
+  contentId?: string;
+  publishedStatus?: 'draft' | 'published';
   error?: string;
 };
 
@@ -58,6 +60,7 @@ type PrefixRow = {
 
 type BoardInfoResponse = {
   board?: {
+    board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series';
   };
   error?: string;
@@ -73,6 +76,27 @@ type PrefixListResponse = {
   error?: string;
 };
 
+type PostImageRow = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+type UploadResponse = {
+  ok?: boolean;
+  path?: string;
+  url?: string;
+  width?: number | null;
+  height?: number | null;
+  error?: string;
+};
+
+type PollState = {
+  question: string;
+  options: string[];
+};
+
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -85,6 +109,36 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+const EMPTY_POLL: PollState = {
+  question: '',
+  options: ['', '', '', '', ''],
+};
+
+function getYoutubeId(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,
+    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+  ];
+
+  for (const pattern of patterns) {
+    const matchedValue = normalizedValue.match(pattern);
+
+    if (matchedValue?.[1]) {
+      return matchedValue[1];
+    }
+  }
+
+  return '';
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -94,25 +148,42 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
-  const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
+  const galleryInputReference = useRef<HTMLInputElement | null>(null);
 
-  const [subject, setSubject] = useState('');
-  const [summary, setSummary] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [contentMarkdown, setContentMarkdown] = useState('');
-  const [thumbnailImage, setThumbnailImage] = useState('');
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [subject, setSubject] = useState('');
+  const [summary, setSummary] = useState('');
+  const [contentHtml, setContentHtml] = useState('');
+  const [contentMarkdown, setContentMarkdown] = useState('');
+  const [contentSimple, setContentSimple] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeCreatedAt, setYoutubeCreatedAt] = useState('');
+  const [thumbnailImage, setThumbnailImage] = useState('');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
+  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [images, setImages] = useState<PostImageRow[]>([]);
+  const [isPollEnabled, setIsPollEnabled] = useState(false);
+  const [poll, setPoll] = useState<PollState>(EMPTY_POLL);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
+  const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const isBasicBoard = boardType === 'basic';
+  const isGalleryBoard = boardType === 'gallery';
+  const isYoutubeBoard = boardType === 'youtube';
+  const isFeedBoard = boardType === 'feed';
+
+  const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
 
   useEffect(() => {
     async function loadBoardData() {
@@ -130,7 +201,10 @@ export default function Opt() {
           throw new Error(boardResult.error ?? '게시판 정보를 불러오지 못했습니다.');
         }
 
+        const nextBoardType = boardResult.board?.board_type ?? 'basic';
         const nextPostType = boardResult.board?.post_type ?? 'none';
+
+        setBoardType(nextBoardType);
         setPostType(nextPostType);
 
         if (nextPostType === 'series') {
@@ -184,6 +258,18 @@ export default function Opt() {
     setSummary(event.currentTarget.value);
   }
 
+  function handleContentSimpleChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setContentSimple(event.currentTarget.value);
+  }
+
+  function handleYoutubeUrlChange(event: InputChangeEvent) {
+    setYoutubeUrl(event.currentTarget.value);
+  }
+
+  function handleYoutubeCreatedAtChange(event: InputChangeEvent) {
+    setYoutubeCreatedAt(event.currentTarget.value);
+  }
+
   function handleSeriesChange(event: SelectChangeEvent<string>) {
     setSelectedSeriesKey(event.target.value);
   }
@@ -192,12 +278,88 @@ export default function Opt() {
     setSelectedPrefixId(event.target.value);
   }
 
+  function handlePollQuestionChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setPoll((previousPoll) => ({
+      ...previousPoll,
+      question: event.currentTarget.value,
+    }));
+  }
+
+  function handlePollOptionChange(index: number, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const nextValue = event.currentTarget.value;
+
+    setPoll((previousPoll) => ({
+      ...previousPoll,
+      options: previousPoll.options.map((option, optionIndex) => (optionIndex === index ? nextValue : option)),
+    }));
+  }
+
+  function handleEnablePoll() {
+    setIsPollEnabled(true);
+    setPoll(EMPTY_POLL);
+  }
+
+  function handleDisablePoll() {
+    setIsPollEnabled(false);
+    setPoll(EMPTY_POLL);
+  }
+
+  async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    formData.append('siteName', siteName);
+
+    const response = await fetch('/api/attachment/add/post', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    const result = (await response.json()) as UploadResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '이미지 업로드에 실패했습니다.');
+    }
+
+    if (!result.path || !result.url) {
+      throw new Error('이미지 업로드에 실패했습니다.');
+    }
+
+    return {
+      path: result.path,
+      url: result.url,
+      width: typeof result.width === 'number' ? result.width : null,
+      height: typeof result.height === 'number' ? result.height : null,
+    };
+  }
+
+  async function deletePostImage(path: string) {
+    const response = await fetch('/api/attachment/delete/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        siteName,
+        path,
+      }),
+    });
+
+    const result = (await response.json()) as { ok?: boolean; error?: string };
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '이미지 삭제에 실패했습니다.');
+    }
+  }
+
   function handleClickThumbnailUpload() {
     if (isUploadingThumbnail) {
       return;
     }
 
-    fileInputReference.current?.click();
+    thumbnailInputReference.current?.click();
   }
 
   async function handleThumbnailFileChange(event: InputChangeEvent) {
@@ -209,70 +371,25 @@ export default function Opt() {
       return;
     }
 
-    setErrorMessage('');
-    setIsUploadingThumbnail(true);
-
     try {
-      const imageUrl = URL.createObjectURL(selectedFile);
+      setErrorMessage('');
+      setIsUploadingThumbnail(true);
 
-      const imageSize = await new Promise<{ width: number; height: number }>((resolve, reject) => {
-        const image = new Image();
+      const uploadedImage = await uploadPostImage(selectedFile, 'thumbnail');
 
-        image.onload = () => {
-          resolve({
-            width: image.naturalWidth,
-            height: image.naturalHeight,
-          });
-          URL.revokeObjectURL(imageUrl);
-        };
-
-        image.onerror = () => {
-          reject(new Error('썸네일 이미지 정보를 불러오지 못했습니다.'));
-          URL.revokeObjectURL(imageUrl);
-        };
-
-        image.src = imageUrl;
-      });
-
-      const previousThumbnailImage = thumbnailImage;
-
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      const response = await fetch('/api/attachment/add/og-image', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
+      if (thumbnailImage) {
+        await deletePostImage(thumbnailImage);
       }
 
-      if (previousThumbnailImage) {
-        await fetch('/api/attachment/delete/og-image', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: previousThumbnailImage,
-          }),
-        });
-      }
-
-      setThumbnailImage(typeof result.ogImage === 'string' ? result.ogImage : '');
-      setThumbnailImageUrl(typeof result.url === 'string' ? result.url : '');
-      setThumbnailWidth(imageSize.width);
-      setThumbnailHeight(imageSize.height);
+      setThumbnailImage(uploadedImage.path);
+      setThumbnailImageUrl(uploadedImage.url);
+      setThumbnailWidth(uploadedImage.width);
+      setThumbnailHeight(uploadedImage.height);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '썸네일 이미지 업로드에 실패했습니다.');
+        setErrorMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
       } else {
-        setErrorMessage('썸네일 이미지 업로드에 실패했습니다.');
+        setErrorMessage('이미지 업로드에 실패했습니다.');
       }
     } finally {
       setIsUploadingThumbnail(false);
@@ -280,27 +397,116 @@ export default function Opt() {
     }
   }
 
-  async function handleSubmit(event: FormSubmitEvent) {
-    event.preventDefault();
-
-    if (isSubmitting || isLoading) {
+  function handleClickGalleryUpload() {
+    if (isUploadingImages) {
       return;
     }
 
-    if (postType === 'prefix' && !selectedPrefixId) {
-      setErrorMessage('말머리를 선택해주세요.');
+    galleryInputReference.current?.click();
+  }
+
+  async function handleGalleryFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFiles = Array.from(inputElement.files ?? []);
+
+    if (selectedFiles.length === 0 || isUploadingImages) {
+      inputElement.value = '';
       return;
     }
 
-    if (postType === 'series' && !selectedSeriesKey) {
-      setErrorMessage('연재를 선택해주세요.');
+    const remainCount = 6 - images.length;
+
+    if (remainCount <= 0) {
+      setErrorMessage('이미지는 최대 6개까지 등록할 수 있습니다.');
+      inputElement.value = '';
       return;
     }
-
-    setErrorMessage('');
-    setIsSubmitting(true);
 
     try {
+      setErrorMessage('');
+      setIsUploadingImages(true);
+
+      const nextFiles = selectedFiles.slice(0, remainCount);
+      const uploadedImages: PostImageRow[] = [];
+
+      for (const file of nextFiles) {
+        const uploadedImage = await uploadPostImage(file, 'images');
+
+        uploadedImages.unshift({
+          path: uploadedImage.path,
+          url: uploadedImage.url,
+          width: uploadedImage.width,
+          height: uploadedImage.height,
+        });
+      }
+
+      setImages((previousImages) => [...uploadedImages, ...previousImages]);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
+      } else {
+        setErrorMessage('이미지 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingImages(false);
+      inputElement.value = '';
+    }
+  }
+
+  async function handleDeleteGalleryImage(path: string) {
+    try {
+      setErrorMessage('');
+      await deletePostImage(path);
+      setImages((previousImages) => previousImages.filter((image) => image.path !== path));
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '이미지 삭제에 실패했습니다.');
+      } else {
+        setErrorMessage('이미지 삭제에 실패했습니다.');
+      }
+    }
+  }
+
+  async function handleUploadEditorImage(file: Blob | File) {
+    const editorFile =
+      file instanceof File
+        ? file
+        : new File([file], `editor-${Date.now()}.png`, {
+            type: file.type || 'image/png',
+          });
+
+    const uploadedImage = await uploadPostImage(editorFile, 'editor');
+    return uploadedImage.url;
+  }
+
+  async function handleSubmit(action: 'draft' | 'publish', event: FormSubmitEvent) {
+    event.preventDefault();
+
+    if (isSubmittingDraft || isSubmittingPublish || isLoading || isUploadingThumbnail || isUploadingImages) {
+      return;
+    }
+
+    if (action === 'publish') {
+      if (postType === 'prefix' && !selectedPrefixId) {
+        setErrorMessage('말머리를 선택해주세요.');
+        return;
+      }
+
+      if (postType === 'series' && !selectedSeriesKey) {
+        setErrorMessage('연재를 선택해주세요.');
+        return;
+      }
+    }
+
+    try {
+      setErrorMessage('');
+
+      if (action === 'draft') {
+        setIsSubmittingDraft(true);
+      } else {
+        setIsSubmittingPublish(true);
+      }
+
       const response = await fetch(`/api/boards/${boardName}/new`, {
         method: 'POST',
         headers: {
@@ -309,13 +515,19 @@ export default function Opt() {
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          subject,
-          summary,
-          contentHtml,
-          contentMarkdown,
+          action,
+          subject: isFeedBoard ? null : subject,
+          summary: isBasicBoard || isFeedBoard ? null : summary,
+          contentHtml: isBasicBoard || isGalleryBoard ? contentHtml : null,
+          contentMarkdown: isBasicBoard || isGalleryBoard ? contentMarkdown : null,
+          contentSimple: isFeedBoard ? contentSimple : null,
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
+          youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
+          youtubeCreatedAt: isYoutubeBoard ? youtubeCreatedAt : null,
+          images: isGalleryBoard || isFeedBoard ? images : [],
+          poll: isBasicBoard && isPollEnabled ? poll : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
         }),
@@ -324,20 +536,16 @@ export default function Opt() {
       const result = (await response.json()) as CreateResponse;
 
       if (!response.ok) {
-        if (thumbnailImage) {
-          await fetch('/api/attachment/delete/og-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              path: thumbnailImage,
-            }),
-          });
-        }
-
         throw new Error(result.error ?? '글 작성에 실패했습니다.');
+      }
+
+      if (!result.contentId) {
+        throw new Error('글 작성에 실패했습니다.');
+      }
+
+      if (result.publishedStatus === 'draft') {
+        router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.contentId}/edit`);
+        return;
       }
 
       if (!result.slug) {
@@ -352,7 +560,8 @@ export default function Opt() {
         setErrorMessage('글 작성에 실패했습니다.');
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingDraft(false);
+      setIsSubmittingPublish(false);
     }
   }
 
@@ -362,15 +571,49 @@ export default function Opt() {
 
   return (
     <Stack spacing={2}>
-      {isNotMobile && (
+      {isNotMobile ? (
         <Typography variant="h5" component="h1">
           새 글 쓰기
         </Typography>
-      )}
+      ) : null}
 
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
-        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+      <Stack component="form" spacing={2.5} onSubmit={(event) => void handleSubmit('publish', event)}>
+        {!isFeedBoard ? (
+          <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+        ) : null}
+
+        {isGalleryBoard ? (
+          <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+        ) : null}
+
+        {isYoutubeBoard ? (
+          <>
+            <TextField label="간단 설명 (필수)" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+            <TextField
+              label="유튜브 영상 주소 (필수)"
+              value={youtubeUrl}
+              onChange={handleYoutubeUrlChange}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="유튜브 영상 ID"
+              value={youtubeId}
+              fullWidth
+              size="small"
+              slotProps={{ input: { readOnly: true } }}
+            />
+            <TextField
+              label="유튜브 업로드 기준 날짜 (필수)"
+              type="datetime-local"
+              value={youtubeCreatedAt}
+              onChange={handleYoutubeCreatedAtChange}
+              fullWidth
+              size="small"
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </>
+        ) : null}
 
         {postType === 'prefix' ? (
           <FormControl fullWidth size="small">
@@ -381,6 +624,9 @@ export default function Opt() {
               onChange={handlePrefixChange}
               input={<OutlinedInput label="말머리" />}
             >
+              <MenuItem value="">
+                <ListItemText primary="선택 안함" />
+              </MenuItem>
               {prefixList.map((prefix) => (
                 <MenuItem key={prefix.id} value={prefix.id}>
                   <ListItemText primary={prefix.prefix_label} />
@@ -415,40 +661,154 @@ export default function Opt() {
           </>
         ) : null}
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
+        {!isFeedBoard ? (
+          <Box>
+            <Typography sx={{ mb: 1 }}>{isBasicBoard ? '썸네일 이미지' : '오픈 그래프 이미지'}</Typography>
 
-          {thumbnailImageUrl ? (
-            <Box
-              component="img"
-              src={thumbnailImageUrl}
-              alt="오픈그래프 이미지"
-              sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+            {isGalleryBoard ? (
+              <Alert severity="info" variant="outlined" sx={{ mb: 1.5 }}>
+                검색엔진이나 소셜 미디어에 링크를 올릴 때 미리보기 이미지로 사용됩니다.
+              </Alert>
+            ) : null}
+
+            {thumbnailImageUrl ? (
+              <Box
+                component="img"
+                src={thumbnailImageUrl}
+                alt="썸네일 이미지"
+                sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+              />
+            ) : null}
+
+            <VisuallyHiddenInput
+              ref={thumbnailInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleThumbnailFileChange}
             />
-          ) : null}
 
-          <VisuallyHiddenInput
-            ref={fileInputReference}
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailFileChange}
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleClickThumbnailUpload}
+              disabled={isUploadingThumbnail}
+            >
+              {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+            </Button>
+          </Box>
+        ) : null}
+
+        {isGalleryBoard || isFeedBoard ? (
+          <Box>
+            <Typography sx={{ mb: 1 }}>
+              이미지 업로드 (최대 6개). 이미지 하나 이상 필수 등록. 순서 변경 불가함. 이미지 올리는 순서대로 정렬됨. 맨
+              나중에 등록된게 앞에 나옴.
+            </Typography>
+
+            <VisuallyHiddenInput
+              ref={galleryInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              onChange={handleGalleryFileChange}
+            />
+
+            <Button type="button" variant="outlined" onClick={handleClickGalleryUpload} disabled={isUploadingImages}>
+              이미지 업로드
+            </Button>
+
+            {images.length > 0 ? (
+              <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                {images.map((image, index) => (
+                  <Stack key={image.path} spacing={1}>
+                    <Typography variant="body2">{`이미지 ${index + 1}`}</Typography>
+                    <Box
+                      component="img"
+                      src={image.url}
+                      alt={`업로드 이미지 ${index + 1}`}
+                      sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                    />
+                    <Stack direction="row">
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => void handleDeleteGalleryImage(image.path)}
+                      >
+                        삭제
+                      </Button>
+                    </Stack>
+                  </Stack>
+                ))}
+              </Stack>
+            ) : null}
+          </Box>
+        ) : null}
+
+        {isFeedBoard ? (
+          <TextField
+            label="내용 (필수)"
+            value={contentSimple}
+            onChange={handleContentSimpleChange}
+            fullWidth
+            multiline
+            minRows={6}
+            size="small"
           />
+        ) : null}
 
-          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
-            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
-        </Box>
+        {isBasicBoard || isGalleryBoard ? (
+          <Box>
+            <Typography sx={{ mb: 1 }}>{isGalleryBoard ? '내용' : '내용 (필수)'}</Typography>
+            <ToastEditor
+              initialValue={contentHtml}
+              initialMarkdown={contentMarkdown}
+              initialEditType="wysiwyg"
+              themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+              hideModeSwitch
+              onHtmlChange={setContentHtml}
+              onMarkdownChange={setContentMarkdown}
+              onUploadImage={handleUploadEditorImage}
+            />
+          </Box>
+        ) : null}
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
-          <ToastEditor
-            initialValue={contentHtml}
-            initialMarkdown={contentMarkdown}
-            initialEditType="markdown"
-            onHtmlChange={setContentHtml}
-            onMarkdownChange={setContentMarkdown}
-          />
-        </Box>
+        {isBasicBoard ? (
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={1}>
+              <Button type="button" variant="outlined" onClick={isPollEnabled ? handleDisablePoll : handleEnablePoll}>
+                {isPollEnabled ? '투표 취소' : '투표 설정'}
+              </Button>
+            </Stack>
+
+            {isPollEnabled ? (
+              <>
+                <TextField
+                  label="투표 질문"
+                  value={poll.question}
+                  onChange={handlePollQuestionChange}
+                  fullWidth
+                  size="small"
+                />
+
+                {poll.options.map((option, index) => (
+                  <TextField
+                    key={index}
+                    label={`선택지 ${index + 1}`}
+                    value={option}
+                    onChange={(event) => handlePollOptionChange(index, event)}
+                    fullWidth
+                    size="small"
+                  />
+                ))}
+
+                <Alert severity="warning" variant="outlined">
+                  글이 게시된 이후에는 투표를 수정하실 수 없습니다. 유의하세요.
+                </Alert>
+              </>
+            ) : null}
+          </Stack>
+        ) : null}
 
         <Stack direction="row" spacing={1.5}>
           <Button
@@ -460,7 +820,16 @@ export default function Opt() {
           >
             취소
           </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+          <Button
+            type="button"
+            variant="outlined"
+            disabled={isSubmittingDraft || isSubmittingPublish}
+            size="large"
+            onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
+          >
+            임시 저장
+          </Button>
+          <Button type="submit" variant="contained" disabled={isSubmittingDraft || isSubmittingPublish} size="large">
             저장
           </Button>
         </Stack>
