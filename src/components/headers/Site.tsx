@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -97,9 +97,29 @@ export default function HeaderSite() {
     siteRole: null,
   });
 
+  const hasHydratedThemeMode = useRef(false);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+
+    if (themeMode === 'dark') {
+      htmlElement.setAttribute('data-theme', 'yellow-dark');
+      return;
+    }
+
+    if (themeMode === 'light') {
+      htmlElement.setAttribute('data-theme', 'yellow-light');
+      return;
+    }
+
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    htmlElement.setAttribute('data-theme', prefersDarkMode ? 'yellow-dark' : 'yellow-light');
+  }, [themeMode]);
 
   useEffect(() => {
     async function loadHeader() {
@@ -138,8 +158,9 @@ export default function HeaderSite() {
         siteRole: result.siteRole,
       });
 
-      if (result.themeMode) {
+      if (!hasHydratedThemeMode.current && result.themeMode) {
         setThemeMode(result.themeMode);
+        hasHydratedThemeMode.current = true;
       }
     }
 

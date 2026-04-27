@@ -1,0 +1,33 @@
+.table-list
+  .button
+    width: 100%
+
+  .link
+    margin-top: ds.rem(17)
+
+    a
+      width: 100%
+
+  ol
+    margin-top: ds.rem(17)
+    border-top: 1px solid rgba(ds.$hex-tertiary, .1)
+    padding-top: ds.rem(17)
+
+    li
+      margin: ds.rem(7) 0
+
+      a
+        display: block
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(16)
+
+        span
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+        &:hover, &:focus-visible
+          span
+            text-decoration: underline

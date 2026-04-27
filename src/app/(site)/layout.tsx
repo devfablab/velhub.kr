@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderSiteGuard from './[siteName]/headerSiteGuard';
-import '../globals.sass';
+// import '../globals.sass';
 
 export const metadata: Metadata = {
   title: 'Create Next App',

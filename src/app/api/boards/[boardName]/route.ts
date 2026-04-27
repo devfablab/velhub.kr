@@ -2,32 +2,12 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
+import { getPostList } from '@/lib/board/getPostList';
 
 type RouteContext = {
   params: Promise<{
     boardName: string;
   }>;
-};
-
-type PostListRow = {
-  id: string;
-  slug: number;
-  subject: string;
-  summary: string | null;
-  edited_at: string;
-  created_at: string;
-  idx: number;
-  board_id: string;
-  site_id: string;
-  user_id: string;
-  is_closed: boolean;
-  closed_by: string | null;
-  closed_at: string | null;
-  closed_message: string | null;
-  prefix_id: string | null;
-  published_status: 'draft' | 'published';
-  post_count: number | null;
-  is_pin: boolean;
 };
 
 function parsePositiveInt(value: string | null, fallbackValue: number) {
@@ -171,6 +151,8 @@ export async function GET(request: Request, context: RouteContext) {
         prefix_label: null,
         post_count: null,
         is_pin: false,
+        board_key: board.data.board_key,
+        board_label: board.data.board_label,
       }));
 
       const totalCount = pagesResult.count ?? 0;
@@ -187,149 +169,24 @@ export async function GET(request: Request, context: RouteContext) {
       });
     }
 
-    const from = (page - 1) * size;
-    const to = from + size - 1;
-
-    let pinnedPosts: PostListRow[] = [];
-
-    if (filter === 'all') {
-      const pinnedQuery = supabaseAdmin
-        .from('posts')
-        .select(
-          'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
-        )
-        .eq('board_id', board.data.id)
-        .eq('is_pin', true)
-        .eq('is_closed', false)
-        .eq('published_status', 'published')
-        .order('idx', { ascending: false });
-
-      const pinnedResult = await pinnedQuery;
-
-      if (pinnedResult.error) {
-        return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      pinnedPosts = (pinnedResult.data ?? []) as PostListRow[];
-    }
-
-    const postsQuery = supabaseAdmin
-      .from('posts')
-      .select(
-        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
-        { count: 'exact' },
-      )
-      .eq('board_id', board.data.id)
-      .order('idx', { ascending: false });
-
-    if (filter === 'deleted') {
-      postsQuery.eq('is_closed', true).eq('published_status', 'published');
-    } else {
-      postsQuery.eq('is_pin', false);
-
-      if (!isStaff) {
-        postsQuery.eq('is_closed', false);
-      }
-
-      if (authUserId) {
-        postsQuery.or(`published_status.eq.published,and(published_status.eq.draft,user_id.eq.${authUserId})`);
-      } else {
-        postsQuery.eq('published_status', 'published');
-      }
-    }
-
-    postsQuery.range(from, to);
-
-    const postsResult = await postsQuery;
-
-    if (postsResult.error) {
-      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const mergedPosts = [...pinnedPosts, ...((postsResult.data ?? []) as PostListRow[])];
-
-    const userIds = Array.from(
-      new Set(
-        mergedPosts
-          .flatMap((post) => [post.user_id, post.closed_by])
-          .filter((value): value is string => Boolean(value)),
-      ),
-    );
-
-    const prefixIds = Array.from(
-      new Set(mergedPosts.map((post) => post.prefix_id).filter((value): value is string => Boolean(value))),
-    );
-
-    const rhizomeStigmasResult =
-      userIds.length > 0
-        ? await supabaseAdmin
-            .from('rhizome_stigmas')
-            .select('user_id, nickname')
-            .eq('site_id', rhizome.data.id)
-            .in('user_id', userIds)
-        : { data: [], error: null };
-
-    if (rhizomeStigmasResult.error) {
-      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const stigmaResult =
-      userIds.length > 0
-        ? await supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIds)
-        : { data: [], error: null };
-
-    if (stigmaResult.error) {
-      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const prefixResult =
-      prefixIds.length > 0
-        ? await supabaseAdmin
-            .from('board_prefixes')
-            .select('id, prefix_label')
-            .eq('board_id', board.data.id)
-            .in('id', prefixIds)
-        : { data: [], error: null };
-
-    if (prefixResult.error) {
-      return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const nicknameMap = new Map(
-      (rhizomeStigmasResult.data ?? []).map((row) => [row.user_id as string, normalizeText(row.nickname)]),
-    );
-
-    const userNameMap = new Map(
-      (stigmaResult.data ?? []).map((row) => {
-        let decryptedUserName = '';
-        try {
-          decryptedUserName = row.user_name ? decrypt(row.user_name as string) : '';
-        } catch {
-          decryptedUserName = '';
-        }
-        return [row.user_id as string, decryptedUserName];
-      }),
-    );
-
-    const prefixMap = new Map((prefixResult.data ?? []).map((row) => [row.id as string, row.prefix_label as string]));
-
-    const contents = mergedPosts.map((post) => ({
-      ...post,
-      author_name: nicknameMap.get(post.user_id as string) || userNameMap.get(post.user_id as string) || '',
-      closed_by_name: post.closed_by ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '' : '',
-      prefix_label: post.prefix_id ? (prefixMap.get(post.prefix_id) ?? null) : null,
-    }));
-
-    const totalCount = postsResult.count ?? 0;
-    const totalPage = Math.max(1, Math.ceil(totalCount / size));
+    const result = await getPostList({
+      siteId: rhizome.data.id,
+      siteKey: siteName,
+      boardId: board.data.id,
+      page,
+      size,
+      filter,
+      sessionCase: session.case,
+      authUserId,
+    });
 
     return Response.json({
       board: board.data,
-      contents,
+      contents: result.contents,
       page,
       size,
-      totalCount,
-      totalPage,
+      totalCount: result.totalCount,
+      totalPage: result.totalPage,
       filter,
     });
   } catch (unknownError) {

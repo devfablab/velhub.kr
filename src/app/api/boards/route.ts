@@ -7,6 +7,19 @@ type PlanFeatureRow = {
   count_subpage: number | null;
 };
 
+type BoardRow = {
+  id: string;
+  board_key: string;
+  board_label: string;
+  board_type: string;
+  is_active: boolean;
+  sort_order: number | null;
+  markdown_status: string | null;
+  site_id: string;
+  created_at: string;
+  post_per_page: number | null;
+};
+
 function toNonNegativeInteger(value: number | null | undefined) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 0;
@@ -41,11 +54,16 @@ export async function GET(request: Request) {
     });
 
     const isStaff = session.case === 'staff';
+    const isMember = session.case === 'member';
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
+    }
+
+    if (!isStaff && !isMember) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const boards = await supabaseAdmin
@@ -76,11 +94,14 @@ export async function GET(request: Request) {
       toNonNegativeInteger(planFeature.count_board) - toNonNegativeInteger(planFeature.count_subpage),
     );
 
-    const boardRows = boards.data ?? [];
+    const boardRows = (boards.data ?? []) as BoardRow[];
     const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;
+
+    const writeBoards = boardRows.filter((board) => board.is_active === true && board.board_type !== 'page');
 
     return Response.json({
       boards: boardRows,
+      writeBoards,
       limit: {
         maxBoardCount,
         currentBoardCount,

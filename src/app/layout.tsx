@@ -4,7 +4,7 @@ import localFont from 'next/font/local';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
-// import './globals.sass';
+import './globals.sass';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -27,11 +27,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable}`}>
       <body>
-        <AuthStateProvider>
-          <AppRouterCacheProvider>
-            <ThemeProviderClient>{children}</ThemeProviderClient>
-          </AppRouterCacheProvider>
-        </AuthStateProvider>
+        <div id="__app">
+          <AuthStateProvider>
+            <AppRouterCacheProvider>
+              <ThemeProviderClient>{children}</ThemeProviderClient>
+            </AppRouterCacheProvider>
+          </AuthStateProvider>
+        </div>
       </body>
     </html>
   );
