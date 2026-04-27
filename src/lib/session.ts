@@ -34,7 +34,6 @@ type CookieLike = {
 
 const DEFAULT_AUTO_LOGIN = true;
 const SESSION_CACHE_SECONDS = 60 * 10;
-const PROFILE_AUTO_LOGIN_CACHE_SECONDS = 60 * 10;
 const LAST_ACTIVE_TOUCH_SECONDS = 60 * 5;
 const AUTO_LOGIN_ON_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
 const AUTO_LOGIN_OFF_TIMEOUT_MS = 24 * 60 * 60 * 1000;
@@ -64,14 +63,6 @@ function getSessionClaimsCacheKey(cookieFingerprint: string) {
   return `session:claims:${cookieFingerprint}`;
 }
 
-function getLastActiveCacheKey(userId: string) {
-  return `session:last-active:${userId}`;
-}
-
-function getProfileAutoLoginCacheKey(userId: string) {
-  return `session:auto-login:${userId}`;
-}
-
 function getAuthCookieFingerprint(cookieItems: CookieLike[]) {
   const authCookieValue = cookieItems
     .filter((cookieItem) => cookieItem.name.includes('-auth-token'))
@@ -98,10 +89,6 @@ function getInactiveTimeoutMs(autoLogin: boolean) {
   return autoLogin ? AUTO_LOGIN_ON_TIMEOUT_MS : AUTO_LOGIN_OFF_TIMEOUT_MS;
 }
 
-function getLastActiveExpireSeconds(autoLogin: boolean) {
-  return Math.floor(getInactiveTimeoutMs(autoLogin) / 1000);
-}
-
 function isInactive(lastActiveAt: number, autoLogin: boolean) {
   return Date.now() - lastActiveAt >= getInactiveTimeoutMs(autoLogin);
 }
@@ -111,12 +98,6 @@ function shouldTouchLastActive(lastActiveAt: number) {
 }
 
 async function getUserAutoLogin(userId: string) {
-  const cachedAutoLogin = await redis.get<boolean>(getProfileAutoLoginCacheKey(userId));
-
-  if (typeof cachedAutoLogin === 'boolean') {
-    return cachedAutoLogin;
-  }
-
   const supabaseAdmin = getSupabaseAdmin();
 
   const profileResult = await supabaseAdmin.from('profiles').select('auto_login').eq('user_id', userId).maybeSingle();
@@ -125,24 +106,7 @@ async function getUserAutoLogin(userId: string) {
     return DEFAULT_AUTO_LOGIN;
   }
 
-  const autoLogin =
-    typeof profileResult.data?.auto_login === 'boolean' ? profileResult.data.auto_login : DEFAULT_AUTO_LOGIN;
-
-  await redis.set(getProfileAutoLoginCacheKey(userId), autoLogin, {
-    ex: PROFILE_AUTO_LOGIN_CACHE_SECONDS,
-  });
-
-  return autoLogin;
-}
-
-async function touchLastActive(userId: string, autoLogin: boolean) {
-  const nextLastActiveAt = Date.now();
-
-  await redis.set(getLastActiveCacheKey(userId), nextLastActiveAt, {
-    ex: getLastActiveExpireSeconds(autoLogin),
-  });
-
-  return nextLastActiveAt;
+  return typeof profileResult.data?.auto_login === 'boolean' ? profileResult.data.auto_login : DEFAULT_AUTO_LOGIN;
 }
 
 async function clearSessionCacheByFingerprint(cookieFingerprint: string | null | undefined) {
@@ -153,6 +117,12 @@ async function clearSessionCacheByFingerprint(cookieFingerprint: string | null |
   }
 
   await redis.del(getSessionClaimsCacheKey(normalizedFingerprint));
+}
+
+async function setCachedSessionClaims(cookieFingerprint: string, sessionClaims: SessionClaims) {
+  await redis.set(getSessionClaimsCacheKey(cookieFingerprint), sessionClaims, {
+    ex: SESSION_CACHE_SECONDS,
+  });
 }
 
 async function buildSessionClaimsFromAuthClaims(
@@ -171,18 +141,7 @@ async function buildSessionClaimsFromAuthClaims(
   }
 
   const autoLogin = await getUserAutoLogin(claims.sub);
-  const storedLastActiveAt = await redis.get<number>(getLastActiveCacheKey(claims.sub));
-  const lastActiveAt = typeof storedLastActiveAt === 'number' ? storedLastActiveAt : Date.now();
-
-  if (isInactive(lastActiveAt, autoLogin)) {
-    await clearSessionCacheByFingerprint(cookieFingerprint);
-    await redis.del(getLastActiveCacheKey(claims.sub));
-    return null;
-  }
-
-  const nextLastActiveAt = shouldTouchLastActive(lastActiveAt)
-    ? await touchLastActive(claims.sub, autoLogin)
-    : lastActiveAt;
+  const lastActiveAt = Date.now();
 
   const sessionClaims: SessionClaims = {
     userId: claims.sub,
@@ -192,12 +151,10 @@ async function buildSessionClaimsFromAuthClaims(
     role: claims.role ?? null,
     expiresAt: claims.exp ?? null,
     autoLogin,
-    lastActiveAt: nextLastActiveAt,
+    lastActiveAt,
   };
 
-  await redis.set(getSessionClaimsCacheKey(cookieFingerprint), sessionClaims, {
-    ex: SESSION_CACHE_SECONDS,
-  });
+  await setCachedSessionClaims(cookieFingerprint, sessionClaims);
 
   return sessionClaims;
 }
@@ -220,30 +177,21 @@ async function getCachedSessionClaims(cookieItems: CookieLike[]) {
     return null;
   }
 
-  const autoLogin = await getUserAutoLogin(cachedSessionClaims.userId);
-  const storedLastActiveAt = await redis.get<number>(getLastActiveCacheKey(cachedSessionClaims.userId));
-  const lastActiveAt =
-    typeof storedLastActiveAt === 'number' ? storedLastActiveAt : (cachedSessionClaims.lastActiveAt ?? Date.now());
-
-  if (isInactive(lastActiveAt, autoLogin)) {
+  if (isInactive(cachedSessionClaims.lastActiveAt, cachedSessionClaims.autoLogin)) {
     await clearSessionCacheByFingerprint(cookieFingerprint);
-    await redis.del(getLastActiveCacheKey(cachedSessionClaims.userId));
     return null;
   }
 
-  const nextLastActiveAt = shouldTouchLastActive(lastActiveAt)
-    ? await touchLastActive(cachedSessionClaims.userId, autoLogin)
-    : lastActiveAt;
+  if (!shouldTouchLastActive(cachedSessionClaims.lastActiveAt)) {
+    return cachedSessionClaims;
+  }
 
   const nextSessionClaims: SessionClaims = {
     ...cachedSessionClaims,
-    autoLogin,
-    lastActiveAt: nextLastActiveAt,
+    lastActiveAt: Date.now(),
   };
 
-  await redis.set(getSessionClaimsCacheKey(cookieFingerprint), nextSessionClaims, {
-    ex: SESSION_CACHE_SECONDS,
-  });
+  await setCachedSessionClaims(cookieFingerprint, nextSessionClaims);
 
   return nextSessionClaims;
 }
