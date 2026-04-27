@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import ListIcon from '@mui/icons-material/List';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
@@ -51,6 +56,22 @@ function isWritePath(pathname: string, siteName: string) {
   }
 
   return false;
+}
+
+function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
+  if (boardType === 'gallery') {
+    return <CollectionsOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'youtube') {
+    return <OndemandVideoOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'feed') {
+    return <DynamicFeedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
 export default function TableList() {
@@ -110,17 +131,17 @@ export default function TableList() {
         </p>
       ) : null}
 
-      <div className={styles.link}>
-        <Anchor href={`/${siteName}/board`} className="link">
-          <ListIcon sx={{ width: 16, height: 16 }} />
-          <span>전체 게시글</span>
-        </Anchor>
-      </div>
-
       <ol>
+        <li className={styles.link}>
+          <Anchor href={`/${siteName}/board`} className="link">
+            <ListAltIcon sx={{ width: 16, height: 16 }} />
+            <span>전체 게시글</span>
+          </Anchor>
+        </li>
         {boards.map((board) => (
           <li key={board.id} className={styles.item}>
             <Anchor href={`/${siteName}/${board.board_key}`}>
+              {renderBoardTypeIcon(board.board_type)}
               <span>{board.board_label}</span>
             </Anchor>
           </li>
