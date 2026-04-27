@@ -1,6 +1,8 @@
+import { NextResponse } from 'next/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { encrypt } from '@/lib/encryption/encrypt';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -55,6 +57,10 @@ function normalizeImages(value: unknown) {
     .filter(Boolean);
 }
 
+function getPostViewCookieName(siteKey: string, boardKey: string, idx: number) {
+  return `PS_${encrypt(siteKey)}_${encrypt(boardKey)}_${encrypt(String(idx))}`;
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
@@ -62,18 +68,19 @@ export async function GET(request: Request, context: RouteContext) {
     const normalizedContentId = normalizeText(contentId);
 
     if (!normalizedBoardName) {
-      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
     }
 
     if (!normalizedContentId) {
-      return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
     }
 
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const shouldCountView = requestUrl.searchParams.get('countView') === '1';
 
     if (!siteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+      return NextResponse.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -85,7 +92,7 @@ export async function GET(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
-      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const session = await verifySession({
@@ -96,7 +103,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+        return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
     }
 
@@ -108,7 +115,7 @@ export async function GET(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (board.error || !board.data) {
-      return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
     if (board.data.board_type === 'page') {
@@ -124,7 +131,7 @@ export async function GET(request: Request, context: RouteContext) {
         : await pageQuery.eq('id', normalizedContentId).maybeSingle();
 
       if (page.error || !page.data) {
-        return Response.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
+        return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
       let authorName = '';
@@ -154,7 +161,7 @@ export async function GET(request: Request, context: RouteContext) {
 
       const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
 
-      return Response.json({
+      return NextResponse.json({
         board: board.data,
         content: {
           ...page.data,
@@ -169,7 +176,7 @@ export async function GET(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count',
       )
       .eq('board_id', board.data.id);
 
@@ -178,17 +185,17 @@ export async function GET(request: Request, context: RouteContext) {
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
 
     if (post.error || !post.data) {
-      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+      return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
 
     if (post.data.published_status === 'draft' && !isAuthor) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     if (post.data.is_closed === true && !isStaff) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     let authorName = '';
@@ -267,7 +274,7 @@ export async function GET(request: Request, context: RouteContext) {
         .order('sort_order', { ascending: true });
 
       if (categoryResult.error) {
-        return Response.json({ error: '카테고리 정보를 불러오지 못했습니다.' }, { status: 500 });
+        return NextResponse.json({ error: '카테고리 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
       categories = categoryResult.data ?? [];
@@ -299,7 +306,7 @@ export async function GET(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (seriesResult.error) {
-        return Response.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
+        return NextResponse.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
       series = seriesResult.data ?? null;
@@ -317,16 +324,52 @@ export async function GET(request: Request, context: RouteContext) {
         .order('prefix_key', { ascending: true });
 
       if (prefixResult.error) {
-        return Response.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
+        return NextResponse.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
       prefixes = prefixResult.data ?? [];
       prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
     }
 
+    let postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
+    let shouldSetCookie = false;
+    let viewCookieName = '';
+
+    if (
+      shouldCountView &&
+      !isAuthor &&
+      !post.data.is_closed &&
+      post.data.published_status === 'published' &&
+      typeof post.data.idx === 'number'
+    ) {
+      viewCookieName = getPostViewCookieName(siteName, normalizedBoardName, Number(post.data.idx));
+      const alreadyViewed = request.headers
+        .get('cookie')
+        ?.split(';')
+        .map((item) => item.trim())
+        .some((item) => item.startsWith(`${viewCookieName}=`));
+
+      if (!alreadyViewed) {
+        const updateViewResult = await supabaseAdmin
+          .from('posts')
+          .update({
+            post_count: postCount + 1,
+          })
+          .eq('id', post.data.id)
+          .eq('post_count', postCount)
+          .select('post_count')
+          .maybeSingle();
+
+        if (!updateViewResult.error && updateViewResult.data) {
+          postCount = Number(updateViewResult.data.post_count ?? postCount + 1);
+          shouldSetCookie = true;
+        }
+      }
+    }
+
     const thumbnailImageUrl = getPublicPostImageUrl(post.data.thumbnail_image);
 
-    return Response.json({
+    const response = NextResponse.json({
       board: board.data,
       content: {
         ...post.data,
@@ -336,6 +379,7 @@ export async function GET(request: Request, context: RouteContext) {
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,
         images: normalizeImages(post.data.images),
+        post_count: postCount,
       },
       categories,
       series,
@@ -343,11 +387,26 @@ export async function GET(request: Request, context: RouteContext) {
       isAuthor,
       isStaff,
     });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '게시글 정보를 불러오지 못했습니다.' }, { status: 500 });
+
+    if (shouldSetCookie && viewCookieName) {
+      response.cookies.set(viewCookieName, '1', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24,
+      });
     }
 
-    return Response.json({ error: '게시글 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return response;
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return NextResponse.json(
+        { error: unknownError.message || '게시글 정보를 불러오지 못했습니다.' },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ error: '게시글 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 }

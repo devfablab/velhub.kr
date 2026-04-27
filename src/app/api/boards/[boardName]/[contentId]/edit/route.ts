@@ -44,6 +44,7 @@ type RequestBody = {
   hashtags?: string[] | null;
   seriesKey?: string | null;
   prefixId?: string | null;
+  isComment?: boolean | null;
 };
 
 function isNumericSlug(value: string) {
@@ -230,8 +231,8 @@ function extractYoutubeId(value: string) {
   return '';
 }
 
-function isValidDateTimeValue(value: string) {
-  return !Number.isNaN(new Date(value).getTime());
+function isValidDateValue(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function buildFeedSubject(value: string) {
@@ -279,6 +280,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const hashtags = normalizeHashtags(requestBody.hashtags);
     const images = normalizeImages(requestBody.images);
     const poll = normalizePoll(requestBody.poll);
+    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -521,8 +523,8 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '유튜브 영상 주소가 올바르지 않습니다.' }, { status: 400 });
         }
 
-        if (!finalYoutubeCreatedAt || !isValidDateTimeValue(finalYoutubeCreatedAt)) {
-          return Response.json({ error: '유튜브 업로드 기준 날짜가 올바르지 않습니다.' }, { status: 400 });
+        if (!finalYoutubeCreatedAt || !isValidDateValue(finalYoutubeCreatedAt)) {
+          return Response.json({ error: '유튜브 업로드 날짜가 올바르지 않습니다.' }, { status: 400 });
         }
       }
     }
@@ -576,6 +578,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       published_status: 'draft' | 'published';
       published_at?: string | null;
       edited_at?: string | null;
+      is_comment: boolean;
     } = {
       subject: finalSubject || null,
       summary: finalSummary,
@@ -595,6 +598,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       series_id: seriesId,
       prefix_id: resolvedPrefixId,
       published_status: nextPublishedStatus,
+      is_comment: isComment,
     };
 
     if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {

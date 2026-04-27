@@ -241,7 +241,7 @@ export default function StaffTabs({ pageTitle }: Props) {
         </Box>
       ) : (
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={currentValue} variant="scrollable">
+          <Tabs value={currentValue} variant="scrollable" scrollButtons={false}>
             {tabItems.map((tabItem) => (
               <LinkTab key={tabItem.href} label={tabItem.label} href={tabItem.href} value={tabItem.href} />
             ))}

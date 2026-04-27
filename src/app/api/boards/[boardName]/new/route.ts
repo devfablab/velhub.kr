@@ -43,6 +43,8 @@ type RequestBody = {
   hashtags?: string[] | null;
   seriesKey?: string | null;
   prefixId?: string | null;
+  isComment?: boolean | null;
+  isPin?: boolean | null;
 };
 
 function isValidCategoryKey(value: string) {
@@ -225,8 +227,8 @@ function extractYoutubeId(value: string) {
   return '';
 }
 
-function isValidDateTimeValue(value: string) {
-  return !Number.isNaN(new Date(value).getTime());
+function isValidDateValue(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 function buildFeedSubject(value: string) {
@@ -266,6 +268,8 @@ export async function POST(request: Request, context: RouteContext) {
     const hashtags = normalizeHashtags(requestBody.hashtags);
     const images = normalizeImages(requestBody.images);
     const poll = normalizePoll(requestBody.poll);
+    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
+    const isPin = requestBody.isPin === true;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -496,8 +500,8 @@ export async function POST(request: Request, context: RouteContext) {
           return Response.json({ error: '유튜브 영상 주소가 올바르지 않습니다.' }, { status: 400 });
         }
 
-        if (!finalYoutubeCreatedAt || !isValidDateTimeValue(finalYoutubeCreatedAt)) {
-          return Response.json({ error: '유튜브 업로드 기준 날짜가 올바르지 않습니다.' }, { status: 400 });
+        if (!finalYoutubeCreatedAt || !isValidDateValue(finalYoutubeCreatedAt)) {
+          return Response.json({ error: '유튜브 업로드 날짜가 올바르지 않습니다.' }, { status: 400 });
         }
       }
     }
@@ -570,9 +574,14 @@ export async function POST(request: Request, context: RouteContext) {
         prefix_id: resolvedPrefixId,
         published_status: action === 'draft' ? 'draft' : 'published',
         published_at: action === 'publish' ? nowIsoString : null,
+        is_comment: isComment,
+        post_count: 1,
+        is_pin: isPin,
       })
       .select('id, slug')
       .maybeSingle();
+
+    console.log('insertPost: ', insertPost);
 
     if (insertPost.error || !insertPost.data) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });

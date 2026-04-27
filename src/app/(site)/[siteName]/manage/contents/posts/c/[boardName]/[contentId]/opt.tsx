@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from '@mui/material/Link';
 import { Alert, Box, Button, Chip, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
@@ -83,6 +83,7 @@ type ContentResponse = {
     attachment_slug?: string | null;
     attachment_origin?: string | null;
     is_comment?: boolean | null;
+    post_count?: number | null;
   };
   categories?: CategoryRow[];
   prefixes?: PrefixRow[];
@@ -101,6 +102,9 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
+  const viewTimerReference = useRef<number | null>(null);
+  const hasRequestedViewReference = useRef(false);
+
   const [board, setBoard] = useState<ContentResponse['board'] | null>(null);
   const [content, setContent] = useState<ContentResponse['content'] | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -114,6 +118,7 @@ export default function Opt() {
     async function loadContent() {
       try {
         setErrorMessage('');
+        hasRequestedViewReference.current = false;
 
         const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
           method: 'GET',
@@ -148,7 +153,66 @@ export default function Opt() {
     }
 
     void loadContent();
+
+    return () => {
+      if (viewTimerReference.current) {
+        window.clearTimeout(viewTimerReference.current);
+      }
+    };
   }, [boardName, contentId, siteName]);
+
+  useEffect(() => {
+    if (!board || !content || board.board_type === 'page' || isAuthor) {
+      return;
+    }
+
+    if (content.published_status !== 'published') {
+      return;
+    }
+
+    if (content.is_closed) {
+      return;
+    }
+
+    if (hasRequestedViewReference.current) {
+      return;
+    }
+
+    viewTimerReference.current = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}&countView=1`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as ContentResponse;
+
+        if (!response.ok || !result.content) {
+          return;
+        }
+
+        hasRequestedViewReference.current = true;
+        setContent((previousContent) => {
+          if (!previousContent) {
+            return previousContent;
+          }
+
+          return {
+            ...previousContent,
+            post_count: result.content?.post_count ?? previousContent.post_count,
+          };
+        });
+      } catch {
+        return;
+      }
+    }, 5000);
+
+    return () => {
+      if (viewTimerReference.current) {
+        window.clearTimeout(viewTimerReference.current);
+      }
+    };
+  }, [board, boardName, content, contentId, isAuthor, siteName]);
 
   if (isLoading) {
     return null;
@@ -337,7 +401,9 @@ export default function Opt() {
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={2}>
-          {content.subject ? <Typography variant="h5">{content.subject}</Typography> : null}
+          {content.subject && board.board_type !== 'feed' ? (
+            <Typography variant="h5">{content.subject}</Typography>
+          ) : null}
           {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
 
           {typeof content.idx === 'number' ? (
@@ -346,6 +412,11 @@ export default function Opt() {
               <Typography variant="body2">{content.idx}</Typography>
             </Stack>
           ) : null}
+
+          <Stack spacing={0.75}>
+            <Typography variant="subtitle2">조회수</Typography>
+            <Typography variant="body2">{typeof content.post_count === 'number' ? content.post_count : 0}</Typography>
+          </Stack>
 
           <Stack spacing={0.75}>
             <Typography variant="subtitle2">작성일</Typography>
@@ -398,6 +469,13 @@ export default function Opt() {
             <Stack spacing={0.75}>
               <Typography variant="subtitle2">유튜브 업로드 기준 날짜</Typography>
               <Typography variant="body2">{formatDateTimeDetail(content.youtube_created_at)}</Typography>
+            </Stack>
+          ) : null}
+
+          {typeof content.is_comment === 'boolean' ? (
+            <Stack spacing={0.75}>
+              <Typography variant="subtitle2">댓글 허용</Typography>
+              <Typography variant="body2">{content.is_comment ? '허용' : '비허용'}</Typography>
             </Stack>
           ) : null}
 

@@ -9,6 +9,27 @@ type RouteContext = {
   }>;
 };
 
+type PostListRow = {
+  id: string;
+  slug: number;
+  subject: string;
+  summary: string | null;
+  edited_at: string;
+  created_at: string;
+  idx: number;
+  board_id: string;
+  site_id: string;
+  user_id: string;
+  is_closed: boolean;
+  closed_by: string | null;
+  closed_at: string | null;
+  closed_message: string | null;
+  prefix_id: string | null;
+  published_status: 'draft' | 'published';
+  post_count: number | null;
+  is_pin: boolean;
+};
+
 function parsePositiveInt(value: string | null, fallbackValue: number) {
   const parsedValue = Number(value);
 
@@ -148,6 +169,8 @@ export async function GET(request: Request, context: RouteContext) {
         closed_by_name: '',
         prefix_id: null,
         prefix_label: null,
+        post_count: null,
+        is_pin: false,
       }));
 
       const totalCount = pagesResult.count ?? 0;
@@ -167,10 +190,33 @@ export async function GET(request: Request, context: RouteContext) {
     const from = (page - 1) * size;
     const to = from + size - 1;
 
+    let pinnedPosts: PostListRow[] = [];
+
+    if (filter === 'all') {
+      const pinnedQuery = supabaseAdmin
+        .from('posts')
+        .select(
+          'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
+        )
+        .eq('board_id', board.data.id)
+        .eq('is_pin', true)
+        .eq('is_closed', false)
+        .eq('published_status', 'published')
+        .order('idx', { ascending: false });
+
+      const pinnedResult = await pinnedQuery;
+
+      if (pinnedResult.error) {
+        return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      pinnedPosts = (pinnedResult.data ?? []) as PostListRow[];
+    }
+
     const postsQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status',
+        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
         { count: 'exact' },
       )
       .eq('board_id', board.data.id)
@@ -179,6 +225,8 @@ export async function GET(request: Request, context: RouteContext) {
     if (filter === 'deleted') {
       postsQuery.eq('is_closed', true).eq('published_status', 'published');
     } else {
+      postsQuery.eq('is_pin', false);
+
       if (!isStaff) {
         postsQuery.eq('is_closed', false);
       }
@@ -198,18 +246,18 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '글 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const mergedPosts = [...pinnedPosts, ...((postsResult.data ?? []) as PostListRow[])];
+
     const userIds = Array.from(
       new Set(
-        (postsResult.data ?? [])
+        mergedPosts
           .flatMap((post) => [post.user_id, post.closed_by])
           .filter((value): value is string => Boolean(value)),
       ),
     );
 
     const prefixIds = Array.from(
-      new Set(
-        (postsResult.data ?? []).map((post) => post.prefix_id).filter((value): value is string => Boolean(value)),
-      ),
+      new Set(mergedPosts.map((post) => post.prefix_id).filter((value): value is string => Boolean(value))),
     );
 
     const rhizomeStigmasResult =
@@ -265,7 +313,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const prefixMap = new Map((prefixResult.data ?? []).map((row) => [row.id as string, row.prefix_label as string]));
 
-    const contents = (postsResult.data ?? []).map((post) => ({
+    const contents = mergedPosts.map((post) => ({
       ...post,
       author_name: nicknameMap.get(post.user_id as string) || userNameMap.get(post.user_id as string) || '',
       closed_by_name: post.closed_by ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '' : '',

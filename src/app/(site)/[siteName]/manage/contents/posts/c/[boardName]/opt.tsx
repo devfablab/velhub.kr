@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import NextLink from 'next/link';
+import PushPinIcon from '@mui/icons-material/PushPin';
 import {
   Alert,
   Backdrop,
@@ -57,6 +58,8 @@ type ContentRow = {
   prefix_id: string | null;
   prefix_label: string | null;
   published_status?: 'draft' | 'published';
+  post_count?: number | null;
+  is_pin?: boolean;
 };
 
 type BoardResponse = {
@@ -207,7 +210,7 @@ export default function Opt() {
     }
 
     void loadBoard();
-  }, [boardName, siteName, currentPage, sizeParam, filterParam, reloadKey]);
+  }, [boardName, siteName, currentPage, sizeParam, filterParam, reloadKey, hasLoaded]);
 
   useEffect(() => {
     setSelectedIds((previousIds) => previousIds.filter((id) => contents.some((content) => content.id === id)));
@@ -557,7 +560,9 @@ export default function Opt() {
                     onChange={handleToggleAllCurrentPage}
                   />
                 </TableCell>
+                <TableCell />
                 <TableCell>제목</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
                 <TableCell>작성일</TableCell>
                 <TableCell>작성자</TableCell>
                 <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
@@ -574,29 +579,37 @@ export default function Opt() {
                     <Checkbox checked={selectedIds.includes(content.id)} onChange={() => handleToggleOne(content.id)} />
                   </TableCell>
 
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {content.is_pin ? <PushPinIcon fontSize="small" /> : content.idx}
+                  </TableCell>
+
                   <TableCell>
-                    <Stack spacing={0.75}>
-                      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
-                        <Typography variant="body2">{content.idx}</Typography>
-                        {content.published_status === 'draft' ? (
-                          <Chip label="임시저장글" color="warning" size="small" />
-                        ) : null}
-                        {content.prefix_label ? (
-                          <Chip label={content.prefix_label} size="small" variant="outlined" />
-                        ) : null}
-                      </Stack>
+                    <Stack direction="row" gap={1}>
+                      {content.published_status === 'draft' ? (
+                        <Chip label="임시저장글" color="warning" size="small" />
+                      ) : null}
+                      {content.prefix_label ? (
+                        <Chip label={content.prefix_label} size="small" variant="outlined" />
+                      ) : null}
 
                       <Link
                         href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
                         sx={{
                           whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          width: 270,
+                          display: 'inline-block',
                         }}
                       >
-                        <Box component="span">{content.subject}</Box>
+                        {content.subject}
                       </Link>
                     </Stack>
                   </TableCell>
 
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {typeof content.post_count === 'number' ? content.post_count : 0}
+                  </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
@@ -631,7 +644,7 @@ export default function Opt() {
 
               {contents.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={10} align="center">
                     {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
                   </TableCell>
                 </TableRow>
