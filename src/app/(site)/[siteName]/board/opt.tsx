@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { normalizeText } from '@/lib/utils';
+import styles from '@/app/board.module.sass';
 
 type PostItem = {
   id: string;
@@ -94,8 +96,11 @@ export default function Opt() {
   }
 
   return (
-    <div className="content">
-      <h2>전체 게시글</h2>
+    <div className={`${styles.content} content`}>
+      <h2>
+        <ListAltOutlinedIcon />
+        <span>최신글 보기</span>
+      </h2>
 
       <div className="paper">
         <table>

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import ListAltIcon from '@mui/icons-material/ListAlt';
 import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
@@ -134,8 +133,8 @@ export default function TableList() {
       <ol>
         <li className={styles.link}>
           <Anchor href={`/${siteName}/board`} className="link">
-            <ListAltIcon sx={{ width: 16, height: 16 }} />
-            <span>전체 게시글</span>
+            <ListAltOutlinedIcon sx={{ width: 16, height: 16 }} />
+            <span>최신글 보기</span>
           </Anchor>
         </li>
         {boards.map((board) => (
