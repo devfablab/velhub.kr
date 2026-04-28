@@ -1,5 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import verifySession from '@/lib/session/verifySession';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -7,12 +7,6 @@ type RequestBody = {
   siteName?: string | null;
   action?: 'approve' | 'reject' | null;
   userIds?: string[] | null;
-};
-
-type RhizomeRow = {
-  id: string;
-  site_key: string;
-  site_type: string | null;
 };
 
 type CommunityRow = {
@@ -175,51 +169,39 @@ function normalizeAnsweredQuestions(
   });
 }
 
-async function getStaffAccess(siteName: string) {
-  const supabaseAdmin = getSupabaseAdmin();
+async function getJoinManageAccess(siteName: string) {
+  try {
+    const access = await getCommunityManagerAccess(siteName);
 
-  const rhizomeResult = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_key, site_type')
-    .eq('site_key', siteName)
-    .maybeSingle();
+    if (!access.actor.permissions.join_manage) {
+      return {
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  if (rhizomeResult.error || !rhizomeResult.data) {
     return {
-      ok: false,
-      status: 404,
-      error: '사이트를 찾을 수 없습니다.',
+      ok: true,
+      supabaseAdmin: access.supabaseAdmin,
+      rhizome: access.rhizome,
+      actor: access.actor,
     } as const;
-  }
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return {
+        ok: false,
+        status: 403,
+        error: unknownError.message || '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  const rhizome = rhizomeResult.data as RhizomeRow;
-
-  if (rhizome.site_type !== 'community') {
-    return {
-      ok: false,
-      status: 403,
-      error: '커뮤니티만 사용할 수 있습니다.',
-    } as const;
-  }
-
-  const session = await verifySession({
-    siteId: rhizome.id,
-  });
-
-  if (session.case !== 'staff' || !session.stigmaId) {
     return {
       ok: false,
       status: 403,
       error: '접근 권한이 없습니다.',
     } as const;
   }
-
-  return {
-    ok: true,
-    supabaseAdmin,
-    rhizome,
-    session,
-  } as const;
 }
 
 export async function GET(request: Request) {
@@ -231,7 +213,7 @@ export async function GET(request: Request) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const access = await getStaffAccess(siteName);
+    const access = await getJoinManageAccess(siteName);
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });
@@ -328,7 +310,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'userIds가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const access = await getStaffAccess(siteName);
+    const access = await getJoinManageAccess(siteName);
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });
@@ -377,7 +359,7 @@ export async function PATCH(request: Request) {
       .update({
         is_approval: false,
         rejected_at: nowIsoString,
-        rejected_by: access.session.stigmaId,
+        rejected_by: access.actor.stigmaId,
         is_re_approval: false,
       })
       .eq('site_id', access.rhizome.id)

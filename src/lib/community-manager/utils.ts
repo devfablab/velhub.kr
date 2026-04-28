@@ -61,6 +61,10 @@ type PlanFeatureRow = {
   count_board_assistant_manager: number | null;
 };
 
+type GetCommunityManagerAccessOptions = {
+  requireManagerControlPermission?: boolean;
+};
+
 export type ActiveMemberSummary = {
   rhizomeStigmaId: string;
   userId: string;
@@ -102,6 +106,7 @@ export type CommunityManagerActor = {
   rhizomeStigmaId: string;
   communityRoles: CommunityManageRoleType[];
   permissions: CommunityManagePermissionMap;
+  managedBoardIds: string[];
   canManageCommunityManager: boolean;
   canManageBoardManager: boolean;
 };
@@ -141,7 +146,10 @@ function toNonNegativeInteger(value: number | null | undefined) {
   return Math.max(0, Math.floor(value));
 }
 
-export async function getCommunityManagerAccess(siteName: string): Promise<CommunityManagerAccess> {
+export async function getCommunityManagerAccess(
+  siteName: string,
+  options: GetCommunityManagerAccessOptions = {},
+): Promise<CommunityManagerAccess> {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   if (!normalizedSiteName) {
@@ -198,7 +206,7 @@ export async function getCommunityManagerAccess(siteName: string): Promise<Commu
 
   const actorManageRoleResult = await supabaseAdmin
     .from('community_manage_role')
-    .select('role')
+    .select('role, board_id')
     .eq('community_id', community.id)
     .eq('manager_id', session.rhizomeStigmaId);
 
@@ -206,9 +214,9 @@ export async function getCommunityManagerAccess(siteName: string): Promise<Commu
     throw new Error('접근 권한이 없습니다.');
   }
 
-  const actorManageRoles = (actorManageRoleResult.data ?? [])
-    .map((row) => normalizeText(row.role))
-    .filter(isCommunityManageRole);
+  const actorManageRoleRows = (actorManageRoleResult.data ?? []) as Pick<CommunityManageRoleRow, 'role' | 'board_id'>[];
+
+  const actorManageRoles = actorManageRoleRows.map((row) => normalizeText(row.role)).filter(isCommunityManageRole);
 
   const mergedRoles: CommunityManageRoleType[] = [
     ...(actorBaseRole === 'owner' ? (['owner'] as CommunityManageRoleType[]) : []),
@@ -218,10 +226,19 @@ export async function getCommunityManagerAccess(siteName: string): Promise<Commu
   const uniqueRoles = [...new Set(mergedRoles)];
   const permissions = getMergedCommunityManagePermission(uniqueRoles);
 
+  const managedBoardIds = [
+    ...new Set(
+      actorManageRoleRows
+        .filter((row) => ['board-general-manager', 'board-assistant-manager'].includes(normalizeText(row.role)))
+        .map((row) => normalizeText(row.board_id))
+        .filter(Boolean),
+    ),
+  ];
+
   const canManageCommunityManager = uniqueRoles.includes('owner');
   const canManageBoardManager = uniqueRoles.includes('owner') || uniqueRoles.includes('community-manager');
 
-  if (!canManageCommunityManager && !canManageBoardManager) {
+  if (options.requireManagerControlPermission !== false && !canManageCommunityManager && !canManageBoardManager) {
     throw new Error('접근 권한이 없습니다.');
   }
 
@@ -247,6 +264,7 @@ export async function getCommunityManagerAccess(siteName: string): Promise<Commu
       rhizomeStigmaId: session.rhizomeStigmaId,
       communityRoles: uniqueRoles,
       permissions,
+      managedBoardIds,
       canManageCommunityManager,
       canManageBoardManager,
     },

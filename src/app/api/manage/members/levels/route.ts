@@ -1,6 +1,6 @@
 import path from 'path';
 import sharp from 'sharp';
-import verifySession from '@/lib/session/verifySession';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -91,49 +91,39 @@ function getSafeExtension(fileName: string) {
 }
 
 async function checkAccess(siteName: string) {
-  const supabaseAdmin = getSupabaseAdmin();
+  try {
+    const access = await getCommunityManagerAccess(siteName);
 
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_key, site_type')
-    .eq('site_key', siteName)
-    .maybeSingle();
+    if (!access.actor.permissions.member_manage) {
+      return {
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  if (rhizome.error || !rhizome.data) {
     return {
-      ok: false,
-      status: 404,
-      error: '사이트를 찾을 수 없습니다.',
+      ok: true,
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.rhizome.id,
+      siteName: access.rhizome.site_key,
+      actor: access.actor,
     } as const;
-  }
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return {
+        ok: false,
+        status: 403,
+        error: unknownError.message || '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  if (rhizome.data.site_type !== 'community') {
-    return {
-      ok: false,
-      status: 403,
-      error: '커뮤니티만 사용할 수 있습니다.',
-    } as const;
-  }
-
-  const session = await verifySession({
-    siteId: rhizome.data.id,
-  });
-
-  if (session.case !== 'staff' || !session.stigmaId) {
     return {
       ok: false,
       status: 403,
       error: '접근 권한이 없습니다.',
     } as const;
   }
-
-  return {
-    ok: true,
-    supabaseAdmin,
-    siteId: rhizome.data.id,
-    siteName: rhizome.data.site_key,
-    session,
-  } as const;
 }
 
 async function getLevels(siteId: string) {

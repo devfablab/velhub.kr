@@ -1,3 +1,4 @@
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import { normalizeText } from '@/lib/utils';
 import {
   decryptNullable,
@@ -33,6 +34,12 @@ export async function GET(request: Request) {
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });
+    }
+
+    const managerAccess = await getCommunityManagerAccess(siteName);
+
+    if (!managerAccess.actor.permissions.member_manage) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const membershipResult = await getWithdrawnMemberships(access.site.id);

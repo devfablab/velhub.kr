@@ -13,6 +13,47 @@ type RouteContext = {
   }>;
 };
 
+type ManageRoleRow = {
+  manager_id: string;
+  role: string | null;
+};
+
+function getManageRoleLabel(role: string | null | undefined) {
+  const normalizedRole = normalizeText(role);
+
+  if (normalizedRole === 'community-manager') {
+    return '커뮤니티 매니저';
+  }
+
+  if (normalizedRole === 'board-manager') {
+    return '전체 게시판 매니저';
+  }
+
+  if (normalizedRole === 'board-general-manager') {
+    return '개별 게시판 총괄 매니저';
+  }
+
+  if (normalizedRole === 'board-assistant-manager') {
+    return '개별 게시판 부 매니저';
+  }
+
+  return '매니저';
+}
+
+function getMembershipRoleLabel(role: string | null | undefined, manageRole: string | null | undefined) {
+  const normalizedRole = normalizeText(role);
+
+  if (normalizedRole === 'owner') {
+    return '운영자';
+  }
+
+  if (normalizedRole === 'manager') {
+    return getManageRoleLabel(manageRole);
+  }
+
+  return '멤버';
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { siteName: rawSiteName } = await context.params;
@@ -35,6 +76,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const userIds = [...new Set(membershipsResult.memberships.map((membership) => membership.user_id))];
+    const membershipIds = [...new Set(membershipsResult.memberships.map((membership) => membership.id))];
     const levelIds = [
       ...new Set(membershipsResult.memberships.map((membership) => membership.lv).filter(Boolean) as string[]),
     ];
@@ -51,13 +93,49 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: levelResult.error }, { status: 500 });
     }
 
+    const communityResult = await access.supabaseAdmin
+      .from('communities')
+      .select('id')
+      .eq('site_id', access.site.id)
+      .maybeSingle();
+
+    if (communityResult.error || !communityResult.data) {
+      return Response.json({ error: '커뮤니티 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const manageRoleResult =
+      membershipIds.length > 0
+        ? await access.supabaseAdmin
+            .from('community_manage_role')
+            .select('manager_id, role')
+            .eq('community_id', communityResult.data.id)
+            .in('manager_id', membershipIds)
+        : { data: [], error: null };
+
+    if (manageRoleResult.error) {
+      return Response.json({ error: '매니저 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
     const levelMap = new Map(levelResult.levels.map((level) => [level.id, level]));
+    const manageRoleMap = new Map(
+      ((manageRoleResult.data ?? []) as ManageRoleRow[]).map((manageRole) => [manageRole.manager_id, manageRole.role]),
+    );
 
     return Response.json({
       ok: true,
       siteName: access.site.site_key,
-      users: membershipsResult.memberships.map((membership) => buildMemberResponse(membership, stigmaMap, levelMap)),
+      users: membershipsResult.memberships.map((membership) => {
+        const memberResponse = buildMemberResponse(membership, stigmaMap, levelMap);
+
+        return {
+          ...memberResponse,
+          membership: {
+            ...memberResponse.membership,
+            role: getMembershipRoleLabel(membership.role, manageRoleMap.get(membership.id) ?? null),
+          },
+        };
+      }),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

@@ -69,13 +69,17 @@ export async function POST(request: Request) {
 
     const memberResult = await access.supabaseAdmin
       .from('rhizome_stigmas')
-      .select('id, site_id, is_approval, is_block, kicked_at, banned_at')
+      .select('id, site_id, role, is_approval, is_block, kicked_at, banned_at')
       .eq('id', managerId)
       .eq('site_id', access.rhizome.id)
       .maybeSingle();
 
     if (memberResult.error || !memberResult.data) {
       return Response.json({ error: '멤버를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (normalizeText(memberResult.data.role) === 'owner') {
+      return Response.json({ error: '운영자는 매니저로 변경할 수 없습니다.' }, { status: 400 });
     }
 
     if (
@@ -149,6 +153,19 @@ export async function POST(request: Request) {
 
     if (insertResult.error || !insertResult.data) {
       return Response.json({ error: '위임에 실패했습니다.' }, { status: 500 });
+    }
+
+    const updateMemberRoleResult = await access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .update({
+        role: 'manager',
+      })
+      .eq('id', managerId)
+      .eq('site_id', access.rhizome.id)
+      .neq('role', 'owner');
+
+    if (updateMemberRoleResult.error) {
+      return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
     }
 
     const managers = await buildCommunityManagerList(access);

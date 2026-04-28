@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
-import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -75,51 +74,55 @@ async function sendInviteEmail(params: { email: string; siteName: string; siteLa
 }
 
 async function checkAccess(siteName: string) {
-  const supabaseAdmin = getSupabaseAdmin();
+  try {
+    const access = await getCommunityManagerAccess(siteName);
 
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type, site_label, site_key')
-    .eq('site_key', siteName)
-    .maybeSingle();
+    if (!access.actor.permissions.join_manage) {
+      return {
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  if (rhizome.error || !rhizome.data) {
+    const siteLabelResult = await access.supabaseAdmin
+      .from('rhizomes')
+      .select('site_label')
+      .eq('id', access.rhizome.id)
+      .maybeSingle();
+
+    if (siteLabelResult.error) {
+      return {
+        ok: false,
+        status: 500,
+        error: '사이트 정보를 불러오지 못했습니다.',
+      } as const;
+    }
+
     return {
-      ok: false,
-      status: 404,
-      error: '사이트를 찾을 수 없습니다.',
+      ok: true,
+      status: 200,
+      siteId: access.rhizome.id,
+      siteKey: access.rhizome.site_key,
+      siteLabel: (siteLabelResult.data?.site_label ?? null) as string | null,
+      actor: access.actor,
+      supabaseAdmin: access.supabaseAdmin,
     } as const;
-  }
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return {
+        ok: false,
+        status: 403,
+        error: unknownError.message || '접근 권한이 없습니다.',
+      } as const;
+    }
 
-  if (rhizome.data.site_type !== 'community') {
-    return {
-      ok: false,
-      status: 403,
-      error: '커뮤니티 사이트만 접근할 수 있습니다.',
-    } as const;
-  }
-
-  const session = await verifySession({
-    siteId: rhizome.data.id,
-  });
-
-  if (session.case !== 'staff') {
     return {
       ok: false,
       status: 403,
       error: '접근 권한이 없습니다.',
     } as const;
   }
-
-  return {
-    ok: true,
-    status: 200,
-    siteId: rhizome.data.id,
-    siteKey: rhizome.data.site_key,
-    siteLabel: rhizome.data.site_label as string | null,
-    session,
-    supabaseAdmin,
-  } as const;
 }
 
 export async function GET(request: Request) {

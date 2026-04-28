@@ -1047,8 +1047,10 @@ export default function Opt() {
                         <Typography>{getDisplayNickname(user)}</Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell>
-                      {user.level ? (
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {user.membership.role !== '멤버' ? (
+                        <Typography variant="body2">{user.membership.role}</Typography>
+                      ) : user.level ? (
                         <Stack direction="row" spacing={1} alignItems="center">
                           {user.level.iconUrl ? (
                             <Box
@@ -1058,12 +1060,14 @@ export default function Opt() {
                               sx={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
                             />
                           ) : null}
-                          <Typography>{user.level.name}</Typography>
+                          <Typography variant="body2">{user.level.name}</Typography>
                         </Stack>
                       ) : null}
                     </TableCell>
-                    <TableCell>{user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      {user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}
+                    </TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
                       {user.membership.last_checkin_at ? formatDate(user.membership.last_checkin_at) : ''}
                     </TableCell>
                     <TableCell>{user.membership.checkin_count}</TableCell>

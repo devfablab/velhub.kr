@@ -1,3 +1,4 @@
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -134,6 +135,42 @@ async function getCommunityAccess(siteName: string) {
   } as const;
 }
 
+async function getJoinManageAccess(siteName: string) {
+  try {
+    const access = await getCommunityManagerAccess(siteName);
+
+    if (!access.actor.permissions.join_manage) {
+      return {
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없습니다.',
+      } as const;
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      supabaseAdmin: access.supabaseAdmin,
+      rhizome: access.rhizome,
+      actor: access.actor,
+    } as const;
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return {
+        ok: false,
+        status: 403,
+        error: unknownError.message || '접근 권한이 없습니다.',
+      } as const;
+    }
+
+    return {
+      ok: false,
+      status: 403,
+      error: '접근 권한이 없습니다.',
+    } as const;
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -153,10 +190,12 @@ export async function GET(request: Request) {
       return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
     }
 
-    console.log('access.session.case: ', access.session.case);
-
     if (access.session.case !== 'guest-site') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      const managerAccess = await getJoinManageAccess(siteName);
+
+      if (!managerAccess.ok) {
+        return Response.json({ error: managerAccess.error }, { status: managerAccess.status });
+      }
     }
 
     const community = await access.supabaseAdmin
@@ -241,8 +280,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
     }
 
-    if (access.session.case !== 'staff' || !access.session.authUserId) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    const managerAccess = await getJoinManageAccess(siteName);
+
+    if (!managerAccess.ok) {
+      return Response.json({ error: managerAccess.error }, { status: managerAccess.status });
     }
 
     const joinNotice = normalizeNoticeText(requestBody.joinNotice);
@@ -303,7 +344,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '객관식 질문은 이미지 답변을 받을 수 없습니다.' }, { status: 400 });
     }
 
-    const updateCommunity = await access.supabaseAdmin
+    const updateCommunity = await managerAccess.supabaseAdmin
       .from('communities')
       .update({
         join_notice: joinNotice || null,
@@ -316,18 +357,18 @@ export async function POST(request: Request) {
         policy_post: policyPost,
         policy_comment: policyComment,
       })
-      .eq('site_id', access.rhizome.id);
+      .eq('site_id', managerAccess.rhizome.id);
 
     if (updateCommunity.error) {
       return Response.json({ error: '커뮤니티 가입 정보 저장에 실패했습니다.' }, { status: 500 });
     }
 
-    const refreshedCommunity = await access.supabaseAdmin
+    const refreshedCommunity = await managerAccess.supabaseAdmin
       .from('communities')
       .select(
         'site_id, join_notice, join_question_status, join_questions, join_accept_status, join_accept_start_day, join_accept_end_day, join_type, policy_post, policy_comment',
       )
-      .eq('site_id', access.rhizome.id)
+      .eq('site_id', managerAccess.rhizome.id)
       .maybeSingle();
 
     if (refreshedCommunity.error) {

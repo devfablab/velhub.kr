@@ -1,6 +1,8 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { canPinCommunityPost } from '@/lib/community-manager/board-permissions';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -338,6 +340,28 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (board.data.board_type === 'page') {
       return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
+    }
+
+    if (isPin && rhizome.data.site_type === 'community') {
+      let canPinPost = false;
+
+      try {
+        const access = await getCommunityManagerAccess(siteName, {
+          requireManagerControlPermission: false,
+        });
+
+        canPinPost = canPinCommunityPost({
+          permissions: access.actor.permissions,
+          managedBoardIds: access.actor.managedBoardIds,
+          boardId: board.data.id,
+        });
+      } catch {
+        canPinPost = false;
+      }
+
+      if (!canPinPost) {
+        return Response.json({ error: '상단고정글을 등록할 권한이 없습니다.' }, { status: 403 });
+      }
     }
 
     let categoryIds: string[] = [];

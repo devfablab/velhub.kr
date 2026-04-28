@@ -3,6 +3,8 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import { getPostList } from '@/lib/board/getPostList';
+import { canPinCommunityPost } from '@/lib/community-manager/board-permissions';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -43,7 +45,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, visibility_type, is_shutdown')
+      .select('id, site_type, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -73,6 +75,24 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    let canPinPost = false;
+
+    if (rhizome.data.site_type === 'community' && session.authUserId) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, {
+          requireManagerControlPermission: false,
+        });
+
+        canPinPost = canPinCommunityPost({
+          permissions: access.actor.permissions,
+          managedBoardIds: access.actor.managedBoardIds,
+          boardId: board.data.id,
+        });
+      } catch {
+        canPinPost = false;
+      }
     }
 
     if (board.data.board_type === 'page') {
@@ -166,6 +186,9 @@ export async function GET(request: Request, context: RouteContext) {
         totalCount,
         totalPage,
         filter,
+        actions: {
+          canPinPost: false,
+        },
       });
     }
 
@@ -188,6 +211,9 @@ export async function GET(request: Request, context: RouteContext) {
       totalCount: result.totalCount,
       totalPage: result.totalPage,
       filter,
+      actions: {
+        canPinPost,
+      },
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

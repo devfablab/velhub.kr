@@ -1,6 +1,8 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { canPinCommunityPost } from '@/lib/community-manager/board-permissions';
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -320,7 +322,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -347,7 +349,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const postQuery = supabaseAdmin
       .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll')
+      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_pin')
       .eq('board_id', board.data.id);
 
     const currentPost = isNumericSlug(normalizedContentId)
@@ -363,6 +365,28 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!isStaff && !isAuthor) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (rhizome.data.site_type === 'community' && currentPost.data.is_pin !== isPin) {
+      let canPinPost = false;
+
+      try {
+        const access = await getCommunityManagerAccess(siteName, {
+          requireManagerControlPermission: false,
+        });
+
+        canPinPost = canPinCommunityPost({
+          permissions: access.actor.permissions,
+          managedBoardIds: access.actor.managedBoardIds,
+          boardId: board.data.id,
+        });
+      } catch {
+        canPinPost = false;
+      }
+
+      if (!canPinPost) {
+        return Response.json({ error: '상단고정글을 변경할 권한이 없습니다.' }, { status: 403 });
+      }
     }
 
     let categoryIds: string[] = [];

@@ -60,6 +60,19 @@ export async function DELETE(request: Request) {
       return Response.json({ error: '해임에 실패했습니다.' }, { status: 500 });
     }
 
+    const updateMemberRoleResult = await access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .update({
+        role: 'member',
+      })
+      .eq('id', targetRow.manager_id)
+      .eq('site_id', access.rhizome.id)
+      .neq('role', 'owner');
+
+    if (updateMemberRoleResult.error) {
+      return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
+    }
+
     const managers = await buildCommunityManagerList(access);
 
     return Response.json({

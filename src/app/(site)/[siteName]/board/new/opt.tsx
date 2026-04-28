@@ -27,6 +27,9 @@ type BoardInfoResponse = {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series';
   };
+  actions?: {
+    canPinPost?: boolean;
+  };
   error?: string;
 };
 
@@ -152,6 +155,7 @@ export default function Opt() {
   const [images, setImages] = useState<PostImageRow[]>([]);
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
+  const [canPinPost, setCanPinPost] = useState(false);
   const [isPollEnabled, setIsPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollState>(EMPTY_POLL);
   const [isLoadingBoards, setIsLoadingBoards] = useState(true);
@@ -218,6 +222,8 @@ export default function Opt() {
         setSeriesList([]);
         setSelectedPrefixId('');
         setSelectedSeriesKey('');
+        setIsPin(false);
+        setCanPinPost(false);
         return;
       }
 
@@ -243,6 +249,8 @@ export default function Opt() {
 
         setBoardType(nextBoardType);
         setPostType(nextPostType);
+        setCanPinPost(boardResult.actions?.canPinPost === true);
+        setIsPin(false);
         setPrefixList([]);
         setSeriesList([]);
 
@@ -305,6 +313,8 @@ export default function Opt() {
     setThumbnailWidth(null);
     setThumbnailHeight(null);
     setImages([]);
+    setIsPin(false);
+    setCanPinPost(false);
     setIsPollEnabled(false);
     setPoll(EMPTY_POLL);
     setErrorMessage('');
@@ -533,7 +543,7 @@ export default function Opt() {
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
           isComment,
-          isPin,
+          isPin: canPinPost ? isPin : false,
         }),
       });
 
@@ -605,6 +615,7 @@ export default function Opt() {
             </div>
             <p>게시판 선택시 입력했던 내용들이 초기화됩니다.</p>
           </div>
+
           <div className={styles['post-info']}>
             {isLoadingBoardMeta ? (
               <LoadingIndicator />
@@ -806,8 +817,9 @@ export default function Opt() {
                 ) : null}
               </>
             ) : null}
-          </div>{' '}
+          </div>
         </div>
+
         {isLoadingBoardMeta ? null : selectedBoard ? (
           <>
             {isFeedBoard ? (
@@ -834,6 +846,7 @@ export default function Opt() {
                 />
               </div>
             ) : null}
+
             <div className="paper paper-p0">
               <div className={styles['post-option']}>
                 <div>
@@ -848,17 +861,19 @@ export default function Opt() {
                   </label>
                 </div>
 
-                <div>
-                  <label htmlFor="is-pin">
-                    <input
-                      id="is-pin"
-                      type="checkbox"
-                      checked={isPin}
-                      onChange={(event) => setIsPin(event.currentTarget.checked)}
-                    />
-                    상단고정글 등록
-                  </label>
-                </div>
+                {canPinPost ? (
+                  <div>
+                    <label htmlFor="is-pin">
+                      <input
+                        id="is-pin"
+                        type="checkbox"
+                        checked={isPin}
+                        onChange={(event) => setIsPin(event.currentTarget.checked)}
+                      />
+                      상단고정글 등록
+                    </label>
+                  </div>
+                ) : null}
 
                 <div>
                   <a href={`/${siteName}/board`}>취소</a>

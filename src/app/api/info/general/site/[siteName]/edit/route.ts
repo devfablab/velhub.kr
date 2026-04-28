@@ -1,3 +1,4 @@
+import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -89,11 +90,62 @@ async function checkAccess(siteName: string) {
     } as const;
   }
 
+  if (rhizome.data.site_type === 'community') {
+    try {
+      const access = await getCommunityManagerAccess(siteName);
+
+      if (!access.actor.permissions.site_edit) {
+        return {
+          ok: false,
+          status: 403,
+          error: '접근 권한이 없습니다.',
+        } as const;
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        rhizome: rhizome.data,
+        updatedByStigmaId: access.actor.stigmaId,
+        supabaseAdmin,
+      } as const;
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        return {
+          ok: false,
+          status: 403,
+          error: unknownError.message || '접근 권한이 없습니다.',
+        } as const;
+      }
+
+      return {
+        ok: false,
+        status: 403,
+        error: '접근 권한이 없습니다.',
+      } as const;
+    }
+  }
+
   const session = await verifySession({
     siteId: rhizome.data.id,
   });
 
-  if (session.case !== 'staff') {
+  if (session.case !== 'staff' || !session.stigmaId || !session.rhizomeStigmaId) {
+    return {
+      ok: false,
+      status: 403,
+      error: '접근 권한이 없습니다.',
+    } as const;
+  }
+
+  const membership = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('role')
+    .eq('id', session.rhizomeStigmaId)
+    .eq('site_id', rhizome.data.id)
+    .maybeSingle();
+
+  if (membership.error || normalizeText(membership.data?.role) !== 'owner') {
     return {
       ok: false,
       status: 403,
@@ -105,7 +157,7 @@ async function checkAccess(siteName: string) {
     ok: true,
     status: 200,
     rhizome: rhizome.data,
-    session,
+    updatedByStigmaId: session.stigmaId,
     supabaseAdmin,
   } as const;
 }
@@ -228,10 +280,6 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    if (!access.session.stigmaId) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
     const previousValue: string | boolean | null = access.rhizome[requestBody.field];
     let nextValue: string | boolean | null = null;
 
@@ -325,7 +373,7 @@ export async function POST(request: Request, context: RouteContext) {
       .from('sites')
       .update({
         updated_at: nowIsoString,
-        updated_by: access.session.stigmaId,
+        updated_by: access.updatedByStigmaId,
         log: logMessage,
       })
       .eq('site_id', access.rhizome.id);
