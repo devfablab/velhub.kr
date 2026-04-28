@@ -3,9 +3,13 @@ import Opt from './opt';
 
 export default function Page() {
   return (
-    <>
-      <TableList />
-      <Opt />
-    </>
+    <main>
+      <div className="container">
+        <aside>
+          <TableList />
+        </aside>
+        <Opt />
+      </div>
+    </main>
   );
 }

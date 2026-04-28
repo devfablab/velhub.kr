@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ToastEditor from '@/components/editor/ToastEditor';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { normalizeText } from '@/lib/utils';
+import ToastEditor from '@/components/editor/ToastEditor';
+import styles from '@/app/board.module.sass';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type BoardItem = {
   id: string;
@@ -191,7 +194,7 @@ export default function Opt() {
         );
 
         setBoards(nextBoards);
-        setSelectedBoardKey((previousValue) => previousValue || nextBoards[0]?.board_key || '');
+        setSelectedBoardKey('');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
@@ -575,176 +578,240 @@ export default function Opt() {
   }
 
   return (
-    <section>
-      <h1>글쓰기</h1>
+    <div className={`${styles.content} content`}>
+      <h2>
+        <ListAltOutlinedIcon />
+        <span>글쓰기</span>
+      </h2>
 
       {errorMessage ? <p>{errorMessage}</p> : null}
 
       <form onSubmit={(event) => void handleSubmit('publish', event)}>
-        <div>
-          <label htmlFor="board">게시판</label>
-          <select
-            id="board"
-            value={selectedBoardKey}
-            onChange={(event) => resetBoardSpecificFields(event.currentTarget.value)}
-          >
-            <option value="">게시판을 선택하세요</option>
-            {boards.map((board) => (
-              <option key={board.id} value={board.board_key}>
-                {board.board_label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {isLoadingBoardMeta ? <p>게시판 정보를 불러오는 중...</p> : null}
-
-        {selectedBoard ? (
-          <>
-            {!isFeedBoard ? (
-              <div>
-                <label htmlFor="subject">제목</label>
-                <input
-                  id="subject"
-                  type="text"
-                  value={subject}
-                  onChange={(event) => setSubject(event.currentTarget.value)}
-                />
-              </div>
-            ) : null}
-
-            {isGalleryBoard ? (
-              <div>
-                <label htmlFor="summary">부제목</label>
-                <input
-                  id="summary"
-                  type="text"
-                  value={summary}
-                  onChange={(event) => setSummary(event.currentTarget.value)}
-                />
-              </div>
-            ) : null}
-
-            {isYoutubeBoard ? (
+        <div className="paper paper-p0">
+          <div className={styles['board-select']}>
+            <div className={styles['form-select']}>
+              <select
+                id="board"
+                value={selectedBoardKey}
+                onChange={(event) => resetBoardSpecificFields(event.currentTarget.value)}
+              >
+                <option value="">게시판을 선택하세요</option>
+                {boards.map((board) => (
+                  <option key={board.id} value={board.board_key}>
+                    {board.board_label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p>게시판 선택시 입력했던 내용들이 초기화됩니다.</p>
+          </div>
+          <div className={styles['post-info']}>
+            {isLoadingBoardMeta ? (
+              <LoadingIndicator />
+            ) : selectedBoard ? (
               <>
-                <div>
-                  <label htmlFor="youtube-summary">간단 설명</label>
-                  <textarea
-                    id="youtube-summary"
-                    value={summary}
-                    onChange={(event) => setSummary(event.currentTarget.value)}
-                  />
-                </div>
+                {postType === 'prefix' ? (
+                  <div>
+                    <select
+                      id="prefix"
+                      value={selectedPrefixId}
+                      onChange={(event) => setSelectedPrefixId(event.currentTarget.value)}
+                    >
+                      <option value="">말머리 선택</option>
+                      {prefixList.map((prefix) => (
+                        <option key={prefix.id} value={prefix.id}>
+                          {prefix.prefix_label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
 
-                <div>
-                  <label htmlFor="youtube-url">유튜브 영상 주소</label>
-                  <input
-                    id="youtube-url"
-                    type="text"
-                    value={youtubeUrl}
-                    onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
-                  />
-                </div>
+                {postType === 'series' ? (
+                  <div>
+                    <select
+                      id="series"
+                      value={selectedSeriesKey}
+                      onChange={(event) => setSelectedSeriesKey(event.currentTarget.value)}
+                    >
+                      <option value="">연재 선택</option>
+                      {seriesList
+                        .filter((series) => !series.is_completed)
+                        .map((series) => (
+                          <option key={series.id} value={series.series_key}>
+                            {series.series_label}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                ) : null}
 
-                <div>
-                  <label htmlFor="youtube-id">유튜브 영상 ID</label>
-                  <input id="youtube-id" type="text" value={youtubeId} readOnly />
-                </div>
+                {!isFeedBoard ? (
+                  <div>
+                    <input
+                      id="subject"
+                      type="text"
+                      value={subject}
+                      placeholder="제목을 입력해 주세요"
+                      onChange={(event) => setSubject(event.currentTarget.value)}
+                    />
+                  </div>
+                ) : null}
 
-                <div>
-                  <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
-                  <input
-                    id="youtube-created-at"
-                    type="date"
-                    value={youtubeCreatedAt}
-                    onChange={(event) => setYoutubeCreatedAt(event.currentTarget.value)}
-                  />
-                </div>
+                {isGalleryBoard ? (
+                  <div>
+                    <label htmlFor="summary">부제목</label>
+                    <input
+                      id="summary"
+                      type="text"
+                      value={summary}
+                      placeholder="부제목을 입력해 해주세요"
+                      onChange={(event) => setSummary(event.currentTarget.value)}
+                    />
+                  </div>
+                ) : null}
+
+                {isYoutubeBoard ? (
+                  <>
+                    <div>
+                      <textarea
+                        id="youtube-summary"
+                        value={summary}
+                        placeholder="설명을 간단히 입력해주세요"
+                        onChange={(event) => setSummary(event.currentTarget.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <input
+                        id="youtube-url"
+                        type="text"
+                        value={youtubeUrl}
+                        placeholder="유튜브 영상 주소를 입력해주세요"
+                        onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
+                      />
+                    </div>
+
+                    <input id="youtube-id" type="hidden" value={youtubeId} />
+
+                    <div>
+                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
+                      <input
+                        id="youtube-created-at"
+                        type="date"
+                        value={youtubeCreatedAt}
+                        onChange={(event) => setYoutubeCreatedAt(event.currentTarget.value)}
+                      />
+                    </div>
+                  </>
+                ) : null}
+
+                {!isFeedBoard ? (
+                  <div>
+                    <label htmlFor="thumbnail">썸네일 이미지</label>
+                    <input
+                      ref={thumbnailInputReference}
+                      id="thumbnail"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleThumbnailFileChange}
+                    />
+                    {thumbnailImageUrl ? <img src={thumbnailImageUrl} alt="썸네일 이미지" /> : null}
+                  </div>
+                ) : null}
+
+                {isGalleryBoard || isFeedBoard ? (
+                  <div>
+                    <label htmlFor="images">이미지 업로드</label>
+                    <input
+                      ref={galleryInputReference}
+                      id="images"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      onChange={handleGalleryFileChange}
+                    />
+
+                    {images.length > 0 ? (
+                      <ul>
+                        {images.map((image, index) => (
+                          <li key={image.path}>
+                            <span>{`이미지 ${index + 1}`}</span>
+                            <button type="button" onClick={() => void handleDeleteGalleryImage(image.path)}>
+                              삭제
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {isBasicBoard ? (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isPollEnabled) {
+                          setIsPollEnabled(false);
+                          setPoll(EMPTY_POLL);
+                          return;
+                        }
+
+                        setIsPollEnabled(true);
+                        setPoll(EMPTY_POLL);
+                      }}
+                    >
+                      {isPollEnabled ? '투표 취소' : '투표 설정'}
+                    </button>
+
+                    {isPollEnabled ? (
+                      <>
+                        <div>
+                          <label htmlFor="poll-question">투표 질문</label>
+                          <input
+                            id="poll-question"
+                            type="text"
+                            value={poll.question}
+                            onChange={(event) =>
+                              setPoll((previousPoll) => ({
+                                ...previousPoll,
+                                question: event.currentTarget.value,
+                              }))
+                            }
+                          />
+                        </div>
+
+                        {poll.options.map((option, index) => (
+                          <div key={index}>
+                            <label htmlFor={`poll-option-${index}`}>{`선택지 ${index + 1}`}</label>
+                            <input
+                              id={`poll-option-${index}`}
+                              type="text"
+                              value={option}
+                              onChange={(event) =>
+                                setPoll((previousPoll) => ({
+                                  ...previousPoll,
+                                  options: previousPoll.options.map((item, itemIndex) =>
+                                    itemIndex === index ? event.currentTarget.value : item,
+                                  ),
+                                }))
+                              }
+                            />
+                          </div>
+                        ))}
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
               </>
             ) : null}
-
-            {postType === 'prefix' ? (
-              <div>
-                <label htmlFor="prefix">말머리</label>
-                <select
-                  id="prefix"
-                  value={selectedPrefixId}
-                  onChange={(event) => setSelectedPrefixId(event.currentTarget.value)}
-                >
-                  <option value="">선택 안함</option>
-                  {prefixList.map((prefix) => (
-                    <option key={prefix.id} value={prefix.id}>
-                      {prefix.prefix_label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-
-            {postType === 'series' ? (
-              <div>
-                <label htmlFor="series">연재</label>
-                <select
-                  id="series"
-                  value={selectedSeriesKey}
-                  onChange={(event) => setSelectedSeriesKey(event.currentTarget.value)}
-                >
-                  <option value="">연재를 선택하세요</option>
-                  {seriesList
-                    .filter((series) => !series.is_completed)
-                    .map((series) => (
-                      <option key={series.id} value={series.series_key}>
-                        {series.series_label}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            ) : null}
-
-            {!isFeedBoard ? (
-              <div>
-                <label htmlFor="thumbnail">썸네일 이미지</label>
-                <input
-                  ref={thumbnailInputReference}
-                  id="thumbnail"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleThumbnailFileChange}
-                />
-                {thumbnailImageUrl ? <img src={thumbnailImageUrl} alt="썸네일 이미지" /> : null}
-              </div>
-            ) : null}
-
-            {isGalleryBoard || isFeedBoard ? (
-              <div>
-                <label htmlFor="images">이미지 업로드</label>
-                <input
-                  ref={galleryInputReference}
-                  id="images"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  multiple
-                  onChange={handleGalleryFileChange}
-                />
-
-                {images.length > 0 ? (
-                  <ul>
-                    {images.map((image, index) => (
-                      <li key={image.path}>
-                        <span>{`이미지 ${index + 1}`}</span>
-                        <button type="button" onClick={() => void handleDeleteGalleryImage(image.path)}>
-                          삭제
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-            ) : null}
-
+          </div>{' '}
+        </div>
+        {isLoadingBoardMeta ? null : selectedBoard ? (
+          <>
             {isFeedBoard ? (
-              <div>
-                <label htmlFor="content-simple">내용</label>
+              <div className="paper paper-p0">
                 <textarea
                   id="content-simple"
                   value={contentSimple}
@@ -754,8 +821,7 @@ export default function Opt() {
             ) : null}
 
             {isBasicBoard || isGalleryBoard ? (
-              <div>
-                <label>내용</label>
+              <div className="service-editor">
                 <ToastEditor
                   initialValue={contentHtml}
                   initialMarkdown={contentMarkdown}
@@ -768,105 +834,50 @@ export default function Opt() {
                 />
               </div>
             ) : null}
+            <div className="paper paper-p0">
+              <div className={styles['post-option']}>
+                <div>
+                  <label htmlFor="is-comment">
+                    <input
+                      id="is-comment"
+                      type="checkbox"
+                      checked={isComment}
+                      onChange={(event) => setIsComment(event.currentTarget.checked)}
+                    />
+                    댓글 허용
+                  </label>
+                </div>
 
-            <div>
-              <label htmlFor="is-comment">
-                <input
-                  id="is-comment"
-                  type="checkbox"
-                  checked={isComment}
-                  onChange={(event) => setIsComment(event.currentTarget.checked)}
-                />
-                댓글 허용
-              </label>
-            </div>
+                <div>
+                  <label htmlFor="is-pin">
+                    <input
+                      id="is-pin"
+                      type="checkbox"
+                      checked={isPin}
+                      onChange={(event) => setIsPin(event.currentTarget.checked)}
+                    />
+                    상단고정글 등록
+                  </label>
+                </div>
 
-            <div>
-              <label htmlFor="is-pin">
-                <input
-                  id="is-pin"
-                  type="checkbox"
-                  checked={isPin}
-                  onChange={(event) => setIsPin(event.currentTarget.checked)}
-                />
-                상단고정글 등록
-              </label>
-            </div>
-
-            {isBasicBoard ? (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (isPollEnabled) {
-                      setIsPollEnabled(false);
-                      setPoll(EMPTY_POLL);
-                      return;
-                    }
-
-                    setIsPollEnabled(true);
-                    setPoll(EMPTY_POLL);
-                  }}
-                >
-                  {isPollEnabled ? '투표 취소' : '투표 설정'}
-                </button>
-
-                {isPollEnabled ? (
-                  <>
-                    <div>
-                      <label htmlFor="poll-question">투표 질문</label>
-                      <input
-                        id="poll-question"
-                        type="text"
-                        value={poll.question}
-                        onChange={(event) =>
-                          setPoll((previousPoll) => ({
-                            ...previousPoll,
-                            question: event.currentTarget.value,
-                          }))
-                        }
-                      />
-                    </div>
-
-                    {poll.options.map((option, index) => (
-                      <div key={index}>
-                        <label htmlFor={`poll-option-${index}`}>{`선택지 ${index + 1}`}</label>
-                        <input
-                          id={`poll-option-${index}`}
-                          type="text"
-                          value={option}
-                          onChange={(event) =>
-                            setPoll((previousPoll) => ({
-                              ...previousPoll,
-                              options: previousPoll.options.map((item, itemIndex) =>
-                                itemIndex === index ? event.currentTarget.value : item,
-                              ),
-                            }))
-                          }
-                        />
-                      </div>
-                    ))}
-                  </>
-                ) : null}
+                <div>
+                  <a href={`/${siteName}/board`}>취소</a>
+                  <button
+                    type="button"
+                    disabled={isSubmittingDraft || isSubmittingPublish}
+                    onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+                  >
+                    임시 저장
+                  </button>
+                  <button type="submit" disabled={isSubmittingDraft || isSubmittingPublish}>
+                    저장
+                  </button>
+                </div>
               </div>
-            ) : null}
-
-            <div>
-              <a href={`/${siteName}/board`}>취소</a>
-              <button
-                type="button"
-                disabled={isSubmittingDraft || isSubmittingPublish}
-                onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
-              >
-                임시 저장
-              </button>
-              <button type="submit" disabled={isSubmittingDraft || isSubmittingPublish}>
-                저장
-              </button>
             </div>
           </>
         ) : null}
       </form>
-    </section>
+    </div>
   );
 }

@@ -3,3 +3,20 @@
     display: flex
     gap: ds.rem(5)
     align-items: center
+
+  .post-info
+    position: relative
+
+    .loading
+      position: absolute
+      display: flex
+      align-items: center
+      justify-content: center
+      inset: 0
+      z-index: 77
+
+      html[data-theme="yellow-light"] &
+        background-color: rgba(ds.$hex-bright, .7)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$hex-primary, .7)

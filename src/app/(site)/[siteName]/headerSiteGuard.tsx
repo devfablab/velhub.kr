@@ -1,10 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import HeaderSite from '@/components/headers/Site';
-import { useEffect } from 'react';
 
 const HIDE_PREFIXES = ['/contents', '/design', '/manage', '/', '/team', '/stats', '/members', '/filtered'];
 

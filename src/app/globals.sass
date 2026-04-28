@@ -27,14 +27,14 @@ body, pre, input, button, textarea, select
   -webkit-font-smoothing: antialiased
 
 body
-  &[data-theme="yellow-light"]
+  html[data-theme="yellow-light"] &
     background-color: ds.$hex-bright
     color: ds.$hex-primary
 
     pre, input, button, textarea, select
       color: ds.$hex-primary
 
-  &[data-theme="yellow-dark"]
+  html[data-theme="yellow-dark"] &
     background-color: ds.$hex-primary
     color: ds.$hex-bright
 
@@ -122,10 +122,21 @@ a, button, select, input
 .seo
   @include ds.screen-reader-only
 
+.service-editor
+  .toastui-editor-defaultUI
+    border-radius: ds.rem(17)!important
+    overflow: hidden
+    border: 0!important
+    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+
 .paper
   border-radius: ds.rem(17)
   padding: ds.rem(23)
   box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+
+  &.paper-p0
+    padding-right: 0
+    padding-left: 0
 
   caption
     @include ds.screen-reader-only
