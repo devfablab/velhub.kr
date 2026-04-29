@@ -1008,7 +1008,7 @@ export default function Opt() {
               {isFeedBoard ? (
                 <div className="paper paper-p0">
                   <textarea
-                    id="content-simple"
+                    className={styles['content-simple']}
                     value={contentSimple}
                     placeholder="내용을 입력해주세요"
                     onChange={(event) => setContentSimple(event.currentTarget.value)}
@@ -1017,9 +1017,9 @@ export default function Opt() {
               ) : null}
 
               {isYoutubeBoard ? (
-                <div className="paper">
+                <div className="paper paper-p0">
                   <textarea
-                    id="youtube-summary"
+                    className={styles['content-simple']}
                     value={summary}
                     placeholder="영상설명을 간단히 입력해주세요"
                     onChange={(event) => setSummary(event.currentTarget.value)}

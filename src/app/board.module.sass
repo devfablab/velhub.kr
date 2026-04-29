@@ -97,7 +97,12 @@
             padding: 0 ds.rem(23) 0 ds.rem(12)
             font-size: ds.rem(16)
             @include ds.fw(pre, 600)
-            color: ds.$hex-primary
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-bright
 
           .form-control
             position: absolute
@@ -113,7 +118,12 @@
                 padding-left: ds.rem(152)
                 font-size: ds.rem(16)
                 @include ds.fw(pre, 600)
-                color: ds.$hex-primary
+
+                html[data-theme="yellow-light"] &
+                  color: ds.$hex-primary
+
+                html[data-theme="yellow-dark"] &
+                  color: ds.$hex-bright
 
                 div[contenteditable="false"]
                   padding: 0
@@ -162,6 +172,22 @@
       .editor
         @include ds.mq(maxLarge)
           width: calc(100vw - ds.rem(287))
+
+      .content-simple
+        width: 100%
+        height: ds.rem(120)
+        border-radius: ds.rem(17)
+        padding: ds.rem(23)
+
+        html[data-theme="yellow-light"] &
+          background-color: ds.$hex-white
+          border: 1px solid rgba(ds.$hex-tertiary, .1)
+          color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-black
+          border: 1px solid rgba(ds.$hex-tertiary, .5)
+          color: ds.$hex-bright
 
       .button-group
         display: flex
