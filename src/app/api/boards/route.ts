@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
 
     if (!siteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -54,16 +54,10 @@ export async function GET(request: Request) {
     });
 
     const isStaff = session.case === 'staff';
-    const isMember = session.case === 'member';
-
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
-    }
-
-    if (!isStaff && !isMember) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const boards = await supabaseAdmin

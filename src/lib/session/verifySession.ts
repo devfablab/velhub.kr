@@ -2,7 +2,7 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type VerifySessionCase = 'admin' | 'guest-public' | 'guest-site' | 'member' | 'staff';
+type VerifySessionCase = 'admin' | 'guest-public' | 'guest-site' | 'pending-member' | 'member' | 'staff';
 
 type VerifySessionParams = {
   siteId: string | null | undefined;
@@ -92,9 +92,18 @@ export default async function verifySession({ siteId }: VerifySessionParams): Pr
     };
   }
 
-  if (isApproval) {
+  if (rhizomeRole === 'member' && isApproval) {
     return {
       case: 'member',
+      authUserId,
+      stigmaId,
+      rhizomeStigmaId,
+    };
+  }
+
+  if (rhizomeRole === 'member' && !isApproval) {
+    return {
+      case: 'pending-member',
       authUserId,
       stigmaId,
       rhizomeStigmaId,

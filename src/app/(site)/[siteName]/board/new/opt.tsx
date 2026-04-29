@@ -4,6 +4,12 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { normalizeText } from '@/lib/utils';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
 import ToastEditor from '@/components/editor/ToastEditor';
 import styles from '@/app/board.module.sass';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -95,6 +101,8 @@ type PollState = {
   options: string[];
 };
 
+type AccessDialogType = 'login' | 'join' | 'pending' | null;
+
 const EMPTY_POLL: PollState = {
   question: '',
   options: ['', '', '', '', ''],
@@ -133,6 +141,8 @@ export default function Opt() {
   const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
 
+  const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
+  const [alertMessage, setAlertMessage] = useState('');
   const [boards, setBoards] = useState<BoardItem[]>([]);
   const [selectedBoardKey, setSelectedBoardKey] = useState('');
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
@@ -177,6 +187,54 @@ export default function Opt() {
   const isFeedBoard = boardType === 'feed';
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
 
+  const accessDialog = useMemo(() => {
+    if (accessDialogType === 'login') {
+      return {
+        open: true,
+        title: '로그인 필요',
+        content: '로그인이 필요한 서비스입니다.',
+        cancelLabel: '취소',
+        confirmLabel: '로그인',
+        onCancel: () => router.replace(`/${siteName}/board`),
+        onConfirm: () => router.push('/auth/sign-in'),
+      };
+    }
+
+    if (accessDialogType === 'join') {
+      return {
+        open: true,
+        title: '커뮤니티 가입 필요',
+        content: '커뮤니티 가입 후 이용할 수 있습니다.',
+        cancelLabel: '취소',
+        confirmLabel: '가입하기',
+        onCancel: () => router.replace(`/${siteName}/board`),
+        onConfirm: () => router.push(`/${siteName}/join`),
+      };
+    }
+
+    if (accessDialogType === 'pending') {
+      return {
+        open: true,
+        title: '가입 승인 대기 중',
+        content: '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.',
+        cancelLabel: null,
+        confirmLabel: '확인',
+        onCancel: () => router.replace(`/${siteName}/board`),
+        onConfirm: () => router.replace(`/${siteName}/board`),
+      };
+    }
+
+    return {
+      open: false,
+      title: '',
+      content: '',
+      cancelLabel: null,
+      confirmLabel: '',
+      onCancel: () => undefined,
+      onConfirm: () => undefined,
+    };
+  }, [accessDialogType, router, siteName]);
+
   useEffect(() => {
     async function loadBoards() {
       try {
@@ -190,7 +248,8 @@ export default function Opt() {
         const result = (await response.json()) as BoardsResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '게시판 목록을 불러오지 못했습니다.');
+          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
+          throw new Error(message);
         }
 
         const nextBoards = (Array.isArray(result.boards) ? result.boards : []).filter(
@@ -229,6 +288,8 @@ export default function Opt() {
 
       try {
         setErrorMessage('');
+        setAlertMessage('');
+        setAccessDialogType(null);
         setIsLoadingBoardMeta(true);
         setSelectedPrefixId('');
         setSelectedSeriesKey('');
@@ -241,7 +302,26 @@ export default function Opt() {
         const boardResult = (await boardResponse.json()) as BoardInfoResponse;
 
         if (!boardResponse.ok) {
-          throw new Error(boardResult.error ?? '게시판 정보를 불러오지 못했습니다.');
+          const message = boardResult.error ?? '게시판 정보를 불러오지 못했습니다.';
+
+          if (message === '로그인이 필요한 서비스입니다.') {
+            setAccessDialogType('login');
+            return;
+          }
+
+          if (message === '커뮤니티 가입 후 이용할 수 있습니다.') {
+            setAccessDialogType('join');
+            return;
+          }
+
+          if (
+            message === '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.'
+          ) {
+            setAccessDialogType('pending');
+            return;
+          }
+
+          throw new Error(message);
         }
 
         const nextBoardType = boardResult.board?.board_type ?? 'basic';
@@ -285,9 +365,9 @@ export default function Opt() {
         }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
+          setAlertMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
         } else {
-          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
+          setAlertMessage('게시판 정보를 불러오지 못했습니다.');
         }
       } finally {
         setIsLoadingBoardMeta(false);
@@ -318,6 +398,8 @@ export default function Opt() {
     setIsPollEnabled(false);
     setPoll(EMPTY_POLL);
     setErrorMessage('');
+    setAlertMessage('');
+    setAccessDialogType(null);
   }
 
   async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
@@ -381,6 +463,7 @@ export default function Opt() {
 
     try {
       setErrorMessage('');
+      setAlertMessage('');
       setIsUploadingThumbnail(true);
 
       const uploadedImage = await uploadPostImage(selectedFile, 'thumbnail');
@@ -395,9 +478,9 @@ export default function Opt() {
       setThumbnailHeight(uploadedImage.height);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
+        setAlertMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
       } else {
-        setErrorMessage('이미지 업로드에 실패했습니다.');
+        setAlertMessage('이미지 업로드에 실패했습니다.');
       }
     } finally {
       setIsUploadingThumbnail(false);
@@ -417,13 +500,14 @@ export default function Opt() {
     const remainCount = 6 - images.length;
 
     if (remainCount <= 0) {
-      setErrorMessage('이미지는 최대 6개까지 등록할 수 있습니다.');
+      setAlertMessage('이미지는 최대 6개까지 등록할 수 있습니다.');
       inputElement.value = '';
       return;
     }
 
     try {
       setErrorMessage('');
+      setAlertMessage('');
       setIsUploadingImages(true);
 
       const nextFiles = selectedFiles.slice(0, remainCount);
@@ -443,9 +527,9 @@ export default function Opt() {
       setImages((previousImages) => [...uploadedImages, ...previousImages]);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
+        setAlertMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
       } else {
-        setErrorMessage('이미지 업로드에 실패했습니다.');
+        setAlertMessage('이미지 업로드에 실패했습니다.');
       }
     } finally {
       setIsUploadingImages(false);
@@ -456,13 +540,14 @@ export default function Opt() {
   async function handleDeleteGalleryImage(path: string) {
     try {
       setErrorMessage('');
+      setAlertMessage('');
       await deletePostImage(path);
       setImages((previousImages) => previousImages.filter((image) => image.path !== path));
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '이미지 삭제에 실패했습니다.');
+        setAlertMessage(unknownError.message || '이미지 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('이미지 삭제에 실패했습니다.');
+        setAlertMessage('이미지 삭제에 실패했습니다.');
       }
     }
   }
@@ -512,6 +597,7 @@ export default function Opt() {
 
     try {
       setErrorMessage('');
+      setAlertMessage('');
 
       if (action === 'draft') {
         setIsSubmittingDraft(true);
@@ -569,9 +655,9 @@ export default function Opt() {
       router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '글 작성에 실패했습니다.');
+        setAlertMessage(unknownError.message || '글 작성에 실패했습니다.');
       } else {
-        setErrorMessage('글 작성에 실패했습니다.');
+        setAlertMessage('글 작성에 실패했습니다.');
       }
     } finally {
       setIsSubmittingDraft(false);
@@ -893,6 +979,29 @@ export default function Opt() {
           </>
         ) : null}
       </form>
+
+      <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
+        <DialogTitle>{accessDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {accessDialog.cancelLabel ? (
+            <Button onClick={accessDialog.onCancel}>{accessDialog.cancelLabel}</Button>
+          ) : null}
+
+          <button onClick={accessDialog.onConfirm}>{accessDialog.confirmLabel}</button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+        <DialogContent>
+          <DialogContentText>{alertMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <button onClick={() => setAlertMessage('')}>확인</button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

@@ -58,12 +58,31 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.case === 'staff';
+    const isPendingMember = session.case === 'pending-member';
+    const isGuestSite = session.case === 'guest-site';
+    const isGuestPublic = session.case === 'guest-public';
+
     const authUserId = session.authUserId ?? null;
 
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
       if (!isStaff) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
+    }
+
+    if (isGuestPublic) {
+      return Response.json({ error: '로그인이 필요한 서비스입니다.' }, { status: 403 });
+    }
+
+    if (isGuestSite) {
+      return Response.json({ error: '가입이 필요합니다.' }, { status: 403 });
+    }
+
+    if (isPendingMember) {
+      return Response.json(
+        { error: '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.' },
+        { status: 403 },
+      );
     }
 
     const board = await supabaseAdmin

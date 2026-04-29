@@ -147,6 +147,42 @@ a, button, select, input
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
 
+.vh-dialog
+  .MuiDialog-paper
+    border-radius: ds.rem(17)
+    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+
+    .MuiDialogTitle-root, .MuiDialogContent-root
+      padding: ds.rem(17) ds.rem(23)
+
+    .MuiDialogTitle-root
+      font-size: ds.rem(16)
+
+      html[data-theme="yellow-light"] &
+        border-bottom: 1px solid rgba(ds.$hex-tertiary, .1)
+
+      html[data-theme="yellow-dark"] &
+        border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+
+    .MuiDialogActions-root
+      padding: 0 ds.rem(23) ds.rem(17)
+
+      button
+        display: flex
+        justify-content: center
+        align-items: center
+        width: 100%
+        height: ds.rem(52)
+        border-radius: ds.rem(7)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(20)
+        background-color: ds.$hex-accent
+        color: ds.$hex-bright
+
+        &:disabled
+          background-color: ds.$hex-tertiary
+          color: rgba(ds.$hex-bright, .7)
+
 .button
   display: flex
   justify-content: center

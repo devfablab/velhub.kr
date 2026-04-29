@@ -7,6 +7,11 @@ import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import Button from '@mui/material/Button';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
@@ -79,14 +84,14 @@ export default function TableList() {
   const siteName = normalizeText(params.siteName);
 
   const [boards, setBoards] = useState<BoardItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   const shouldShowWriteLink = useMemo(() => !isWritePath(pathname, siteName), [pathname, siteName]);
 
   useEffect(() => {
     async function loadBoards() {
       try {
-        setErrorMessage('');
+        setAlertMessage('');
 
         const response = await fetch(`/api/boards?siteName=${siteName}`, {
           method: 'GET',
@@ -96,7 +101,8 @@ export default function TableList() {
         const result = (await response.json()) as BoardsResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '게시판 목록을 불러오지 못했습니다.');
+          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
+          throw new Error(message);
         }
 
         const nextBoards = Array.isArray(result.boards) ? result.boards : [];
@@ -104,9 +110,9 @@ export default function TableList() {
         setBoards(nextBoards.filter((board) => board.is_active === true && board.board_type !== 'page'));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
+          setAlertMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('게시판 목록을 불러오지 못했습니다.');
+          setAlertMessage('게시판 목록을 불러오지 못했습니다.');
         }
       }
     }
@@ -120,8 +126,6 @@ export default function TableList() {
 
   return (
     <div className={`${styles['table-list']} paper`}>
-      {errorMessage ? <p>{errorMessage}</p> : null}
-
       {shouldShowWriteLink ? (
         <p className={styles.button}>
           <Anchor href={`/${siteName}/board/new`} className="button">
@@ -146,6 +150,17 @@ export default function TableList() {
           </li>
         ))}
       </ol>
+
+      <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+        <DialogContent>
+          <DialogContentText>{alertMessage}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAlertMessage('')} variant="contained">
+            확인
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
