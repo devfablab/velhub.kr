@@ -38,7 +38,12 @@
               padding: 0 ds.rem(23) 0 0
               font-size: ds.rem(16)
               @include ds.fw(pre, 600)
-              color: ds.$hex-primary
+
+              html[data-theme="yellow-light"] &
+                color: ds.$hex-primary
+
+              html[data-theme="yellow-dark"] &
+                color: ds.$hex-bright
 
             fieldset
               top: 0
@@ -76,7 +81,12 @@
               padding: 0 ds.rem(23) 0 0
               font-size: ds.rem(16)
               @include ds.fw(pre, 600)
-              color: ds.$hex-primary
+
+              html[data-theme="yellow-light"] &
+                color: ds.$hex-primary
+
+              html[data-theme="yellow-dark"] &
+                color: ds.$hex-bright
 
             fieldset
               border: 0
@@ -124,3 +134,53 @@
               html[data-theme="yellow-dark"] &
                 background-color: ds.$hex-black
                 border: 1px solid rgba(ds.$hex-tertiary, .5)
+
+        .image
+          button
+            display: flex
+            flex-direction: column
+            justify-content: center
+            align-items: center
+            gap: ds.rem(3)
+            width: ds.rem(37)
+            border-radius: ds.rem(7)
+            background-color: transparent
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-bright
+
+            svg
+              width: ds.rem(35)
+              height: ds.rem(35)
+
+            span
+              font-size: ds.rem(12)
+
+      .editor
+        @include ds.mq(maxLarge)
+          width: calc(100vw - ds.rem(287))
+
+      .button-group
+        display: flex
+        gap: ds.rem(12)
+        justify-content: flex-end
+
+        .link, .button, .submit
+          padding: 0 ds.rem(23)
+
+        .link
+          html[data-theme="yellow-light"] &
+            color: rgba(ds.$hex-primary, .5)
+
+          html[data-theme="yellow-dark"] &
+            color: rgba(ds.$hex-bright, .5)
+
+        .button
+          background-color: rgba(ds.$hex-accent, .1)
+          color: ds.$hex-accent
+
+        .submit
+          color: ds.$hex-bright

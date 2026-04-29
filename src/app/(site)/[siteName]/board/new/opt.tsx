@@ -5,17 +5,21 @@ import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { normalizeText } from '@/lib/utils';
 import Dialog from '@mui/material/Dialog';
+import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
+import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Divider, FormControlLabel, FormGroup, MenuItem, Select, SelectChangeEvent, useTheme } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
 import styles from '@/app/board.module.sass';
 
@@ -170,6 +174,7 @@ export default function Opt() {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const theme = useTheme();
 
   const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
@@ -885,25 +890,31 @@ export default function Opt() {
                     </div>
                   </div>
                 ) : null}
-                <div className={styles['post-info']}>
+                <div className={`${styles['post-info']} ${styles['post-row']}`}>
                   {!isFeedBoard ? (
-                    <div>
-                      <label htmlFor="thumbnail">썸네일 이미지</label>
-                      <input
+                    <div className={styles.image}>
+                      <button type="button">
+                        <CropOriginalOutlinedIcon />
+                        <span>썸네일 이미지</span>
+                      </button>
+                      {/* <input
                         ref={thumbnailInputReference}
                         id="thumbnail"
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
                         onChange={handleThumbnailFileChange}
                       />
-                      {thumbnailImageUrl ? <img src={thumbnailImageUrl} alt="썸네일 이미지" /> : null}
+                      {thumbnailImageUrl ? <img src={thumbnailImageUrl} alt="썸네일 이미지" /> : null} */}
                     </div>
                   ) : null}
 
                   {isGalleryBoard || isFeedBoard ? (
-                    <div>
-                      <label htmlFor="images">이미지 업로드</label>
-                      <input
+                    <div className={styles.image}>
+                      <button type="button">
+                        <CollectionsOutlinedIcon />
+                        <span>갤러리 이미지</span>
+                      </button>
+                      {/* <input
                         ref={galleryInputReference}
                         id="images"
                         type="file"
@@ -911,7 +922,6 @@ export default function Opt() {
                         multiple
                         onChange={handleGalleryFileChange}
                       />
-
                       {images.length > 0 ? (
                         <ul>
                           {images.map((image, index) => (
@@ -923,13 +933,17 @@ export default function Opt() {
                             </li>
                           ))}
                         </ul>
-                      ) : null}
+                      ) : null} */}
                     </div>
                   ) : null}
 
                   {isBasicBoard ? (
-                    <div>
-                      <button
+                    <div className={styles.image}>
+                      <button type="button">
+                        <HowToVoteOutlinedIcon />
+                        <span>투표</span>
+                      </button>
+                      {/* <button
                         type="button"
                         onClick={() => {
                           if (isPollEnabled) {
@@ -943,7 +957,7 @@ export default function Opt() {
                         }}
                       >
                         {isPollEnabled ? '투표 취소' : '투표 설정'}
-                      </button>
+                      </button> */}
 
                       {isPollEnabled ? (
                         <>
@@ -1014,12 +1028,12 @@ export default function Opt() {
               ) : null}
 
               {isBasicBoard || isGalleryBoard ? (
-                <div className="service-editor">
+                <div className={`${styles.editor} service-editor`}>
                   <ToastEditor
                     initialValue={contentHtml}
                     initialMarkdown={contentMarkdown}
                     initialEditType="wysiwyg"
-                    themeMode="light"
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                     hideModeSwitch
                     onHtmlChange={setContentHtml}
                     onMarkdownChange={setContentMarkdown}
@@ -1028,51 +1042,57 @@ export default function Opt() {
                 </div>
               ) : null}
 
-              <div className="paper paper-p0">
+              <div className="paper">
                 <div className={styles['post-option']}>
-                  <div>
-                    <label htmlFor="is-comment">
-                      <input
-                        id="is-comment"
-                        type="checkbox"
-                        checked={isComment}
-                        onChange={(event) => setIsComment(event.currentTarget.checked)}
-                      />
-                      댓글 허용
-                    </label>
-                  </div>
-
-                  {canPinPost ? (
-                    <div>
-                      <label htmlFor="is-pin">
-                        <input
-                          id="is-pin"
-                          type="checkbox"
-                          checked={isPin}
-                          onChange={(event) => setIsPin(event.currentTarget.checked)}
+                  <FormGroup row>
+                    <FormControlLabel
+                      label="댓글 허용"
+                      control={
+                        <IOSSwitch
+                          sx={{ m: 1 }}
+                          checked={isComment}
+                          onChange={(event) => setIsComment(event.target.checked)}
                         />
-                        상단고정글 등록
-                      </label>
-                    </div>
-                  ) : null}
-
-                  <div>
-                    <a href={`/${siteName}/board`}>취소</a>
-                    <button
-                      type="button"
-                      disabled={isSubmittingDraft || isSubmittingPublish}
-                      onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
-                    >
-                      임시 저장
-                    </button>
-                    <button type="submit" disabled={isSubmittingDraft || isSubmittingPublish}>
-                      저장
-                    </button>
-                  </div>
+                      }
+                    />
+                    <Divider orientation="vertical" variant="middle" flexItem sx={{ mr: 2 }} />
+                    {canPinPost ? (
+                      <FormControlLabel
+                        label="상단고정글 등록"
+                        control={
+                          <IOSSwitch
+                            sx={{ m: 1 }}
+                            checked={isPin}
+                            onChange={(event) => setIsPin(event.target.checked)}
+                          />
+                        }
+                      />
+                    ) : null}
+                  </FormGroup>
                 </div>
               </div>
             </>
           ) : null}
+          <div className={styles['button-group']}>
+            <a href={`/${siteName}/board`} className={`${styles.link} link`}>
+              취소
+            </a>
+            <button
+              type="button"
+              className={`${styles.button} button`}
+              disabled={isSubmittingDraft || isSubmittingPublish}
+              onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+            >
+              임시 저장
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmittingDraft || isSubmittingPublish}
+              className={`${styles.submit} button`}
+            >
+              저장
+            </button>
+          </div>
         </fieldset>
       </form>
 

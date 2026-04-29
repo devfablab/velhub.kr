@@ -53,7 +53,7 @@ export default function ToastEditorClient({
       initialValue={editorInitialValue}
       initialEditType={initialEditType}
       previewStyle="vertical"
-      height="500px"
+      height="527px"
       language="ko-KR"
       usageStatistics={false}
       hideModeSwitch={hideModeSwitch}
