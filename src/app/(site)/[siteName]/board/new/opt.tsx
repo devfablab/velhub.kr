@@ -10,10 +10,14 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Button from '@mui/material/Button';
-import ToastEditor from '@/components/editor/ToastEditor';
-import styles from '@/app/board.module.sass';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { ko } from 'date-fns/locale';
+import ToastEditor from '@/components/editor/ToastEditor';
+import styles from '@/app/board.module.sass';
 
 type BoardItem = {
   id: string;
@@ -132,6 +136,34 @@ function getYoutubeId(value: string) {
   }
 
   return '';
+}
+
+function formatDateValue(value: Date | null) {
+  if (!value || Number.isNaN(value.getTime())) {
+    return '';
+  }
+
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateValue(value: string) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const dateValue = new Date(`${normalizedValue}T00:00:00`);
+
+  if (Number.isNaN(dateValue.getTime())) {
+    return null;
+  }
+
+  return dateValue;
 }
 
 export default function Opt() {
@@ -750,47 +782,47 @@ export default function Opt() {
               </div>
             ) : selectedBoard ? (
               <>
-                <div className={styles['post-info']}>
-                  <div className={styles['form-group']}>
-                    {postType === 'prefix' ? (
-                      <div ref={prefixSelectReference} className={styles['form-select']}>
-                        <Select
-                          displayEmpty
-                          value={selectedPrefixId}
-                          onChange={(event: SelectChangeEvent) => setSelectedPrefixId(event.target.value)}
-                          className={styles['MuiInputBase-root']}
-                        >
-                          <MenuItem value="">말머리 선택</MenuItem>
-                          {prefixList.map((prefix) => (
-                            <MenuItem key={prefix.id} value={prefix.id}>
-                              {prefix.prefix_label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </div>
-                    ) : null}
-
-                    {postType === 'series' ? (
-                      <div ref={seriesSelectReference} className={styles['form-select']}>
-                        <Select
-                          displayEmpty
-                          value={selectedSeriesKey}
-                          onChange={(event: SelectChangeEvent) => setSelectedSeriesKey(event.target.value)}
-                          className={styles['MuiInputBase-root']}
-                        >
-                          <MenuItem value="">연재 선택</MenuItem>
-                          {seriesList
-                            .filter((series) => !series.is_completed)
-                            .map((series) => (
-                              <MenuItem key={series.id} value={series.series_key}>
-                                {series.series_label}
+                {!isFeedBoard ? (
+                  <div className={styles['post-info']}>
+                    <div className={styles['form-group']}>
+                      {postType === 'prefix' ? (
+                        <div ref={prefixSelectReference} className={styles['form-select']}>
+                          <Select
+                            displayEmpty
+                            value={selectedPrefixId}
+                            onChange={(event: SelectChangeEvent) => setSelectedPrefixId(event.target.value)}
+                            className={styles['MuiInputBase-root']}
+                          >
+                            <MenuItem value="">말머리 선택</MenuItem>
+                            {prefixList.map((prefix) => (
+                              <MenuItem key={prefix.id} value={prefix.id}>
+                                {prefix.prefix_label}
                               </MenuItem>
                             ))}
-                        </Select>
-                      </div>
-                    ) : null}
+                          </Select>
+                        </div>
+                      ) : null}
 
-                    {!isFeedBoard ? (
+                      {postType === 'series' ? (
+                        <div ref={seriesSelectReference} className={styles['form-select']}>
+                          <Select
+                            displayEmpty
+                            value={selectedSeriesKey}
+                            onChange={(event: SelectChangeEvent) => setSelectedSeriesKey(event.target.value)}
+                            className={styles['MuiInputBase-root']}
+                          >
+                            <MenuItem value="">연재 선택</MenuItem>
+                            {seriesList
+                              .filter((series) => !series.is_completed)
+                              .map((series) => (
+                                <MenuItem key={series.id} value={series.series_key}>
+                                  {series.series_label}
+                                </MenuItem>
+                              ))}
+                          </Select>
+                        </div>
+                      ) : null}
+
                       <div className={styles['form-control']}>
                         <input
                           type="text"
@@ -800,11 +832,11 @@ export default function Opt() {
                           onChange={(event) => setSubject(event.currentTarget.value)}
                         />
                       </div>
-                    ) : null}
+                    </div>
                   </div>
-                </div>
-                <div className={styles['post-info']}>
-                  {isGalleryBoard ? (
+                ) : null}
+                {isGalleryBoard ? (
+                  <div className={styles['post-info']}>
                     <div className={styles['form-group']}>
                       <div className={styles['form-control']}>
                         <input
@@ -816,33 +848,44 @@ export default function Opt() {
                         />
                       </div>
                     </div>
-                  ) : null}
-
-                  {isYoutubeBoard ? (
-                    <>
-                      <input id="youtube-id" type="hidden" value={youtubeId} />
-                      <div>
+                  </div>
+                ) : null}
+                {isYoutubeBoard ? (
+                  <div className={`${styles['post-info']} ${styles['post-row']}`}>
+                    <input id="youtube-id" type="hidden" value={youtubeId} />
+                    <div className={styles['form-group']}>
+                      <div className={styles['form-control']}>
                         <input
                           id="youtube-url"
                           type="text"
                           value={youtubeUrl}
                           placeholder="유튜브 영상 주소를 입력해주세요"
+                          style={{ paddingLeft: 12 }}
                           onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
                         />
                       </div>
-
-                      <div>
-                        <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
-                        <input
-                          id="youtube-created-at"
-                          type="date"
-                          value={youtubeCreatedAt}
-                          onChange={(event) => setYoutubeCreatedAt(event.currentTarget.value)}
-                        />
+                    </div>
+                    <div className={styles['form-group']}>
+                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
+                      <div className={styles['form-control']}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                          <DatePicker
+                            value={parseDateValue(youtubeCreatedAt)}
+                            onChange={(value) => setYoutubeCreatedAt(formatDateValue(value))}
+                            className={styles['MuiFormControl-root']}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                size: 'small',
+                              },
+                            }}
+                          />
+                        </LocalizationProvider>
                       </div>
-                    </>
-                  ) : null}
-
+                    </div>
+                  </div>
+                ) : null}
+                <div className={styles['post-info']}>
                   {!isFeedBoard ? (
                     <div>
                       <label htmlFor="thumbnail">썸네일 이미지</label>
