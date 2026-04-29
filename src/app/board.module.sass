@@ -1,22 +1,90 @@
 .content
+  display: flex
+  flex-direction: column
+  gap: ds.rem(23)
+
   h2
     display: flex
     gap: ds.rem(5)
     align-items: center
 
-  .post-info
-    position: relative
-
-    .loading
-      position: absolute
+  .form
+    fieldset
       display: flex
-      align-items: center
-      justify-content: center
-      inset: 0
-      z-index: 77
+      flex-direction: column
+      gap: ds.rem(23)
 
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$hex-bright, .7)
+      .board-select
+        display: flex
+        flex-direction: row
+        align-items: center
+        width: 100%
 
-      html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$hex-primary, .7)
+        .form-select
+          .MuiInputBase-root
+            height: ds.rem(37)
+            padding: 0 ds.rem(12)
+            border-radius: ds.rem(7)
+
+            html[data-theme="yellow-light"] &
+              background-color: ds.$hex-white
+              border-bottom: 1px solid rgba(ds.$hex-tertiary, .1)
+
+            html[data-theme="yellow-dark"] &
+              background-color: ds.$hex-black
+              border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+
+            > div
+              padding: 0 ds.rem(23) 0 0
+              font-size: ds.rem(16)
+              @include ds.fw(pre, 600)
+              color: ds.$hex-primary
+
+            fieldset
+              top: 0
+              height: ds.rem(37)
+
+        p
+          padding-left: ds.rem(17)
+          @include ds.fw(pre, 700)
+          font-size: ds.rem(14)
+          color: ds.$hex-warning
+
+      .post-info
+        .form-group
+          display: flex
+          flex-drection: row
+          height: ds.rem(37)
+          position: relative
+
+          .MuiInputBase-root
+            height: ds.rem(37)
+            padding: 0 ds.rem(12)
+            border: 0
+            z-index: 1
+
+            > div
+              padding: 0 ds.rem(23) 0 0
+              font-size: ds.rem(16)
+              @include ds.fw(pre, 600)
+              color: ds.$hex-primary
+
+            fieldset
+              border: 0
+
+          .form-control
+            position: absolute
+            inset: 0
+
+            input
+              border-radius: ds.rem(7)
+              width: 100%
+              height: ds.rem(37)
+
+              html[data-theme="yellow-light"] &
+                background-color: ds.$hex-white
+                border: 1px solid rgba(ds.$hex-tertiary, .1)
+
+              html[data-theme="yellow-dark"] &
+                background-color: ds.$hex-black
+                border: 1px solid rgba(ds.$hex-tertiary, .5)
