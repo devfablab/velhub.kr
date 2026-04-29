@@ -1010,7 +1010,7 @@ export default function Opt() {
                   <textarea
                     className={styles['content-simple']}
                     value={contentSimple}
-                    placeholder="내용을 입력해주세요"
+                    placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
                     onChange={(event) => setContentSimple(event.currentTarget.value)}
                   />
                 </div>

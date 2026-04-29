@@ -55,6 +55,7 @@ export default function ToastEditorClient({
       previewStyle="vertical"
       height="527px"
       language="ko-KR"
+      placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
       usageStatistics={false}
       hideModeSwitch={hideModeSwitch}
       theme={themeMode === 'dark' ? 'dark' : undefined}
