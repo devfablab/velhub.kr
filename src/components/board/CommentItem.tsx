@@ -2,6 +2,11 @@
 
 import { useState } from 'react';
 import Avatar from '@mui/material/Avatar';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
 import CommentForm from '@/components/board/CommentForm';
 
 type AuthorRole =
@@ -24,6 +29,8 @@ type AuthorLevel = {
   icon: string | null;
   iconUrl: string;
 };
+
+type ConfirmAction = 'delete' | 'blind' | 'unblind' | null;
 
 export type CommentData = {
   id: string;
@@ -94,15 +101,15 @@ function getAuthorRoleLabel(role: AuthorRole) {
   }
 
   if (role === 'board-manager') {
-    return '게시판 매니저';
+    return '전체 게시판 매니저';
   }
 
   if (role === 'board-general-manager') {
-    return '게시판 일반 매니저';
+    return '개별 게시판 총괄 매니저';
   }
 
   if (role === 'board-assistant-manager') {
-    return '게시판 보조 매니저';
+    return '개별 게시판 부 매니저';
   }
 
   return '';
@@ -122,8 +129,59 @@ export default function CommentItem({
   onUnblind,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
+
+  const confirmDialog = (() => {
+    if (confirmAction === 'delete') {
+      return {
+        title: '댓글 삭제',
+        content: '정말로 댓글을 삭제하시겠습니까?\n삭제된 댓글은 복구할 수 없습니다.',
+        confirmLabel: '삭제',
+        confirmClassName: 'delete-button',
+        onConfirm: async () => {
+          setConfirmAction(null);
+          await onDelete(comment.id);
+        },
+      };
+    }
+
+    if (confirmAction === 'blind') {
+      return {
+        title: '댓글 숨김',
+        content: '정말로 댓글을 숨김 처리하시겠습니까?',
+        confirmLabel: '숨김',
+        confirmClassName: '',
+        onConfirm: async () => {
+          setConfirmAction(null);
+          await onBlind(comment.id);
+        },
+      };
+    }
+
+    if (confirmAction === 'unblind') {
+      return {
+        title: '댓글 숨김 취소',
+        content: '정말로 댓글 숨김을 취소하시겠습니까?',
+        confirmLabel: '숨김 취소',
+        confirmClassName: '',
+        onConfirm: async () => {
+          setConfirmAction(null);
+          await onUnblind(comment.id);
+        },
+      };
+    }
+
+    return {
+      title: '',
+      content: '',
+      confirmLabel: '',
+      confirmClassName: '',
+      onConfirm: async () => undefined,
+    };
+  })();
 
   async function handleEdit(content: string) {
     await onEdit(comment.id, content);
@@ -200,19 +258,19 @@ export default function CommentItem({
         ) : null}
 
         {comment.can_delete ? (
-          <button type="button" onClick={() => void onDelete(comment.id)} disabled={isSubmitting}>
+          <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
             삭제
           </button>
         ) : null}
 
         {comment.can_blind ? (
-          <button type="button" onClick={() => void onBlind(comment.id)} disabled={isSubmitting}>
+          <button type="button" onClick={() => setConfirmAction('blind')} disabled={isSubmitting}>
             댓글 숨김
           </button>
         ) : null}
 
         {comment.can_unblind ? (
-          <button type="button" onClick={() => void onUnblind(comment.id)} disabled={isSubmitting}>
+          <button type="button" onClick={() => setConfirmAction('unblind')} disabled={isSubmitting}>
             댓글 숨김 취소
           </button>
         ) : null}
@@ -248,6 +306,26 @@ export default function CommentItem({
           ))}
         </div>
       ) : null}
+
+      <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
+        <DialogTitle>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmDialog.onConfirm()}
+            disabled={isSubmitting}
+            className={confirmDialog.confirmClassName}
+          >
+            {confirmDialog.confirmLabel}
+          </button>
+        </DialogActions>
+      </Dialog>
     </article>
   );
 }

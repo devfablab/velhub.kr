@@ -215,15 +215,15 @@ function getAuthorRoleLabel(role: AuthorRole) {
   }
 
   if (role === 'board-manager') {
-    return '게시판 매니저';
+    return '전체 게시판 매니저';
   }
 
   if (role === 'board-general-manager') {
-    return '게시판 일반 매니저';
+    return '개별 게시판 총괄 매니저';
   }
 
   if (role === 'board-assistant-manager') {
-    return '게시판 보조 매니저';
+    return '개별 게시판 부 매니저';
   }
 
   return '';

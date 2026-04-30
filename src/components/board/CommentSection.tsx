@@ -264,8 +264,6 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
 
       {isCommentEnabled && !canWrite ? <p>댓글을 작성하려면 로그인이 필요합니다.</p> : null}
 
-      {canManageComment ? <p>매니저 권한으로 삭제/숨김 처리된 댓글 원문을 볼 수 있습니다.</p> : null}
-
       <div className="comment-list">
         {comments.length > 0 ? (
           comments.map((comment) => (
