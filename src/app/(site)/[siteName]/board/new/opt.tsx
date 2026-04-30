@@ -2,22 +2,38 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { normalizeText } from '@/lib/utils';
-import Dialog from '@mui/material/Dialog';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
+import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import { Divider, FormControlLabel, FormGroup, MenuItem, Select, SelectChangeEvent, useTheme } from '@mui/material';
+import {
+  Checkbox,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormLabel,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Select,
+  SelectChangeEvent,
+  useTheme,
+} from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
+import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
@@ -111,21 +127,79 @@ type GalleryBlobImage = {
   previewUrl: string;
 };
 
+type PollEndType = '' | 'absolute' | 'relative';
+
+type PollOptionState = {
+  label: string;
+  imagePath: string;
+  imageUrl: string;
+  imageWidth: number | null;
+  imageHeight: number | null;
+  imageFile: File | null;
+  imagePreviewUrl: string;
+};
+
 type PollState = {
   question: string;
-  options: string[];
+  useOptionThumbnail: boolean;
+  endType: PollEndType;
+  absoluteEndAt: Date | null;
+  relativeDays: number;
+  relativeTime: Date | null;
+  options: PollOptionState[];
+};
+
+type PollPayload = {
+  question: string;
+  endType: 'absolute' | 'relative';
+  endsAt: string;
+  options: {
+    label: string;
+    image: {
+      path: string;
+      url: string;
+      width: number | null;
+      height: number | null;
+    } | null;
+  }[];
 };
 
 type AccessDialogType = 'login' | 'join' | 'pending' | null;
 
-const EMPTY_POLL: PollState = {
-  question: '',
-  options: ['', '', '', '', ''],
-};
-
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
 const MAX_GALLERY_IMAGE_COUNT = 9;
+const MAX_POLL_OPTION_COUNT = 4;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+function createEmptyPollOption(): PollOptionState {
+  return {
+    label: '',
+    imagePath: '',
+    imageUrl: '',
+    imageWidth: null,
+    imageHeight: null,
+    imageFile: null,
+    imagePreviewUrl: '',
+  };
+}
+
+function createEmptyPoll(): PollState {
+  return {
+    question: '',
+    useOptionThumbnail: false,
+    endType: '',
+    absoluteEndAt: null,
+    relativeDays: 0,
+    relativeTime: createRelativeTimeValue(0, 1),
+    options: Array.from({ length: MAX_POLL_OPTION_COUNT }, () => createEmptyPollOption()),
+  };
+}
+
+function createRelativeTimeValue(hour: number, minute: number) {
+  const dateValue = new Date();
+  dateValue.setHours(hour, minute, 0, 0);
+  return dateValue;
+}
 
 function getYoutubeId(value: string) {
   const normalizedValue = normalizeText(value);
@@ -224,7 +298,7 @@ function canvasToWebpBlob(canvas: HTMLCanvasElement, quality: number) {
   });
 }
 
-async function convertImageToWebpFile(file: File) {
+async function convertImageToWebpFile(file: File, errorMessage = '이미지는 1MB 이하로 등록해주세요.') {
   const image = await loadImageFromFile(file);
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
@@ -252,14 +326,106 @@ async function convertImageToWebpFile(file: File) {
   }
 
   if (!convertedBlob || convertedBlob.size > MAX_THUMBNAIL_FILE_SIZE) {
-    throw new Error('썸네일 이미지는 1MB 이하로 등록해주세요.');
+    throw new Error(errorMessage);
   }
 
-  const filename = `${file.name.replace(/\.[^.]+$/, '') || `thumbnail-${Date.now()}`}.webp`;
+  const filename = `${file.name.replace(/\.[^.]+$/, '') || `image-${Date.now()}`}.webp`;
 
   return new File([convertedBlob], filename, {
     type: 'image/webp',
   });
+}
+
+function clonePollState(poll: PollState): PollState {
+  return {
+    ...poll,
+    absoluteEndAt: poll.absoluteEndAt ? new Date(poll.absoluteEndAt) : null,
+    relativeTime: poll.relativeTime ? new Date(poll.relativeTime) : null,
+    options: poll.options.map((option) => ({
+      ...option,
+    })),
+  };
+}
+
+function getPollPreviewUrls(poll: PollState) {
+  return poll.options.map((option) => option.imagePreviewUrl).filter((previewUrl) => previewUrl.startsWith('blob:'));
+}
+
+function revokeUnusedPollPreviewUrls(previousPoll: PollState, nextPoll: PollState) {
+  const nextPreviewUrls = new Set(getPollPreviewUrls(nextPoll));
+
+  previousPoll.options.forEach((option) => {
+    if (option.imagePreviewUrl.startsWith('blob:') && !nextPreviewUrls.has(option.imagePreviewUrl)) {
+      URL.revokeObjectURL(option.imagePreviewUrl);
+    }
+  });
+}
+
+function getMinimumAbsolutePollEndAt() {
+  const dateValue = new Date();
+  dateValue.setSeconds(0, 0);
+  dateValue.setMinutes(dateValue.getMinutes() + 1);
+  return dateValue;
+}
+
+function getRelativeHourMinute(value: Date | null) {
+  if (!value || Number.isNaN(value.getTime())) {
+    return {
+      hour: 0,
+      minute: 0,
+    };
+  }
+
+  return {
+    hour: value.getHours(),
+    minute: value.getMinutes(),
+  };
+}
+
+function buildPollEndsAt(poll: PollState) {
+  if (poll.endType === 'absolute') {
+    if (!poll.absoluteEndAt || Number.isNaN(poll.absoluteEndAt.getTime())) {
+      throw new Error('투표 종료 시간을 설정해주세요.');
+    }
+
+    const normalizedEndAt = new Date(poll.absoluteEndAt);
+    normalizedEndAt.setSeconds(0, 0);
+
+    const minimumEndAt = getMinimumAbsolutePollEndAt();
+
+    if (normalizedEndAt.getTime() < minimumEndAt.getTime()) {
+      throw new Error('투표 종료 시간은 최소 1분 뒤로 설정해주세요.');
+    }
+
+    return normalizedEndAt.toISOString();
+  }
+
+  if (poll.endType === 'relative') {
+    const { hour, minute } = getRelativeHourMinute(poll.relativeTime);
+    const relativeDays = Number.isFinite(poll.relativeDays) ? poll.relativeDays : 0;
+
+    if (relativeDays < 0 || relativeDays > 7) {
+      throw new Error('상대 시간은 최대 7일까지 설정할 수 있습니다.');
+    }
+
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      throw new Error('상대 시간이 유효하지 않습니다.');
+    }
+
+    if (relativeDays === 0 && hour === 0 && minute === 0) {
+      throw new Error('상대 시간은 최소 1분 뒤로 설정해주세요.');
+    }
+
+    const endsAt = new Date();
+    endsAt.setSeconds(0, 0);
+    endsAt.setDate(endsAt.getDate() + relativeDays);
+    endsAt.setHours(endsAt.getHours() + hour);
+    endsAt.setMinutes(endsAt.getMinutes() + minute);
+
+    return endsAt.toISOString();
+  }
+
+  throw new Error('투표 종료 방식을 선택해주세요.');
 }
 
 export default function Opt() {
@@ -311,7 +477,10 @@ export default function Opt() {
   const [isPin, setIsPin] = useState(false);
   const [canPinPost, setCanPinPost] = useState(false);
   const [isPollEnabled, setIsPollEnabled] = useState(false);
-  const [poll, setPoll] = useState<PollState>(EMPTY_POLL);
+  const [poll, setPoll] = useState<PollState>(() => createEmptyPoll());
+  const [pollDialogOpen, setPollDialogOpen] = useState(false);
+  const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
+  const [pollDialogMessage, setPollDialogMessage] = useState('');
   const [isLoadingBoards, setIsLoadingBoards] = useState(true);
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
@@ -400,6 +569,16 @@ export default function Opt() {
     return () => {
       galleryBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       galleryDialogBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      poll.options.forEach((option) => {
+        if (option.imagePreviewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(option.imagePreviewUrl);
+        }
+      });
+      pollDialog.options.forEach((option) => {
+        if (option.imagePreviewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(option.imagePreviewUrl);
+        }
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -586,7 +765,8 @@ export default function Opt() {
     setIsPin(false);
     setCanPinPost(false);
     setIsPollEnabled(false);
-    setPoll(EMPTY_POLL);
+    setPoll(createEmptyPoll());
+    setPollDialog(createEmptyPoll());
     setErrorMessage('');
     setAlertMessage('');
     setAccessDialogType(null);
@@ -797,6 +977,196 @@ export default function Opt() {
     setGalleryDialogMessage('');
   }
 
+  function openPollDialog() {
+    setPollDialog(clonePollState(poll));
+    setPollDialogMessage('');
+    setPollDialogOpen(true);
+  }
+
+  function closePollDialog() {
+    revokeUnusedPollPreviewUrls(pollDialog, poll);
+    setPollDialog(clonePollState(poll));
+    setPollDialogMessage('');
+    setPollDialogOpen(false);
+  }
+
+  function applyPollDialog() {
+    try {
+      const normalizedQuestion = normalizeText(pollDialog.question);
+
+      if (!normalizedQuestion) {
+        setPollDialogMessage('투표 질문을 입력해주세요.');
+        return;
+      }
+
+      const filledOptions = pollDialog.options
+        .map((option) => ({
+          ...option,
+          label: normalizeText(option.label),
+        }))
+        .filter((option) => option.label);
+
+      if (filledOptions.length < 2) {
+        setPollDialogMessage('투표 항목은 최소 2개 이상 입력해주세요.');
+        return;
+      }
+
+      if (pollDialog.useOptionThumbnail) {
+        const hasMissingImage = filledOptions.some((option) => !option.imageFile && !option.imagePath);
+
+        if (hasMissingImage) {
+          setPollDialogMessage('썸네일 이미지 사용시 항목에 맞는 이미지는 필수 등록 사항입니다.');
+          return;
+        }
+      }
+
+      buildPollEndsAt(pollDialog);
+
+      const nextPoll: PollState = {
+        ...pollDialog,
+        question: normalizedQuestion,
+        options: pollDialog.options.map((option) => ({
+          ...option,
+          label: normalizeText(option.label),
+          imagePath: pollDialog.useOptionThumbnail ? option.imagePath : '',
+          imageUrl: pollDialog.useOptionThumbnail ? option.imageUrl : '',
+          imageWidth: pollDialog.useOptionThumbnail ? option.imageWidth : null,
+          imageHeight: pollDialog.useOptionThumbnail ? option.imageHeight : null,
+          imageFile: pollDialog.useOptionThumbnail ? option.imageFile : null,
+          imagePreviewUrl: pollDialog.useOptionThumbnail ? option.imagePreviewUrl : '',
+        })),
+      };
+
+      revokeUnusedPollPreviewUrls(poll, nextPoll);
+      revokeUnusedPollPreviewUrls(pollDialog, nextPoll);
+
+      setPoll(nextPoll);
+      setIsPollEnabled(true);
+      setPollDialog(clonePollState(nextPoll));
+      setPollDialogMessage('');
+      setPollDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPollDialogMessage(unknownError.message || '투표 설정을 확인해주세요.');
+      } else {
+        setPollDialogMessage('투표 설정을 확인해주세요.');
+      }
+    }
+  }
+
+  function removePoll() {
+    revokeUnusedPollPreviewUrls(poll, createEmptyPoll());
+    revokeUnusedPollPreviewUrls(pollDialog, createEmptyPoll());
+    setPoll(createEmptyPoll());
+    setPollDialog(createEmptyPoll());
+    setIsPollEnabled(false);
+    setPollDialogMessage('');
+    setPollDialogOpen(false);
+  }
+
+  function updatePollDialogOptionLabel(index: number, value: string) {
+    setPollDialog((previousPoll) => ({
+      ...previousPoll,
+      options: previousPoll.options.map((option, optionIndex) =>
+        optionIndex === index
+          ? {
+              ...option,
+              label: value,
+            }
+          : option,
+      ),
+    }));
+  }
+
+  function handlePollOptionImageChange(index: number, event: ChangeEvent<HTMLInputElement>) {
+    const selectedFile = event.currentTarget.files?.[0];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    if (selectedFile.size > MAX_THUMBNAIL_FILE_SIZE) {
+      setPollDialogMessage('투표 항목 이미지는 1MB 이하로 등록해주세요.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(selectedFile.type)) {
+      setPollDialogMessage('png, jpg, webp 이미지만 등록할 수 있습니다.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    setPollDialog((previousPoll) => {
+      const previousOption = previousPoll.options[index];
+
+      if (previousOption?.imagePreviewUrl.startsWith('blob:')) {
+        const isCommittedPreview = poll.options.some(
+          (option) => option.imagePreviewUrl === previousOption.imagePreviewUrl,
+        );
+
+        if (!isCommittedPreview) {
+          URL.revokeObjectURL(previousOption.imagePreviewUrl);
+        }
+      }
+
+      return {
+        ...previousPoll,
+        options: previousPoll.options.map((option, optionIndex) =>
+          optionIndex === index
+            ? {
+                ...option,
+                imagePath: '',
+                imageUrl: '',
+                imageWidth: null,
+                imageHeight: null,
+                imageFile: selectedFile,
+                imagePreviewUrl: URL.createObjectURL(selectedFile),
+              }
+            : option,
+        ),
+      };
+    });
+
+    setPollDialogMessage('');
+    event.currentTarget.value = '';
+  }
+
+  function removePollOptionImage(index: number) {
+    setPollDialog((previousPoll) => {
+      const previousOption = previousPoll.options[index];
+
+      if (previousOption?.imagePreviewUrl.startsWith('blob:')) {
+        const isCommittedPreview = poll.options.some(
+          (option) => option.imagePreviewUrl === previousOption.imagePreviewUrl,
+        );
+
+        if (!isCommittedPreview) {
+          URL.revokeObjectURL(previousOption.imagePreviewUrl);
+        }
+      }
+
+      return {
+        ...previousPoll,
+        options: previousPoll.options.map((option, optionIndex) =>
+          optionIndex === index
+            ? {
+                ...option,
+                imagePath: '',
+                imageUrl: '',
+                imageWidth: null,
+                imageHeight: null,
+                imageFile: null,
+                imagePreviewUrl: '',
+              }
+            : option,
+        ),
+      };
+    });
+
+    setPollDialogMessage('');
+  }
+
   async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
     const formData = new FormData();
     formData.append('file', file);
@@ -869,7 +1239,10 @@ export default function Opt() {
       };
     }
 
-    const webpThumbnailFile = await convertImageToWebpFile(thumbnailBlobFile);
+    const webpThumbnailFile = await convertImageToWebpFile(
+      thumbnailBlobFile,
+      '썸네일 이미지는 1MB 이하로 등록해주세요.',
+    );
     const uploadedThumbnail = await uploadPostImage(webpThumbnailFile, 'thumbnail');
 
     if (thumbnailImage) {
@@ -928,6 +1301,89 @@ export default function Opt() {
     }
   }
 
+  async function buildPollPayloadIfNeeded(): Promise<PollPayload | null> {
+    if (!isPollEnabled) {
+      return null;
+    }
+
+    const normalizedQuestion = normalizeText(poll.question);
+
+    if (!normalizedQuestion) {
+      throw new Error('투표 질문을 입력해주세요.');
+    }
+
+    const filledOptions = poll.options
+      .map((option, optionIndex) => ({
+        option,
+        optionIndex,
+        label: normalizeText(option.label),
+      }))
+      .filter((item) => item.label);
+
+    if (filledOptions.length < 2) {
+      throw new Error('투표 항목은 최소 2개 이상 입력해주세요.');
+    }
+
+    if (poll.useOptionThumbnail) {
+      const hasMissingImage = filledOptions.some((item) => !item.option.imageFile && !item.option.imagePath);
+
+      if (hasMissingImage) {
+        throw new Error('썸네일 이미지 사용시 항목에 맞는 이미지는 필수 등록 사항입니다.');
+      }
+    }
+
+    const endsAt = buildPollEndsAt(poll);
+    const nextPoll = clonePollState(poll);
+    const options: PollPayload['options'] = [];
+
+    for (const item of filledOptions) {
+      const targetOption = nextPoll.options[item.optionIndex];
+
+      if (poll.useOptionThumbnail && targetOption.imageFile) {
+        const webpFile = await convertImageToWebpFile(
+          targetOption.imageFile,
+          '투표 항목 이미지는 1MB 이하로 등록해주세요.',
+        );
+        const uploadedImage = await uploadPostImage(webpFile, 'images');
+
+        targetOption.imagePath = uploadedImage.path;
+        targetOption.imageUrl = uploadedImage.url;
+        targetOption.imageWidth = uploadedImage.width;
+        targetOption.imageHeight = uploadedImage.height;
+        targetOption.imageFile = null;
+
+        if (targetOption.imagePreviewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(targetOption.imagePreviewUrl);
+        }
+
+        targetOption.imagePreviewUrl = uploadedImage.url;
+      }
+
+      options.push({
+        label: item.label,
+        image:
+          poll.useOptionThumbnail && targetOption.imagePath
+            ? {
+                path: targetOption.imagePath,
+                url: targetOption.imageUrl,
+                width: targetOption.imageWidth,
+                height: targetOption.imageHeight,
+              }
+            : null,
+      });
+    }
+
+    setPoll(nextPoll);
+    setPollDialog(clonePollState(nextPoll));
+
+    return {
+      question: normalizedQuestion,
+      endType: poll.endType === 'relative' ? 'relative' : 'absolute',
+      endsAt,
+      options,
+    };
+  }
+
   async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -970,6 +1426,7 @@ export default function Opt() {
 
       const uploadedThumbnail = await uploadThumbnailIfNeeded();
       const uploadedImages = await uploadGalleryImagesIfNeeded();
+      const pollPayload = await buildPollPayloadIfNeeded();
 
       const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
         method: 'POST',
@@ -991,7 +1448,7 @@ export default function Opt() {
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt : null,
           images: isGalleryBoard || isFeedBoard ? uploadedImages : [],
-          poll: isBasicBoard && isPollEnabled ? poll : null,
+          poll: isBasicBoard && isPollEnabled ? pollPayload : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
           isComment,
@@ -1150,6 +1607,7 @@ export default function Opt() {
                     </div>
                   </div>
                 ) : null}
+
                 {isGalleryBoard ? (
                   <div className={styles['post-info']}>
                     <div className={styles['form-group']}>
@@ -1165,6 +1623,7 @@ export default function Opt() {
                     </div>
                   </div>
                 ) : null}
+
                 {isYoutubeBoard ? (
                   <div className={`${styles['post-info']} ${styles['post-row']}`}>
                     <input id="youtube-id" type="hidden" value={youtubeId} />
@@ -1188,6 +1647,7 @@ export default function Opt() {
                             value={parseDateValue(youtubeCreatedAt)}
                             onChange={(value) => setYoutubeCreatedAt(formatDateValue(value))}
                             className={styles['MuiFormControl-root']}
+                            format="yyyy년 MM월 dd일"
                             slotProps={{
                               textField: {
                                 fullWidth: true,
@@ -1200,6 +1660,7 @@ export default function Opt() {
                     </div>
                   </div>
                 ) : null}
+
                 <div className={`${styles['post-info']} ${styles['post-row']}`}>
                   {!isFeedBoard ? (
                     <div className={styles.image}>
@@ -1221,48 +1682,10 @@ export default function Opt() {
 
                   {isBasicBoard ? (
                     <div className={styles.image}>
-                      <button type="button">
+                      <button type="button" onClick={openPollDialog}>
                         <HowToVoteOutlinedIcon />
-                        <span>투표</span>
+                        <span>{isPollEnabled ? '투표 수정' : '투표'}</span>
                       </button>
-
-                      {isPollEnabled ? (
-                        <>
-                          <div>
-                            <label htmlFor="poll-question">투표 질문</label>
-                            <input
-                              id="poll-question"
-                              type="text"
-                              value={poll.question}
-                              onChange={(event) =>
-                                setPoll((previousPoll) => ({
-                                  ...previousPoll,
-                                  question: event.currentTarget.value,
-                                }))
-                              }
-                            />
-                          </div>
-
-                          {poll.options.map((option, index) => (
-                            <div key={index}>
-                              <label htmlFor={`poll-option-${index}`}>{`선택지 ${index + 1}`}</label>
-                              <input
-                                id={`poll-option-${index}`}
-                                type="text"
-                                value={option}
-                                onChange={(event) =>
-                                  setPoll((previousPoll) => ({
-                                    ...previousPoll,
-                                    options: previousPoll.options.map((item, itemIndex) =>
-                                      itemIndex === index ? event.currentTarget.value : item,
-                                    ),
-                                  }))
-                                }
-                              />
-                            </div>
-                          ))}
-                        </>
-                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -1340,6 +1763,7 @@ export default function Opt() {
               </div>
             </>
           ) : null}
+
           <div className={styles['button-group']}>
             <a href={`/${siteName}/board`} className={`${styles.link} link`}>
               취소
@@ -1401,8 +1825,8 @@ export default function Opt() {
             </div>
           ) : null}
         </DialogContent>
-        <DialogActions className={styles['thumbnail-dialog-actions']}>
-          <button type="button" onClick={closeThumbnailDialog} className={styles['thumbnail-dialog-cancel-button']}>
+        <DialogActions>
+          <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
             취소
           </button>
           <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
@@ -1469,7 +1893,7 @@ export default function Opt() {
                       aria-label="이미지 삭제"
                       className={styles['gallery-dialog-remove-button']}
                     >
-                      ×
+                      <CloseRoundedIcon />
                     </button>
                     <img src={image.url} alt="" />
                   </div>
@@ -1478,12 +1902,202 @@ export default function Opt() {
             </div>
           ) : null}
         </DialogContent>
-        <DialogActions className={styles['thumbnail-dialog-actions']}>
-          <button type="button" onClick={closeGalleryDialog} className={styles['thumbnail-dialog-cancel-button']}>
+        <DialogActions>
+          <button type="button" onClick={closeGalleryDialog} className="cancel-button">
             취소
           </button>
           <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
             이미지 업로드
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={pollDialogOpen}
+        onClose={closePollDialog}
+        fullWidth={true}
+        maxWidth="sm"
+        className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
+      >
+        <DialogTitle>투표 설정</DialogTitle>
+        <DialogContent className={styles['poll-dialog-content']}>
+          {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+
+          <div className={styles['form-group']}>
+            <div className={styles['form-control']}>
+              <input
+                id="poll-question"
+                type="text"
+                value={pollDialog.question}
+                placeholder="투표 질문을 입력해주세요"
+                onChange={(event) =>
+                  setPollDialog((previousPoll) => ({
+                    ...previousPoll,
+                    question: event.currentTarget.value,
+                  }))
+                }
+              />
+            </div>
+            <FormControlLabel
+              label="항목에 이미지 등록"
+              className="vh-checkbox"
+              control={
+                <Checkbox
+                  checked={pollDialog.useOptionThumbnail}
+                  onChange={(event) =>
+                    setPollDialog((previousPoll) => ({
+                      ...previousPoll,
+                      useOptionThumbnail: event.target.checked,
+                    }))
+                  }
+                />
+              }
+            />
+          </div>
+
+          <div className={styles['poll-options']}>
+            {pollDialog.options.map((option, index) => (
+              <div key={index} className={styles['poll-option']}>
+                <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                <div className={styles['form-control']}>
+                  <input
+                    id={`poll-option-${index}`}
+                    placeholder="항목을 입력해주세요"
+                    type="text"
+                    value={option.label}
+                    onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                  />
+                </div>
+
+                {pollDialog.useOptionThumbnail ? (
+                  <div className={styles['poll-option-image']}>
+                    {option.imagePreviewUrl || option.imageUrl ? (
+                      <div className={styles['poll-option-image-preview']}>
+                        <button type="button" onClick={() => removePollOptionImage(index)}>
+                          <CloseRoundedIcon />
+                        </button>
+                        <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                      </div>
+                    ) : (
+                      <div className={styles['poll-option-image-upload']}>
+                        <button type="button">
+                          <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                            <InsertPhotoOutlinedIcon />
+                          </label>
+                        </button>
+                        <input
+                          id={`poll-option-image-${index}`}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={(event) => handlePollOptionImageChange(index, event)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+
+          <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+            <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
+            <RadioGroup
+              row
+              className="vh-radio"
+              aria-labelledby="poll-end-type-label"
+              value={pollDialog.endType}
+              onChange={(event) =>
+                setPollDialog((previousPoll) => ({
+                  ...previousPoll,
+                  endType: event.target.value as PollEndType,
+                }))
+              }
+            >
+              <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
+              <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
+            </RadioGroup>
+          </FormControl>
+
+          {pollDialog.endType === 'absolute' ? (
+            <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DateTimePicker
+                  value={pollDialog.absoluteEndAt}
+                  onChange={(value) =>
+                    setPollDialog((previousPoll) => ({
+                      ...previousPoll,
+                      absoluteEndAt: value,
+                    }))
+                  }
+                  ampm={false}
+                  views={['year', 'month', 'day', 'hours', 'minutes']}
+                  format="yyyy년 MM월 dd일 hh시 m분"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: 'small',
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+              <span>에 종료</span>
+            </div>
+          ) : null}
+
+          {pollDialog.endType === 'relative' ? (
+            <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']}`}>
+              <Select
+                value={String(pollDialog.relativeDays)}
+                onChange={(event: SelectChangeEvent) =>
+                  setPollDialog((previousPoll) => ({
+                    ...previousPoll,
+                    relativeDays: Number(event.target.value),
+                  }))
+                }
+                size="small"
+              >
+                {Array.from({ length: 8 }, (_, index) => (
+                  <MenuItem key={index} value={String(index)}>
+                    {index}일
+                  </MenuItem>
+                ))}
+              </Select>
+
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <TimePicker
+                  value={pollDialog.relativeTime}
+                  className={styles['poll-relative-time-picker']}
+                  onChange={(value) =>
+                    setPollDialog((previousPoll) => ({
+                      ...previousPoll,
+                      relativeTime: value,
+                    }))
+                  }
+                  ampm={false}
+                  views={['hours', 'minutes']}
+                  format="hh시간 mm분"
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+              <span>후에 종료</span>
+            </div>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          {isPollEnabled ? (
+            <button type="button" onClick={removePoll} className="delete-button">
+              투표 삭제
+            </button>
+          ) : null}
+          <button type="button" onClick={closePollDialog} className="cancel-button">
+            취소
+          </button>
+          <button type="button" onClick={applyPollDialog}>
+            투표 설정
           </button>
         </DialogActions>
       </Dialog>

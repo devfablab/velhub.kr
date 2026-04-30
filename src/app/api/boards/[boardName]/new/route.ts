@@ -1,8 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { canPinCommunityPost } from '@/lib/community-manager/board-permissions';
-import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 
 type RouteContext = {
   params: Promise<{
@@ -10,13 +8,24 @@ type RouteContext = {
   }>;
 };
 
+type PollOptionImageRow = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
 type PollOptionRow = {
   id: number;
   label: string;
+  image: PollOptionImageRow | null;
 };
 
 type PollRow = {
   question: string;
+  creator_id: string;
+  endType: 'absolute' | 'relative';
+  endsAt: string;
   options: PollOptionRow[];
 };
 
@@ -150,56 +159,134 @@ function normalizeImages(value: unknown) {
     });
   }
 
-  return normalizedImages.slice(0, 6);
+  return normalizedImages.slice(0, 9);
 }
 
-function normalizePoll(value: unknown) {
+function normalizePollImage(value: unknown) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const rawValue = value as {
+    path?: unknown;
+    url?: unknown;
+    width?: unknown;
+    height?: unknown;
+  };
+
+  const path = normalizeText(rawValue.path);
+  const url = normalizeText(rawValue.url);
+
+  if (!path || !url) {
+    return null;
+  }
+
+  const width =
+    typeof rawValue.width === 'number' && Number.isFinite(rawValue.width) ? Math.floor(rawValue.width) : null;
+  const height =
+    typeof rawValue.height === 'number' && Number.isFinite(rawValue.height) ? Math.floor(rawValue.height) : null;
+
+  return {
+    path,
+    url,
+    width,
+    height,
+  } satisfies PollOptionImageRow;
+}
+
+function normalizePoll(value: unknown, creatorId: string) {
   if (!value || typeof value !== 'object') {
     return null;
   }
 
   const rawValue = value as {
     question?: unknown;
+    endType?: unknown;
+    endsAt?: unknown;
     options?: unknown;
   };
 
   const question = normalizeText(rawValue.question);
+  const endType = rawValue.endType === 'absolute' || rawValue.endType === 'relative' ? rawValue.endType : '';
+  const endsAt = normalizeText(rawValue.endsAt);
 
   if (!question) {
     return null;
+  }
+
+  if (!endType) {
+    return 'INVALID_END_TYPE';
+  }
+
+  if (!endsAt) {
+    return 'INVALID_END_AT';
+  }
+
+  const endDate = new Date(endsAt);
+
+  if (Number.isNaN(endDate.getTime())) {
+    return 'INVALID_END_AT';
+  }
+
+  const minimumEndDate = new Date();
+  minimumEndDate.setSeconds(0, 0);
+  minimumEndDate.setMinutes(minimumEndDate.getMinutes() + 1);
+
+  if (endDate.getTime() < minimumEndDate.getTime()) {
+    return 'INVALID_END_AT';
   }
 
   if (!Array.isArray(rawValue.options)) {
     return null;
   }
 
-  const rawOptions = rawValue.options.map((item) => normalizeText(item));
-  const hasAnyOption = rawOptions.some(Boolean);
+  const normalizedOptions = rawValue.options
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
 
-  if (!hasAnyOption) {
-    return null;
-  }
+      const rawOption = item as {
+        label?: unknown;
+        image?: unknown;
+      };
 
-  const firstEmptyIndex = rawOptions.findIndex((item) => !item);
+      const label = normalizeText(rawOption.label);
 
-  if (firstEmptyIndex !== -1 && rawOptions.slice(firstEmptyIndex + 1).some(Boolean)) {
-    return 'NON_SEQUENTIAL';
-  }
+      if (!label) {
+        return null;
+      }
 
-  const options = rawOptions
-    .filter(Boolean)
-    .slice(0, 5)
-    .map((label, index) => ({
-      id: index + 1,
-      label,
-    }));
+      return {
+        label,
+        image: normalizePollImage(rawOption.image),
+      };
+    })
+    .filter((item): item is { label: string; image: PollOptionImageRow | null } => Boolean(item))
+    .slice(0, 4);
 
-  if (options.length < 2) {
+  if (normalizedOptions.length < 2) {
     return 'INVALID_OPTION_COUNT';
   }
 
+  const hasAnyImage = normalizedOptions.some((option) => option.image);
+  const hasMissingImage = normalizedOptions.some((option) => !option.image);
+
+  if (hasAnyImage && hasMissingImage) {
+    return 'INVALID_OPTION_IMAGE';
+  }
+
+  const options = normalizedOptions.map((option, index) => ({
+    id: index + 1,
+    label: option.label,
+    image: option.image,
+  }));
+
   return {
     question,
+    creator_id: creatorId,
+    endType,
+    endsAt: endDate.toISOString(),
     options,
   } satisfies PollRow;
 }
@@ -269,7 +356,6 @@ export async function POST(request: Request, context: RouteContext) {
     const prefixId = normalizeText(requestBody.prefixId);
     const hashtags = normalizeHashtags(requestBody.hashtags);
     const images = normalizeImages(requestBody.images);
-    const poll = normalizePoll(requestBody.poll);
     const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
     const isPin = requestBody.isPin === true;
     const thumbnailWidth =
@@ -299,14 +385,6 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '연재 식별자가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (poll === 'NON_SEQUENTIAL') {
-      return Response.json({ error: '투표 선택지는 순차적으로 입력해야 합니다.' }, { status: 400 });
-    }
-
-    if (poll === 'INVALID_OPTION_COUNT') {
-      return Response.json({ error: '투표 선택지는 2개 이상 입력해야 합니다.' }, { status: 400 });
-    }
-
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin
@@ -327,6 +405,27 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const poll = normalizePoll(requestBody.poll, session.authUserId);
+
+    if (poll === 'INVALID_END_TYPE') {
+      return Response.json({ error: '투표 종료 방식을 선택해주세요.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_END_AT') {
+      return Response.json({ error: '투표 종료 시간은 최소 1분 뒤로 설정해주세요.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_OPTION_COUNT') {
+      return Response.json({ error: '투표 선택지는 2개 이상 입력해야 합니다.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_OPTION_IMAGE') {
+      return Response.json(
+        { error: '썸네일 이미지 사용시 항목에 맞는 이미지는 필수 등록 사항입니다.' },
+        { status: 400 },
+      );
+    }
+
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_type, site_id, post_type')
@@ -340,28 +439,6 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (board.data.board_type === 'page') {
       return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
-    }
-
-    if (isPin && rhizome.data.site_type === 'community') {
-      let canPinPost = false;
-
-      try {
-        const access = await getCommunityManagerAccess(siteName, {
-          requireManagerControlPermission: false,
-        });
-
-        canPinPost = canPinCommunityPost({
-          permissions: access.actor.permissions,
-          managedBoardIds: access.actor.managedBoardIds,
-          boardId: board.data.id,
-        });
-      } catch {
-        canPinPost = false;
-      }
-
-      if (!canPinPost) {
-        return Response.json({ error: '상단고정글을 등록할 권한이 없습니다.' }, { status: 403 });
-      }
     }
 
     let categoryIds: string[] = [];
@@ -604,8 +681,6 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .select('id, slug')
       .maybeSingle();
-
-    console.log('insertPost: ', insertPost);
 
     if (insertPost.error || !insertPost.data) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });

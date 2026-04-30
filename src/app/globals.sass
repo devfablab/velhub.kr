@@ -209,21 +209,67 @@ a, button, select, input
           height: auto
 
       .MuiDialogActions-root
+        display: flex
+        gap: ds.rem(12)
+        justify-content: flex-end
+
         button
           display: flex
           justify-content: center
           align-items: center
-          width: 100%
-          height: ds.rem(52)
+          padding: 0 ds.rem(17)
+          width: ds.rem(137)
+          height: ds.rem(37)
           border-radius: ds.rem(7)
           @include ds.fw(pre, 700)
-          font-size: ds.rem(20)
+          font-size: ds.rem(16)
           background-color: ds.$hex-accent
+          white-space: nowrap
           color: ds.$hex-bright
 
+          html[data-theme="yellow-light"] &
+            background-color: rgba(ds.$hex-accent, .1)
+            color: ds.$hex-accent
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$hex-bright, .1)
+            color: ds.$hex-bright
+
+          &.cancel-button
+            background-color: transparent!important
+
+            html[data-theme="yellow-light"] &
+              color: rgba(ds.$hex-primary, .5)!important
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$hex-bright, .5)!important
+
+          &.warning-button
+            background-color: ds.$hex-warning
+            color: ds.$hex-white
+
           &:disabled
-            background-color: ds.$hex-tertiary
-            color: rgba(ds.$hex-bright, .7)
+            color: rgba(ds.$hex-accent, .5)!important
+
+            html[data-theme="yellow-light"] &
+              background-color: rgba(ds.$hex-accent, .1)!important
+
+            html[data-theme="yellow-dark"] &
+              background-color: rgba(ds.$hex-bright, .1)!important
+
+.vh-checkbox, .vh-radio
+  .Mui-checked
+    color: ds.$hex-accent!important
+
+.vh-form-control
+  .Mui-focused
+    @include ds.fw(neo, 400)
+
+    html[data-theme="yellow-light"] &
+      color: ds.$hex-primary!important
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright!important
 
 .button
   display: flex
