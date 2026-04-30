@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { encrypt } from '@/lib/encryption/encrypt';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -18,8 +17,38 @@ type PostImageRow = {
   height?: number | null;
 };
 
+type LevelRow = {
+  id: string;
+  lv: number;
+  icon: string | null;
+  name: string | null;
+};
+
+const AVATAR_BUCKET = 'avatar';
+const LEVEL_ICON_BUCKET = 'lv-icon';
+
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
+}
+
+function isExternalUrl(value: string) {
+  return value.startsWith('http://') || value.startsWith('https://');
+}
+
+function isSupabaseStorageValue(value: string | null | undefined) {
+  return Boolean(value && value.startsWith('supabase:'));
+}
+
+function getStoragePath(value: string | null | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  if (isSupabaseStorageValue(value)) {
+    return value.replace('supabase:', '').trim();
+  }
+
+  return value.trim();
 }
 
 function getPublicPostImageUrl(path: string | null | undefined) {
@@ -31,6 +60,37 @@ function getPublicPostImageUrl(path: string | null | undefined) {
 
   const supabaseAdmin = getSupabaseAdmin();
   const publicUrl = supabaseAdmin.storage.from('post').getPublicUrl(normalizedPath);
+
+  return publicUrl.data.publicUrl ?? '';
+}
+
+function getAvatarUrl(value: string | null | undefined) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  if (isExternalUrl(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrl = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(normalizedValue);
+
+  return publicUrl.data.publicUrl ?? '';
+}
+
+function getLevelIconUrl(value: string | null | undefined) {
+  const targetPath = getStoragePath(value);
+
+  if (!targetPath) {
+    return '';
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(targetPath);
+
   return publicUrl.data.publicUrl ?? '';
 }
 
@@ -57,8 +117,87 @@ function normalizeImages(value: unknown) {
     .filter(Boolean);
 }
 
-function getPostViewCookieName(siteKey: string, boardKey: string, idx: number) {
-  return `PS_${encrypt(siteKey)}_${encrypt(boardKey)}_${encrypt(String(idx))}`;
+async function getUserDisplayInfo(siteId: string, userId: string | null | undefined) {
+  const normalizedUserId = normalizeText(userId);
+
+  if (!normalizedUserId) {
+    return {
+      name: '',
+      avatarUrl: '',
+      level: null,
+    };
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const membershipResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname, lv')
+    .eq('site_id', siteId)
+    .eq('user_id', normalizedUserId)
+    .maybeSingle();
+
+  let name = '';
+  let level: {
+    id: string;
+    lv: number;
+    name: string;
+    icon: string | null;
+    iconUrl: string;
+  } | null = null;
+
+  if (!membershipResult.error && membershipResult.data?.nickname) {
+    name = normalizeText(membershipResult.data.nickname);
+  }
+
+  const levelId = normalizeText(membershipResult.data?.lv);
+
+  if (levelId) {
+    const levelResult = await supabaseAdmin
+      .from('community_levels')
+      .select('id, lv, icon, name')
+      .eq('site_id', siteId)
+      .eq('id', levelId)
+      .maybeSingle();
+
+    if (!levelResult.error && levelResult.data) {
+      const levelData = levelResult.data as LevelRow;
+
+      level = {
+        id: levelData.id,
+        lv: levelData.lv,
+        name: normalizeText(levelData.name) || String(levelData.lv),
+        icon: levelData.icon,
+        iconUrl: getLevelIconUrl(levelData.icon),
+      };
+    }
+  }
+
+  const stigmaResult = await supabaseAdmin
+    .from('stigmas')
+    .select('user_name, avatar')
+    .eq('user_id', normalizedUserId)
+    .maybeSingle();
+
+  let avatarUrl = '';
+
+  if (!stigmaResult.error && stigmaResult.data) {
+    avatarUrl = getAvatarUrl(stigmaResult.data.avatar ?? null);
+
+    if (!name && stigmaResult.data.user_name) {
+      try {
+        name = decrypt(stigmaResult.data.user_name as string);
+      } catch {
+        name = '';
+      }
+    }
+  }
+
+  return {
+    name,
+    avatarUrl,
+    level,
+  };
 }
 
 export async function GET(request: Request, context: RouteContext) {
@@ -77,7 +216,6 @@ export async function GET(request: Request, context: RouteContext) {
 
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
-    const shouldCountView = requestUrl.searchParams.get('countView') === '1';
 
     if (!siteName) {
       return NextResponse.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -124,6 +262,7 @@ export async function GET(request: Request, context: RouteContext) {
         .select(
           'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
         )
+        .eq('site_id', rhizome.data.id)
         .eq('board_id', board.data.id);
 
       const page = isNumericSlug(normalizedContentId)
@@ -134,31 +273,7 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      let authorName = '';
-
-      if (page.data.user_id) {
-        const nicknameResult = await supabaseAdmin
-          .from('rhizome_stigmas')
-          .select('nickname')
-          .eq('site_id', rhizome.data.id)
-          .eq('user_id', page.data.user_id)
-          .maybeSingle();
-
-        if (!nicknameResult.error && nicknameResult.data?.nickname) {
-          authorName = nicknameResult.data.nickname as string;
-        } else {
-          const stigmaResult = await supabaseAdmin
-            .from('stigmas')
-            .select('user_name')
-            .eq('user_id', page.data.user_id)
-            .maybeSingle();
-
-          if (!stigmaResult.error && stigmaResult.data?.user_name) {
-            authorName = decrypt(stigmaResult.data.user_name as string);
-          }
-        }
-      }
-
+      const author = await getUserDisplayInfo(rhizome.data.id, page.data.user_id);
       const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
 
       return NextResponse.json({
@@ -166,7 +281,9 @@ export async function GET(request: Request, context: RouteContext) {
         content: {
           ...page.data,
           slug: String(page.data.slug),
-          author_name: authorName,
+          author_name: author.name,
+          author_avatar_url: author.avatarUrl,
+          author_level: author.level,
         },
         isAuthor,
         isStaff,
@@ -176,8 +293,9 @@ export async function GET(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin',
       )
+      .eq('site_id', rhizome.data.id)
       .eq('board_id', board.data.id);
 
     const post = isNumericSlug(normalizedContentId)
@@ -198,55 +316,8 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    let authorName = '';
-
-    if (post.data.user_id) {
-      const nicknameResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('nickname')
-        .eq('site_id', rhizome.data.id)
-        .eq('user_id', post.data.user_id)
-        .maybeSingle();
-
-      if (!nicknameResult.error && nicknameResult.data?.nickname) {
-        authorName = nicknameResult.data.nickname as string;
-      } else {
-        const stigmaResult = await supabaseAdmin
-          .from('stigmas')
-          .select('user_name')
-          .eq('user_id', post.data.user_id)
-          .maybeSingle();
-
-        if (!stigmaResult.error && stigmaResult.data?.user_name) {
-          authorName = decrypt(stigmaResult.data.user_name as string);
-        }
-      }
-    }
-
-    let closedByName = '';
-
-    if (post.data.closed_by) {
-      const closedByNicknameResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('nickname')
-        .eq('site_id', rhizome.data.id)
-        .eq('user_id', post.data.closed_by)
-        .maybeSingle();
-
-      if (!closedByNicknameResult.error && closedByNicknameResult.data?.nickname) {
-        closedByName = closedByNicknameResult.data.nickname as string;
-      } else {
-        const closedByStigmaResult = await supabaseAdmin
-          .from('stigmas')
-          .select('user_name')
-          .eq('user_id', post.data.closed_by)
-          .maybeSingle();
-
-        if (!closedByStigmaResult.error && closedByStigmaResult.data?.user_name) {
-          closedByName = decrypt(closedByStigmaResult.data.user_name as string);
-        }
-      }
-    }
+    const author = await getUserDisplayInfo(rhizome.data.id, post.data.user_id);
+    const closedBy = await getUserDisplayInfo(rhizome.data.id, post.data.closed_by);
 
     const categoryIds = Array.isArray(post.data.categories)
       ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
@@ -331,51 +402,18 @@ export async function GET(request: Request, context: RouteContext) {
       prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
     }
 
-    let postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
-    let shouldSetCookie = false;
-    let viewCookieName = '';
-
-    if (
-      shouldCountView &&
-      !isAuthor &&
-      !post.data.is_closed &&
-      post.data.published_status === 'published' &&
-      typeof post.data.idx === 'number'
-    ) {
-      viewCookieName = getPostViewCookieName(siteName, normalizedBoardName, Number(post.data.idx));
-      const alreadyViewed = request.headers
-        .get('cookie')
-        ?.split(';')
-        .map((item) => item.trim())
-        .some((item) => item.startsWith(`${viewCookieName}=`));
-
-      if (!alreadyViewed) {
-        const updateViewResult = await supabaseAdmin
-          .from('posts')
-          .update({
-            post_count: postCount + 1,
-          })
-          .eq('id', post.data.id)
-          .eq('post_count', postCount)
-          .select('post_count')
-          .maybeSingle();
-
-        if (!updateViewResult.error && updateViewResult.data) {
-          postCount = Number(updateViewResult.data.post_count ?? postCount + 1);
-          shouldSetCookie = true;
-        }
-      }
-    }
-
+    const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(post.data.thumbnail_image);
 
-    const response = NextResponse.json({
+    return NextResponse.json({
       board: board.data,
       content: {
         ...post.data,
         slug: String(post.data.slug),
-        author_name: authorName,
-        closed_by_name: closedByName,
+        author_name: author.name,
+        author_avatar_url: author.avatarUrl,
+        author_level: author.level,
+        closed_by_name: closedBy.name,
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,
         images: normalizeImages(post.data.images),
@@ -387,18 +425,6 @@ export async function GET(request: Request, context: RouteContext) {
       isAuthor,
       isStaff,
     });
-
-    if (shouldSetCookie && viewCookieName) {
-      response.cookies.set(viewCookieName, '1', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24,
-      });
-    }
-
-    return response;
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return NextResponse.json(
