@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { normalizeText } from '@/lib/utils';
 import Dialog from '@mui/material/Dialog';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import Button from '@mui/material/Button';
 import { Divider, FormControlLabel, FormGroup, MenuItem, Select, SelectChangeEvent, useTheme } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -105,6 +105,12 @@ type PostImageRow = {
   height: number | null;
 };
 
+type GalleryBlobImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
 type PollState = {
   question: string;
   options: string[];
@@ -118,6 +124,8 @@ const EMPTY_POLL: PollState = {
 };
 
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
+const MAX_GALLERY_IMAGE_COUNT = 9;
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
 function getYoutubeId(value: string) {
   const normalizedValue = normalizeText(value);
@@ -170,6 +178,14 @@ function parseDateValue(value: string) {
   }
 
   return dateValue;
+}
+
+function createLocalId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `local-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function loadImageFromFile(file: File) {
@@ -252,9 +268,8 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
   const theme = useTheme();
 
-  const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
-  const galleryInputReference = useRef<HTMLInputElement | null>(null);
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
+  const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
 
@@ -287,6 +302,11 @@ export default function Opt() {
   const [thumbnailDialogPreviewUrl, setThumbnailDialogPreviewUrl] = useState('');
   const [thumbnailDialogMessage, setThumbnailDialogMessage] = useState('');
   const [images, setImages] = useState<PostImageRow[]>([]);
+  const [galleryBlobImages, setGalleryBlobImages] = useState<GalleryBlobImage[]>([]);
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
+  const [galleryDialogImages, setGalleryDialogImages] = useState<PostImageRow[]>([]);
+  const [galleryDialogBlobImages, setGalleryDialogBlobImages] = useState<GalleryBlobImage[]>([]);
+  const [galleryDialogMessage, setGalleryDialogMessage] = useState('');
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
   const [canPinPost, setCanPinPost] = useState(false);
@@ -310,6 +330,7 @@ export default function Opt() {
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
+  const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
 
   const accessDialog = useMemo(() => {
     if (accessDialogType === 'login') {
@@ -374,6 +395,14 @@ export default function Opt() {
       }
     };
   }, [thumbnailDialogPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      galleryBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      galleryDialogBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     async function loadBoards() {
@@ -553,6 +582,7 @@ export default function Opt() {
     setThumbnailHeight(null);
     setThumbnailBlobFile(null);
     setImages([]);
+    setGalleryBlobImages([]);
     setIsPin(false);
     setCanPinPost(false);
     setIsPollEnabled(false);
@@ -640,7 +670,7 @@ export default function Opt() {
       return;
     }
 
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(selectedFile.type)) {
+    if (!ACCEPTED_IMAGE_TYPES.includes(selectedFile.type)) {
       setThumbnailDialogMessage('png, jpg, webp 이미지만 등록할 수 있습니다.');
       event.currentTarget.value = '';
       return;
@@ -653,6 +683,118 @@ export default function Opt() {
     setThumbnailDialogFile(selectedFile);
     setThumbnailDialogPreviewUrl(URL.createObjectURL(selectedFile));
     setThumbnailDialogMessage('');
+  }
+
+  function openGalleryDialog() {
+    setGalleryDialogImages(images);
+    setGalleryDialogBlobImages(galleryBlobImages);
+    setGalleryDialogMessage('');
+    setGalleryDialogOpen(true);
+
+    if (galleryDialogInputReference.current) {
+      galleryDialogInputReference.current.value = '';
+    }
+  }
+
+  function closeGalleryDialog() {
+    galleryDialogBlobImages.forEach((image) => {
+      const isCommitted = galleryBlobImages.some((committedImage) => committedImage.id === image.id);
+
+      if (!isCommitted) {
+        URL.revokeObjectURL(image.previewUrl);
+      }
+    });
+
+    setGalleryDialogOpen(false);
+    setGalleryDialogImages([]);
+    setGalleryDialogBlobImages([]);
+    setGalleryDialogMessage('');
+
+    if (galleryDialogInputReference.current) {
+      galleryDialogInputReference.current.value = '';
+    }
+  }
+
+  function applyGalleryDialogImages() {
+    const totalCount = galleryDialogImages.length + galleryDialogBlobImages.length;
+
+    if (totalCount === 0) {
+      setGalleryDialogMessage('이미지를 추가해주세요.');
+      return;
+    }
+
+    galleryBlobImages.forEach((image) => {
+      const isStillSelected = galleryDialogBlobImages.some((dialogImage) => dialogImage.id === image.id);
+
+      if (!isStillSelected) {
+        URL.revokeObjectURL(image.previewUrl);
+      }
+    });
+
+    setImages(galleryDialogImages);
+    setGalleryBlobImages(galleryDialogBlobImages);
+    setGalleryDialogOpen(false);
+    setGalleryDialogImages([]);
+    setGalleryDialogBlobImages([]);
+    setGalleryDialogMessage('');
+
+    if (galleryDialogInputReference.current) {
+      galleryDialogInputReference.current.value = '';
+    }
+  }
+
+  function handleGalleryDialogFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.currentTarget.files ?? []);
+
+    if (selectedFiles.length === 0) {
+      return;
+    }
+
+    const currentCount = galleryDialogImages.length + galleryDialogBlobImages.length;
+
+    if (currentCount + selectedFiles.length > MAX_GALLERY_IMAGE_COUNT) {
+      setGalleryDialogMessage('이미지는 9개를 초과할 수 없습니다');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    const invalidFile = selectedFiles.find((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type));
+
+    if (invalidFile) {
+      setGalleryDialogMessage('png, jpg, webp 이미지만 등록할 수 있습니다.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    const nextImages = selectedFiles.map((file) => ({
+      id: createLocalId(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setGalleryDialogBlobImages((previousImages) => [...nextImages, ...previousImages]);
+    setGalleryDialogMessage('');
+    event.currentTarget.value = '';
+  }
+
+  function removeGalleryDialogServerImage(path: string) {
+    setGalleryDialogImages((previousImages) => previousImages.filter((image) => image.path !== path));
+    setGalleryDialogMessage('');
+  }
+
+  function removeGalleryDialogBlobImage(id: string) {
+    setGalleryDialogBlobImages((previousImages) => {
+      const targetImage = previousImages.find((image) => image.id === id);
+      const isCommitted = galleryBlobImages.some((image) => image.id === id);
+
+      if (targetImage && !isCommitted) {
+        URL.revokeObjectURL(targetImage.previewUrl);
+      }
+
+      return previousImages.filter((image) => image.id !== id);
+    });
+
+    setGalleryDialogMessage('');
   }
 
   async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
@@ -705,103 +847,6 @@ export default function Opt() {
     }
   }
 
-  async function handleThumbnailFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const inputElement = event.currentTarget;
-    const selectedFile = inputElement.files?.[0];
-
-    if (!selectedFile || isUploadingThumbnail) {
-      inputElement.value = '';
-      return;
-    }
-
-    try {
-      setAlertMessage('');
-      setIsUploadingThumbnail(true);
-
-      const uploadedImage = await uploadPostImage(selectedFile, 'thumbnail');
-
-      if (thumbnailImage) {
-        await deletePostImage(thumbnailImage);
-      }
-
-      setThumbnailImage(uploadedImage.path);
-      setThumbnailImageUrl(uploadedImage.url);
-      setThumbnailWidth(uploadedImage.width);
-      setThumbnailHeight(uploadedImage.height);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setAlertMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
-      } else {
-        setAlertMessage('이미지 업로드에 실패했습니다.');
-      }
-    } finally {
-      setIsUploadingThumbnail(false);
-      inputElement.value = '';
-    }
-  }
-
-  async function handleGalleryFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const inputElement = event.currentTarget;
-    const selectedFiles = Array.from(inputElement.files ?? []);
-
-    if (selectedFiles.length === 0 || isUploadingImages) {
-      inputElement.value = '';
-      return;
-    }
-
-    const remainCount = 6 - images.length;
-
-    if (remainCount <= 0) {
-      setAlertMessage('이미지는 최대 6개까지 등록할 수 있습니다.');
-      inputElement.value = '';
-      return;
-    }
-
-    try {
-      setAlertMessage('');
-      setIsUploadingImages(true);
-
-      const nextFiles = selectedFiles.slice(0, remainCount);
-      const uploadedImages: PostImageRow[] = [];
-
-      for (const file of nextFiles) {
-        const uploadedImage = await uploadPostImage(file, 'images');
-
-        uploadedImages.unshift({
-          path: uploadedImage.path,
-          url: uploadedImage.url,
-          width: uploadedImage.width,
-          height: uploadedImage.height,
-        });
-      }
-
-      setImages((previousImages) => [...uploadedImages, ...previousImages]);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setAlertMessage(unknownError.message || '이미지 업로드에 실패했습니다.');
-      } else {
-        setAlertMessage('이미지 업로드에 실패했습니다.');
-      }
-    } finally {
-      setIsUploadingImages(false);
-      inputElement.value = '';
-    }
-  }
-
-  async function handleDeleteGalleryImage(path: string) {
-    try {
-      setAlertMessage('');
-      await deletePostImage(path);
-      setImages((previousImages) => previousImages.filter((image) => image.path !== path));
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setAlertMessage(unknownError.message || '이미지 삭제에 실패했습니다.');
-      } else {
-        setAlertMessage('이미지 삭제에 실패했습니다.');
-      }
-    }
-  }
-
   async function handleUploadEditorImage(file: Blob | File) {
     const editorFile =
       file instanceof File
@@ -850,6 +895,39 @@ export default function Opt() {
     };
   }
 
+  async function uploadGalleryImagesIfNeeded() {
+    if (galleryBlobImages.length === 0) {
+      return images;
+    }
+
+    setIsUploadingImages(true);
+
+    try {
+      const uploadedImages: PostImageRow[] = [];
+
+      for (const image of galleryBlobImages) {
+        const uploadedImage = await uploadPostImage(image.file, 'images');
+
+        uploadedImages.push({
+          path: uploadedImage.path,
+          url: uploadedImage.url,
+          width: uploadedImage.width,
+          height: uploadedImage.height,
+        });
+      }
+
+      const nextImages = [...uploadedImages, ...images];
+
+      setImages(nextImages);
+      galleryBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      setGalleryBlobImages([]);
+
+      return nextImages;
+    } finally {
+      setIsUploadingImages(false);
+    }
+  }
+
   async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -891,6 +969,7 @@ export default function Opt() {
       }
 
       const uploadedThumbnail = await uploadThumbnailIfNeeded();
+      const uploadedImages = await uploadGalleryImagesIfNeeded();
 
       const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
         method: 'POST',
@@ -911,7 +990,7 @@ export default function Opt() {
           thumbnailHeight: uploadedThumbnail.thumbnailHeight,
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt : null,
-          images: isGalleryBoard || isFeedBoard ? images : [],
+          images: isGalleryBoard || isFeedBoard ? uploadedImages : [],
           poll: isBasicBoard && isPollEnabled ? poll : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
@@ -1133,7 +1212,7 @@ export default function Opt() {
 
                   {isGalleryBoard || isFeedBoard ? (
                     <div className={styles.image}>
-                      <button type="button">
+                      <button type="button" onClick={openGalleryDialog}>
                         <CollectionsOutlinedIcon />
                         <span>갤러리 이미지</span>
                       </button>
@@ -1327,6 +1406,83 @@ export default function Opt() {
             취소
           </button>
           <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
+            이미지 업로드
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={galleryDialogOpen}
+        onClose={closeGalleryDialog}
+        className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+      >
+        <DialogTitle>갤러리 이미지 업로드</DialogTitle>
+        <DialogContent className={styles['thumbnail-dialog-content']}>
+          {galleryDialogMessage ? (
+            <DialogContentText className={styles['thumbnail-dialog-message']}>{galleryDialogMessage}</DialogContentText>
+          ) : null}
+
+          <div className={styles['thumbnail-uploader']}>
+            <button
+              type="button"
+              onClick={() => galleryDialogInputReference.current?.click()}
+              className={styles['thumbnail-upload-button']}
+            >
+              <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
+              <CollectionsOutlinedIcon />
+            </button>
+
+            <input
+              ref={galleryDialogInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className={styles['thumbnail-file-input']}
+              onChange={handleGalleryDialogFileChange}
+            />
+          </div>
+
+          {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
+            <div className={styles['gallery-dialog-preview']}>
+              {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
+                if ('file' in image) {
+                  return (
+                    <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryDialogBlobImage(image.id)}
+                        aria-label="이미지 삭제"
+                        className={styles['gallery-dialog-remove-button']}
+                      >
+                        <CloseRoundedIcon />
+                      </button>
+                      <img src={image.previewUrl} alt="" />
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={image.path}>
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryDialogServerImage(image.path)}
+                      aria-label="이미지 삭제"
+                      className={styles['gallery-dialog-remove-button']}
+                    >
+                      ×
+                    </button>
+                    <img src={image.url} alt="" />
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </DialogContent>
+        <DialogActions className={styles['thumbnail-dialog-actions']}>
+          <button type="button" onClick={closeGalleryDialog} className={styles['thumbnail-dialog-cancel-button']}>
+            취소
+          </button>
+          <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
             이미지 업로드
           </button>
         </DialogActions>

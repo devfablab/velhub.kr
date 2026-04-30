@@ -253,6 +253,48 @@
     img
       border-radius: ds.rem(7)
 
+  .gallery-dialog-preview
+    display: flex
+    flex-wrap: wrap
+    gap: ds.rem(12)
+
+    .gallery-dialog-preview-image
+      position: relative
+      border-radius: ds.rem(7)
+      overflow: hidden
+      width: ds.rem(174)
+      height: ds.rem(174)
+
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$hex-tertiary, .1)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$hex-white, .5)
+
+      img
+        display: block
+        width: 100%
+        object-fit: cover
+        object-position: center
+        aspect-ratio: 1/1
+
+      .gallery-dialog-remove-button
+        position: absolute
+        top: ds.rem(5)
+        right: ds.rem(5)
+        display: flex
+        justify-content: center
+        align-items: center
+        width: ds.rem(24)
+        height: ds.rem(24)
+        border-radius: 50%
+        background-color: rgba(ds.$hex-tertiary, .5)
+        color: ds.$hex-primary
+
+        svg
+          width: ds.rem(16)
+          height: ds.rem(16)
+
   .thumbnail-dialog-actions
     display: flex
     gap: ds.rem(12)
@@ -283,5 +325,10 @@
         color: ds.$hex-bright
 
       &:disabled
-        background-color: rgba(ds.$hex-tertiary, .1)
-        color: rgba(ds.$hex-primary, .5)
+        color: rgba(ds.$hex-accent, .5)!important
+
+        html[data-theme="yellow-light"] &
+          background-color: rgba(ds.$hex-accent, .1)!important
+
+        html[data-theme="yellow-dark"] &
+          background-color: rgba(ds.$hex-bright, .1)!important
