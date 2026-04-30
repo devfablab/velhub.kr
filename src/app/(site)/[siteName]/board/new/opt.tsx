@@ -1467,13 +1467,15 @@ export default function Opt() {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/${selectedBoardKey}/${result.contentId}/edit`);
+        router.replace(`/${siteName}/board/content/edit?boardName=${selectedBoardKey}&contentId=${result.contentId}`);
         return;
       }
 
       if (!result.slug) {
         throw new Error('글 작성에 실패했습니다.');
       }
+
+      router.replace(`/${siteName}/board/content?boardName=${selectedBoardKey}&contentId=${result.slug}`);
 
       router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
     } catch (unknownError) {

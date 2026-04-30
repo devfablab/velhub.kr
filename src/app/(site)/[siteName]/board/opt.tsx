@@ -124,7 +124,9 @@ export default function Opt() {
                   {content.prefix_label ? (
                     <small className={styles['prefix-name']}>{content.prefix_label}</small>
                   ) : null}
-                  <Anchor href={`/${siteName}/${content.board_key}/${content.slug}`}>{content.subject}</Anchor>
+                  <Anchor href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}>
+                    {content.subject}
+                  </Anchor>
                 </td>
                 <td>{content.author_name}</td>
                 <td>{formatDate(content.created_at)}</td>
