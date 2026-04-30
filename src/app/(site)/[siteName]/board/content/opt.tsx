@@ -264,6 +264,17 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
+  function updatePostCount(nextPostCount: number) {
+    setContent((previousContent) =>
+      previousContent
+        ? {
+            ...previousContent,
+            post_count: nextPostCount,
+          }
+        : previousContent,
+    );
+  }
+
   async function increasePostCount(nextBoardName: string, nextContentId: string) {
     try {
       const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/count?siteName=${siteName}`, {
@@ -278,14 +289,7 @@ export default function Opt() {
       }
 
       if (typeof result.postCount === 'number') {
-        setContent((previousContent) =>
-          previousContent
-            ? {
-                ...previousContent,
-                post_count: result.postCount,
-              }
-            : previousContent,
-        );
+        updatePostCount(result.postCount);
       }
     } catch {
       return;

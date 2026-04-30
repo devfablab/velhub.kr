@@ -22,8 +22,11 @@ export async function POST(request: Request) {
     const formData = await request.formData();
 
     const file = formData.get('file');
-    const folder = normalizeText(formData.get('folder'));
-    const siteName = normalizeText(formData.get('siteName')).toLowerCase();
+    const rawFolder = formData.get('folder');
+    const rawSiteName = formData.get('siteName');
+
+    const folder = typeof rawFolder === 'string' ? normalizeText(rawFolder) : '';
+    const siteName = typeof rawSiteName === 'string' ? normalizeText(rawSiteName).toLowerCase() : '';
 
     if (!(file instanceof File)) {
       return Response.json({ error: '이미지 파일이 유효하지 않습니다.' }, { status: 400 });

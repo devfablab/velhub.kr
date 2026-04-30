@@ -146,7 +146,7 @@ function normalizeImages(value: unknown) {
       height?: unknown;
     };
 
-    const path = normalizeText(rawItem.path);
+    const path = typeof rawItem.path === 'string' ? normalizeText(rawItem.path) : '';
 
     if (!path) {
       continue;
@@ -179,8 +179,8 @@ function normalizePollImage(value: unknown) {
     height?: unknown;
   };
 
-  const path = normalizeText(rawValue.path);
-  const url = normalizeText(rawValue.url);
+  const path = typeof rawValue.path === 'string' ? normalizeText(rawValue.path) : '';
+  const url = typeof rawValue.url === 'string' ? normalizeText(rawValue.url) : '';
 
   if (!path || !url) {
     return null;
@@ -211,9 +211,9 @@ function normalizePoll(value: unknown, creatorId: string) {
     options?: unknown;
   };
 
-  const question = normalizeText(rawValue.question);
+  const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
   const endType = rawValue.endType === 'absolute' || rawValue.endType === 'relative' ? rawValue.endType : '';
-  const endsAt = normalizeText(rawValue.endsAt);
+  const endsAt = typeof rawValue.endsAt === 'string' ? normalizeText(rawValue.endsAt) : '';
 
   if (!question) {
     return null;
@@ -256,7 +256,7 @@ function normalizePoll(value: unknown, creatorId: string) {
         image?: unknown;
       };
 
-      const label = normalizeText(rawOption.label);
+      const label = typeof rawOption.label === 'string' ? normalizeText(rawOption.label) : '';
 
       if (!label) {
         return null;

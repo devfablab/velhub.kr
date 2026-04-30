@@ -243,8 +243,9 @@ export async function getPostContent({
       throw new BoardContentError('말머리 정보를 불러오지 못했습니다.', 500);
     }
 
+    const postData = post.data;
     prefixes = prefixResult.data ?? [];
-    prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
+    prefixLabel = prefixes.find((prefix) => prefix.id === postData.prefix_id)?.prefix_label ?? null;
   }
 
   let postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;

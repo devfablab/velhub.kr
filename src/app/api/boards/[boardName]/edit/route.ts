@@ -137,7 +137,7 @@ function normalizeImages(value: unknown) {
       height?: unknown;
     };
 
-    const path = normalizeText(rawItem.path);
+    const path = typeof rawItem.path === 'string' ? normalizeText(rawItem.path) : '';
 
     if (!path) {
       continue;
@@ -168,7 +168,7 @@ function normalizePoll(value: unknown) {
     options?: unknown;
   };
 
-  const question = normalizeText(rawValue.question);
+  const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
 
   if (!question) {
     return null;

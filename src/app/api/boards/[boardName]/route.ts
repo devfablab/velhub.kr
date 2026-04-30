@@ -178,6 +178,8 @@ export async function GET(request: Request, context: RouteContext) {
         }),
       );
 
+      const boardData = board.data;
+
       const contents = (pagesResult.data ?? []).map((pageRow) => ({
         ...pageRow,
         author_name: nicknameMap.get(pageRow.user_id as string) || userNameMap.get(pageRow.user_id as string) || '',
@@ -190,8 +192,8 @@ export async function GET(request: Request, context: RouteContext) {
         prefix_label: null,
         post_count: null,
         is_pin: false,
-        board_key: board.data.board_key,
-        board_label: board.data.board_label,
+        board_key: boardData.board_key,
+        board_label: boardData.board_label,
       }));
 
       const totalCount = pagesResult.count ?? 0;
@@ -211,6 +213,9 @@ export async function GET(request: Request, context: RouteContext) {
       });
     }
 
+    const postListSessionCase =
+      session.case === 'admin' || session.case === 'staff' ? 'staff' : session.case === 'member' ? 'member' : 'guest';
+
     const result = await getPostList({
       siteId: rhizome.data.id,
       siteKey: siteName,
@@ -218,7 +223,7 @@ export async function GET(request: Request, context: RouteContext) {
       page,
       size,
       filter,
-      sessionCase: session.case,
+      sessionCase: postListSessionCase,
       authUserId,
     });
 

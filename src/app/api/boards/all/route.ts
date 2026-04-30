@@ -47,6 +47,9 @@ export async function GET(request: Request) {
       }
     }
 
+    const postListSessionCase =
+      session.case === 'admin' || session.case === 'staff' ? 'staff' : session.case === 'member' ? 'member' : 'guest';
+
     const result = await getPostList({
       siteId: rhizome.data.id,
       siteKey: siteName,
@@ -54,7 +57,7 @@ export async function GET(request: Request) {
       page,
       size,
       filter,
-      sessionCase: session.case,
+      sessionCase: postListSessionCase,
       authUserId: session.authUserId ?? null,
     });
 

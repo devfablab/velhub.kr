@@ -491,8 +491,13 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
+      if (post.error || !post.data) {
+        return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+      }
+
+      const postData = post.data;
       prefixes = prefixResult.data ?? [];
-      prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
+      prefixLabel = prefixes.find((prefix) => prefix.id === postData.prefix_id)?.prefix_label ?? null;
     }
 
     const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;

@@ -62,7 +62,7 @@ export default function ToastEditorClient({
       hooks={
         onUploadImage
           ? {
-              addImageBlobHook: async (blob, callback) => {
+              addImageBlobHook: async (blob: Blob | File, callback: (url: string, altText?: string) => void) => {
                 const imageUrl = await onUploadImage(blob);
 
                 if (!imageUrl) {
