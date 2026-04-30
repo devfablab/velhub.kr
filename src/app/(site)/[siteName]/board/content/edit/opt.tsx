@@ -1807,14 +1807,16 @@ export default function Opt() {
             >
               취소
             </a>
-            <button
-              type="button"
-              className={`${styles.button} button`}
-              disabled={isSubmittingDraft || isSubmittingPublish}
-              onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
-            >
-              임시 저장
-            </button>
+            {publishedStatus === 'draft' ? (
+              <button
+                type="button"
+                className={`${styles.button} button`}
+                disabled={isSubmittingDraft || isSubmittingPublish}
+                onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+              >
+                임시 저장
+              </button>
+            ) : null}
             <button
               type="submit"
               disabled={isSubmittingDraft || isSubmittingPublish}
