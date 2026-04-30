@@ -10,6 +10,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
+import CommentSection from '@/components/board/CommentSection';
 
 type BoardInfo = {
   id: string;
@@ -514,6 +515,13 @@ export default function Opt() {
           </div>
         ) : null}
       </article>
+      <CommentSection
+        siteName={siteName}
+        boardName={boardName}
+        contentId={content.id}
+        postAuthorId={content.user_id}
+        isCommentEnabled={content.is_comment}
+      />
     </div>
   );
 }
