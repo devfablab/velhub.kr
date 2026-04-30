@@ -201,6 +201,30 @@ a, button, select, input
           background-color: ds.$hex-tertiary
           color: rgba(ds.$hex-bright, .7)
 
+  &.vh-alert-dialog
+    .MuiDialog-paper
+      .MuiDialogContent-root
+        img
+          max-width: 100%
+          height: auto
+
+      .MuiDialogActions-root
+        button
+          display: flex
+          justify-content: center
+          align-items: center
+          width: 100%
+          height: ds.rem(52)
+          border-radius: ds.rem(7)
+          @include ds.fw(pre, 700)
+          font-size: ds.rem(20)
+          background-color: ds.$hex-accent
+          color: ds.$hex-bright
+
+          &:disabled
+            background-color: ds.$hex-tertiary
+            color: rgba(ds.$hex-bright, .7)
+
 .button
   display: flex
   justify-content: center

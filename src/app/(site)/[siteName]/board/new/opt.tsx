@@ -117,6 +117,8 @@ const EMPTY_POLL: PollState = {
   options: ['', '', '', '', ''],
 };
 
+const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
+
 function getYoutubeId(value: string) {
   const normalizedValue = normalizeText(value);
 
@@ -170,6 +172,80 @@ function parseDateValue(value: string) {
   return dateValue;
 }
 
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(imageUrl);
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error('이미지를 불러오지 못했습니다.'));
+    };
+
+    image.src = imageUrl;
+  });
+}
+
+function canvasToWebpBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('이미지 변환에 실패했습니다.'));
+          return;
+        }
+
+        resolve(blob);
+      },
+      'image/webp',
+      quality,
+    );
+  });
+}
+
+async function convertImageToWebpFile(file: File) {
+  const image = await loadImageFromFile(file);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('이미지 변환에 실패했습니다.');
+  }
+
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  context.drawImage(image, 0, 0);
+
+  const qualitySteps = [0.92, 0.86, 0.8, 0.74, 0.68, 0.62, 0.56, 0.5];
+  let convertedBlob: Blob | null = null;
+
+  for (const quality of qualitySteps) {
+    const nextBlob = await canvasToWebpBlob(canvas, quality);
+
+    if (nextBlob.size <= MAX_THUMBNAIL_FILE_SIZE) {
+      convertedBlob = nextBlob;
+      break;
+    }
+
+    convertedBlob = nextBlob;
+  }
+
+  if (!convertedBlob || convertedBlob.size > MAX_THUMBNAIL_FILE_SIZE) {
+    throw new Error('썸네일 이미지는 1MB 이하로 등록해주세요.');
+  }
+
+  const filename = `${file.name.replace(/\.[^.]+$/, '') || `thumbnail-${Date.now()}`}.webp`;
+
+  return new File([convertedBlob], filename, {
+    type: 'image/webp',
+  });
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -178,6 +254,7 @@ export default function Opt() {
 
   const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
+  const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
 
@@ -203,6 +280,12 @@ export default function Opt() {
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
+  const [thumbnailBlobFile, setThumbnailBlobFile] = useState<File | null>(null);
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState('');
+  const [thumbnailDialogOpen, setThumbnailDialogOpen] = useState(false);
+  const [thumbnailDialogFile, setThumbnailDialogFile] = useState<File | null>(null);
+  const [thumbnailDialogPreviewUrl, setThumbnailDialogPreviewUrl] = useState('');
+  const [thumbnailDialogMessage, setThumbnailDialogMessage] = useState('');
   const [images, setImages] = useState<PostImageRow[]>([]);
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
@@ -275,6 +358,22 @@ export default function Opt() {
       onConfirm: () => undefined,
     };
   }, [accessDialogType, router, siteName]);
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreviewUrl) {
+        URL.revokeObjectURL(thumbnailPreviewUrl);
+      }
+    };
+  }, [thumbnailPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailDialogPreviewUrl) {
+        URL.revokeObjectURL(thumbnailDialogPreviewUrl);
+      }
+    };
+  }, [thumbnailDialogPreviewUrl]);
 
   useEffect(() => {
     async function loadBoards() {
@@ -452,6 +551,7 @@ export default function Opt() {
     setThumbnailImageUrl('');
     setThumbnailWidth(null);
     setThumbnailHeight(null);
+    setThumbnailBlobFile(null);
     setImages([]);
     setIsPin(false);
     setCanPinPost(false);
@@ -460,6 +560,99 @@ export default function Opt() {
     setErrorMessage('');
     setAlertMessage('');
     setAccessDialogType(null);
+
+    if (thumbnailPreviewUrl) {
+      URL.revokeObjectURL(thumbnailPreviewUrl);
+      setThumbnailPreviewUrl('');
+    }
+  }
+
+  function openThumbnailDialog() {
+    setThumbnailDialogFile(thumbnailBlobFile);
+    setThumbnailDialogMessage('');
+
+    if (thumbnailDialogPreviewUrl) {
+      URL.revokeObjectURL(thumbnailDialogPreviewUrl);
+    }
+
+    if (thumbnailBlobFile) {
+      setThumbnailDialogPreviewUrl(URL.createObjectURL(thumbnailBlobFile));
+    } else {
+      setThumbnailDialogPreviewUrl(thumbnailPreviewUrl || thumbnailImageUrl);
+    }
+
+    setThumbnailDialogOpen(true);
+  }
+
+  function closeThumbnailDialog() {
+    setThumbnailDialogOpen(false);
+    setThumbnailDialogFile(null);
+    setThumbnailDialogMessage('');
+
+    if (thumbnailDialogPreviewUrl && thumbnailDialogPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(thumbnailDialogPreviewUrl);
+    }
+
+    setThumbnailDialogPreviewUrl('');
+
+    if (thumbnailDialogInputReference.current) {
+      thumbnailDialogInputReference.current.value = '';
+    }
+  }
+
+  function applyThumbnailDialogImage() {
+    if (!thumbnailDialogFile) {
+      setThumbnailDialogMessage('업로드할 이미지를 선택해주세요.');
+      return;
+    }
+
+    if (thumbnailPreviewUrl) {
+      URL.revokeObjectURL(thumbnailPreviewUrl);
+    }
+
+    setThumbnailBlobFile(thumbnailDialogFile);
+    setThumbnailPreviewUrl(URL.createObjectURL(thumbnailDialogFile));
+    setThumbnailDialogOpen(false);
+    setThumbnailDialogFile(null);
+    setThumbnailDialogMessage('');
+
+    if (thumbnailDialogPreviewUrl && thumbnailDialogPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(thumbnailDialogPreviewUrl);
+    }
+
+    setThumbnailDialogPreviewUrl('');
+
+    if (thumbnailDialogInputReference.current) {
+      thumbnailDialogInputReference.current.value = '';
+    }
+  }
+
+  function handleThumbnailDialogFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFile = event.currentTarget.files?.[0];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    if (selectedFile.size > MAX_THUMBNAIL_FILE_SIZE) {
+      setThumbnailDialogMessage('썸네일 이미지는 1MB 이하로 등록해주세요.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(selectedFile.type)) {
+      setThumbnailDialogMessage('png, jpg, webp 이미지만 등록할 수 있습니다.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    if (thumbnailDialogPreviewUrl && thumbnailDialogPreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(thumbnailDialogPreviewUrl);
+    }
+
+    setThumbnailDialogFile(selectedFile);
+    setThumbnailDialogPreviewUrl(URL.createObjectURL(selectedFile));
+    setThumbnailDialogMessage('');
   }
 
   async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
@@ -621,6 +814,42 @@ export default function Opt() {
     return uploadedImage.url;
   }
 
+  async function uploadThumbnailIfNeeded() {
+    if (!thumbnailBlobFile) {
+      return {
+        thumbnailImage,
+        thumbnailImageUrl,
+        thumbnailWidth,
+        thumbnailHeight,
+      };
+    }
+
+    const webpThumbnailFile = await convertImageToWebpFile(thumbnailBlobFile);
+    const uploadedThumbnail = await uploadPostImage(webpThumbnailFile, 'thumbnail');
+
+    if (thumbnailImage) {
+      await deletePostImage(thumbnailImage);
+    }
+
+    setThumbnailImage(uploadedThumbnail.path);
+    setThumbnailImageUrl(uploadedThumbnail.url);
+    setThumbnailWidth(uploadedThumbnail.width);
+    setThumbnailHeight(uploadedThumbnail.height);
+    setThumbnailBlobFile(null);
+
+    if (thumbnailPreviewUrl) {
+      URL.revokeObjectURL(thumbnailPreviewUrl);
+      setThumbnailPreviewUrl('');
+    }
+
+    return {
+      thumbnailImage: uploadedThumbnail.path,
+      thumbnailImageUrl: uploadedThumbnail.url,
+      thumbnailWidth: uploadedThumbnail.width,
+      thumbnailHeight: uploadedThumbnail.height,
+    };
+  }
+
   async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -661,6 +890,8 @@ export default function Opt() {
         setIsSubmittingPublish(true);
       }
 
+      const uploadedThumbnail = await uploadThumbnailIfNeeded();
+
       const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
         method: 'POST',
         headers: {
@@ -675,9 +906,9 @@ export default function Opt() {
           contentHtml: isBasicBoard || isGalleryBoard ? contentHtml : null,
           contentMarkdown: isBasicBoard || isGalleryBoard ? contentMarkdown : null,
           contentSimple: isFeedBoard ? contentSimple : null,
-          thumbnailImage: thumbnailImage || null,
-          thumbnailWidth,
-          thumbnailHeight,
+          thumbnailImage: uploadedThumbnail.thumbnailImage || null,
+          thumbnailWidth: uploadedThumbnail.thumbnailWidth,
+          thumbnailHeight: uploadedThumbnail.thumbnailHeight,
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt : null,
           images: isGalleryBoard || isFeedBoard ? images : [],
@@ -893,18 +1124,10 @@ export default function Opt() {
                 <div className={`${styles['post-info']} ${styles['post-row']}`}>
                   {!isFeedBoard ? (
                     <div className={styles.image}>
-                      <button type="button">
+                      <button type="button" onClick={openThumbnailDialog}>
                         <CropOriginalOutlinedIcon />
                         <span>썸네일 이미지</span>
                       </button>
-                      {/* <input
-                        ref={thumbnailInputReference}
-                        id="thumbnail"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        onChange={handleThumbnailFileChange}
-                      />
-                      {thumbnailImageUrl ? <img src={thumbnailImageUrl} alt="썸네일 이미지" /> : null} */}
                     </div>
                   ) : null}
 
@@ -914,26 +1137,6 @@ export default function Opt() {
                         <CollectionsOutlinedIcon />
                         <span>갤러리 이미지</span>
                       </button>
-                      {/* <input
-                        ref={galleryInputReference}
-                        id="images"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        multiple
-                        onChange={handleGalleryFileChange}
-                      />
-                      {images.length > 0 ? (
-                        <ul>
-                          {images.map((image, index) => (
-                            <li key={image.path}>
-                              <span>{`이미지 ${index + 1}`}</span>
-                              <button type="button" onClick={() => void handleDeleteGalleryImage(image.path)}>
-                                삭제
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null} */}
                     </div>
                   ) : null}
 
@@ -943,21 +1146,6 @@ export default function Opt() {
                         <HowToVoteOutlinedIcon />
                         <span>투표</span>
                       </button>
-                      {/* <button
-                        type="button"
-                        onClick={() => {
-                          if (isPollEnabled) {
-                            setIsPollEnabled(false);
-                            setPoll(EMPTY_POLL);
-                            return;
-                          }
-
-                          setIsPollEnabled(true);
-                          setPoll(EMPTY_POLL);
-                        }}
-                      >
-                        {isPollEnabled ? '투표 취소' : '투표 설정'}
-                      </button> */}
 
                       {isPollEnabled ? (
                         <>
@@ -1096,6 +1284,54 @@ export default function Opt() {
         </fieldset>
       </form>
 
+      <Dialog
+        open={thumbnailDialogOpen}
+        onClose={closeThumbnailDialog}
+        className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+      >
+        <DialogTitle>썸네일 이미지 업로드</DialogTitle>
+        <DialogContent className={styles['thumbnail-dialog-content']}>
+          {thumbnailDialogMessage ? (
+            <DialogContentText className={styles['thumbnail-dialog-message']}>
+              {thumbnailDialogMessage}
+            </DialogContentText>
+          ) : null}
+
+          <div className={styles['thumbnail-uploader']}>
+            <button
+              type="button"
+              onClick={() => thumbnailDialogInputReference.current?.click()}
+              className={styles['thumbnail-upload-button']}
+            >
+              <span>이미지를 선택해주세요</span>
+              <CropOriginalOutlinedIcon />
+            </button>
+
+            <input
+              ref={thumbnailDialogInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className={styles['thumbnail-file-input']}
+              onChange={handleThumbnailDialogFileChange}
+            />
+          </div>
+
+          {thumbnailDialogPreviewUrl ? (
+            <div className={styles['thumbnail-dialog-preview']}>
+              <img src={thumbnailDialogPreviewUrl} alt="" />
+            </div>
+          ) : null}
+        </DialogContent>
+        <DialogActions className={styles['thumbnail-dialog-actions']}>
+          <button type="button" onClick={closeThumbnailDialog} className={styles['thumbnail-dialog-cancel-button']}>
+            취소
+          </button>
+          <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
+            이미지 업로드
+          </button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
         <DialogTitle>{accessDialog.title}</DialogTitle>
         <DialogContent>
@@ -1103,10 +1339,14 @@ export default function Opt() {
         </DialogContent>
         <DialogActions>
           {accessDialog.cancelLabel ? (
-            <Button onClick={accessDialog.onCancel}>{accessDialog.cancelLabel}</Button>
+            <button type="button" onClick={accessDialog.onCancel}>
+              {accessDialog.cancelLabel}
+            </button>
           ) : null}
 
-          <button onClick={accessDialog.onConfirm}>{accessDialog.confirmLabel}</button>
+          <button type="button" onClick={accessDialog.onConfirm}>
+            {accessDialog.confirmLabel}
+          </button>
         </DialogActions>
       </Dialog>
 
@@ -1115,7 +1355,9 @@ export default function Opt() {
           <DialogContentText>{alertMessage}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <button onClick={() => setAlertMessage('')}>확인</button>
+          <button type="button" onClick={() => setAlertMessage('')}>
+            확인
+          </button>
         </DialogActions>
       </Dialog>
     </div>
