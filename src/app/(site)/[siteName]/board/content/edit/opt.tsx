@@ -1449,18 +1449,6 @@ export default function Opt() {
       return;
     }
 
-    if (action !== 'draft') {
-      if (postType === 'prefix' && !selectedPrefixId) {
-        setErrorMessage('말머리를 선택해주세요.');
-        return;
-      }
-
-      if (postType === 'series' && !selectedSeriesKey) {
-        setErrorMessage('연재를 선택해주세요.');
-        return;
-      }
-    }
-
     try {
       setErrorMessage('');
 
@@ -1800,6 +1788,7 @@ export default function Opt() {
             </>
           ) : null}
 
+          {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
           <div className={styles['button-group']}>
             <a
               href={`/${siteName}/board/content?boardName=${boardName}&contentId=${contentId}`}

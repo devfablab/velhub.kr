@@ -28,6 +28,19 @@ type PostImage = {
   height: number | null;
 };
 
+type AuthorRole =
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager'
+  | 'member';
+
+type AuthorManageRole = {
+  role: Exclude<AuthorRole, 'owner' | 'member'>;
+  boardId: string | null;
+};
+
 type AuthorLevel = {
   id: string;
   lv: number;
@@ -87,6 +100,8 @@ type PostContent = {
   author_name: string;
   author_avatar_url: string;
   author_level: AuthorLevel | null;
+  author_role: AuthorRole;
+  author_manage_roles: AuthorManageRole[];
   closed_by_name: string;
   prefix_label: string | null;
 };
@@ -187,6 +202,30 @@ function normalizeHashtags(value: unknown) {
   }
 
   return [];
+}
+
+function getAuthorRoleLabel(role: AuthorRole) {
+  if (role === 'owner') {
+    return '운영자';
+  }
+
+  if (role === 'community-manager') {
+    return '커뮤니티 매니저';
+  }
+
+  if (role === 'board-manager') {
+    return '게시판 매니저';
+  }
+
+  if (role === 'board-general-manager') {
+    return '게시판 일반 매니저';
+  }
+
+  if (role === 'board-assistant-manager') {
+    return '게시판 보조 매니저';
+  }
+
+  return '';
 }
 
 function renderYoutubeEmbed(youtubeId: string | null) {
@@ -333,6 +372,7 @@ export default function Opt() {
   const isYoutubeBoard = board.board_type === 'youtube';
   const isFeedBoard = board.board_type === 'feed';
   const hashtags = normalizeHashtags(content.hashtags);
+  const authorRoleLabel = getAuthorRoleLabel(content.author_role);
 
   return (
     <div className={`${styles.content} content`}>
@@ -380,7 +420,10 @@ export default function Opt() {
           <div>
             <Avatar src={content.author_avatar_url} alt={content.author_name || '작성자'} />
             <span>{content.author_name || '작성자'}</span>
-            {content.author_level ? (
+
+            {authorRoleLabel ? (
+              <span>{authorRoleLabel}</span>
+            ) : content.author_level ? (
               <span>
                 {content.author_level.iconUrl ? (
                   <img src={content.author_level.iconUrl} alt={content.author_level.name} />
@@ -389,6 +432,7 @@ export default function Opt() {
               </span>
             ) : null}
           </div>
+
           <span>{formatDateTime(content.published_at || content.created_at)}</span>
           <span>{`조회 ${content.post_count}`}</span>
           {content.edited_at ? <span>{`수정 ${formatDateTime(content.edited_at)}`}</span> : null}

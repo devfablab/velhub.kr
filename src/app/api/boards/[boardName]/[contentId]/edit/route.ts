@@ -521,8 +521,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         seriesId = seriesResult.data.id;
-      } else if (action !== 'draft') {
-        return Response.json({ error: '연재형 게시판은 연재를 선택해야 합니다.' }, { status: 400 });
+      } else {
+        seriesId = null;
       }
     } else {
       seriesId = null;
@@ -545,8 +545,8 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         resolvedPrefixId = prefixResult.data.id;
-      } else if (action !== 'draft') {
-        return Response.json({ error: '말머리형 게시판은 말머리를 선택해야 합니다.' }, { status: 400 });
+      } else {
+        resolvedPrefixId = null;
       }
     } else {
       resolvedPrefixId = null;

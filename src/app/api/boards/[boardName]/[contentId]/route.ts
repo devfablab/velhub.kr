@@ -24,6 +24,19 @@ type LevelRow = {
   name: string | null;
 };
 
+type AuthorRole =
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager'
+  | 'member';
+
+type AuthorManageRole = {
+  role: Exclude<AuthorRole, 'owner' | 'member'>;
+  boardId: string | null;
+};
+
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
 
@@ -117,7 +130,16 @@ function normalizeImages(value: unknown) {
     .filter(Boolean);
 }
 
-async function getUserDisplayInfo(siteId: string, userId: string | null | undefined) {
+function isManageRole(value: string): value is AuthorManageRole['role'] {
+  return (
+    value === 'community-manager' ||
+    value === 'board-manager' ||
+    value === 'board-general-manager' ||
+    value === 'board-assistant-manager'
+  );
+}
+
+async function getUserDisplayInfo(siteId: string, boardId: string, userId: string | null | undefined) {
   const normalizedUserId = normalizeText(userId);
 
   if (!normalizedUserId) {
@@ -125,19 +147,53 @@ async function getUserDisplayInfo(siteId: string, userId: string | null | undefi
       name: '',
       avatarUrl: '',
       level: null,
+      role: 'member' as AuthorRole,
+      manageRoles: [] as AuthorManageRole[],
     };
   }
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const membershipResult = await supabaseAdmin
-    .from('rhizome_stigmas')
-    .select('nickname, lv')
-    .eq('site_id', siteId)
-    .eq('user_id', normalizedUserId)
+  const stigmaByIdResult = await supabaseAdmin
+    .from('stigmas')
+    .select('id, user_id, user_name, avatar')
+    .eq('id', normalizedUserId)
     .maybeSingle();
 
+  const stigmaByAuthIdResult = stigmaByIdResult.data
+    ? null
+    : await supabaseAdmin
+        .from('stigmas')
+        .select('id, user_id, user_name, avatar')
+        .eq('user_id', normalizedUserId)
+        .maybeSingle();
+
+  const stigma = stigmaByIdResult.data ?? stigmaByAuthIdResult?.data ?? null;
+  const stigmaId = normalizeText(stigma?.id);
+  const authUserId = normalizeText(stigma?.user_id) || normalizedUserId;
+
+  const membershipResult = stigmaId
+    ? await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('id, nickname, lv, role')
+        .eq('site_id', siteId)
+        .eq('user_id', stigmaId)
+        .maybeSingle()
+    : await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('id, nickname, lv, role')
+        .eq('site_id', siteId)
+        .eq('user_id', normalizedUserId)
+        .maybeSingle();
+
+  const rhizomeStigmaId = normalizeText(membershipResult.data?.id);
+  const baseRole = normalizeText(membershipResult.data?.role);
+  const levelId = normalizeText(membershipResult.data?.lv);
+
   let name = '';
+  let avatarUrl = '';
+  let role: AuthorRole = baseRole === 'owner' ? 'owner' : 'member';
+  let manageRoles: AuthorManageRole[] = [];
   let level: {
     id: string;
     lv: number;
@@ -149,8 +205,6 @@ async function getUserDisplayInfo(siteId: string, userId: string | null | undefi
   if (!membershipResult.error && membershipResult.data?.nickname) {
     name = normalizeText(membershipResult.data.nickname);
   }
-
-  const levelId = normalizeText(membershipResult.data?.lv);
 
   if (levelId) {
     const levelResult = await supabaseAdmin
@@ -165,7 +219,7 @@ async function getUserDisplayInfo(siteId: string, userId: string | null | undefi
 
       level = {
         id: levelData.id,
-        lv: levelData.lv,
+        lv: Number(levelData.lv),
         name: normalizeText(levelData.name) || String(levelData.lv),
         icon: levelData.icon,
         iconUrl: getLevelIconUrl(levelData.icon),
@@ -173,20 +227,55 @@ async function getUserDisplayInfo(siteId: string, userId: string | null | undefi
     }
   }
 
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('user_name, avatar')
-    .eq('user_id', normalizedUserId)
-    .maybeSingle();
+  if (rhizomeStigmaId) {
+    const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteId).maybeSingle();
 
-  let avatarUrl = '';
+    if (!communityResult.error && communityResult.data?.id) {
+      const manageRoleResult = await supabaseAdmin
+        .from('community_manage_role')
+        .select('role, board_id')
+        .eq('community_id', communityResult.data.id)
+        .eq('manager_id', rhizomeStigmaId);
 
-  if (!stigmaResult.error && stigmaResult.data) {
-    avatarUrl = getAvatarUrl(stigmaResult.data.avatar ?? null);
+      if (!manageRoleResult.error) {
+        manageRoles = (manageRoleResult.data ?? [])
+          .map((row) => {
+            const manageRole = normalizeText(row.role);
 
-    if (!name && stigmaResult.data.user_name) {
+            if (!isManageRole(manageRole)) {
+              return null;
+            }
+
+            return {
+              role: manageRole,
+              boardId: row.board_id ?? null,
+            };
+          })
+          .filter((item): item is AuthorManageRole => Boolean(item));
+
+        if (role !== 'owner') {
+          const communityWideRole = manageRoles.find(
+            (item) => item.role === 'community-manager' || item.role === 'board-manager',
+          );
+
+          const boardRole = manageRoles.find(
+            (item) =>
+              item.boardId === boardId &&
+              (item.role === 'board-general-manager' || item.role === 'board-assistant-manager'),
+          );
+
+          role = communityWideRole?.role ?? boardRole?.role ?? 'member';
+        }
+      }
+    }
+  }
+
+  if (stigma) {
+    avatarUrl = getAvatarUrl(stigma.avatar ?? null);
+
+    if (!name && stigma.user_name) {
       try {
-        name = decrypt(stigmaResult.data.user_name as string);
+        name = decrypt(stigma.user_name as string);
       } catch {
         name = '';
       }
@@ -197,6 +286,8 @@ async function getUserDisplayInfo(siteId: string, userId: string | null | undefi
     name,
     avatarUrl,
     level,
+    role,
+    manageRoles,
   };
 }
 
@@ -273,7 +364,7 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      const author = await getUserDisplayInfo(rhizome.data.id, page.data.user_id);
+      const author = await getUserDisplayInfo(rhizome.data.id, board.data.id, page.data.user_id);
       const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
 
       return NextResponse.json({
@@ -284,6 +375,8 @@ export async function GET(request: Request, context: RouteContext) {
           author_name: author.name,
           author_avatar_url: author.avatarUrl,
           author_level: author.level,
+          author_role: author.role,
+          author_manage_roles: author.manageRoles,
         },
         isAuthor,
         isStaff,
@@ -316,8 +409,8 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const author = await getUserDisplayInfo(rhizome.data.id, post.data.user_id);
-    const closedBy = await getUserDisplayInfo(rhizome.data.id, post.data.closed_by);
+    const author = await getUserDisplayInfo(rhizome.data.id, board.data.id, post.data.user_id);
+    const closedBy = await getUserDisplayInfo(rhizome.data.id, board.data.id, post.data.closed_by);
 
     const categoryIds = Array.isArray(post.data.categories)
       ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
@@ -413,6 +506,8 @@ export async function GET(request: Request, context: RouteContext) {
         author_name: author.name,
         author_avatar_url: author.avatarUrl,
         author_level: author.level,
+        author_role: author.role,
+        author_manage_roles: author.manageRoles,
         closed_by_name: closedBy.name,
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,

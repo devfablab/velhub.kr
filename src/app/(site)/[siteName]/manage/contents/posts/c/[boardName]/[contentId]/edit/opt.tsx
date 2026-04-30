@@ -586,18 +586,6 @@ export default function Opt() {
       return;
     }
 
-    if (action !== 'draft') {
-      if (postType === 'prefix' && !selectedPrefixId) {
-        setErrorMessage('말머리를 선택해주세요.');
-        return;
-      }
-
-      if (postType === 'series' && !selectedSeriesKey) {
-        setErrorMessage('연재를 선택해주세요.');
-        return;
-      }
-    }
-
     try {
       setErrorMessage('');
 
