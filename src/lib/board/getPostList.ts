@@ -31,6 +31,8 @@ type RawPostRow = {
   closed_at: string | null;
   closed_message: string | null;
   prefix_id: string | null;
+  series_id: string | null;
+  poll: unknown;
   published_status: 'draft' | 'published';
   post_count: number | null;
   is_pin: boolean;
@@ -61,6 +63,10 @@ export type PostListItem = {
   closed_by_name: string;
   prefix_id: string | null;
   prefix_label: string | null;
+  series_id: string | null;
+  series_label: string | null;
+  is_poll: boolean;
+  comment_count: number;
   published_status: 'draft' | 'published';
   post_count: number;
   is_pin: boolean;
@@ -94,7 +100,7 @@ export async function getPostList({
     const pinnedQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
+        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_status, post_count, is_pin',
       )
       .eq('site_id', siteId)
       .eq('is_pin', true)
@@ -118,7 +124,7 @@ export async function getPostList({
   const postsQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, published_status, post_count, is_pin',
+      'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_status, post_count, is_pin',
       { count: 'exact' },
     )
     .eq('site_id', siteId)
@@ -154,6 +160,7 @@ export async function getPostList({
 
   const mergedPosts = [...pinnedPosts, ...((postsResult.data ?? []) as RawPostRow[])];
 
+  const postIds = Array.from(new Set(mergedPosts.map((post) => post.id).filter(Boolean)));
   const boardIds = Array.from(new Set(mergedPosts.map((post) => post.board_id).filter(Boolean)));
   const userIds = Array.from(
     new Set(
@@ -162,6 +169,9 @@ export async function getPostList({
   );
   const prefixIds = Array.from(
     new Set(mergedPosts.map((post) => post.prefix_id).filter((value): value is string => Boolean(value))),
+  );
+  const seriesIds = Array.from(
+    new Set(mergedPosts.map((post) => post.series_id).filter((value): value is string => Boolean(value))),
   );
 
   const boardsResult =
@@ -204,6 +214,24 @@ export async function getPostList({
     throw new Error('글 목록을 불러오지 못했습니다.');
   }
 
+  const seriesResult =
+    seriesIds.length > 0
+      ? await supabaseAdmin.from('board_series').select('id, series_label').in('id', seriesIds)
+      : { data: [], error: null };
+
+  if (seriesResult.error) {
+    throw new Error('글 목록을 불러오지 못했습니다.');
+  }
+
+  const commentResult =
+    postIds.length > 0
+      ? await supabaseAdmin.from('post_comments').select('post_id').in('post_id', postIds)
+      : { data: [], error: null };
+
+  if (commentResult.error) {
+    throw new Error('글 목록을 불러오지 못했습니다.');
+  }
+
   const boardMap = new Map(
     (boardsResult.data ?? []).map((row) => [
       row.id as string,
@@ -236,6 +264,22 @@ export async function getPostList({
     (prefixResult.data ?? []).map((row) => [row.id as string, normalizeText(row.prefix_label)]),
   );
 
+  const seriesMap = new Map(
+    (seriesResult.data ?? []).map((row) => [row.id as string, normalizeText(row.series_label)]),
+  );
+
+  const commentCountMap = new Map<string, number>();
+
+  (commentResult.data ?? []).forEach((row) => {
+    const targetPostId = normalizeText(row.post_id);
+
+    if (!targetPostId) {
+      return;
+    }
+
+    commentCountMap.set(targetPostId, (commentCountMap.get(targetPostId) ?? 0) + 1);
+  });
+
   const contents: PostListItem[] = mergedPosts.map((post) => {
     const boardInfo = boardMap.get(post.board_id);
 
@@ -258,6 +302,10 @@ export async function getPostList({
       closed_by_name: post.closed_by ? nicknameMap.get(post.closed_by) || userNameMap.get(post.closed_by) || '' : '',
       prefix_id: post.prefix_id,
       prefix_label: post.prefix_id ? (prefixMap.get(post.prefix_id) ?? null) : null,
+      series_id: post.series_id,
+      series_label: post.series_id ? (seriesMap.get(post.series_id) ?? null) : null,
+      is_poll: Boolean(post.poll),
+      comment_count: commentCountMap.get(post.id) ?? 0,
       published_status: post.published_status,
       post_count: typeof post.post_count === 'number' ? Number(post.post_count) : 0,
       is_pin: post.is_pin === true,

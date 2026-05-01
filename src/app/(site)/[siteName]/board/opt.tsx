@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
-import { normalizeText } from '@/lib/utils';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
 
 type PostItem = {
@@ -20,6 +22,9 @@ type PostItem = {
   board_key: string;
   board_label: string;
   prefix_label: string | null;
+  series_label: string | null;
+  is_poll: boolean;
+  comment_count: number;
 };
 
 type BoardListResponse = {
@@ -30,20 +35,6 @@ type BoardListResponse = {
   totalPage?: number;
   error?: string;
 };
-
-function formatDate(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '';
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}.${month}.${day}`;
-}
 
 export default function Opt() {
   const params = useParams();
@@ -85,15 +76,43 @@ export default function Opt() {
   }, [siteName]);
 
   if (isLoading) {
-    return <p>불러오는 중...</p>;
+    return (
+      <div className={`${styles.content} content`}>
+        <h2>
+          <ListAltOutlinedIcon />
+          <span>최신글 보기</span>
+        </h2>
+        <div className="paper">
+          <div className="loading-container">
+            <LoadingIndicator />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (errorMessage) {
-    return <p>{errorMessage}</p>;
+    return (
+      <div className={`${styles.content} content`}>
+        <h2>
+          <ListAltOutlinedIcon />
+          <span>최신글 보기</span>
+        </h2>
+        <div className="paper paper-error">{errorMessage}</div>
+      </div>
+    );
   }
 
   if (contents.length === 0) {
-    return <p>등록된 게시글이 없습니다.</p>;
+    return (
+      <div className={`${styles.content} content`}>
+        <h2>
+          <ListAltOutlinedIcon />
+          <span>최신글 보기</span>
+        </h2>
+        <div className="paper paper-error">등록된 게시글이 없습니다.</div>
+      </div>
+    );
   }
 
   return (
@@ -106,10 +125,16 @@ export default function Opt() {
       <div className="paper">
         <table>
           <caption>게시글 목록</caption>
+          <colgroup>
+            <col />
+            <col style={{ width: 127 }} />
+            <col style={{ width: 77 }} />
+            <col style={{ width: 67 }} />
+          </colgroup>
           <thead>
             <tr>
-              <th>제목</th>
-              <th>작성자</th>
+              <th className="long-cell">제목</th>
+              <th className="long-cell">작성자</th>
               <th>작성일</th>
               <th>조회수</th>
             </tr>
@@ -117,24 +142,56 @@ export default function Opt() {
 
           <tbody>
             {contents.map((content) => (
-              <tr key={content.id} className={content.is_pin ? styles.pinned : undefined}>
-                <td>
-                  {content.is_pin ? <PushPinRoundedIcon /> : null}
-                  <small className={styles['board-name']}>{content.board_label}</small>
-                  {content.prefix_label ? (
-                    <small className={styles['prefix-name']}>{content.prefix_label}</small>
-                  ) : null}
-                  <Anchor href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}>
-                    {content.subject}
-                  </Anchor>
+              <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                <td className="long-cell">
+                  <div className="board-subject">
+                    {content.is_pin ? (
+                      <i className="pin-icon" aria-label="상단고정글">
+                        <PushPinRoundedIcon />
+                      </i>
+                    ) : null}
+                    <small className="board-name board-chip" aria-label="게시판명">
+                      {content.board_label}
+                    </small>
+                    {content.prefix_label ? (
+                      <small className="prefix-name board-chip" aria-label="말머리">
+                        {content.prefix_label}
+                      </small>
+                    ) : null}
+                    {content.series_label ? (
+                      <small className="series-name board-chip" aria-label="연재명">
+                        {content.series_label}
+                      </small>
+                    ) : null}
+                    {content.is_poll ? (
+                      <i className="poll-icon" aria-label="투표글">
+                        <HowToVoteIcon />
+                      </i>
+                    ) : null}
+                    <Anchor
+                      href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                    >
+                      {content.subject}
+                    </Anchor>
+                    {content.comment_count > 0 ? (
+                      <span aria-label="댓글 수">{`(${content.comment_count})`}</span>
+                    ) : null}
+                  </div>
                 </td>
-                <td>{content.author_name}</td>
-                <td>{formatDate(content.created_at)}</td>
+                <td className="long-cell">
+                  <cite>{content.author_name}</cite>
+                </td>
+                <td>{formatTimeAgo(content.created_at)}</td>
                 <td>{content.post_count}</td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+      <div className={styles['button-group']}>
+        <Anchor href={`/${siteName}/board/new`} className={`${styles.submit} button`}>
+          글쓰기
+        </Anchor>
       </div>
     </div>
   );

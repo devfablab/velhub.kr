@@ -171,6 +171,141 @@ a, button, select, input
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
 
+  table
+    table-layout: fixed
+    border-collapse: collapse
+    width: 100%
+
+    thead
+      tr
+        html[data-theme="yellow-light"] &
+          border-bottom: 1px solid rgba(ds.$hex-tertiary, .1)
+
+        html[data-theme="yellow-dark"] &
+          border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+
+        th
+          height: ds.rem(52)
+          @include ds.fw(neo, 700)
+          font-size: ds.rem(14)
+          line-height: 1.15
+
+          &.long-cell
+            padding-left: ds.rem(12)
+            text-align: left
+
+    tbody
+      tr
+        html[data-theme="yellow-light"] &
+          border-bottom: 1px solid rgba(ds.$hex-tertiary, .05)
+
+        html[data-theme="yellow-dark"] &
+          border-bottom: 1px solid rgba(ds.$hex-tertiary, .25)
+
+        &.pinned, &:hover
+          html[data-theme="yellow-light"] &
+            background-color: rgba(ds.$hex-accent, .05)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$hex-accent, .1)
+
+          a
+            @include ds.fw(pre, 700)
+
+        td
+          height: ds.rem(37)
+          font-size: ds.rem(14)
+          text-align: center
+
+          &.long-cell
+            padding: 0 ds.rem(12)
+            text-align: left
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+          a
+            &:hover, &:focus-visible
+              text-decoration: underline
+
+          a, cite
+            display: block
+            overflow: hidden
+            text-overflow: ellipsis
+            white-space: nowrap
+            padding-top: ds.rem(3)
+            min-width: 0
+            height: ds.rem(22)
+            font-size: ds.rem(14)
+            line-height: ds.rem(14)
+            letter-spacing: -.05em
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-bright
+
+          .board-subject
+            display: flex
+            flex-direction: row
+            align-items: center
+            gap: ds.rem(7)
+            height: ds.rem(37)
+
+            i
+              position: relative
+              top: ds.rem(2)
+              color: ds.$hex-accent
+
+              &.pin-icon
+                color: ds.$hex-warning
+
+                svg
+                  transform: rotate(45deg)
+
+            i, small
+              flex: none
+              line-height: ds.rem(14)
+              height: ds.rem(22)
+              display: block
+
+            svg
+              width: ds.rem(16)
+              height: ds.rem(16)
+
+            .board-chip
+              overflow: hidden
+              text-overflow: ellipsis
+              white-space: nowrap
+              max-width: ds.rem(120)
+              padding: ds.rem(4) ds.rem(5) ds.rem(3)
+              border-radius: ds.rem(6)
+
+              &.prefix-name
+                border: 1px solid ds.$hex-accent
+
+                html[data-theme="yellow-light"] &
+                  background-color: ds.$hex-white
+
+                html[data-theme="yellow-dark"] &
+                  background-color: ds.$hex-black
+
+              &.series-name
+                background-color: transparent
+                border: 1px solid ds.$hex-action
+
+              html[data-theme="yellow-light"] &
+                background-color: rgba(ds.$hex-tertiary, .1)
+                color: rgba(ds.$hex-primary, .7)
+
+              html[data-theme="yellow-dark"] &
+                background-color: rgba(ds.$hex-tertiary, .5)
+                color: rgba(ds.$hex-bright, .7)
+
 .vh-dialog
   .MuiDialog-paper
     border-radius: ds.rem(17)
