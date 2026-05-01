@@ -8,6 +8,53 @@
     gap: ds.rem(5)
     align-items: center
 
+    svg
+      width: ds.rem(26)
+      height: ds.rem(26)
+
+  .board-search-container
+    display: flex
+    justify-content: flex-end
+
+    form
+      .form-group
+        display: flex
+        flex-direction: row
+        gap: ds.rem(7)
+        width: ds.rem(270)
+        position: relative
+        border-radius: ds.rem(7)
+        @include ds.fw(pre, 700)
+
+        html[data-theme="yellow-light"] &
+          background-color: rgba(ds.$hex-accent, .1)
+          color: ds.$hex-accent
+
+        html[data-theme="yellow-dark"] &
+          background-color: rgba(ds.$hex-bright, .1)
+          color: ds.$hex-bright
+
+        .form-control
+          @include ds.col
+
+          input
+            background-color: transparent
+            border: 0
+            padding: 0 ds.rem(17)
+            width: 100%
+            height: ds.rem(37)
+
+        button
+          posiation: absolute
+          top: 0
+          right: 0
+          display: flex
+          justify-content: center
+          align-items: center
+          background-color: transparent
+          width: ds.rem(37)
+          height: ds.rem(37)
+
   .form
     fieldset
       display: flex

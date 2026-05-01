@@ -20,6 +20,7 @@ export async function GET(request: Request) {
     const page = parsePositiveInt(requestUrl.searchParams.get('page'), 1);
     const size = parsePositiveInt(requestUrl.searchParams.get('size'), 10);
     const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase() === 'deleted' ? 'deleted' : 'all';
+    const keyword = normalizeText(requestUrl.searchParams.get('keyword'));
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -59,6 +60,7 @@ export async function GET(request: Request) {
       filter,
       sessionCase: postListSessionCase,
       authUserId: session.authUserId ?? null,
+      keyword,
     });
 
     return Response.json({
@@ -68,6 +70,7 @@ export async function GET(request: Request) {
       totalCount: result.totalCount,
       totalPage: result.totalPage,
       filter,
+      keyword,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

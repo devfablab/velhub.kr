@@ -13,6 +13,7 @@ type GetPostListOptions = {
   filter: 'all' | 'deleted';
   sessionCase: SessionCase;
   authUserId: string | null;
+  keyword?: string | null;
 };
 
 type RawPostRow = {
@@ -20,6 +21,9 @@ type RawPostRow = {
   slug: number;
   subject: string;
   summary: string | null;
+  content_html: string | null;
+  content_markdown: string | null;
+  content_simple: string | null;
   edited_at: string;
   created_at: string;
   idx: number;
@@ -33,6 +37,7 @@ type RawPostRow = {
   prefix_id: string | null;
   series_id: string | null;
   poll: unknown;
+  published_at: string | null;
   published_status: 'draft' | 'published';
   post_count: number | null;
   is_pin: boolean;
@@ -67,6 +72,10 @@ export type PostListItem = {
   series_label: string | null;
   is_poll: boolean;
   comment_count: number;
+  search_title_matched: boolean;
+  search_content_matched: boolean;
+  search_content: string;
+  published_at: string | null;
   published_status: 'draft' | 'published';
   post_count: number;
   is_pin: boolean;
@@ -80,6 +89,68 @@ export type GetPostListResult = {
   totalPage: number;
 };
 
+function stripHtml(value: string | null) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getSearchTargetContent(post: RawPostRow) {
+  return [post.content_simple, post.content_markdown, post.summary, stripHtml(post.content_html)]
+    .map((value) => normalizeText(value))
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getSearchSnippet(content: string, keyword: string) {
+  const normalizedContent = normalizeText(content).replace(/\s+/g, ' ').trim();
+  const normalizedKeyword = normalizeText(keyword);
+
+  if (!normalizedContent || !normalizedKeyword) {
+    return '';
+  }
+
+  const contentLowerCase = normalizedContent.toLowerCase();
+  const keywordLowerCase = normalizedKeyword.toLowerCase();
+  const matchedIndex = contentLowerCase.indexOf(keywordLowerCase);
+
+  if (matchedIndex === -1) {
+    return '';
+  }
+
+  const maxLength = 150;
+  const halfLength = Math.floor((maxLength - normalizedKeyword.length) / 2);
+  const startIndex = Math.max(0, matchedIndex - halfLength);
+  const endIndex = Math.min(normalizedContent.length, startIndex + maxLength);
+  const snippet = normalizedContent.slice(startIndex, endIndex);
+
+  return `${startIndex > 0 ? '...' : ''}${snippet}${endIndex < normalizedContent.length ? '...' : ''}`;
+}
+
+function applySearchFilter(
+  query: ReturnType<ReturnType<typeof getSupabaseAdmin>['from']> extends infer T ? T : never,
+  keyword: string,
+) {
+  return query.or(
+    [
+      `subject.ilike.%${keyword}%`,
+      `summary.ilike.%${keyword}%`,
+      `content_html.ilike.%${keyword}%`,
+      `content_markdown.ilike.%${keyword}%`,
+      `content_simple.ilike.%${keyword}%`,
+    ].join(','),
+  );
+}
+
 export async function getPostList({
   siteId,
   boardId = null,
@@ -88,19 +159,21 @@ export async function getPostList({
   filter,
   sessionCase,
   authUserId,
+  keyword = null,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
   const from = (page - 1) * size;
   const to = from + size - 1;
+  const searchKeyword = normalizeText(keyword);
 
   let pinnedPosts: RawPostRow[] = [];
 
   if (filter === 'all') {
-    const pinnedQuery = supabaseAdmin
+    let pinnedQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_status, post_count, is_pin',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin',
       )
       .eq('site_id', siteId)
       .eq('is_pin', true)
@@ -109,7 +182,11 @@ export async function getPostList({
       .order('idx', { ascending: false });
 
     if (boardId) {
-      pinnedQuery.eq('board_id', boardId);
+      pinnedQuery = pinnedQuery.eq('board_id', boardId);
+    }
+
+    if (searchKeyword) {
+      pinnedQuery = applySearchFilter(pinnedQuery, searchKeyword);
     }
 
     const pinnedResult = await pinnedQuery;
@@ -121,36 +198,42 @@ export async function getPostList({
     pinnedPosts = (pinnedResult.data ?? []) as RawPostRow[];
   }
 
-  const postsQuery = supabaseAdmin
+  let postsQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_status, post_count, is_pin',
+      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin',
       { count: 'exact' },
     )
     .eq('site_id', siteId)
     .order('idx', { ascending: false });
 
   if (boardId) {
-    postsQuery.eq('board_id', boardId);
+    postsQuery = postsQuery.eq('board_id', boardId);
   }
 
   if (filter === 'deleted') {
-    postsQuery.eq('is_closed', true).eq('published_status', 'published');
+    postsQuery = postsQuery.eq('is_closed', true).eq('published_status', 'published');
   } else {
-    postsQuery.eq('is_pin', false);
+    postsQuery = postsQuery.eq('is_pin', false);
 
     if (!isStaff) {
-      postsQuery.eq('is_closed', false);
+      postsQuery = postsQuery.eq('is_closed', false);
     }
 
     if (authUserId) {
-      postsQuery.or(`published_status.eq.published,and(published_status.eq.draft,user_id.eq.${authUserId})`);
+      postsQuery = postsQuery.or(
+        `published_status.eq.published,and(published_status.eq.draft,user_id.eq.${authUserId})`,
+      );
     } else {
-      postsQuery.eq('published_status', 'published');
+      postsQuery = postsQuery.eq('published_status', 'published');
     }
   }
 
-  postsQuery.range(from, to);
+  if (searchKeyword) {
+    postsQuery = applySearchFilter(postsQuery, searchKeyword);
+  }
+
+  postsQuery = postsQuery.range(from, to);
 
   const postsResult = await postsQuery;
 
@@ -225,7 +308,7 @@ export async function getPostList({
 
   const commentResult =
     postIds.length > 0
-      ? await supabaseAdmin.from('post_comments').select('post_id').in('post_id', postIds)
+      ? await supabaseAdmin.from('post_comments').select('post_id').eq('is_deleted', false).in('post_id', postIds)
       : { data: [], error: null };
 
   if (commentResult.error) {
@@ -282,6 +365,11 @@ export async function getPostList({
 
   const contents: PostListItem[] = mergedPosts.map((post) => {
     const boardInfo = boardMap.get(post.board_id);
+    const searchTargetContent = getSearchTargetContent(post);
+    const searchContent = searchKeyword ? getSearchSnippet(searchTargetContent, searchKeyword) : '';
+    const searchTitleMatched = searchKeyword
+      ? normalizeText(post.subject).toLowerCase().includes(searchKeyword.toLowerCase())
+      : false;
 
     return {
       id: post.id,
@@ -306,6 +394,10 @@ export async function getPostList({
       series_label: post.series_id ? (seriesMap.get(post.series_id) ?? null) : null,
       is_poll: Boolean(post.poll),
       comment_count: commentCountMap.get(post.id) ?? 0,
+      search_title_matched: searchTitleMatched,
+      search_content_matched: Boolean(searchContent),
+      search_content: searchContent,
+      published_at: post.published_at,
       published_status: post.published_status,
       post_count: typeof post.post_count === 'number' ? Number(post.post_count) : 0,
       is_pin: post.is_pin === true,

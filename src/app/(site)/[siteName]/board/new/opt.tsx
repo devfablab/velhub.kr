@@ -1473,8 +1473,6 @@ export default function Opt() {
       }
 
       router.replace(`/${siteName}/board/content?boardName=${selectedBoardKey}&contentId=${result.slug}`);
-
-      router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '글 작성에 실패했습니다.');

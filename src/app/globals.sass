@@ -228,6 +228,10 @@ a, button, select, input
             color: ds.$hex-bright
 
           a
+            strong
+              @include ds.fw(pre, 800)
+              color: ds.$hex-warning
+
             &:hover, &:focus-visible
               text-decoration: underline
 
@@ -257,8 +261,6 @@ a, button, select, input
             height: ds.rem(37)
 
             i
-              position: relative
-              top: ds.rem(2)
               color: ds.$hex-accent
 
               &.pin-icon
@@ -267,11 +269,22 @@ a, button, select, input
                 svg
                   transform: rotate(45deg)
 
-            i, small
+            i, small, > strong, em
+              display: flex
+              align-items: center
               flex: none
-              line-height: ds.rem(14)
               height: ds.rem(22)
-              display: block
+
+            > strong
+              @include ds.fw(neo, 800)
+              font-size: ds.rem(11)
+              opacity: .5
+
+            em
+              @include ds.fw(pre, 700)
+              font-size: ds.rem(12)
+              font-style: normal
+              color: ds.$hex-warning
 
             svg
               width: ds.rem(16)
@@ -305,6 +318,14 @@ a, button, select, input
               html[data-theme="yellow-dark"] &
                 background-color: rgba(ds.$hex-tertiary, .5)
                 color: rgba(ds.$hex-bright, .7)
+
+          .board-content
+            margin-bottom: ds.rem(3)
+            @include ds.line-abbr(2, 42, 1.5)
+
+            strong
+              @include ds.fw(pre, 800)
+              color: ds.$hex-warning
 
 .vh-dialog
   .MuiDialog-paper
@@ -424,8 +445,13 @@ a, button, select, input
   color: ds.$hex-bright
 
   &:disabled
-    background-color: ds.$hex-tertiary
-    color: rgba(ds.$hex-bright, .7)
+    html[data-theme="yellow-light"] &
+      background-color: rgba(ds.$hex-primary, .2)!important
+      color: rgba(ds.$hex-bright, 1)!important
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$hex-bright, .1)!important
+      color: rgba(ds.$hex-primary, 1)!important
 
 .link
   display: inline-flex
