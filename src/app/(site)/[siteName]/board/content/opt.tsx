@@ -273,6 +273,18 @@ export default function Opt() {
     setGalleryViewerOpen(false);
   }
 
+  function showPreviousGalleryImage() {
+    if (!content?.images || content.images.length === 0) {
+      return;
+    }
+
+    setGalleryViewerIndex((previousIndex) => {
+      const previousImageIndex = previousIndex - 1;
+
+      return previousImageIndex < 0 ? content.images!.length - 1 : previousImageIndex;
+    });
+  }
+
   function showNextGalleryImage() {
     if (!content?.images || content.images.length === 0) {
       return;
@@ -583,7 +595,7 @@ export default function Opt() {
                   <DialogActions className={styles['dialog-actions']}>
                     <button
                       type="button"
-                      onClick={showNextGalleryImage}
+                      onClick={showPreviousGalleryImage}
                       className={`${styles['control-button']} ${styles['prev-button']}`}
                       aria-label="이전 이미지"
                     >
