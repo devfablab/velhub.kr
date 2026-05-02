@@ -405,6 +405,101 @@
     .content-simple
       white-space: pre-wrap
 
+  .content-poll
+    display: flex
+    flex-direction: column
+    gap: ds.rem(7)
+
+    strong
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(14)
+
+    .tail
+      display: flex
+      flex-direction: row
+      gap: ds.rem(7)
+      font-size: ds.rem(12)
+
+      span
+        opacity: .7
+
+      p
+        @include ds.fw(pre, 600)
+        color: ds.$hex-warning
+
+    ol
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
+
+      li
+        .option, button
+          display: flex
+          justify-content: space-between
+          border-radius: ds.rem(3)
+          min-height: ds.rem(37)
+          overflow: hidden
+          position: relative
+
+          html[data-theme="yellow-light"] &
+            border: ds.rem(2) solid rgba(ds.$hex-tertiary, .5)
+
+          html[data-theme="yellow-dark"] &
+            border: ds.rem(2) solid rgba(ds.$hex-tertiary, .7)
+
+          &.selected
+            border-color: ds.$hex-accent!important
+
+            .progress
+              i
+                background-color: ds.$hex-accent
+
+            span
+              color: ds.$hex-accent
+
+        .option
+          .progress
+            position: absolute
+            top: 0
+            right: 0
+            bottom: 0
+            left: 0
+
+            &.stack-progress
+              left: ds.rem(127)
+
+            i
+              position: absolute
+              top: 0
+              left: 0
+              height: 100%
+              opacity: .1
+              background-color: ds.$hex-primary
+
+        button
+          width: 100%
+          background-color: transparent
+
+        .label
+          display: flex
+
+          span
+            @include ds.col
+
+        img
+          width: ds.rem(127)
+          height: ds.rem(127)
+          object-fit: cover
+          object-position: center
+          display: block
+
+        span
+          display: flex
+          align-items: center
+          padding: 0 ds.rem(12)
+          @include ds.fw(pre, 800)
+          font-size: ds.rem(14)
+
 .thumbnail-dialog
   .thumbnail-dialog-content
     display: flex

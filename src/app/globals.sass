@@ -375,6 +375,13 @@ a, button, select, input
         gap: ds.rem(12)
         justify-content: flex-end
 
+        .complex-button
+          display: flex
+          gap: ds.rem(12)
+
+          button
+            margin-left: 0
+
         button
           display: flex
           justify-content: center
@@ -397,6 +404,11 @@ a, button, select, input
             background-color: rgba(ds.$hex-bright, .1)
             color: ds.$hex-bright
 
+          &.delete-button
+            background-color: transparent!important
+            border: 1px solid ds.$hex-warning!important
+            color: ds.$hex-warning!important
+
           &.cancel-button
             background-color: transparent!important
 
@@ -418,6 +430,10 @@ a, button, select, input
 
             html[data-theme="yellow-dark"] &
               background-color: rgba(ds.$hex-bright, .1)!important
+
+        &.complex-buttons
+          gap: 0
+          justify-content: space-between
 
 .vh-checkbox, .vh-radio
   .Mui-checked

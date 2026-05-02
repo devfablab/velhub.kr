@@ -133,6 +133,37 @@ type CountResponse = {
   error?: string;
 };
 
+type PollResultOption = {
+  id: number;
+  option_index: number;
+  label: string;
+  image: {
+    path: string;
+    url: string;
+    width: number | null;
+    height: number | null;
+  } | null;
+  count: number;
+  percent: number;
+  is_selected: boolean;
+};
+
+type PollResult = {
+  total_count: number;
+  selected_option_index: number | null;
+  is_ended: boolean;
+  options: PollResultOption[];
+};
+
+type PollResponse = {
+  ok?: boolean;
+  total_count?: number;
+  selected_option_index?: number | null;
+  is_ended?: boolean;
+  options?: PollResultOption[];
+  error?: string;
+};
+
 function normalizeHashtags(value: unknown) {
   if (Array.isArray(value)) {
     return value.filter((item): item is string => typeof item === 'string' && Boolean(normalizeText(item)));
@@ -201,6 +232,10 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [pollResult, setPollResult] = useState<PollResult | null>(null);
+  const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
+  const [pollErrorMessage, setPollErrorMessage] = useState('');
+
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
       previousContent
@@ -210,6 +245,16 @@ export default function Opt() {
           }
         : previousContent,
     );
+  }
+
+  function isPastDateTime(value: string) {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return false;
+    }
+
+    return date.getTime() <= Date.now();
   }
 
   async function increasePostCount(nextBoardName: string, nextContentId: string) {
@@ -255,6 +300,10 @@ export default function Opt() {
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
 
+        if (result.content?.poll) {
+          void loadPollResult(boardName, result.content.id);
+        }
+
         if (result.content?.published_status === 'published') {
           void increasePostCount(boardName, contentId);
         }
@@ -277,6 +326,84 @@ export default function Opt() {
 
     void loadContent();
   }, [siteName, boardName, contentId]);
+
+  async function loadPollResult(nextBoardName: string, nextContentId: string) {
+    try {
+      setPollErrorMessage('');
+
+      const response = await fetch(`/api/boards/${nextBoardName}/${nextContentId}/poll?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PollResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '투표 정보를 불러오지 못했습니다.');
+      }
+
+      setPollResult({
+        total_count: typeof result.total_count === 'number' ? result.total_count : 0,
+        selected_option_index: typeof result.selected_option_index === 'number' ? result.selected_option_index : null,
+        is_ended: result.is_ended === true,
+        options: Array.isArray(result.options) ? result.options : [],
+      });
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPollErrorMessage(unknownError.message || '투표 정보를 불러오지 못했습니다.');
+      } else {
+        setPollErrorMessage('투표 정보를 불러오지 못했습니다.');
+      }
+    }
+  }
+
+  async function submitPoll(optionIndex: number) {
+    if (isSubmittingPoll) {
+      return;
+    }
+
+    try {
+      setIsSubmittingPoll(true);
+      setPollErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${content.id}/poll`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          optionIndex,
+        }),
+      });
+
+      const result = (await response.json()) as PollResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '투표에 참여하지 못했습니다.');
+      }
+
+      setPollResult({
+        total_count: typeof result.total_count === 'number' ? result.total_count : 0,
+        selected_option_index: typeof result.selected_option_index === 'number' ? result.selected_option_index : null,
+        is_ended: result.is_ended === true,
+        options: Array.isArray(result.options) ? result.options : [],
+      });
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPollErrorMessage(unknownError.message || '투표에 참여하지 못했습니다.');
+      } else {
+        setPollErrorMessage('투표에 참여하지 못했습니다.');
+      }
+    } finally {
+      setIsSubmittingPoll(false);
+    }
+  }
+
+  function getPollOptionResult(optionIndex: number) {
+    return pollResult?.options.find((option) => option.option_index === optionIndex) ?? null;
+  }
 
   if (isLoading) {
     return (
@@ -492,16 +619,74 @@ export default function Opt() {
             {content.poll ? (
               <div className="paper">
                 <div className={styles['content-poll']}>
-                  <h4>{content.poll.question}</h4>
-                  <p>{`종료 ${formatDateTimeDetail(content.poll.endsAt)}`}</p>
-                  <ol>
-                    {content.poll.options.map((option) => (
-                      <li key={option.id}>
-                        {option.image ? <img src={option.image.url} alt="" /> : null}
-                        <span>{option.label}</span>
-                      </li>
-                    ))}
-                  </ol>
+                  {(() => {
+                    const isPollEnded = isPastDateTime(content.poll.endsAt) || pollResult?.is_ended === true;
+
+                    return (
+                      <>
+                        <strong>{content.poll.question}</strong>
+                        <div className={styles.tail}>
+                          <span className={styles.total}>{`${pollResult?.total_count ?? 0}명 투표`}</span>
+                          {isPollEnded ? (
+                            <span className={styles.end}>(종료됨)</span>
+                          ) : (
+                            <span className={styles.end}>({formatDateTimeFull(content.poll.endsAt)}에 종료)</span>
+                          )}
+                          {pollErrorMessage ? <p className={styles.fin}>{pollErrorMessage}</p> : null}
+                        </div>
+
+                        <ol>
+                          {content.poll.options.map((option, optionIndex) => {
+                            const optionResult = getPollOptionResult(optionIndex);
+
+                            const selectedOptionIndex =
+                              typeof pollResult?.selected_option_index === 'number' &&
+                              pollResult.selected_option_index >= 0
+                                ? pollResult.selected_option_index
+                                : null;
+
+                            const hasVoted = selectedOptionIndex !== null;
+                            const shouldShowResult = hasVoted || isPollEnded;
+                            const count = optionResult?.count ?? 0;
+                            const percent = optionResult?.percent ?? 0;
+                            const isSelected = selectedOptionIndex === optionIndex;
+
+                            return (
+                              <li key={option.id}>
+                                {shouldShowResult ? (
+                                  <div
+                                    className={`${styles.option} ${isSelected ? styles.selected : styles['un-selected']}`}
+                                  >
+                                    <div
+                                      className={`${styles.progress} ${option.image ? styles['stack-progress'] : ''}`}
+                                    >
+                                      <i style={{ width: `${percent}%` }} />
+                                    </div>
+                                    <div className={styles.label}>
+                                      {option.image ? <img src={option.image.url} alt="" /> : null}
+                                      <span>{option.label}</span>
+                                    </div>
+                                    <span>{`(${count}명) ${percent}%`}</span>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => void submitPoll(optionIndex)}
+                                    disabled={isSubmittingPoll}
+                                  >
+                                    <div className={styles.label}>
+                                      {option.image ? <img src={option.image.url} alt="" /> : null}
+                                      <span>{option.label}</span>
+                                    </div>
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ol>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             ) : null}
