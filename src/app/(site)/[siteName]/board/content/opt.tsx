@@ -9,6 +9,10 @@ import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -232,6 +236,9 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
+  const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
+
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
   const [pollErrorMessage, setPollErrorMessage] = useState('');
@@ -255,6 +262,23 @@ export default function Opt() {
     }
 
     return date.getTime() <= Date.now();
+  }
+
+  function openGalleryViewer(index: number) {
+    setGalleryViewerIndex(index);
+    setGalleryViewerOpen(true);
+  }
+
+  function closeGalleryViewer() {
+    setGalleryViewerOpen(false);
+  }
+
+  function showNextGalleryImage() {
+    if (!content?.images || content.images.length === 0) {
+      return;
+    }
+
+    setGalleryViewerIndex((previousIndex) => (previousIndex + 1) % content.images!.length);
   }
 
   async function increasePostCount(nextBoardName: string, nextContentId: string) {
@@ -536,12 +560,53 @@ export default function Opt() {
               ) : null}
               {content.images && content.images.length > 0 ? (
                 <div className={styles['content-images']}>
-                  {content.images.map((image) => (
+                  {content.images.map((image, index) => (
                     <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <img src={image.url} alt="" />
+                      <button type="button" onClick={() => openGalleryViewer(index)}>
+                        <img src={image.url} alt="" />
+                      </button>
                     </div>
                   ))}
                 </div>
+              ) : null}
+              {content.images && content.images.length > 0 ? (
+                <Dialog
+                  open={galleryViewerOpen}
+                  onClose={closeGalleryViewer}
+                  fullScreen
+                  className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+                >
+                  <DialogTitle className={styles['dialog-title']}>{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
+                  <DialogContent className={styles['dialog-content']}>
+                    <img src={content.images[galleryViewerIndex].url} alt="" />
+                  </DialogContent>
+                  <DialogActions className={styles['dialog-actions']}>
+                    <button
+                      type="button"
+                      onClick={showNextGalleryImage}
+                      className={`${styles['control-button']} ${styles['prev-button']}`}
+                      aria-label="이전 이미지"
+                    >
+                      <ArrowBackRoundedIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showNextGalleryImage}
+                      className={`${styles['control-button']} ${styles['next-button']}`}
+                      aria-label="다음 이미지"
+                    >
+                      <ArrowForwardRoundedIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeGalleryViewer}
+                      className={styles['close-button']}
+                      aria-label="갤러리 닫기"
+                    >
+                      <CloseRoundedIcon />
+                    </button>
+                  </DialogActions>
+                </Dialog>
               ) : null}
               {hashtags.length > 0 ? (
                 <div className={styles['content-tags']}>
