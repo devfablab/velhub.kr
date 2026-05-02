@@ -1353,7 +1353,14 @@ export default function Opt() {
   }
 
   async function buildPollPayloadIfNeeded(): Promise<PollPayload | null> {
-    if (!isPollEnabled) {
+    const hasPollValue =
+      Boolean(normalizeText(poll.question)) ||
+      Boolean(poll.endType) ||
+      poll.options.some(
+        (option) => Boolean(normalizeText(option.label)) || Boolean(option.imageFile || option.imagePath),
+      );
+
+    if (!hasPollValue) {
       return null;
     }
 
@@ -1411,6 +1418,7 @@ export default function Opt() {
       }
 
       options.push({
+        id: item.optionIndex + 1,
         label: item.label,
         image:
           poll.useOptionThumbnail && targetOption.imagePath
@@ -1426,6 +1434,7 @@ export default function Opt() {
 
     setPoll(nextPoll);
     setPollDialog(clonePollState(nextPoll));
+    setIsPollEnabled(true);
 
     return {
       question: normalizedQuestion,
@@ -1482,7 +1491,7 @@ export default function Opt() {
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt : null,
           images: isGalleryBoard || isFeedBoard ? uploadedImages : [],
-          poll: isBasicBoard && isPollEnabled ? pollPayload : null,
+          poll: isBasicBoard ? pollPayload : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
           isComment,
@@ -1960,12 +1969,13 @@ export default function Opt() {
                 type="text"
                 value={pollDialog.question}
                 placeholder="투표 질문을 입력해주세요"
-                onChange={(event) =>
+                onChange={(event) => {
+                  const nextQuestion = event.currentTarget.value;
                   setPollDialog((previousPoll) => ({
                     ...previousPoll,
-                    question: event.currentTarget.value,
-                  }))
-                }
+                    question: nextQuestion,
+                  }));
+                }}
               />
             </div>
             <FormControlLabel
@@ -2105,7 +2115,7 @@ export default function Opt() {
                   }
                   ampm={false}
                   views={['hours', 'minutes']}
-                  format="hh시간 mm분"
+                  format="H시간 mm분"
                   slotProps={{
                     textField: {
                       size: 'small',
@@ -2117,18 +2127,31 @@ export default function Opt() {
             </div>
           ) : null}
         </DialogContent>
-        <DialogActions>
+        <DialogActions className={isPollEnabled ? 'complex-buttons' : undefined}>
           {isPollEnabled ? (
-            <button type="button" onClick={removePoll} className="delete-button">
-              투표 삭제
-            </button>
-          ) : null}
-          <button type="button" onClick={closePollDialog} className="cancel-button">
-            취소
-          </button>
-          <button type="button" onClick={applyPollDialog}>
-            투표 설정
-          </button>
+            <>
+              <button type="button" onClick={removePoll} className="delete-button">
+                투표 삭제
+              </button>
+              <div className="complex-button">
+                <button type="button" onClick={closePollDialog} className="cancel-button">
+                  취소
+                </button>
+                <button type="button" onClick={applyPollDialog}>
+                  투표 설정
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={closePollDialog} className="cancel-button">
+                취소
+              </button>
+              <button type="button" onClick={applyPollDialog}>
+                투표 설정
+              </button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 

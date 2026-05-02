@@ -119,7 +119,7 @@ function normalizeHashtags(value: unknown) {
   return Array.from(
     new Set(
       value
-        .map((item) => normalizeText(item))
+        .map((item) => (typeof item === 'string' ? normalizeText(item) : ''))
         .filter(Boolean)
         .map((item) => (item.startsWith('#') ? item.slice(1) : item))
         .map((item) => item.replace(/\s+/g, ' '))
@@ -214,9 +214,37 @@ function normalizePoll(value: unknown, creatorId: string) {
   const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
   const endType = rawValue.endType === 'absolute' || rawValue.endType === 'relative' ? rawValue.endType : '';
   const endsAt = typeof rawValue.endsAt === 'string' ? normalizeText(rawValue.endsAt) : '';
+  const rawOptions = Array.isArray(rawValue.options) ? rawValue.options : [];
+
+  const hasPollValue =
+    Boolean(question) ||
+    Boolean(endType) ||
+    Boolean(endsAt) ||
+    rawOptions.some((item) => {
+      if (!item || typeof item !== 'object') {
+        return false;
+      }
+
+      const rawOption = item as {
+        label?: unknown;
+        image?: unknown;
+        imagePath?: unknown;
+        imageUrl?: unknown;
+      };
+
+      const label = typeof rawOption.label === 'string' ? normalizeText(rawOption.label) : '';
+      const imagePath = typeof rawOption.imagePath === 'string' ? normalizeText(rawOption.imagePath) : '';
+      const imageUrl = typeof rawOption.imageUrl === 'string' ? normalizeText(rawOption.imageUrl) : '';
+
+      return Boolean(label || rawOption.image || imagePath || imageUrl);
+    });
+
+  if (!hasPollValue) {
+    return null;
+  }
 
   if (!question) {
-    return null;
+    return 'INVALID_QUESTION';
   }
 
   if (!endType) {
@@ -241,11 +269,7 @@ function normalizePoll(value: unknown, creatorId: string) {
     return 'INVALID_END_AT';
   }
 
-  if (!Array.isArray(rawValue.options)) {
-    return null;
-  }
-
-  const normalizedOptions = rawValue.options
+  const normalizedOptions = rawOptions
     .map((item) => {
       if (!item || typeof item !== 'object') {
         return null;
@@ -254,6 +278,10 @@ function normalizePoll(value: unknown, creatorId: string) {
       const rawOption = item as {
         label?: unknown;
         image?: unknown;
+        imagePath?: unknown;
+        imageUrl?: unknown;
+        imageWidth?: unknown;
+        imageHeight?: unknown;
       };
 
       const label = typeof rawOption.label === 'string' ? normalizeText(rawOption.label) : '';
@@ -262,9 +290,30 @@ function normalizePoll(value: unknown, creatorId: string) {
         return null;
       }
 
+      const directImage = normalizePollImage(rawOption.image);
+      const imagePath = typeof rawOption.imagePath === 'string' ? normalizeText(rawOption.imagePath) : '';
+      const imageUrl = typeof rawOption.imageUrl === 'string' ? normalizeText(rawOption.imageUrl) : '';
+
+      const image =
+        directImage ??
+        (imagePath && imageUrl
+          ? {
+              path: imagePath,
+              url: imageUrl,
+              width:
+                typeof rawOption.imageWidth === 'number' && Number.isFinite(rawOption.imageWidth)
+                  ? Math.floor(rawOption.imageWidth)
+                  : null,
+              height:
+                typeof rawOption.imageHeight === 'number' && Number.isFinite(rawOption.imageHeight)
+                  ? Math.floor(rawOption.imageHeight)
+                  : null,
+            }
+          : null);
+
       return {
         label,
-        image: normalizePollImage(rawOption.image),
+        image,
       };
     })
     .filter((item): item is { label: string; image: PollOptionImageRow | null } => Boolean(item))
@@ -452,6 +501,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const poll = normalizePoll(requestBody.poll, session.authUserId);
 
+    if (poll === 'INVALID_QUESTION') {
+      return Response.json({ error: '투표 질문을 입력해주세요.' }, { status: 400 });
+    }
+
     if (poll === 'INVALID_END_TYPE') {
       return Response.json({ error: '투표 종료 방식을 선택해주세요.' }, { status: 400 });
     }
@@ -582,10 +635,6 @@ export async function PATCH(request: Request, context: RouteContext) {
         if (!finalContentHtml || !finalContentMarkdown) {
           return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
         }
-      }
-
-      if (currentPost.data.published_status === 'published' && (currentPost.data.poll || finalPoll)) {
-        finalPoll = currentPost.data.poll as PollRow | null;
       }
     }
 
