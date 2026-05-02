@@ -138,7 +138,7 @@ export async function getPostContent({
   const postQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin',
+      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin',
     )
     .eq('site_id', siteId)
     .eq('board_id', boardId);
@@ -163,38 +163,6 @@ export async function getPostContent({
 
   const authorName = await getUserDisplayName(siteId, post.data.user_id);
   const closedByName = await getUserDisplayName(siteId, post.data.closed_by);
-
-  const categoryIds = Array.isArray(post.data.categories)
-    ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
-    : [];
-
-  let categories: Array<{
-    id: string;
-    category_key: string;
-    category_label: string;
-    summary: string | null;
-    thumbnail_image: string | null;
-    sort_order: number;
-    board_id: string;
-    site_id: string;
-    created_at?: string;
-  }> = [];
-
-  if (categoryIds.length > 0) {
-    const categoryResult = await supabaseAdmin
-      .from('board_categories')
-      .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
-      .eq('site_id', siteId)
-      .eq('board_id', boardId)
-      .in('id', categoryIds)
-      .order('sort_order', { ascending: true });
-
-    if (categoryResult.error) {
-      throw new BoardContentError('카테고리 정보를 불러오지 못했습니다.', 500);
-    }
-
-    categories = categoryResult.data ?? [];
-  }
 
   let series: {
     id: string;
@@ -301,7 +269,6 @@ export async function getPostContent({
       images: normalizeImages(post.data.images),
       post_count: postCount,
     },
-    categories,
     series,
     prefixes,
     isAuthor,

@@ -12,6 +12,30 @@
       width: ds.rem(26)
       height: ds.rem(26)
 
+  .top-buttons
+    display: flex
+    justify-content: space-between
+
+    a
+      display: inline-flex
+      gap: ds.rem(5)
+      align-items: center
+      padding: 0 ds.rem(12)
+      height: ds.rem(37)
+      border-radius: ds.rem(7)
+      @include ds.fw(pre, 700)
+
+      span
+        padding-left: ds.rem(3)
+
+      svg
+        width: ds.rem(16)
+        height: ds.rem(16)
+
+        + span
+          padding-right: ds.rem(3)
+          padding-left: 0
+
   .board-search-container
     display: flex
     justify-content: flex-end
@@ -257,6 +281,129 @@
 
     .submit
       color: ds.$hex-bright
+
+  article
+    display: flex
+    flex-direction: column
+    gap: ds.rem(17)
+
+    .board-container
+      display: flex
+      flex-direction: column
+      gap: ds.rem(17)
+
+  .content-header
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+
+    .content-board-name
+      display: flex
+      justify-content: space-between
+
+      a
+        display: inline-flex
+        align-items: center
+        gap: ds.rem(3)
+
+      .board-link
+        @include ds.fw(pre, 700)
+        color: ds.$hex-accent
+
+        svg
+          width: ds.rem(16)
+          height: ds.rem(16)
+
+        &:hover, &:focus-visible
+          text-decoration: underline
+
+      .edit-link
+        height: ds.rem(27)
+        border: 1px solid rgba(ds.$hex-tertiary, .2)
+        border-radius: ds.rem(7)
+        padding: 0 ds.rem(7)
+        color: rgba(ds.$hex-tertiary, 1)
+        font-size: ds.rem(14)
+
+    h3
+      display: flex
+      gap: ds.rem(7)
+
+      .pin-icon
+        color: ds.$hex-warning
+        position: relative
+        top: ds.rem(2)
+
+        svg
+          width: ds.rem(20)
+          height: ds.rem(20)
+          transform: rotate(45deg)
+
+      small, strong
+        @include ds.fw(neo, 700)
+        line-height: 1.5
+
+      small
+        font-size: ds.rem(20)
+        opacity: .7
+
+    .author-profile
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+
+      .info
+        @include ds.col
+        display: flex
+        flex-direction: column
+
+        .name
+          display: flex
+          align-items: center
+          gap: ds.rem(7)
+
+          cite
+            font-size: ds.rem(14)
+
+          em
+            display: flex
+            align-items: center
+            gap: ds.rem(3)
+            font-style: normal
+
+          span
+            font-size: ds.rem(12)
+
+          img
+            width: ds.rem(12)
+            height: ds.rem(12)
+
+        .datetime
+          width: 100%
+          display: flex
+          gap: ds.rem(7 )
+          align-items: center
+          flex-direction: row
+          opacity: .5
+
+          span
+            display: inline-flex
+            align-items: center
+            gap: ds.rem(3)
+            font-size: ds.rem(12)
+
+          svg
+            width: ds.rem(16)
+            height: ds.rem(16)
+
+  .youtube-board
+    font-size: ds.rem(14)
+
+    strong
+      @include ds.fw(pre, 700)
+
+    .content-simple
+      white-space: pre-wrap
 
 .thumbnail-dialog
   .thumbnail-dialog-content

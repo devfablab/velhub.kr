@@ -1596,7 +1596,7 @@ export default function Opt() {
                         <input
                           type="text"
                           value={subject}
-                          placeholder="제목을 입력해 주세요"
+                          placeholder="제목을 입력해 주세요 (필수)"
                           style={{ paddingLeft: subjectPaddingLeft }}
                           onChange={(event) => setSubject(event.currentTarget.value)}
                         />
@@ -1623,21 +1623,20 @@ export default function Opt() {
 
                 {isYoutubeBoard ? (
                   <div className={`${styles['post-info']} ${styles['post-row']}`}>
-                    <input id="youtube-id" type="hidden" value={youtubeId} />
+                    <input type="hidden" value={youtubeId} />
                     <div className={styles['form-group']}>
                       <div className={styles['form-control']}>
                         <input
-                          id="youtube-url"
                           type="text"
                           value={youtubeUrl}
-                          placeholder="유튜브 영상 주소를 입력해주세요"
+                          placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
                           style={{ paddingLeft: 12 }}
                           onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
                         />
                       </div>
                     </div>
                     <div className={styles['form-group']}>
-                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
+                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜 (필수)</label>
                       <div className={styles['form-control']}>
                         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                           <DatePicker
@@ -1924,7 +1923,6 @@ export default function Opt() {
           <div className={styles['form-group']}>
             <div className={styles['form-control']}>
               <input
-                id="poll-question"
                 type="text"
                 value={pollDialog.question}
                 placeholder="투표 질문을 입력해주세요"

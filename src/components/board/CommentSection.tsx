@@ -243,7 +243,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
 
   if (isLoading) {
     return (
-      <section className="comment-section">
+      <section className="comment-section paper">
         <h3>댓글</h3>
         <div className="loading-container">댓글을 불러오는 중입니다.</div>
       </section>
@@ -251,7 +251,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
   }
 
   return (
-    <section className="comment-section">
+    <section className="comment-section paper">
       <h3>댓글</h3>
 
       {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
@@ -282,7 +282,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
             />
           ))
         ) : (
-          <p>등록된 댓글이 없습니다.</p>
+          <p>이 글의 첫 댓글을 달아보세요.</p>
         )}
       </div>
     </section>
