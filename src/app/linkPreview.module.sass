@@ -1,0 +1,73 @@
+.link-preview
+  display: flex
+
+  a
+    display: inline-flex
+    flex-direction: column
+    width: 100%
+    max-width: 520px
+    border-radius: ds.rem(7)
+
+    html[data-theme="yellow-light"] &
+      border: 1px solid rgba(ds.$hex-tertiary, .1)
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$hex-tertiary, .5)
+
+    .thumbnail
+      img
+        displays: block
+        aspect-ratio: 1200 / 630
+        max-width: 100%
+        height: auto
+        object-fit: cover
+        object-position: center
+
+    .info
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
+      padding: ds.rem(7) ds.rem(12)
+      line-height: 1.25
+
+      strong
+        @include ds.line-abbr(1, 17, 1.2)
+        @include ds.fw(neo, 700)
+        font-size: ds.rem(14)
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
+
+      p
+        @include ds.line-abbr(3, 43, 1.2)
+        font-size: ds.rem(12)
+
+        html[data-theme="yellow-light"] &
+          opacity: .7
+          color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          opacity: .6
+          color: ds.$hex-light
+
+      .site
+        display: flex
+        gap: ds.rem(12)
+
+        cite, em
+          @include ds.fw(pre, 700)
+          font-size: ds.rem(12)
+          font-style: normal
+          opacity: .7
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-tertiary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
+
+        em
+          text-transform: uppercase

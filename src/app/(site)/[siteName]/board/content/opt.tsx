@@ -18,6 +18,7 @@ import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import CommentSection from '@/components/board/CommentSection';
+import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
 
 type BoardInfo = {
@@ -220,6 +221,12 @@ function getAuthorRoleLabel(role: AuthorRole) {
   return '';
 }
 
+function extractUrls(value: string) {
+  const matchedUrls = value.match(/https?:\/\/[^\s<>"']+/g) ?? [];
+
+  return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
+}
+
 export default function Opt() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -402,7 +409,7 @@ export default function Opt() {
       setIsSubmittingPoll(true);
       setPollErrorMessage('');
 
-      const response = await fetch(`/api/boards/${boardName}/${content.id}/poll`, {
+      const response = await fetch(`/api/boards/${boardName}/${content?.id}/poll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -476,6 +483,7 @@ export default function Opt() {
   const isFeedBoard = board.board_type === 'feed';
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
+  const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
 
   return (
     <div className={`${styles.content} content`}>
@@ -526,7 +534,7 @@ export default function Opt() {
                   {series.is_completed ? ' (완결)' : null}]
                 </small>
               ) : null}
-              <strong>{content.subject}</strong>
+              {!isFeedBoard ? <strong>{content.subject}</strong> : null}
             </h3>
 
             <div className={styles['author-profile']}>
@@ -661,6 +669,13 @@ export default function Opt() {
                     <div key={image.path} className={styles['content-thumbnail-image']}>
                       <img src={image.url} alt="" />
                     </div>
+                  ))}
+                </div>
+              ) : null}
+              {feedLinkPreviewUrls.length > 0 ? (
+                <div className={styles['link-previews']}>
+                  {feedLinkPreviewUrls.map((url) => (
+                    <LinkPreview key={url} href={url} />
                   ))}
                 </div>
               ) : null}

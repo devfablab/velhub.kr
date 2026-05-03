@@ -396,14 +396,22 @@
             width: ds.rem(16)
             height: ds.rem(16)
 
+  .content-simple
+    white-space: pre-wrap
+    font-size: ds.rem(14)
+    line-height: 1.5
+
+  .link-previews
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+    margin-top: ds.rem(12)
+
   .youtube-board
     font-size: ds.rem(14)
 
     strong
       @include ds.fw(pre, 700)
-
-    .content-simple
-      white-space: pre-wrap
 
   .content-poll
     display: flex
