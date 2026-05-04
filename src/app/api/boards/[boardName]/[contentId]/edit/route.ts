@@ -715,6 +715,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       action === 'draft' ? 'draft' : currentPost.data.published_status === 'draft' ? 'published' : 'published';
 
     const updatePayload: {
+      idx?: number;
       subject: string | null;
       summary: string | null;
       content_html: string | null;
@@ -761,6 +762,21 @@ export async function PATCH(request: Request, context: RouteContext) {
     };
 
     if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {
+      const latestPost = await supabaseAdmin
+        .from('posts')
+        .select('idx')
+        .eq('site_id', rhizome.data.id)
+        .order('idx', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestPost.error) {
+        return Response.json({ error: '글 순서를 갱신하지 못했습니다.' }, { status: 500 });
+      }
+
+      const latestIdx = typeof latestPost.data?.idx === 'number' ? latestPost.data.idx : 0;
+
+      updatePayload.idx = latestIdx + 1;
       updatePayload.published_at = nowIsoString;
       updatePayload.edited_at = null;
     }

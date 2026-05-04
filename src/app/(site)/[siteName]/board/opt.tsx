@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import SearchIcon from '@mui/icons-material/Search';
+import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -14,6 +16,7 @@ import styles from '@/app/board.module.sass';
 
 type PostItem = {
   id: string;
+  idx: number;
   slug: string;
   subject: string;
   summary: string | null;
@@ -43,6 +46,9 @@ type BoardListResponse = {
   keyword?: string;
   error?: string;
 };
+
+const PAGE_SIZE = 20;
+const PAGER_SIZE = 10;
 
 function renderHighlightedText(value: string, keyword: string) {
   const normalizedKeyword = normalizeText(keyword);
@@ -79,23 +85,57 @@ function renderHighlightedText(value: string, keyword: string) {
   return result;
 }
 
+function parsePage(value: string | null) {
+  const parsedValue = Number(value);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return 1;
+  }
+
+  return Math.floor(parsedValue);
+}
+
+function getPageNumbers(currentPage: number, totalPage: number) {
+  const currentGroup = Math.floor((currentPage - 1) / PAGER_SIZE);
+  const startPage = currentGroup * PAGER_SIZE + 1;
+  const endPage = Math.min(startPage + PAGER_SIZE - 1, totalPage);
+
+  return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
+}
+
 export default function Opt() {
+  const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
 
+  const initialPage = parsePage(searchParams.get('page'));
+  const initialKeyword = normalizeText(searchParams.get('keyword'));
+
   const [contents, setContents] = useState<PostItem[]>([]);
-  const [keywordInput, setKeywordInput] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [keywordInput, setKeywordInput] = useState(initialKeyword);
+  const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
+  const [totalPage, setTotalPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  async function loadContents(nextKeyword = '') {
+  async function loadContents(nextPage = 1, nextKeyword = '') {
     try {
       setErrorMessage('');
 
-      const keywordQuery = nextKeyword ? `&keyword=${nextKeyword}` : '';
-      const response = await fetch(`/api/boards/all?siteName=${siteName}&page=1&size=20${keywordQuery}`, {
+      const queryParams = new URLSearchParams({
+        siteName,
+        page: String(nextPage),
+        size: String(PAGE_SIZE),
+      });
+
+      if (nextKeyword) {
+        queryParams.set('keyword', nextKeyword);
+      }
+
+      const response = await fetch(`/api/boards/all?${queryParams.toString()}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -107,7 +147,9 @@ export default function Opt() {
       }
 
       setContents(Array.isArray(result.contents) ? result.contents : []);
+      setCurrentPage(typeof result.page === 'number' ? result.page : nextPage);
       setTotalCount(typeof result.totalCount === 'number' ? result.totalCount : 0);
+      setTotalPage(typeof result.totalPage === 'number' ? result.totalPage : 1);
       setSearchKeyword(nextKeyword);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -120,21 +162,52 @@ export default function Opt() {
     }
   }
 
+  function updateRoute(nextPage: number, nextKeyword: string) {
+    const queryParams = new URLSearchParams();
+
+    if (nextPage > 1) {
+      queryParams.set('page', String(nextPage));
+    }
+
+    if (nextKeyword) {
+      queryParams.set('keyword', nextKeyword);
+    }
+
+    const queryString = queryParams.toString();
+
+    router.push(queryString ? `/${siteName}/board?${queryString}` : `/${siteName}/board`);
+  }
+
   useEffect(() => {
-    void loadContents();
+    const nextPage = parsePage(searchParams.get('page'));
+    const nextKeyword = normalizeText(searchParams.get('keyword'));
+
+    setKeywordInput(nextKeyword);
+    setIsLoading(true);
+    void loadContents(nextPage, nextKeyword);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [siteName]);
+  }, [siteName, searchParams]);
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextKeyword = normalizeText(keywordInput);
 
-    setIsLoading(true);
-    void loadContents(nextKeyword);
+    updateRoute(1, nextKeyword);
+  }
+
+  function handlePageClick(nextPage: number) {
+    if (nextPage < 1 || nextPage > totalPage || nextPage === currentPage) {
+      return;
+    }
+
+    updateRoute(nextPage, searchKeyword);
   }
 
   const isSearchMode = Boolean(searchKeyword);
+  const pageNumbers = getPageNumbers(currentPage, totalPage);
+  const hasPreviousPager = pageNumbers[0] > 1;
+  const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
 
   if (isLoading) {
     return (
@@ -300,7 +373,7 @@ export default function Opt() {
                         </i>
                       ) : null}
                       <small className="board-name board-chip" aria-label="게시판명">
-                        {content.board_label}
+                        {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
                       </small>
                       {content.prefix_label ? (
                         <small className="prefix-name board-chip" aria-label="말머리">
@@ -343,6 +416,44 @@ export default function Opt() {
           </table>
         </div>
       )}
+
+      {totalPage > 1 ? (
+        <nav className={styles.pagination} aria-label="페이지네이션">
+          {hasPreviousPager ? (
+            <button
+              type="button"
+              onClick={() => handlePageClick(pageNumbers[0] - 1)}
+              className={styles.pager}
+              aria-label="이전 페이지 묶음"
+            >
+              <ArrowBackIosRoundedIcon />
+            </button>
+          ) : null}
+
+          {pageNumbers.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              onClick={() => handlePageClick(pageNumber)}
+              className={pageNumber === currentPage ? styles.current : undefined}
+              aria-current={pageNumber === currentPage ? 'page' : undefined}
+            >
+              {pageNumber}
+            </button>
+          ))}
+
+          {hasNextPager ? (
+            <button
+              type="button"
+              onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
+              className={styles.pager}
+              aria-label="다음 페이지 묶음"
+            >
+              <ArrowForwardIosRoundedIcon />
+            </button>
+          ) : null}
+        </nav>
+      ) : null}
 
       <div className={styles['button-group']}>
         <Anchor href={`/${siteName}/board/new`} className={`${styles.submit} button`}>

@@ -12,6 +12,23 @@
       width: ds.rem(26)
       height: ds.rem(26)
 
+  .pagination
+    display: flex
+    justify-content: center
+    gap: ds.rem(7)
+
+    button
+      height: ds.rem(27)
+      border-radius: ds.rem(7)
+      padding: 0 ds.rem(10)
+      color: ds.$hex-action
+      @include ds.fw(neo, 700)
+      font-size: ds.rem(12)
+
+      &.pager, &.current, &:hover, &:focus-visible
+        background-color: ds.$hex-action
+        color: ds.$hex-white
+
   .top-buttons
     display: flex
     justify-content: space-between
