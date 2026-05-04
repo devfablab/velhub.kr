@@ -39,8 +39,11 @@
       position: absolute
       right: ds.rem(12)
       bottom: ds.rem(12)
+      display: flex
+      justify-content: flex-end
+      gap: ds.rem(7)
 
-      .submit, .submit-button
+      .submit, .cancel-button, .submit-button
         display: flex
         align-items: center
         height: ds.rem(30)
@@ -48,9 +51,10 @@
         padding: 0 ds.rem(12)
         @include ds.fw(pre, 700)
         font-size: ds.rem(14)
-        cursor: default
 
       .submit
+        cursor: default
+
         html[data-theme="yellow-light"] &
           background-color: rgba(ds.$hex-tertiary, .5)
           color: rgba(ds.$hex-bright, .7)
@@ -58,6 +62,16 @@
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$hex-tertiary, .2)
           color: rgba(ds.$hex-bright, .2)
+
+      .cancel-button
+        background-color: transparent
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-primary
+          opacity: .7
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
 
       .submit-button
         background-color: ds.$hex-accent
@@ -96,6 +110,17 @@
     textarea
       resize: none
       line-height: 1.25
+
+      &.reply-textarea
+        padding-top: ds.rem(32)
+
+    strong
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(14)
+      color: ds.$hex-accent
+      position: absolute
+      top: ds.rem(12)
+      left: ds.rem(52)
 
   .comment-items
     display: flex
@@ -160,6 +185,10 @@
           display: flex
           gap: ds.rem(7)
           font-size: ds.rem(12)
+
+          time
+            @include ds.fw(pre, 700)
+            opacity: .7
 
           button
             font-size: ds.rem(12)

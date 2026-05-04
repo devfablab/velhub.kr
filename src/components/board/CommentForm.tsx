@@ -76,7 +76,7 @@ export default function CommentForm({
         <div className={styles.textarea}>
           <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
 
-          {replyTargetName ? <cite>@{replyTargetName}</cite> : null}
+          {replyTargetName ? <strong>{replyTargetName}</strong> : null}
 
           <textarea
             ref={textareaReference}
@@ -84,6 +84,7 @@ export default function CommentForm({
             placeholder={placeholder}
             disabled={isSubmitting}
             rows={1}
+            className={replyTargetName ? styles['reply-textarea'] : undefined}
             onChange={handleContentChange}
           />
 
