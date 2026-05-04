@@ -1,0 +1,114 @@
+.comment-section
+  display: flex
+  flex-direction: column
+
+  .comment-headline
+    display: flex
+    gap: ds.rem(7)
+
+    strong
+      display: flex
+      gap: ds.rem(5)
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(16)
+
+    button
+      display: flex
+      justify-content: center
+      align-items: center
+      width: ds.rem(24)
+      height: ds.rem(24)
+      background-color: transparent
+      border-radius: 100%
+      color: rgba(gray, .7)
+
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$hex-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$hex-tertiary, .5)
+
+      svg
+        width: ds.rem(18)
+        height: ds.rem(18)
+
+  .textarea
+    position: relative
+
+    .options
+      position: absolute
+      right: ds.rem(12)
+      bottom: ds.rem(12)
+
+      .submit, .submit-button
+        display: flex
+        align-items: center
+        height: ds.rem(30)
+        border-radius: ds.rem(15)
+        padding: 0 ds.rem(12)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(14)
+        cursor: default
+
+      .submit
+        html[data-theme="yellow-light"] &
+          background-color: rgba(ds.$hex-tertiary, .5)
+          color: rgba(ds.$hex-bright, .7)
+
+        html[data-theme="yellow-dark"] &
+          background-color: rgba(ds.$hex-tertiary, .2)
+          color: rgba(ds.$hex-bright, .2)
+
+      .submit-button
+        background-color: ds.$hex-accent
+        color: ds.$hex-bright
+
+        &:disabled
+          html[data-theme="yellow-light"] &
+            background-color: rgba(ds.$hex-tertiary, .5)
+            color: rgba(ds.$hex-bright, .7)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgba(ds.$hex-tertiary, .2)
+            color: rgba(ds.$hex-bright, .2)
+
+    a, textarea
+      display: block
+      width: 100%
+      min-height: ds.rem(127)
+      border-radius: ds.rem(12)
+      padding: ds.rem(12) ds.rem(12) ds.rem(52) ds.rem(52)
+      font-size: ds.rem(14)
+
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$hex-tertiary, .2)
+        background-color: rgba(ds.$hex-bright, .5)
+        color: rgba(ds.$hex-primary, .7)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$hex-tertiary, .5)
+        background-color: rgba(ds.$hex-primary, .5)
+        color: rgba(ds.$hex-bright, .7)
+
+    a
+      line-height: 1
+
+    textarea
+      resize: none
+      line-height: 1.25
+
+  .comment-0
+    display: flex
+    flex-direction: column
+    align-items: center
+    gap: ds.rem(17)
+    padding: ds.rem(72) 0
+
+    html[data-theme="yellow-light"] &
+      color: rgba(ds.$hex-primary, .5)
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$hex-bright, .5)
+
+    span
+      font-size: ds.rem(14)

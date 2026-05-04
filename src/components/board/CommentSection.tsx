@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
 import CommentForm from '@/components/board/CommentForm';
 import CommentItem, { type CommentData } from '@/components/board/CommentItem';
+import Anchor from '../Anchor';
+import { LoadingIndicator } from '../LoadingIndicator';
+import styles from '@/app/comments.module.sass';
+import { Avatar } from '@mui/material';
 
 type Props = {
   siteName: string;
@@ -14,6 +20,7 @@ type Props = {
 
 type CommentsResponse = {
   comments?: CommentData[];
+  mySelfAvatarUrl?: string;
   actions?: {
     canWrite?: boolean;
     canManageComment?: boolean;
@@ -29,6 +36,7 @@ type CommentActionResponse = {
 
 export default function CommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
   const [comments, setComments] = useState<CommentData[]>([]);
+  const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
   const [canWrite, setCanWrite] = useState(false);
   const [canManageComment, setCanManageComment] = useState(false);
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
@@ -52,6 +60,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
       }
 
       setComments(Array.isArray(result.comments) ? result.comments : []);
+      setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
       setCanWrite(result.actions?.canWrite === true);
       setCanManageComment(result.actions?.canManageComment === true);
     } catch (unknownError) {
@@ -245,26 +254,50 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
     return (
       <section className="comment-section paper">
         <h3>댓글</h3>
-        <div className="loading-container">댓글을 불러오는 중입니다.</div>
+        <div className="loading-container">
+          <LoadingIndicator />
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="comment-section paper">
-      <h3>댓글</h3>
-
+    <section className={`${styles['comment-section']} paper`}>
       {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
 
-      {!isCommentEnabled ? <p>댓글이 허용되지 않은 글입니다.</p> : null}
+      <div className={styles['comment-headline']}>
+        <strong>
+          <span>댓글</span>
+          <span aria-label="댓글 갯수">{comments.length}</span>
+        </strong>
+        <button type="button" aria-label="댓글 새로고침" onClick={() => void loadComments()} disabled={isSubmitting}>
+          <RefreshRoundedIcon />
+        </button>
+      </div>
 
       {isCommentEnabled && canWrite ? (
-        <CommentForm isSubmitting={isSubmitting} onSubmit={(content) => createComment(content, null)} />
+        <CommentForm
+          avatarUrl={mySelfAvatarUrl}
+          isSubmitting={isSubmitting}
+          onSubmit={(content) => createComment(content, null)}
+        />
       ) : null}
 
-      {isCommentEnabled && !canWrite ? <p>댓글을 작성하려면 로그인이 필요합니다.</p> : null}
+      {isCommentEnabled && !canWrite ? (
+        <div className={styles.textarea}>
+          <Avatar
+            src="/broken-image.jpg"
+            alt=""
+            sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
+          />
+          <Anchor href={`/auth/sign-in`}>로그인 하시면 댓글을 다실 수 있어요</Anchor>
+          <div className={styles.options}>
+            <div className={styles.submit}>등록</div>
+          </div>
+        </div>
+      ) : null}
 
-      <div className="comment-list">
+      <div className={styles['comment-items']}>
         {comments.length > 0 ? (
           comments.map((comment) => (
             <CommentItem
@@ -282,7 +315,10 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
             />
           ))
         ) : (
-          <p>이 글의 첫 댓글을 달아보세요.</p>
+          <p className={styles['comment-0']}>
+            <SmsOutlinedIcon sx={{ width: 57, height: 57 }} />
+            <span>이 글의 첫 댓글을 달아보세요!</span>
+          </p>
         )}
       </div>
     </section>

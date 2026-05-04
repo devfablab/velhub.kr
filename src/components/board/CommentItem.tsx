@@ -8,6 +8,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import CommentForm from '@/components/board/CommentForm';
+import styles from '@/app/comments.module.sass';
 
 type AuthorRole =
   | 'owner'
@@ -195,7 +196,7 @@ export default function CommentItem({
   return (
     <article className={depth === 1 ? 'comment-item comment-reply-item' : 'comment-item'}>
       <div className="comment-author">
-        <Avatar src={comment.author_avatar_url} alt={comment.author_name || '작성자'} />
+        <Avatar src={comment.author_avatar_url} alt={comment.author_name} />
 
         <div>
           <div className="comment-author-info">

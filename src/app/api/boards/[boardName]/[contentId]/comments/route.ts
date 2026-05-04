@@ -589,6 +589,21 @@ export async function GET(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    let mySelfAvatarUrl = '';
+
+    if (session.authUserId) {
+      const stigmaResult = await supabaseAdmin
+        .from('stigmas')
+        .select('avatar')
+        .eq('user_id', session.authUserId)
+        .maybeSingle();
+
+      if (!stigmaResult.error && stigmaResult.data?.avatar) {
+        const avatarUrl = getAvatarUrl(stigmaResult.data.avatar ?? null);
+        mySelfAvatarUrl = avatarUrl;
+      }
+    }
+
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
@@ -623,6 +638,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     return Response.json({
       comments: groupComments(commentItems),
+      mySelfAvatarUrl,
       actions: {
         canWrite:
           Boolean(session.authUserId) &&
