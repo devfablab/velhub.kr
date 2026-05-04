@@ -309,7 +309,11 @@ export async function getPostList({
 
   const commentResult =
     postIds.length > 0
-      ? await supabaseAdmin.from('post_comments').select('post_id').eq('is_deleted', false).in('post_id', postIds)
+      ? await supabaseAdmin
+          .from('post_comments')
+          .select('id, post_id, reply_to_id')
+          .eq('is_deleted', false)
+          .or([`post_id.in.(${postIds.join(',')})`, `reply_to_id.not.is.null`].join(','))
       : { data: [], error: null };
 
   if (commentResult.error) {

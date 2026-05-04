@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SmsOutlinedIcon from '@mui/icons-material/SmsOutlined';
+import { Avatar } from '@mui/material';
 import CommentForm from '@/components/board/CommentForm';
 import CommentItem, { type CommentData } from '@/components/board/CommentItem';
 import Anchor from '../Anchor';
 import { LoadingIndicator } from '../LoadingIndicator';
 import styles from '@/app/comments.module.sass';
-import { Avatar } from '@mui/material';
 
 type Props = {
   siteName: string;
@@ -33,6 +33,24 @@ type CommentActionResponse = {
   comment?: CommentData;
   error?: string;
 };
+
+type CommentWithReplies = CommentData & {
+  replies?: CommentData[];
+  children?: CommentData[];
+};
+
+function getCommentCount(nextComments: CommentData[]): number {
+  return nextComments.reduce<number>((totalCount, comment) => {
+    const nextComment = comment as CommentWithReplies;
+    const replies = Array.isArray(nextComment.replies)
+      ? nextComment.replies
+      : Array.isArray(nextComment.children)
+        ? nextComment.children
+        : [];
+
+    return totalCount + 1 + getCommentCount(replies);
+  }, 0);
+}
 
 export default function CommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
   const [comments, setComments] = useState<CommentData[]>([]);
@@ -261,6 +279,8 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
     );
   }
 
+  const commentCount = getCommentCount(comments);
+
   return (
     <section className={`${styles['comment-section']} paper`}>
       {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
@@ -268,7 +288,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
       <div className={styles['comment-headline']}>
         <strong>
           <span>댓글</span>
-          <span aria-label="댓글 갯수">{comments.length}</span>
+          <span aria-label="댓글 갯수">{commentCount}</span>
         </strong>
         <button type="button" aria-label="댓글 새로고침" onClick={() => void loadComments()} disabled={isSubmitting}>
           <RefreshRoundedIcon />
