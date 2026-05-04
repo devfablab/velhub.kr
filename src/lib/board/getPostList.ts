@@ -136,21 +136,6 @@ function getSearchSnippet(content: string, keyword: string) {
   return `${startIndex > 0 ? '...' : ''}${snippet}${endIndex < normalizedContent.length ? '...' : ''}`;
 }
 
-function applySearchFilter(
-  query: ReturnType<ReturnType<typeof getSupabaseAdmin>['from']> extends infer T ? T : never,
-  keyword: string,
-) {
-  return query.or(
-    [
-      `subject.ilike.%${keyword}%`,
-      `summary.ilike.%${keyword}%`,
-      `content_html.ilike.%${keyword}%`,
-      `content_markdown.ilike.%${keyword}%`,
-      `content_simple.ilike.%${keyword}%`,
-    ].join(','),
-  );
-}
-
 export async function getPostList({
   siteId,
   boardId = null,
@@ -186,7 +171,15 @@ export async function getPostList({
     }
 
     if (searchKeyword) {
-      pinnedQuery = applySearchFilter(pinnedQuery, searchKeyword);
+      pinnedQuery = pinnedQuery.or(
+        [
+          `subject.ilike.%${searchKeyword}%`,
+          `summary.ilike.%${searchKeyword}%`,
+          `content_html.ilike.%${searchKeyword}%`,
+          `content_markdown.ilike.%${searchKeyword}%`,
+          `content_simple.ilike.%${searchKeyword}%`,
+        ].join(','),
+      );
     }
 
     const pinnedResult = await pinnedQuery;
@@ -230,7 +223,15 @@ export async function getPostList({
   }
 
   if (searchKeyword) {
-    postsQuery = applySearchFilter(postsQuery, searchKeyword);
+    postsQuery = postsQuery.or(
+      [
+        `subject.ilike.%${searchKeyword}%`,
+        `summary.ilike.%${searchKeyword}%`,
+        `content_html.ilike.%${searchKeyword}%`,
+        `content_markdown.ilike.%${searchKeyword}%`,
+        `content_simple.ilike.%${searchKeyword}%`,
+      ].join(','),
+    );
   }
 
   postsQuery = postsQuery.range(from, to);

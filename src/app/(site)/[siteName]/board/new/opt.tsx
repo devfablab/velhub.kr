@@ -154,6 +154,7 @@ type PollPayload = {
   endType: 'absolute' | 'relative';
   endsAt: string;
   options: {
+    id?: number;
     label: string;
     image: {
       path: string;
