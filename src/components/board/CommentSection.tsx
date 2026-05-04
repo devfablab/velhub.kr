@@ -303,6 +303,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
             <CommentItem
               key={comment.id}
               comment={comment}
+              avatarUrl={mySelfAvatarUrl}
               activeReplyTargetId={activeReplyTargetId}
               isSubmitting={isSubmitting}
               onReplyClick={(targetComment) => setActiveReplyTargetId(targetComment.id)}

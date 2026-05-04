@@ -97,18 +97,75 @@
       resize: none
       line-height: 1.25
 
-  .comment-0
+  .comment-items
     display: flex
     flex-direction: column
-    align-items: center
     gap: ds.rem(17)
-    padding: ds.rem(72) 0
 
-    html[data-theme="yellow-light"] &
-      color: rgba(ds.$hex-primary, .5)
+    .comment-0
+      display: flex
+      flex-direction: column
+      align-items: center
+      gap: ds.rem(17)
+      padding: ds.rem(72) 0
 
-    html[data-theme="yellow-dark"] &
-      color: rgba(ds.$hex-bright, .5)
+      html[data-theme="yellow-light"] &
+        color: rgba(ds.$hex-primary, .5)
 
-    span
-      font-size: ds.rem(14)
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$hex-bright, .5)
+
+      span
+        font-size: ds.rem(14)
+
+    .comment-item
+      display: flex
+      gap: ds.rem(12)
+
+      .comment-detail
+        display: flex
+        flex-direction: column
+        gap: ds.rem(5)
+        @include ds.col
+
+        .comment-author-info
+          display: flex
+          gap: ds.rem(12)
+          font-size: ds.rem(12)
+
+          cite
+            @include ds.fw(pre, 700)
+
+          .author-manager
+            @include ds.fw(pre, 700)
+            color: ds.$hex-action
+
+          .author-lv
+            color: ds.$hex-secondary
+
+          .comment-status
+            @include ds.fw(pre, 700)
+            color: ds.$hex-warning
+
+        .comment-content
+          font-size: ds.rem(14)
+          line-height: 1.25
+
+          strong
+            margin-right: ds.rem(7)
+            @include ds.fw(pre, 700)
+            color: ds.$hex-accent
+
+        .options
+          display: flex
+          gap: ds.rem(7)
+          font-size: ds.rem(12)
+
+          button
+            font-size: ds.rem(12)
+
+        .comment-replies
+          display: flex
+          flex-direction: column
+          gap: ds.rem(12)
+          margin: ds.rem(7) 0 ds.rem(12)

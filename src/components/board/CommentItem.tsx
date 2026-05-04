@@ -67,6 +67,7 @@ type Props = {
   depth?: 0 | 1;
   activeReplyTargetId: string;
   isSubmitting: boolean;
+  avatarUrl: string;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
   onCreateReply: (parentId: string, content: string) => Promise<void>;
@@ -121,6 +122,7 @@ export default function CommentItem({
   depth = 0,
   activeReplyTargetId,
   isSubmitting,
+  avatarUrl,
   onReplyClick,
   onCancelReply,
   onCreateReply,
@@ -194,119 +196,116 @@ export default function CommentItem({
   }
 
   return (
-    <article className={depth === 1 ? 'comment-item comment-reply-item' : 'comment-item'}>
-      <div className="comment-author">
-        <Avatar src={comment.author_avatar_url} alt={comment.author_name} />
+    <div className={depth === 1 ? `${styles['comment-item']} ${styles['comment-reply-item']}` : styles['comment-item']}>
+      <Avatar src={comment.author_avatar_url} alt={comment.author_name} sx={{ width: 28, height: 28 }} />
+      <div className={styles['comment-detail']}>
+        <div className={styles['comment-author-info']}>
+          <cite>{comment.author_name}</cite>
 
-        <div>
-          <div className="comment-author-info">
-            <strong>{comment.author_name || '작성자'}</strong>
+          {roleLabel ? (
+            <span className={styles['author-manager']}>{roleLabel}</span>
+          ) : comment.author_level ? (
+            <span className={styles['author-lv']}>
+              <span>{comment.author_level.name}</span>
+              {comment.author_level.iconUrl ? (
+                <img src={comment.author_level.iconUrl} alt={comment.author_level.name} />
+              ) : null}
+            </span>
+          ) : null}
 
-            {comment.is_author ? <span>글 작성자</span> : null}
-            {comment.is_me ? <span>본인</span> : null}
+          {comment.is_author ? <span className={styles['author-type']}>글 작성자</span> : null}
+          {comment.is_me ? <span className={styles['author-type']}>본인</span> : null}
 
-            {roleLabel ? (
-              <span>{roleLabel}</span>
-            ) : comment.author_level ? (
-              <span>
-                {comment.author_level.iconUrl ? (
-                  <img src={comment.author_level.iconUrl} alt={comment.author_level.name} />
-                ) : null}
-                <span>{comment.author_level.name}</span>
-              </span>
-            ) : null}
+          {comment.is_deleted ? <span className={styles['comment-status']}>삭제된 댓글</span> : null}
+          {comment.is_blinded ? <span className={styles['comment-status']}>숨겨진 댓글</span> : null}
+        </div>
 
-            {comment.is_deleted ? <span>삭제된 댓글</span> : null}
-            {comment.is_blinded ? <span>숨겨진 댓글</span> : null}
+        {isEditing ? (
+          <CommentForm
+            defaultValue={comment.content}
+            submitLabel="수정"
+            isSubmitting={isSubmitting}
+            onSubmit={handleEdit}
+            onCancel={() => setIsEditing(false)}
+            avatarUrl={avatarUrl}
+          />
+        ) : (
+          <div className={styles['comment-content']}>
+            {depth === 1 && comment.reply_to_author_name ? <strong>{comment.reply_to_author_name} </strong> : null}
+            {comment.content}
           </div>
+        )}
 
+        {comment.blinded_message ? (
+          <p className={styles['comment-blinded-message']}>{comment.blinded_message}</p>
+        ) : null}
+
+        <div className={styles.options}>
           <time>{formatDateTime(comment.created_at)}</time>
+          {!comment.is_deleted && !comment.is_blinded ? (
+            <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
+              답글 달기
+            </button>
+          ) : null}
+
+          {comment.can_edit ? (
+            <button type="button" onClick={() => setIsEditing(true)} disabled={isSubmitting || isEditing}>
+              수정
+            </button>
+          ) : null}
+
+          {comment.can_delete ? (
+            <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
+              삭제
+            </button>
+          ) : null}
+
+          {comment.can_blind ? (
+            <button type="button" onClick={() => setConfirmAction('blind')} disabled={isSubmitting}>
+              댓글 숨김
+            </button>
+          ) : null}
+
+          {comment.can_unblind ? (
+            <button type="button" onClick={() => setConfirmAction('unblind')} disabled={isSubmitting}>
+              댓글 숨김 취소
+            </button>
+          ) : null}
         </div>
-      </div>
 
-      {depth === 1 && comment.reply_to_author_name ? (
-        <p className="comment-reply-to">
-          <strong>{comment.reply_to_author_name}</strong>
-          <span>님에게 답글</span>
-        </p>
-      ) : null}
-
-      {isEditing ? (
-        <CommentForm
-          defaultValue={comment.content}
-          submitLabel="수정"
-          isSubmitting={isSubmitting}
-          onSubmit={handleEdit}
-          onCancel={() => setIsEditing(false)}
-        />
-      ) : (
-        <p className="comment-content">{comment.content}</p>
-      )}
-
-      {comment.blinded_message ? <p className="comment-blinded-message">{comment.blinded_message}</p> : null}
-
-      <div className="comment-actions">
-        {!comment.is_deleted && !comment.is_blinded ? (
-          <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
-            답글 달기
-          </button>
+        {isReplyFormOpen ? (
+          <CommentForm
+            replyTargetName={comment.author_name}
+            submitLabel="답글 등록"
+            isSubmitting={isSubmitting}
+            onSubmit={handleReplySubmit}
+            onCancel={onCancelReply}
+            avatarUrl={avatarUrl}
+          />
         ) : null}
 
-        {comment.can_edit ? (
-          <button type="button" onClick={() => setIsEditing(true)} disabled={isSubmitting || isEditing}>
-            수정
-          </button>
-        ) : null}
-
-        {comment.can_delete ? (
-          <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
-            삭제
-          </button>
-        ) : null}
-
-        {comment.can_blind ? (
-          <button type="button" onClick={() => setConfirmAction('blind')} disabled={isSubmitting}>
-            댓글 숨김
-          </button>
-        ) : null}
-
-        {comment.can_unblind ? (
-          <button type="button" onClick={() => setConfirmAction('unblind')} disabled={isSubmitting}>
-            댓글 숨김 취소
-          </button>
+        {depth === 0 && comment.replies.length > 0 ? (
+          <div className={styles['comment-replies']}>
+            {comment.replies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                depth={1}
+                activeReplyTargetId={activeReplyTargetId}
+                isSubmitting={isSubmitting}
+                onReplyClick={onReplyClick}
+                onCancelReply={onCancelReply}
+                onCreateReply={onCreateReply}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onBlind={onBlind}
+                onUnblind={onUnblind}
+                avatarUrl={avatarUrl}
+              />
+            ))}
+          </div>
         ) : null}
       </div>
-
-      {isReplyFormOpen ? (
-        <CommentForm
-          replyTargetName={comment.author_name || '작성자'}
-          submitLabel="답글 등록"
-          isSubmitting={isSubmitting}
-          onSubmit={handleReplySubmit}
-          onCancel={onCancelReply}
-        />
-      ) : null}
-
-      {depth === 0 && comment.replies.length > 0 ? (
-        <div className="comment-replies">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              depth={1}
-              activeReplyTargetId={activeReplyTargetId}
-              isSubmitting={isSubmitting}
-              onReplyClick={onReplyClick}
-              onCancelReply={onCancelReply}
-              onCreateReply={onCreateReply}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onBlind={onBlind}
-              onUnblind={onUnblind}
-            />
-          ))}
-        </div>
-      ) : null}
 
       <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
         <DialogTitle>{confirmDialog.title}</DialogTitle>
@@ -327,6 +326,6 @@ export default function CommentItem({
           </button>
         </DialogActions>
       </Dialog>
-    </article>
+    </div>
   );
 }
