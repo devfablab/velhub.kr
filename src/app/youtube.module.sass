@@ -16,14 +16,25 @@
 
     button
       position: absolute
-      top: 50%
-      left: 50%
-      transform: translate(-50%, -50%)
-      width: ds.rem(56)
-      height: ds.rem(56)
-      background-color: rgba(ds.$hex-black, .3)
-      color: rgba(ds.$hex-white, 1)
-      border-radius: 100%
+      inset: 0
+      background-color: transparent
+
+      &:hover, &:focus-visible
+        span
+          background-color: rgba(ds.$hex-black, .5)
+          color: rgba(ds.$hex-accent, 1)
+
+      span
+        position: absolute
+        top: 50%
+        left: 50%
+        transform: translate(-50%, -50%)
+        width: ds.rem(56)
+        height: ds.rem(56)
+        background-color: rgba(ds.$hex-black, .3)
+        color: rgba(ds.$hex-white, 1)
+        border-radius: 100%
+        transition: all .4s cubic-bezier(.4,0,.2,1)
 
       svg
         width: 100%

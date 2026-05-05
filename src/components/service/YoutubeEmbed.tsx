@@ -41,7 +41,9 @@ export default function YoutubeEmbed({ videoId, thumbnailImage }: Props) {
         <div className={styles.thumbnail}>
           <img src={thumbnailImage} alt="" />
           <button type="button" aria-label="영상 재생하기" onClick={handlePlayButtonClick}>
-            <PlayArrowRoundedIcon />
+            <span>
+              <PlayArrowRoundedIcon />
+            </span>
           </button>
         </div>
       ) : null}
