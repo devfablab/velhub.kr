@@ -166,7 +166,18 @@
             color: ds.$hex-action
 
           .author-lv
+            display: inline-flex
+            gap: ds.rem(3)
+            align-items: center
             color: ds.$hex-secondary
+
+            span
+              display: inline-flex
+              align-items: center
+
+            img
+              width: ds.rem(14)
+              height: ds.rem(14)
 
           .comment-status
             @include ds.fw(pre, 700)
@@ -175,6 +186,7 @@
         .comment-content
           font-size: ds.rem(14)
           line-height: 1.25
+          white-space: break-spaces
 
           strong
             margin-right: ds.rem(7)

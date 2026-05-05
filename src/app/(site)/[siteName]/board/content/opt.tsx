@@ -665,19 +665,53 @@ export default function Opt() {
               {content.content_simple ? <div className={styles['content-simple']}>{content.content_simple}</div> : null}
               {content.images && content.images.length > 0 ? (
                 <div className={styles['content-images']}>
-                  {content.images.map((image) => (
+                  {content.images.map((image, index) => (
                     <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <img src={image.url} alt="" />
+                      <button type="button" onClick={() => openGalleryViewer(index)}>
+                        <img src={image.url} alt="" />
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : null}
-              {feedLinkPreviewUrls.length > 0 ? (
-                <div className={styles['link-previews']}>
-                  {feedLinkPreviewUrls.map((url) => (
-                    <LinkPreview key={url} href={url} />
-                  ))}
-                </div>
+              {content.images && content.images.length > 0 ? (
+                <Dialog
+                  open={galleryViewerOpen}
+                  onClose={closeGalleryViewer}
+                  fullScreen
+                  className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+                >
+                  <DialogTitle className={styles['dialog-title']}>{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
+                  <DialogContent className={styles['dialog-content']}>
+                    <img src={content.images[galleryViewerIndex].url} alt="" />
+                  </DialogContent>
+                  <DialogActions className={styles['dialog-actions']}>
+                    <button
+                      type="button"
+                      onClick={showPreviousGalleryImage}
+                      className={`${styles['control-button']} ${styles['prev-button']}`}
+                      aria-label="이전 이미지"
+                    >
+                      <ArrowBackRoundedIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={showNextGalleryImage}
+                      className={`${styles['control-button']} ${styles['next-button']}`}
+                      aria-label="다음 이미지"
+                    >
+                      <ArrowForwardRoundedIcon />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeGalleryViewer}
+                      className={styles['close-button']}
+                      aria-label="갤러리 닫기"
+                    >
+                      <CloseRoundedIcon />
+                    </button>
+                  </DialogActions>
+                </Dialog>
               ) : null}
               {hashtags.length > 0 ? (
                 <div className={styles['content-tags']}>
