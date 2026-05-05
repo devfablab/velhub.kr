@@ -25,6 +25,7 @@ type PollOptionRow = {
 type PollRow = {
   question: string;
   creator_id: string;
+  anonymity?: 'anonymous' | 'named';
   endType: 'absolute' | 'relative';
   endsAt: string;
   options: PollOptionRow[];
@@ -168,6 +169,7 @@ async function buildPollResult({ postId, poll, voterId }: { postId: string; poll
 
   return {
     total_count: totalCount,
+    anonymity: poll.anonymity === 'named' ? 'named' : 'anonymous',
     selected_option_index: selectedOptionIndex,
     is_ended: isPollEnded(poll.endsAt),
     options: poll.options.map((option, optionIndex) => {

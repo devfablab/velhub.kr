@@ -24,6 +24,7 @@ type PollOptionRow = {
 type PollRow = {
   question: string;
   creator_id: string;
+  anonymity: 'anonymous' | 'named';
   endType: 'absolute' | 'relative';
   endsAt: string;
   options: PollOptionRow[];
@@ -201,17 +202,23 @@ function normalizePoll(value: unknown, creatorId: string) {
 
   const rawValue = value as {
     question?: unknown;
+    anonymity?: unknown;
     endType?: unknown;
     endsAt?: unknown;
     options?: unknown;
   };
 
   const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
+  const anonymity = rawValue.anonymity === 'anonymous' || rawValue.anonymity === 'named' ? rawValue.anonymity : '';
   const endType = rawValue.endType === 'absolute' || rawValue.endType === 'relative' ? rawValue.endType : '';
   const endsAt = typeof rawValue.endsAt === 'string' ? normalizeText(rawValue.endsAt) : '';
 
   if (!question) {
     return null;
+  }
+
+  if (!anonymity) {
+    return 'INVALID_ANONYMITY';
   }
 
   if (!endType) {
@@ -311,6 +318,7 @@ function normalizePoll(value: unknown, creatorId: string) {
   return {
     question,
     creator_id: creatorId,
+    anonymity,
     endType,
     endsAt: endDate.toISOString(),
     options,
@@ -432,6 +440,10 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const poll = normalizePoll(requestBody.poll, session.authUserId);
+
+    if (poll === 'INVALID_ANONYMITY') {
+      return Response.json({ error: '투표 방식을 선택해주세요.' }, { status: 400 });
+    }
 
     if (poll === 'INVALID_END_TYPE') {
       return Response.json({ error: '투표 종료 방식을 선택해주세요.' }, { status: 400 });

@@ -76,6 +76,7 @@ type CommentItem = {
   can_delete: boolean;
   can_blind: boolean;
   can_unblind: boolean;
+  poll_choice: PollChoice | null;
   replies: CommentItem[];
 };
 
@@ -90,6 +91,22 @@ type LevelRow = {
   lv: number;
   icon: string | null;
   name: string | null;
+};
+
+type PollOptionRow = {
+  id: number;
+  label: string;
+};
+
+type PollRow = {
+  question: string;
+  anonymity?: 'anonymous' | 'named';
+  options: PollOptionRow[];
+};
+
+type PollChoice = {
+  option_index: number;
+  label: string;
 };
 
 const AVATAR_BUCKET = 'avatar';
@@ -370,6 +387,36 @@ async function getCommentAccess(siteId: string, boardId: string, userId: string 
   });
 }
 
+
+function isPollRow(value: unknown): value is PollRow {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const rawValue = value as {
+    question?: unknown;
+    options?: unknown;
+  };
+
+  return typeof rawValue.question === 'string' && Array.isArray(rawValue.options);
+}
+
+function getPollAnonymity(value: PollRow | null) {
+  return value?.anonymity === 'named' ? 'named' : 'anonymous';
+}
+
+function buildPollOptionMap(poll: PollRow) {
+  return new Map(
+    poll.options.map((option, optionIndex) => [
+      optionIndex,
+      {
+        option_index: optionIndex,
+        label: normalizeText(option.label),
+      },
+    ]),
+  );
+}
+
 async function getBoardAndPost(siteName: string, boardName: string, contentId: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -409,7 +456,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
 
   const postQuery = supabaseAdmin
     .from('posts')
-    .select('id, user_id, is_closed, published_status, is_comment')
+    .select('id, user_id, is_closed, published_status, is_comment, poll')
     .eq('site_id', rhizome.data.id)
     .eq('board_id', board.data.id);
 
@@ -434,6 +481,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
       isClosed: post.data.is_closed === true,
       isPublished: post.data.published_status === 'published',
       isCommentEnabled: post.data.is_comment !== false,
+      poll: isPollRow(post.data.poll) ? post.data.poll : null,
       visibilityType: rhizome.data.visibility_type as string,
       isShutdown: rhizome.data.is_shutdown === true,
     },
@@ -449,6 +497,7 @@ async function buildCommentItem({
   postAuthorId,
   authUserId,
   canManageComment,
+  pollChoiceMap,
 }: {
   comment: CommentRow;
   commentMap: Map<string, CommentRow>;
@@ -458,6 +507,7 @@ async function buildCommentItem({
   postAuthorId: string;
   authUserId: string | null;
   canManageComment: boolean;
+  pollChoiceMap: Map<string, PollChoice>;
 }) {
   let author = authorMap.get(comment.user_id);
 
@@ -521,6 +571,7 @@ async function buildCommentItem({
     can_delete: isMe && !isDeleted,
     can_blind: canManageComment && !isDeleted && !isBlinded,
     can_unblind: canManageComment && !isDeleted && isBlinded,
+    poll_choice: pollChoiceMap.get(comment.user_id) ?? null,
     replies: [],
   } satisfies CommentItem;
 }
@@ -620,6 +671,36 @@ export async function GET(request: Request, context: RouteContext) {
     const commentRows = (commentsResult.data ?? []) as CommentRow[];
     const commentMap = new Map(commentRows.map((comment) => [comment.id, comment]));
     const authorMap = new Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>();
+    const pollChoiceMap = new Map<string, PollChoice>();
+    let myPollChoice: PollChoice | null = null;
+
+    if (target.data.poll && getPollAnonymity(target.data.poll) === 'named') {
+      const pollOptionMap = buildPollOptionMap(target.data.poll);
+      const pollRowsResult = await supabaseAdmin
+        .from('post_polls')
+        .select('voter_id, option_index')
+        .eq('post_id', target.data.postId);
+
+      if (pollRowsResult.error) {
+        return Response.json({ error: '댓글 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      (pollRowsResult.data ?? []).forEach((row) => {
+        const voterId = normalizeText(row.voter_id);
+        const optionIndex = typeof row.option_index === 'number' ? row.option_index : -1;
+        const pollChoice = pollOptionMap.get(optionIndex);
+
+        if (!voterId || !pollChoice) {
+          return;
+        }
+
+        pollChoiceMap.set(voterId, pollChoice);
+
+        if (session.authUserId && voterId === session.authUserId) {
+          myPollChoice = pollChoice;
+        }
+      });
+    }
 
     const commentItems = await Promise.all(
       commentRows.map((comment) =>
@@ -632,6 +713,7 @@ export async function GET(request: Request, context: RouteContext) {
           postAuthorId: target.data.postAuthorId,
           authUserId: session.authUserId ?? null,
           canManageComment,
+          pollChoiceMap,
         }),
       ),
     );
@@ -639,6 +721,7 @@ export async function GET(request: Request, context: RouteContext) {
     return Response.json({
       comments: groupComments(commentItems),
       mySelfAvatarUrl,
+      myPollChoice,
       actions: {
         canWrite:
           Boolean(session.authUserId) &&
@@ -774,6 +857,7 @@ export async function POST(request: Request, context: RouteContext) {
       postAuthorId: target.data.postAuthorId,
       authUserId: session.authUserId,
       canManageComment,
+      pollChoiceMap: new Map(),
     });
 
     return Response.json({

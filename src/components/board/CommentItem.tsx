@@ -33,6 +33,11 @@ type AuthorLevel = {
 
 type ConfirmAction = 'delete' | 'blind' | 'unblind' | null;
 
+type PollChoice = {
+  option_index: number;
+  label: string;
+};
+
 export type CommentData = {
   id: string;
   created_at: string;
@@ -59,6 +64,7 @@ export type CommentData = {
   can_delete: boolean;
   can_blind: boolean;
   can_unblind: boolean;
+  poll_choice: PollChoice | null;
   replies: CommentData[];
 };
 
@@ -68,6 +74,7 @@ type Props = {
   activeReplyTargetId: string;
   isSubmitting: boolean;
   avatarUrl: string;
+  myPollChoiceLabel: string;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
   onCreateReply: (parentId: string, content: string) => Promise<void>;
@@ -123,6 +130,7 @@ export default function CommentItem({
   activeReplyTargetId,
   isSubmitting,
   avatarUrl,
+  myPollChoiceLabel,
   onReplyClick,
   onCancelReply,
   onCreateReply,
@@ -228,11 +236,13 @@ export default function CommentItem({
             onSubmit={handleEdit}
             onCancel={() => setIsEditing(false)}
             avatarUrl={avatarUrl}
+            pollChoiceLabel={comment.poll_choice?.label}
           />
         ) : (
           <div className={styles['comment-content']}>
             {depth === 1 && comment.reply_to_author_name ? <strong>{comment.reply_to_author_name} </strong> : null}
-            {comment.content}
+            <p>{comment.content}</p>
+            {comment.poll_choice ? <blockquote>선택한 항목: {comment.poll_choice.label}</blockquote> : null}
           </div>
         )}
 
@@ -281,6 +291,7 @@ export default function CommentItem({
             onSubmit={handleReplySubmit}
             onCancel={onCancelReply}
             avatarUrl={avatarUrl}
+            pollChoiceLabel={myPollChoiceLabel}
           />
         ) : null}
 
@@ -301,6 +312,7 @@ export default function CommentItem({
                 onBlind={onBlind}
                 onUnblind={onUnblind}
                 avatarUrl={avatarUrl}
+                myPollChoiceLabel={myPollChoiceLabel}
               />
             ))}
           </div>

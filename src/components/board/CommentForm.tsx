@@ -10,6 +10,7 @@ type Props = {
   defaultValue?: string;
   replyTargetName?: string;
   avatarUrl: string;
+  pollChoiceLabel?: string;
   isSubmitting?: boolean;
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
@@ -21,6 +22,7 @@ export default function CommentForm({
   defaultValue = '',
   replyTargetName,
   avatarUrl,
+  pollChoiceLabel,
   isSubmitting = false,
   onSubmit,
   onCancel,
@@ -77,6 +79,7 @@ export default function CommentForm({
           <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
 
           {replyTargetName ? <strong>{replyTargetName}</strong> : null}
+          {/* {pollChoiceLabel ? <span className={styles['poll-choice']}>{pollChoiceLabel}</span> : null} */}
 
           <textarea
             ref={textareaReference}

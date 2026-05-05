@@ -25,6 +25,7 @@ type PollOptionRow = {
 type PollRow = {
   question: string;
   creator_id: string;
+  anonymity: 'anonymous' | 'named';
   endType: 'absolute' | 'relative';
   endsAt: string;
   options: PollOptionRow[];
@@ -206,18 +207,21 @@ function normalizePoll(value: unknown, creatorId: string) {
 
   const rawValue = value as {
     question?: unknown;
+    anonymity?: unknown;
     endType?: unknown;
     endsAt?: unknown;
     options?: unknown;
   };
 
   const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
+  const anonymity = rawValue.anonymity === 'anonymous' || rawValue.anonymity === 'named' ? rawValue.anonymity : '';
   const endType = rawValue.endType === 'absolute' || rawValue.endType === 'relative' ? rawValue.endType : '';
   const endsAt = typeof rawValue.endsAt === 'string' ? normalizeText(rawValue.endsAt) : '';
   const rawOptions = Array.isArray(rawValue.options) ? rawValue.options : [];
 
   const hasPollValue =
     Boolean(question) ||
+    Boolean(anonymity) ||
     Boolean(endType) ||
     Boolean(endsAt) ||
     rawOptions.some((item) => {
@@ -245,6 +249,10 @@ function normalizePoll(value: unknown, creatorId: string) {
 
   if (!question) {
     return 'INVALID_QUESTION';
+  }
+
+  if (!anonymity) {
+    return 'INVALID_ANONYMITY';
   }
 
   if (!endType) {
@@ -339,6 +347,7 @@ function normalizePoll(value: unknown, creatorId: string) {
   return {
     question,
     creator_id: creatorId,
+    anonymity,
     endType,
     endsAt: endDate.toISOString(),
     options,
@@ -503,6 +512,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (poll === 'INVALID_QUESTION') {
       return Response.json({ error: '투표 질문을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (poll === 'INVALID_ANONYMITY') {
+      return Response.json({ error: '투표 방식을 선택해주세요.' }, { status: 400 });
     }
 
     if (poll === 'INVALID_END_TYPE') {

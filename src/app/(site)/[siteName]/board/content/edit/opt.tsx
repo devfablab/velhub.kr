@@ -154,6 +154,7 @@ type GalleryBlobImage = {
 };
 
 type PollEndType = '' | 'absolute' | 'relative';
+type PollAnonymity = '' | 'anonymous' | 'named';
 
 type PollOptionState = {
   label: string;
@@ -167,6 +168,7 @@ type PollOptionState = {
 
 type PollState = {
   question: string;
+  anonymity: PollAnonymity;
   useOptionThumbnail: boolean;
   endType: PollEndType;
   absoluteEndAt: Date | null;
@@ -177,6 +179,7 @@ type PollState = {
 
 type PollPayload = {
   question: string;
+  anonymity: 'anonymous' | 'named';
   creator_id?: string;
   endType: 'absolute' | 'relative';
   endsAt: string;
@@ -220,6 +223,7 @@ function createRelativeTimeValue(hour: number, minute: number) {
 function createEmptyPoll(): PollState {
   return {
     question: '',
+    anonymity: '',
     useOptionThumbnail: false,
     endType: '',
     absoluteEndAt: null,
@@ -481,6 +485,7 @@ function createPollStateFromPayload(payload: PollPayload | null | undefined) {
   const hasImage = payload.options.some((option) => option.image);
 
   nextPoll.question = normalizeText(payload.question);
+  nextPoll.anonymity = payload.anonymity === 'named' ? 'named' : 'anonymous';
   nextPoll.useOptionThumbnail = hasImage;
   nextPoll.endType = payload.endType;
   nextPoll.absoluteEndAt = payload.endType === 'absolute' ? parseDateTimeValue(payload.endsAt) : null;
@@ -1069,6 +1074,11 @@ export default function Opt() {
     try {
       const normalizedQuestion = normalizeText(pollDialog.question);
 
+      if (!pollDialog.anonymity) {
+        setPollDialogMessage('투표 방식을 선택해주세요.');
+        return;
+      }
+
       if (!normalizedQuestion) {
         setPollDialogMessage('투표 질문을 입력해주세요.');
         return;
@@ -1355,6 +1365,7 @@ export default function Opt() {
   async function buildPollPayloadIfNeeded(): Promise<PollPayload | null> {
     const hasPollValue =
       Boolean(normalizeText(poll.question)) ||
+      Boolean(poll.anonymity) ||
       Boolean(poll.endType) ||
       poll.options.some(
         (option) => Boolean(normalizeText(option.label)) || Boolean(option.imageFile || option.imagePath),
@@ -1365,6 +1376,10 @@ export default function Opt() {
     }
 
     const normalizedQuestion = normalizeText(poll.question);
+
+    if (!poll.anonymity) {
+      throw new Error('투표 방식을 선택해주세요.');
+    }
 
     if (!normalizedQuestion) {
       throw new Error('투표 질문을 입력해주세요.');
@@ -1438,6 +1453,7 @@ export default function Opt() {
 
     return {
       question: normalizedQuestion,
+      anonymity: poll.anonymity === 'named' ? 'named' : 'anonymous',
       endType: poll.endType === 'relative' ? 'relative' : 'absolute',
       endsAt,
       options,
@@ -2038,6 +2054,25 @@ export default function Opt() {
               </div>
             ))}
           </div>
+
+          <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+            <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
+            <RadioGroup
+              row
+              className="vh-radio"
+              aria-labelledby="poll-anonymity-label"
+              value={pollDialog.anonymity}
+              onChange={(event) =>
+                setPollDialog((previousPoll) => ({
+                  ...previousPoll,
+                  anonymity: event.target.value as PollAnonymity,
+                }))
+              }
+            >
+              <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
+              <FormControlLabel value="named" control={<Radio />} label="기명" />
+            </RadioGroup>
+          </FormControl>
 
           <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
             <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>

@@ -18,9 +18,15 @@ type Props = {
   isCommentEnabled: boolean;
 };
 
+type PollChoice = {
+  option_index: number;
+  label: string;
+};
+
 type CommentsResponse = {
   comments?: CommentData[];
   mySelfAvatarUrl?: string;
+  myPollChoice?: PollChoice | null;
   actions?: {
     canWrite?: boolean;
     canManageComment?: boolean;
@@ -55,6 +61,7 @@ function getCommentCount(nextComments: CommentData[]): number {
 export default function CommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
+  const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(null);
   const [canWrite, setCanWrite] = useState(false);
   const [canManageComment, setCanManageComment] = useState(false);
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
@@ -79,6 +86,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
 
       setComments(Array.isArray(result.comments) ? result.comments : []);
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
+      setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
       setCanManageComment(result.actions?.canManageComment === true);
     } catch (unknownError) {
@@ -298,6 +306,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
       {isCommentEnabled && canWrite ? (
         <CommentForm
           avatarUrl={mySelfAvatarUrl}
+          pollChoiceLabel={myPollChoice?.label}
           isSubmitting={isSubmitting}
           onSubmit={(content) => createComment(content, null)}
         />
@@ -324,6 +333,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
               key={comment.id}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
+              myPollChoiceLabel={myPollChoice?.label ?? ''}
               activeReplyTargetId={activeReplyTargetId}
               isSubmitting={isSubmitting}
               onReplyClick={(targetComment) => setActiveReplyTargetId(targetComment.id)}
