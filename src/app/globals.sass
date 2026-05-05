@@ -533,13 +533,20 @@ a, button, select, input
     &:last-of-type
       margin-bottom: 0
 
+.service-editor
+  .toastui-editor-main-container
+    color: ds.$hex-secondary
+
+  .toastui-editor-dark .toastui-editor-main-container
+    color: ds.$hex-light
+
 .toastui-editor-dark
-  .toastui-editor-popup-add-fontSize, .toastui-editor-popup-add-textAlign
+  .toastui-editor-popup-add-fontSize, .toastui-editor-popup-add-textAlign, .toastui-editor-popup-add-textColor
     ul
       li:hover
         background-color: #36383f
 
-.toastui-editor-popup-add-fontSize, .toastui-editor-popup-add-textAlign
+.toastui-editor-popup-add-fontSize, .toastui-editor-popup-add-textAlign, .toastui-editor-popup-add-textColor
   .toastui-editor-popup-body
     padding: 0
 
