@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -513,15 +516,30 @@ function createPollStateFromPayload(payload: PollPayload | null | undefined) {
   return nextPoll;
 }
 
+function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
+  if (boardType === 'gallery') {
+    return <CollectionsOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'youtube') {
+    return <OndemandVideoOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'feed') {
+    return <DynamicFeedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const theme = useTheme();
 
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(searchParams.get('boardName')).toLowerCase();
-  const contentId = normalizeText(searchParams.get('contentId'));
+  const boardName = normalizeText(params.boardName).toLowerCase();
+  const contentId = normalizeText(params.contentId);
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
@@ -593,7 +611,7 @@ export default function Opt() {
         content: '로그인이 필요한 서비스입니다.',
         cancelLabel: '취소',
         confirmLabel: '로그인',
-        onCancel: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
         onConfirm: () => router.push('/auth/sign-in'),
       };
     }
@@ -605,7 +623,7 @@ export default function Opt() {
         content: '커뮤니티 가입 후 이용할 수 있습니다.',
         cancelLabel: '취소',
         confirmLabel: '가입하기',
-        onCancel: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
         onConfirm: () => router.push(`/${siteName}/join`),
       };
     }
@@ -617,8 +635,8 @@ export default function Opt() {
         content: '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.',
         cancelLabel: null,
         confirmLabel: '확인',
-        onCancel: () => router.replace(`/${siteName}/board`),
-        onConfirm: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
+        onConfirm: () => router.replace(`/${siteName}/${boardName}`),
       };
     }
 
@@ -1526,7 +1544,7 @@ export default function Opt() {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${result.contentId}`);
+        router.replace(`/${siteName}/${boardName}/${result.contentId}/edit`);
         return;
       }
 
@@ -1534,7 +1552,7 @@ export default function Opt() {
         throw new Error('글 수정에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/board/content?boardName=${boardName}&contentId=${result.slug}`);
+      router.replace(`/${siteName}/${boardName}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '글 수정에 실패했습니다.');
@@ -1550,10 +1568,6 @@ export default function Opt() {
   if (isLoadingContent) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 수정</span>
-        </h2>
         <div className="paper">
           <div className="loading-container">
             <LoadingIndicator />
@@ -1566,10 +1580,6 @@ export default function Opt() {
   if (errorMessage && !board) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 수정</span>
-        </h2>
         <div className="paper paper-error">{errorMessage}</div>
       </div>
     );
@@ -1578,7 +1588,7 @@ export default function Opt() {
   return (
     <div className={`${styles.content} content`}>
       <h2>
-        <ListAltOutlinedIcon />
+        {board ? renderBoardTypeIcon(board.board_type) : <ListAltOutlinedIcon />}
         <span>글 수정</span>
       </h2>
 
@@ -1817,10 +1827,7 @@ export default function Opt() {
 
           {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
           <div className={styles['button-group']}>
-            <a
-              href={`/${siteName}/board/content?boardName=${boardName}&contentId=${contentId}`}
-              className={`${styles.link} link`}
-            >
+            <a href={`/${siteName}/${boardName}/${contentId}`} className={`${styles.link} link`}>
               취소
             </a>
             {publishedStatus === 'draft' ? (

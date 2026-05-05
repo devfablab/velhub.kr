@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
+import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -48,6 +51,11 @@ type BoardItem = {
   is_active: boolean;
 };
 
+type BoardsResponse = {
+  boards?: BoardItem[];
+  error?: string;
+};
+
 type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
@@ -59,44 +67,13 @@ type BoardInfoResponse = {
   error?: string;
 };
 
-type ContentResponse = {
-  board?: BoardItem;
-  content?: {
-    id: string;
-    slug: string;
-    subject: string | null;
-    summary: string | null;
-    content_html: string | null;
-    content_markdown: string | null;
-    content_simple: string | null;
-    thumbnail_image: string | null;
-    thumbnail_image_url: string;
-    thumbnail_width: number | null;
-    thumbnail_height: number | null;
-    youtube_url: string | null;
-    youtube_created_at: string | null;
-    images: PostImageRow[];
-    poll: PollPayload | null;
-    series_id: string | null;
-    prefix_id: string | null;
-    published_status: 'draft' | 'published';
-    is_comment: boolean;
-    is_pin: boolean;
-  };
-  prefixes?: PrefixRow[];
-  series?: SeriesRow | null;
-  isAuthor?: boolean;
-  isStaff?: boolean;
-  error?: string;
-};
-
 type PrefixRow = {
   id: string;
-  prefix_key?: number;
+  prefix_key: number;
   prefix_label: string;
-  board_id?: string;
-  site_id?: string;
-  created_at?: string;
+  board_id: string;
+  site_id: string;
+  created_at: string;
 };
 
 type PrefixListResponse = {
@@ -132,7 +109,7 @@ type UploadResponse = {
   error?: string;
 };
 
-type UpdateResponse = {
+type CreateResponse = {
   ok?: boolean;
   slug?: string;
   contentId?: string;
@@ -180,7 +157,6 @@ type PollState = {
 type PollPayload = {
   question: string;
   anonymity: 'anonymous' | 'named';
-  creator_id?: string;
   endType: 'absolute' | 'relative';
   endsAt: string;
   options: {
@@ -214,12 +190,6 @@ function createEmptyPollOption(): PollOptionState {
   };
 }
 
-function createRelativeTimeValue(hour: number, minute: number) {
-  const dateValue = new Date();
-  dateValue.setHours(hour, minute, 0, 0);
-  return dateValue;
-}
-
 function createEmptyPoll(): PollState {
   return {
     question: '',
@@ -231,6 +201,12 @@ function createEmptyPoll(): PollState {
     relativeTime: createRelativeTimeValue(0, 1),
     options: Array.from({ length: MAX_POLL_OPTION_COUNT }, () => createEmptyPollOption()),
   };
+}
+
+function createRelativeTimeValue(hour: number, minute: number) {
+  const dateValue = new Date();
+  dateValue.setHours(hour, minute, 0, 0);
+  return dateValue;
 }
 
 function getYoutubeId(value: string) {
@@ -270,7 +246,7 @@ function formatDateValue(value: Date | null) {
   return `${year}-${month}-${day}`;
 }
 
-function parseDateValue(value: string | null | undefined) {
+function parseDateValue(value: string) {
   const normalizedValue = normalizeText(value);
 
   if (!normalizedValue) {
@@ -278,22 +254,6 @@ function parseDateValue(value: string | null | undefined) {
   }
 
   const dateValue = new Date(`${normalizedValue}T00:00:00`);
-
-  if (Number.isNaN(dateValue.getTime())) {
-    return null;
-  }
-
-  return dateValue;
-}
-
-function parseDateTimeValue(value: string | null | undefined) {
-  const normalizedValue = normalizeText(value);
-
-  if (!normalizedValue) {
-    return null;
-  }
-
-  const dateValue = new Date(normalizedValue);
 
   if (Number.isNaN(dateValue.getTime())) {
     return null;
@@ -344,6 +304,22 @@ function canvasToWebpBlob(canvas: HTMLCanvasElement, quality: number) {
       quality,
     );
   });
+}
+
+function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
+  if (boardType === 'gallery') {
+    return <CollectionsOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'youtube') {
+    return <OndemandVideoOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'feed') {
+    return <DynamicFeedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
 async function convertImageToWebpFile(file: File, errorMessage = '이미지는 1MB 이하로 등록해주세요.') {
@@ -476,52 +452,12 @@ function buildPollEndsAt(poll: PollState) {
   throw new Error('투표 종료 방식을 선택해주세요.');
 }
 
-function createPollStateFromPayload(payload: PollPayload | null | undefined) {
-  if (!payload) {
-    return createEmptyPoll();
-  }
-
-  const nextPoll = createEmptyPoll();
-  const hasImage = payload.options.some((option) => option.image);
-
-  nextPoll.question = normalizeText(payload.question);
-  nextPoll.anonymity = payload.anonymity === 'named' ? 'named' : 'anonymous';
-  nextPoll.useOptionThumbnail = hasImage;
-  nextPoll.endType = payload.endType;
-  nextPoll.absoluteEndAt = payload.endType === 'absolute' ? parseDateTimeValue(payload.endsAt) : null;
-  nextPoll.relativeTime =
-    payload.endType === 'relative' ? createRelativeTimeValue(0, 1) : createRelativeTimeValue(0, 1);
-
-  nextPoll.options = Array.from({ length: MAX_POLL_OPTION_COUNT }, (_, index) => {
-    const option = payload.options[index];
-
-    if (!option) {
-      return createEmptyPollOption();
-    }
-
-    return {
-      label: normalizeText(option.label),
-      imagePath: option.image?.path ?? '',
-      imageUrl: option.image?.url ?? '',
-      imageWidth: option.image?.width ?? null,
-      imageHeight: option.image?.height ?? null,
-      imageFile: null,
-      imagePreviewUrl: option.image?.url ?? '',
-    };
-  });
-
-  return nextPoll;
-}
-
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
-  const theme = useTheme();
-
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(searchParams.get('boardName')).toLowerCase();
-  const contentId = normalizeText(searchParams.get('contentId'));
+  const boardName = normalizeText(params.boardName).toLowerCase();
+  const theme = useTheme();
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
@@ -530,7 +466,8 @@ export default function Opt() {
 
   const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
   const [alertMessage, setAlertMessage] = useState('');
-  const [board, setBoard] = useState<BoardItem | null>(null);
+  const [boards, setBoards] = useState<BoardItem[]>([]);
+  const [selectedBoardKey, setSelectedBoardKey] = useState(boardName);
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
   const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
@@ -569,14 +506,18 @@ export default function Opt() {
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
   const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogMessage, setPollDialogMessage] = useState('');
-  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>('draft');
-  const [isLoadingContent, setIsLoadingContent] = useState(true);
+  const [isLoadingBoards, setIsLoadingBoards] = useState(true);
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const selectedBoard = useMemo(
+    () => boards.find((board) => board.board_key === selectedBoardKey) ?? null,
+    [boards, selectedBoardKey],
+  );
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
@@ -593,7 +534,7 @@ export default function Opt() {
         content: '로그인이 필요한 서비스입니다.',
         cancelLabel: '취소',
         confirmLabel: '로그인',
-        onCancel: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
         onConfirm: () => router.push('/auth/sign-in'),
       };
     }
@@ -605,7 +546,7 @@ export default function Opt() {
         content: '커뮤니티 가입 후 이용할 수 있습니다.',
         cancelLabel: '취소',
         confirmLabel: '가입하기',
-        onCancel: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
         onConfirm: () => router.push(`/${siteName}/join`),
       };
     }
@@ -617,8 +558,8 @@ export default function Opt() {
         content: '가입 신청이 완료되었지만 아직 승인되지 않았습니다.\n운영자 승인 후 글을 작성할 수 있습니다.',
         cancelLabel: null,
         confirmLabel: '확인',
-        onCancel: () => router.replace(`/${siteName}/board`),
-        onConfirm: () => router.replace(`/${siteName}/board`),
+        onCancel: () => router.replace(`/${siteName}/${boardName}`),
+        onConfirm: () => router.replace(`/${siteName}/${boardName}`),
       };
     }
 
@@ -631,7 +572,7 @@ export default function Opt() {
       onCancel: () => undefined,
       onConfirm: () => undefined,
     };
-  }, [accessDialogType, router, siteName]);
+  }, [accessDialogType, router, siteName, boardName]);
 
   useEffect(() => {
     return () => {
@@ -668,87 +609,53 @@ export default function Opt() {
   }, []);
 
   useEffect(() => {
-    async function loadContent() {
+    async function loadBoards() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
+        const response = await fetch(`/api/boards?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const result = (await response.json()) as ContentResponse;
+        const result = (await response.json()) as BoardsResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '게시글 정보를 불러오지 못했습니다.');
+          const message = result.error ?? '게시판 목록을 불러오지 못했습니다.';
+          throw new Error(message);
         }
 
-        if (!result.board || !result.content) {
-          throw new Error('게시글 정보를 불러오지 못했습니다.');
-        }
+        const nextBoards = (Array.isArray(result.boards) ? result.boards : []).filter(
+          (board) => board.is_active === true && board.board_type !== 'page',
+        );
 
-        if (result.isAuthor !== true && result.isStaff !== true) {
-          throw new Error('접근 권한이 없습니다.');
-        }
-
-        setBoard(result.board);
-        setBoardType(result.board.board_type === 'page' ? 'basic' : result.board.board_type);
-        setPostType(result.board.post_type ?? 'none');
-        setSubject(result.content.subject ?? '');
-        setSummary(result.content.summary ?? '');
-        setContentHtml(result.content.content_html ?? '');
-        setContentMarkdown(result.content.content_markdown ?? '');
-        setContentSimple(result.content.content_simple ?? '');
-        setYoutubeUrl(result.content.youtube_url ?? '');
-        setYoutubeCreatedAt(formatDateValue(parseDateValue(result.content.youtube_created_at)));
-        setThumbnailImage(result.content.thumbnail_image ?? '');
-        setThumbnailImageUrl(result.content.thumbnail_image_url ?? '');
-        setThumbnailWidth(result.content.thumbnail_width);
-        setThumbnailHeight(result.content.thumbnail_height);
-        setImages(Array.isArray(result.content.images) ? result.content.images : []);
-        setIsComment(result.content.is_comment !== false);
-        setIsPin(result.content.is_pin === true);
-        setPublishedStatus(result.content.published_status);
-
-        const nextPoll = createPollStateFromPayload(result.content.poll);
-        setPoll(nextPoll);
-        setPollDialog(clonePollState(nextPoll));
-        setIsPollEnabled(Boolean(result.content.poll));
-
-        if (Array.isArray(result.prefixes)) {
-          setPrefixList(result.prefixes);
-        }
-
-        if (result.content.prefix_id) {
-          setSelectedPrefixId(result.content.prefix_id);
-        }
-
-        if (result.series?.series_key) {
-          setSelectedSeriesKey(result.series.series_key);
-        }
+        setBoards(nextBoards);
+        setSelectedBoardKey(nextBoards.some((board) => board.board_key === boardName) ? boardName : '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시글 정보를 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');
         } else {
-          setErrorMessage('게시글 정보를 불러오지 못했습니다.');
+          setErrorMessage('게시판 목록을 불러오지 못했습니다.');
         }
       } finally {
-        setIsLoadingContent(false);
+        setIsLoadingBoards(false);
       }
     }
 
-    if (!siteName || !boardName || !contentId) {
-      setErrorMessage('게시글 정보를 불러오지 못했습니다.');
-      setIsLoadingContent(false);
-      return;
-    }
-
-    void loadContent();
-  }, [siteName, boardName, contentId]);
+    void loadBoards();
+  }, [siteName, boardName]);
 
   useEffect(() => {
     async function loadBoardMeta() {
-      if (!boardName) {
+      if (!selectedBoardKey) {
+        setBoardType('basic');
+        setPostType('none');
+        setPrefixList([]);
+        setSeriesList([]);
+        setSelectedPrefixId('');
+        setSelectedSeriesKey('');
+        setIsPin(false);
+        setCanPinPost(false);
         return;
       }
 
@@ -756,8 +663,10 @@ export default function Opt() {
         setAlertMessage('');
         setAccessDialogType(null);
         setIsLoadingBoardMeta(true);
+        setSelectedPrefixId('');
+        setSelectedSeriesKey('');
 
-        const boardResponse = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
+        const boardResponse = await fetch(`/api/boards/${selectedBoardKey}?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -793,9 +702,12 @@ export default function Opt() {
         setBoardType(nextBoardType);
         setPostType(nextPostType);
         setCanPinPost(boardResult.actions?.canPinPost === true);
+        setIsPin(false);
+        setPrefixList([]);
+        setSeriesList([]);
 
         if (nextPostType === 'prefix') {
-          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
+          const prefixResponse = await fetch(`/api/boards/${selectedBoardKey}/prefix?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
           });
@@ -810,7 +722,7 @@ export default function Opt() {
         }
 
         if (nextPostType === 'series') {
-          const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
+          const seriesResponse = await fetch(`/api/boards/${selectedBoardKey}/series?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
           });
@@ -835,7 +747,7 @@ export default function Opt() {
     }
 
     void loadBoardMeta();
-  }, [boardName, siteName]);
+  }, [selectedBoardKey, siteName]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -855,7 +767,40 @@ export default function Opt() {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [postType, prefixList, seriesList, selectedPrefixId, selectedSeriesKey, boardName, isLoadingBoardMeta]);
+  }, [postType, prefixList, seriesList, selectedPrefixId, selectedSeriesKey, selectedBoardKey, isLoadingBoardMeta]);
+
+  function resetBoardSpecificFields(nextBoardKey: string) {
+    setSelectedBoardKey(nextBoardKey);
+    setSelectedPrefixId('');
+    setSelectedSeriesKey('');
+    setSubject('');
+    setSummary('');
+    setContentHtml('');
+    setContentMarkdown('');
+    setContentSimple('');
+    setYoutubeUrl('');
+    setYoutubeCreatedAt('');
+    setThumbnailImage('');
+    setThumbnailImageUrl('');
+    setThumbnailWidth(null);
+    setThumbnailHeight(null);
+    setThumbnailBlobFile(null);
+    setImages([]);
+    setGalleryBlobImages([]);
+    setIsPin(false);
+    setCanPinPost(false);
+    setIsPollEnabled(false);
+    setPoll(createEmptyPoll());
+    setPollDialog(createEmptyPoll());
+    setErrorMessage('');
+    setAlertMessage('');
+    setAccessDialogType(null);
+
+    if (thumbnailPreviewUrl) {
+      URL.revokeObjectURL(thumbnailPreviewUrl);
+      setThumbnailPreviewUrl('');
+    }
+  }
 
   function openThumbnailDialog() {
     setThumbnailDialogFile(thumbnailBlobFile);
@@ -1282,6 +1227,26 @@ export default function Opt() {
     };
   }
 
+  async function deletePostImage(path: string) {
+    const response = await fetch('/api/attachment/delete/post', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        siteName,
+        path,
+      }),
+    });
+
+    const result = (await response.json()) as { ok?: boolean; error?: string };
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '이미지 삭제에 실패했습니다.');
+    }
+  }
+
   async function handleUploadEditorImage(file: Blob | File) {
     const editorFile =
       file instanceof File
@@ -1309,6 +1274,10 @@ export default function Opt() {
       '썸네일 이미지는 1MB 이하로 등록해주세요.',
     );
     const uploadedThumbnail = await uploadPostImage(webpThumbnailFile, 'thumbnail');
+
+    if (thumbnailImage) {
+      await deletePostImage(thumbnailImage);
+    }
 
     setThumbnailImage(uploadedThumbnail.path);
     setThumbnailImageUrl(uploadedThumbnail.url);
@@ -1364,9 +1333,9 @@ export default function Opt() {
 
   async function buildPollPayloadIfNeeded(): Promise<PollPayload | null> {
     const hasPollValue =
-      Boolean(normalizeText(poll.question)) ||
+      isPollEnabled ||
       Boolean(poll.anonymity) ||
-      Boolean(poll.endType) ||
+      Boolean(normalizeText(poll.question)) ||
       poll.options.some(
         (option) => Boolean(normalizeText(option.label)) || Boolean(option.imageFile || option.imagePath),
       );
@@ -1460,13 +1429,18 @@ export default function Opt() {
     };
   }
 
-  async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (!selectedBoardKey) {
+      setErrorMessage('게시판을 선택해주세요.');
+      return;
+    }
 
     if (
       isSubmittingDraft ||
       isSubmittingPublish ||
-      isLoadingContent ||
+      isLoadingBoards ||
       isLoadingBoardMeta ||
       isUploadingThumbnail ||
       isUploadingImages
@@ -1487,8 +1461,8 @@ export default function Opt() {
       const uploadedImages = await uploadGalleryImagesIfNeeded();
       const pollPayload = await buildPollPayloadIfNeeded();
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1515,31 +1489,31 @@ export default function Opt() {
         }),
       });
 
-      const result = (await response.json()) as UpdateResponse;
+      const result = (await response.json()) as CreateResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '글 수정에 실패했습니다.');
+        throw new Error(result.error ?? '글 작성에 실패했습니다.');
       }
 
       if (!result.contentId) {
-        throw new Error('글 수정에 실패했습니다.');
+        throw new Error('글 작성에 실패했습니다.');
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${result.contentId}`);
+        router.replace(`/${siteName}/${selectedBoardKey}/${result.contentId}/edit`);
         return;
       }
 
       if (!result.slug) {
-        throw new Error('글 수정에 실패했습니다.');
+        throw new Error('글 작성에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/board/content?boardName=${boardName}&contentId=${result.slug}`);
+      router.replace(`/${siteName}/${selectedBoardKey}/${result.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '글 수정에 실패했습니다.');
+        setErrorMessage(unknownError.message || '글 작성에 실패했습니다.');
       } else {
-        setErrorMessage('글 수정에 실패했습니다.');
+        setErrorMessage('글 작성에 실패했습니다.');
       }
     } finally {
       setIsSubmittingDraft(false);
@@ -1547,13 +1521,9 @@ export default function Opt() {
     }
   }
 
-  if (isLoadingContent) {
+  if (isLoadingBoards) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 수정</span>
-        </h2>
         <div className="paper">
           <div className="loading-container">
             <LoadingIndicator />
@@ -1563,14 +1533,10 @@ export default function Opt() {
     );
   }
 
-  if (errorMessage && !board) {
+  if (boards.length === 0) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 수정</span>
-        </h2>
-        <div className="paper paper-error">{errorMessage}</div>
+        <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
       </div>
     );
   }
@@ -1578,30 +1544,40 @@ export default function Opt() {
   return (
     <div className={`${styles.content} content`}>
       <h2>
-        <ListAltOutlinedIcon />
-        <span>글 수정</span>
+        {boardType ? renderBoardTypeIcon(boardType) : <ListAltOutlinedIcon />}
+        <span>글쓰기</span>
       </h2>
 
       {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
 
-      <form
-        onSubmit={(event) => void handleSubmit(publishedStatus === 'draft' ? 'publish' : 'update', event)}
-        className={`${styles.form} form`}
-      >
+      <form onSubmit={(event) => void handleSubmit('publish', event)} className={`${styles.form} form`}>
         <fieldset>
-          <legend>글 수정 폼</legend>
+          <legend>글쓰기 폼</legend>
           <div className="paper">
-            {board ? (
-              <div className={styles['board-name']}>
-                <strong>{board.board_label} 게시판</strong>
+            <div className={styles['board-select']}>
+              <div className={styles['form-select']}>
+                <Select
+                  displayEmpty
+                  value={selectedBoardKey}
+                  onChange={(event: SelectChangeEvent) => resetBoardSpecificFields(event.target.value)}
+                  className={styles['MuiInputBase-root']}
+                >
+                  <MenuItem value="">게시판을 선택하세요</MenuItem>
+                  {boards.map((board) => (
+                    <MenuItem key={board.id} value={board.board_key}>
+                      {board.board_label}
+                    </MenuItem>
+                  ))}
+                </Select>
               </div>
-            ) : null}
+              <p>게시판 선택시 입력했던 내용들이 초기화됩니다.</p>
+            </div>
 
             {isLoadingBoardMeta ? (
               <div className="loading-container">
                 <LoadingIndicator />
               </div>
-            ) : board ? (
+            ) : selectedBoard ? (
               <>
                 {!isFeedBoard ? (
                   <div className={styles['post-info']}>
@@ -1634,12 +1610,10 @@ export default function Opt() {
                           >
                             <MenuItem value="">연재 선택</MenuItem>
                             {seriesList
-                              .filter(
-                                (seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey,
-                              )
-                              .map((seriesItem) => (
-                                <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
-                                  {seriesItem.series_label}
+                              .filter((series) => !series.is_completed)
+                              .map((series) => (
+                                <MenuItem key={series.id} value={series.series_key}>
+                                  {series.series_label}
                                 </MenuItem>
                               ))}
                           </Select>
@@ -1650,7 +1624,7 @@ export default function Opt() {
                         <input
                           type="text"
                           value={subject}
-                          placeholder="제목을 입력해 주세요"
+                          placeholder="제목을 입력해 주세요 (필수)"
                           style={{ paddingLeft: subjectPaddingLeft }}
                           onChange={(event) => setSubject(event.currentTarget.value)}
                         />
@@ -1677,21 +1651,20 @@ export default function Opt() {
 
                 {isYoutubeBoard ? (
                   <div className={`${styles['post-info']} ${styles['post-row']}`}>
-                    <input id="youtube-id" type="hidden" value={youtubeId} />
+                    <input type="hidden" value={youtubeId} />
                     <div className={styles['form-group']}>
                       <div className={styles['form-control']}>
                         <input
-                          id="youtube-url"
                           type="text"
                           value={youtubeUrl}
-                          placeholder="유튜브 영상 주소를 입력해주세요"
+                          placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
                           style={{ paddingLeft: 12 }}
                           onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
                         />
                       </div>
                     </div>
                     <div className={styles['form-group']}>
-                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜</label>
+                      <label htmlFor="youtube-created-at">유튜브 업로드 날짜 (필수)</label>
                       <div className={styles['form-control']}>
                         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                           <DatePicker
@@ -1744,7 +1717,7 @@ export default function Opt() {
             ) : null}
           </div>
 
-          {isLoadingBoardMeta ? null : board ? (
+          {isLoadingBoardMeta ? null : selectedBoard ? (
             <>
               {isFeedBoard ? (
                 <div className="paper paper-p0">
@@ -1817,22 +1790,17 @@ export default function Opt() {
 
           {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
           <div className={styles['button-group']}>
-            <a
-              href={`/${siteName}/board/content?boardName=${boardName}&contentId=${contentId}`}
-              className={`${styles.link} link`}
-            >
+            <a href={`/${siteName}/${boardName}`} className={`${styles.link} link`}>
               취소
             </a>
-            {publishedStatus === 'draft' ? (
-              <button
-                type="button"
-                className={`${styles.button} button`}
-                disabled={isSubmittingDraft || isSubmittingPublish}
-                onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
-              >
-                임시 저장
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className={`${styles.button} button`}
+              disabled={isSubmittingDraft || isSubmittingPublish}
+              onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+            >
+              임시 저장
+            </button>
             <button
               type="submit"
               disabled={isSubmittingDraft || isSubmittingPublish}
@@ -1943,7 +1911,7 @@ export default function Opt() {
                 }
 
                 return (
-                  <div key={image.path} className={styles['gallery-dialog-preview-image']}>
+                  <div key={image.path}>
                     <button
                       type="button"
                       onClick={() => removeGalleryDialogServerImage(image.path)}
@@ -1983,12 +1951,12 @@ export default function Opt() {
           <div className={styles['form-group']}>
             <div className={styles['form-control']}>
               <input
-                id="poll-question"
                 type="text"
                 value={pollDialog.question}
                 placeholder="투표 질문을 입력해주세요"
                 onChange={(event) => {
                   const nextQuestion = event.currentTarget.value;
+
                   setPollDialog((previousPoll) => ({
                     ...previousPoll,
                     question: nextQuestion,
@@ -2164,31 +2132,18 @@ export default function Opt() {
             </div>
           ) : null}
         </DialogContent>
-        <DialogActions className={isPollEnabled ? 'complex-buttons' : undefined}>
+        <DialogActions>
           {isPollEnabled ? (
-            <>
-              <button type="button" onClick={removePoll} className="delete-button">
-                투표 삭제
-              </button>
-              <div className="complex-button">
-                <button type="button" onClick={closePollDialog} className="cancel-button">
-                  취소
-                </button>
-                <button type="button" onClick={applyPollDialog}>
-                  투표 설정
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <button type="button" onClick={closePollDialog} className="cancel-button">
-                취소
-              </button>
-              <button type="button" onClick={applyPollDialog}>
-                투표 설정
-              </button>
-            </>
-          )}
+            <button type="button" onClick={removePoll} className="delete-button">
+              투표 삭제
+            </button>
+          ) : null}
+          <button type="button" onClick={closePollDialog} className="cancel-button">
+            취소
+          </button>
+          <button type="button" onClick={applyPollDialog}>
+            투표 설정
+          </button>
         </DialogActions>
       </Dialog>
 

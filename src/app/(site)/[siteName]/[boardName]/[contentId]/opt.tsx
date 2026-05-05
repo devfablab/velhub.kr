@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -229,11 +228,9 @@ function extractUrls(value: string) {
 
 export default function Opt() {
   const params = useParams();
-  const searchParams = useSearchParams();
-
   const siteName = normalizeText(params.siteName);
-  const boardName = normalizeText(searchParams.get('boardName')).toLowerCase();
-  const contentId = normalizeText(searchParams.get('contentId'));
+  const boardName = normalizeText(params.boardName).toLowerCase();
+  const contentId = normalizeText(params.contentId);
 
   const [board, setBoard] = useState<BoardInfo | null>(null);
   const [content, setContent] = useState<PostContent | null>(null);
@@ -451,10 +448,6 @@ export default function Opt() {
   if (isLoading) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 보기</span>
-        </h2>
         <div className="paper">
           <div className="loading-container">
             <LoadingIndicator />
@@ -467,10 +460,6 @@ export default function Opt() {
   if (errorMessage || !board || !content) {
     return (
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글 보기</span>
-        </h2>
         <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
       </div>
     );
@@ -487,13 +476,8 @@ export default function Opt() {
 
   return (
     <div className={`${styles.content} content`}>
-      <h2>
-        <ListAltOutlinedIcon />
-        <span>최신글 보기</span>
-      </h2>
-
       <div className={styles['top-buttons']}>
-        <Anchor href={`/${siteName}/board`} className="button">
+        <Anchor href={`/${siteName}/${boardName}`} className="button">
           <ArrowBackIosRoundedIcon />
           <span>목록</span>
         </Anchor>
@@ -512,10 +496,7 @@ export default function Opt() {
                 <ArrowForwardIosRoundedIcon />
               </Anchor>
               {canEdit ? (
-                <Anchor
-                  href={`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${content.slug}`}
-                  className={styles['edit-link']}
-                >
+                <Anchor href={`/${siteName}/${boardName}/${content.slug}/edit`} className={styles['edit-link']}>
                   <span>글 수정</span>
                   <EditNoteRoundedIcon />
                 </Anchor>
@@ -671,15 +652,6 @@ export default function Opt() {
                 </div>
               ) : null}
 
-              {content.images && content.images.length > 0 ? (
-                <div className={styles['content-images']}>
-                  {content.images.map((image) => (
-                    <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <img src={image.url} alt="" />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
               {content.images && content.images.length > 0 ? (
                 <div className={styles['content-images']}>
                   {content.images.map((image, index) => (

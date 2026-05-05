@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
@@ -82,6 +82,7 @@ export default function TableList() {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
 
   const [boards, setBoards] = useState<BoardItem[]>([]);
   const [alertMessage, setAlertMessage] = useState('');
@@ -128,7 +129,7 @@ export default function TableList() {
     <div className={`${styles['table-list']} paper`}>
       {shouldShowWriteLink ? (
         <p className={styles.button}>
-          <Anchor href={`/${siteName}/board/new`} className="button">
+          <Anchor href={boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`} className="button">
             글쓰기
           </Anchor>
         </p>
