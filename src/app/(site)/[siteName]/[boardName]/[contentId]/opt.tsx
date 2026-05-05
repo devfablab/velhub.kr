@@ -486,7 +486,6 @@ export default function Opt() {
           <ArrowForwardIosRoundedIcon />
         </Anchor>
       </div>
-
       <article>
         <div className="paper">
           <header className={styles['content-header']}>
@@ -808,13 +807,15 @@ export default function Opt() {
           </div>
         ) : null}
       </article>
-      <CommentSection
-        siteName={siteName}
-        boardName={boardName}
-        contentId={content.id}
-        postAuthorId={content.user_id}
-        isCommentEnabled={content.is_comment}
-      />
+      {content.published_status === 'published' ? (
+        <CommentSection
+          siteName={siteName}
+          boardName={boardName}
+          contentId={content.id}
+          postAuthorId={content.user_id}
+          isCommentEnabled={content.is_comment}
+        />
+      ) : null}
     </div>
   );
 }
