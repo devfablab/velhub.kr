@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
+import '@toast-ui/editor/dist/i18n/ko-kr';
+import { fontSizePlugin } from '@/lib/editor/createFontSizeToolbarItem';
 
 type Props = {
   initialValue: string | null;
@@ -28,6 +30,27 @@ export default function ToastEditorClient({
 }: Props) {
   const editorReference = useRef<Editor | null>(null);
 
+  function syncEditorValue() {
+    const instance = editorReference.current?.getInstance();
+
+    if (!instance) {
+      return;
+    }
+
+    onHtmlChange(instance.getHTML());
+    onMarkdownChange(instance.getMarkdown());
+  }
+
+  const toolbarItems = useMemo(
+    () => [
+      ['bold', 'italic', 'strike'],
+      ['hr', 'quote'],
+      ['ul', 'ol', 'task'],
+      ['table', 'image', 'link'],
+    ],
+    [],
+  );
+
   const editorInitialValue = useMemo(() => {
     if (initialEditType === 'markdown') {
       return initialMarkdown && initialMarkdown.trim() ? initialMarkdown : ' ';
@@ -37,15 +60,9 @@ export default function ToastEditorClient({
   }, [initialEditType, initialMarkdown, initialValue]);
 
   useEffect(() => {
-    if (!editorReference.current) {
-      return;
-    }
-
-    const instance = editorReference.current.getInstance();
-
-    onHtmlChange(instance.getHTML());
-    onMarkdownChange(instance.getMarkdown());
-  }, [editorInitialValue, onHtmlChange, onMarkdownChange]);
+    syncEditorValue();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorInitialValue]);
 
   return (
     <Editor
@@ -59,6 +76,8 @@ export default function ToastEditorClient({
       usageStatistics={false}
       hideModeSwitch={hideModeSwitch}
       theme={themeMode === 'dark' ? 'dark' : undefined}
+      toolbarItems={toolbarItems}
+      plugins={[fontSizePlugin]}
       hooks={
         onUploadImage
           ? {
@@ -75,16 +94,7 @@ export default function ToastEditorClient({
             }
           : undefined
       }
-      onChange={() => {
-        const instance = editorReference.current?.getInstance();
-
-        if (!instance) {
-          return;
-        }
-
-        onHtmlChange(instance.getHTML());
-        onMarkdownChange(instance.getMarkdown());
-      }}
+      onChange={syncEditorValue}
     />
   );
 }
