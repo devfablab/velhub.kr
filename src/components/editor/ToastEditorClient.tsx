@@ -6,6 +6,7 @@ import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { fontSizePlugin } from '@/lib/editor/createFontSizeToolbarItem';
+import { textAlignPlugin } from '@/lib/editor/createTextAlignToolbarItem';
 
 type Props = {
   initialValue: string | null;
@@ -77,7 +78,7 @@ export default function ToastEditorClient({
       hideModeSwitch={hideModeSwitch}
       theme={themeMode === 'dark' ? 'dark' : undefined}
       toolbarItems={toolbarItems}
-      plugins={[fontSizePlugin]}
+      plugins={[fontSizePlugin, textAlignPlugin]}
       hooks={
         onUploadImage
           ? {
