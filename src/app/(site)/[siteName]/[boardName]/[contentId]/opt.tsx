@@ -19,6 +19,7 @@ import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import CommentSection from '@/components/board/CommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 
 type BoardInfo = {
   id: string;
@@ -550,14 +551,7 @@ export default function Opt() {
           <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
             <div className="paper">
               {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
-              {content.content_html ? (
-                <div
-                  className="viewer"
-                  dangerouslySetInnerHTML={{
-                    __html: content.content_html,
-                  }}
-                />
-              ) : null}
+              {content.content_html ? <EmbeddedContentHtml html={content.content_html} className="viewer" /> : null}
               {content.images && content.images.length > 0 ? (
                 <div className={styles['content-images']}>
                   {content.images.map((image, index) => (
@@ -714,14 +708,7 @@ export default function Opt() {
         {isBasicBoard ? (
           <div className={`${styles['board-container']} ${styles['basic-board']}`}>
             <div className="paper">
-              {content.content_html ? (
-                <div
-                  className="viewer"
-                  dangerouslySetInnerHTML={{
-                    __html: content.content_html,
-                  }}
-                />
-              ) : null}
+              {content.content_html ? <EmbeddedContentHtml html={content.content_html} className="viewer" /> : null}
               {hashtags.length > 0 ? (
                 <div className={styles['content-tags']}>
                   {hashtags.map((hashtag) => (

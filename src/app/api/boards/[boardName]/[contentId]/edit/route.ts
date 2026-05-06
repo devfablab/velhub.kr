@@ -664,7 +664,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         if (!finalImages || finalImages.length === 0) {
-          return Response.json({ error: '이미지를 하나 이상 등록해주세요.' }, { status: 400 });
+          return Response.json({ error: '갤러리 이미지를 하나 이상 등록해주세요.' }, { status: 400 });
         }
       }
     }
