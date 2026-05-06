@@ -34,6 +34,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
+import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
@@ -1498,7 +1499,7 @@ export default function Opt() {
           action,
           subject: isFeedBoard ? null : subject,
           summary: isBasicBoard || isFeedBoard ? null : summary,
-          contentHtml: isBasicBoard || isGalleryBoard ? contentHtml : null,
+          contentHtml: isBasicBoard || isGalleryBoard ? normalizeEditorHtml(contentHtml) : null,
           contentMarkdown: isBasicBoard || isGalleryBoard ? contentMarkdown : null,
           contentSimple: isFeedBoard ? contentSimple : null,
           thumbnailImage: uploadedThumbnail.thumbnailImage || null,
