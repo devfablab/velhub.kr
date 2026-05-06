@@ -14,7 +14,7 @@ type BoardRow = {
   board_type: string;
   is_active: boolean;
   sort_order: number | null;
-  markdown_status: string | null;
+  markdown_status: string;
   site_id: string;
   created_at: string;
   post_per_page: number | null;

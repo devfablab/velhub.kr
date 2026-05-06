@@ -6,7 +6,6 @@ import {
   Alert,
   Button,
   FormControlLabel,
-  Paper,
   Radio,
   RadioGroup,
   Snackbar,

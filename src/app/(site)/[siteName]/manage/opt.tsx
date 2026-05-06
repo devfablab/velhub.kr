@@ -134,7 +134,7 @@ export default function Opt() {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
-          <Paper variant="outlined" sx={{ pt: 3 }}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar src={siteAvatar ?? '/broken-image.jpg'} alt={siteNameText} sx={{ width: 72, height: 72 }} />
 
@@ -149,13 +149,13 @@ export default function Opt() {
 
         <Grid container rowSpacing={1} size={{ xs: 12 }}>
           <Grid size={6}>
-            <Paper sx={{ p: 3 }}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
               <Typography variant="subtitle1">활동 멤버</Typography>
               <Typography variant="body1">{memberCount} 명</Typography>
             </Paper>
           </Grid>
           <Grid size={6}>
-            <Paper sx={{ p: 3 }}>
+            <Paper variant="outlined" sx={{ p: 3 }}>
               <Typography variant="subtitle1">전체 글</Typography>
               <Typography variant="body1">{postCount} 개</Typography>
             </Paper>

@@ -34,7 +34,7 @@ type BoardResponse = {
     board_type: BoardType;
     is_active: boolean;
     sort_order: number;
-    markdown_status: string | null;
+    markdown_status: string;
     post_per_page: number | null;
     post_type: PostType | null;
   };

@@ -303,33 +303,29 @@ export default function Opt() {
         </Typography>
       )}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1.5} alignItems="center">
-          <Avatar
-            src={profilePictureUrl || '/broken-image.jpg'}
-            alt={siteInfo.site_label ?? ''}
-            sx={{ width: 96, height: 96 }}
-          />
+      <Typography variant="subtitle2">
+        {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
+        {formatDate(siteInfo.created_at)}에 개설
+      </Typography>
 
-          <VisuallyHiddenInput
-            ref={fileInputReference}
-            type="file"
-            accept="image/*"
-            onChange={handleProfilePictureFileChange}
-          />
+      <Stack spacing={1.5} alignItems="center">
+        <Avatar
+          src={profilePictureUrl || '/broken-image.jpg'}
+          alt={siteInfo.site_label ?? ''}
+          sx={{ width: 96, height: 96 }}
+        />
 
-          <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isUploadingAvatar}>
-            {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
-        </Stack>
-      </Paper>
+        <VisuallyHiddenInput
+          ref={fileInputReference}
+          type="file"
+          accept="image/*"
+          onChange={handleProfilePictureFileChange}
+        />
 
-      <Paper variant="outlined">
-        <Typography variant="subtitle2">
-          {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
-          {formatDate(siteInfo.created_at)}에 개설
-        </Typography>
-      </Paper>
+        <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isUploadingAvatar}>
+          {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
+        </Button>
+      </Stack>
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>
