@@ -25,7 +25,7 @@ type BoardInfo = {
   board_key: string;
   board_label: string;
   board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
-  markdown_status: string | null;
+  markdown_status: string;
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
 };
