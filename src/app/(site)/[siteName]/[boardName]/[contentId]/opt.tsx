@@ -11,7 +11,7 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, useTheme } from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -20,6 +20,7 @@ import CommentSection from '@/components/board/CommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import ContentViewer from '@/components/service/ContentViewer';
 
 type BoardInfo = {
   id: string;
@@ -228,6 +229,7 @@ function extractUrls(value: string) {
 }
 
 export default function Opt() {
+  const theme = useTheme();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
@@ -551,7 +553,15 @@ export default function Opt() {
           <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
             <div className="paper">
               {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
-              {content.content_html ? <EmbeddedContentHtml html={content.content_html} className="viewer" /> : null}
+              {content.content_html ? (
+                <EmbeddedContentHtml
+                  contentHtml={content.content_html}
+                  contentMarkdown={content.content_markdown}
+                  markdownStatus={board.markdown_status}
+                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                  className="viewer"
+                />
+              ) : null}
               {content.images && content.images.length > 0 ? (
                 <div className={styles['content-images']}>
                   {content.images.map((image, index) => (
@@ -708,7 +718,15 @@ export default function Opt() {
         {isBasicBoard ? (
           <div className={`${styles['board-container']} ${styles['basic-board']}`}>
             <div className="paper">
-              {content.content_html ? <EmbeddedContentHtml html={content.content_html} className="viewer" /> : null}
+              {content.content_html ? (
+                <EmbeddedContentHtml
+                  contentHtml={content.content_html}
+                  contentMarkdown={content.content_markdown}
+                  markdownStatus={board.markdown_status}
+                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                  className="viewer"
+                />
+              ) : null}
               {hashtags.length > 0 ? (
                 <div className={styles['content-tags']}>
                   {hashtags.map((hashtag) => (

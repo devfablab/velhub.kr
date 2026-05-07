@@ -1,15 +1,26 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useMemo, createElement, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, createElement, type CSSProperties, type ReactNode } from 'react';
 import { useTheme } from '@mui/material';
+import { Viewer } from '@toast-ui/react-editor';
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
+import '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
+import 'prismjs/themes/prism-okaidia.css';
+import '@toast-ui/editor/dist/toastui-editor-viewer.css';
 import { Tweet } from 'react-twitter-widgets';
 import Vimeo from '@u-wave/react-vimeo';
 import { FacebookEmbed, InstagramEmbed } from 'react-social-media-embed';
-import Anchor from '@/components/Anchor';
+import { markdownAlignPlugin } from '@/lib/editor/createMarkdownAlignToolbarItem';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import Anchor from '@/components/Anchor';
 
 type Props = {
-  html: string;
+  html?: string;
+  contentHtml?: string | null;
+  contentMarkdown?: string | null;
+  markdownStatus?: string | null;
+  themeMode?: 'light' | 'dark';
   className?: string;
 };
 
@@ -77,6 +88,14 @@ const ALLOWED_TAGS = new Set([
   'figcaption',
   'hr',
 ]);
+
+function getViewerValue(contentHtml: string | null, contentMarkdown: string | null, markdownStatus: string | null) {
+  if (markdownStatus === 'markdown_off') {
+    return contentHtml ?? '';
+  }
+
+  return contentMarkdown ?? '';
+}
 
 function normalizeUrlText(value: string) {
   return value.trim().replace(/&amp;/g, '&');
@@ -308,6 +327,14 @@ function renderNode(node: ChildNode, key: string): ReactNode {
     });
   }
 
+  if (tagName === 'img') {
+    return createElement(tagName, {
+      key,
+
+      ...getElementProps(element),
+    });
+  }
+
   return createElement(
     tagName,
     {
@@ -373,7 +400,7 @@ function createRenderItems(html: string) {
   return renderItems;
 }
 
-export default function EmbeddedContentHtml({ html, className }: Props) {
+function EmbeddedRenderedHtml({ html, className }: { html: string; className?: string }) {
   const theme = useTheme();
   const renderItems = useMemo(() => createRenderItems(html), [html]);
 
@@ -409,11 +436,81 @@ export default function EmbeddedContentHtml({ html, className }: Props) {
         }
 
         if (item.embed.type === 'instagram') {
-          return <InstagramEmbed key={`embed-${index}`} url={item.embed.url} width="100%" />;
+          return <InstagramEmbed key={`embed-${index}`} url={item.embed.url} width={540} />;
         }
 
-        return <FacebookEmbed key={`embed-${index}`} url={item.embed.url} width="100%" />;
+        return <FacebookEmbed key={`embed-${index}`} url={item.embed.url} width={550} />;
       })}
+    </>
+  );
+}
+
+export default function EmbeddedContentHtml({
+  html,
+  contentHtml = null,
+  contentMarkdown = null,
+  markdownStatus = null,
+  themeMode = 'light',
+  className,
+}: Props) {
+  const viewerWrapperReference = useRef<HTMLDivElement | null>(null);
+  const [renderedHtml, setRenderedHtml] = useState('');
+
+  const viewerValue = useMemo(() => {
+    if (html !== undefined) {
+      return html;
+    }
+
+    return getViewerValue(contentHtml, contentMarkdown, markdownStatus);
+  }, [html, contentHtml, contentMarkdown, markdownStatus]);
+
+  const plugins = useMemo(() => {
+    const nextPlugins = [codeSyntaxHighlight];
+
+    if (markdownStatus === 'markdown_default') {
+      nextPlugins.push(markdownAlignPlugin);
+    }
+
+    return nextPlugins;
+  }, [markdownStatus]);
+
+  const viewerKey = useMemo(() => `${markdownStatus ?? 'html'}-${viewerValue}`, [markdownStatus, viewerValue]);
+
+  useEffect(() => {
+    setRenderedHtml('');
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      const viewerContent = viewerWrapperReference.current?.querySelector('.toastui-editor-contents > div');
+
+      setRenderedHtml(viewerContent?.innerHTML ?? '');
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [viewerKey]);
+
+  if (!viewerValue.trim()) {
+    return null;
+  }
+
+  return (
+    <>
+      <div ref={viewerWrapperReference} hidden aria-hidden="true">
+        <Viewer key={viewerKey} initialValue={viewerValue} plugins={plugins} />
+      </div>
+
+      {themeMode === 'light' ? (
+        <>{renderedHtml ? <EmbeddedRenderedHtml html={renderedHtml} className={className} /> : null}</>
+      ) : (
+        <>
+          {renderedHtml ? (
+            <div className="dark-viewer">
+              <EmbeddedRenderedHtml html={renderedHtml} className={className} />
+            </div>
+          ) : null}
+        </>
+      )}
     </>
   );
 }
