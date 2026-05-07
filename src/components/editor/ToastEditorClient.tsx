@@ -6,6 +6,7 @@ import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { fontSizePlugin } from '@/lib/editor/createFontSizeToolbarItem';
+import { markdownAlignPlugin } from '@/lib/editor/createMarkdownAlignToolbarItem';
 import { textAlignPlugin } from '@/lib/editor/createTextAlignToolbarItem';
 import { textColorPlugin } from '@/lib/editor/createTextColorToolbarItem';
 
@@ -15,6 +16,7 @@ type Props = {
   initialEditType?: 'markdown' | 'wysiwyg';
   themeMode?: 'light' | 'dark';
   hideModeSwitch?: boolean;
+  markdownStatus?: string | null;
   onHtmlChange: (value: string) => void;
   onMarkdownChange: (value: string) => void;
   onUploadImage?: (file: Blob | File) => Promise<string>;
@@ -26,6 +28,7 @@ export default function ToastEditorClient({
   initialEditType = 'markdown',
   themeMode = 'light',
   hideModeSwitch = false,
+  markdownStatus = null,
   onHtmlChange,
   onMarkdownChange,
   onUploadImage,
@@ -53,6 +56,20 @@ export default function ToastEditorClient({
     [],
   );
 
+  const plugins = useMemo(() => {
+    const nextPlugins = [fontSizePlugin, textColorPlugin];
+
+    if (markdownStatus === 'markdown_off') {
+      nextPlugins.push(textAlignPlugin);
+    }
+
+    if (markdownStatus === 'markdown_default') {
+      nextPlugins.push(markdownAlignPlugin);
+    }
+
+    return nextPlugins;
+  }, [markdownStatus]);
+
   const editorInitialValue = useMemo(() => {
     if (initialEditType === 'markdown') {
       return initialMarkdown && initialMarkdown.trim() ? initialMarkdown : ' ';
@@ -79,7 +96,7 @@ export default function ToastEditorClient({
       hideModeSwitch={hideModeSwitch}
       theme={themeMode === 'dark' ? 'dark' : undefined}
       toolbarItems={toolbarItems}
-      plugins={[fontSizePlugin, textAlignPlugin, textColorPlugin]}
+      plugins={plugins}
       hooks={
         onUploadImage
           ? {

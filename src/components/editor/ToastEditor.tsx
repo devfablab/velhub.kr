@@ -52,6 +52,7 @@ export default function ToastEditor({
       hideModeSwitch={effectiveHideModeSwitch}
       onHtmlChange={onHtmlChange}
       onMarkdownChange={onMarkdownChange}
+      markdownStatus={normalizedMarkdownStatus}
       onUploadImage={onUploadImage}
     />
   );
