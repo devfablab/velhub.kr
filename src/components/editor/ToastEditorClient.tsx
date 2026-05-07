@@ -5,6 +5,11 @@ import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
 import '@toast-ui/editor/dist/i18n/ko-kr';
+
+import 'prismjs/themes/prism.css';
+import '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
+
 import { fontSizePlugin } from '@/lib/editor/createFontSizeToolbarItem';
 import { markdownAlignPlugin } from '@/lib/editor/createMarkdownAlignToolbarItem';
 import { textAlignPlugin } from '@/lib/editor/createTextAlignToolbarItem';
@@ -52,12 +57,13 @@ export default function ToastEditorClient({
       ['hr', 'quote'],
       ['ul', 'ol', 'task'],
       ['table', 'image', 'link'],
+      ['code', 'codeblock'],
     ],
     [],
   );
 
   const plugins = useMemo(() => {
-    const nextPlugins = [fontSizePlugin, textColorPlugin];
+    const nextPlugins = [fontSizePlugin, textColorPlugin, codeSyntaxHighlight];
 
     if (markdownStatus === 'markdown_off') {
       nextPlugins.push(textAlignPlugin);
