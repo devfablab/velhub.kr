@@ -46,8 +46,15 @@ type BoardsResponse = {
 
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
+type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
+  { value: 'markdown_default', label: '마크다운 전용' },
+  { value: 'markdown_on', label: '마크다운 사용가능' },
+  { value: 'markdown_off', label: '마크다운 사용안함' },
+];
 
 function normalizeBoardKey(rawValue: string) {
   return rawValue
@@ -76,6 +83,7 @@ export default function Opt() {
   const [boardKey, setBoardKey] = useState('');
   const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
+  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
   const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -119,6 +127,10 @@ export default function Opt() {
 
   function handlePostPerPageChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setPostPerPage(Number(event.target.value));
+  }
+
+  function handleMarkdownStatusChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setMarkdownStatus(event.target.value as MarkdownStatus);
   }
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -266,7 +278,7 @@ export default function Opt() {
           boardLabel: normalizedBoardLabel,
           boardType,
           isActive: true,
-          markdownStatus: 'markdown_default',
+          markdownStatus,
           postPerPage,
           postType: canUsePostType ? postType : 'none',
         }),
@@ -395,6 +407,21 @@ export default function Opt() {
           {POST_PER_PAGE_OPTIONS.map((count) => (
             <MenuItem key={count} value={count}>
               {count}개씩
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="마크다운 사용"
+          value={markdownStatus}
+          onChange={handleMarkdownStatusChange}
+          fullWidth
+          size="small"
+        >
+          {MARKDOWN_STATUS_OPTIONS.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
             </MenuItem>
           ))}
         </TextField>

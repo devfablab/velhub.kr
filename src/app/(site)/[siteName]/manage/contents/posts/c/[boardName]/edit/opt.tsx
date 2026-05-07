@@ -25,6 +25,7 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
+type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
 
 type BoardResponse = {
   board?: {
@@ -34,7 +35,7 @@ type BoardResponse = {
     board_type: BoardType;
     is_active: boolean;
     sort_order: number;
-    markdown_status: string;
+    markdown_status?: MarkdownStatus | null;
     post_per_page: number | null;
     post_type: PostType | null;
   };
@@ -49,6 +50,12 @@ type UpdateBoardResponse = {
 };
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
+  { value: 'markdown_default', label: '마크다운 전용' },
+  { value: 'markdown_on', label: '마크다운 사용가능' },
+  { value: 'markdown_off', label: '마크다운 사용안함' },
+];
 
 function normalizeBoardKey(rawValue: string) {
   return rawValue
@@ -79,6 +86,7 @@ export default function Opt() {
   const [originBoardKey, setOriginBoardKey] = useState('');
   const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
+  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
   const [postType, setPostType] = useState<PostType>('none');
   const [isActive, setIsActive] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
@@ -112,6 +120,10 @@ export default function Opt() {
     setPostPerPage(Number(event.target.value));
   }
 
+  function handleMarkdownStatusChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setMarkdownStatus(event.target.value as MarkdownStatus);
+  }
+
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostType(event.target.value as PostType);
   }
@@ -137,6 +149,7 @@ export default function Opt() {
     setOriginBoardKey(result.board.board_key);
     setBoardType(result.board.board_type);
     setPostPerPage(result.board.post_per_page ?? 5);
+    setMarkdownStatus(result.board.markdown_status ?? 'markdown_default');
     setPostType(result.board.post_type ?? 'none');
     setIsActive(result.board.is_active);
     setIsChecked(true);
@@ -271,7 +284,7 @@ export default function Opt() {
           boardLabel: normalizedBoardLabel,
           boardType,
           isActive,
-          markdownStatus: 'markdown_default',
+          markdownStatus,
           postPerPage,
           postType: canUsePostType ? postType : 'none',
         }),
@@ -399,6 +412,21 @@ export default function Opt() {
           {POST_PER_PAGE_OPTIONS.map((count) => (
             <MenuItem key={count} value={count}>
               {count}개씩
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="마크다운 사용"
+          value={markdownStatus || 'markdown_default'}
+          onChange={handleMarkdownStatusChange}
+          fullWidth
+          size="small"
+        >
+          {MARKDOWN_STATUS_OPTIONS.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
             </MenuItem>
           ))}
         </TextField>

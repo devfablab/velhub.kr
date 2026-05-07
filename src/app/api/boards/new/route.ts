@@ -37,6 +37,10 @@ function isAllowedBoardType(value: string) {
   return value === 'basic' || value === 'gallery' || value === 'youtube' || value === 'feed';
 }
 
+function isAllowedMarkdownStatus(value: string) {
+  return value === 'markdown_default' || value === 'markdown_on' || value === 'markdown_off';
+}
+
 function normalizePostPerPage(value: number | null | undefined) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 5;
@@ -108,8 +112,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '게시판 종류가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (!isAllowedMarkdownStatus(markdownStatus)) {
+      return Response.json({ error: '마크다운 사용 설정이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     if (!isAllowedPostType(postType)) {
-      return Response.json({ error: '말머리/연재 설정 값이 유효하지 않습니다.' }, { status: 400 });
+      return Response.json({ error: '말머리/연재 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -122,6 +130,10 @@ export async function POST(request: Request) {
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (rhizome.data.site_type !== 'community') {
+      return Response.json({ error: '커뮤니티 사이트에서만 게시판을 생성할 수 있습니다.' }, { status: 400 });
     }
 
     const session = await verifySession({

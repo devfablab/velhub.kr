@@ -1,323 +1,88 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { canPinCommunityPost } from '@/lib/community-manager/board-permissions';
-import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 
 type RouteContext = {
   params: Promise<{
     boardName: string;
-    contentId: string;
   }>;
-};
-
-type PollOptionRow = {
-  id: number;
-  label: string;
-};
-
-type PollRow = {
-  question: string;
-  options: PollOptionRow[];
-};
-
-type ImageRow = {
-  path: string;
-  width: number | null;
-  height: number | null;
 };
 
 type RequestBody = {
   siteName: string | null;
-  action?: 'draft' | 'publish' | 'update' | null;
-  subject?: string | null;
-  summary?: string | null;
-  contentHtml?: string | null;
-  contentMarkdown?: string | null;
-  contentSimple?: string | null;
-  thumbnailImage?: string | null;
-  thumbnailWidth?: number | null;
-  thumbnailHeight?: number | null;
-  youtubeUrl?: string | null;
-  youtubeCreatedAt?: string | null;
-  images?: unknown;
-  poll?: unknown;
-  categories?: string[] | null;
-  hashtags?: string[] | null;
-  seriesKey?: string | null;
-  prefixId?: string | null;
-  isComment?: boolean | null;
-  isPin?: boolean | null;
+  boardKey?: string | null;
+  boardLabel?: string | null;
+  isActive?: boolean | null;
+  markdownStatus?: string | null;
 };
 
-function isNumericSlug(value: string) {
-  return /^\d+$/.test(value);
+function normalizeBoardKey(rawValue: string | null | undefined) {
+  return (rawValue ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/g, '')
+    .replace(/-+$/g, '');
 }
 
-function isValidCategoryKey(value: string) {
-  if (value.length < 2 || value.length > 16) {
-    return false;
-  }
-
-  if (!/[a-z]/.test(value)) {
-    return false;
-  }
-
-  if (/[^a-z0-9\-_]/.test(value)) {
-    return false;
-  }
-
-  if (value.startsWith('_') || value.endsWith('_')) {
-    return false;
-  }
-
-  if (value.includes('__')) {
-    return false;
-  }
-
-  return true;
+function hasInvalidBoardKeyCharacters(value: string) {
+  return /[^a-z0-9-]/.test(value);
 }
 
-function isValidSeriesKey(value: string) {
-  if (value.length < 5 || value.length > 16) {
-    return false;
-  }
-
-  if (!/[a-z]/.test(value)) {
-    return false;
-  }
-
-  if (/[^a-z0-9\-_]/.test(value)) {
-    return false;
-  }
-
-  if (value.startsWith('_') || value.endsWith('_')) {
-    return false;
-  }
-
-  if (value.includes('__')) {
-    return false;
-  }
-
-  return true;
-}
-
-function normalizeHashtags(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return Array.from(
-    new Set(
-      value
-        .map((item) => normalizeText(item))
-        .filter(Boolean)
-        .map((item) => (item.startsWith('#') ? item.slice(1) : item))
-        .map((item) => item.replace(/\s+/g, ' '))
-        .filter(Boolean),
-    ),
-  );
-}
-
-function normalizeImages(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [] as ImageRow[];
-  }
-
-  const normalizedImages: ImageRow[] = [];
-
-  for (const item of value) {
-    if (!item || typeof item !== 'object') {
-      continue;
-    }
-
-    const rawItem = item as {
-      path?: unknown;
-      width?: unknown;
-      height?: unknown;
-    };
-
-    const path = typeof rawItem.path === 'string' ? normalizeText(rawItem.path) : '';
-
-    if (!path) {
-      continue;
-    }
-
-    const width =
-      typeof rawItem.width === 'number' && Number.isFinite(rawItem.width) ? Math.floor(rawItem.width) : null;
-    const height =
-      typeof rawItem.height === 'number' && Number.isFinite(rawItem.height) ? Math.floor(rawItem.height) : null;
-
-    normalizedImages.push({
-      path,
-      width,
-      height,
-    });
-  }
-
-  return normalizedImages.slice(0, 6);
-}
-
-function normalizePoll(value: unknown) {
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  const rawValue = value as {
-    question?: unknown;
-    options?: unknown;
-  };
-
-  const question = typeof rawValue.question === 'string' ? normalizeText(rawValue.question) : '';
-
-  if (!question) {
-    return null;
-  }
-
-  if (!Array.isArray(rawValue.options)) {
-    return null;
-  }
-
-  const rawOptions = rawValue.options.map((item) => normalizeText(item));
-  const hasAnyOption = rawOptions.some(Boolean);
-
-  if (!hasAnyOption) {
-    return null;
-  }
-
-  const firstEmptyIndex = rawOptions.findIndex((item) => !item);
-
-  if (firstEmptyIndex !== -1 && rawOptions.slice(firstEmptyIndex + 1).some(Boolean)) {
-    return 'NON_SEQUENTIAL';
-  }
-
-  const options = rawOptions
-    .filter(Boolean)
-    .slice(0, 5)
-    .map((label, index) => ({
-      id: index + 1,
-      label,
-    }));
-
-  if (options.length < 2) {
-    return 'INVALID_OPTION_COUNT';
-  }
-
-  return {
-    question,
-    options,
-  } satisfies PollRow;
-}
-
-function extractYoutubeId(value: string) {
-  const normalizedValue = normalizeText(value);
-
-  if (!normalizedValue) {
-    return '';
-  }
-
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,
-    /(?:youtu\.be\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
-    /(?:youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
-  ];
-
-  for (const pattern of patterns) {
-    const matchedValue = normalizedValue.match(pattern);
-
-    if (matchedValue?.[1]) {
-      return matchedValue[1];
-    }
-  }
-
-  return '';
-}
-
-function isValidDateValue(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value);
-}
-
-function buildFeedSubject(value: string) {
-  const normalizedValue = normalizeText(value);
-
-  if (!normalizedValue) {
-    return '';
-  }
-
-  return normalizedValue.length > 100 ? normalizedValue.slice(0, 100) : normalizedValue;
+function isAllowedMarkdownStatus(value: string) {
+  return value === 'markdown_default' || value === 'markdown_on' || value === 'markdown_off';
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
-    const { boardName, contentId } = await context.params;
+    const { boardName } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
-    const normalizedContentId = normalizeText(contentId);
 
     if (!normalizedBoardName) {
       return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!normalizedContentId) {
-      return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
-    }
-
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const action =
-      requestBody.action === 'draft' || requestBody.action === 'publish' || requestBody.action === 'update'
-        ? requestBody.action
-        : 'update';
-    const subject = normalizeText(requestBody.subject);
-    const summary = normalizeText(requestBody.summary);
-    const contentHtml = normalizeText(requestBody.contentHtml);
-    const contentMarkdown = normalizeText(requestBody.contentMarkdown);
-    const contentSimple = normalizeText(requestBody.contentSimple);
-    const thumbnailImage = normalizeText(requestBody.thumbnailImage);
-    const youtubeUrl = normalizeText(requestBody.youtubeUrl);
-    const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
-    const youtubeId = extractYoutubeId(youtubeUrl);
-    const seriesKey = normalizeText(requestBody.seriesKey).toLowerCase();
-    const prefixId = normalizeText(requestBody.prefixId);
-    const hashtags = normalizeHashtags(requestBody.hashtags);
-    const images = normalizeImages(requestBody.images);
-    const poll = normalizePoll(requestBody.poll);
-    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
-    const isPin = requestBody.isPin === true;
-    const thumbnailWidth =
-      typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
-        ? Math.floor(requestBody.thumbnailWidth)
-        : null;
-    const thumbnailHeight =
-      typeof requestBody.thumbnailHeight === 'number' && Number.isFinite(requestBody.thumbnailHeight)
-        ? Math.floor(requestBody.thumbnailHeight)
-        : null;
-
-    const categoryKeys = Array.isArray(requestBody.categories)
-      ? Array.from(
-          new Set(
-            requestBody.categories
-              .map((value) => normalizeText(value).toLowerCase())
-              .filter((value) => value && isValidCategoryKey(value)),
-          ),
-        )
-      : [];
+    const boardKey = normalizeBoardKey(requestBody.boardKey);
+    const boardLabel = normalizeText(requestBody.boardLabel);
+    const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
+    const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (seriesKey && !isValidSeriesKey(seriesKey)) {
-      return Response.json({ error: '연재 식별자가 유효하지 않습니다.' }, { status: 400 });
+    if (!boardKey) {
+      return Response.json({ error: '게시판 식별자를 입력해주세요.' }, { status: 400 });
     }
 
-    if (poll === 'NON_SEQUENTIAL') {
-      return Response.json({ error: '투표 선택지는 순차적으로 입력해야 합니다.' }, { status: 400 });
+    if (hasInvalidBoardKeyCharacters(boardKey)) {
+      return Response.json(
+        {
+          error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다.",
+        },
+        { status: 400 },
+      );
     }
 
-    if (poll === 'INVALID_OPTION_COUNT') {
-      return Response.json({ error: '투표 선택지는 2개 이상 입력해야 합니다.' }, { status: 400 });
+    if (/^\d/.test(boardKey)) {
+      return Response.json({ error: '게시판 식별자는 숫자로 시작할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (boardKey.length < 5 || boardKey.length > 15) {
+      return Response.json({ error: '게시판 식별자는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
+    }
+
+    if (!boardLabel) {
+      return Response.json({ error: '게시판 이름을 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!isAllowedMarkdownStatus(markdownStatus)) {
+      return Response.json({ error: '마크다운 사용 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -328,347 +93,76 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    if (rhizome.data.site_type !== 'community') {
+      return Response.json({ error: '커뮤니티 사이트에서만 사용할 수 있습니다.' }, { status: 400 });
+    }
+
     const session = await verifySession({
       siteId: rhizome.data.id,
     });
 
-    if (!session.authUserId) {
+    if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const board = await supabaseAdmin
+    const currentBoard = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, site_id, post_type')
+      .select('id, board_key, board_type, post_type, post_per_page')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
-    if (board.error || !board.data) {
+    if (currentBoard.error) {
+      return Response.json({ error: '게시판 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!currentBoard.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const postQuery = supabaseAdmin
-      .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_pin')
-      .eq('board_id', board.data.id);
-
-    const currentPost = isNumericSlug(normalizedContentId)
-      ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
-      : await postQuery.eq('id', normalizedContentId).maybeSingle();
-
-    if (currentPost.error || !currentPost.data) {
-      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const isStaff = session.case === 'staff';
-    const isAuthor = currentPost.data.user_id === session.authUserId;
-
-    if (!isStaff && !isAuthor) {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
-    if (rhizome.data.site_type === 'community' && currentPost.data.is_pin !== isPin) {
-      let canPinPost = false;
-
-      try {
-        const access = await getCommunityManagerAccess(siteName, {
-          requireManagerControlPermission: false,
-        });
-
-        canPinPost = canPinCommunityPost({
-          permissions: access.actor.permissions,
-          managedBoardIds: access.actor.managedBoardIds,
-          boardId: board.data.id,
-        });
-      } catch {
-        canPinPost = false;
-      }
-
-      if (!canPinPost) {
-        return Response.json({ error: '상단고정글을 변경할 권한이 없습니다.' }, { status: 403 });
-      }
-    }
-
-    let categoryIds: string[] = [];
-
-    if (categoryKeys.length > 0) {
-      const categoryResult = await supabaseAdmin
-        .from('board_categories')
-        .select('id, category_key')
+    if (boardKey !== normalizedBoardName) {
+      const duplicateBoard = await supabaseAdmin
+        .from('boards')
+        .select('id')
         .eq('site_id', rhizome.data.id)
-        .eq('board_id', board.data.id)
-        .in('category_key', categoryKeys);
+        .eq('board_key', boardKey)
+        .maybeSingle();
 
-      if (categoryResult.error) {
-        return Response.json({ error: '카테고리 정보를 확인하지 못했습니다.' }, { status: 500 });
+      if (duplicateBoard.error) {
+        return Response.json({ error: '게시판 식별자 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      if ((categoryResult.data ?? []).length !== categoryKeys.length) {
-        return Response.json({ error: '일부 카테고리를 찾을 수 없습니다.' }, { status: 404 });
-      }
-
-      const categoryMap = new Map(
-        (categoryResult.data ?? []).map((category) => [category.category_key as string, category.id as string]),
-      );
-
-      categoryIds = categoryKeys.map((categoryKey) => categoryMap.get(categoryKey) as string);
-    }
-
-    let seriesId: string | null = currentPost.data.series_id ?? null;
-
-    if (board.data.post_type === 'series') {
-      if (seriesKey) {
-        const seriesResult = await supabaseAdmin
-          .from('board_series')
-          .select('id, is_completed, user_id')
-          .eq('site_id', rhizome.data.id)
-          .eq('board_id', board.data.id)
-          .eq('series_key', seriesKey)
-          .maybeSingle();
-
-        if (seriesResult.error || !seriesResult.data) {
-          return Response.json({ error: '연재를 찾을 수 없습니다.' }, { status: 404 });
-        }
-
-        if (seriesResult.data.is_completed) {
-          return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
-        }
-
-        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
-          return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
-        }
-
-        seriesId = seriesResult.data.id;
-      } else {
-        seriesId = null;
-      }
-    } else {
-      seriesId = null;
-    }
-
-    let resolvedPrefixId: string | null = currentPost.data.prefix_id ?? null;
-
-    if (board.data.post_type === 'prefix') {
-      if (prefixId) {
-        const prefixResult = await supabaseAdmin
-          .from('board_prefixes')
-          .select('id')
-          .eq('site_id', rhizome.data.id)
-          .eq('board_id', board.data.id)
-          .eq('id', prefixId)
-          .maybeSingle();
-
-        if (prefixResult.error || !prefixResult.data) {
-          return Response.json({ error: '말머리를 찾을 수 없습니다.' }, { status: 404 });
-        }
-
-        resolvedPrefixId = prefixResult.data.id;
-      } else {
-        resolvedPrefixId = null;
-      }
-    } else {
-      resolvedPrefixId = null;
-    }
-
-    let finalSubject = subject;
-    let finalSummary = summary || null;
-    let finalContentHtml = contentHtml || null;
-    let finalContentMarkdown = contentMarkdown || null;
-    let finalContentSimple = contentSimple || null;
-    let finalThumbnailImage = thumbnailImage || null;
-    let finalThumbnailWidth = thumbnailWidth;
-    let finalThumbnailHeight = thumbnailHeight;
-    let finalYoutubeUrl = youtubeUrl || null;
-    let finalYoutubeId = youtubeId || null;
-    let finalYoutubeCreatedAt = youtubeCreatedAt || null;
-    let finalImages = images.length > 0 ? images : null;
-    let finalPoll = poll && typeof poll === 'object' ? poll : null;
-
-    if (board.data.board_type === 'basic') {
-      finalSummary = null;
-      finalContentSimple = null;
-      finalYoutubeUrl = null;
-      finalYoutubeId = null;
-      finalYoutubeCreatedAt = null;
-      finalImages = null;
-
-      if (action !== 'draft') {
-        if (!finalSubject) {
-          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalContentHtml || !finalContentMarkdown) {
-          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-        }
-      }
-
-      if (currentPost.data.poll && finalPoll) {
-        return Response.json({ error: '글이 게시된 이후에는 투표를 수정하실 수 없습니다.' }, { status: 400 });
+      if (duplicateBoard.data) {
+        return Response.json({ error: '이미 존재하는 게시판 식별자입니다.' }, { status: 400 });
       }
     }
 
-    if (board.data.board_type === 'gallery') {
-      finalYoutubeUrl = null;
-      finalYoutubeId = null;
-      finalYoutubeCreatedAt = null;
-      finalPoll = null;
-      finalContentSimple = null;
-
-      if (action !== 'draft') {
-        if (!finalSubject) {
-          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalImages || finalImages.length === 0) {
-          return Response.json({ error: '갤러리 이미지를 하나 이상 등록해주세요.' }, { status: 400 });
-        }
-      }
-    }
-
-    if (board.data.board_type === 'youtube') {
-      finalContentHtml = null;
-      finalContentMarkdown = null;
-      finalContentSimple = null;
-      finalImages = null;
-      finalPoll = null;
-
-      if (action !== 'draft') {
-        if (!finalSubject) {
-          return Response.json({ error: '제목을 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalSummary) {
-          return Response.json({ error: '간단 설명을 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalYoutubeUrl) {
-          return Response.json({ error: '유튜브 영상 주소를 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalYoutubeId) {
-          return Response.json({ error: '유튜브 영상 주소가 올바르지 않습니다.' }, { status: 400 });
-        }
-
-        if (!finalYoutubeCreatedAt || !isValidDateValue(finalYoutubeCreatedAt)) {
-          return Response.json({ error: '유튜브 업로드 날짜가 올바르지 않습니다.' }, { status: 400 });
-        }
-      }
-    }
-
-    if (board.data.board_type === 'feed') {
-      finalSummary = null;
-      finalThumbnailImage = null;
-      finalThumbnailWidth = null;
-      finalThumbnailHeight = null;
-      finalContentHtml = null;
-      finalContentMarkdown = null;
-      finalYoutubeUrl = null;
-      finalYoutubeId = null;
-      finalYoutubeCreatedAt = null;
-      finalPoll = null;
-      finalSubject = buildFeedSubject(finalContentSimple ?? '');
-
-      if (action !== 'draft') {
-        if (!finalContentSimple) {
-          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-        }
-
-        if (!finalSubject) {
-          return Response.json({ error: '내용을 입력해주세요.' }, { status: 400 });
-        }
-      }
-    }
-
-    const nowIsoString = new Date().toISOString();
-    const nextPublishedStatus =
-      action === 'draft' ? 'draft' : currentPost.data.published_status === 'draft' ? 'published' : 'published';
-
-    const updatePayload: {
-      subject: string | null;
-      summary: string | null;
-      content_html: string | null;
-      content_markdown: string | null;
-      content_simple: string | null;
-      thumbnail_image: string | null;
-      thumbnail_width: number | null;
-      thumbnail_height: number | null;
-      youtube_url: string | null;
-      youtube_id: string | null;
-      youtube_created_at: string | null;
-      images: ImageRow[] | null;
-      poll: PollRow | null;
-      hashtags: string[];
-      categories: string[];
-      series_id: string | null;
-      prefix_id: string | null;
-      published_status: 'draft' | 'published';
-      published_at?: string | null;
-      edited_at?: string | null;
-      is_comment: boolean;
-      is_pin: boolean;
-    } = {
-      subject: finalSubject || null,
-      summary: finalSummary,
-      content_html: finalContentHtml,
-      content_markdown: finalContentMarkdown,
-      content_simple: finalContentSimple,
-      thumbnail_image: finalThumbnailImage,
-      thumbnail_width: finalThumbnailWidth,
-      thumbnail_height: finalThumbnailHeight,
-      youtube_url: finalYoutubeUrl,
-      youtube_id: finalYoutubeId,
-      youtube_created_at: finalYoutubeCreatedAt,
-      images: finalImages,
-      poll: finalPoll,
-      hashtags,
-      categories: categoryIds,
-      series_id: seriesId,
-      prefix_id: resolvedPrefixId,
-      published_status: nextPublishedStatus,
-      is_comment: isComment,
-      is_pin: isPin,
-    };
-
-    if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {
-      updatePayload.published_at = nowIsoString;
-      updatePayload.edited_at = null;
-    }
-
-    if (currentPost.data.published_status === 'published' && action === 'update') {
-      updatePayload.edited_at = nowIsoString;
-    }
-
-    const updatePost = await supabaseAdmin
-      .from('posts')
-      .update(updatePayload)
-      .eq('id', currentPost.data.id)
-      .select('id, slug, published_status')
+    const updateBoard = await supabaseAdmin
+      .from('boards')
+      .update({
+        board_key: boardKey,
+        board_label: boardLabel,
+        is_active: isActive,
+        markdown_status: markdownStatus,
+      })
+      .eq('id', currentBoard.data.id)
+      .select('id, board_key')
       .maybeSingle();
 
-    if (updatePost.error || !updatePost.data) {
-      return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
-    }
-
-    if (seriesId && nextPublishedStatus === 'published') {
-      await supabaseAdmin
-        .from('board_series')
-        .update({
-          last_published_at: nowIsoString,
-        })
-        .eq('id', seriesId);
+    if (updateBoard.error || !updateBoard.data) {
+      return Response.json({ error: '게시판 수정에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      slug: String(updatePost.data.slug),
-      contentId: updatePost.data.id,
-      publishedStatus: updatePost.data.published_status,
+      boardId: updateBoard.data.id,
+      boardName: updateBoard.data.board_key,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '글 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '게시판 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '게시판 수정에 실패했습니다.' }, { status: 500 });
   }
 }
