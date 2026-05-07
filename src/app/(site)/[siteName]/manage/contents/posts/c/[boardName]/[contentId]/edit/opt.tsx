@@ -198,6 +198,7 @@ export default function Opt() {
 
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
   const [seriesList, setSeriesList] = useState<
     Array<{ id: string; series_key: string; series_label: string; is_completed: boolean }>
   >([]);
@@ -253,6 +254,7 @@ export default function Opt() {
 
         const nextBoardType = contentResult.board?.board_type ?? 'basic';
         const nextPostType = contentResult.board?.post_type ?? 'none';
+        const nextMarkdownStatus = contentResult.board?.markdown_status ?? 'markdown_default';
         const nextContent = contentResult.content;
 
         if (!nextContent || nextBoardType === 'page') {
@@ -261,6 +263,7 @@ export default function Opt() {
 
         setBoardType(nextBoardType);
         setPostType(nextPostType);
+        setMarkdownStatus(nextMarkdownStatus);
         setSubject(nextContent.subject ?? '');
         setSummary(nextContent.summary ?? '');
         setContentHtml(nextContent.content_html ?? '');
@@ -871,6 +874,7 @@ export default function Opt() {
                 initialMarkdown={contentMarkdown}
                 initialEditType="wysiwyg"
                 themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                markdownStatus={markdownStatus}
                 hideModeSwitch
                 onHtmlChange={setContentHtml}
                 onMarkdownChange={setContentMarkdown}

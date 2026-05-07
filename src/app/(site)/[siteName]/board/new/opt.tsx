@@ -58,6 +58,7 @@ type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series';
+    markdown_status: string | null;
   };
   actions?: {
     canPinPost?: boolean;
@@ -482,6 +483,7 @@ export default function Opt() {
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
   const [canPinPost, setCanPinPost] = useState(false);
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
   const [isPollEnabled, setIsPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
@@ -637,6 +639,7 @@ export default function Opt() {
         setSelectedSeriesKey('');
         setIsPin(false);
         setCanPinPost(false);
+        setMarkdownStatus('markdown_default');
         return;
       }
 
@@ -679,9 +682,11 @@ export default function Opt() {
 
         const nextBoardType = boardResult.board?.board_type ?? 'basic';
         const nextPostType = boardResult.board?.post_type ?? 'none';
+        const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
 
         setBoardType(nextBoardType);
         setPostType(nextPostType);
+        setMarkdownStatus(nextMarkdownStatus);
         setCanPinPost(boardResult.actions?.canPinPost === true);
         setIsPin(false);
         setPrefixList([]);
@@ -1737,6 +1742,7 @@ export default function Opt() {
                     initialMarkdown={contentMarkdown}
                     initialEditType="wysiwyg"
                     themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    markdownStatus={markdownStatus}
                     hideModeSwitch
                     onHtmlChange={setContentHtml}
                     onMarkdownChange={setContentMarkdown}

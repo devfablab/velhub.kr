@@ -20,7 +20,6 @@ import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import CommentSection from '@/components/board/CommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
-import ContentHtmlRenderer from '@/components/service/EmbeddedContentHtml';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 
 type BoardInfo = {

@@ -68,6 +68,7 @@ type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series';
+    markdown_status: string | null;
   };
   error?: string;
 };
@@ -159,6 +160,7 @@ export default function Opt() {
 
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
   const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
@@ -211,9 +213,11 @@ export default function Opt() {
 
         const nextBoardType = boardResult.board?.board_type ?? 'basic';
         const nextPostType = boardResult.board?.post_type ?? 'none';
+        const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
 
         setBoardType(nextBoardType);
         setPostType(nextPostType);
+        setMarkdownStatus(nextMarkdownStatus);
 
         if (nextPostType === 'series') {
           const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
@@ -777,6 +781,7 @@ export default function Opt() {
                 initialMarkdown={contentMarkdown}
                 initialEditType="wysiwyg"
                 themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                markdownStatus={markdownStatus}
                 hideModeSwitch
                 onHtmlChange={setContentHtml}
                 onMarkdownChange={setContentMarkdown}
