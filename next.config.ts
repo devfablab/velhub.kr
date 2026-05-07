@@ -7,15 +7,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'tjejcolcmqterhhdfcub.supabase.co',
+        hostname: 'qfipuxidypbyzmajkybm.supabase.co',
         port: '',
-        pathname: '/storage/v1/object/public/post-images/**',
+        pathname: '/storage/v1/object/public/**',
       },
       {
         protocol: 'https',
         hostname: 'i.ytimg.com',
         port: '',
-        pathname: '/vi/**',
+        pathname: '/vi_webp/**',
       },
     ],
   },

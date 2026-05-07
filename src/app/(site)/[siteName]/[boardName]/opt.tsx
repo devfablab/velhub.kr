@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
@@ -13,6 +14,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -27,12 +29,20 @@ type BoardItem = {
   is_active?: boolean;
 };
 
+type PostImage = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
 type PostItem = {
   id: string;
   idx: number;
   slug: string;
   subject: string;
-  summary: string | null;
+  summary: string;
+  content_simple: string | null;
   created_at: string;
   author_name: string;
   post_count: number;
@@ -48,6 +58,11 @@ type PostItem = {
   search_title_matched: boolean;
   search_content_matched: boolean;
   search_content: string;
+  thumbnail_image_url: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
+  images: PostImage[] | null;
+  youtube_id: string | null;
 };
 
 type BoardListResponse = {
@@ -61,8 +76,12 @@ type BoardListResponse = {
   error?: string;
 };
 
+type BoardViewType = 'default' | 'list';
+
 const PAGE_SIZE = 20;
 const PAGER_SIZE = 10;
+
+const YOUTUBE_THUMBNAIL_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default'];
 
 function renderHighlightedText(value: string, keyword: string) {
   const normalizedKeyword = normalizeText(keyword);
@@ -133,6 +152,81 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
   return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
+function getGalleryThumbnail(content: PostItem) {
+  const firstImage = content.images?.[0] ?? null;
+
+  if (content.thumbnail_image_url) {
+    return {
+      url: content.thumbnail_image_url,
+      width: content.thumbnail_width ?? firstImage?.width ?? 1200,
+      height: content.thumbnail_height ?? firstImage?.height ?? 675,
+    };
+  }
+
+  if (firstImage?.url) {
+    return {
+      url: firstImage.url,
+      width: firstImage.width ?? 1200,
+      height: firstImage.height ?? 675,
+    };
+  }
+
+  return null;
+}
+
+function getImageCount(content: PostItem) {
+  return Array.isArray(content.images) ? content.images.length : 0;
+}
+
+function getYoutubeThumbnailUrl(videoId: string, quality: string) {
+  return `https://i.ytimg.com/vi_webp/${videoId}/${quality}.webp`;
+}
+
+function truncateText(value: string | null, maxLength: number) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  if (normalizedValue.length <= maxLength) {
+    return normalizedValue;
+  }
+
+  return `${normalizedValue.slice(0, maxLength)}…`;
+}
+
+function YoutubeThumbnailImage({ content }: { content: PostItem }) {
+  const [qualityIndex, setQualityIndex] = useState(0);
+  const thumbnailUrl = content.thumbnail_image_url
+    ? content.thumbnail_image_url
+    : content.youtube_id
+      ? getYoutubeThumbnailUrl(content.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[qualityIndex])
+      : '';
+
+  if (!thumbnailUrl) {
+    return null;
+  }
+
+  return (
+    <Image
+      src={thumbnailUrl}
+      width={content.thumbnail_width ?? 1280}
+      height={content.thumbnail_height ?? 720}
+      alt=""
+      onError={() => {
+        if (content.thumbnail_image_url) {
+          return;
+        }
+
+        setQualityIndex((previousIndex) =>
+          previousIndex < YOUTUBE_THUMBNAIL_QUALITIES.length - 1 ? previousIndex + 1 : previousIndex,
+        );
+      }}
+    />
+  );
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -150,6 +244,7 @@ export default function Opt() {
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPage, setTotalPage] = useState(1);
+  const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -220,6 +315,10 @@ export default function Opt() {
     void loadContents(nextPage, nextKeyword);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, boardName, searchParams]);
+
+  useEffect(() => {
+    setBoardViewType('default');
+  }, [boardName]);
 
   function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -297,6 +396,87 @@ export default function Opt() {
         </form>
       </div>
 
+      {!isSearchMode && board?.board_type === 'gallery' ? (
+        <div className={styles['select-board-type']}>
+          <ul>
+            <li>
+              <button
+                type="button"
+                aria-label="갤러리로 보기"
+                className={boardViewType === 'default' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('default')}
+              >
+                <CollectionsOutlinedIcon />
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                aria-label="리스트로 보기"
+                className={boardViewType === 'list' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('list')}
+              >
+                <FormatListNumberedOutlinedIcon />
+              </button>
+            </li>
+          </ul>
+        </div>
+      ) : null}
+
+      {!isSearchMode && board?.board_type === 'youtube' ? (
+        <div className={styles['select-board-type']}>
+          <ul>
+            <li>
+              <button
+                type="button"
+                aria-label="유튜브로 보기"
+                className={boardViewType === 'default' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('default')}
+              >
+                <OndemandVideoOutlinedIcon />
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                aria-label="리스트로 보기"
+                className={boardViewType === 'list' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('list')}
+              >
+                <FormatListNumberedOutlinedIcon />
+              </button>
+            </li>
+          </ul>
+        </div>
+      ) : null}
+
+      {!isSearchMode && board?.board_type === 'feed' ? (
+        <div className={styles['select-board-type']}>
+          <ul>
+            <li>
+              <button
+                type="button"
+                aria-label="피드로 보기"
+                className={boardViewType === 'default' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('default')}
+              >
+                <DynamicFeedOutlinedIcon />
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                aria-label="리스트로 보기"
+                className={boardViewType === 'list' ? styles.selected : undefined}
+                onClick={() => setBoardViewType('list')}
+              >
+                <FormatListNumberedOutlinedIcon />
+              </button>
+            </li>
+          </ul>
+        </div>
+      ) : null}
+
       {contents.length === 0 ? (
         <div className="paper paper-error">{isSearchMode ? '검색 결과가 없습니다.' : '등록된 게시글이 없습니다.'}</div>
       ) : isSearchMode ? (
@@ -364,6 +544,132 @@ export default function Opt() {
               ))}
             </tbody>
           </table>
+        </div>
+      ) : board?.board_type === 'gallery' && boardViewType === 'default' ? (
+        <div className="paper">
+          <div className={styles['gallery-items']}>
+            {contents.map((content) => {
+              const thumbnail = getGalleryThumbnail(content);
+              const imageCount = getImageCount(content);
+
+              return (
+                <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                  <div className={styles.thumbnail}>
+                    <span>
+                      {content.is_pin ? (
+                        <i className={styles['pin-icon']} aria-label="상단고정글">
+                          <PushPinRoundedIcon />
+                        </i>
+                      ) : (
+                        <i className={styles.number}>{content.idx}</i>
+                      )}
+                      {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                    </span>
+                    <small>{`${imageCount}개 이미지`}</small>
+                    {thumbnail ? (
+                      <Image src={thumbnail.url} width={thumbnail.width} height={thumbnail.height} alt="" />
+                    ) : null}
+                  </div>
+                  <div className={styles.info}>
+                    <div className={styles.subject}>
+                      <strong>
+                        {content.prefix_label ? `[${content.prefix_label}] ` : null}
+                        {content.subject}
+                      </strong>
+                    </div>
+                    <div className={styles.author}>
+                      <cite>{content.author_name}</cite>
+                    </div>
+                    <div className={styles.tail}>
+                      <time>
+                        {formatTimeAgo(
+                          content.published_status === 'published' ? content.published_at : content.created_at,
+                        )}
+                      </time>
+                      {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
+                      <span>조회 {content.post_count}</span>
+                    </div>
+                  </div>
+                </Anchor>
+              );
+            })}
+          </div>
+        </div>
+      ) : board?.board_type === 'youtube' && boardViewType === 'default' ? (
+        <div className="paper">
+          <div className={styles['youtube-items']}>
+            {contents.map((content) => (
+              <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                <div className={styles.thumbnail}>
+                  <span>
+                    {content.is_pin ? (
+                      <i className={styles['pin-icon']} aria-label="상단고정글">
+                        <PushPinRoundedIcon />
+                      </i>
+                    ) : (
+                      <i className={styles.number}>{content.idx}</i>
+                    )}
+                    {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                  </span>
+                  <YoutubeThumbnailImage content={content} />
+                </div>
+                <div className={styles.info}>
+                  <div className={styles.subject}>
+                    <strong>
+                      {content.prefix_label ? `[${content.prefix_label}] ` : null}
+                      {content.subject}
+                    </strong>
+                  </div>
+                  <div className={styles.author}>
+                    <cite>{content.author_name}</cite>
+                  </div>
+                  <div className={styles.tail}>
+                    <time>
+                      {formatTimeAgo(
+                        content.published_status === 'published' ? content.published_at : content.created_at,
+                      )}
+                    </time>
+                    {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
+                    <span>조회 {content.post_count}</span>
+                  </div>
+                </div>
+              </Anchor>
+            ))}
+          </div>
+        </div>
+      ) : board?.board_type === 'feed' && boardViewType === 'default' ? (
+        <div className="paper">
+          <div className={styles['feed-items']}>
+            {contents.map((content) => (
+              <div className={styles['feed-item']} key={content.id}>
+                <div className={styles['content-simple']}>{truncateText(content.content_simple, 140)}</div>
+                <div className={styles.info}>
+                  <span>
+                    {content.is_pin ? (
+                      <i className={styles['pin-icon']} aria-label="상단고정글">
+                        <PushPinRoundedIcon />
+                      </i>
+                    ) : (
+                      <i className={styles.number}>{content.idx}</i>
+                    )}
+                    {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                  </span>
+                  <cite>{content.author_name}</cite>
+                  <time className={styles.item}>
+                    {formatTimeAgo(
+                      content.published_status === 'published' ? content.published_at : content.created_at,
+                    )}
+                  </time>
+                  {content.comment_count > 0 ? <span className={styles.item}>댓글 {content.comment_count}</span> : null}
+                  <span className={styles.item}>조회 {content.post_count}</span>
+                  <Anchor href={`/${siteName}/${boardName}/${content.slug}`} className={styles.item}>
+                    <span>더보기</span>
+                    <ChevronRightRoundedIcon />
+                  </Anchor>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="paper">

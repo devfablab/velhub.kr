@@ -991,3 +991,323 @@
 
         &.next-button
           right: ds.rem(32)
+
+.select-board-type
+  display: flex
+  justify-content: flex-end
+
+  ul
+    display: flex
+    gap: ds.rem(3)
+    border-radius: ds.rem(7)
+    padding: ds.rem(3)
+
+    html[data-theme="yellow-light"] &
+      background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+  li
+    display: flex
+    align-items: center
+
+    &::before
+      content: ''
+      display: inline-block
+      margin-right: ds.rem(2)
+      width: 1px
+      height: ds.rem(20)
+
+      html[data-theme="yellow-light"] &
+        background-color: rgba(ds.$hex-tertiary, .5)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$hex-tertiary, .9)
+
+    &:first-of-type
+      &::before
+        display: none
+
+  button
+    display: flex
+    justify-content: center
+    align-items: center
+    background-color: transparent
+    width: ds.rem(28)
+    height: ds.rem(28)
+    color: ds.$hex-accent
+
+    &.selected
+      color: ds.$hex-accent!important
+
+    html[data-theme="yellow-light"] &
+      color: rgba(ds.$hex-tertiary, .5)
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$hex-tertiary, .9)
+
+    svg
+      width: ds.rem(20)
+      height: ds.rem(20)
+
+.gallery-items, .youtube-items
+  display: grid
+  grid-template-columns: repeat(5, 1fr)
+  column-gap: ds.rem(12)
+  row-gap: ds.rem(23)
+
+  a
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+
+    .thumbnail
+      position: relative
+      border-radius: ds.rem(7)
+      width: 100%
+      height: auto
+
+      html[data-theme="yellow-light"] &
+        background-color: ds.$hex-bright
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-primary
+
+      span
+        position: absolute
+        top: ds.rem(7)
+        left: ds.rem(7)
+        display: flex
+        gap: ds.rem(7)
+
+        i
+          color: ds.$hex-accent
+          display: inline-flex
+          align-items: center
+          border-radius: ds.rem(3)
+          height: ds.rem(20)
+
+          html[data-theme="yellow-light"] &
+            background-color: ds.$hex-white
+
+          html[data-theme="yellow-dark"] &
+            background-color: ds.$hex-black
+
+          &.number
+            padding: 0 ds.rem(6)
+            @include ds.fw(pre, 700)
+            font-style: normal
+            font-size: ds.rem(12)
+            color: ds.$hex-action
+
+          &.pin-icon
+            justify-content: center
+            width: ds.rem(20)
+            color: ds.$hex-warning
+
+            svg
+              width: ds.rem(14)
+              height: ds.rem(14)
+              transform: rotate(45deg)
+
+        em
+          display: inline-flex
+          align-items: center
+          border-radius: ds.rem(3)
+          padding: 0 ds.rem(6)
+          height: ds.rem(20)
+          @include ds.fw(pre, 700)
+          font-style: normal
+          font-size: ds.rem(12)
+          color: ds.$hex-warning
+
+          html[data-theme="yellow-light"] &
+            background-color: ds.$hex-white
+
+          html[data-theme="yellow-dark"] &
+            background-color: ds.$hex-black
+
+      img
+        object-position: center
+        width: 100%
+        height: auto
+        display: block
+
+      small
+        position: absolute
+        right: ds.rem(7)
+        bottom: ds.rem(7)
+        background-color: ds.$hex-accent
+        display: flex
+        align-items: center
+        border-radius: ds.rem(3)
+        padding: 0 ds.rem(7)
+        height: ds.rem(20)
+        font-size: ds.rem(12)
+        color: ds.$hex-primary
+
+    .info
+      display: flex
+      flex-direction: column
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
+
+      .subject
+        @include ds.fw(pre, 600)
+        font-size: ds.rem(14)
+
+        strong
+          @include ds.line-abbr(2, 36, 1.25)
+
+      .author
+        margin-top: ds.rem(7)
+        font-size: ds.rem(12)
+        opacity: .5
+
+        cite
+          @include ds.line-abbr(1, 12, 1)
+
+      .tail
+        display: flex
+        gap: ds.rem(5)
+        font-size: ds.rem(12)
+        opacity: .3
+
+        span
+          display: inline-flex
+          align-items: center
+
+          &::before
+            content: ''
+            display: inline-block
+            margin-right: ds.rem(5)
+            width: ds.rem(2)
+            height: ds.rem(2)
+            background-color: ds.$hex-secondary
+            border-radius: ds.rem(2)
+
+.gallery-items
+  a
+    .thumbnail
+      aspect-ratio: 1 / 1
+
+      img
+        object-fit: contain
+        aspect-ratio: 1 / 1
+
+.youtube-items
+  a
+    .thumbnail
+      aspect-ratio: 1920 / 1080
+
+      img
+        object-fit: cover
+        aspect-ratio: 1920 / 1080
+
+.feed-items
+  display: flex
+  flex-direction: column
+
+  .feed-item
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+    padding: ds.rem(23) 0
+
+    &:first-of-type
+      padding-top: 0
+
+    &:last-of-type
+      border-bottom: 0!important
+      padding-bottom: 0
+
+    html[data-theme="yellow-light"] &
+      border-bottom: 1px solid rgba(ds.$hex-tertiary, .1)
+
+    html[data-theme="yellow-dark"] &
+      border-bottom: 1px solid rgba(ds.$hex-tertiary, .9)
+
+    .content-simple
+      white-space: pre-wrap
+      font-size: ds.rem(14)
+      line-height: 1.25
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+    .info
+      display: flex
+      align-items: center
+      font-size: ds.rem(12)
+      gap: ds.rem(7)
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      > span
+        display: inline-flex
+        align-items: center
+
+      i
+        display: inline-flex
+        opacity: .7
+        font-size: ds.rem(12)
+        font-style: normal
+
+        &.pin-icon
+          opacity: 1
+          color: ds.$hex-warning
+
+          svg
+            width: ds.rem(14)
+            height: ds.rem(14)
+            transform: rotate(45deg)
+
+      cite
+        max-width: ds.rem(103)
+        font-size: ds.rem(12)
+        @include ds.line-abbr(1, 12, 1)
+        opacity: .7
+
+      a
+        @include ds.fw(pre, 700)
+        color: ds.$hex-action
+        opacity: 1!important
+
+        &::before
+          opacity: .5
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
+
+        svg
+          width: ds.rem(14)
+          height: ds.rem(14)
+
+      .item
+        display: inline-flex
+        align-items: center
+        opacity: .5
+
+        &::before
+          content: ''
+          display: inline-block
+          margin-right: ds.rem(5)
+          width: ds.rem(2)
+          height: ds.rem(2)
+          background-color: ds.$hex-secondary
+          border-radius: ds.rem(2)

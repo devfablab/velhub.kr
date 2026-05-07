@@ -16,6 +16,13 @@ type GetPostListOptions = {
   keyword?: string | null;
 };
 
+type PostImage = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
 type RawPostRow = {
   id: string;
   slug: number;
@@ -41,6 +48,11 @@ type RawPostRow = {
   published_status: 'draft' | 'published';
   post_count: number | null;
   is_pin: boolean;
+  thumbnail_image: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
+  images: unknown;
+  youtube_id: string | null;
 };
 
 export type BoardListItem = {
@@ -53,7 +65,8 @@ export type PostListItem = {
   id: string;
   slug: string;
   subject: string;
-  summary: string | null;
+  summary: string;
+  content_simple: string | null;
   edited_at: string;
   created_at: string;
   idx: number;
@@ -81,6 +94,11 @@ export type PostListItem = {
   is_pin: boolean;
   board_key: string;
   board_label: string;
+  thumbnail_image_url: string | null;
+  thumbnail_width: number | null;
+  thumbnail_height: number | null;
+  images: PostImage[] | null;
+  youtube_id: string | null;
 };
 
 export type GetPostListResult = {
@@ -88,6 +106,9 @@ export type GetPostListResult = {
   totalCount: number;
   totalPage: number;
 };
+
+const POST_SELECT =
+  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id';
 
 function stripHtml(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -136,6 +157,75 @@ function getSearchSnippet(content: string, keyword: string) {
   return `${startIndex > 0 ? '...' : ''}${snippet}${endIndex < normalizedContent.length ? '...' : ''}`;
 }
 
+function applySearchFilter(query: any, keyword: string) {
+  return query.or(
+    [
+      `subject.ilike.%${keyword}%`,
+      `summary.ilike.%${keyword}%`,
+      `content_html.ilike.%${keyword}%`,
+      `content_markdown.ilike.%${keyword}%`,
+      `content_simple.ilike.%${keyword}%`,
+    ].join(','),
+  );
+}
+
+function getPostImageUrl(path: string | null) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    return normalizedPath;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return null;
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/post/${normalizedPath}`;
+}
+
+function normalizePostImages(value: unknown): PostImage[] | null {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const images = value
+    .map((item): PostImage | null => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const image = item as {
+        path?: unknown;
+        url?: unknown;
+        width?: unknown;
+        height?: unknown;
+      };
+
+      const path = typeof image.path === 'string' ? image.path : '';
+      const url = typeof image.url === 'string' ? image.url : (getPostImageUrl(path) ?? '');
+
+      if (!url) {
+        return null;
+      }
+
+      return {
+        path,
+        url,
+        width: typeof image.width === 'number' ? image.width : null,
+        height: typeof image.height === 'number' ? image.height : null,
+      };
+    })
+    .filter((item): item is PostImage => Boolean(item));
+
+  return images.length > 0 ? images : null;
+}
+
 export async function getPostList({
   siteId,
   boardId = null,
@@ -157,9 +247,7 @@ export async function getPostList({
   if (filter === 'all') {
     let pinnedQuery = supabaseAdmin
       .from('posts')
-      .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin',
-      )
+      .select(POST_SELECT)
       .eq('site_id', siteId)
       .eq('is_pin', true)
       .eq('is_closed', false)
@@ -171,15 +259,7 @@ export async function getPostList({
     }
 
     if (searchKeyword) {
-      pinnedQuery = pinnedQuery.or(
-        [
-          `subject.ilike.%${searchKeyword}%`,
-          `summary.ilike.%${searchKeyword}%`,
-          `content_html.ilike.%${searchKeyword}%`,
-          `content_markdown.ilike.%${searchKeyword}%`,
-          `content_simple.ilike.%${searchKeyword}%`,
-        ].join(','),
-      );
+      pinnedQuery = applySearchFilter(pinnedQuery, searchKeyword);
     }
 
     const pinnedResult = await pinnedQuery;
@@ -193,10 +273,7 @@ export async function getPostList({
 
   let postsQuery = supabaseAdmin
     .from('posts')
-    .select(
-      'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin',
-      { count: 'exact' },
-    )
+    .select(POST_SELECT, { count: 'exact' })
     .eq('site_id', siteId)
     .order('idx', { ascending: false });
 
@@ -223,15 +300,7 @@ export async function getPostList({
   }
 
   if (searchKeyword) {
-    postsQuery = postsQuery.or(
-      [
-        `subject.ilike.%${searchKeyword}%`,
-        `summary.ilike.%${searchKeyword}%`,
-        `content_html.ilike.%${searchKeyword}%`,
-        `content_markdown.ilike.%${searchKeyword}%`,
-        `content_simple.ilike.%${searchKeyword}%`,
-      ].join(','),
-    );
+    postsQuery = applySearchFilter(postsQuery, searchKeyword);
   }
 
   postsQuery = postsQuery.range(from, to);
@@ -309,11 +378,7 @@ export async function getPostList({
 
   const commentResult =
     postIds.length > 0
-      ? await supabaseAdmin
-          .from('post_comments')
-          .select('id, post_id, reply_to_id')
-          .eq('is_deleted', false)
-          .or([`post_id.in.(${postIds.join(',')})`, `reply_to_id.not.is.null`].join(','))
+      ? await supabaseAdmin.from('post_comments').select('post_id').eq('is_deleted', false).in('post_id', postIds)
       : { data: [], error: null };
 
   if (commentResult.error) {
@@ -380,7 +445,8 @@ export async function getPostList({
       id: post.id,
       slug: String(post.slug),
       subject: post.subject,
-      summary: post.summary,
+      summary: post.summary ?? '',
+      content_simple: post.content_simple,
       edited_at: post.edited_at,
       created_at: post.created_at,
       idx: post.idx,
@@ -408,6 +474,11 @@ export async function getPostList({
       is_pin: post.is_pin === true,
       board_key: boardInfo?.board_key ?? '',
       board_label: boardInfo?.board_label ?? '',
+      thumbnail_image_url: getPostImageUrl(post.thumbnail_image),
+      thumbnail_width: post.thumbnail_width,
+      thumbnail_height: post.thumbnail_height,
+      images: normalizePostImages(post.images),
+      youtube_id: post.youtube_id,
     };
   });
 
