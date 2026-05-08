@@ -37,8 +37,15 @@ type AuthorManageRole = {
   boardId: string | null;
 };
 
+type AuthorManageIcon = {
+  role: Exclude<AuthorRole, 'member'>;
+  icon: string | null;
+  iconUrl: string;
+};
+
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
+const MANAGER_ICON_BUCKET = 'manager_icon';
 
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
@@ -107,6 +114,19 @@ function getLevelIconUrl(value: string | null | undefined) {
   return publicUrl.data.publicUrl ?? '';
 }
 
+function getManagerIconUrl(value: string | null | undefined) {
+  const targetPath = normalizeText(value);
+
+  if (!targetPath) {
+    return '';
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrl = supabaseAdmin.storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
+
+  return publicUrl.data.publicUrl ?? '';
+}
+
 function normalizeImages(value: unknown) {
   if (!Array.isArray(value)) {
     return [];
@@ -149,6 +169,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
       level: null,
       role: 'member' as AuthorRole,
       manageRoles: [] as AuthorManageRole[],
+      manageIcon: null as AuthorManageIcon | null,
     };
   }
 
@@ -194,6 +215,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   let avatarUrl = '';
   let role: AuthorRole = baseRole === 'owner' ? 'owner' : 'member';
   let manageRoles: AuthorManageRole[] = [];
+  let manageIcon: AuthorManageIcon | null = null;
   let level: {
     id: string;
     lv: number;
@@ -270,6 +292,25 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     }
   }
 
+  if (role !== 'member') {
+    const managerIconResult = await supabaseAdmin
+      .from('community_manage_icons')
+      .select('role, icon')
+      .eq('site_id', siteId)
+      .eq('role', role)
+      .maybeSingle();
+
+    if (!managerIconResult.error && managerIconResult.data) {
+      const iconPath = normalizeText(managerIconResult.data.icon);
+
+      manageIcon = {
+        role,
+        icon: iconPath || null,
+        iconUrl: getManagerIconUrl(iconPath),
+      };
+    }
+  }
+
   if (stigma) {
     avatarUrl = getAvatarUrl(stigma.avatar ?? null);
 
@@ -288,6 +329,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     level,
     role,
     manageRoles,
+    manageIcon,
   };
 }
 
@@ -377,6 +419,7 @@ export async function GET(request: Request, context: RouteContext) {
           author_level: author.level,
           author_role: author.role,
           author_manage_roles: author.manageRoles,
+          author_manage_icon: author.manageIcon,
         },
         isAuthor,
         isStaff,
@@ -513,6 +556,7 @@ export async function GET(request: Request, context: RouteContext) {
         author_level: author.level,
         author_role: author.role,
         author_manage_roles: author.manageRoles,
+        author_manage_icon: author.manageIcon,
         closed_by_name: closedBy.name,
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,

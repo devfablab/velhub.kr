@@ -23,6 +23,12 @@ type AuthorManageRole = {
   boardId: string | null;
 };
 
+type AuthorManageIcon = {
+  role: Exclude<AuthorRole, 'member'>;
+  icon: string | null;
+  iconUrl: string;
+};
+
 type AuthorLevel = {
   id: string;
   lv: number;
@@ -70,6 +76,7 @@ type CommentItem = {
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
+  author_manage_icon: AuthorManageIcon | null;
   is_author: boolean;
   is_me: boolean;
   can_edit: boolean;
@@ -111,6 +118,7 @@ type PollChoice = {
 
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
+const MANAGER_ICON_BUCKET = 'manager_icon';
 
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
@@ -166,6 +174,19 @@ function getLevelIconUrl(value: string | null | undefined) {
   return publicUrl.data.publicUrl ?? '';
 }
 
+function getManagerIconUrl(value: string | null | undefined) {
+  const targetPath = normalizeText(value);
+
+  if (!targetPath) {
+    return '';
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrl = supabaseAdmin.storage.from(MANAGER_ICON_BUCKET).getPublicUrl(targetPath);
+
+  return publicUrl.data.publicUrl ?? '';
+}
+
 function isManageRole(value: string): value is AuthorManageRole['role'] {
   return (
     value === 'community-manager' ||
@@ -185,6 +206,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
       level: null,
       role: 'member' as AuthorRole,
       manageRoles: [] as AuthorManageRole[],
+      manageIcon: null as AuthorManageIcon | null,
     };
   }
 
@@ -229,6 +251,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   let avatarUrl = '';
   let role: AuthorRole = baseRole === 'owner' ? 'owner' : 'member';
   let manageRoles: AuthorManageRole[] = [];
+  let manageIcon: AuthorManageIcon | null = null;
   let level: AuthorLevel | null = null;
 
   if (!membershipResult.error && membershipResult.data?.nickname) {
@@ -299,6 +322,25 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     }
   }
 
+  if (role !== 'member') {
+    const managerIconResult = await supabaseAdmin
+      .from('community_manage_icons')
+      .select('role, icon')
+      .eq('site_id', siteId)
+      .eq('role', role)
+      .maybeSingle();
+
+    if (!managerIconResult.error && managerIconResult.data) {
+      const iconPath = normalizeText(managerIconResult.data.icon);
+
+      manageIcon = {
+        role,
+        icon: iconPath || null,
+        iconUrl: getManagerIconUrl(iconPath),
+      };
+    }
+  }
+
   if (stigma) {
     avatarUrl = getAvatarUrl(stigma.avatar ?? null);
 
@@ -317,6 +359,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     level,
     role,
     manageRoles,
+    manageIcon,
   };
 }
 
@@ -565,6 +608,7 @@ async function buildCommentItem({
     author_level: author.level,
     author_role: author.role,
     author_manage_roles: author.manageRoles,
+    author_manage_icon: author.manageIcon,
     is_author: comment.user_id === postAuthorId,
     is_me: isMe,
     can_edit: isMe && !isDeleted && !isBlinded,

@@ -53,6 +53,12 @@ type AuthorManageRole = {
   boardId: string | null;
 };
 
+type AuthorManageIcon = {
+  role: Exclude<AuthorRole, 'member'>;
+  icon: string | null;
+  iconUrl: string;
+};
+
 type AuthorLevel = {
   id: string;
   lv: number;
@@ -114,6 +120,7 @@ type PostContent = {
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
+  author_manage_icon: AuthorManageIcon | null;
   closed_by_name: string;
   prefix_label: string | null;
 };
@@ -548,13 +555,18 @@ export default function Opt() {
                 <div className={styles.name}>
                   <cite>{content.author_name}</cite>
                   {authorRoleLabel ? (
-                    <span>{authorRoleLabel}</span>
+                    <em>
+                      <span>{authorRoleLabel}</span>
+                      {content.author_manage_icon?.iconUrl ? (
+                        <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                      ) : null}
+                    </em>
                   ) : content.author_level ? (
                     <em>
+                      <span>{content.author_level.name}</span>
                       {content.author_level.iconUrl ? (
                         <img src={content.author_level.iconUrl} alt={content.author_level.name} />
                       ) : null}
-                      <span>{content.author_level.name}</span>
                     </em>
                   ) : null}
                 </div>

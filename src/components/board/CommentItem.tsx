@@ -23,6 +23,12 @@ type AuthorManageRole = {
   boardId: string | null;
 };
 
+type AuthorManageIcon = {
+  role: Exclude<AuthorRole, 'member'>;
+  icon: string | null;
+  iconUrl: string;
+};
+
 type AuthorLevel = {
   id: string;
   lv: number;
@@ -58,6 +64,7 @@ export type CommentData = {
   author_level: AuthorLevel | null;
   author_role: AuthorRole;
   author_manage_roles: AuthorManageRole[];
+  author_manage_icon: AuthorManageIcon | null;
   is_author: boolean;
   is_me: boolean;
   can_edit: boolean;
@@ -211,7 +218,12 @@ export default function CommentItem({
           <cite>{comment.author_name}</cite>
 
           {roleLabel ? (
-            <span className={styles['author-manager']}>{roleLabel}</span>
+            <span className={styles['author-manager']}>
+              <span>{roleLabel}</span>
+              {comment.author_manage_icon?.iconUrl ? (
+                <img src={comment.author_manage_icon.iconUrl} alt={roleLabel} />
+              ) : null}
+            </span>
           ) : comment.author_level ? (
             <span className={styles['author-lv']}>
               <span>{comment.author_level.name}</span>

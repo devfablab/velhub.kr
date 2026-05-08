@@ -162,8 +162,19 @@
             @include ds.fw(pre, 700)
 
           .author-manager
+            display: inline-flex
+            gap: ds.rem(3)
+            align-items: center
             @include ds.fw(pre, 700)
             color: ds.$hex-action
+
+            span
+              display: inline-flex
+              align-items: center
+
+            img
+              width: ds.rem(14)
+              height: ds.rem(14)
 
           .author-lv
             display: inline-flex
