@@ -132,6 +132,12 @@ type GalleryBlobImage = {
   previewUrl: string;
 };
 
+type EditorBlobImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
 type PollEndType = '' | 'absolute' | 'relative';
 type PollAnonymity = '' | 'anonymous' | 'named';
 
@@ -176,6 +182,7 @@ type PollPayload = {
 type AccessDialogType = 'login' | 'join' | 'pending' | null;
 
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
+const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
 const MAX_GALLERY_IMAGE_COUNT = 9;
 const MAX_POLL_OPTION_COUNT = 4;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
@@ -463,6 +470,7 @@ export default function Opt() {
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
+  const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
 
@@ -481,6 +489,7 @@ export default function Opt() {
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
+  const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [contentSimple, setContentSimple] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [youtubeCreatedAt, setYoutubeCreatedAt] = useState('');
@@ -594,7 +603,12 @@ export default function Opt() {
   }, [thumbnailDialogPreviewUrl]);
 
   useEffect(() => {
+    editorBlobImagesReference.current = editorBlobImages;
+  }, [editorBlobImages]);
+
+  useEffect(() => {
     return () => {
+      editorBlobImagesReference.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       galleryBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       galleryDialogBlobImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       poll.options.forEach((option) => {
@@ -1261,8 +1275,76 @@ export default function Opt() {
             type: file.type || 'image/png',
           });
 
-    const uploadedImage = await uploadPostImage(editorFile, 'editor');
-    return uploadedImage.url;
+    if (!ACCEPTED_IMAGE_TYPES.includes(editorFile.type)) {
+      throw new Error('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+    }
+
+    if (editorFile.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
+      throw new Error('이미지는 1MB 이하로 등록해주세요.');
+    }
+
+    const previewUrl = URL.createObjectURL(editorFile);
+
+    const nextImage = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      file: editorFile,
+      previewUrl,
+    };
+
+    editorBlobImagesReference.current = [...editorBlobImagesReference.current, nextImage];
+    setEditorBlobImages(editorBlobImagesReference.current);
+
+    return previewUrl;
+  }
+
+  function replaceAllImageUrl(value: string, fromUrl: string, toUrl: string) {
+    return value.split(fromUrl).join(toUrl);
+  }
+
+  async function uploadEditorImagesIfNeeded() {
+    const currentEditorBlobImages = editorBlobImagesReference.current;
+
+    if (currentEditorBlobImages.length === 0) {
+      return {
+        contentHtml,
+        contentMarkdown,
+      };
+    }
+
+    let nextContentHtml = contentHtml;
+    let nextContentMarkdown = contentMarkdown;
+    const usedPreviewUrls = new Set<string>();
+
+    for (const image of currentEditorBlobImages) {
+      const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
+      const isUsedInMarkdown = nextContentMarkdown.includes(image.previewUrl);
+
+      if (!isUsedInHtml && !isUsedInMarkdown) {
+        URL.revokeObjectURL(image.previewUrl);
+        continue;
+      }
+
+      const webpFile = await convertImageToWebpFile(image.file, '이미지는 1MB 이하로 등록해주세요.');
+      const uploadedImage = await uploadPostImage(webpFile, 'editor');
+
+      nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
+      nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
+      usedPreviewUrls.add(image.previewUrl);
+
+      URL.revokeObjectURL(image.previewUrl);
+    }
+
+    const remainingEditorBlobImages = currentEditorBlobImages.filter((image) => !usedPreviewUrls.has(image.previewUrl));
+
+    editorBlobImagesReference.current = remainingEditorBlobImages;
+    setContentHtml(nextContentHtml);
+    setContentMarkdown(nextContentMarkdown);
+    setEditorBlobImages(remainingEditorBlobImages);
+
+    return {
+      contentHtml: nextContentHtml,
+      contentMarkdown: nextContentMarkdown,
+    };
   }
 
   async function uploadThumbnailIfNeeded() {
@@ -1465,6 +1547,7 @@ export default function Opt() {
 
       const uploadedThumbnail = await uploadThumbnailIfNeeded();
       const uploadedImages = await uploadGalleryImagesIfNeeded();
+      const uploadedEditorContent = await uploadEditorImagesIfNeeded();
       const pollPayload = await buildPollPayloadIfNeeded();
 
       const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
@@ -1478,8 +1561,8 @@ export default function Opt() {
           action,
           subject: isFeedBoard ? null : subject,
           summary: isBasicBoard || isFeedBoard ? null : summary,
-          contentHtml: isBasicBoard || isGalleryBoard ? normalizeEditorHtml(contentHtml) : null,
-          contentMarkdown: isBasicBoard || isGalleryBoard ? contentMarkdown : null,
+          contentHtml: isBasicBoard || isGalleryBoard ? normalizeEditorHtml(uploadedEditorContent.contentHtml) : null,
+          contentMarkdown: isBasicBoard || isGalleryBoard ? uploadedEditorContent.contentMarkdown : null,
           contentSimple: isFeedBoard ? contentSimple : null,
           thumbnailImage: uploadedThumbnail.thumbnailImage || null,
           thumbnailWidth: uploadedThumbnail.thumbnailWidth,

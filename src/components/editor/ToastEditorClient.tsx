@@ -15,6 +15,9 @@ import { markdownAlignPlugin } from '@/lib/editor/createMarkdownAlignToolbarItem
 import { textAlignPlugin } from '@/lib/editor/createTextAlignToolbarItem';
 import { textColorPlugin } from '@/lib/editor/createTextColorToolbarItem';
 
+const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
 type Props = {
   initialValue: string | null;
   initialMarkdown: string | null;
@@ -107,6 +110,16 @@ export default function ToastEditorClient({
         onUploadImage
           ? {
               addImageBlobHook: async (blob: Blob | File, callback: (url: string, altText?: string) => void) => {
+                if (!ACCEPTED_IMAGE_TYPES.includes(blob.type)) {
+                  alert('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+                  return false;
+                }
+
+                if (blob.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
+                  alert('이미지는 1MB 이하로 등록해주세요.');
+                  return false;
+                }
+
                 const imageUrl = await onUploadImage(blob);
 
                 if (!imageUrl) {
