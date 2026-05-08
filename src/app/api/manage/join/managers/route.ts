@@ -20,7 +20,7 @@ type ManagerIconRow = {
   id: string;
   created_at: string;
   role: ManagerIconRole;
-  icon: string;
+  icon: string | null;
   site_id: string;
 };
 
@@ -34,16 +34,8 @@ function isManagerIconRole(value: string): value is ManagerIconRole {
   return MANAGER_ICON_ROLES.includes(value as ManagerIconRole);
 }
 
-function isSupabaseStorageValue(value: string | null | undefined) {
-  return Boolean(value && value.startsWith('supabase:'));
-}
-
 function getStoragePath(value: string | null | undefined) {
-  if (!isSupabaseStorageValue(value)) {
-    return '';
-  }
-
-  return value!.replace('supabase:', '').trim();
+  return normalizeText(value);
 }
 
 function getManagerIconUrl(value: string | null | undefined) {
@@ -116,6 +108,7 @@ async function checkAccess(siteName: string) {
 function serializeManagerIcon(icon: ManagerIconRow) {
   return {
     ...icon,
+    icon: getStoragePath(icon.icon),
     icon_url: getManagerIconUrl(icon.icon),
   };
 }
@@ -143,6 +136,7 @@ async function getManagerIcons(siteId: string) {
       .map((icon) => ({
         ...icon,
         role: normalizeText(icon.role) as ManagerIconRole,
+        icon: getStoragePath(icon.icon),
       }))
       .map(serializeManagerIcon),
   } as const;
@@ -171,11 +165,9 @@ async function ensureManagerIcons(siteId: string) {
       missingRoles.map((role) => ({
         site_id: siteId,
         role,
-        icon: null,
+        icon: '',
       })),
     );
-
-    console.log('insertResult: ', insertResult);
 
     if (insertResult.error) {
       return {
@@ -377,7 +369,7 @@ export async function PUT(request: Request) {
       return Response.json({ error: '아이콘 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextIconValue = `supabase:${filePath}`;
+    const nextIconValue = filePath;
 
     const updateResult = await access.supabaseAdmin
       .from('community_manage_icons')

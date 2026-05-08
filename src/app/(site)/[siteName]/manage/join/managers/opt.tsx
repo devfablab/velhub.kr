@@ -137,10 +137,6 @@ const roleOptions: Array<{ value: ManagerRole; label: string }> = [
   { value: 'board-assistant-manager', label: '개별 게시판 부 매니저' },
 ];
 
-function getManagerIconRoleLabel(role: ManagerIconRole) {
-  return managerIconRoleOptions.find((option) => option.value === role)?.label ?? role;
-}
-
 function getRoleLabel(role: ManagerRole) {
   return roleOptions.find((option) => option.value === role)?.label ?? role;
 }
@@ -203,6 +199,7 @@ export default function Opt() {
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
   const [targetIconId, setTargetIconId] = useState('');
+  const [iconErrorMessage, setIconErrorMessage] = useState('');
   const [isLoadingIcons, setIsLoadingIcons] = useState(false);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconId, setDeletingIconId] = useState('');
@@ -335,16 +332,17 @@ export default function Opt() {
       return;
     }
 
+    setIsIconDialogOpen(true);
+    setIconErrorMessage('');
+
     try {
-      setErrorMessage('');
       setIsLoadingIcons(true);
       await ensureManagerIcons();
-      setIsIconDialogOpen(true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '매니저 아이콘 정보를 생성하지 못했습니다.');
+        setIconErrorMessage(unknownError.message || '매니저 아이콘 정보를 생성하지 못했습니다.');
       } else {
-        setErrorMessage('매니저 아이콘 정보를 생성하지 못했습니다.');
+        setIconErrorMessage('매니저 아이콘 정보를 생성하지 못했습니다.');
       }
     } finally {
       setIsLoadingIcons(false);
@@ -358,6 +356,7 @@ export default function Opt() {
 
     setIsIconDialogOpen(false);
     setTargetIconId('');
+    setIconErrorMessage('');
 
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -369,6 +368,7 @@ export default function Opt() {
       return;
     }
 
+    setIconErrorMessage('');
     setTargetIconId(iconId);
     fileInputRef.current?.click();
   }
@@ -383,7 +383,7 @@ export default function Opt() {
     }
 
     try {
-      setErrorMessage('');
+      setIconErrorMessage('');
       setIsUploadingIcon(true);
 
       const formData = new FormData();
@@ -418,9 +418,9 @@ export default function Opt() {
       setSnackbarMessage('아이콘이 저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '아이콘 업로드에 실패했습니다.');
+        setIconErrorMessage(unknownError.message || '아이콘 업로드에 실패했습니다.');
       } else {
-        setErrorMessage('아이콘 업로드에 실패했습니다.');
+        setIconErrorMessage('아이콘 업로드에 실패했습니다.');
       }
     } finally {
       setIsUploadingIcon(false);
@@ -435,7 +435,7 @@ export default function Opt() {
     }
 
     try {
-      setErrorMessage('');
+      setIconErrorMessage('');
       setDeletingIconId(iconId);
 
       const response = await fetch('/api/manage/join/managers', {
@@ -472,9 +472,9 @@ export default function Opt() {
       setSnackbarMessage('아이콘이 삭제되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '아이콘 삭제에 실패했습니다.');
+        setIconErrorMessage(unknownError.message || '아이콘 삭제에 실패했습니다.');
       } else {
-        setErrorMessage('아이콘 삭제에 실패했습니다.');
+        setIconErrorMessage('아이콘 삭제에 실패했습니다.');
       }
     } finally {
       setDeletingIconId('');
@@ -974,6 +974,12 @@ export default function Opt() {
         <DialogTitle>아이콘 변경</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
+            {iconErrorMessage ? (
+              <Alert severity="error" variant="filled">
+                {iconErrorMessage}
+              </Alert>
+            ) : null}
+
             <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
               {managerIconRoleOptions.map((roleOption) => {
                 const icon = managerIcons.find((managerIcon) => managerIcon.role === roleOption.value);
