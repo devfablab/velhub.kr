@@ -24,6 +24,10 @@ type RequestBody = {
   value: string | boolean | null;
 };
 
+type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
+
+const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
+
 function normalizeSiteKey(rawValue: string) {
   return rawValue
     .trim()
@@ -37,6 +41,10 @@ function normalizeSiteKey(rawValue: string) {
 
 function hasInvalidCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
+}
+
+function isThemeType(value: unknown): value is ThemeType {
+  return typeof value === 'string' && THEME_TYPES.includes(value as ThemeType);
 }
 
 function formatLogMessage(
@@ -71,6 +79,41 @@ function formatLogMessage(
   return `중단 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
 }
 
+async function getUpdatedByName(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  siteId: string,
+  particleId: string,
+) {
+  const nickname = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname')
+    .eq('site_id', siteId)
+    .eq('user_id', particleId)
+    .maybeSingle();
+
+  if (nickname.data?.nickname) {
+    return nickname.data.nickname;
+  }
+
+  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('user_id', particleId).maybeSingle();
+
+  if (stigmaUser.data?.user_name) {
+    return decrypt(stigmaUser.data.user_name);
+  }
+
+  return '';
+}
+
+async function getCommunityUpdatedByParticleId(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, stigmaId: string) {
+  const stigma = await supabaseAdmin.from('stigmas').select('user_id').eq('id', stigmaId).maybeSingle();
+
+  if (stigma.error || !stigma.data?.user_id) {
+    return null;
+  }
+
+  return stigma.data.user_id as string;
+}
+
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -102,11 +145,23 @@ async function checkAccess(siteName: string) {
         } as const;
       }
 
+      const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
+
+      console.log('updatedByParticleId: ', updatedByParticleId);
+
+      if (!updatedByParticleId) {
+        return {
+          ok: false,
+          status: 403,
+          error: '수정자 정보를 확인할 수 없습니다.',
+        } as const;
+      }
+
       return {
         ok: true,
         status: 200,
         rhizome: rhizome.data,
-        updatedByStigmaId: access.actor.stigmaId,
+        updatedByParticleId,
         supabaseAdmin,
       } as const;
     } catch (unknownError) {
@@ -140,12 +195,12 @@ async function checkAccess(siteName: string) {
 
   const membership = await supabaseAdmin
     .from('rhizome_stigmas')
-    .select('role')
+    .select('role, user_id')
     .eq('id', session.rhizomeStigmaId)
     .eq('site_id', rhizome.data.id)
     .maybeSingle();
 
-  if (membership.error || normalizeText(membership.data?.role) !== 'owner') {
+  if (membership.error || normalizeText(membership.data?.role) !== 'owner' || !membership.data?.user_id) {
     return {
       ok: false,
       status: 403,
@@ -157,7 +212,7 @@ async function checkAccess(siteName: string) {
     ok: true,
     status: 200,
     rhizome: rhizome.data,
-    updatedByStigmaId: session.stigmaId,
+    updatedByParticleId: membership.data.user_id as string,
     supabaseAdmin,
   } as const;
 }
@@ -187,40 +242,9 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    let updatedByName = '';
-
-    if (sites.data.updated_by) {
-      const nickname = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('nickname')
-        .eq('site_id', access.rhizome.id)
-        .eq('user_id', sites.data.updated_by)
-        .maybeSingle();
-
-      if (nickname.data?.nickname) {
-        updatedByName = nickname.data.nickname;
-      } else {
-        const stigmaUser = await access.supabaseAdmin
-          .from('stigmas')
-          .select('user_name')
-          .eq('id', sites.data.updated_by)
-          .maybeSingle();
-
-        if (stigmaUser.data?.user_name) {
-          updatedByName = decrypt(stigmaUser.data.user_name);
-        } else {
-          const fallbackStigma = await access.supabaseAdmin
-            .from('stigmas')
-            .select('user_name')
-            .eq('user_id', sites.data.updated_by)
-            .maybeSingle();
-
-          if (fallbackStigma.data?.user_name) {
-            updatedByName = decrypt(fallbackStigma.data.user_name);
-          }
-        }
-      }
-    }
+    const updatedByName = sites.data.updated_by
+      ? await getUpdatedByName(access.supabaseAdmin, access.rhizome.id, sites.data.updated_by)
+      : '';
 
     const rawProfilePicture = normalizeText(access.rhizome.profile_picture);
     let profilePictureUrl = '';
@@ -340,7 +364,7 @@ export async function POST(request: Request, context: RouteContext) {
 
       nextValue = requestBody.value;
     } else if (requestBody.field === 'theme_type') {
-      if (requestBody.value !== 'default') {
+      if (!isThemeType(requestBody.value)) {
         return Response.json({ error: '테마 값이 올바르지 않습니다.' }, { status: 400 });
       }
 
@@ -373,7 +397,7 @@ export async function POST(request: Request, context: RouteContext) {
       .from('sites')
       .update({
         updated_at: nowIsoString,
-        updated_by: access.updatedByStigmaId,
+        updated_by: access.updatedByParticleId,
         log: logMessage,
       })
       .eq('site_id', access.rhizome.id);

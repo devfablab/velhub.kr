@@ -68,11 +68,11 @@
         @include ds.fw(pre, 700)
 
         html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$hex-accent, .1)
+          background-color: rgba(ds.$rgb-accent, .1)
           color: ds.$hex-accent
 
         html[data-theme="yellow-dark"] &
-          background-color: rgba(ds.$hex-bright, .1)
+          background-color: rgba(ds.$rgb-bright, .1)
           color: ds.$hex-bright
 
         .form-control
@@ -122,11 +122,11 @@
 
             html[data-theme="yellow-light"] &
               background-color: ds.$hex-white
-              border-bottom: 1px solid rgba(ds.$hex-tertiary, .2)
+              border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
             html[data-theme="yellow-dark"] &
               background-color: ds.$hex-black
-              border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+              border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
 
             > div
               padding: 0 ds.rem(23) 0 0
@@ -233,11 +233,11 @@
 
               html[data-theme="yellow-light"] &
                 background-color: ds.$hex-white
-                border: 1px solid rgba(ds.$hex-tertiary, .2)
+                border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
               html[data-theme="yellow-dark"] &
                 background-color: ds.$hex-black
-                border: 1px solid rgba(ds.$hex-tertiary, .5)
+                border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         .image
           button
@@ -275,12 +275,12 @@
 
         html[data-theme="yellow-light"] &
           background-color: ds.$hex-white
-          border: 1px solid rgba(ds.$hex-tertiary, .2)
+          border: 1px solid rgba(ds.$rgb-tertiary, .2)
           color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           background-color: ds.$hex-black
-          border: 1px solid rgba(ds.$hex-tertiary, .5)
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
           color: ds.$hex-bright
 
   .button-group
@@ -293,13 +293,13 @@
 
     .link
       html[data-theme="yellow-light"] &
-        color: rgba(ds.$hex-primary, .5)
+        color: rgba(ds.$rgb-primary, .5)
 
       html[data-theme="yellow-dark"] &
-        color: rgba(ds.$hex-bright, .5)
+        color: rgba(ds.$rgb-bright, .5)
 
     .button
-      background-color: rgba(ds.$hex-accent, .1)
+      background-color: rgba(ds.$rgb-accent, .1)
       color: ds.$hex-accent
 
     .submit
@@ -342,10 +342,10 @@
 
       .edit-link
         height: ds.rem(27)
-        border: 1px solid rgba(ds.$hex-tertiary, .2)
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
         border-radius: ds.rem(7)
         padding: 0 ds.rem(7)
-        color: rgba(ds.$hex-tertiary, 1)
+        color: rgba(ds.$rgb-tertiary, 1)
         font-size: ds.rem(14)
 
     h3
@@ -473,10 +473,10 @@
           position: relative
 
           html[data-theme="yellow-light"] &
-            border: ds.rem(2) solid rgba(ds.$hex-tertiary, .5)
+            border: ds.rem(2) solid rgba(ds.$rgb-tertiary, .5)
 
           html[data-theme="yellow-dark"] &
-            border: ds.rem(2) solid rgba(ds.$hex-tertiary, .7)
+            border: ds.rem(2) solid rgba(ds.$rgb-tertiary, .7)
 
           &.selected
             border-color: ds.$hex-accent!important
@@ -691,11 +691,11 @@
       @include ds.fw(pre, 700)
 
       html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$hex-accent, .1)
+        background-color: rgba(ds.$rgb-accent, .1)
         color: ds.$hex-accent
 
       html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$hex-bright, .1)
+        background-color: rgba(ds.$rgb-bright, .1)
         color: ds.$hex-bright
 
     .thumbnail-file-input
@@ -727,10 +727,10 @@
       height: ds.rem(174)
 
       html[data-theme="yellow-light"] &
-        border: 1px solid rgba(ds.$hex-tertiary, .2)
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
       html[data-theme="yellow-dark"] &
-        border: 1px solid rgba(ds.$hex-white, .5)
+        border: 1px solid rgba(ds.$rgb-white, .5)
 
       img
         display: block
@@ -749,7 +749,7 @@
         width: ds.rem(24)
         height: ds.rem(24)
         border-radius: 50%
-        background-color: rgba(ds.$hex-tertiary, .5)
+        background-color: rgba(ds.$rgb-tertiary, .5)
         color: ds.$hex-primary
 
         svg
@@ -778,11 +778,11 @@
       @include ds.fw(pre, 700)
 
       html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$hex-accent, .1)
+        background-color: rgba(ds.$rgb-accent, .1)
         color: ds.$hex-accent
 
       html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$hex-bright, .1)
+        background-color: rgba(ds.$rgb-bright, .1)
         color: ds.$hex-bright
 
   .form-group
@@ -804,10 +804,10 @@
     padding: ds.rem(12)
 
     html[data-theme="yellow-light"] &
-      border: 1px solid rgba(ds.$hex-tertiary, .2)
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
     html[data-theme="yellow-dark"] &
-      border: 1px solid rgba(ds.$hex-tertiary, .5)
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
     .poll-option
       display: flex
@@ -827,10 +827,10 @@
         font-size: ds.rem(14)
 
         html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$hex-primary, .1)
+          background-color: rgba(ds.$rgb-primary, .1)
 
         html[data-theme="yellow-dark"] &
-          background-color: rgba(ds.$hex-primary, .5)
+          background-color: rgba(ds.$rgb-primary, .5)
 
       .form-control
         display: flex
@@ -869,7 +869,7 @@
             width: ds.rem(24)
             height: ds.rem(24)
             border-radius: 50%
-            background-color: rgba(ds.$hex-primary, .7)
+            background-color: rgba(ds.$rgb-primary, .7)
             color: ds.$hex-white
 
             svg
@@ -934,10 +934,10 @@
 .gallery-viewer-dialog
   div[aria-hidden="true"]
     html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$hex-white, .9)
+      background-color: rgba(ds.$rgb-white, .9)
 
     html[data-theme="yellow-dark"] &
-      background-color: rgba(ds.$hex-black, .9)
+      background-color: rgba(ds.$rgb-black, .9)
 
   div[role="dialog"]
     background: transparent
@@ -979,11 +979,11 @@
         border-radius: 100%
 
         html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$hex-white, .5)
+          background-color: rgba(ds.$rgb-white, .5)
           color: ds.$hex-black
 
         html[data-theme="yellow-dark"] &
-          background-color: rgba(ds.$hex-black, .9)
+          background-color: rgba(ds.$rgb-black, .9)
           color: ds.$hex-white
 
         &.prev-button
@@ -1020,10 +1020,10 @@
       height: ds.rem(20)
 
       html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$hex-tertiary, .5)
+        background-color: rgba(ds.$rgb-tertiary, .5)
 
       html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$hex-tertiary, .9)
+        background-color: rgba(ds.$rgb-tertiary, .9)
 
     &:first-of-type
       &::before
@@ -1042,10 +1042,10 @@
       color: ds.$hex-accent!important
 
     html[data-theme="yellow-light"] &
-      color: rgba(ds.$hex-tertiary, .5)
+      color: rgba(ds.$rgb-tertiary, .5)
 
     html[data-theme="yellow-dark"] &
-      color: rgba(ds.$hex-tertiary, .9)
+      color: rgba(ds.$rgb-tertiary, .9)
 
     svg
       width: ds.rem(20)
@@ -1227,10 +1227,10 @@
       padding-bottom: 0
 
     html[data-theme="yellow-light"] &
-      border-bottom: 1px solid rgba(ds.$hex-tertiary, .1)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
 
     html[data-theme="yellow-dark"] &
-      border-bottom: 1px solid rgba(ds.$hex-tertiary, .9)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .9)
 
     .content-simple
       white-space: pre-wrap

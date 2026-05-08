@@ -3,24 +3,20 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type ThemeMode = 'light' | 'system' | 'dark';
 type SiteType = 'blog' | 'community';
 
 type SiteRow = {
   id: string;
   site_key: string;
-  site_type: string | null;
+  site_type: string;
+  theme_type: string;
 };
 
 type AccountRow = {
-  email: string | null;
-  user_name: string | null;
+  email: string;
+  user_name: string;
   avatar: string | null;
   role: string | null;
-};
-
-type ProfileRow = {
-  theme_mode: string | null;
 };
 
 type MembershipRow = {
@@ -83,7 +79,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_type')
+      .select('id, site_key, site_type, theme_type')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -176,16 +172,15 @@ export async function GET(request: Request) {
     }
 
     const account = accountResult.data as AccountRow;
-    const profile = (profileResult.data ?? null) as ProfileRow | null;
 
     return Response.json({
       siteName: site.site_key,
-      siteType: isSiteType(site.site_type) ? site.site_type : null,
+      siteType: isSiteType(site.site_type),
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
       avatar: account.avatar ?? null,
-      themeMode: isThemeMode(profile?.theme_mode ?? null) ? profile?.theme_mode : null,
+      themeType: siteResult.data.theme_type,
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole: normalizeText(membership?.role).toLowerCase() || null,
       sessionCase: session.case ?? null,

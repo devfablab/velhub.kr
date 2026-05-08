@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -38,7 +38,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import type { ThemeMode } from '@/app/themeProvider';
 import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
@@ -48,11 +48,11 @@ type SiteType = 'blog' | 'community';
 type HeaderResponse = {
   siteName: string | null;
   siteType: SiteType | null;
+  themeType: string;
   isLoggedIn: boolean;
   email: string | null;
   userName: string | null;
   avatar: string | null;
-  themeMode: ThemeMode | null;
   globalRole: string | null;
   siteRole: string | null;
   sessionCase?: string | null;
@@ -67,8 +67,45 @@ type UserProfile = {
   siteRole: string | null;
 };
 
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+const THEME_BASE_KEY = 'yellow';
+
 function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
+}
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `${THEME_BASE_KEY}-${getResolvedThemeMode(themeMode)}`);
+}
+
+function applyColorSet(themeType: string) {
+  document.documentElement.setAttribute('data-colorset', themeType);
 }
 
 export default function HeaderSite() {
@@ -79,10 +116,10 @@ export default function HeaderSite() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = !isNotMobile;
 
-  const { themeMode, setThemeMode } = useThemeMode();
-  const { isReady, authVersion } = useAuthState();
+  const { isReady } = useAuthState();
 
   const [isMounted, setIsMounted] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
   const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
@@ -97,29 +134,35 @@ export default function HeaderSite() {
     siteRole: null,
   });
 
-  const hasHydratedThemeMode = useRef(false);
-
   useEffect(() => {
+    const storedThemeMode = getStoredThemeMode();
+
+    setThemeMode(storedThemeMode);
+    applyThemeMode(storedThemeMode);
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
-    const htmlElement = document.documentElement;
-
-    if (themeMode === 'dark') {
-      htmlElement.setAttribute('data-theme', 'yellow-dark');
+    if (!isMounted) {
       return;
     }
 
-    if (themeMode === 'light') {
-      htmlElement.setAttribute('data-theme', 'yellow-light');
-      return;
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
     }
 
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
 
-    htmlElement.setAttribute('data-theme', prefersDarkMode ? 'yellow-dark' : 'yellow-light');
-  }, [themeMode]);
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
 
   useEffect(() => {
     async function loadHeader() {
@@ -148,6 +191,7 @@ export default function HeaderSite() {
       }
 
       setSiteType(result.siteType);
+      applyColorSet(result.themeType);
 
       setUserProfile({
         name: result.userName,
@@ -157,11 +201,6 @@ export default function HeaderSite() {
         globalRole: result.globalRole,
         siteRole: result.siteRole,
       });
-
-      if (!hasHydratedThemeMode.current && result.themeMode) {
-        setThemeMode(result.themeMode);
-        hasHydratedThemeMode.current = true;
-      }
     }
 
     if (!isReady) {
@@ -169,7 +208,7 @@ export default function HeaderSite() {
     }
 
     void loadHeader();
-  }, [authVersion, isReady, setThemeMode, siteName]);
+  }, [isReady, siteName]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -189,7 +228,9 @@ export default function HeaderSite() {
   }
 
   function handleSelectThemeMode(nextThemeMode: ThemeMode) {
+    window.localStorage.setItem(THEME_MODE_STORAGE_KEY, nextThemeMode);
     setThemeMode(nextThemeMode);
+    applyThemeMode(nextThemeMode);
     handleCloseThemeModeMenu();
     handleCloseThemeModeDrawer();
   }
@@ -250,7 +291,6 @@ export default function HeaderSite() {
       position="static"
       variant="outlined"
       sx={{
-        bgcolor: 'background.paper',
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',

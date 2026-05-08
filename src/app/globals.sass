@@ -6,6 +6,135 @@
   color: ds.$hex-primary
 
 html
+  &[data-colorset='default']
+    --hex-primary: #181818
+    --rgb-primary: 24, 24, 24
+    --hex-secondary: #1F1F1F
+    --rgb-secondary: 31, 31, 31
+    --hex-accent: #EEB400
+    --rgb-accent: 238, 180, 0
+    --hex-action: #007ADB
+    --rgb-action: 0, 122, 219
+    --hex-warning: #FF555D
+    --rgb-warning: 255, 85, 93
+    --hex-bright: #F8F8F8
+    --rgb-bright: 248, 248, 248
+    --hex-light: #D7D7D7
+    --rgb-light: 215, 215, 215
+
+  &[data-colorset='coral']
+    --hex-primary: #181818
+    --rgb-primary: 24, 24, 24
+    --hex-secondary: #2A2A2A
+    --rgb-secondary: 42, 42, 42
+    --hex-accent: #FF6F61
+    --rgb-accent: 255, 111, 97
+    --hex-action: #007ADB
+    --rgb-action: 0, 122, 219
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #FFF9F7
+    --rgb-bright: 255, 249, 247
+    --hex-light: #F3E7E3
+    --rgb-light: 243, 231, 227
+
+  &[data-colorset='teal']
+    --hex-primary: #151B1B
+    --rgb-primary: 21, 27, 27
+    --hex-secondary: #263333
+    --rgb-secondary: 38, 51, 51
+    --hex-accent: #008C8C
+    --rgb-accent: 0, 140, 140
+    --hex-action: #006FC9
+    --rgb-action: 0, 111, 201
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #F5FBFB
+    --rgb-bright: 245, 251, 251
+    --hex-light: #DDEEEE
+    --rgb-light: 221, 238, 238
+
+  &[data-colorset='royalblue']
+    --hex-primary: #151821
+    --rgb-primary: 21, 24, 33
+    --hex-secondary: #252A36
+    --rgb-secondary: 37, 42, 54
+    --hex-accent: #4169E1
+    --rgb-accent: 65, 105, 225
+    --hex-action: #005FCC
+    --rgb-action: 0, 95, 204
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #F7F9FF
+    --rgb-bright: 247, 249, 255
+    --hex-light: #E1E7FA
+    --rgb-light: 225, 231, 250
+
+  &[data-colorset='slateblue']
+    --hex-primary: #191821
+    --rgb-primary: 25, 24, 33
+    --hex-secondary: #2A2836
+    --rgb-secondary: 42, 40, 54
+    --hex-accent: #6A5ACD
+    --rgb-accent: 106, 90, 205
+    --hex-action: #006FC9
+    --rgb-action: 0, 111, 201
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #F9F8FF
+    --rgb-bright: 249, 248, 255
+    --hex-light: #E6E2F5
+    --rgb-light: 230, 226, 245
+
+  &[data-colorset='seagreen']
+    --hex-primary: #151C18
+    --rgb-primary: 21, 28, 24
+    --hex-secondary: #26332B
+    --rgb-secondary: 38, 51, 43
+    --hex-accent: #2E8B57
+    --rgb-accent: 46, 139, 87
+    --hex-action: #006FC9
+    --rgb-action: 0, 111, 201
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #F6FBF8
+    --rgb-bright: 246, 251, 248
+    --hex-light: #DDEDE4
+    --rgb-light: 221, 237, 228
+
+  &[data-colorset='orchid']
+    --hex-primary: #1E1720
+    --rgb-primary: 30, 23, 32
+    --hex-secondary: #332735
+    --rgb-secondary: 51, 39, 53
+    --hex-accent: #BA55D3
+    --rgb-accent: 186, 85, 211
+    --hex-action: #006FC9
+    --rgb-action: 0, 111, 201
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #FCF7FD
+    --rgb-bright: 252, 247, 253
+    --hex-light: #EEDDF2
+    --rgb-light: 238, 221, 242
+
+  &[data-colorset='tomato']
+    --hex-primary: #1F1715
+    --rgb-primary: 31, 23, 21
+    --hex-secondary: #342823
+    --rgb-secondary: 52, 40, 35
+    --hex-accent: #FF6347
+    --rgb-accent: 255, 99, 71
+    --hex-action: #007ADB
+    --rgb-action: 0, 122, 219
+    --hex-warning: #D9363E
+    --rgb-warning: 217, 54, 62
+    --hex-bright: #FFF8F5
+    --rgb-bright: 255, 248, 245
+    --hex-light: #F0DED8
+    --rgb-light: 240, 222, 216
+
+html
   font-size: 16px
 
 body
@@ -27,6 +156,9 @@ body, pre, input, button, textarea, select
   -webkit-font-smoothing: antialiased
 
 body
+  .MuiAppBar-root
+    background-color: transparent
+
   html[data-theme="yellow-light"] &
     background-color: ds.$hex-bright
     color: ds.$hex-primary
@@ -127,7 +259,7 @@ a, button, select, input
     border-radius: ds.rem(17)!important
     overflow: hidden
     border: 0!important
-    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
 
 .loading-container
   display: flex
@@ -150,7 +282,7 @@ a, button, select, input
   gap: ds.rem(12)
   border-radius: ds.rem(17)
   padding: ds.rem(23)
-  box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+  box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
 
   &.paper-p0
     padding: 0
@@ -179,10 +311,10 @@ a, button, select, input
     thead
       tr
         html[data-theme="yellow-light"] &
-          border-bottom: 1px solid rgba(ds.$hex-tertiary, .2)
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
         html[data-theme="yellow-dark"] &
-          border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         th
           height: ds.rem(52)
@@ -197,17 +329,17 @@ a, button, select, input
     tbody
       tr
         html[data-theme="yellow-light"] &
-          border-bottom: 1px solid rgba(ds.$hex-tertiary, .05)
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .05)
 
         html[data-theme="yellow-dark"] &
-          border-bottom: 1px solid rgba(ds.$hex-tertiary, .25)
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .25)
 
         &.pinned, &:hover
           html[data-theme="yellow-light"] &
-            background-color: rgba(ds.$hex-accent, .05)
+            background-color: rgba(ds.$rgb-accent, .05)
 
           html[data-theme="yellow-dark"] &
-            background-color: rgba(ds.$hex-accent, .1)
+            background-color: rgba(ds.$rgb-accent, .1)
 
           a
             @include ds.fw(pre, 700)
@@ -319,12 +451,12 @@ a, button, select, input
                 border: 1px solid ds.$hex-action
 
               html[data-theme="yellow-light"] &
-                background-color: rgba(ds.$hex-tertiary, .2)
-                color: rgba(ds.$hex-primary, .7)
+                background-color: rgba(ds.$rgb-tertiary, .2)
+                color: rgba(ds.$rgb-primary, .7)
 
               html[data-theme="yellow-dark"] &
-                background-color: rgba(ds.$hex-tertiary, .5)
-                color: rgba(ds.$hex-bright, .7)
+                background-color: rgba(ds.$rgb-tertiary, .5)
+                color: rgba(ds.$rgb-bright, .7)
 
           .board-content
             margin-bottom: ds.rem(3)
@@ -337,7 +469,7 @@ a, button, select, input
 .vh-dialog
   .MuiDialog-paper
     border-radius: ds.rem(17)
-    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$hex-primary,.07)
+    box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
 
     .MuiDialogTitle-root, .MuiDialogContent-root
       padding: ds.rem(17) ds.rem(27)
@@ -346,10 +478,10 @@ a, button, select, input
       font-size: ds.rem(16)
 
       html[data-theme="yellow-light"] &
-        border-bottom: 1px solid rgba(ds.$hex-tertiary, .2)
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
       html[data-theme="yellow-dark"] &
-        border-bottom: 1px solid rgba(ds.$hex-tertiary, .5)
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
 
     .MuiDialogActions-root
       padding: ds.rem(7) ds.rem(27) ds.rem(27)
@@ -368,7 +500,7 @@ a, button, select, input
 
         &:disabled
           background-color: ds.$hex-tertiary
-          color: rgba(ds.$hex-bright, .7)
+          color: rgba(ds.$rgb-bright, .7)
 
   &.vh-alert-dialog
     .MuiDialog-paper
@@ -404,11 +536,11 @@ a, button, select, input
           color: ds.$hex-bright
 
           html[data-theme="yellow-light"] &
-            background-color: rgba(ds.$hex-accent, .1)
+            background-color: rgba(ds.$rgb-accent, .1)
             color: ds.$hex-accent
 
           html[data-theme="yellow-dark"] &
-            background-color: rgba(ds.$hex-bright, .1)
+            background-color: rgba(ds.$rgb-bright, .1)
             color: ds.$hex-bright
 
           &.delete-button
@@ -420,23 +552,23 @@ a, button, select, input
             background-color: transparent!important
 
             html[data-theme="yellow-light"] &
-              color: rgba(ds.$hex-primary, .5)!important
+              color: rgba(ds.$rgb-primary, .5)!important
 
             html[data-theme="yellow-dark"] &
-              color: rgba(ds.$hex-bright, .5)!important
+              color: rgba(ds.$rgb-bright, .5)!important
 
           &.warning-button
             background-color: ds.$hex-warning
             color: ds.$hex-white
 
           &:disabled
-            color: rgba(ds.$hex-accent, .5)!important
+            color: rgba(ds.$rgb-accent, .5)!important
 
             html[data-theme="yellow-light"] &
-              background-color: rgba(ds.$hex-accent, .1)!important
+              background-color: rgba(ds.$rgb-accent, .1)!important
 
             html[data-theme="yellow-dark"] &
-              background-color: rgba(ds.$hex-bright, .1)!important
+              background-color: rgba(ds.$rgb-bright, .1)!important
 
         &.complex-buttons
           gap: 0
@@ -469,12 +601,12 @@ a, button, select, input
 
   &:disabled
     html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$hex-primary, .2)!important
-      color: rgba(ds.$hex-bright, 1)!important
+      background-color: rgba(ds.$rgb-primary, .2)!important
+      color: rgba(ds.$rgb-bright, 1)!important
 
     html[data-theme="yellow-dark"] &
-      background-color: rgba(ds.$hex-bright, .1)!important
-      color: rgba(ds.$hex-primary, 1)!important
+      background-color: rgba(ds.$rgb-bright, .1)!important
+      color: rgba(ds.$rgb-primary, 1)!important
 
 .link
   display: inline-flex
@@ -496,11 +628,11 @@ a, button, select, input
     justify-content: center
 
     html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$hex-bright, .5)
+      background-color: rgba(ds.$rgb-bright, .5)
       color: ds.$hex-primary
 
     html[data-theme="yellow-dark"] &
-      background-color: rgba(ds.$hex-primary, .5)
+      background-color: rgba(ds.$rgb-primary, .5)
       color: ds.$hex-bright
 
     .container
@@ -612,14 +744,14 @@ body
 
   .viewer, .toastui-editor-contents
     blockquote
-      color: rgba(ds.$hex-secondary, .7)
-      border-left: ds.rem(5) solid rgba(ds.$hex-tertiary, .7)
+      color: rgba(ds.$rgb-secondary, .7)
+      border-left: ds.rem(5) solid rgba(ds.$rgb-tertiary, .7)
       margin: ds.rem(16)
       padding: 0 ds.rem(18)
 
   .dark-viewer .viewer, .toastui-editor-dark .toastui-editor-contents
     blockquote
-      border-color: rgba(ds.$hex-tertiary, .9)
+      border-color: rgba(ds.$rgb-tertiary, .9)
 
   .viewer, .toastui-editor-contents
     ul, menu, ol, dir
@@ -727,25 +859,25 @@ body
       border-collapse: collapse
       table-layout: fixed
       box-sizing: border-box
-      border: 1px solid rgba(ds.$hex-tertiary, .7)
+      border: 1px solid rgba(ds.$rgb-tertiary, .7)
       border-radius: ds.rem(7)
       width: 100%
       margin: ds.rem(12) 0 ds.rem(14)
 
   .dark-viewer .viewer, .toastui-editor-dark .toastui-editor-contents
     table
-      border-color: rgba(ds.$hex-tertiary, .9)
+      border-color: rgba(ds.$rgb-tertiary, .9)
 
   .viewer, .toastui-editor-contents
     table
       th, td
-        border: 1px solid rgba(ds.$hex-tertiary, .7)
+        border: 1px solid rgba(ds.$rgb-tertiary, .7)
         padding: ds.rem(5) ds.rem(14) ds.rem(5) ds.rem(12)
 
   .dark-viewer .viewer, .toastui-editor-dark .toastui-editor-contents
     table
       th, td
-        border-color: rgba(ds.$hex-tertiary, .9)
+        border-color: rgba(ds.$rgb-tertiary, .9)
 
   .viewer, .toastui-editor-contents
     table
@@ -784,11 +916,11 @@ body
       code
         color: ds.$hex-warning
         letter-spacing: -.05em
-        background-color: rgba(ds.$hex-warning, .17)
+        background-color: rgba(ds.$rgb-warning, .17)
         border-radius: ds.rem(3)
         padding: ds.rem(2) ds.rem(3)
 
   .dark-viewer .viewer, .toastui-editor-dark .toastui-editor-contents
     p
       code
-        background-color: rgba(ds.$hex-warning, .07)
+        background-color: rgba(ds.$rgb-warning, .07)

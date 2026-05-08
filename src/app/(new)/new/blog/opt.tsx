@@ -13,6 +13,7 @@ import {
   FormControlLabel,
   FormLabel,
   InputAdornment,
+  MenuItem,
   Paper,
   Radio,
   RadioGroup,
@@ -28,7 +29,7 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
 
 type VisibilityType = 'public' | 'private';
-type ThemeType = 'default';
+type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
 type PlanRow = {
@@ -40,6 +41,8 @@ type PlanRow = {
   price: number;
   product_type: string;
 };
+
+const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -66,6 +69,10 @@ function normalizeSiteKey(rawValue: string) {
 
 function hasInvalidCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
+}
+
+function isThemeType(value: string): value is ThemeType {
+  return THEME_TYPES.includes(value as ThemeType);
 }
 
 export default function Opt() {
@@ -138,6 +145,10 @@ export default function Opt() {
     setBaseUrl(window.location.origin);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-colorset', themeType);
+  }, [themeType]);
+
   function openErrorDialog(message: string) {
     setErrorMessage(message);
     setSuccessMessage('');
@@ -168,10 +179,10 @@ export default function Opt() {
     setSummary(event.currentTarget.value);
   }
 
-  function handleThemeTypeChange(event: InputChangeEvent) {
-    const nextValue = event.currentTarget.value;
+  function handleThemeTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const nextValue = event.target.value;
 
-    if (nextValue !== 'default') {
+    if (!isThemeType(nextValue)) {
       return;
     }
 
@@ -573,10 +584,13 @@ export default function Opt() {
           />
 
           <Stack spacing={1}>
-            <FormLabel>테마</FormLabel>
-            <RadioGroup value={themeType} onChange={handleThemeTypeChange}>
-              <FormControlLabel value="default" control={<Radio />} label="default" />
-            </RadioGroup>
+            <TextField select label="테마" value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
+              {THEME_TYPES.map((themeValue) => (
+                <MenuItem key={themeValue} value={themeValue}>
+                  {themeValue}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
 
           <Stack spacing={1}>

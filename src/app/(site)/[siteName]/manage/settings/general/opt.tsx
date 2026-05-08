@@ -8,9 +8,8 @@ import {
   Button,
   FormControlLabel,
   InputAdornment,
+  MenuItem,
   Paper,
-  Radio,
-  RadioGroup,
   Stack,
   styled,
   Switch,
@@ -38,6 +37,8 @@ type EditableField =
   | 'theme_type'
   | 'is_shutdown';
 
+type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
+
 type SiteInfoInfo = {
   created_at: string;
   site_key: string;
@@ -56,6 +57,16 @@ type SitesInfo = {
   updated_by_name: string;
   log: string;
 };
+
+const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
+
+function isThemeType(value: string): value is ThemeType {
+  return THEME_TYPES.includes(value as ThemeType);
+}
+
+function applyColorSet(themeType: string) {
+  document.documentElement.setAttribute('data-colorset', themeType);
+}
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -105,6 +116,7 @@ export default function Opt() {
 
         setSiteInfo(result.siteInfo);
         setSites(result.sites);
+        applyColorSet(result.siteInfo.theme_type);
         setProfilePictureUrl(result.profilePictureUrl ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -128,6 +140,10 @@ export default function Opt() {
   }
 
   function cancelEdit() {
+    if (editingField === 'theme_type' && siteInfo) {
+      applyColorSet(siteInfo.theme_type);
+    }
+
     setEditingField(null);
     setErrorMessage('');
     setSuccessMessage('');
@@ -135,6 +151,17 @@ export default function Opt() {
 
   function handleTextChange(event: InputChangeEvent | TextAreaChangeEvent) {
     setDraftValue(event.currentTarget.value);
+  }
+
+  function handleThemeTypeChange(event: InputChangeEvent) {
+    const nextValue = event.target.value;
+
+    if (!isThemeType(nextValue)) {
+      return;
+    }
+
+    setDraftValue(nextValue);
+    applyColorSet(nextValue);
   }
 
   function handleSwitchChange(event: InputChangeEvent) {
@@ -157,6 +184,7 @@ export default function Opt() {
 
     setSiteInfo(result.siteInfo);
     setSites(result.sites);
+    applyColorSet(result.siteInfo.theme_type);
     setProfilePictureUrl(result.profilePictureUrl ?? '');
   }
 
@@ -475,9 +503,19 @@ export default function Opt() {
           <Typography variant="subtitle2">테마</Typography>
           {editingField === 'theme_type' ? (
             <>
-              <RadioGroup value={String(draftValue || 'default')} onChange={handleTextChange}>
-                <FormControlLabel value="default" control={<Radio />} label="default" />
-              </RadioGroup>
+              <TextField
+                select
+                value={String(draftValue || 'default')}
+                onChange={handleThemeTypeChange}
+                fullWidth
+                size="small"
+              >
+                {THEME_TYPES.map((themeValue) => (
+                  <MenuItem key={themeValue} value={themeValue}>
+                    {themeValue}
+                  </MenuItem>
+                ))}
+              </TextField>
               <Stack
                 direction="row"
                 spacing={2}
