@@ -1,5 +1,5 @@
 import { Box, Container, Stack } from '@mui/material';
-import StaffTabs from '../../../../tabs';
+import StaffTabs from '../../../tabs';
 import CommunityDesignBreadcrumb from '../breadcrumb';
 import Opt from './opt';
 

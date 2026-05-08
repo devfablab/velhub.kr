@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { Box, Container, Stack } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import StaffTabs from '@/app/(site)/[siteName]/tabs';
+import StaffTabs from '@/app/(site)/[siteName]/manage/tabs';
 import SiteContentsBreadcrumb from '@/app/(site)/[siteName]/manage/contents/breadcrumb';
 import Opt from './opt';
 

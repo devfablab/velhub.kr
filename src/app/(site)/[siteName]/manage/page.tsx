@@ -1,6 +1,6 @@
 import { Box, Container, Stack } from '@mui/material';
 import Opt from './opt';
-import StaffTabs from '../tabs';
+import StaffTabs from './tabs';
 
 export default function Page() {
   return (

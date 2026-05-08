@@ -1,5 +1,5 @@
 import { Box, Container, Stack } from '@mui/material';
-import StaffTabs from '@/app/(site)/[siteName]/tabs';
+import StaffTabs from '@/app/(site)/[siteName]/manage/tabs';
 import SiteContentsBreadcrumb from '../../../breadcrumb';
 import Opt from './opt';
 

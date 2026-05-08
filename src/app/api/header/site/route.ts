@@ -175,7 +175,7 @@ export async function GET(request: Request) {
 
     return Response.json({
       siteName: site.site_key,
-      siteType: isSiteType(site.site_type),
+      siteType: isSiteType(site.site_type) ? site.site_type : null,
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
