@@ -122,7 +122,7 @@ export async function GET(request: Request, context: RouteContext) {
       const pageQuery = supabaseAdmin
         .from('pages')
         .select(
-          'id, slug, subject, summary, edited_at, sort_order, user_id, board_id, site_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
+          'id, slug, subject, summary, edited_at, sort_order, user_id, board_id, site_id, created_at, og_image, attachment_slug, attachment_origin, is_comment',
           { count: 'exact' },
         )
         .eq('board_id', board.data.id)
@@ -131,8 +131,10 @@ export async function GET(request: Request, context: RouteContext) {
 
       const pagesResult = await pageQuery;
 
+      console.log('pagesResult: ', pagesResult);
+
       if (pagesResult.error) {
-        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.1' }, { status: 500 });
       }
 
       const userIds = Array.from(
@@ -151,7 +153,7 @@ export async function GET(request: Request, context: RouteContext) {
           : { data: [], error: null };
 
       if (rhizomeStigmasResult.error) {
-        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.2' }, { status: 500 });
       }
 
       const stigmaResult =
@@ -160,7 +162,7 @@ export async function GET(request: Request, context: RouteContext) {
           : { data: [], error: null };
 
       if (stigmaResult.error) {
-        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.3' }, { status: 500 });
       }
 
       const nicknameMap = new Map(

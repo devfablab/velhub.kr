@@ -39,6 +39,21 @@ type CreateResponse = {
   error?: string;
 };
 
+type UploadResponse = {
+  ok?: boolean;
+  path?: string;
+  url?: string;
+  width?: number | null;
+  height?: number | null;
+  error?: string;
+};
+
+type EditorBlobImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
 type CategoryRow = {
   id: string;
   category_key: string;
@@ -75,6 +90,8 @@ type SeriesListResponse = {
   error?: string;
 };
 
+const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -87,6 +104,84 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('이미지 정보를 불러오지 못했습니다.'));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+function canvasToWebpBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('이미지 변환에 실패했습니다.'));
+          return;
+        }
+
+        resolve(blob);
+      },
+      'image/webp',
+      quality,
+    );
+  });
+}
+
+function createWebpFile(blob: Blob, originalFile: File) {
+  const baseName = originalFile.name.replace(/\.[^.]+$/, '') || `editor-${Date.now()}`;
+
+  return new File([blob], `${baseName}.webp`, {
+    type: 'image/webp',
+  });
+}
+
+async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+  }
+
+  if (file.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
+    throw new Error(maxSizeMessage);
+  }
+
+  const image = await loadImageFromFile(file);
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    throw new Error('이미지 변환에 실패했습니다.');
+  }
+
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  context.drawImage(image, 0, 0);
+
+  const qualities = [0.92, 0.86, 0.8, 0.74, 0.68];
+
+  for (const quality of qualities) {
+    const nextBlob = await canvasToWebpBlob(canvas, quality);
+
+    if (nextBlob.size <= MAX_EDITOR_IMAGE_FILE_SIZE) {
+      return createWebpFile(nextBlob, file);
+    }
+  }
+
+  throw new Error(maxSizeMessage);
+}
+
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -96,11 +191,13 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
+  const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
@@ -115,6 +212,17 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+
+  useEffect(() => {
+    editorBlobImagesReference.current = editorBlobImages;
+  }, [editorBlobImages]);
+
+  useEffect(() => {
+    return () => {
+      editorBlobImagesReference.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+      editorBlobImagesReference.current = [];
+    };
+  }, []);
 
   useEffect(() => {
     async function loadStatus() {
@@ -278,6 +386,116 @@ export default function Opt() {
     }
   }
 
+  async function uploadPostImage(file: File, folder: 'editor') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+    formData.append('siteName', siteName);
+
+    const response = await fetch('/api/attachment/add/post', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    const result = (await response.json()) as UploadResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '이미지 업로드에 실패했습니다.');
+    }
+
+    if (!result.path || !result.url) {
+      throw new Error('이미지 업로드에 실패했습니다.');
+    }
+
+    return {
+      path: result.path,
+      url: result.url,
+      width: typeof result.width === 'number' ? result.width : null,
+      height: typeof result.height === 'number' ? result.height : null,
+    };
+  }
+
+  async function handleUploadEditorImage(file: Blob | File) {
+    const editorFile =
+      file instanceof File
+        ? file
+        : new File([file], `editor-${Date.now()}.png`, {
+            type: file.type || 'image/png',
+          });
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(editorFile.type)) {
+      throw new Error('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+    }
+
+    if (editorFile.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
+      throw new Error('이미지는 1MB 이하로 등록해주세요.');
+    }
+
+    const previewUrl = URL.createObjectURL(editorFile);
+
+    const nextImage = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      file: editorFile,
+      previewUrl,
+    };
+
+    editorBlobImagesReference.current = [...editorBlobImagesReference.current, nextImage];
+    setEditorBlobImages(editorBlobImagesReference.current);
+
+    return previewUrl;
+  }
+
+  function replaceAllImageUrl(value: string, fromUrl: string, toUrl: string) {
+    return value.split(fromUrl).join(toUrl);
+  }
+
+  async function uploadEditorImagesIfNeeded() {
+    const currentEditorBlobImages = editorBlobImagesReference.current;
+
+    if (currentEditorBlobImages.length === 0) {
+      return {
+        contentHtml,
+        contentMarkdown,
+      };
+    }
+
+    let nextContentHtml = contentHtml;
+    let nextContentMarkdown = contentMarkdown;
+    const usedPreviewUrls = new Set<string>();
+
+    for (const image of currentEditorBlobImages) {
+      const isUsedInHtml = nextContentHtml.includes(image.previewUrl);
+      const isUsedInMarkdown = nextContentMarkdown.includes(image.previewUrl);
+
+      if (!isUsedInHtml && !isUsedInMarkdown) {
+        URL.revokeObjectURL(image.previewUrl);
+        continue;
+      }
+
+      const webpFile = await convertImageToWebpFile(image.file, '이미지는 1MB 이하로 등록해주세요.');
+      const uploadedImage = await uploadPostImage(webpFile, 'editor');
+
+      nextContentHtml = replaceAllImageUrl(nextContentHtml, image.previewUrl, uploadedImage.url);
+      nextContentMarkdown = replaceAllImageUrl(nextContentMarkdown, image.previewUrl, uploadedImage.url);
+      usedPreviewUrls.add(image.previewUrl);
+
+      URL.revokeObjectURL(image.previewUrl);
+    }
+
+    const remainingEditorBlobImages = currentEditorBlobImages.filter((image) => !usedPreviewUrls.has(image.previewUrl));
+
+    editorBlobImagesReference.current = remainingEditorBlobImages;
+    setContentHtml(nextContentHtml);
+    setContentMarkdown(nextContentMarkdown);
+    setEditorBlobImages(remainingEditorBlobImages);
+
+    return {
+      contentHtml: nextContentHtml,
+      contentMarkdown: nextContentMarkdown,
+    };
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -294,6 +512,8 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
+      const uploadedEditorContent = await uploadEditorImagesIfNeeded();
+
       const createResponse = await fetch(`/api/boards/${boardName}/new`, {
         method: 'POST',
         headers: {
@@ -304,8 +524,8 @@ export default function Opt() {
           siteName,
           subject,
           summary,
-          contentHtml,
-          contentMarkdown,
+          contentHtml: uploadedEditorContent.contentHtml,
+          contentMarkdown: uploadedEditorContent.contentMarkdown,
           thumbnailImage: thumbnailImage || null,
           thumbnailWidth,
           thumbnailHeight,
@@ -458,6 +678,7 @@ export default function Opt() {
             initialEditType="markdown"
             onHtmlChange={setContentHtml}
             onMarkdownChange={setContentMarkdown}
+            onUploadImage={handleUploadEditorImage}
           />
         </Box>
 

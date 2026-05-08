@@ -255,7 +255,7 @@ export default function Opt() {
 
   return (
     <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3, pr: 0, pl: 0 }}>
+      <Paper variant="outlined" sx={{ p: 3 }}>
         <Stack spacing={2.5}>
           <Typography variant="h5" component="h2">
             {content.subject}

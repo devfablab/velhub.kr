@@ -75,7 +75,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const denylist = await supabaseAdmin.from('denylist').select('word').eq('word', slug).maybeSingle();
+    const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', slug).maybeSingle();
 
     if (denylist.error) {
       return Response.json({ error: '페이지 식별자 확인에 실패했습니다.' }, { status: 500 });
