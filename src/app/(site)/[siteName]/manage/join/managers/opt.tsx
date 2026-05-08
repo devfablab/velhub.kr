@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Alert,
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -68,10 +69,27 @@ type MemberSearchItem = {
   manageRoles: ManagerItem[];
 };
 
+type ManagerIconRole =
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager';
+
+type ManagerIconItem = {
+  id: string;
+  created_at: string;
+  role: ManagerIconRole;
+  icon: string;
+  icon_url: string;
+  site_id: string;
+};
+
 type ManagersResponse = {
   ok?: boolean;
   managers?: ManagerItem[];
   boards?: BoardItem[];
+  managerIcons?: ManagerIconItem[];
   limits?: {
     community_manager: number;
     board_manager: number;
@@ -94,12 +112,34 @@ type MutationResponse = {
   error?: string;
 };
 
+type ManagerIconResponse = {
+  ok?: boolean;
+  iconId?: string;
+  role?: ManagerIconRole;
+  icon?: string;
+  iconUrl?: string;
+  managerIcons?: ManagerIconItem[];
+  error?: string;
+};
+
+const managerIconRoleOptions: Array<{ value: ManagerIconRole; label: string }> = [
+  { value: 'owner', label: '운영자' },
+  { value: 'community-manager', label: '커뮤니티 매니저' },
+  { value: 'board-manager', label: '전체 게시판 매니저' },
+  { value: 'board-general-manager', label: '개별 게시판 총괄 매니저' },
+  { value: 'board-assistant-manager', label: '개별 게시판 부 매니저' },
+];
+
 const roleOptions: Array<{ value: ManagerRole; label: string }> = [
   { value: 'community-manager', label: '커뮤니티 매니저' },
   { value: 'board-manager', label: '전체 게시판 매니저' },
   { value: 'board-general-manager', label: '개별 게시판 총괄 매니저' },
   { value: 'board-assistant-manager', label: '개별 게시판 부 매니저' },
 ];
+
+function getManagerIconRoleLabel(role: ManagerIconRole) {
+  return managerIconRoleOptions.find((option) => option.value === role)?.label ?? role;
+}
 
 function getRoleLabel(role: ManagerRole) {
   return roleOptions.find((option) => option.value === role)?.label ?? role;
@@ -132,9 +172,11 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [managers, setManagers] = useState<ManagerItem[]>([]);
   const [boards, setBoards] = useState<BoardItem[]>([]);
+  const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>([]);
   const [limits, setLimits] = useState<ManagersResponse['limits'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -159,6 +201,11 @@ export default function Opt() {
   const [isSubmittingDelete, setIsSubmittingDelete] = useState(false);
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
+  const [targetIconId, setTargetIconId] = useState('');
+  const [isLoadingIcons, setIsLoadingIcons] = useState(false);
+  const [isUploadingIcon, setIsUploadingIcon] = useState(false);
+  const [deletingIconId, setDeletingIconId] = useState('');
 
   const selectedManager = useMemo(
     () => managers.find((manager) => manager.manageRoleId === selectedManagerRoleId) ?? null,
@@ -257,7 +304,181 @@ export default function Opt() {
 
     setManagers(Array.isArray(result.managers) ? result.managers : []);
     setBoards(Array.isArray(result.boards) ? result.boards : []);
+    setManagerIcons(Array.isArray(result.managerIcons) ? result.managerIcons : []);
     setLimits(result.limits ?? null);
+  }
+
+  async function ensureManagerIcons() {
+    const response = await fetch('/api/manage/join/managers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        action: 'enable-icons',
+        siteName,
+      }),
+    });
+
+    const result = (await response.json()) as ManagerIconResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '매니저 아이콘 정보를 생성하지 못했습니다.');
+    }
+
+    setManagerIcons(Array.isArray(result.managerIcons) ? result.managerIcons : []);
+  }
+
+  async function openIconDialog() {
+    if (isLoadingIcons) {
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setIsLoadingIcons(true);
+      await ensureManagerIcons();
+      setIsIconDialogOpen(true);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '매니저 아이콘 정보를 생성하지 못했습니다.');
+      } else {
+        setErrorMessage('매니저 아이콘 정보를 생성하지 못했습니다.');
+      }
+    } finally {
+      setIsLoadingIcons(false);
+    }
+  }
+
+  function closeIconDialog() {
+    if (isUploadingIcon || Boolean(deletingIconId)) {
+      return;
+    }
+
+    setIsIconDialogOpen(false);
+    setTargetIconId('');
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+  function handleClickIconUpload(iconId: string) {
+    if (isUploadingIcon) {
+      return;
+    }
+
+    setTargetIconId(iconId);
+    fileInputRef.current?.click();
+  }
+
+  async function handleIconFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || !targetIconId || isUploadingIcon) {
+      inputElement.value = '';
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setIsUploadingIcon(true);
+
+      const formData = new FormData();
+      formData.append('siteName', siteName);
+      formData.append('iconId', targetIconId);
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/manage/join/managers', {
+        method: 'PUT',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const result = (await response.json()) as ManagerIconResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '아이콘 업로드에 실패했습니다.');
+      }
+
+      setManagerIcons((previousIcons) =>
+        previousIcons.map((icon) =>
+          icon.id === result.iconId
+            ? {
+                ...icon,
+                icon: result.icon ?? '',
+                icon_url: result.iconUrl ?? '',
+              }
+            : icon,
+        ),
+      );
+
+      setSnackbarMessage('아이콘이 저장되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '아이콘 업로드에 실패했습니다.');
+      } else {
+        setErrorMessage('아이콘 업로드에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingIcon(false);
+      setTargetIconId('');
+      inputElement.value = '';
+    }
+  }
+
+  async function handleDeleteIcon(iconId: string) {
+    if (deletingIconId) {
+      return;
+    }
+
+    try {
+      setErrorMessage('');
+      setDeletingIconId(iconId);
+
+      const response = await fetch('/api/manage/join/managers', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'delete-icon',
+          siteName,
+          iconId,
+        }),
+      });
+
+      const result = (await response.json()) as ManagerIconResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '아이콘 삭제에 실패했습니다.');
+      }
+
+      setManagerIcons((previousIcons) =>
+        previousIcons.map((icon) =>
+          icon.id === iconId
+            ? {
+                ...icon,
+                icon: '',
+                icon_url: '',
+              }
+            : icon,
+        ),
+      );
+
+      setSnackbarMessage('아이콘이 삭제되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '아이콘 삭제에 실패했습니다.');
+      } else {
+        setErrorMessage('아이콘 삭제에 실패했습니다.');
+      }
+    } finally {
+      setDeletingIconId('');
+    }
   }
 
   function handleSearchKeywordChange(event: InputChangeEvent) {
@@ -601,6 +822,9 @@ export default function Opt() {
       ) : null}
 
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+        <Button type="button" variant="outlined" onClick={() => void openIconDialog()} disabled={isLoadingIcons}>
+          아이콘 변경
+        </Button>
         <Button type="button" variant="outlined" onClick={openSearchDialog}>
           위임
         </Button>
@@ -745,6 +969,94 @@ export default function Opt() {
           </Stack>
         </Paper>
       ) : null}
+
+      <Dialog open={isIconDialogOpen} onClose={closeIconDialog} fullWidth maxWidth="sm">
+        <DialogTitle>아이콘 변경</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {managerIconRoleOptions.map((roleOption) => {
+                const icon = managerIcons.find((managerIcon) => managerIcon.role === roleOption.value);
+
+                if (!icon) {
+                  return null;
+                }
+
+                return (
+                  <Stack key={icon.id} direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Typography variant="subtitle2" sx={{ minWidth: 170 }}>
+                        {roleOption.label}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          height: 25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {icon.icon_url ? (
+                          <Box
+                            component="img"
+                            src={icon.icon_url}
+                            alt={roleOption.label}
+                            sx={{
+                              width: 25,
+                              height: 25,
+                              objectFit: 'contain',
+                              display: 'block',
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2">아이콘 없음</Typography>
+                        )}
+                      </Box>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        onClick={() => handleClickIconUpload(icon.id)}
+                        disabled={isUploadingIcon}
+                      >
+                        아이콘 변경
+                      </Button>
+
+                      {icon.icon ? (
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => void handleDeleteIcon(icon.id)}
+                          disabled={deletingIconId === icon.id}
+                        >
+                          삭제
+                        </Button>
+                      ) : null}
+                    </Stack>
+                  </Stack>
+                );
+              })}
+            </Paper>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+              style={{ display: 'none' }}
+              onChange={handleIconFileChange}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={closeIconDialog} disabled={isUploadingIcon || Boolean(deletingIconId)}>
+            닫기
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={isSearchDialogOpen} onClose={closeSearchDialog} fullWidth maxWidth="md">
         <DialogTitle>멤버 검색</DialogTitle>
