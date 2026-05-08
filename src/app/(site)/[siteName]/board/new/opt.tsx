@@ -51,6 +51,7 @@ type BoardItem = {
 
 type BoardsResponse = {
   boards?: BoardItem[];
+  writeBoards?: BoardItem[];
   error?: string;
 };
 
@@ -616,7 +617,7 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/boards?siteName=${siteName}`, {
+        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });

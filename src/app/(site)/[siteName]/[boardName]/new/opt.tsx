@@ -630,7 +630,7 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/boards?siteName=${siteName}`, {
+        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -646,8 +646,17 @@ export default function Opt() {
           (board) => board.is_active === true && board.board_type !== 'page',
         );
 
+        const canWriteCurrentBoard = nextBoards.some((board) => board.board_key === boardName);
+
         setBoards(nextBoards);
-        setSelectedBoardKey(nextBoards.some((board) => board.board_key === boardName) ? boardName : '');
+
+        if (boardName && !canWriteCurrentBoard) {
+          setSelectedBoardKey('');
+          setErrorMessage('접근 권한이 없습니다.');
+          return;
+        }
+
+        setSelectedBoardKey(canWriteCurrentBoard ? boardName : '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시판 목록을 불러오지 못했습니다.');

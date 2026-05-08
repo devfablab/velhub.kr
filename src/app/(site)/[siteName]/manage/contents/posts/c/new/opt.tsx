@@ -47,6 +47,7 @@ type BoardsResponse = {
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
+type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
 
 const POST_PER_PAGE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
@@ -54,6 +55,13 @@ const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
   { value: 'markdown_default', label: '마크다운 전용' },
   { value: 'markdown_on', label: '마크다운 사용가능' },
   { value: 'markdown_off', label: '마크다운 사용안함' },
+];
+
+const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [
+  { value: 'member', label: '일반 멤버 가능' },
+  { value: 'manager', label: '매니저 전용' },
+  { value: 'community-manager', label: '커뮤니티 매니저 전용' },
+  { value: 'owner', label: '운영자 전용' },
 ];
 
 function normalizeBoardKey(rawValue: string) {
@@ -84,6 +92,7 @@ export default function Opt() {
   const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
   const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
+  const [writePermission, setWritePermission] = useState<WritePermission>('member');
   const [postType, setPostType] = useState<PostType>('none');
   const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
@@ -131,6 +140,10 @@ export default function Opt() {
 
   function handleMarkdownStatusChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setMarkdownStatus(event.target.value as MarkdownStatus);
+  }
+
+  function handleWritePermissionChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setWritePermission(event.target.value as WritePermission);
   }
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -279,6 +292,7 @@ export default function Opt() {
           boardType,
           isActive: true,
           markdownStatus,
+          writePermission,
           postPerPage,
           postType: canUsePostType ? postType : 'none',
         }),
@@ -420,6 +434,21 @@ export default function Opt() {
           size="small"
         >
           {MARKDOWN_STATUS_OPTIONS.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="글 작성 권한"
+          value={writePermission}
+          onChange={handleWritePermissionChange}
+          fullWidth
+          size="small"
+        >
+          {WRITE_PERMISSION_OPTIONS.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
             </MenuItem>

@@ -9,6 +9,7 @@ type RequestBody = {
   boardType: string | null;
   isActive: boolean | null;
   markdownStatus: string | null;
+  writePermission?: string | null;
   postPerPage?: number | null;
   postType?: 'none' | 'prefix' | 'series' | null;
 };
@@ -39,6 +40,10 @@ function isAllowedBoardType(value: string) {
 
 function isAllowedMarkdownStatus(value: string) {
   return value === 'markdown_default' || value === 'markdown_on' || value === 'markdown_off';
+}
+
+function isAllowedWritePermission(value: string) {
+  return value === 'member' || value === 'manager' || value === 'community-manager' || value === 'owner';
 }
 
 function normalizePostPerPage(value: number | null | undefined) {
@@ -80,6 +85,7 @@ export async function POST(request: Request) {
     const boardLabel = normalizeText(requestBody.boardLabel);
     const boardType = normalizeText(requestBody.boardType).toLowerCase();
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
+    const writePermission = normalizeText(requestBody.writePermission) || 'member';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
     const postPerPage = normalizePostPerPage(requestBody.postPerPage);
     const postType = requestBody.postType ?? 'none';
@@ -114,6 +120,10 @@ export async function POST(request: Request) {
 
     if (!isAllowedMarkdownStatus(markdownStatus)) {
       return Response.json({ error: '마크다운 사용 설정이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!isAllowedWritePermission(writePermission)) {
+      return Response.json({ error: '글 작성 권한 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
     if (!isAllowedPostType(postType)) {
@@ -214,6 +224,7 @@ export async function POST(request: Request) {
         sort_order: nextSortOrder,
         site_id: rhizome.data.id,
         markdown_status: markdownStatus,
+        write_permission: writePermission,
         post_per_page: postPerPage,
         post_type: rhizome.data.site_type === 'community' ? postType : 'none',
       })

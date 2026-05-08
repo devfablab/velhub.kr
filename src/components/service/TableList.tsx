@@ -85,9 +85,20 @@ export default function TableList() {
   const boardName = normalizeText(params.boardName);
 
   const [boards, setBoards] = useState<BoardItem[]>([]);
+  const [writeBoards, setWriteBoards] = useState<BoardItem[]>([]);
   const [alertMessage, setAlertMessage] = useState('');
 
   const shouldShowWriteLink = useMemo(() => !isWritePath(pathname, siteName), [pathname, siteName]);
+
+  const canWriteCurrentBoard = useMemo(() => {
+    if (!boardName) {
+      return true;
+    }
+
+    return writeBoards.some((board) => board.board_key === boardName);
+  }, [boardName, writeBoards]);
+
+  const shouldRenderWriteLink = shouldShowWriteLink && canWriteCurrentBoard;
 
   useEffect(() => {
     async function loadBoards() {
@@ -118,16 +129,37 @@ export default function TableList() {
       }
     }
 
+    async function loadWriteBoards() {
+      try {
+        const response = await fetch(`/api/boards/write?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as BoardsResponse;
+
+        if (!response.ok) {
+          setWriteBoards([]);
+          return;
+        }
+
+        setWriteBoards(Array.isArray(result.boards) ? result.boards : []);
+      } catch {
+        setWriteBoards([]);
+      }
+    }
+
     if (!siteName) {
       return;
     }
 
     void loadBoards();
+    void loadWriteBoards();
   }, [siteName]);
 
   return (
     <div className={`${styles['table-list']} paper`}>
-      {shouldShowWriteLink ? (
+      {shouldRenderWriteLink ? (
         <p className={styles.button}>
           <Anchor href={boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`} className="button">
             글쓰기

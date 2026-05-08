@@ -73,6 +73,9 @@ type BoardListResponse = {
   totalCount?: number;
   totalPage?: number;
   keyword?: string;
+  actions?: {
+    canWritePost?: boolean;
+  };
   error?: string;
 };
 
@@ -245,6 +248,7 @@ export default function Opt() {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPage, setTotalPage] = useState(1);
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
+  const [canWritePost, setCanWritePost] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -279,7 +283,10 @@ export default function Opt() {
       setTotalCount(typeof result.totalCount === 'number' ? result.totalCount : 0);
       setTotalPage(typeof result.totalPage === 'number' ? result.totalPage : 1);
       setSearchKeyword(nextKeyword);
+      setCanWritePost(Boolean(result.actions?.canWritePost));
     } catch (unknownError) {
+      setCanWritePost(false);
+
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '전체 게시글을 불러오지 못했습니다.');
       } else {
@@ -778,11 +785,13 @@ export default function Opt() {
         </nav>
       ) : null}
 
-      <div className={styles['button-group']}>
-        <Anchor href={`/${siteName}/${boardName}/new`} className={`${styles.submit} button`}>
-          글쓰기
-        </Anchor>
-      </div>
+      {canWritePost ? (
+        <div className={styles['button-group']}>
+          <Anchor href={`/${siteName}/${boardName}/new`} className={`${styles.submit} button`}>
+            글쓰기
+          </Anchor>
+        </div>
+      ) : null}
     </div>
   );
 }

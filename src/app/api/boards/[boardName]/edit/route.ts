@@ -14,6 +14,7 @@ type RequestBody = {
   boardLabel?: string | null;
   isActive?: boolean | null;
   markdownStatus?: string | null;
+  writePermission?: string | null;
 };
 
 function normalizeBoardKey(rawValue: string | null | undefined) {
@@ -35,6 +36,10 @@ function isAllowedMarkdownStatus(value: string) {
   return value === 'markdown_default' || value === 'markdown_on' || value === 'markdown_off';
 }
 
+function isAllowedWritePermission(value: string) {
+  return value === 'member' || value === 'manager' || value === 'community-manager' || value === 'owner';
+}
+
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -50,6 +55,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const boardKey = normalizeBoardKey(requestBody.boardKey);
     const boardLabel = normalizeText(requestBody.boardLabel);
     const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
+    const writePermission = normalizeText(requestBody.writePermission) || 'member';
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
 
     if (!siteName) {
@@ -85,6 +91,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '마크다운 사용 설정이 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (!isAllowedWritePermission(writePermission)) {
+      return Response.json({ error: '글 작성 권한 설정이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
@@ -107,7 +117,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const currentBoard = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, post_type, post_per_page')
+      .select('id, board_key, board_type, post_type, post_per_page, write_permission')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -144,6 +154,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         board_label: boardLabel,
         is_active: isActive,
         markdown_status: markdownStatus,
+        write_permission: writePermission,
       })
       .eq('id', currentBoard.data.id)
       .select('id, board_key')

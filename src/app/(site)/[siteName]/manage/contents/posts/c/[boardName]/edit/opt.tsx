@@ -13,6 +13,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Switch,
   TextField,
   Typography,
   useMediaQuery,
@@ -26,6 +27,7 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 type PostType = 'none' | 'prefix' | 'series';
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
+type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
 
 type BoardResponse = {
   board?: {
@@ -36,6 +38,7 @@ type BoardResponse = {
     is_active: boolean;
     sort_order: number;
     markdown_status?: MarkdownStatus | null;
+    write_permission?: WritePermission | null;
     post_per_page: number | null;
     post_type: PostType | null;
   };
@@ -55,6 +58,13 @@ const MARKDOWN_STATUS_OPTIONS: { value: MarkdownStatus; label: string }[] = [
   { value: 'markdown_default', label: '마크다운 전용' },
   { value: 'markdown_on', label: '마크다운 사용가능' },
   { value: 'markdown_off', label: '마크다운 사용안함' },
+];
+
+const WRITE_PERMISSION_OPTIONS: { value: WritePermission; label: string }[] = [
+  { value: 'member', label: '일반 멤버 가능' },
+  { value: 'manager', label: '매니저 전용' },
+  { value: 'community-manager', label: '커뮤니티 매니저 전용' },
+  { value: 'owner', label: '운영자 전용' },
 ];
 
 function normalizeBoardKey(rawValue: string) {
@@ -87,6 +97,7 @@ export default function Opt() {
   const [boardType, setBoardType] = useState<BoardType>('basic');
   const [postPerPage, setPostPerPage] = useState(5);
   const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
+  const [writePermission, setWritePermission] = useState<WritePermission>('member');
   const [postType, setPostType] = useState<PostType>('none');
   const [isActive, setIsActive] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
@@ -124,8 +135,16 @@ export default function Opt() {
     setMarkdownStatus(event.target.value as MarkdownStatus);
   }
 
+  function handleWritePermissionChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setWritePermission(event.target.value as WritePermission);
+  }
+
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostType(event.target.value as PostType);
+  }
+
+  function handleIsActiveChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setIsActive(event.target.checked);
   }
 
   async function loadBoard() {
@@ -150,6 +169,7 @@ export default function Opt() {
     setBoardType(result.board.board_type);
     setPostPerPage(result.board.post_per_page ?? 5);
     setMarkdownStatus(result.board.markdown_status ?? 'markdown_default');
+    setWritePermission(result.board.write_permission ?? 'member');
     setPostType(result.board.post_type ?? 'none');
     setIsActive(result.board.is_active);
     setIsChecked(true);
@@ -285,6 +305,7 @@ export default function Opt() {
           boardType,
           isActive,
           markdownStatus,
+          writePermission,
           postPerPage,
           postType: canUsePostType ? postType : 'none',
         }),
@@ -401,6 +422,13 @@ export default function Opt() {
 
         <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth size="small" />
 
+        <FormControl>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            게시판 상태
+          </Typography>
+          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
+        </FormControl>
+
         <TextField
           select
           label="목록 표시 개수 (필수)"
@@ -425,6 +453,21 @@ export default function Opt() {
           size="small"
         >
           {MARKDOWN_STATUS_OPTIONS.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        <TextField
+          select
+          label="글 작성 권한"
+          value={writePermission}
+          onChange={handleWritePermissionChange}
+          fullWidth
+          size="small"
+        >
+          {WRITE_PERMISSION_OPTIONS.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
             </MenuItem>
