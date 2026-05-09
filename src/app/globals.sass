@@ -534,14 +534,8 @@ a, button, select, input
           background-color: ds.$hex-accent
           white-space: nowrap
           color: ds.$hex-bright
-
-          html[data-theme="yellow-light"] &
             background-color: rgba(ds.$rgb-accent, .1)
             color: ds.$hex-accent
-
-          html[data-theme="yellow-dark"] &
-            background-color: rgba(ds.$rgb-bright, .1)
-            color: ds.$hex-bright
 
           &.delete-button
             background-color: transparent!important
@@ -550,12 +544,7 @@ a, button, select, input
 
           &.cancel-button
             background-color: transparent!important
-
-            html[data-theme="yellow-light"] &
-              color: rgba(ds.$rgb-primary, .5)!important
-
-            html[data-theme="yellow-dark"] &
-              color: rgba(ds.$rgb-bright, .5)!important
+            color: rgba(ds.$rgb-primary, .5)!important
 
           &.warning-button
             background-color: ds.$hex-warning
@@ -563,12 +552,7 @@ a, button, select, input
 
           &:disabled
             color: rgba(ds.$rgb-accent, .5)!important
-
-            html[data-theme="yellow-light"] &
-              background-color: rgba(ds.$rgb-accent, .1)!important
-
-            html[data-theme="yellow-dark"] &
-              background-color: rgba(ds.$rgb-bright, .1)!important
+            background-color: rgba(ds.$rgb-accent, .1)!important
 
         &.complex-buttons
           gap: 0

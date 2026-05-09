@@ -3,6 +3,7 @@ import { Box, Container } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog from './blog';
 import Community from './community';
+import SiteInfo from '@/components/service/community/SiteInfo';
 
 type RouteContext = {
   params: Promise<{
@@ -79,11 +80,14 @@ export default async function Page(context: RouteContext) {
     }
 
     return (
-      <Container maxWidth="sm">
-        <Box sx={{ py: 8 }}>
+      <main>
+        <div className="container">
+          <aside>
+            <SiteInfo />
+          </aside>
           <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />
-        </Box>
-      </Container>
+        </div>
+      </main>
     );
   }
 
