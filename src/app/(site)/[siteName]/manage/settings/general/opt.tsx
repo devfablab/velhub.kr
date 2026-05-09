@@ -58,7 +58,34 @@ type SitesInfo = {
   log: string;
 };
 
+type SiteKeyCheckResponse = {
+  ok?: boolean;
+  normalizedSiteKey?: string;
+  error?: string;
+};
+
+type SiteLabelCheckResponse = {
+  ok?: boolean;
+  normalizedSiteLabel?: string;
+  error?: string;
+};
+
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
+
+function normalizeSiteKey(rawValue: string) {
+  return rawValue
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/g, '')
+    .replace(/-+$/g, '');
+}
+
+function hasInvalidCharacters(value: string) {
+  return /[^a-z0-9-]/.test(value);
+}
 
 function isThemeType(value: string): value is ThemeType {
   return THEME_TYPES.includes(value as ThemeType);
@@ -97,6 +124,16 @@ export default function Opt() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
+  const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
+  const [checkedSiteKey, setCheckedSiteKey] = useState('');
+  const [isSiteKeyAvailable, setIsSiteKeyAvailable] = useState(false);
+  const [siteKeyCheckMessage, setSiteKeyCheckMessage] = useState('');
+
+  const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
+  const [checkedSiteLabel, setCheckedSiteLabel] = useState('');
+  const [isSiteLabelAvailable, setIsSiteLabelAvailable] = useState(false);
+  const [siteLabelCheckMessage, setSiteLabelCheckMessage] = useState('');
+
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
@@ -132,11 +169,35 @@ export default function Opt() {
     void loadInfo();
   }, [siteName]);
 
+  function resetSiteKeyCheck() {
+    setCheckedSiteKey('');
+    setIsSiteKeyAvailable(false);
+    setSiteKeyCheckMessage('');
+  }
+
+  function resetSiteLabelCheck() {
+    setCheckedSiteLabel('');
+    setIsSiteLabelAvailable(false);
+    setSiteLabelCheckMessage('');
+  }
+
   function startEdit(field: EditableField, value: string | boolean | null) {
     setEditingField(field);
     setDraftValue(typeof value === 'boolean' ? value : (value ?? ''));
     setErrorMessage('');
     setSuccessMessage('');
+    resetSiteKeyCheck();
+    resetSiteLabelCheck();
+
+    if (field === 'site_key' && typeof value === 'string') {
+      setCheckedSiteKey(value);
+      setIsSiteKeyAvailable(true);
+    }
+
+    if (field === 'site_label' && typeof value === 'string') {
+      setCheckedSiteLabel(value.trim());
+      setIsSiteLabelAvailable(Boolean(value.trim()));
+    }
   }
 
   function cancelEdit() {
@@ -147,10 +208,28 @@ export default function Opt() {
     setEditingField(null);
     setErrorMessage('');
     setSuccessMessage('');
+    resetSiteKeyCheck();
+    resetSiteLabelCheck();
   }
 
   function handleTextChange(event: InputChangeEvent | TextAreaChangeEvent) {
     setDraftValue(event.currentTarget.value);
+  }
+
+  function handleSiteKeyChange(event: InputChangeEvent) {
+    const normalizedValue = normalizeSiteKey(event.currentTarget.value);
+
+    setDraftValue(normalizedValue);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetSiteKeyCheck();
+  }
+
+  function handleSiteLabelChange(event: InputChangeEvent) {
+    setDraftValue(event.currentTarget.value);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetSiteLabelCheck();
   }
 
   function handleThemeTypeChange(event: InputChangeEvent) {
@@ -166,6 +245,142 @@ export default function Opt() {
 
   function handleSwitchChange(event: InputChangeEvent) {
     setDraftValue(event.currentTarget.checked);
+  }
+
+  async function handleCheckSiteKey() {
+    if (!siteInfo || isCheckingSiteKey) {
+      return;
+    }
+
+    const normalizedSiteKey = normalizeSiteKey(String(draftValue));
+
+    setDraftValue(normalizedSiteKey);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetSiteKeyCheck();
+
+    if (!normalizedSiteKey) {
+      setErrorMessage('사이트 식별자를 입력해주세요.');
+      return;
+    }
+
+    if (hasInvalidCharacters(normalizedSiteKey)) {
+      setErrorMessage("영소문자, 하이픈('-'), 숫자만 사용 가능합니다.");
+      return;
+    }
+
+    if (normalizedSiteKey === siteInfo.site_key) {
+      setCheckedSiteKey(normalizedSiteKey);
+      setIsSiteKeyAvailable(true);
+      setSiteKeyCheckMessage('현재 사용 중인 사이트 식별자입니다.');
+      return;
+    }
+
+    try {
+      setIsCheckingSiteKey(true);
+
+      const response = await fetch('/api/site/check-key', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteKey: normalizedSiteKey,
+        }),
+      });
+
+      const result = (await response.json()) as SiteKeyCheckResponse;
+
+      if (typeof result.normalizedSiteKey === 'string') {
+        setDraftValue(result.normalizedSiteKey);
+      }
+
+      if (!response.ok || !result.ok) {
+        setCheckedSiteKey(result.normalizedSiteKey ?? normalizedSiteKey);
+        setIsSiteKeyAvailable(false);
+        setErrorMessage(result.error ?? '사용할 수 없는 사이트 식별자입니다.');
+        return;
+      }
+
+      setCheckedSiteKey(result.normalizedSiteKey ?? normalizedSiteKey);
+      setIsSiteKeyAvailable(true);
+      setSiteKeyCheckMessage('사용 가능한 사이트 식별자입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '사이트 식별자 확인에 실패했습니다.');
+      } else {
+        setErrorMessage('사이트 식별자 확인에 실패했습니다.');
+      }
+      resetSiteKeyCheck();
+    } finally {
+      setIsCheckingSiteKey(false);
+    }
+  }
+
+  async function handleCheckSiteLabel() {
+    if (!siteInfo || isCheckingSiteLabel) {
+      return;
+    }
+
+    const trimmedSiteLabel = String(draftValue).trim();
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetSiteLabelCheck();
+
+    if (!trimmedSiteLabel) {
+      setErrorMessage('사이트명을 입력해주세요.');
+      return;
+    }
+
+    if (trimmedSiteLabel === (siteInfo.site_label ?? '').trim()) {
+      setCheckedSiteLabel(trimmedSiteLabel);
+      setIsSiteLabelAvailable(true);
+      setSiteLabelCheckMessage('현재 사용 중인 사이트명입니다.');
+      return;
+    }
+
+    try {
+      setIsCheckingSiteLabel(true);
+
+      const response = await fetch('/api/site/check-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteLabel: trimmedSiteLabel,
+        }),
+      });
+
+      const result = (await response.json()) as SiteLabelCheckResponse;
+
+      if (typeof result.normalizedSiteLabel === 'string') {
+        setDraftValue(result.normalizedSiteLabel);
+      }
+
+      if (!response.ok || !result.ok) {
+        setCheckedSiteLabel(result.normalizedSiteLabel ?? trimmedSiteLabel);
+        setIsSiteLabelAvailable(false);
+        setErrorMessage(result.error ?? '사용할 수 없는 사이트명입니다.');
+        return;
+      }
+
+      setCheckedSiteLabel(result.normalizedSiteLabel ?? trimmedSiteLabel);
+      setIsSiteLabelAvailable(true);
+      setSiteLabelCheckMessage('사용 가능한 사이트명입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '사이트명 확인에 실패했습니다.');
+      } else {
+        setErrorMessage('사이트명 확인에 실패했습니다.');
+      }
+      resetSiteLabelCheck();
+    } finally {
+      setIsCheckingSiteLabel(false);
+    }
   }
 
   async function refreshInfo(nextSiteName?: string) {
@@ -194,6 +409,26 @@ export default function Opt() {
     }
 
     const nextValue = value ?? draftValue;
+
+    if (field === 'site_key') {
+      const normalizedSiteKey = normalizeSiteKey(String(nextValue));
+
+      if (!isSiteKeyAvailable || checkedSiteKey !== normalizedSiteKey) {
+        setErrorMessage('사이트 식별자 중복 확인을 해주세요.');
+        setSuccessMessage('');
+        return;
+      }
+    }
+
+    if (field === 'site_label') {
+      const trimmedSiteLabel = String(nextValue).trim();
+
+      if (trimmedSiteLabel && (!isSiteLabelAvailable || checkedSiteLabel !== trimmedSiteLabel)) {
+        setErrorMessage('사이트명 중복 확인을 해주세요.');
+        setSuccessMessage('');
+        return;
+      }
+    }
 
     setErrorMessage('');
     setSuccessMessage('');
@@ -226,6 +461,8 @@ export default function Opt() {
       }
 
       setEditingField(null);
+      resetSiteKeyCheck();
+      resetSiteLabelCheck();
       setSuccessMessage('저장되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -359,45 +596,65 @@ export default function Opt() {
         <Stack spacing={1}>
           <Typography variant="subtitle2">사이트 식별자</Typography>
           {editingField === 'site_key' ? (
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{
-                alignItems: 'flex-start',
-              }}
-            >
-              <TextField
-                value={String(draftValue)}
-                onChange={handleTextChange}
-                fullWidth
-                size="small"
-                helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                slotProps={{
-                  input: {
-                    startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                  },
+            <>
+              <Stack
+                direction="row"
+                spacing={1}
+                sx={{
+                  alignItems: 'flex-start',
                 }}
-              />
-              <Button
-                type="button"
-                onClick={() => cancelEdit()}
-                size="large"
-                variant="outlined"
-                sx={{ whiteSpace: 'nowrap' }}
               >
-                취소
-              </Button>
-              <Button
-                type="button"
-                variant="contained"
-                onClick={() => void saveField('site_key')}
-                disabled={isSubmitting}
-                sx={{ whiteSpace: 'nowrap' }}
-                size="large"
-              >
-                수정 완료
-              </Button>
-            </Stack>
+                <TextField
+                  value={String(draftValue)}
+                  onChange={handleSiteKeyChange}
+                  fullWidth
+                  size="small"
+                  helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                  slotProps={{
+                    input: {
+                      startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            onClick={() => void handleCheckSiteKey()}
+                            disabled={isCheckingSiteKey}
+                            size="small"
+                          >
+                            중복 확인
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => cancelEdit()}
+                  size="large"
+                  variant="outlined"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  취소
+                </Button>
+                <Button
+                  type="button"
+                  variant="contained"
+                  onClick={() => void saveField('site_key')}
+                  disabled={isSubmitting || isCheckingSiteKey}
+                  sx={{ whiteSpace: 'nowrap' }}
+                  size="large"
+                >
+                  수정 완료
+                </Button>
+              </Stack>
+              {siteKeyCheckMessage ? (
+                <Alert severity="success" variant="outlined">
+                  {siteKeyCheckMessage}
+                </Alert>
+              ) : null}
+            </>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{siteInfo.site_key}</Typography>
@@ -413,35 +670,64 @@ export default function Opt() {
         <Stack spacing={1}>
           <Typography variant="subtitle2">사이트명</Typography>
           {editingField === 'site_label' ? (
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-              }}
-            >
-              <TextField value={String(draftValue)} onChange={handleTextChange} fullWidth size="small" />
-              <Button
-                type="button"
-                onClick={() => cancelEdit()}
-                size="large"
-                variant="outlined"
-                sx={{ whiteSpace: 'nowrap' }}
+            <>
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                }}
               >
-                취소
-              </Button>
-              <Button
-                type="button"
-                variant="contained"
-                onClick={() => void saveField('site_label')}
-                disabled={isSubmitting}
-                size="large"
-                sx={{ whiteSpace: 'nowrap' }}
-              >
-                수정 완료
-              </Button>
-            </Stack>
+                <TextField
+                  value={String(draftValue)}
+                  onChange={handleSiteLabelChange}
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            onClick={() => void handleCheckSiteLabel()}
+                            disabled={isCheckingSiteLabel}
+                            size="small"
+                          >
+                            중복 확인
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={() => cancelEdit()}
+                  size="large"
+                  variant="outlined"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  취소
+                </Button>
+                <Button
+                  type="button"
+                  variant="contained"
+                  onClick={() => void saveField('site_label')}
+                  disabled={isSubmitting || isCheckingSiteLabel}
+                  size="large"
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  수정 완료
+                </Button>
+              </Stack>
+              {siteLabelCheckMessage ? (
+                <Alert severity="success" variant="outlined">
+                  {siteLabelCheckMessage}
+                </Alert>
+              ) : null}
+            </>
           ) : (
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Typography>{siteInfo.site_label ?? ''}</Typography>
