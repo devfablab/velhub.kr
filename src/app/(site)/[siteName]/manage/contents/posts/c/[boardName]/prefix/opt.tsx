@@ -162,6 +162,10 @@ export default function Opt() {
     setDialogErrorMessage('');
   }
 
+  function isDuplicatePrefixLabel(prefixId: string | null, prefixLabelValue: string) {
+    return prefixes.some((prefix) => prefix.prefix_label === prefixLabelValue && prefix.id !== prefixId);
+  }
+
   async function handleSubmit() {
     if (isSubmitting) {
       return;
@@ -171,6 +175,16 @@ export default function Opt() {
 
     if (!normalizedPrefixLabel) {
       setDialogErrorMessage('말머리명을 입력해주세요.');
+      return;
+    }
+
+    if (dialogMode === 'new' && isDuplicatePrefixLabel(null, normalizedPrefixLabel)) {
+      setDialogErrorMessage('이미 존재하는 말머리입니다.');
+      return;
+    }
+
+    if (dialogMode === 'edit' && selectedPrefix && isDuplicatePrefixLabel(selectedPrefix.id, normalizedPrefixLabel)) {
+      setDialogErrorMessage('이미 존재하는 말머리입니다.');
       return;
     }
 
@@ -308,7 +322,7 @@ export default function Opt() {
         ) : null}
 
         <Alert severity="warning" variant="outlined">
-          사용한 적 있는 말머리는 삭제할 수 없습니다.
+          포스팅에 1번 이상 사용한 말머리는 삭제할 수 없습니다.
         </Alert>
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
