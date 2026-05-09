@@ -45,16 +45,22 @@ type BoardResponse = {
   error?: string;
 };
 
+type UpdateBoardResponse = {
+  ok?: boolean;
+  boardId?: string;
+  boardName?: string;
+  error?: string;
+};
+
 type BoardKeyCheckResponse = {
   ok?: boolean;
   boardKey?: string;
   error?: string;
 };
 
-type UpdateBoardResponse = {
+type BoardLabelCheckResponse = {
   ok?: boolean;
-  boardId?: string;
-  boardName?: string;
+  boardLabel?: string;
   error?: string;
 };
 
@@ -97,7 +103,9 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
 
+  const [boardId, setBoardId] = useState('');
   const [boardLabel, setBoardLabel] = useState('');
+  const [originBoardLabel, setOriginBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');
   const [originBoardKey, setOriginBoardKey] = useState('');
   const [boardType, setBoardType] = useState<BoardType>('basic');
@@ -106,10 +114,17 @@ export default function Opt() {
   const [writePermission, setWritePermission] = useState<WritePermission>('member');
   const [postType, setPostType] = useState<PostType>('none');
   const [isActive, setIsActive] = useState(true);
+
   const [isChecking, setIsChecking] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [checkedBoardKey, setCheckedBoardKey] = useState('');
+
+  const [isCheckingBoardLabel, setIsCheckingBoardLabel] = useState(false);
+  const [checkedBoardLabel, setCheckedBoardLabel] = useState('');
+  const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(false);
+  const [boardLabelCheckMessage, setBoardLabelCheckMessage] = useState('');
+
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,8 +134,17 @@ export default function Opt() {
     return boardType === 'basic';
   }, [boardType]);
 
+  function resetBoardLabelCheck() {
+    setCheckedBoardLabel('');
+    setIsBoardLabelAvailable(false);
+    setBoardLabelCheckMessage('');
+  }
+
   function handleBoardLabelChange(event: InputChangeEvent) {
     setBoardLabel(event.currentTarget.value);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetBoardLabelCheck();
   }
 
   function handleBoardKeyChange(event: InputChangeEvent) {
@@ -169,7 +193,9 @@ export default function Opt() {
       throw new Error('게시판 정보를 불러오지 못했습니다.');
     }
 
+    setBoardId(result.board.id);
     setBoardLabel(result.board.board_label);
+    setOriginBoardLabel(result.board.board_label);
     setBoardKey(result.board.board_key);
     setOriginBoardKey(result.board.board_key);
     setBoardType(result.board.board_type);
@@ -178,9 +204,74 @@ export default function Opt() {
     setWritePermission(result.board.write_permission ?? 'member');
     setPostType(result.board.post_type ?? 'none');
     setIsActive(result.board.is_active);
+
     setIsChecked(true);
     setIsAvailable(true);
     setCheckedBoardKey(result.board.board_key);
+
+    setIsBoardLabelAvailable(true);
+    setCheckedBoardLabel(result.board.board_label);
+  }
+
+  async function handleCheckBoardLabel() {
+    const trimmedBoardLabel = boardLabel.trim();
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetBoardLabelCheck();
+
+    if (!trimmedBoardLabel) {
+      setErrorMessage('게시판 이름을 입력해주세요.');
+      return;
+    }
+
+    if (trimmedBoardLabel === originBoardLabel) {
+      setCheckedBoardLabel(trimmedBoardLabel);
+      setIsBoardLabelAvailable(true);
+      setBoardLabelCheckMessage('현재 사용 중인 게시판 이름입니다.');
+      return;
+    }
+
+    try {
+      setIsCheckingBoardLabel(true);
+
+      const response = await fetch('/api/boards/check-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          boardLabel: trimmedBoardLabel,
+          currentBoardId: boardId,
+        }),
+      });
+
+      const result = (await response.json()) as BoardLabelCheckResponse;
+
+      if (!response.ok || !result.ok) {
+        setCheckedBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+        setIsBoardLabelAvailable(false);
+        setErrorMessage(result.error ?? '사용할 수 없는 게시판 이름입니다.');
+        return;
+      }
+
+      setBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+      setCheckedBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+      setIsBoardLabelAvailable(true);
+      setBoardLabelCheckMessage('사용 가능한 게시판 이름입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '게시판 이름 확인에 실패했습니다.');
+      } else {
+        setErrorMessage('게시판 이름 확인에 실패했습니다.');
+      }
+
+      resetBoardLabelCheck();
+    } finally {
+      setIsCheckingBoardLabel(false);
+    }
   }
 
   async function handleCheckBoardKey() {
@@ -224,7 +315,7 @@ export default function Opt() {
       setSuccessMessage('');
       setIsChecking(true);
 
-      const response = await fetch(`/api/boards/check?siteName=${siteName}&boardKey=${normalizedBoardKey}`, {
+      const response = await fetch(`/api/boards/check-key?siteName=${siteName}&boardKey=${normalizedBoardKey}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -252,7 +343,6 @@ export default function Opt() {
       } else {
         setErrorMessage('게시판 식별자 확인에 실패했습니다.');
       }
-
       setSuccessMessage('');
       setIsChecked(false);
       setIsAvailable(false);
@@ -274,6 +364,12 @@ export default function Opt() {
 
     if (!normalizedBoardLabel) {
       setErrorMessage('게시판 이름을 입력해주세요.');
+      setSuccessMessage('');
+      return;
+    }
+
+    if (!isBoardLabelAvailable || checkedBoardLabel !== normalizedBoardLabel) {
+      setErrorMessage('게시판 이름 중복 확인을 해주세요.');
       setSuccessMessage('');
       return;
     }
@@ -423,7 +519,43 @@ export default function Opt() {
           }}
         />
 
-        <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth size="small" />
+        <TextField
+          label="게시판 이름 (필수)"
+          value={boardLabel}
+          onChange={handleBoardLabelChange}
+          fullWidth
+          size="small"
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleCheckBoardLabel}
+                    disabled={isCheckingBoardLabel}
+                    size="small"
+                  >
+                    중복 확인
+                  </Button>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        {boardLabelCheckMessage ? (
+          <Alert severity="success" variant="outlined">
+            {boardLabelCheckMessage}
+          </Alert>
+        ) : null}
+
+        <FormControl>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            게시판 상태
+          </Typography>
+          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
+        </FormControl>
 
         <TextField
           select
@@ -488,13 +620,6 @@ export default function Opt() {
             </Alert>
           </>
         ) : null}
-
-        <FormControl>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            게시판 상태
-          </Typography>
-          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
-        </FormControl>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button

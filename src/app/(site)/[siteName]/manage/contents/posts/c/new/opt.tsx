@@ -44,9 +44,9 @@ type BoardsResponse = {
   error?: string;
 };
 
-type BoardKeyCheckResponse = {
+type BoardLabelCheckResponse = {
   ok?: boolean;
-  boardKey?: string;
+  boardLabel?: string;
   error?: string;
 };
 
@@ -104,6 +104,10 @@ export default function Opt() {
   const [isChecked, setIsChecked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [checkedBoardKey, setCheckedBoardKey] = useState('');
+  const [isCheckingBoardLabel, setIsCheckingBoardLabel] = useState(false);
+  const [checkedBoardLabel, setCheckedBoardLabel] = useState('');
+  const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(false);
+  const [boardLabelCheckMessage, setBoardLabelCheckMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,8 +120,17 @@ export default function Opt() {
     return boardType === 'basic';
   }, [boardType]);
 
+  function resetBoardLabelCheck() {
+    setCheckedBoardLabel('');
+    setIsBoardLabelAvailable(false);
+    setBoardLabelCheckMessage('');
+  }
+
   function handleBoardLabelChange(event: InputChangeEvent) {
     setBoardLabel(event.currentTarget.value);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetBoardLabelCheck();
   }
 
   function handleBoardKeyChange(event: InputChangeEvent) {
@@ -173,6 +186,59 @@ export default function Opt() {
     setCanCreateBoard(result.limit?.canCreateBoard ?? false);
   }
 
+  async function handleCheckBoardLabel() {
+    const trimmedBoardLabel = boardLabel.trim();
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetBoardLabelCheck();
+
+    if (!trimmedBoardLabel) {
+      setErrorMessage('게시판 이름을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsCheckingBoardLabel(true);
+
+      const response = await fetch('/api/boards/check-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          boardLabel: trimmedBoardLabel,
+        }),
+      });
+
+      const result = (await response.json()) as BoardLabelCheckResponse;
+
+      if (!response.ok || !result.ok) {
+        setCheckedBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+        setIsBoardLabelAvailable(false);
+        setErrorMessage(result.error ?? '사용할 수 없는 게시판 이름입니다.');
+        return;
+      }
+
+      setBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+      setCheckedBoardLabel(result.boardLabel ?? trimmedBoardLabel);
+      setIsBoardLabelAvailable(true);
+      setBoardLabelCheckMessage('사용 가능한 게시판 이름입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '게시판 이름 확인에 실패했습니다.');
+      } else {
+        setErrorMessage('게시판 이름 확인에 실패했습니다.');
+      }
+
+      resetBoardLabelCheck();
+    } finally {
+      setIsCheckingBoardLabel(false);
+    }
+  }
+
   async function handleCheckBoardKey() {
     const normalizedBoardKey = normalizeBoardKey(boardKey);
 
@@ -205,35 +271,38 @@ export default function Opt() {
       setSuccessMessage('');
       setIsChecking(true);
 
-      const response = await fetch(`/api/boards/check?siteName=${siteName}&boardKey=${normalizedBoardKey}`, {
+      const response = await fetch(`/api/boards/${normalizedBoardKey}?siteName=${siteName}`, {
         method: 'GET',
         credentials: 'include',
       });
 
-      const result = (await response.json()) as BoardKeyCheckResponse;
+      const result = (await response.json()) as { error?: string };
 
-      if (!response.ok || !result.ok) {
+      if (response.ok) {
         setIsChecked(true);
         setIsAvailable(false);
         setCheckedBoardKey(normalizedBoardKey);
-        setErrorMessage(result.error ?? '사용할 수 없는 게시판 식별자입니다.');
+        setErrorMessage('이미 존재하는 게시판 식별자입니다.');
         setSuccessMessage('');
         return;
       }
 
-      setIsChecked(true);
-      setIsAvailable(true);
-      setCheckedBoardKey(result.boardKey ?? normalizedBoardKey);
-      setBoardKey(result.boardKey ?? normalizedBoardKey);
-      setErrorMessage('');
-      setSuccessMessage('사용 가능한 게시판 식별자입니다.');
+      if (response.status === 404) {
+        setIsChecked(true);
+        setIsAvailable(true);
+        setCheckedBoardKey(normalizedBoardKey);
+        setErrorMessage('');
+        setSuccessMessage('사용 가능한 게시판 식별자입니다.');
+        return;
+      }
+
+      throw new Error(result.error ?? '게시판 식별자 확인에 실패했습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '게시판 식별자 확인에 실패했습니다.');
       } else {
         setErrorMessage('게시판 식별자 확인에 실패했습니다.');
       }
-
       setSuccessMessage('');
       setIsChecked(false);
       setIsAvailable(false);
@@ -261,6 +330,12 @@ export default function Opt() {
 
     if (!normalizedBoardLabel) {
       setErrorMessage('게시판 이름을 입력해주세요.');
+      setSuccessMessage('');
+      return;
+    }
+
+    if (!isBoardLabelAvailable || checkedBoardLabel !== normalizedBoardLabel) {
+      setErrorMessage('게시판 이름 중복 확인을 해주세요.');
       setSuccessMessage('');
       return;
     }
@@ -411,7 +486,36 @@ export default function Opt() {
           }}
         />
 
-        <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth size="small" />
+        <TextField
+          label="게시판 이름 (필수)"
+          value={boardLabel}
+          onChange={handleBoardLabelChange}
+          fullWidth
+          size="small"
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleCheckBoardLabel}
+                    disabled={isCheckingBoardLabel || !canCreateBoard}
+                    size="small"
+                  >
+                    중복 확인
+                  </Button>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+
+        {boardLabelCheckMessage ? (
+          <Alert severity="success" variant="outlined">
+            {boardLabelCheckMessage}
+          </Alert>
+        ) : null}
 
         <TextField
           select
