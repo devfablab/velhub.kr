@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Anchor from '@/components/Anchor';
 import { formatDate, normalizeText } from '@/lib/utils';
 import styles from '@/app/aside.module.sass';
 
@@ -24,6 +25,11 @@ type SiteInfoData = {
 type SiteInfoResponse = {
   ok?: boolean;
   siteInfo?: SiteInfoData;
+  error?: string;
+};
+
+type HeaderSiteResponse = {
+  siteRole: string | null;
   error?: string;
 };
 
@@ -63,11 +69,16 @@ function getJoinTypeLabel(joinType: string) {
   return joinType;
 }
 
+function isManagerRole(siteRole: string | null) {
+  return siteRole === 'owner' || siteRole === 'manager';
+}
+
 export default function SiteInfo() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
   const [siteInfo, setSiteInfo] = useState<SiteInfoData | null>(null);
+  const [siteRole, setSiteRole] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -97,11 +108,28 @@ export default function SiteInfo() {
       }
     }
 
+    async function loadHeader() {
+      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as HeaderSiteResponse;
+
+      if (!response.ok) {
+        setSiteRole(null);
+        return;
+      }
+
+      setSiteRole(result.siteRole ?? null);
+    }
+
     if (!siteName) {
       return;
     }
 
     void loadSiteInfo();
+    void loadHeader();
   }, [siteName]);
 
   if (!siteInfo) {
@@ -120,9 +148,13 @@ export default function SiteInfo() {
         </div>
 
         <div className={styles.button}>
-          <button type="button" onClick={() => setIsDialogOpen(true)}>
-            커뮤니티 정보
-          </button>
+          {isManagerRole(siteRole) ? (
+            <Anchor href={`/${siteName}/manage`}>커뮤니티 관리</Anchor>
+          ) : (
+            <button type="button" onClick={() => setIsDialogOpen(true)}>
+              커뮤니티 정보
+            </button>
+          )}
         </div>
       </div>
 
