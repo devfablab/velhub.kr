@@ -1,4 +1,4 @@
-import TableList from '@/components/service/TableList';
+import TableList from '@/components/service/community/TableList';
 import Opt from './opt';
 
 export default function Page() {

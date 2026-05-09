@@ -13,7 +13,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import Button from '@mui/material/Button';
 import { normalizeText } from '@/lib/utils';
-import Anchor from '../Anchor';
+import Anchor from '../../Anchor';
 import styles from '@/app/aside.module.sass';
 
 type BoardItem = {
