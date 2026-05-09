@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog from './blog';
 import Community from './community';
 import SiteInfo from '@/components/service/community/SiteInfo';
+import UserInfo from '@/components/service/community/UserInfo';
 
 type RouteContext = {
   params: Promise<{
@@ -85,7 +86,12 @@ export default async function Page(context: RouteContext) {
           <aside>
             <SiteInfo />
           </aside>
-          <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />
+          <div className="content">
+            <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />
+          </div>
+          <aside>
+            <UserInfo />
+          </aside>
         </div>
       </main>
     );

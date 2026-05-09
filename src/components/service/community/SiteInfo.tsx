@@ -5,8 +5,8 @@ import { useParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Anchor from '@/components/Anchor';
 import { formatDate, normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/aside.module.sass';
 
 type SiteInfoData = {
