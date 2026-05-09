@@ -205,13 +205,10 @@ export default function Opt() {
       setSuccessMessage('');
       setIsChecking(true);
 
-      const response = await fetch(
-        `/api/boards/check?siteName=${siteName}&boardKey=${encodeURIComponent(normalizedBoardKey)}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-        },
-      );
+      const response = await fetch(`/api/boards/check?siteName=${siteName}&boardKey=${normalizedBoardKey}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
       const result = (await response.json()) as BoardKeyCheckResponse;
 
