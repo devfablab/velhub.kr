@@ -154,6 +154,16 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();
+
+    if (denylist.error) {
+      return Response.json({ error: '게시판 식별자 확인에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (denylist.data) {
+      return Response.json({ error: '사용할 수 없는 게시판 식별자입니다.' }, { status: 400 });
+    }
+
     const duplicateBoard = await supabaseAdmin
       .from('boards')
       .select('id')

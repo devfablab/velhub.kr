@@ -45,6 +45,12 @@ type BoardResponse = {
   error?: string;
 };
 
+type BoardKeyCheckResponse = {
+  ok?: boolean;
+  boardKey?: string;
+  error?: string;
+};
+
 type UpdateBoardResponse = {
   ok?: boolean;
   boardId?: string;
@@ -218,38 +224,35 @@ export default function Opt() {
       setSuccessMessage('');
       setIsChecking(true);
 
-      const response = await fetch(`/api/boards/${normalizedBoardKey}?siteName=${siteName}`, {
+      const response = await fetch(`/api/boards/check?siteName=${siteName}&boardKey=${normalizedBoardKey}`, {
         method: 'GET',
         credentials: 'include',
       });
 
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as BoardKeyCheckResponse;
 
-      if (response.ok) {
+      if (!response.ok || !result.ok) {
         setIsChecked(true);
         setIsAvailable(false);
         setCheckedBoardKey(normalizedBoardKey);
-        setErrorMessage('이미 존재하는 게시판 식별자입니다.');
+        setErrorMessage(result.error ?? '사용할 수 없는 게시판 식별자입니다.');
         setSuccessMessage('');
         return;
       }
 
-      if (response.status === 404) {
-        setIsChecked(true);
-        setIsAvailable(true);
-        setCheckedBoardKey(normalizedBoardKey);
-        setErrorMessage('');
-        setSuccessMessage('사용 가능한 게시판 식별자입니다.');
-        return;
-      }
-
-      throw new Error(result.error ?? '게시판 식별자 확인에 실패했습니다.');
+      setIsChecked(true);
+      setIsAvailable(true);
+      setCheckedBoardKey(result.boardKey ?? normalizedBoardKey);
+      setBoardKey(result.boardKey ?? normalizedBoardKey);
+      setErrorMessage('');
+      setSuccessMessage('사용 가능한 게시판 식별자입니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '게시판 식별자 확인에 실패했습니다.');
       } else {
         setErrorMessage('게시판 식별자 확인에 실패했습니다.');
       }
+
       setSuccessMessage('');
       setIsChecked(false);
       setIsAvailable(false);
@@ -422,13 +425,6 @@ export default function Opt() {
 
         <TextField label="게시판 이름" value={boardLabel} onChange={handleBoardLabelChange} fullWidth size="small" />
 
-        <FormControl>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            게시판 상태
-          </Typography>
-          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
-        </FormControl>
-
         <TextField
           select
           label="목록 표시 개수 (필수)"
@@ -492,6 +488,13 @@ export default function Opt() {
             </Alert>
           </>
         ) : null}
+
+        <FormControl>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            게시판 상태
+          </Typography>
+          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
+        </FormControl>
 
         <Stack direction="row" spacing={1.5} justifyContent="flex-end">
           <Button

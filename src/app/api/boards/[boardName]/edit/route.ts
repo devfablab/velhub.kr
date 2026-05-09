@@ -130,6 +130,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();
+
+    if (denylist.error) {
+      return Response.json({ error: '게시판 식별자 확인에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (denylist.data) {
+      return Response.json({ error: '사용할 수 없는 게시판 식별자입니다.' }, { status: 400 });
+    }
+
     if (boardKey !== normalizedBoardName) {
       const duplicateBoard = await supabaseAdmin
         .from('boards')
