@@ -38,7 +38,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import type { ThemeMode } from '@/app/themeProvider';
+import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
@@ -116,9 +116,9 @@ export default function HeaderSite() {
   const isMobile = !isNotMobile;
 
   const { isReady } = useAuthState();
+  const { themeMode, setThemeMode } = useThemeMode();
 
   const [isMounted, setIsMounted] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemeMode>('system');
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
   const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
@@ -136,7 +136,7 @@ export default function HeaderSite() {
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
     setIsMounted(true);
-  }, []);
+  }, [setThemeMode]);
 
   useEffect(() => {
     if (!isMounted) {
