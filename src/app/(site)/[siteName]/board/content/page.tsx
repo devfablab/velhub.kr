@@ -1,5 +1,8 @@
 import TableList from '@/components/service/community/TableList';
 import Opt from './opt';
+import RecentTableList from '@/components/service/community/RecentTableList';
+import PostCountTableList from '@/components/service/community/PostCountTableList';
+import UserInfo from '@/components/service/community/UserInfo';
 
 export default function Page() {
   return (
@@ -9,6 +12,11 @@ export default function Page() {
           <TableList />
         </aside>
         <Opt />
+        <aside>
+          <UserInfo />
+          <PostCountTableList />
+          <RecentTableList />
+        </aside>
       </div>
     </main>
   );

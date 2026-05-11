@@ -20,7 +20,7 @@ type PostCountResponse = {
   error?: string;
 };
 
-export default function PostCountTableList() {
+export default function RecentTableList() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -32,13 +32,10 @@ export default function PostCountTableList() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(
-          `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        );
+        const response = await fetch(`/api/boards/all?siteName=${siteName}&page=1&size=10&includePin=false`, {
+          method: 'GET',
+          credentials: 'include',
+        });
 
         const result = (await response.json()) as PostCountResponse;
 
@@ -73,7 +70,7 @@ export default function PostCountTableList() {
 
   return (
     <div className={`${styles['post-count-list']} paper`}>
-      <strong>이 커뮤니티 인기글</strong>
+      <strong>이 커뮤니티 최신글</strong>
       <ol>
         {contents.map((content) => (
           <li key={content.id}>

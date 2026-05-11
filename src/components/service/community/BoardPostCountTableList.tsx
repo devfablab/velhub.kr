@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { normalizeText } from '@/lib/utils';
 import styles from '@/app/aside.module.sass';
 
-type PostCountItem = {
+type BoardPostCountItem = {
   id: string;
   slug: string;
   subject: string;
@@ -15,16 +15,23 @@ type PostCountItem = {
   comment_count: number;
 };
 
-type PostCountResponse = {
-  contents?: PostCountItem[];
+type BoardItem = {
+  board_label: string;
+};
+
+type BoardPostCountResponse = {
+  contents?: BoardPostCountItem[];
+  board: BoardItem;
   error?: string;
 };
 
-export default function PostCountTableList() {
+export default function BoardPostCountTableList() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const boardName = normalizeText(params.boardName);
 
-  const [contents, setContents] = useState<PostCountItem[]>([]);
+  const [contents, setContents] = useState<BoardPostCountItem[]>([]);
+  const [boards, setBoards] = useState<BoardItem>();
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -33,20 +40,21 @@ export default function PostCountTableList() {
         setErrorMessage('');
 
         const response = await fetch(
-          `/api/boards/all?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
+          `/api/boards/${boardName}?siteName=${siteName}&page=1&size=10&sort=post_count&includePin=false`,
           {
             method: 'GET',
             credentials: 'include',
           },
         );
 
-        const result = (await response.json()) as PostCountResponse;
+        const result = (await response.json()) as BoardPostCountResponse;
 
         if (!response.ok) {
           throw new Error(result.error ?? '게시글 목록을 불러오지 못했습니다.');
         }
 
         setContents(Array.isArray(result.contents) ? result.contents : []);
+        setBoards(result.board);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '게시글 목록을 불러오지 못했습니다.');
@@ -56,12 +64,12 @@ export default function PostCountTableList() {
       }
     }
 
-    if (!siteName) {
+    if (!siteName || !boardName) {
       return;
     }
 
     void loadContents();
-  }, [siteName]);
+  }, [siteName, boardName]);
 
   if (errorMessage) {
     return <p>{errorMessage}</p>;
@@ -73,7 +81,8 @@ export default function PostCountTableList() {
 
   return (
     <div className={`${styles['post-count-list']} paper`}>
-      <strong>이 커뮤니티 인기글</strong>
+      <strong>{boards?.board_label} 인기글</strong>
+
       <ol>
         {contents.map((content) => (
           <li key={content.id}>
