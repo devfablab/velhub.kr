@@ -160,7 +160,11 @@ function getSearchSnippet(content: string, keyword: string) {
   return `${startIndex > 0 ? '...' : ''}${snippet}${endIndex < normalizedContent.length ? '...' : ''}`;
 }
 
-function applySearchFilter(query: any, keyword: string) {
+type SupabaseFilterQuery = {
+  or: (filters: string) => SupabaseFilterQuery;
+};
+
+function applySearchFilter<TQuery extends SupabaseFilterQuery>(query: TQuery, keyword: string): TQuery {
   return query.or(
     [
       `subject.ilike.%${keyword}%`,
@@ -169,7 +173,7 @@ function applySearchFilter(query: any, keyword: string) {
       `content_markdown.ilike.%${keyword}%`,
       `content_simple.ilike.%${keyword}%`,
     ].join(','),
-  );
+  ) as TQuery;
 }
 
 function getPostImageUrl(path: string | null) {

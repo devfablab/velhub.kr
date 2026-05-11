@@ -64,10 +64,12 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
+  const rhizome = rhizomeResult.data;
+
   const siteResult = await supabaseAdmin
     .from('sites')
     .select('updated_at, updated_by')
-    .eq('site_id', rhizomeResult.data.id)
+    .eq('site_id', rhizome.id)
     .maybeSingle();
 
   if (siteResult.error || !siteResult.data) {
@@ -75,15 +77,15 @@ export default async function Page(context: RouteContext) {
   }
 
   const sitesInfo = {
-    rhizomes: rhizomeResult.data,
+    rhizomes: rhizome,
     sites: siteResult.data,
   };
 
-  if (rhizomeResult.data.site_type === 'blog') {
+  if (rhizome.site_type === 'blog') {
     const blogInfo = await supabaseAdmin
       .from('blogs')
       .select('created_at, comment_provider')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.id)
       .maybeSingle();
 
     if (blogInfo.error || !blogInfo.data) {
@@ -99,11 +101,11 @@ export default async function Page(context: RouteContext) {
     );
   }
 
-  if (rhizomeResult.data.site_type === 'community') {
+  if (rhizome.site_type === 'community') {
     const communityInfo = await supabaseAdmin
       .from('communities')
       .select('created_at, join_type, policy_post, policy_comment')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.id)
       .maybeSingle();
 
     if (communityInfo.error || !communityInfo.data) {
@@ -113,7 +115,7 @@ export default async function Page(context: RouteContext) {
     const homeOrderResult = await supabaseAdmin
       .from('community_home_orders')
       .select('id, site_id, board_id, order, is_show')
-      .eq('site_id', rhizomeResult.data.id)
+      .eq('site_id', rhizome.id)
       .eq('is_show', true)
       .order('order', { ascending: true });
 
@@ -133,7 +135,7 @@ export default async function Page(context: RouteContext) {
       const boardResult = await supabaseAdmin
         .from('boards')
         .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
-        .eq('site_id', rhizomeResult.data.id)
+        .eq('site_id', rhizome.id)
         .eq('is_active', true)
         .in('id', boardIds)
         .neq('board_type', 'page');
@@ -150,7 +152,7 @@ export default async function Page(context: RouteContext) {
           .filter((board): board is BoardRow => Boolean(board))
           .map(async (board) => {
             const postList = await getPostList({
-              siteId: rhizomeResult.data.id,
+              siteId: rhizome.id,
               siteKey: normalizedSiteName,
               boardId: board.id,
               page: 1,

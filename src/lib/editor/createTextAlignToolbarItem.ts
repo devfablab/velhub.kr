@@ -7,6 +7,82 @@ type TextAlignPayload = {
   textAlign?: TextAlignValue;
 };
 
+type NodeTypeLike = {
+  name: string;
+};
+
+type ParagraphNodeLike = {
+  type: NodeTypeLike;
+  attrs?: {
+    htmlAttrs?: Record<string, string>;
+    [key: string]: unknown;
+  };
+};
+
+type DocLike = {
+  nodeAt: (position: number) => ParagraphNodeLike | null;
+  nodesBetween: (from: number, to: number, callback: (node: ParagraphNodeLike, position: number) => void) => void;
+};
+
+type MappingLike = {
+  map: (position: number) => number;
+};
+
+type ResolvedPositionLike = {
+  depth: number;
+  node: (depth: number) => ParagraphNodeLike;
+  before: (depth: number) => number;
+};
+
+type FragmentLike = {
+  size: number;
+  textBetween: (from: number, to: number, separator?: string) => string;
+};
+
+type SliceLike = {
+  content: FragmentLike;
+};
+
+type SelectionLike = {
+  from: number;
+  to: number;
+  empty: boolean;
+  $from: ResolvedPositionLike;
+  content: () => SliceLike;
+};
+
+type TransactionLike = {
+  mapping: MappingLike;
+  doc: DocLike;
+  replaceSelectionWith: (node: unknown) => TransactionLike;
+  setSelection: (selection: unknown) => TransactionLike;
+  setNodeMarkup: (
+    position: number,
+    type: unknown,
+    attrs: {
+      htmlAttrs: Record<string, string>;
+      [key: string]: unknown;
+    },
+  ) => TransactionLike;
+  scrollIntoView: () => TransactionLike;
+};
+
+type TextSelectionLike = {
+  create: (doc: DocLike, from: number, to: number) => unknown;
+};
+
+type SchemaLike = {
+  text: (value: string) => unknown;
+};
+
+type CommandContextLike = {
+  tr: TransactionLike;
+  selection: SelectionLike;
+  schema: SchemaLike;
+};
+
+type CommandDispatchLike = (tr: TransactionLike) => void;
+
 const TEXT_ALIGN_OPTIONS: { value: TextAlignValue; label: string }[] = [
   { value: 'left', label: '왼쪽 정렬' },
   { value: 'center', label: '가운데 정렬' },
@@ -90,7 +166,7 @@ function assignCssValue(previousStyle: string, propertyName: string, propertyVal
     .join(';');
 }
 
-function updateParagraphAlign(tr: any, position: number, textAlign: TextAlignValue) {
+function updateParagraphAlign(tr: TransactionLike, position: number, textAlign: TextAlignValue) {
   const node = tr.doc.nodeAt(position);
 
   if (!node || node.type.name !== 'paragraph') {
@@ -102,7 +178,7 @@ function updateParagraphAlign(tr: any, position: number, textAlign: TextAlignVal
   const style = assignCssValue(previousStyle, 'text-align', textAlign);
 
   tr.setNodeMarkup(position, undefined, {
-    ...node.attrs,
+    ...(node.attrs ?? {}),
     htmlAttrs: {
       ...previousHtmlAttrs,
       style,
@@ -112,7 +188,7 @@ function updateParagraphAlign(tr: any, position: number, textAlign: TextAlignVal
   return true;
 }
 
-function setParagraphTextAlign(tr: any, selection: any, textAlign: TextAlignValue) {
+function setParagraphTextAlign(tr: TransactionLike, selection: SelectionLike, textAlign: TextAlignValue) {
   const paragraphPositions = new Set<number>();
 
   if (selection.empty) {
@@ -125,7 +201,7 @@ function setParagraphTextAlign(tr: any, selection: any, textAlign: TextAlignValu
       }
     }
   } else {
-    tr.doc.nodesBetween(selection.from, selection.to, (node: any, position: number) => {
+    tr.doc.nodesBetween(selection.from, selection.to, (node, position) => {
       if (node.type.name === 'paragraph') {
         paragraphPositions.add(position);
       }
@@ -139,7 +215,13 @@ function setParagraphTextAlign(tr: any, selection: any, textAlign: TextAlignValu
   return paragraphPositions.size > 0;
 }
 
-function createSelection(tr: any, selection: any, SelectionClass: any, openTag: string, closeTag: string) {
+function createSelection(
+  tr: TransactionLike,
+  selection: SelectionLike,
+  SelectionClass: TextSelectionLike,
+  openTag: string,
+  closeTag: string,
+) {
   const { mapping, doc } = tr;
   const { from, to, empty } = selection;
   const mappedFrom = mapping.map(from) + openTag.length;
@@ -154,7 +236,11 @@ export function textAlignPlugin(context: PluginContext): PluginInfo {
 
   return {
     markdownCommands: {
-      textAlign: ({ textAlign }: TextAlignPayload, { tr, selection, schema }, dispatch) => {
+      textAlign: (
+        { textAlign }: TextAlignPayload,
+        { tr, selection, schema }: CommandContextLike,
+        dispatch?: CommandDispatchLike,
+      ) => {
         if (!textAlign) {
           return false;
         }
@@ -176,7 +262,11 @@ export function textAlignPlugin(context: PluginContext): PluginInfo {
     },
 
     wysiwygCommands: {
-      textAlign: ({ textAlign }: TextAlignPayload, { tr, selection }, dispatch) => {
+      textAlign: (
+        { textAlign }: TextAlignPayload,
+        { tr, selection }: CommandContextLike,
+        dispatch?: CommandDispatchLike,
+      ) => {
         if (!textAlign) {
           return false;
         }

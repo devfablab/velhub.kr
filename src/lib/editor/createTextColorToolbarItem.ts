@@ -10,12 +10,94 @@ type SpanAttrs = {
   classNames: string[] | null;
 };
 
+type MarkLike = {
+  type?: {
+    name?: string;
+  };
+  attrs?: unknown;
+};
+
+type NodeLike = {
+  marks?: MarkLike[];
+};
+
+type FragmentLike = {
+  size: number;
+  textBetween: (from: number, to: number, separator?: string) => string;
+  nodesBetween: (from: number, to: number, callback: (node: NodeLike) => void) => void;
+};
+
+type SliceLike = {
+  content: FragmentLike;
+};
+
+type SelectionLike = {
+  from: number;
+  to: number;
+  empty: boolean;
+  content: () => SliceLike;
+};
+
+type MappingLike = {
+  map: (position: number) => number;
+};
+
+type TransactionLike = {
+  mapping: MappingLike;
+  doc: unknown;
+  replaceSelectionWith: (node: unknown) => TransactionLike;
+  setSelection: (selection: unknown) => TransactionLike;
+  addMark: (from: number, to: number, mark: unknown) => TransactionLike;
+};
+
+type TextSelectionLike = {
+  create: (doc: unknown, from: number, to: number) => unknown;
+};
+
+type SchemaLike = {
+  text: (value: string) => unknown;
+  marks: {
+    span: {
+      create: (attrs: { htmlAttrs: Record<string, string> }) => unknown;
+    };
+  };
+};
+
+type CommandContextLike = {
+  tr: TransactionLike;
+  selection: SelectionLike;
+  schema: SchemaLike;
+};
+
+type CommandDispatchLike = (tr: TransactionLike) => void;
+
 const TEXT_COLOR_OPTIONS = [
   { value: 'inherit', label: '기본색' },
   { value: '#EEB400', label: '노랑' },
   { value: '#007ADB', label: '파랑' },
   { value: '#FF555D', label: '빨강' },
 ];
+
+function isSpanAttrs(value: unknown): value is SpanAttrs {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const target = value as {
+    htmlAttrs?: unknown;
+    htmlInline?: unknown;
+    classNames?: unknown;
+  };
+
+  const isValidHtmlAttrs =
+    target.htmlAttrs === null || (typeof target.htmlAttrs === 'object' && !Array.isArray(target.htmlAttrs));
+
+  const isValidClassNames =
+    target.classNames === null ||
+    (Array.isArray(target.classNames) && target.classNames.every((className) => typeof className === 'string'));
+
+  return isValidHtmlAttrs && isValidClassNames;
+}
 
 function createTextColorPopupBody(eventEmitter: PluginContext['eventEmitter']) {
   const popupBody = document.createElement('div');
@@ -72,7 +154,7 @@ function createTextColorToolbarItem(eventEmitter: PluginContext['eventEmitter'])
   };
 }
 
-function getSpanAttrs(selection: any): SpanAttrs {
+function getSpanAttrs(selection: SelectionLike): SpanAttrs {
   const slice = selection.content();
 
   let attrs: SpanAttrs = {
@@ -81,13 +163,13 @@ function getSpanAttrs(selection: any): SpanAttrs {
     classNames: null,
   };
 
-  slice.content.nodesBetween(0, slice.content.size, (node: any) => {
+  slice.content.nodesBetween(0, slice.content.size, (node) => {
     if (!Array.isArray(node.marks) || node.marks.length === 0) {
       return;
     }
 
-    node.marks.forEach((mark: any) => {
-      if (mark.type?.name === 'span') {
+    node.marks.forEach((mark) => {
+      if (mark.type?.name === 'span' && isSpanAttrs(mark.attrs)) {
         attrs = mark.attrs;
       }
     });
@@ -118,7 +200,13 @@ function assignCssValue(previousStyle: string, propertyName: string, propertyVal
     .join(';');
 }
 
-function createSelection(tr: any, selection: any, SelectionClass: any, openTag: string, closeTag: string) {
+function createSelection(
+  tr: TransactionLike,
+  selection: SelectionLike,
+  SelectionClass: TextSelectionLike,
+  openTag: string,
+  closeTag: string,
+) {
   const { mapping, doc } = tr;
   const { from, to, empty } = selection;
   const mappedFrom = mapping.map(from) + openTag.length;
@@ -133,7 +221,11 @@ export function textColorPlugin(context: PluginContext): PluginInfo {
 
   return {
     markdownCommands: {
-      textColor: ({ textColor }: TextColorPayload, { tr, selection, schema }, dispatch) => {
+      textColor: (
+        { textColor }: TextColorPayload,
+        { tr, selection, schema }: CommandContextLike,
+        dispatch?: CommandDispatchLike,
+      ) => {
         if (!textColor) {
           return false;
         }
@@ -155,7 +247,11 @@ export function textColorPlugin(context: PluginContext): PluginInfo {
     },
 
     wysiwygCommands: {
-      textColor: ({ textColor }: TextColorPayload, { tr, selection, schema }, dispatch) => {
+      textColor: (
+        { textColor }: TextColorPayload,
+        { tr, selection, schema }: CommandContextLike,
+        dispatch?: CommandDispatchLike,
+      ) => {
         if (!textColor || selection.empty) {
           return false;
         }

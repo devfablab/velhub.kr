@@ -15,7 +15,6 @@ const youtubeOptions: YouTubeProps['opts'] = {
   height: '100%',
   playerVars: {
     autoplay: 0,
-    cc_load_policy: 0,
     loop: 0,
     rel: 0,
     modestbranding: 1,

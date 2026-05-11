@@ -53,15 +53,17 @@ export async function GET(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (rhizome.data.site_type !== 'community') {
+    const rhizomeData = rhizome.data;
+
+    if (rhizomeData.site_type !== 'community') {
       return Response.json({ error: '커뮤니티 사이트가 아닙니다.' }, { status: 400 });
     }
 
     const session = await verifySession({
-      siteId: rhizome.data.id,
+      siteId: rhizomeData.id,
     });
 
-    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
+    if (rhizomeData.visibility_type !== 'public' || rhizomeData.is_shutdown !== false) {
       if (session.case !== 'staff') {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
@@ -70,7 +72,7 @@ export async function GET(request: Request) {
     const homeOrders = await supabaseAdmin
       .from('community_home_orders')
       .select('id, site_id, board_id, order, is_show')
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('is_show', true)
       .order('order', { ascending: true });
 
@@ -91,7 +93,7 @@ export async function GET(request: Request) {
     const boards = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('is_active', true)
       .in('id', boardIds)
       .neq('board_type', 'page');
@@ -110,7 +112,7 @@ export async function GET(request: Request) {
         .filter((board): board is BoardRow => Boolean(board))
         .map(async (board) => {
           const postList = await getPostList({
-            siteId: rhizome.data.id,
+            siteId: rhizomeData.id,
             siteKey: siteName,
             boardId: board.id,
             page: 1,
@@ -121,8 +123,6 @@ export async function GET(request: Request) {
             sort: 'latest',
             includePin: false,
           });
-
-          console.log('postList.contents: ', postList.contents);
 
           return {
             board,

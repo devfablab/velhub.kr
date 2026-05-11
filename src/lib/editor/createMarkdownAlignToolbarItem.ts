@@ -6,6 +6,53 @@ type MarkdownAlignPayload = {
   markdownAlign?: MarkdownAlignValue;
 };
 
+type ResolvedPositionLike = {
+  depth: number;
+  doc: {
+    resolve: (position: number) => ResolvedPositionLike;
+  };
+  start: (depth: number) => number;
+  end: (depth: number) => number;
+};
+
+type SelectionLike = {
+  $from: ResolvedPositionLike;
+  $to: ResolvedPositionLike;
+  from: number;
+};
+
+type MappingLike = {
+  map: (position: number) => number;
+};
+
+type TransactionLike = {
+  doc: {
+    content: {
+      size: number;
+    };
+  };
+  mapping: MappingLike;
+  insert: (position: number, node: unknown) => TransactionLike;
+  split: (position: number) => TransactionLike;
+  setSelection: (selection: unknown) => TransactionLike;
+};
+
+type TextSelectionLike = {
+  create: (doc: TransactionLike['doc'], from: number, to?: number) => unknown;
+};
+
+type SchemaLike = {
+  text: (value: string) => unknown;
+};
+
+type CommandContextLike = {
+  tr: TransactionLike;
+  selection: SelectionLike;
+  schema: SchemaLike;
+};
+
+type CommandDispatchLike = (tr: TransactionLike) => void;
+
 const MARKDOWN_ALIGN_OPTIONS: { value: MarkdownAlignValue; label: string }[] = [
   { value: 'left', label: '왼쪽 정렬' },
   { value: 'center', label: '가운데 정렬' },
@@ -75,7 +122,7 @@ function createMarkdownAlignToolbarItem(eventEmitter: PluginContext['eventEmitte
   };
 }
 
-function getRangeInfo(selection: any) {
+function getRangeInfo(selection: SelectionLike) {
   let $from = selection.$from;
   let $to = selection.$to;
   const { from } = selection;
@@ -92,7 +139,7 @@ function getRangeInfo(selection: any) {
   };
 }
 
-function createSafeTextSelection(TextSelection: any, tr: any, from: number, to = from) {
+function createSafeTextSelection(TextSelection: TextSelectionLike, tr: TransactionLike, from: number, to = from) {
   const contentSize = tr.doc.content.size;
   const size = contentSize > 0 ? contentSize - 1 : 1;
 
@@ -190,7 +237,11 @@ export function markdownAlignPlugin(context: PluginContext): PluginInfo {
 
   return {
     markdownCommands: {
-      markdownAlign: ({ markdownAlign }: MarkdownAlignPayload, { tr, selection, schema }, dispatch) => {
+      markdownAlign: (
+        { markdownAlign }: MarkdownAlignPayload,
+        { tr, selection, schema }: CommandContextLike,
+        dispatch?: CommandDispatchLike,
+      ) => {
         const align = normalizeAlignInfo(markdownAlign);
 
         if (!align) {

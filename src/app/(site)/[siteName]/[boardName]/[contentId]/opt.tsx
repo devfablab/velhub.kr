@@ -20,7 +20,6 @@ import CommentSection from '@/components/board/CommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
-import ContentViewer from '@/components/service/ContentViewer';
 
 type BoardInfo = {
   id: string;
