@@ -1,3 +1,4 @@
+import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import Opt from './opt';
 import UserInfo from '@/components/service/community/UserInfo';
@@ -8,6 +9,7 @@ export default function Page() {
     <main>
       <div className="container">
         <aside>
+          <SiteInfo />
           <TableList />
         </aside>
         <Opt />
