@@ -172,7 +172,7 @@ export default function UserInfo() {
 
   if (errorMessage) {
     return (
-      <div className={`${styles['user-info']} paper`}>
+      <div className={`${styles['user-status']} paper`}>
         <p>{errorMessage}</p>
       </div>
     );
@@ -184,31 +184,36 @@ export default function UserInfo() {
 
   if (status === 'guest') {
     return (
-      <div className={`${styles['user-info']} paper`}>
-        <Anchor href="/auth/sign-in">로그인하러 가기</Anchor>
+      <div className={`${styles['user-status']} paper`}>
+        <Anchor href={`/${siteName}/join`} className="button">
+          로그인하러 가기
+        </Anchor>
       </div>
     );
   }
 
   if (status === 'not_joined') {
     return (
-      <div className={`${styles['user-info']} paper`}>
-        <Anchor href={`/${siteName}/join`}>가입하러 가기</Anchor>
+      <div className={`${styles['user-status']} paper`}>
+        <Anchor href={`/${siteName}/join`} className="button">
+          가입하러 가기
+        </Anchor>
       </div>
     );
   }
 
   if (status === 'pending') {
     return (
-      <div className={`${styles['user-info']} paper`}>
-        <p>가입 승인 대기중</p>
+      <div className={`${styles['user-status']} paper`}>
+        <p>가입 승인 대기중입니다.</p>
+        <p>조금만 기다려주세요! 😭</p>
       </div>
     );
   }
 
   if (status === 'blocked') {
     return (
-      <div className={`${styles['user-info']} paper`}>
+      <div className={`${styles['user-status']} paper`}>
         <p>차단된 멤버입니다.</p>
         <p>사유: {blockReason}</p>
       </div>
