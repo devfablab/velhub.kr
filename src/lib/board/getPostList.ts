@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 
 type SessionCase = 'guest' | 'member' | 'staff';
+type PostListSort = 'latest' | 'post_count';
 
 type GetPostListOptions = {
   siteId: string;
@@ -14,6 +15,8 @@ type GetPostListOptions = {
   sessionCase: SessionCase;
   authUserId: string | null;
   keyword?: string | null;
+  sort?: PostListSort;
+  includePin?: boolean;
 };
 
 type PostImage = {
@@ -235,16 +238,19 @@ export async function getPostList({
   sessionCase,
   authUserId,
   keyword = null,
+  sort = 'latest',
+  includePin = true,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
   const from = (page - 1) * size;
   const to = from + size - 1;
   const searchKeyword = normalizeText(keyword);
+  const shouldUsePinnedPosts = filter === 'all' && sort === 'latest' && includePin;
 
   let pinnedPosts: RawPostRow[] = [];
 
-  if (filter === 'all') {
+  if (shouldUsePinnedPosts) {
     let pinnedQuery = supabaseAdmin
       .from('posts')
       .select(POST_SELECT)
@@ -271,11 +277,7 @@ export async function getPostList({
     pinnedPosts = (pinnedResult.data ?? []) as RawPostRow[];
   }
 
-  let postsQuery = supabaseAdmin
-    .from('posts')
-    .select(POST_SELECT, { count: 'exact' })
-    .eq('site_id', siteId)
-    .order('idx', { ascending: false });
+  let postsQuery = supabaseAdmin.from('posts').select(POST_SELECT, { count: 'exact' }).eq('site_id', siteId);
 
   if (boardId) {
     postsQuery = postsQuery.eq('board_id', boardId);
@@ -284,7 +286,9 @@ export async function getPostList({
   if (filter === 'deleted') {
     postsQuery = postsQuery.eq('is_closed', true).eq('published_status', 'published');
   } else {
-    postsQuery = postsQuery.eq('is_pin', false);
+    if (shouldUsePinnedPosts || !includePin) {
+      postsQuery = postsQuery.eq('is_pin', false);
+    }
 
     if (!isStaff) {
       postsQuery = postsQuery.eq('is_closed', false);
@@ -301,6 +305,14 @@ export async function getPostList({
 
   if (searchKeyword) {
     postsQuery = applySearchFilter(postsQuery, searchKeyword);
+  }
+
+  if (sort === 'post_count') {
+    postsQuery = postsQuery.order('post_count', { ascending: false, nullsFirst: false }).order('created_at', {
+      ascending: false,
+    });
+  } else {
+    postsQuery = postsQuery.order('idx', { ascending: false });
   }
 
   postsQuery = postsQuery.range(from, to);

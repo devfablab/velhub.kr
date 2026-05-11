@@ -3,8 +3,6 @@ import { Box, Container } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog from './blog';
 import Community from './community';
-import SiteInfo from '@/components/service/community/SiteInfo';
-import UserInfo from '@/components/service/community/UserInfo';
 
 type RouteContext = {
   params: Promise<{
@@ -80,21 +78,7 @@ export default async function Page(context: RouteContext) {
       notFound();
     }
 
-    return (
-      <main>
-        <div className="container">
-          <aside>
-            <SiteInfo />
-          </aside>
-          <div className="content">
-            <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />
-          </div>
-          <aside>
-            <UserInfo />
-          </aside>
-        </div>
-      </main>
-    );
+    return <Community sitesInfo={sitesInfo} communityInfo={communityInfo.data} />;
   }
 
   notFound();

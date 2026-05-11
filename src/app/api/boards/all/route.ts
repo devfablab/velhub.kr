@@ -13,6 +13,26 @@ function parsePositiveInt(value: string | null, fallbackValue: number) {
   return Math.floor(parsedValue);
 }
 
+function normalizeSort(value: string | null) {
+  const sort = normalizeText(value).toLowerCase();
+
+  if (sort === 'post_count') {
+    return 'post_count';
+  }
+
+  return 'latest';
+}
+
+function parseIncludePin(value: string | null) {
+  const normalizedValue = normalizeText(value).toLowerCase();
+
+  if (normalizedValue === 'false') {
+    return false;
+  }
+
+  return true;
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -21,6 +41,8 @@ export async function GET(request: Request) {
     const size = parsePositiveInt(requestUrl.searchParams.get('size'), 10);
     const filter = normalizeText(requestUrl.searchParams.get('filter')).toLowerCase() === 'deleted' ? 'deleted' : 'all';
     const keyword = normalizeText(requestUrl.searchParams.get('keyword'));
+    const sort = normalizeSort(requestUrl.searchParams.get('sort'));
+    const includePin = parseIncludePin(requestUrl.searchParams.get('includePin'));
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -61,6 +83,8 @@ export async function GET(request: Request) {
       sessionCase: postListSessionCase,
       authUserId: session.authUserId ?? null,
       keyword,
+      sort,
+      includePin,
     });
 
     return Response.json({
@@ -71,6 +95,8 @@ export async function GET(request: Request) {
       totalPage: result.totalPage,
       filter,
       keyword,
+      sort,
+      includePin,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
