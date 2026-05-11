@@ -6,8 +6,13 @@ import { normalizeText } from '@/lib/utils';
 type RequestBody = {
   siteName: string | null;
   teamId: string | null;
-  isBlock: boolean | null;
+  isBlock?: boolean | null;
+  role?: 'manager' | 'member' | null;
 };
+
+function isChangeableRole(value: string): value is 'manager' | 'member' {
+  return value === 'manager' || value === 'member';
+}
 
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -130,6 +135,7 @@ export async function PATCH(request: Request) {
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const teamId = normalizeText(requestBody.teamId);
     const isBlock = requestBody.isBlock;
+    const role = normalizeText(requestBody.role);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -137,10 +143,6 @@ export async function PATCH(request: Request) {
 
     if (!teamId) {
       return Response.json({ error: 'teamId가 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (typeof isBlock !== 'boolean') {
-      return Response.json({ error: '차단 여부 값이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const access = await checkAccess(siteName);
@@ -151,7 +153,7 @@ export async function PATCH(request: Request) {
 
     const team = await access.supabaseAdmin
       .from('rhizome_stigmas')
-      .select('id, user_id, is_block, block_count, role')
+      .select('id, user_id, is_block, blocked_at, block_count, role')
       .eq('id', teamId)
       .eq('site_id', access.siteId)
       .maybeSingle();
@@ -161,7 +163,44 @@ export async function PATCH(request: Request) {
     }
 
     if (team.data.user_id === access.session.stigmaId) {
-      return Response.json({ error: '본인 차단은 불가능합니다.' }, { status: 403 });
+      return Response.json({ error: '본인 정보는 변경할 수 없습니다.' }, { status: 403 });
+    }
+
+    if (role) {
+      if (!isChangeableRole(role)) {
+        return Response.json({ error: '역할 값이 올바르지 않습니다.' }, { status: 400 });
+      }
+
+      if (team.data.role === 'owner') {
+        return Response.json({ error: '운영자 역할은 변경할 수 없습니다.' }, { status: 403 });
+      }
+
+      if (team.data.role === role) {
+        return Response.json({ error: '이미 같은 역할입니다.' }, { status: 400 });
+      }
+
+      const updateTeam = await access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .update({
+          role,
+        })
+        .eq('id', teamId)
+        .eq('site_id', access.siteId)
+        .select('id, role, is_block, blocked_at, block_count')
+        .maybeSingle();
+
+      if (updateTeam.error || !updateTeam.data) {
+        return Response.json({ error: '역할 변경에 실패했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        team: updateTeam.data,
+      });
+    }
+
+    if (typeof isBlock !== 'boolean') {
+      return Response.json({ error: '차단 여부 값이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const nextBlockCount =
@@ -178,7 +217,7 @@ export async function PATCH(request: Request) {
       })
       .eq('id', teamId)
       .eq('site_id', access.siteId)
-      .select('id, is_block, blocked_at, block_count')
+      .select('id, role, is_block, blocked_at, block_count')
       .maybeSingle();
 
     if (updateTeam.error || !updateTeam.data) {
@@ -191,9 +230,9 @@ export async function PATCH(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '차단 상태 변경에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '팀원 정보 변경에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '차단 상태 변경에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '팀원 정보 변경에 실패했습니다.' }, { status: 500 });
   }
 }

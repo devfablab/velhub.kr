@@ -28,12 +28,14 @@ import {
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 
+type TeamRole = 'owner' | 'manager' | 'member';
+
 type TeamRow = {
   id: string;
   email: string;
   name: string;
   approval_at: string | null;
-  role: string;
+  role: TeamRole;
   is_block: boolean;
   blocked_at: string | null;
   block_count: number;
@@ -63,6 +65,7 @@ type PatchResponse = {
   ok: boolean;
   team: {
     id: string;
+    role: TeamRole;
     is_block: boolean;
     blocked_at: string | null;
     block_count: number;
@@ -115,6 +118,18 @@ function getInviteStatusLabel(status: string) {
   return status;
 }
 
+function getNextRole(role: TeamRole) {
+  if (role === 'manager') {
+    return 'member';
+  }
+
+  if (role === 'member') {
+    return 'manager';
+  }
+
+  return null;
+}
+
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -123,11 +138,14 @@ export default function Opt() {
   const [selectedTeam, setSelectedTeam] = useState<TeamRow | null>(null);
   const [targetTeam, setTargetTeam] = useState<TeamRow | null>(null);
   const [nextBlockState, setNextBlockState] = useState<boolean | null>(null);
+  const [targetRoleTeam, setTargetRoleTeam] = useState<TeamRow | null>(null);
+  const [nextRole, setNextRole] = useState<'manager' | 'member' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRoleSubmitting, setIsRoleSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -136,7 +154,6 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
 
   async function loadTeams() {
     const response = await fetch(`/api/manage/team/members?siteName=${siteName}`, {
@@ -231,6 +248,26 @@ export default function Opt() {
     setNextBlockState(null);
   }
 
+  function handleOpenRoleDialog(team: TeamRow) {
+    const role = getNextRole(team.role);
+
+    if (!role) {
+      return;
+    }
+
+    setTargetRoleTeam(team);
+    setNextRole(role);
+  }
+
+  function handleCloseRoleDialog() {
+    if (isRoleSubmitting) {
+      return;
+    }
+
+    setTargetRoleTeam(null);
+    setNextRole(null);
+  }
+
   function handleOpenCancelDialog(invite: InviteRow) {
     setTargetInvite(invite);
   }
@@ -263,6 +300,77 @@ export default function Opt() {
 
   function handleCloseInviteListDialog() {
     setIsInviteListDialogOpen(false);
+  }
+
+  async function handleSubmitRole() {
+    if (!targetRoleTeam || !nextRole) {
+      return;
+    }
+
+    try {
+      setIsRoleSubmitting(true);
+      setErrorMessage('');
+
+      const response = await fetch('/api/manage/team/members', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteName,
+          teamId: targetRoleTeam.id,
+          role: nextRole,
+        }),
+      });
+
+      const result = (await response.json()) as PatchResponse | { error?: string };
+
+      if (!response.ok) {
+        throw new Error('error' in result ? result.error || '역할 변경에 실패했습니다.' : '역할 변경에 실패했습니다.');
+      }
+
+      if (!('team' in result) || !result.team) {
+        throw new Error('역할 변경에 실패했습니다.');
+      }
+
+      setTeams((previousTeams) =>
+        previousTeams.map((team) =>
+          team.id === result.team.id
+            ? {
+                ...team,
+                role: result.team.role,
+                is_block: result.team.is_block,
+                blocked_at: result.team.blocked_at,
+                block_count: Number(result.team.block_count ?? 0),
+              }
+            : team,
+        ),
+      );
+
+      setSelectedTeam((previousSelectedTeam) =>
+        previousSelectedTeam && previousSelectedTeam.id === result.team.id
+          ? {
+              ...previousSelectedTeam,
+              role: result.team.role,
+              is_block: result.team.is_block,
+              blocked_at: result.team.blocked_at,
+              block_count: Number(result.team.block_count ?? 0),
+            }
+          : previousSelectedTeam,
+      );
+
+      setTargetRoleTeam(null);
+      setNextRole(null);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '역할 변경에 실패했습니다.');
+      } else {
+        setErrorMessage('역할 변경에 실패했습니다.');
+      }
+    } finally {
+      setIsRoleSubmitting(false);
+    }
   }
 
   async function handleSubmitBlock() {
@@ -304,6 +412,7 @@ export default function Opt() {
           team.id === result.team.id
             ? {
                 ...team,
+                role: result.team.role,
                 is_block: result.team.is_block,
                 blocked_at: result.team.blocked_at,
                 block_count: Number(result.team.block_count ?? 0),
@@ -316,6 +425,7 @@ export default function Opt() {
         previousSelectedTeam && previousSelectedTeam.id === result.team.id
           ? {
               ...previousSelectedTeam,
+              role: result.team.role,
               is_block: result.team.is_block,
               blocked_at: result.team.blocked_at,
               block_count: Number(result.team.block_count ?? 0),
@@ -485,15 +595,18 @@ export default function Opt() {
                 <TableCell onClick={(event) => event.stopPropagation()}>
                   {!team.is_self ? (
                     <Stack direction="row" spacing={1}>
-                      <Button
-                        type="button"
-                        size="small"
-                        variant="outlined"
-                        sx={{ whiteSpace: 'nowrap' }}
-                        color="secondary"
-                      >
-                        역할 변경
-                      </Button>
+                      {team.role !== 'owner' ? (
+                        <Button
+                          type="button"
+                          size="small"
+                          variant="outlined"
+                          sx={{ whiteSpace: 'nowrap' }}
+                          color="secondary"
+                          onClick={() => handleOpenRoleDialog(team)}
+                        >
+                          역할 변경
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         variant="outlined"
@@ -561,6 +674,21 @@ export default function Opt() {
         <DialogActions>
           <Button type="button" onClick={handleCloseDetail} autoFocus>
             닫기
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(targetRoleTeam)} onClose={handleCloseRoleDialog} fullWidth maxWidth="xs">
+        <DialogTitle>역할 변경</DialogTitle>
+        <DialogContent>
+          <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" onClick={handleCloseRoleDialog} disabled={isRoleSubmitting} autoFocus>
+            취소
+          </Button>
+          <Button type="button" variant="contained" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
+            역할 변경
           </Button>
         </DialogActions>
       </Dialog>
