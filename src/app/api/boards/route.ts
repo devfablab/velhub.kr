@@ -89,12 +89,11 @@ export async function GET(request: Request) {
     );
 
     const boardRows = (boards.data ?? []) as BoardRow[];
-    console.log('boardRows: ', boardRows);
+
     const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;
 
     const writeBoards = boardRows.filter((board) => board.is_active === true && board.board_type !== 'page');
 
-    console.log('writeBoards: ', writeBoards);
     return Response.json({
       boards: boardRows,
       writeBoards,

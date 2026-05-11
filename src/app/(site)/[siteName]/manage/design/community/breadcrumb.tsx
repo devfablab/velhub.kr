@@ -19,7 +19,10 @@ export default function CommunityDesignBreadcrumb() {
   const siteName = normalizeText(params.siteName);
 
   const crumbs: Crumb[] = useMemo(
-    () => [{ href: `/${siteName}/manage/design/community/menu`, label: '메뉴' }],
+    () => [
+      { href: `/${siteName}/manage/design/community/home`, label: '홈 설정' },
+      { href: `/${siteName}/manage/design/community/menu`, label: '메뉴 설정' },
+    ],
     [siteName],
   );
 

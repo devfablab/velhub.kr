@@ -536,7 +536,12 @@
     overflow: hidden
     border-radius: 12px
     gap: 1px
-    background: #000
+
+    html[data-theme="yellow-light"] &
+      background-color: rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      background-color: rgba(ds.$rgb-tertiary, .5)
 
     &:has(.content-thumbnail-image:only-child)
       display: block
@@ -665,6 +670,171 @@
       max-width: 100%
       height: auto
       object-fit: contain
+
+  &.home-content
+    display: flex
+    flex-direction: column
+    gap: ds.rem(17)
+
+    .headline
+      display: flex
+      align-items: center
+      justify-content: space-between
+
+      h2
+        font-size: ds.rem(18)!important
+
+      a
+        display: inline-flex
+        align-items: center
+
+        html[data-theme="yellow-light"] &
+          color: rgba(ds.$rgb-secondary, .5)
+
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-light, .5)
+
+        &:hover, &:focus-visible
+          span
+            text-decoration: underline
+
+        span
+          @include ds.fw(pre, 500)
+          font-size: ds.rem(14)
+
+        svg
+          width: ds.rem(18)
+          height: ds.rem(18)
+
+    .basic-board
+      .basic
+        display: grid
+        grid-template-columns: repeat(2, 1fr)
+        gap: ds.rem(3) 0
+        margin: ds.rem(7) 0 ds.rem(12)
+
+        & > li
+          display: flex
+          flex-direction: row
+          align-items: center
+          height: ds.rem(21)
+          gap: ds.rem(7)
+
+          &::before
+            content: ''
+            border-radius: 50%
+            width: ds.rem(5)
+            height: ds.rem(5)
+            margin-top: ds.rem(2)
+            margin-left: ds.rem(5)
+            display: inline-block
+            flex: none
+
+            html[data-theme="yellow-light"] &
+              background-color: rgba(ds.$rgb-secondary, .5)
+
+            html[data-theme="yellow-dark"] &
+              background-color: rgba(ds.$rgb-light, .5)
+
+          a
+            @include ds.ellipsis
+            display: block
+            overflow: hidden
+            font-size: ds.rem(14)
+            @include ds.fw(pre, 500)
+            letter-spacing: -.05em
+            min-width: 0
+            height: ds.rem(21)
+
+            &:hover, &:focus-visible
+              text-decoration: underline
+
+            html[data-theme="yellow-light"] &
+              color: rgba(ds.$rgb-secondary, .7)
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$rgb-light, .7)
+
+          em
+            flex: none
+            display: flex
+            display: inline-block
+            vertical-align: text-top
+            @include ds.fw(neo, 400)
+            font-style: normal
+            font-size: ds.rem(10)
+            opacity: .7
+
+    .gallery-board
+      .content-images
+        a
+          position: relative
+
+          strong
+            position: absolute
+            right: ds.rem(7)
+            bottom: ds.rem(7)
+            background-color: ds.$hex-accent
+            display: flex
+            align-items: center
+            border-radius: ds.rem(3)
+            padding: 0 ds.rem(7)
+            height: ds.rem(20)
+            font-size: ds.rem(12)
+            color: ds.$hex-white
+
+    .youtube-board
+      .youtube
+        display: grid
+        grid-template-columns: repeat(3, 1fr)
+        gap: ds.rem(17)
+
+        a
+          display: flex
+          flex-direction: column
+          gap: ds.rem(7)
+
+          &:hover, &:focus-visible
+            strong
+              text-decoration: underline
+
+          img
+            border-radius: ds.rem(7)
+            aspect-ratio: 1920 / 1080
+            width: 100%
+            height: auto
+
+          strong
+            @include ds.line-abbr(3, 45, 1.25)
+            @include ds.fw(neo, 600)
+            font-size: ds.rem(12)
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-secondary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-light
+
+    .feed-board
+      .content-simple
+        font-size: ds.rem(14)
+        line-height: 1.37
+        letter-spacing: -.05em
+
+      .button
+        display: flex
+        justify-content: flex-end
+
+        a
+          display: inline-flex
+          align-items: center
+          color: ds.$hex-action
+          @include ds.fw(pre, 600)
+          font-size: ds.rem(12)
+
+          svg
+            width: ds.rem(16)
+            height: ds.rem(16)
 
 .thumbnail-dialog
   .thumbnail-dialog-content
@@ -1145,7 +1315,7 @@
         padding: 0 ds.rem(7)
         height: ds.rem(20)
         font-size: ds.rem(12)
-        color: ds.$hex-primary
+        color: ds.$hex-white
 
     .info
       display: flex
