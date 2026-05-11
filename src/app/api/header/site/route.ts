@@ -44,10 +44,6 @@ function decryptValue(value: string | null | undefined) {
   }
 }
 
-function isThemeMode(value: string | null | undefined): value is ThemeMode {
-  return value === 'light' || value === 'system' || value === 'dark';
-}
-
 function isSiteType(value: string | null | undefined): value is SiteType {
   return value === 'blog' || value === 'community';
 }
@@ -88,17 +84,19 @@ export async function GET(request: Request) {
     }
 
     const site = siteResult.data as SiteRow;
+    const siteType = isSiteType(site.site_type) ? site.site_type : null;
+
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {
       return Response.json({
         siteName: site.site_key,
-        siteType: isSiteType(site.site_type) ? site.site_type : null,
+        siteType,
+        themeType: site.theme_type,
         isLoggedIn: false,
         email: null,
         userName: null,
         avatar: null,
-        themeMode: null,
         globalRole: null,
         siteRole: null,
         sessionCase: session.case ?? null,
@@ -145,16 +143,6 @@ export async function GET(request: Request) {
       return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const profileResult = await supabaseAdmin
-      .from('profiles')
-      .select('theme_mode')
-      .eq('user_id', session.authUserId)
-      .maybeSingle();
-
-    if (profileResult.error) {
-      return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
     let membership: MembershipRow | null = null;
 
     if ((session.case === 'staff' || session.case === 'member') && session.rhizomeStigmaId) {
@@ -175,12 +163,12 @@ export async function GET(request: Request) {
 
     return Response.json({
       siteName: site.site_key,
-      siteType: isSiteType(site.site_type) ? site.site_type : null,
+      siteType,
+      themeType: site.theme_type,
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
       avatar: account.avatar ?? null,
-      themeType: siteResult.data.theme_type,
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole: normalizeText(membership?.role).toLowerCase() || null,
       sessionCase: session.case ?? null,

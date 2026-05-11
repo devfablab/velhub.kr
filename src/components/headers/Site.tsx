@@ -68,7 +68,6 @@ type UserProfile = {
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
-const THEME_BASE_KEY = 'yellow';
 
 function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
@@ -101,7 +100,7 @@ function getResolvedThemeMode(themeMode: ThemeMode) {
 }
 
 function applyThemeMode(themeMode: ThemeMode) {
-  document.documentElement.setAttribute('data-theme', `${THEME_BASE_KEY}-${getResolvedThemeMode(themeMode)}`);
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
 function applyColorSet(themeType: string) {
@@ -135,10 +134,7 @@ export default function HeaderSite() {
   });
 
   useEffect(() => {
-    const storedThemeMode = getStoredThemeMode();
-
-    setThemeMode(storedThemeMode);
-    applyThemeMode(storedThemeMode);
+    setThemeMode(getStoredThemeMode());
     setIsMounted(true);
   }, []);
 
@@ -190,8 +186,8 @@ export default function HeaderSite() {
         return;
       }
 
-      setSiteType(result.siteType);
       applyColorSet(result.themeType);
+      setSiteType(result.siteType);
 
       setUserProfile({
         name: result.userName,
@@ -291,6 +287,7 @@ export default function HeaderSite() {
       position="static"
       variant="outlined"
       sx={{
+        bgcolor: 'background.paper',
         color: 'text.primary',
         borderBottom: 1,
         borderColor: 'divider',
