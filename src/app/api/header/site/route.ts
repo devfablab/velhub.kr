@@ -28,6 +28,17 @@ type CheckinRow = {
   checkin_count: number | null;
 };
 
+type BlogFontRow = {
+  subject_font_family: string | null;
+  subject_letter_spacing: number | null;
+  subject_line_height: number | null;
+  description_font_family: string | null;
+  description_letter_spacing: number | null;
+  description_line_height: number | null;
+  description_font_size: number | null;
+  description_margin: number | null;
+};
+
 const CHECKIN_INTERVAL_MS = 30 * 60 * 1000;
 
 function decryptValue(value: string | null | undefined) {
@@ -62,6 +73,39 @@ function shouldIncreaseCheckin(lastCheckinAt: string | null | undefined) {
   return Date.now() - lastCheckinTime >= CHECKIN_INTERVAL_MS;
 }
 
+async function getBlogFontSettings(siteId: string, siteType: SiteType | null) {
+  if (siteType !== 'blog') {
+    return null;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const blogResult = await supabaseAdmin
+    .from('blogs')
+    .select(
+      'subject_font_family, subject_letter_spacing, subject_line_height, description_font_family, description_letter_spacing, description_line_height, description_font_size, description_margin',
+    )
+    .eq('site_id', siteId)
+    .maybeSingle();
+
+  if (blogResult.error || !blogResult.data) {
+    return null;
+  }
+
+  const blog = blogResult.data as BlogFontRow;
+
+  return {
+    subjectFontFamily: blog.subject_font_family,
+    subjectLetterSpacing: blog.subject_letter_spacing,
+    subjectLineHeight: blog.subject_line_height,
+    descriptionFontFamily: blog.description_font_family,
+    descriptionLetterSpacing: blog.description_letter_spacing,
+    descriptionLineHeight: blog.description_line_height,
+    descriptionFontSize: blog.description_font_size,
+    descriptionMargin: blog.description_margin,
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -85,6 +129,7 @@ export async function GET(request: Request) {
 
     const site = siteResult.data as SiteRow;
     const siteType = isSiteType(site.site_type) ? site.site_type : null;
+    const blogFontSettings = await getBlogFontSettings(site.id, siteType);
 
     const session = await verifySession({ siteId: site.id });
 
@@ -93,6 +138,7 @@ export async function GET(request: Request) {
         siteName: site.site_key,
         siteType,
         themeType: site.theme_type,
+        blogFontSettings,
         isLoggedIn: false,
         email: null,
         userName: null,
@@ -165,6 +211,7 @@ export async function GET(request: Request) {
       siteName: site.site_key,
       siteType,
       themeType: site.theme_type,
+      blogFontSettings,
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),

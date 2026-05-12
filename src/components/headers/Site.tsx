@@ -49,6 +49,7 @@ type HeaderResponse = {
   siteName: string | null;
   siteType: SiteType | null;
   themeType: string;
+  blogFontSettings: BlogFontSettings | null;
   isLoggedIn: boolean;
   email: string | null;
   userName: string | null;
@@ -66,6 +67,101 @@ type UserProfile = {
   globalRole: string | null;
   siteRole: string | null;
 };
+
+type BlogFontSettings = {
+  subjectFontFamily: string | null;
+  subjectLetterSpacing: number | null;
+  subjectLineHeight: number | null;
+  descriptionFontFamily: string | null;
+  descriptionLetterSpacing: number | null;
+  descriptionLineHeight: number | null;
+  descriptionFontSize: number | null;
+  descriptionMargin: number | null;
+};
+
+function getBlogFontFamily(value: string | null) {
+  if (value === 'neo') {
+    return 'var(--neo)';
+  }
+
+  if (value === 'pre') {
+    return 'var(--pre)';
+  }
+
+  if (value === 'sans') {
+    return 'var(--sans)';
+  }
+
+  if (value === 'serif') {
+    return 'var(--serif)';
+  }
+
+  if (value === 'ham') {
+    return 'var(--ham)';
+  }
+
+  return '';
+}
+
+function setCssVariable(name: string, value: string | number | null) {
+  if (value === null || value === '') {
+    document.documentElement.style.removeProperty(name);
+    return;
+  }
+
+  document.documentElement.style.setProperty(name, String(value));
+}
+
+function clearBlogFontSettings() {
+  document.documentElement.removeAttribute('data-site-type');
+  document.documentElement.style.removeProperty('--blog-subject-font-family');
+  document.documentElement.style.removeProperty('--blog-subject-letter-spacing');
+  document.documentElement.style.removeProperty('--blog-subject-line-height');
+  document.documentElement.style.removeProperty('--blog-description-font-family');
+  document.documentElement.style.removeProperty('--blog-description-letter-spacing');
+  document.documentElement.style.removeProperty('--blog-description-line-height');
+  document.documentElement.style.removeProperty('--blog-description-font-size');
+  document.documentElement.style.removeProperty('--blog-description-margin');
+}
+
+function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: BlogFontSettings | null) {
+  if (siteType !== 'blog') {
+    clearBlogFontSettings();
+    return;
+  }
+
+  document.documentElement.setAttribute('data-site-type', 'blog');
+
+  setCssVariable('--blog-subject-font-family', getBlogFontFamily(blogFontSettings?.subjectFontFamily ?? null));
+  setCssVariable(
+    '--blog-subject-letter-spacing',
+    blogFontSettings?.subjectLetterSpacing !== null && blogFontSettings?.subjectLetterSpacing !== undefined
+      ? `${blogFontSettings.subjectLetterSpacing}em`
+      : null,
+  );
+  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? null);
+
+  setCssVariable('--blog-description-font-family', getBlogFontFamily(blogFontSettings?.descriptionFontFamily ?? null));
+  setCssVariable(
+    '--blog-description-letter-spacing',
+    blogFontSettings?.descriptionLetterSpacing !== null && blogFontSettings?.descriptionLetterSpacing !== undefined
+      ? `${blogFontSettings.descriptionLetterSpacing}em`
+      : null,
+  );
+  setCssVariable('--blog-description-line-height', blogFontSettings?.descriptionLineHeight ?? null);
+  setCssVariable(
+    '--blog-description-font-size',
+    blogFontSettings?.descriptionFontSize !== null && blogFontSettings?.descriptionFontSize !== undefined
+      ? `${blogFontSettings.descriptionFontSize}px`
+      : null,
+  );
+  setCssVariable(
+    '--blog-description-margin',
+    blogFontSettings?.descriptionMargin !== null && blogFontSettings?.descriptionMargin !== undefined
+      ? `${blogFontSettings.descriptionMargin}px`
+      : null,
+  );
+}
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
@@ -174,6 +270,7 @@ export default function HeaderSite() {
       const result = (await response.json()) as HeaderResponse | { error?: string };
 
       if (!response.ok || !('isLoggedIn' in result)) {
+        clearBlogFontSettings();
         setSiteType(null);
         setUserProfile({
           name: null,
@@ -187,6 +284,7 @@ export default function HeaderSite() {
       }
 
       applyColorSet(result.themeType);
+      applyBlogFontSettings(result.siteType, result.blogFontSettings);
       setSiteType(result.siteType);
 
       setUserProfile({
