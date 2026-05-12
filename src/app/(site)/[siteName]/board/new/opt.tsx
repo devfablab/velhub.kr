@@ -40,6 +40,10 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
 import styles from '@/app/board.module.sass';
 
+type Props = {
+  isCommunity: boolean;
+};
+
 type BoardItem = {
   id: string;
   board_key: string;
@@ -443,7 +447,7 @@ function buildPollEndsAt(poll: PollState) {
   throw new Error('투표 종료 방식을 선택해주세요.');
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -1624,6 +1628,14 @@ export default function Opt() {
           <span>글쓰기</span>
         </h2>
         <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
+      </div>
+    );
+  }
+
+  if (!isCommunity) {
+    return (
+      <div className={`${styles.content} content`}>
+        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }

@@ -133,7 +133,11 @@ export default function SiteInfo() {
   }, [siteName]);
 
   if (!siteInfo) {
-    return errorMessage ? <p>{errorMessage}</p> : null;
+    return errorMessage ? (
+      <div className={`${styles['site-info']} paper`}>
+        <p>{errorMessage}</p>
+      </div>
+    ) : null;
   }
 
   return (

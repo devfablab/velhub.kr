@@ -19,9 +19,12 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import CommentSection from '@/components/board/CommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
-import styles from '@/app/board.module.sass';
-import ContentHtmlRenderer from '@/components/service/EmbeddedContentHtml';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import styles from '@/app/board.module.sass';
+
+type Props = {
+  isCommunity: boolean;
+};
 
 type BoardInfo = {
   id: string;
@@ -236,7 +239,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -482,6 +485,14 @@ export default function Opt() {
           <span>글 보기</span>
         </h2>
         <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
+      </div>
+    );
+  }
+
+  if (!isCommunity) {
+    return (
+      <div className={`${styles.content} content`}>
+        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }

@@ -15,16 +15,21 @@ import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
 
+type Props = {
+  isCommunity: boolean;
+};
+
 type BoardItem = {
   id: string;
   board_key: string;
   board_label: string;
-  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
+  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page' | 'blog';
   post_type?: 'none' | 'prefix' | 'series' | null;
   is_active?: boolean;
 };
@@ -59,8 +64,8 @@ type PostItem = {
   search_content_matched: boolean;
   search_content: string;
   thumbnail_image_url: string | null;
-  thumbnail_width: number | null;
-  thumbnail_height: number | null;
+  thumbnail_width: number;
+  thumbnail_height: number;
   images: PostImage[] | null;
   youtube_id: string | null;
 };
@@ -81,7 +86,8 @@ type BoardListResponse = {
 
 type BoardViewType = 'default' | 'list';
 
-const PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 20;
+const BOARD_B_PAGE_SIZE = 9;
 const PAGER_SIZE = 10;
 
 const YOUTUBE_THUMBNAIL_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default'];
@@ -230,7 +236,7 @@ function YoutubeThumbnailImage({ content }: { content: PostItem }) {
   );
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -256,10 +262,12 @@ export default function Opt() {
     try {
       setErrorMessage('');
 
+      const nextSize = boardName === 'b' ? BOARD_B_PAGE_SIZE : DEFAULT_PAGE_SIZE;
+
       const queryParams = new URLSearchParams({
         siteName,
         page: String(nextPage),
-        size: String(PAGE_SIZE),
+        size: String(nextSize),
       });
 
       if (nextKeyword) {
@@ -369,18 +377,26 @@ export default function Opt() {
   }
 
   return (
-    <div className={`${styles.content} content`}>
-      <h2>
-        {isSearchMode ? <ManageSearchIcon /> : board ? renderBoardTypeIcon(board.board_type) : <ListAltOutlinedIcon />}
-        {isSearchMode ? (
-          <span>
-            <strong>{searchKeyword}</strong>
-            {` 검색 결과 (${totalCount}건)`}
-          </span>
-        ) : board ? (
-          <span>{board.board_label}</span>
-        ) : null}
-      </h2>
+    <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
+      {isCommunity ? (
+        <h2>
+          {isSearchMode ? (
+            <ManageSearchIcon />
+          ) : board ? (
+            renderBoardTypeIcon(board.board_type)
+          ) : (
+            <ListAltOutlinedIcon />
+          )}
+          {isSearchMode ? (
+            <span>
+              <strong>{searchKeyword}</strong>
+              {` 검색 결과 (${totalCount}건)`}
+            </span>
+          ) : board ? (
+            <span>{board.board_label}</span>
+          ) : null}
+        </h2>
+      ) : null}
 
       <div className={styles['board-search-container']}>
         <form onSubmit={handleSearchSubmit} className="form">
@@ -402,6 +418,8 @@ export default function Opt() {
           </fieldset>
         </form>
       </div>
+
+      {!isCommunity && isSearchMode ? <p>{totalCount}개의 포스트를 찾았습니다.</p> : null}
 
       {!isSearchMode && board?.board_type === 'gallery' ? (
         <div className={styles['select-board-type']}>
@@ -675,6 +693,50 @@ export default function Opt() {
                   </Anchor>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      ) : board?.board_type === 'blog' ? (
+        <div className="paper">
+          <div className={styles['blog-items']}>
+            {contents.map((content) => (
+              <Anchor href={`/${siteName}/${boardName}/${content.slug}`} key={content.id}>
+                <div className={styles.thumbnail}>
+                  <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
+                  {content.thumbnail_image_url ? (
+                    <Image
+                      src={content.thumbnail_image_url}
+                      alt=""
+                      width={content.thumbnail_width}
+                      height={content.thumbnail_height}
+                    />
+                  ) : (
+                    <div className={styles.dummy}>
+                      <MenuBookRoundedIcon />
+                    </div>
+                  )}
+                </div>
+                <div className={styles.info}>
+                  <div className={styles.subject}>
+                    <strong>
+                      {content.series_label ? `[${content.series_label}] ` : null}
+                      {content.subject}
+                    </strong>
+                  </div>
+                  <div className={styles.author}>
+                    <cite>{content.author_name}</cite>
+                  </div>
+                  <div className={styles.tail}>
+                    <time>
+                      {formatTimeAgo(
+                        content.published_status === 'published' ? content.published_at : content.created_at,
+                      )}
+                    </time>
+                    {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
+                    <span>조회 {content.post_count}</span>
+                  </div>
+                </div>
+              </Anchor>
             ))}
           </div>
         </div>

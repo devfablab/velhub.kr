@@ -38,6 +38,11 @@
   flex-direction: row
   padding: ds.rem(17)
 
+  p
+    @include ds.fw(neo, 600)
+    font-size: ds.rem(14)
+    color: ds.$hex-warning
+
   .avatar
     width: ds.rem(58)
     height: ds.rem(58)
@@ -174,6 +179,7 @@
   gap: ds.rem(7)
 
   p
+    @include ds.fw(neo, 600)
     font-size: ds.rem(14)
     color: ds.$hex-warning
 

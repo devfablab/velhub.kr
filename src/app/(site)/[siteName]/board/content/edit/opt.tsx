@@ -40,6 +40,10 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
 import styles from '@/app/board.module.sass';
 
+type Props = {
+  isCommunity: boolean;
+};
+
 type BoardItem = {
   id: string;
   board_key: string;
@@ -522,7 +526,7 @@ function createPollStateFromPayload(payload: PollPayload | null | undefined) {
   return nextPoll;
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -1665,6 +1669,14 @@ export default function Opt() {
           <span>글 수정</span>
         </h2>
         <div className="paper paper-error">{errorMessage}</div>
+      </div>
+    );
+  }
+
+  if (!isCommunity) {
+    return (
+      <div className={`${styles.content} content`}>
+        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }

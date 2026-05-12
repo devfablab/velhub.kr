@@ -480,7 +480,9 @@ export default function EmbeddedContentHtml({
     setRenderedHtml('');
 
     const animationFrameId = window.requestAnimationFrame(() => {
-      const viewerContent = viewerWrapperReference.current?.querySelector('.toastui-editor-contents > div');
+      const viewerContents = viewerWrapperReference.current?.querySelector('.toastui-editor-contents');
+      const viewerContent =
+        markdownStatus === 'markdown_off' ? viewerContents?.querySelector(':scope > div') : viewerContents;
 
       setRenderedHtml(viewerContent?.innerHTML ?? '');
     });
@@ -488,7 +490,7 @@ export default function EmbeddedContentHtml({
     return () => {
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [viewerKey]);
+  }, [viewerKey, markdownStatus]);
 
   if (!viewerValue.trim()) {
     return null;

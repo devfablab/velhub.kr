@@ -14,6 +14,10 @@ import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/board.module.sass';
 
+type Props = {
+  isCommunity: boolean;
+};
+
 type PostItem = {
   id: string;
   idx: number;
@@ -103,7 +107,7 @@ function getPageNumbers(currentPage: number, totalPage: number) {
   return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -233,6 +237,14 @@ export default function Opt() {
           <span>최신글 보기</span>
         </h2>
         <div className="paper paper-error">{errorMessage}</div>
+      </div>
+    );
+  }
+
+  if (!isCommunity) {
+    return (
+      <div className={`${styles.content} content`}>
+        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }

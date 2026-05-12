@@ -21,11 +21,15 @@ import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 
+type Props = {
+  isCommunity: boolean;
+};
+
 type BoardInfo = {
   id: string;
   board_key: string;
   board_label: string;
-  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
+  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page' | 'blog';
   markdown_status: string;
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
@@ -234,7 +238,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const theme = useTheme();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -476,6 +480,7 @@ export default function Opt() {
 
   const canEdit = isAuthor || isStaff;
   const isBasicBoard = board.board_type === 'basic';
+  const isBlogBoard = board.board_type === 'blog';
   const isGalleryBoard = board.board_type === 'gallery';
   const isYoutubeBoard = board.board_type === 'youtube';
   const isFeedBoard = board.board_type === 'feed';
@@ -484,7 +489,7 @@ export default function Opt() {
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
 
   return (
-    <div className={`${styles.content} content`}>
+    <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
       <div className={styles['top-buttons']}>
         <Anchor href={`/${siteName}/${boardName}`} className="button">
           <ArrowBackIosRoundedIcon />
@@ -500,7 +505,7 @@ export default function Opt() {
           <header className={styles['content-header']}>
             <div className={styles['content-board-name']}>
               <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
-                <span>{board.board_label}</span>
+                {board.board_type === 'blog' ? <span>글 목록</span> : <span>{board.board_label}</span>}
                 <ArrowForwardIosRoundedIcon />
               </Anchor>
               {canEdit ? (
@@ -533,20 +538,24 @@ export default function Opt() {
               <div className={styles.info}>
                 <div className={styles.name}>
                   <cite>{content.author_name}</cite>
-                  {authorRoleLabel ? (
-                    <em>
-                      <span>{authorRoleLabel}</span>
-                      {content.author_manage_icon?.iconUrl ? (
-                        <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                  {isCommunity ? (
+                    <>
+                      {authorRoleLabel ? (
+                        <em>
+                          <span>{authorRoleLabel}</span>
+                          {content.author_manage_icon?.iconUrl ? (
+                            <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                          ) : null}
+                        </em>
+                      ) : content.author_level ? (
+                        <em>
+                          <span>{content.author_level.name}</span>
+                          {content.author_level.iconUrl ? (
+                            <img src={content.author_level.iconUrl} alt={content.author_level.name} />
+                          ) : null}
+                        </em>
                       ) : null}
-                    </em>
-                  ) : content.author_level ? (
-                    <em>
-                      <span>{content.author_level.name}</span>
-                      {content.author_level.iconUrl ? (
-                        <img src={content.author_level.iconUrl} alt={content.author_level.name} />
-                      ) : null}
-                    </em>
+                    </>
                   ) : null}
                 </div>
                 <div className={styles.datetime}>
@@ -726,7 +735,7 @@ export default function Opt() {
             </div>
           </div>
         ) : null}
-        {isBasicBoard ? (
+        {isBasicBoard || isBlogBoard ? (
           <div className={`${styles['board-container']} ${styles['basic-board']}`}>
             <div className="paper">
               {content.content_html ? (
