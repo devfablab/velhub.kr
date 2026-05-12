@@ -9,6 +9,7 @@ import {
   Button,
   Checkbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
   ListItemText,
   MenuItem,
@@ -16,6 +17,7 @@ import {
   Select,
   Stack,
   styled,
+  Switch,
   TextField,
   Typography,
   useMediaQuery,
@@ -28,9 +30,12 @@ import { normalizeText } from '@/lib/utils';
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+
 type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
+  commentProvider: CommentProvider;
 };
 
 type CreateResponse = {
@@ -212,6 +217,8 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
+  const [isComment, setIsComment] = useState(false);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -251,6 +258,8 @@ export default function Opt() {
 
         setHasBoard(statusResult.hasBoard);
         setBoardName(statusResult.boardName);
+        setCommentProvider(statusResult.commentProvider);
+        setIsComment(statusResult.commentProvider !== 'none');
 
         if (statusResult.hasBoard && statusResult.boardName) {
           const [categoryResponse, seriesResponse] = await Promise.all([
@@ -318,6 +327,10 @@ export default function Opt() {
     }
 
     fileInputReference.current?.click();
+  }
+
+  function handleIsCommentChange(event: InputChangeEvent) {
+    setIsComment(event.currentTarget.checked);
   }
 
   async function handleThumbnailFileChange(event: InputChangeEvent) {
@@ -531,6 +544,7 @@ export default function Opt() {
           thumbnailHeight,
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
+          isComment: commentProvider === 'none' ? false : isComment,
         }),
       });
 
@@ -681,6 +695,13 @@ export default function Opt() {
             onUploadImage={handleUploadEditorImage}
           />
         </Box>
+
+        {commentProvider !== 'none' ? (
+          <FormControlLabel
+            control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
+            label={isComment ? '댓글 열기' : '댓글 닫기'}
+          />
+        ) : null}
 
         <Stack direction="row" spacing={1.5}>
           <Button

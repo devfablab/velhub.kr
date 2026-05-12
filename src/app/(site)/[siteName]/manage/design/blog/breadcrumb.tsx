@@ -21,6 +21,7 @@ export default function BlogDesignBreadcrumb() {
   const crumbs: Crumb[] = useMemo(
     () => [
       { href: `/${siteName}/manage/design/blog/fonts`, label: '기본 서체' },
+      { href: `/${siteName}/manage/design/blog/comment`, label: '댓글' },
       { href: `/${siteName}/manage/design/blog/menu`, label: '메뉴' },
       { href: `/${siteName}/manage/design/blog/links`, label: '링크' },
     ],

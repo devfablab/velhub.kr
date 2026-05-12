@@ -390,7 +390,7 @@ export async function POST(request: Request, context: RouteContext) {
     const prefixId = normalizeText(requestBody.prefixId);
     const hashtags = normalizeHashtags(requestBody.hashtags);
     const images = normalizeImages(requestBody.images);
-    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
+    const requestedIsComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
     const isPin = requestBody.isPin === true;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
@@ -431,8 +431,10 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const rhizomeData = rhizome.data;
+
     const session = await verifySession({
-      siteId: rhizome.data.id,
+      siteId: rhizomeData.id,
     });
 
     if (!session.authUserId || (session.case !== 'staff' && session.case !== 'member')) {
@@ -467,7 +469,7 @@ export async function POST(request: Request, context: RouteContext) {
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_type, site_id, post_type')
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
@@ -479,13 +481,29 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
     }
 
+    let resolvedIsComment = requestedIsComment;
+
+    if (rhizomeData.site_type === 'blog') {
+      const blog = await supabaseAdmin
+        .from('blogs')
+        .select('comment_provider')
+        .eq('site_id', rhizomeData.id)
+        .maybeSingle();
+
+      if (blog.error || !blog.data) {
+        return Response.json({ error: '댓글 설정을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      resolvedIsComment = blog.data.comment_provider === 'none' ? false : requestedIsComment;
+    }
+
     let categoryIds: string[] = [];
 
     if (categoryKeys.length > 0) {
       const categoryResult = await supabaseAdmin
         .from('board_categories')
         .select('id, category_key')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .in('category_key', categoryKeys);
 
@@ -514,7 +532,7 @@ export async function POST(request: Request, context: RouteContext) {
       const seriesResult = await supabaseAdmin
         .from('board_series')
         .select('id, is_completed, user_id')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .eq('series_key', seriesKey)
         .maybeSingle();
@@ -544,7 +562,7 @@ export async function POST(request: Request, context: RouteContext) {
       const prefixResult = await supabaseAdmin
         .from('board_prefixes')
         .select('id')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .eq('id', prefixId)
         .maybeSingle();
@@ -697,7 +715,7 @@ export async function POST(request: Request, context: RouteContext) {
         hashtags,
         idx: nextIdx,
         user_id: session.authUserId,
-        site_id: rhizome.data.id,
+        site_id: rhizomeData.id,
         board_id: board.data.id,
         is_closed: false,
         categories: categoryIds,
@@ -705,7 +723,7 @@ export async function POST(request: Request, context: RouteContext) {
         prefix_id: resolvedPrefixId,
         published_status: action === 'draft' ? 'draft' : 'published',
         published_at: action === 'publish' ? nowIsoString : null,
-        is_comment: isComment,
+        is_comment: resolvedIsComment,
         post_count: 1,
         is_pin: isPin,
       })

@@ -9,6 +9,7 @@ import {
   Button,
   Checkbox,
   FormControl,
+  FormControlLabel,
   InputLabel,
   ListItemText,
   MenuItem,
@@ -17,6 +18,7 @@ import {
   Select,
   Stack,
   styled,
+  Switch,
   TextField,
   Typography,
   useMediaQuery,
@@ -29,9 +31,12 @@ import { normalizeText } from '@/lib/utils';
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+
 type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
+  commentProvider: CommentProvider;
 };
 
 type CategoryRow = {
@@ -71,6 +76,7 @@ type ContentResponse = {
     thumbnail_image: string | null;
     thumbnail_width: number | null;
     thumbnail_height: number | null;
+    is_comment: boolean;
   };
   categories?: CategoryRow[];
   series?: SeriesRow | null;
@@ -240,6 +246,8 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
+  const [isComment, setIsComment] = useState(false);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -279,6 +287,7 @@ export default function Opt() {
 
         setHasBoard(statusResult.hasBoard);
         setBoardName(statusResult.boardName);
+        setCommentProvider(statusResult.commentProvider);
 
         if (!statusResult.hasBoard || !statusResult.boardName) {
           return;
@@ -326,6 +335,7 @@ export default function Opt() {
         setThumbnailImage(contentResult.content.thumbnail_image || '');
         setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
         setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
+        setIsComment(statusResult.commentProvider === 'none' ? false : contentResult.content.is_comment);
         setSelectedCategories(
           Array.isArray(contentResult.categories)
             ? contentResult.categories.map((category) => category.category_key)
@@ -389,6 +399,10 @@ export default function Opt() {
     }
 
     fileInputReference.current?.click();
+  }
+
+  function handleIsCommentChange(event: InputChangeEvent) {
+    setIsComment(event.currentTarget.checked);
   }
 
   async function handleThumbnailFileChange(event: InputChangeEvent) {
@@ -616,6 +630,7 @@ export default function Opt() {
           thumbnailHeight,
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
+          isComment: commentProvider === 'none' ? false : isComment,
         }),
       });
 
@@ -758,6 +773,13 @@ export default function Opt() {
             onUploadImage={handleUploadEditorImage}
           />
         </Box>
+
+        {commentProvider !== 'none' ? (
+          <FormControlLabel
+            control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
+            label={isComment ? '댓글 열기' : '댓글 닫기'}
+          />
+        ) : null}
 
         <Stack direction="row" spacing={1.5}>
           <Button

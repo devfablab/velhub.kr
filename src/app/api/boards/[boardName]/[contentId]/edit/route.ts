@@ -277,7 +277,11 @@ function normalizePoll(value: unknown, creatorId: string) {
     return 'INVALID_END_AT';
   }
 
-  const normalizedOptions = rawOptions
+  if (!Array.isArray(rawValue.options)) {
+    return 'INVALID_OPTION_COUNT';
+  }
+
+  const normalizedOptions = rawValue.options
     .map((item) => {
       if (!item || typeof item !== 'object') {
         return null;
@@ -299,6 +303,7 @@ function normalizePoll(value: unknown, creatorId: string) {
       }
 
       const directImage = normalizePollImage(rawOption.image);
+
       const imagePath = typeof rawOption.imagePath === 'string' ? normalizeText(rawOption.imagePath) : '';
       const imageUrl = typeof rawOption.imageUrl === 'string' ? normalizeText(rawOption.imageUrl) : '';
 
@@ -427,7 +432,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const prefixId = normalizeText(requestBody.prefixId);
     const hashtags = normalizeHashtags(requestBody.hashtags);
     const images = normalizeImages(requestBody.images);
-    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
+    const requestedIsComment = requestBody.isComment;
     const isPin = requestBody.isPin === true;
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
@@ -458,14 +463,16 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+    const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const rhizomeData = rhizome.data;
+
     const session = await verifySession({
-      siteId: rhizome.data.id,
+      siteId: rhizomeData.id,
     });
 
     if (!session.authUserId) {
@@ -475,7 +482,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_type, site_id, post_type')
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
@@ -489,8 +496,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const postQuery = supabaseAdmin
       .from('posts')
-      .select('id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll')
-      .eq('site_id', rhizome.data.id)
+      .select(
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_comment',
+      )
+      .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
 
     const currentPost = isNumericSlug(normalizedContentId)
@@ -506,6 +515,23 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!isStaff && !isAuthor) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    let resolvedIsComment =
+      typeof requestedIsComment === 'boolean' ? requestedIsComment : Boolean(currentPost.data.is_comment);
+
+    if (rhizomeData.site_type === 'blog') {
+      const blog = await supabaseAdmin
+        .from('blogs')
+        .select('comment_provider')
+        .eq('site_id', rhizomeData.id)
+        .maybeSingle();
+
+      if (blog.error || !blog.data) {
+        return Response.json({ error: '댓글 설정을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      resolvedIsComment = blog.data.comment_provider === 'none' ? false : resolvedIsComment;
     }
 
     const poll = normalizePoll(requestBody.poll, session.authUserId);
@@ -543,7 +569,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const categoryResult = await supabaseAdmin
         .from('board_categories')
         .select('id, category_key')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .in('category_key', categoryKeys);
 
@@ -569,7 +595,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         const seriesResult = await supabaseAdmin
           .from('board_series')
           .select('id, is_completed, user_id')
-          .eq('site_id', rhizome.data.id)
+          .eq('site_id', rhizomeData.id)
           .eq('board_id', board.data.id)
           .eq('series_key', seriesKey)
           .maybeSingle();
@@ -601,7 +627,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         const prefixResult = await supabaseAdmin
           .from('board_prefixes')
           .select('id')
-          .eq('site_id', rhizome.data.id)
+          .eq('site_id', rhizomeData.id)
           .eq('board_id', board.data.id)
           .eq('id', prefixId)
           .maybeSingle();
@@ -770,7 +796,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       series_id: seriesId,
       prefix_id: resolvedPrefixId,
       published_status: nextPublishedStatus,
-      is_comment: isComment,
+      is_comment: resolvedIsComment,
       is_pin: isPin,
     };
 
@@ -778,7 +804,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const latestPost = await supabaseAdmin
         .from('posts')
         .select('idx')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .order('idx', { ascending: false })
         .limit(1)
         .maybeSingle();
