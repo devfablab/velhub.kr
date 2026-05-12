@@ -193,7 +193,9 @@ function getPostImageUrl(path: string | null) {
     return null;
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/post/${normalizedPath}`;
+  const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
+
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${normalizedPath}`;
 }
 
 function normalizePostImages(value: unknown): PostImage[] | null {

@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
-import { Box, Container } from '@mui/material';
-import { getPostList } from '@/lib/board/getPostList';
+import { getPostList, type PostListItem } from '@/lib/board/getPostList';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog from './blog';
 import Community from './community';
@@ -92,12 +91,45 @@ export default async function Page(context: RouteContext) {
       notFound();
     }
 
+    const blogBoardResult = await supabaseAdmin
+      .from('boards')
+      .select('id, board_key, board_label, board_type, markdown_status, post_type, is_active, sort_order')
+      .eq('site_id', rhizome.id)
+      .eq('is_active', true)
+      .neq('board_type', 'page')
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (blogBoardResult.error || !blogBoardResult.data) {
+      notFound();
+    }
+
+    const blogBoard = blogBoardResult.data as BoardRow;
+
+    const blogPostList = await getPostList({
+      siteId: rhizome.id,
+      siteKey: normalizedSiteName,
+      boardId: blogBoard.id,
+      page: 1,
+      size: 10,
+      filter: 'all',
+      sessionCase: 'guest',
+      authUserId: null,
+      sort: 'latest',
+      includePin: false,
+    });
+
+    const blogContents: PostListItem[] = blogPostList.contents;
+
     return (
-      <Container maxWidth="sm">
-        <Box sx={{ py: 8 }}>
-          <Blog sitesInfo={sitesInfo} blogInfo={blogInfo.data} />
-        </Box>
-      </Container>
+      <Blog
+        siteName={normalizedSiteName}
+        board={blogBoard}
+        sitesInfo={sitesInfo}
+        blogInfo={blogInfo.data}
+        blogContents={blogContents}
+      />
     );
   }
 
@@ -128,7 +160,7 @@ export default async function Page(context: RouteContext) {
 
     let homeBoards: Array<{
       board: BoardRow;
-      contents: Awaited<ReturnType<typeof getPostList>>['contents'];
+      contents: PostListItem[];
     }> = [];
 
     if (boardIds.length > 0) {

@@ -1,4 +1,9 @@
-import { Stack, Typography } from '@mui/material';
+import Image from 'next/image';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import Anchor from '@/components/Anchor';
+import type { PostListItem } from '@/lib/board/getPostList';
+import styles from '@/app/board.module.sass';
 
 type RowValue = string | number | boolean | null;
 
@@ -25,24 +30,77 @@ type BlogInfo = {
   comment_provider: RowValue;
 };
 
-type Props = {
-  sitesInfo: SitesInfo;
-  blogInfo: BlogInfo;
+type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
+
+type BoardRow = {
+  id: string;
+  board_key: string;
+  board_label: string;
+  board_type: BoardType;
+  markdown_status: string | null;
+  post_type: 'none' | 'prefix' | 'series' | null;
+  is_active: boolean;
+  sort_order: number | null;
 };
 
-export default function Blog({ sitesInfo, blogInfo }: Props) {
+type Props = {
+  siteName: string;
+  board: BoardRow;
+  sitesInfo: SitesInfo;
+  blogInfo: BlogInfo;
+  blogContents: PostListItem[];
+};
+
+function getThumbnailImageUrl(content: PostListItem) {
+  return content.thumbnail_image_url || '';
+}
+
+export default function Blog(props: Props) {
   return (
-    <Stack spacing={1.5}>
-      <Typography>{String(sitesInfo.rhizomes.created_at)}</Typography>
-      <Typography>{sitesInfo.rhizomes.site_label ? String(sitesInfo.rhizomes.site_label) : ''}</Typography>
-      <Typography>{sitesInfo.rhizomes.profile_picture ? String(sitesInfo.rhizomes.profile_picture) : ''}</Typography>
-      <Typography>{sitesInfo.rhizomes.summary ? String(sitesInfo.rhizomes.summary) : ''}</Typography>
-      <Typography>{String(sitesInfo.rhizomes.site_type)}</Typography>
-      <Typography>{String(sitesInfo.rhizomes.visibility_type)}</Typography>
-      <Typography>{String(sitesInfo.rhizomes.theme_type)}</Typography>
-      <Typography>{String(sitesInfo.rhizomes.is_shutdown)}</Typography>
-      <Typography>{String(sitesInfo.sites.updated_at)}</Typography>
-      <Typography>{String(blogInfo.comment_provider)}</Typography>
-    </Stack>
+    <main>
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['blog-content']} `}>
+          {props.blogContents.length === 0 ? (
+            <div className="paper">
+              <p>출간된 글이 없습니다. 😭</p>
+            </div>
+          ) : (
+            <div className={`paper ${styles.blog}`}>
+              <ol>
+                {props.blogContents.map((content) => {
+                  const thumbnailImageUrl = getThumbnailImageUrl(content);
+
+                  return (
+                    <li key={content.id}>
+                      <Anchor href={`/${props.siteName}/${props.board.board_key}/${content.slug}`}>
+                        {thumbnailImageUrl && content.thumbnail_width && content.thumbnail_height ? (
+                          <Image
+                            src={thumbnailImageUrl}
+                            width={content.thumbnail_width}
+                            height={content.thumbnail_height}
+                            alt=""
+                          />
+                        ) : (
+                          <div className={styles.dummy}>
+                            <MenuBookRoundedIcon />
+                          </div>
+                        )}
+                        <span>{content.subject}</span>
+                      </Anchor>
+                    </li>
+                  );
+                })}
+              </ol>
+              <div className={styles.button}>
+                <Anchor href={`/${props.siteName}/${props.board.board_key}`}>
+                  <span>더보기</span>
+                  <ArrowForwardRoundedIcon />
+                </Anchor>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
