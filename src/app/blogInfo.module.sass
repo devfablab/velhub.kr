@@ -1,0 +1,39 @@
+.site-info
+  .info-site-name
+    display: flex
+    gap: ds.rem(7)
+    align-items: center
+
+    em
+      display: flex
+      background-color: ds.$hex-accent
+      border-radius: ds.rem(13)
+      padding: ds.rem(7) ds.rem(12)
+      @include ds.fw(pre, 600)
+      font-size: ds.rem(12)
+      font-style: normal
+      color: ds.$hex-white
+      line-height: 1
+
+      html[data-site-type='blog'] &
+        font-family: var(--blog-description-font-family)
+        font-weight: 600
+        font-variation-settings: "wght" 600
+
+    strong
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(14)
+
+      html[data-site-type='blog'] &
+        font-family: var(--blog-subject-font-family)
+        font-weight: 800
+        font-variation-settings: "wght" 800
+
+  .info-date
+    font-size: ds.rem(12)
+    opacity: .5
+
+  .info-summary
+    white-space: pre-wrap
+    font-size: ds.rem(14)
+    line-height: 1.5

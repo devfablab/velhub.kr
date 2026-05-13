@@ -73,6 +73,9 @@ export default function MenuItems({ siteName, isBlog }: Props) {
   const allHref = `/${siteName}/board`;
   const isAllHrefCurrent = pathname === allHref || pathname.startsWith(`${allHref}/`);
 
+  const infoHref = `/${siteName}/info-blog`;
+  const isInfoBlogHrefCurrent = pathname === infoHref;
+
   return (
     <div className={styles.navigationbar}>
       <nav>
@@ -84,7 +87,17 @@ export default function MenuItems({ siteName, isBlog }: Props) {
             </Anchor>
           </li>
 
-          {!isBlog ? (
+          {isBlog ? (
+            <li
+              className={isInfoBlogHrefCurrent ? styles.current : undefined}
+              aria-current={isInfoBlogHrefCurrent ? 'page' : false}
+            >
+              <Anchor href={infoHref}>
+                <span>블로그 소개</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : (
             <li
               className={isAllHrefCurrent ? styles.current : undefined}
               aria-current={isAllHrefCurrent ? 'page' : false}
@@ -94,7 +107,7 @@ export default function MenuItems({ siteName, isBlog }: Props) {
                 <i />
               </Anchor>
             </li>
-          ) : null}
+          )}
 
           {menus.map((menu) => {
             const href = getMenuHref(siteName, menu);
