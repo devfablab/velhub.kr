@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import {
   Alert,
   Avatar,
+  Box,
   Button,
   FormControlLabel,
   InputAdornment,
@@ -32,6 +33,7 @@ type EditableField =
   | 'site_key'
   | 'site_label'
   | 'profile_picture'
+  | 'profile_logo'
   | 'summary'
   | 'visibility_type'
   | 'theme_type'
@@ -44,6 +46,7 @@ type SiteInfoInfo = {
   site_key: string;
   site_label: string | null;
   profile_picture: string | null;
+  profile_logo: string | null;
   summary: string | null;
   site_type: string;
   visibility_type: string;
@@ -109,6 +112,7 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
+  const logoInputReference = useRef<HTMLInputElement | null>(null);
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -118,10 +122,12 @@ export default function Opt() {
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [draftValue, setDraftValue] = useState<string | boolean>('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
+  const [profileLogoUrl, setProfileLogoUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
@@ -155,6 +161,7 @@ export default function Opt() {
         setSites(result.sites);
         applyColorSet(result.siteInfo.theme_type);
         setProfilePictureUrl(result.profilePictureUrl ?? '');
+        setProfileLogoUrl(result.profileLogoUrl ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -401,6 +408,7 @@ export default function Opt() {
     setSites(result.sites);
     applyColorSet(result.siteInfo.theme_type);
     setProfilePictureUrl(result.profilePictureUrl ?? '');
+    setProfileLogoUrl(result.profileLogoUrl ?? '');
   }
 
   async function saveField(field: EditableField, value?: string | boolean) {
@@ -544,12 +552,69 @@ export default function Opt() {
     }
   }
 
+  async function handleProfileLogoFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || !siteInfo || isUploadingLogo) {
+      inputElement.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsUploadingLogo(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const addResponse = await fetch('/api/attachment/add/site-logo', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const addResult = await addResponse.json();
+
+      if (!addResponse.ok) {
+        throw new Error(addResult.error ?? '사이트 로고 업로드에 실패했습니다.');
+      }
+
+      const nextProfileLogo = typeof addResult.logo === 'string' && addResult.logo.trim() ? addResult.logo.trim() : '';
+
+      if (!nextProfileLogo) {
+        throw new Error('업로드된 사이트 로고 정보를 확인하지 못했습니다.');
+      }
+
+      await saveField('profile_logo', nextProfileLogo);
+      setSuccessMessage('사이트 로고가 저장되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '사이트 로고 저장에 실패했습니다.');
+      } else {
+        setErrorMessage('사이트 로고 저장에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingLogo(false);
+      inputElement.value = '';
+    }
+  }
+
   function handleClickAvatarUpload() {
     if (isUploadingAvatar) {
       return;
     }
 
     fileInputReference.current?.click();
+  }
+
+  function handleClickLogoUpload() {
+    if (isUploadingLogo) {
+      return;
+    }
+
+    logoInputReference.current?.click();
   }
 
   useEffect(() => {
@@ -591,6 +656,40 @@ export default function Opt() {
           {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
         </Button>
       </Stack>
+
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle2">사이트 로고</Typography>
+
+          {profileLogoUrl ? (
+            <Box
+              component="img"
+              src={profileLogoUrl}
+              alt={`${siteInfo.site_label ?? siteInfo.site_key} 로고`}
+              sx={{
+                maxWidth: 240,
+                maxHeight: 80,
+                objectFit: 'contain',
+              }}
+            />
+          ) : (
+            <Typography variant="body2">등록된 사이트 로고가 없습니다.</Typography>
+          )}
+
+          <VisuallyHiddenInput
+            ref={logoInputReference}
+            type="file"
+            accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
+            onChange={handleProfileLogoFileChange}
+          />
+
+          <Stack direction="row" justifyContent="flex-end">
+            <Button type="button" variant="outlined" onClick={handleClickLogoUpload} disabled={isUploadingLogo}>
+              {profileLogoUrl ? '로고 교체' : '로고 추가'}
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Stack spacing={1}>

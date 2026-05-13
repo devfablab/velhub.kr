@@ -14,6 +14,7 @@ type UpdateField =
   | 'site_key'
   | 'site_label'
   | 'profile_picture'
+  | 'profile_logo'
   | 'summary'
   | 'visibility_type'
   | 'theme_type'
@@ -62,6 +63,10 @@ function formatLogMessage(
 
   if (field === 'profile_picture') {
     return `아바타 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+  }
+
+  if (field === 'profile_logo') {
+    return `사이트 로고 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
 
   if (field === 'summary') {
@@ -120,7 +125,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, summary, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, site_type, visibility_type, theme_type, is_shutdown',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -146,8 +151,6 @@ async function checkAccess(siteName: string) {
       }
 
       const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
-
-      console.log('updatedByParticleId: ', updatedByParticleId);
 
       if (!updatedByParticleId) {
         return {
@@ -254,9 +257,18 @@ export async function GET(_request: Request, context: RouteContext) {
       profilePictureUrl = publicUrl.data.publicUrl ?? '';
     }
 
+    const rawProfileLogo = normalizeText(access.rhizome.profile_logo);
+    let profileLogoUrl = '';
+
+    if (rawProfileLogo) {
+      const publicUrl = access.supabaseAdmin.storage.from('site-logo').getPublicUrl(rawProfileLogo);
+      profileLogoUrl = publicUrl.data.publicUrl ?? '';
+    }
+
     return Response.json({
       siteInfo: access.rhizome,
       profilePictureUrl,
+      profileLogoUrl,
       sites: {
         updated_at: sites.data.updated_at,
         updated_by: sites.data.updated_by,
@@ -288,6 +300,7 @@ export async function POST(request: Request, context: RouteContext) {
       'site_key',
       'site_label',
       'profile_picture',
+      'profile_logo',
       'summary',
       'visibility_type',
       'theme_type',

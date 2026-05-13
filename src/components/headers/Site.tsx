@@ -37,8 +37,8 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import GroupsIcon from '@mui/icons-material/Groups';
 import PeopleIcon from '@mui/icons-material/People';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
@@ -47,8 +47,11 @@ type SiteType = 'blog' | 'community';
 
 type HeaderResponse = {
   siteName: string | null;
+  siteLabel: string | null;
   siteType: SiteType | null;
   themeType: string;
+  profilePictureUrl: string | null;
+  profileLogoUrl: string | null;
   blogFontSettings: BlogFontSettings | null;
   isLoggedIn: boolean;
   email: string | null;
@@ -229,6 +232,10 @@ export default function HeaderSite() {
     siteRole: null,
   });
 
+  const [siteLabel, setSiteLabel] = useState('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
+
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
     setIsMounted(true);
@@ -280,6 +287,9 @@ export default function HeaderSite() {
           globalRole: null,
           siteRole: null,
         });
+        setSiteLabel('');
+        setProfilePictureUrl(null);
+        setProfileLogoUrl(null);
         return;
       }
 
@@ -295,6 +305,10 @@ export default function HeaderSite() {
         globalRole: result.globalRole,
         siteRole: result.siteRole,
       });
+
+      setSiteLabel(result.siteLabel || result.siteName || '');
+      setProfilePictureUrl(result.profilePictureUrl);
+      setProfileLogoUrl(result.profileLogoUrl);
     }
 
     if (!isReady) {
@@ -393,7 +407,23 @@ export default function HeaderSite() {
     >
       <Toolbar>
         <Box sx={{ flexGrow: 1 }}>
-          <Anchor href={`/${siteName}`}>데브허브</Anchor>
+          <Anchor href={`/${siteName}`} aria-label={profileLogoUrl ? siteLabel : undefined} className="site-logo-link">
+            {profileLogoUrl ? (
+              <>
+                <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" className="site-logo-image" />
+                <Box component="span" className="sr-only">
+                  {siteLabel}
+                </Box>
+              </>
+            ) : (
+              <>
+                {profilePictureUrl ? (
+                  <Avatar src={profilePictureUrl} alt="" aria-hidden="true" sx={{ width: 28, height: 28 }} />
+                ) : null}
+                <Box component="span">{siteLabel}</Box>
+              </>
+            )}
+          </Anchor>
         </Box>
 
         <IconButton color="inherit" onClick={handleOpenThemeModeMenu}>
