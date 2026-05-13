@@ -112,7 +112,6 @@ export default function Opt() {
         });
 
         const result = await response.json();
-        console.log('result: ', result);
 
         if (!response.ok) {
           throw new Error(result.error ?? '메뉴 설정을 불러오지 못했습니다.');

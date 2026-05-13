@@ -266,8 +266,6 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('user_id', stigma.data.id)
       .maybeSingle();
 
-    console.log('currentRhizomeStigma: ', currentRhizomeStigma);
-
     if (currentRhizomeStigma.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }

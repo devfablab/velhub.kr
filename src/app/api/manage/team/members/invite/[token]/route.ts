@@ -34,8 +34,6 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: 'token이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    console.log('siteName: ', siteName);
-
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }

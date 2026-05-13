@@ -64,8 +64,6 @@ export async function GET() {
       .select('id, site_key, site_label, site_type, profile_picture')
       .in('id', siteIdList);
 
-    console.log('rhizomesResult: ', rhizomesResult);
-
     if (rhizomesResult.error) {
       return Response.json({ error: '가입한 사이트 목록을 불러오지 못했습니다.' }, { status: 500 });
     }

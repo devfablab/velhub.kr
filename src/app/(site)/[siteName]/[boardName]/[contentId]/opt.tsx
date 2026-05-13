@@ -500,91 +500,122 @@ export default function Opt({ isCommunity }: Props) {
   const isGalleryBoard = board.board_type === 'gallery';
   const isYoutubeBoard = board.board_type === 'youtube';
   const isFeedBoard = board.board_type === 'feed';
+  const isPage = board.board_type === 'page';
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
 
   return (
     <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
-      <div className={styles['top-buttons']}>
-        <Anchor href={`/${siteName}/${boardName}`} className="button">
-          <ArrowBackIosRoundedIcon />
-          <span>목록</span>
-        </Anchor>
-        <Anchor href="" className="button">
-          <span>다음글</span>
-          <ArrowForwardIosRoundedIcon />
-        </Anchor>
-      </div>
-      <article>
-        <div className="paper">
-          <header className={styles['content-header']}>
-            <div className={styles['content-board-name']}>
-              <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
-                {board.board_type === 'blog' ? <span>글 목록</span> : <span>{board.board_label}</span>}
-                <ArrowForwardIosRoundedIcon />
-              </Anchor>
-              {canEdit ? (
-                <Anchor href={`/${siteName}/${boardName}/${content.slug}/edit`} className={styles['edit-link']}>
-                  <span>글 수정</span>
-                  <EditNoteRoundedIcon />
-                </Anchor>
-              ) : null}
-            </div>
-            <h3>
-              {content.is_pin ? (
-                <i className={styles['pin-icon']} aria-label="상단고정글">
-                  <PushPinRoundedIcon />
-                </i>
-              ) : null}
-              {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
-              {series ? (
-                <small>
-                  [{series.series_label}
-                  {series.is_completed ? ' (완결)' : null}]
-                </small>
-              ) : null}
-              {!isFeedBoard ? <strong>{content.subject}</strong> : null}
-            </h3>
-
-            <div className={styles['author-profile']}>
-              <div className={styles.avatar}>
-                <Avatar src={content.author_avatar_url} alt={content.author_name} />
-              </div>
-              <div className={styles.info}>
-                <div className={styles.name}>
-                  <cite>{content.author_name}</cite>
-                  {isCommunity ? (
-                    <>
-                      {authorRoleLabel ? (
-                        <em>
-                          <span>{authorRoleLabel}</span>
-                          {content.author_manage_icon?.iconUrl ? (
-                            <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
-                          ) : null}
-                        </em>
-                      ) : content.author_level ? (
-                        <em>
-                          <span>{content.author_level.name}</span>
-                          {content.author_level.iconUrl ? (
-                            <img src={content.author_level.iconUrl} alt={content.author_level.name} />
-                          ) : null}
-                        </em>
-                      ) : null}
-                    </>
-                  ) : null}
-                </div>
-                <div className={styles.datetime}>
-                  <span aria-label="작성일">{formatDateTimeDetail(content.published_at || content.created_at)}</span>
-                  {content.edited_at ? <span>{`(수정됨)`}</span> : null}
-                  <span aria-label="조회수">
-                    <VisibilityOutlinedIcon /> {content.post_count}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </header>
+      {!isPage ? (
+        <div className={styles['top-buttons']}>
+          <Anchor href={`/${siteName}/${boardName}`} className="button">
+            <ArrowBackIosRoundedIcon />
+            <span>목록</span>
+          </Anchor>
+          <Anchor href="" className="button">
+            <span>다음글</span>
+            <ArrowForwardIosRoundedIcon />
+          </Anchor>
         </div>
+      ) : null}
+      <article>
+        {isPage ? (
+          <div className="paper">
+            <header className={styles['content-header']}>
+              <h3>
+                <strong>{content.subject}</strong>
+              </h3>
+            </header>
+            <div className={`${styles['board-container']} ${styles['basic-board']}`}>
+              {content.content_html ? (
+                <EmbeddedContentHtml
+                  contentHtml={content.content_html}
+                  contentMarkdown={content.content_markdown}
+                  markdownStatus={board.markdown_status}
+                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                  className="viewer"
+                />
+              ) : null}
+              {hashtags.length > 0 ? (
+                <div className={styles['content-tags']}>
+                  {hashtags.map((hashtag) => (
+                    <span key={hashtag}>{`#${hashtag}`}</span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="paper">
+            <header className={styles['content-header']}>
+              <div className={styles['content-board-name']}>
+                <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
+                  {board.board_type === 'blog' ? <span>글 목록</span> : <span>{board.board_label}</span>}
+                  <ArrowForwardIosRoundedIcon />
+                </Anchor>
+                {canEdit ? (
+                  <Anchor href={`/${siteName}/${boardName}/${content.slug}/edit`} className={styles['edit-link']}>
+                    <span>글 수정</span>
+                    <EditNoteRoundedIcon />
+                  </Anchor>
+                ) : null}
+              </div>
+              <h3>
+                {content.is_pin ? (
+                  <i className={styles['pin-icon']} aria-label="상단고정글">
+                    <PushPinRoundedIcon />
+                  </i>
+                ) : null}
+                {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
+                {series ? (
+                  <small>
+                    [{series.series_label}
+                    {series.is_completed ? ' (완결)' : null}]
+                  </small>
+                ) : null}
+                {!isFeedBoard ? <strong>{content.subject}</strong> : null}
+              </h3>
+
+              <div className={styles['author-profile']}>
+                <div className={styles.avatar}>
+                  <Avatar src={content.author_avatar_url} alt={content.author_name} />
+                </div>
+                <div className={styles.info}>
+                  <div className={styles.name}>
+                    <cite>{content.author_name}</cite>
+                    {isCommunity ? (
+                      <>
+                        {authorRoleLabel ? (
+                          <em>
+                            <span>{authorRoleLabel}</span>
+                            {content.author_manage_icon?.iconUrl ? (
+                              <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                            ) : null}
+                          </em>
+                        ) : content.author_level ? (
+                          <em>
+                            <span>{content.author_level.name}</span>
+                            {content.author_level.iconUrl ? (
+                              <img src={content.author_level.iconUrl} alt={content.author_level.name} />
+                            ) : null}
+                          </em>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                  <div className={styles.datetime}>
+                    <span aria-label="작성일">{formatDateTimeDetail(content.published_at || content.created_at)}</span>
+                    {content.edited_at ? <span>{`(수정됨)`}</span> : null}
+                    <span aria-label="조회수">
+                      <VisibilityOutlinedIcon /> {content.post_count}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </header>
+          </div>
+        )}
         {isGalleryBoard ? (
           <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
             <div className="paper">

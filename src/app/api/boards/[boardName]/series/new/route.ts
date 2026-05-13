@@ -185,8 +185,6 @@ export async function POST(request: Request, context: RouteContext) {
       )
       .maybeSingle();
 
-    console.log('insertSeries: ', insertSeries);
-
     if (insertSeries.error || !insertSeries.data) {
       return Response.json({ error: '연재 추가에 실패했습니다.' }, { status: 500 });
     }

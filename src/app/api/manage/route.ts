@@ -46,8 +46,6 @@ export async function GET(request: Request) {
       .eq('site_key', siteName)
       .maybeSingle();
 
-    console.log('siteResult.error: ', siteResult.error);
-
     if (siteResult.error || !siteResult.data) {
       return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
     }
@@ -66,8 +64,6 @@ export async function GET(request: Request) {
       .eq('site_id', site.id)
       .eq('role', 'owner')
       .maybeSingle();
-
-    console.log('ownerMembershipResult: ', ownerMembershipResult);
 
     if (ownerMembershipResult.error) {
       return Response.json({ error: '운영자 정보를 불러오지 못했습니다.' }, { status: 500 });
