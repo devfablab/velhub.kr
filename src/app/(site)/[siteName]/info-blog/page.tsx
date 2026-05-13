@@ -61,7 +61,7 @@ export default async function Page(context: RouteContext) {
   const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
   const cookie = requestHeaders.get('cookie') ?? '';
 
-  const response = await fetch(`${protocol}://${host}/api/info/general/site/${normalizedSiteName}/edit`, {
+  const response = await fetch(`${protocol}://${host}/api/team-blog?siteName=${normalizedSiteName}`, {
     method: 'GET',
     headers: {
       cookie,
