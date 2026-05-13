@@ -22,7 +22,6 @@ export default function CommentForm({
   defaultValue = '',
   replyTargetName,
   avatarUrl,
-  pollChoiceLabel,
   isSubmitting = false,
   onSubmit,
   onCancel,

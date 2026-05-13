@@ -17,7 +17,7 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import CommentSection from '@/components/board/CommentSection';
+import CommentSection from '@/components/comments/CommunityCommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import styles from '@/app/board.module.sass';

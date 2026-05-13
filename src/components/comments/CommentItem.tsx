@@ -7,7 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import CommentForm from '@/components/board/CommentForm';
+import CommentForm from '@/components/comments/CommentForm';
 import styles from '@/app/comments.module.sass';
 
 type AuthorRole =

@@ -43,6 +43,19 @@ type AuthorManageIcon = {
   iconUrl: string;
 };
 
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+type GiscusInputPosition = 'top' | 'bottom';
+type GiscusFlag = '0' | '1';
+
+type GiscusSettings = {
+  repo: string;
+  repoId: string;
+  strict: GiscusFlag;
+  reactionsEnabled: GiscusFlag;
+  emitMetadata: GiscusFlag;
+  inputPosition: GiscusInputPosition;
+};
+
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
 const MANAGER_ICON_BUCKET = 'manager_icon';
@@ -79,7 +92,8 @@ function getPublicPostImageUrl(path: string | null | undefined) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('post').getPublicUrl(normalizedPath);
+  const bucket = normalizedPath.includes('/') ? 'post' : 'og-image';
+  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
 }
@@ -147,7 +161,9 @@ function normalizeImages(value: unknown) {
         height: typeof image.height === 'number' && Number.isFinite(image.height) ? Math.floor(image.height) : null,
       };
     })
-    .filter(Boolean);
+    .filter((image): image is { path: string; url: string; width: number | null; height: number | null } =>
+      Boolean(image),
+    );
 }
 
 function isManageRole(value: string): value is AuthorManageRole['role'] {
@@ -157,6 +173,47 @@ function isManageRole(value: string): value is AuthorManageRole['role'] {
     value === 'board-general-manager' ||
     value === 'board-assistant-manager'
   );
+}
+
+function isCommentProvider(value: string): value is CommentProvider {
+  return value === 'none' || value === 'giscus' || value === 'disqus' || value === 'velhub';
+}
+
+function isGiscusInputPosition(value: string): value is GiscusInputPosition {
+  return value === 'top' || value === 'bottom';
+}
+
+function normalizeGiscusFlag(value: unknown): GiscusFlag {
+  return value === '1' ? '1' : '0';
+}
+
+function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const rawValue = value as {
+    repo?: unknown;
+    repoId?: unknown;
+    strict?: unknown;
+    reactionsEnabled?: unknown;
+    emitMetadata?: unknown;
+    inputPosition?: unknown;
+  };
+
+  const repo = typeof rawValue.repo === 'string' ? normalizeText(rawValue.repo) : '';
+  const repoId = typeof rawValue.repoId === 'string' ? normalizeText(rawValue.repoId) : '';
+  const inputPositionValue =
+    typeof rawValue.inputPosition === 'string' ? normalizeText(rawValue.inputPosition).toLowerCase() : '';
+
+  return {
+    repo,
+    repoId,
+    strict: normalizeGiscusFlag(rawValue.strict),
+    reactionsEnabled: normalizeGiscusFlag(rawValue.reactionsEnabled),
+    emitMetadata: normalizeGiscusFlag(rawValue.emitMetadata),
+    inputPosition: isGiscusInputPosition(inputPositionValue) ? inputPositionValue : 'bottom',
+  };
 }
 
 async function getUserDisplayInfo(siteId: string, boardId: string, userId: string | null | undefined) {
@@ -358,7 +415,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, visibility_type, is_shutdown')
+      .select('id, site_type, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -366,13 +423,15 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const rhizomeData = rhizome.data;
+
     const session = await verifySession({
-      siteId: rhizome.data.id,
+      siteId: rhizomeData.id,
     });
 
     const isStaff = session.case === 'staff';
 
-    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
+    if (rhizomeData.visibility_type !== 'public' || rhizomeData.is_shutdown !== false) {
       if (!isStaff) {
         return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
@@ -381,7 +440,7 @@ export async function GET(request: Request, context: RouteContext) {
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type')
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
 
@@ -395,7 +454,7 @@ export async function GET(request: Request, context: RouteContext) {
         .select(
           'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
         )
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id);
 
       const page = isNumericSlug(normalizedContentId)
@@ -406,7 +465,7 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      const author = await getUserDisplayInfo(rhizome.data.id, board.data.id, page.data.user_id);
+      const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, page.data.user_id);
       const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
 
       return NextResponse.json({
@@ -431,7 +490,7 @@ export async function GET(request: Request, context: RouteContext) {
       .select(
         'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin',
       )
-      .eq('site_id', rhizome.data.id)
+      .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
 
     const post = isNumericSlug(normalizedContentId)
@@ -452,8 +511,8 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const author = await getUserDisplayInfo(rhizome.data.id, board.data.id, post.data.user_id);
-    const closedBy = await getUserDisplayInfo(rhizome.data.id, board.data.id, post.data.closed_by);
+    const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.user_id);
+    const closedBy = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.closed_by);
 
     const categoryIds = Array.isArray(post.data.categories)
       ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
@@ -475,7 +534,7 @@ export async function GET(request: Request, context: RouteContext) {
       const categoryResult = await supabaseAdmin
         .from('board_categories')
         .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .in('id', categoryIds)
         .order('sort_order', { ascending: true });
@@ -507,7 +566,7 @@ export async function GET(request: Request, context: RouteContext) {
         .select(
           'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
         )
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .eq('id', post.data.series_id)
         .maybeSingle();
@@ -526,7 +585,7 @@ export async function GET(request: Request, context: RouteContext) {
       const prefixResult = await supabaseAdmin
         .from('board_prefixes')
         .select('id, prefix_label')
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .order('prefix_key', { ascending: true });
 
@@ -534,13 +593,32 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '말머리 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      if (post.error || !post.data) {
-        return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+      prefixes = prefixResult.data ?? [];
+      prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
+    }
+
+    let commentProvider: CommentProvider = 'velhub';
+    let giscusSettings: GiscusSettings | null = null;
+
+    if (rhizomeData.site_type === 'blog') {
+      const blogResult = await supabaseAdmin
+        .from('blogs')
+        .select('comment_provider, giscus_settings')
+        .eq('site_id', rhizomeData.id)
+        .maybeSingle();
+
+      if (blogResult.error || !blogResult.data) {
+        return NextResponse.json({ error: '댓글 설정을 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const postData = post.data;
-      prefixes = prefixResult.data ?? [];
-      prefixLabel = prefixes.find((prefix) => prefix.id === postData.prefix_id)?.prefix_label ?? null;
+      const provider = normalizeText(blogResult.data.comment_provider).toLowerCase();
+
+      if (!isCommentProvider(provider)) {
+        return NextResponse.json({ error: '댓글 설정을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      commentProvider = provider;
+      giscusSettings = normalizeGiscusSettings(blogResult.data.giscus_settings);
     }
 
     const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
@@ -562,6 +640,8 @@ export async function GET(request: Request, context: RouteContext) {
         thumbnail_image_url: thumbnailImageUrl,
         images: normalizeImages(post.data.images),
         post_count: postCount,
+        comment_provider: commentProvider,
+        giscus_settings: giscusSettings,
       },
       categories,
       series,

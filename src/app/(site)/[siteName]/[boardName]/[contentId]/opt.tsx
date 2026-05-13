@@ -16,10 +16,11 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import CommentSection from '@/components/board/CommentSection';
+import CommentSection from '@/components/comments/CommunityCommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import styles from '@/app/board.module.sass';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import BlogCommentSection from '@/components/comments/BlogCommentSection';
 
 type Props = {
   isCommunity: boolean;
@@ -125,6 +126,8 @@ type PostContent = {
   author_manage_icon: AuthorManageIcon | null;
   closed_by_name: string;
   prefix_label: string | null;
+  comment_provider: CommentProvider;
+  giscus_settings: GiscusSettings | null;
 };
 
 type SeriesItem = {
@@ -178,6 +181,19 @@ type PollResponse = {
   is_ended?: boolean;
   options?: PollResultOption[];
   error?: string;
+};
+
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+type GiscusInputPosition = 'top' | 'bottom';
+type GiscusFlag = '0' | '1';
+
+type GiscusSettings = {
+  repo: string;
+  repoId: string;
+  strict: GiscusFlag;
+  reactionsEnabled: GiscusFlag;
+  emitMetadata: GiscusFlag;
+  inputPosition: GiscusInputPosition;
 };
 
 function normalizeHashtags(value: unknown) {
@@ -833,13 +849,28 @@ export default function Opt({ isCommunity }: Props) {
         ) : null}
       </article>
       {content.published_status === 'published' ? (
-        <CommentSection
-          siteName={siteName}
-          boardName={boardName}
-          contentId={content.id}
-          postAuthorId={content.user_id}
-          isCommentEnabled={content.is_comment}
-        />
+        isBlogBoard ? (
+          <BlogCommentSection
+            siteName={siteName}
+            boardName={boardName}
+            contentId={content.id}
+            postAuthorId={content.user_id}
+            isCommentEnabled={content.is_comment}
+            commentProvider={content.comment_provider}
+            giscusSettings={content.giscus_settings}
+            themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+            title={content.subject}
+            slug={content.slug}
+          />
+        ) : (
+          <CommentSection
+            siteName={siteName}
+            boardName={boardName}
+            contentId={content.id}
+            postAuthorId={content.user_id}
+            isCommentEnabled={content.is_comment}
+          />
+        )
       ) : null}
     </div>
   );
