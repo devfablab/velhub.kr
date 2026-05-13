@@ -211,9 +211,9 @@ function renderYoutubeBoard(siteName: string, homeBoard: HomeBoard) {
 
 function renderFeedBoard(siteName: string, homeBoard: HomeBoard) {
   return (
-    <>
+    <div className={styles.feed}>
       {homeBoard.contents.map((content) => (
-        <div key={content.id} className="paper">
+        <div key={content.id} className={styles['feed-item']}>
           {content.content_simple ? <div className={styles['content-simple']}>{content.content_simple}</div> : null}
           <div className={styles.button}>
             <Anchor href={`/${siteName}/${homeBoard.board.board_key}/${content.slug}`}>
@@ -223,7 +223,7 @@ function renderFeedBoard(siteName: string, homeBoard: HomeBoard) {
           </div>
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -275,7 +275,7 @@ export default function Community({ siteName, homeBoards }: Props) {
                 {homeBoard.contents.length > 0 ? (
                   renderBoardContents(siteName, homeBoard)
                 ) : (
-                  <p>등록된 글이 없습니다.</p>
+                  <p>등록된 글이 없습니다. 😭</p>
                 )}
               </div>
             ))

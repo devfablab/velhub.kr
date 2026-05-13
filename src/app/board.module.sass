@@ -911,6 +911,25 @@
               color: ds.$hex-light
 
     .feed-board
+      .feed-item
+        display: flex
+        flex-direction: column
+        gap: ds.rem(7)
+        padding: ds.rem(23) 0
+
+        &:first-of-type
+          padding-top: 0
+
+        &:last-of-type
+          border-bottom: 0!important
+          padding-bottom: 0
+
+        html[data-theme="yellow-light"] &
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+        html[data-theme="yellow-dark"] &
+          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .9)
+
       .content-simple
         font-size: ds.rem(14)
         line-height: 1.37
@@ -918,7 +937,6 @@
 
       .button
         display: flex
-        justify-content: flex-end
 
         a
           display: inline-flex
