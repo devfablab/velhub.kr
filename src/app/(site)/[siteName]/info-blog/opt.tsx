@@ -1215,7 +1215,7 @@ export default function Opt({
   return (
     <main>
       <div className="container">
-        <div className="content">
+        <div className={`content ${styles.content}`}>
           <div className={`${styles['site-info']} paper`}>
             <div className={styles['info-site-name']}>
               <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>

@@ -76,6 +76,9 @@ export default function MenuItems({ siteName, isBlog }: Props) {
   const infoHref = `/${siteName}/info-blog`;
   const isInfoBlogHrefCurrent = pathname === infoHref;
 
+  const categoryHref = `/${siteName}/c`;
+  const isCategoryHrefCurrent = pathname === categoryHref || pathname.startsWith(`${categoryHref}/`);
+
   return (
     <div className={styles.navigationbar}>
       <nav>
@@ -88,15 +91,26 @@ export default function MenuItems({ siteName, isBlog }: Props) {
           </li>
 
           {isBlog ? (
-            <li
-              className={isInfoBlogHrefCurrent ? styles.current : undefined}
-              aria-current={isInfoBlogHrefCurrent ? 'page' : false}
-            >
-              <Anchor href={infoHref}>
-                <span>블로그 소개</span>
-                <i />
-              </Anchor>
-            </li>
+            <>
+              <li
+                className={isInfoBlogHrefCurrent ? styles.current : undefined}
+                aria-current={isInfoBlogHrefCurrent ? 'page' : false}
+              >
+                <Anchor href={infoHref}>
+                  <span>블로그 소개</span>
+                  <i />
+                </Anchor>
+              </li>
+              <li
+                className={isCategoryHrefCurrent ? styles.current : undefined}
+                aria-current={isCategoryHrefCurrent ? 'page' : false}
+              >
+                <Anchor href={categoryHref}>
+                  <span>카테고리</span>
+                  <i />
+                </Anchor>
+              </li>
+            </>
           ) : (
             <li
               className={isAllHrefCurrent ? styles.current : undefined}

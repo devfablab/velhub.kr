@@ -12,6 +12,10 @@
       width: ds.rem(26)
       height: ds.rem(26)
 
+  .headline
+    p
+      font-size: ds.rem(14)
+
   .pagination
     display: flex
     justify-content: center
@@ -954,6 +958,9 @@
             width: ds.rem(16)
             height: ds.rem(16)
 
+  &.blog-list
+    max-width: ds.rem(807)
+
   &.blog-content
     max-width: ds.rem(807)
 
@@ -1580,6 +1587,34 @@
             height: ds.rem(2)
             background-color: ds.$hex-secondary
             border-radius: ds.rem(2)
+
+  &.category-items
+    a
+      &:hover, &:focus-visible
+        .info
+          strong
+            text-decoration: underline
+
+      .info
+        strong
+          @include ds.fw(neo, 700)
+          font-size: ds.rem(14)
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+        p
+          font-size: ds.rem(12)
+          white-space: pre-wrap
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
 
 .gallery-items, .youtube-items
   display: grid
