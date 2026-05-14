@@ -91,18 +91,12 @@ export function decryptNullable(value: string | null | undefined) {
 export function getLevelIconUrl(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
-  if (!normalizedValue || !normalizedValue.startsWith('supabase:')) {
-    return '';
-  }
-
-  const storagePath = normalizedValue.replace('supabase:', '').trim();
-
-  if (!storagePath) {
+  if (!normalizedValue) {
     return '';
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(storagePath);
+  const publicUrl = supabaseAdmin.storage.from(LEVEL_ICON_BUCKET).getPublicUrl(normalizedValue);
 
   return publicUrl.data.publicUrl ?? '';
 }

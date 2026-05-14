@@ -55,20 +55,8 @@ function normalizeNumericValue(value: unknown) {
   return 0;
 }
 
-function isSupabaseStorageValue(value: string | null | undefined) {
-  return Boolean(value && value.startsWith('supabase:'));
-}
-
-function getStoragePath(value: string | null | undefined) {
-  if (!isSupabaseStorageValue(value)) {
-    return '';
-  }
-
-  return value!.replace('supabase:', '').trim();
-}
-
 function getLevelIconUrl(value: string | null | undefined) {
-  const targetPath = getStoragePath(value);
+  const targetPath = value;
 
   if (!targetPath) {
     return '';
@@ -154,7 +142,7 @@ async function getLevels(siteId: string) {
 }
 
 async function deleteStorageFile(iconValue: string | null | undefined) {
-  const targetPath = getStoragePath(iconValue);
+  const targetPath = iconValue;
 
   if (!targetPath) {
     return;
@@ -483,7 +471,7 @@ export async function PUT(request: Request) {
       return Response.json({ error: '아이콘 업로드에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextIconValue = `supabase:${filePath}`;
+    const nextIconValue = filePath;
 
     const updateResult = await access.supabaseAdmin
       .from('community_levels')

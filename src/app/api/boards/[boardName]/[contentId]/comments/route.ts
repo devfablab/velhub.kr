@@ -128,17 +128,9 @@ function isExternalUrl(value: string) {
   return value.startsWith('http://') || value.startsWith('https://');
 }
 
-function isSupabaseStorageValue(value: string | null | undefined) {
-  return Boolean(value && value.startsWith('supabase:'));
-}
-
 function getStoragePath(value: string | null | undefined) {
   if (!value) {
     return '';
-  }
-
-  if (isSupabaseStorageValue(value)) {
-    return value.replace('supabase:', '').trim();
   }
 
   return value.trim();
@@ -429,7 +421,6 @@ async function getCommentAccess(siteId: string, boardId: string, userId: string 
     return false;
   });
 }
-
 
 function isPollRow(value: unknown): value is PollRow {
   if (!value || typeof value !== 'object') {

@@ -206,14 +206,6 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
   throw new Error(maxSizeMessage);
 }
 
-function isSupabaseOgImageValue(value: string) {
-  return value.startsWith('supabase:');
-}
-
-function getSupabaseOgImagePath(value: string) {
-  return value.replace('supabase:', '').trim();
-}
-
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -346,9 +338,9 @@ export default function Opt() {
         setSelectedSeriesKey(contentResult.series?.series_key || '');
         setIsSeriesLocked(Boolean(contentResult.series?.series_key));
 
-        if (contentResult.content.thumbnail_image && isSupabaseOgImageValue(contentResult.content.thumbnail_image)) {
+        if (contentResult.content.thumbnail_image) {
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-          const imagePath = getSupabaseOgImagePath(contentResult.content.thumbnail_image);
+          const imagePath = contentResult.content.thumbnail_image;
 
           if (supabaseUrl && imagePath) {
             setThumbnailImageUrl(`${supabaseUrl}/storage/v1/object/public/og-image/${imagePath}`);
@@ -456,7 +448,7 @@ export default function Opt() {
         throw new Error(result.error ?? '썸네일 이미지 업로드에 실패했습니다.');
       }
 
-      if (previousThumbnailImage && isSupabaseOgImageValue(previousThumbnailImage)) {
+      if (previousThumbnailImage) {
         await fetch('/api/attachment/delete/og-image', {
           method: 'POST',
           headers: {
@@ -464,7 +456,7 @@ export default function Opt() {
           },
           credentials: 'include',
           body: JSON.stringify({
-            path: getSupabaseOgImagePath(previousThumbnailImage),
+            path: previousThumbnailImage,
           }),
         });
       }
