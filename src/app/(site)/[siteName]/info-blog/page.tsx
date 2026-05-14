@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { formatDate, normalizeText } from '@/lib/utils';
-import styles from '@/app/blogInfo.module.sass';
+import { normalizeText } from '@/lib/utils';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -22,36 +22,93 @@ type SiteInfo = {
   is_shutdown: boolean;
 };
 
+type MemberGeneral = {
+  id: string;
+  created_at: string;
+  name_ko: string | null;
+  name_en: string | null;
+  description_ko: string | null;
+  description_en: string | null;
+  start_work_date: string | null;
+  job: string | null;
+  member_id: string;
+  site_id: string;
+  nickname: string;
+  isMine: boolean;
+};
+
+type MemberEducation = {
+  id: string;
+  created_at: string;
+  school: string;
+  major: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  member_id: string;
+  site_id: string;
+  sort_order: number;
+  nickname: string;
+  isMine: boolean;
+};
+
+type MemberAward = {
+  id: string;
+  created_at: string;
+  subject: string;
+  institution: string;
+  date_time: string | null;
+  member_id: string;
+  site_id: string;
+  sort_order: number;
+  nickname: string;
+  isMine: boolean;
+};
+
+type MemberProject = {
+  id: string;
+  created_at: string;
+  work_start_date: string | null;
+  work_end_date: string | null;
+  subject: string;
+  description: string | null;
+  client: string | null;
+  agency: string | null;
+  site_name: string | null;
+  site_url: string | null;
+  member_id: string;
+  site_id: string;
+  sort_order: number;
+  nickname: string;
+  isMine: boolean;
+};
+
+type MemberCareer = {
+  id: string;
+  created_at: string;
+  organization: string;
+  team_position: string;
+  role_job: string;
+  work_start_date: string | null;
+  work_end_date: string | null;
+  member_id: string;
+  site_id: string;
+  sort_order: number;
+  nickname: string;
+  isMine: boolean;
+};
+
 type BlogInfoResponse = {
   siteInfo?: SiteInfo;
   profilePictureUrl?: string;
   profileLogoUrl?: string;
+  memberGeneral?: MemberGeneral[];
+  memberEducations?: MemberEducation[];
+  memberAwards?: MemberAward[];
+  memberProjects?: MemberProject[];
+  memberCareers?: MemberCareer[];
+  canEditMyMemberGeneral?: boolean;
   error?: string;
 };
-
-function getSiteTypeLabel(siteType: string) {
-  if (siteType === 'blog') {
-    return '블로그';
-  }
-
-  if (siteType === 'community') {
-    return '커뮤니티';
-  }
-
-  return siteType;
-}
-
-function getVisibilityLabel(visibilityType: string) {
-  if (visibilityType === 'public') {
-    return '공개';
-  }
-
-  if (visibilityType === 'private') {
-    return '비공개';
-  }
-
-  return visibilityType;
-}
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
@@ -87,22 +144,16 @@ export default async function Page(context: RouteContext) {
     return redirect(`/${siteName}`);
   }
 
-  const siteInfo = result.siteInfo;
-  const siteLabel = siteInfo.site_label ?? siteInfo.site_key;
-
   return (
-    <main>
-      <div className="container">
-        <div className="content">
-          <div className={`${styles['site-info']} paper`}>
-            <div className={styles['info-site-name']}>
-              <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>
-            </div>
-            <p className={styles['info-date']}>({formatDate(siteInfo.created_at)} 개설)</p>
-            {siteInfo.summary ? <p className={styles['info-summary']}>{siteInfo.summary}</p> : null}
-          </div>
-        </div>
-      </div>
-    </main>
+    <Opt
+      siteName={normalizedSiteName}
+      siteInfo={result.siteInfo}
+      memberGeneral={result.memberGeneral ?? []}
+      memberEducations={result.memberEducations ?? []}
+      memberAwards={result.memberAwards ?? []}
+      memberProjects={result.memberProjects ?? []}
+      memberCareers={result.memberCareers ?? []}
+      canEditMyMemberGeneral={result.canEditMyMemberGeneral === true}
+    />
   );
 }

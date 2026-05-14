@@ -22,7 +22,7 @@
 
     strong
       @include ds.fw(neo, 800)
-      font-size: ds.rem(14)
+      font-size: ds.rem(18)
 
       html[data-site-type='blog'] &
         font-family: var(--blog-subject-font-family)
@@ -37,3 +37,136 @@
     white-space: pre-wrap
     font-size: ds.rem(14)
     line-height: 1.5
+    letter-spacing: -.025em
+
+  .members
+    display: flex
+    flex-direction: column
+    gap: ds.rem(7)
+    padding-top: ds.rem(12)
+    width: 100%
+
+    strong
+      @include ds.fw(neo, 600)
+      font-size: ds.rem(16)
+      letter-spacing: -.05em
+
+    .member-items
+      display: flex
+      gap: ds.rem(12)
+      width: 100%
+      letter-spacing: -.025em
+
+    .member-item
+      display: flex
+      flex-direction: column
+      @include ds.col
+      gap: ds.rem(12)
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+      color: ds.$hex-secondary
+
+      .name
+        display: inline-flex
+        align-items: center
+        gap: ds.rem(3)
+        @include ds.fw(pre, 500)
+
+        span
+          @include ds.fw(pre, 400)
+          opacity: .7
+
+      .job, .date, .description
+        opacity: .7
+        font-size: ds.rem(14)
+
+      .descriptions
+        display: flex
+        flex-direction: column
+        gap: ds.rem(7)
+        padding-top: ds.rem(7)
+
+        .description
+          white-space: pre-wrap
+
+      .education-items
+        display: flex
+        flex-direction: column
+        color: ds.$hex-secondary
+
+        p
+          display: flex
+          gap: ds.rem(7)
+          @include ds.fw(neo, 600)
+          font-size: ds.rem(12)
+
+          span, time
+            @include ds.fw(pre, 400)
+            opacity: .7
+
+      .award-items
+        display: flex
+        flex-direction: column
+        color: ds.$hex-secondary
+
+        p
+          display: flex
+          gap: ds.rem(7)
+          @include ds.fw(neo, 600)
+          font-size: ds.rem(12)
+
+          span, em
+            @include ds.fw(pre, 400)
+            opacity: .7
+
+          span
+            display: flex
+            gap: ds.rem(5)
+
+      .career-items
+        display: flex
+        flex-direction: column
+        color: ds.$hex-secondary
+        gap: ds.rem(7)
+
+        p
+          display: flex
+          gap: ds.rem(7)
+          font-size: ds.rem(12)
+
+        .organization
+          @include ds.fw(neo, 600)
+
+        .posrole, .time
+          @include ds.fw(pre, 400)
+          opacity: .7
+
+      .project-items
+        display: flex
+        flex-direction: column
+        color: ds.$hex-secondary
+        gap: ds.rem(7)
+
+        p
+          display: flex
+          gap: ds.rem(7)
+          font-size: ds.rem(12)
+
+        .subject
+          @include ds.fw(neo, 600)
+
+        a
+          color: ds.$hex-action
+          font-size: ds.rem(12)
+          text-decoration: underline
+
+        .org, .name, .description, .time, a
+          @include ds.fw(pre, 400)
+          opacity: .7
+
+  .buttons
+    display: flex
+    gap: ds.rem(7)
+
+    button
+      padding: 0 ds.rem(23)
+      color: ds.$hex-white

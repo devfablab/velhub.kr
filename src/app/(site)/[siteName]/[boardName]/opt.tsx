@@ -516,8 +516,8 @@ export default function Opt({ isCommunity }: Props) {
             <thead>
               <tr>
                 <th className="long-cell">제목</th>
-                <th className="long-cell">작성자</th>
-                <th>작성일</th>
+                <th className="long-cell">{isCommunity ? '작성자' : '작가'}</th>
+                <th>{isCommunity ? '작성일' : '출간일'}</th>
               </tr>
             </thead>
 
@@ -526,13 +526,17 @@ export default function Opt({ isCommunity }: Props) {
                 <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
                   <td className="long-cell">
                     <div className="board-subject">
-                      {content.is_pin ? (
-                        <i className="pin-icon" aria-label="상단고정글">
-                          <PushPinRoundedIcon />
-                        </i>
-                      ) : (
-                        <i className="number">{content.idx}</i>
-                      )}
+                      {isCommunity ? (
+                        <>
+                          {content.is_pin ? (
+                            <i className="pin-icon" aria-label="상단고정글">
+                              <PushPinRoundedIcon />
+                            </i>
+                          ) : (
+                            <i className="number">{content.idx}</i>
+                          )}
+                        </>
+                      ) : null}
                       {content.prefix_label ? (
                         <small className="prefix-name board-chip" aria-label="말머리">
                           {content.prefix_label}

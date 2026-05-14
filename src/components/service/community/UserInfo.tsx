@@ -137,7 +137,7 @@ export default function UserInfo() {
       setDialogErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch('/api/site/community/user', {
+      const response = await fetch('/api/users/${siteName}/[userId]', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
