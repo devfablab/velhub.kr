@@ -1276,16 +1276,32 @@ export default function Opt({
                 </button>
                 {getMyMemberGeneral() ? (
                   <>
-                    <button type="button" className="button" onClick={() => handleOpenItemManageDialog('educations')}>
+                    <button
+                      type="button"
+                      className="button action"
+                      onClick={() => handleOpenItemManageDialog('educations')}
+                    >
                       학력 입력
                     </button>
-                    <button type="button" className="button" onClick={() => handleOpenItemManageDialog('awards')}>
+                    <button
+                      type="button"
+                      className="button action"
+                      onClick={() => handleOpenItemManageDialog('awards')}
+                    >
                       수상 입력
                     </button>
-                    <button type="button" className="button" onClick={() => handleOpenItemManageDialog('projects')}>
+                    <button
+                      type="button"
+                      className="button action"
+                      onClick={() => handleOpenItemManageDialog('projects')}
+                    >
                       프로젝트 입력
                     </button>
-                    <button type="button" className="button" onClick={() => handleOpenItemManageDialog('careers')}>
+                    <button
+                      type="button"
+                      className="button action"
+                      onClick={() => handleOpenItemManageDialog('careers')}
+                    >
                       경력 입력
                     </button>
                   </>

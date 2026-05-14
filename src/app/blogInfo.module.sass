@@ -62,14 +62,32 @@
       flex-direction: column
       @include ds.col
       gap: ds.rem(12)
-      border: 1px solid rgba(ds.$rgb-tertiary, .2)
       color: ds.$hex-secondary
+
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      .general-items
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
 
       .name
         display: inline-flex
         align-items: center
         gap: ds.rem(3)
         @include ds.fw(pre, 500)
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
 
         span
           @include ds.fw(pre, 400)
@@ -94,12 +112,16 @@
 
     button
       padding: 0 ds.rem(23)
-      color: ds.$hex-white
 
 .educations-items
   display: flex
   flex-direction: column
-  color: ds.$hex-secondary
+
+  html[data-theme="yellow-light"] &
+    color: ds.$hex-secondary
+
+  html[data-theme="yellow-dark"] &
+    color: ds.$hex-light
 
   p
     display: flex
@@ -114,7 +136,12 @@
 .awards-items
   display: flex
   flex-direction: column
-  color: ds.$hex-secondary
+
+  html[data-theme="yellow-light"] &
+    color: ds.$hex-secondary
+
+  html[data-theme="yellow-dark"] &
+    color: ds.$hex-light
 
   p
     display: flex
@@ -133,8 +160,13 @@
 .careers-items
   display: flex
   flex-direction: column
-  color: ds.$hex-secondary
   gap: ds.rem(7)
+
+  html[data-theme="yellow-light"] &
+    color: ds.$hex-secondary
+
+  html[data-theme="yellow-dark"] &
+    color: ds.$hex-light
 
   p
     display: flex
@@ -151,8 +183,13 @@
 .projects-items
   display: flex
   flex-direction: column
-  color: ds.$hex-secondary
   gap: ds.rem(7)
+
+  html[data-theme="yellow-light"] &
+    color: ds.$hex-secondary
+
+  html[data-theme="yellow-dark"] &
+    color: ds.$hex-light
 
   p
     display: flex
@@ -190,4 +227,3 @@
       height: ds.rem(20)
       font-size: ds.rem(12)
       @include ds.fw(pre, 600)
-      color: ds.$hex-white

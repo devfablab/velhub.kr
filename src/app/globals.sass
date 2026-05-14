@@ -611,12 +611,28 @@ a, button, select, input
   @include ds.fw(pre, 700)
   font-size: ds.rem(16)
   background-color: ds.$hex-accent
-  color: ds.$hex-bright
 
   html[data-site-type='blog'] &
     font-family: var(--blog-description-font-family)
     font-weight: 700
     font-variation-settings: "wght" 700
+
+  html[data-theme="yellow-light"] &
+    color: ds.$hex-bright
+
+  html[data-theme="yellow-dark"] &
+    color: ds.$hex-bright
+
+  &.action
+    html[data-theme="yellow-light"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .3)
+      background-color: ds.$hex-white
+      color: rgba(ds.$rgb-primary, .7)
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
+      background-color: ds.$hex-black
+      color: rgba(ds.$rgb-bright, .7)
 
   &:disabled
     html[data-theme="yellow-light"] &
