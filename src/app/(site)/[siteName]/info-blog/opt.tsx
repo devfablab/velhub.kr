@@ -9,8 +9,8 @@ import { ko } from 'date-fns/locale';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import Anchor from '@/components/Anchor';
 import { formatDate } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/blogInfo.module.sass';
 
 type SiteInfo = {
@@ -273,6 +273,7 @@ function SortableItem({ id, children }: SortableItemProps) {
 
   return (
     <div
+      className={styles.dnd}
       ref={setNodeRef}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -284,12 +285,11 @@ function SortableItem({ id, children }: SortableItemProps) {
         {...listeners}
         sx={{
           display: 'flex',
-          alignItems: 'center',
           cursor: 'grab',
           width: 'fit-content',
         }}
       >
-        <DragIndicatorIcon />
+        <DragIndicatorIcon sx={{ width: 18, height: 18 }} />
       </Box>
 
       {children}
@@ -1162,8 +1162,8 @@ export default function Opt({
 
   function renderManageDialogItem(itemType: ItemType, item: TeamBlogItem) {
     return (
-      <div>
-        {renderItem(item)}
+      <div className={`${styles['dnd-items']} ${styles[`${itemType}-items`]}`}>
+        <div className={styles['dnd-item']}>{renderItem(item)}</div>
         <button type="button" className="button" onClick={() => handleOpenItemFormDialog(itemType, item)}>
           수정
         </button>
@@ -1255,10 +1255,10 @@ export default function Opt({
                             </div>
                           ) : null}
                         </div>
-                        {renderItemList('학력', 'education', memberEducationsByMember)}
-                        {renderItemList('수상', 'award', memberAwardsByMember)}
-                        {renderItemList('프로젝트', 'project', memberProjectsByMember)}
-                        {renderItemList('경력', 'career', memberCareersByMember)}
+                        {renderItemList('학력', 'educations', memberEducationsByMember)}
+                        {renderItemList('수상', 'awards', memberAwardsByMember)}
+                        {renderItemList('프로젝트', 'projects', memberProjectsByMember)}
+                        {renderItemList('경력', 'careers', memberCareersByMember)}
                       </div>
                     );
                   })}
