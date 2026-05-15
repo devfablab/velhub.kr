@@ -127,7 +127,10 @@ export default async function Page(context: RouteContext) {
             {postList.contents.length > 0 ? (
               <div className={styles['blog-items']}>
                 {postList.contents.map((content) => (
-                  <Anchor href={`/${normalizedSiteName}/${content.board_key}/${content.slug}`} key={content.id}>
+                  <Anchor
+                    href={`/${normalizedSiteName}/${content.board_key}/${content.slug}?categoryName=${categoryData.category_key}`}
+                    key={content.id}
+                  >
                     <div className={styles.thumbnail}>
                       <span>{content.published_status === 'draft' ? <em>(임시글)</em> : null}</span>
                       {content.thumbnail_image_url ? (

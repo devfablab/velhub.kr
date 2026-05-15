@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
@@ -89,6 +89,25 @@ type PollData = {
   options: PollOption[];
 };
 
+type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+type GiscusInputPosition = 'top' | 'bottom';
+type GiscusFlag = '0' | '1';
+
+type GiscusSettings = {
+  repo: string;
+  repoId: string;
+  strict: GiscusFlag;
+  reactionsEnabled: GiscusFlag;
+  emitMetadata: GiscusFlag;
+  inputPosition: GiscusInputPosition;
+};
+
+type AdjacentPost = {
+  slug: string;
+  subject: string;
+  href: string;
+};
+
 type PostContent = {
   id: string;
   slug: string;
@@ -116,6 +135,8 @@ type PostContent = {
   published_status: 'draft' | 'published';
   published_at: string | null;
   is_comment: boolean;
+  comment_provider: CommentProvider;
+  giscus_settings: GiscusSettings | null;
   post_count: number;
   is_pin: boolean;
   author_name: string;
@@ -126,8 +147,6 @@ type PostContent = {
   author_manage_icon: AuthorManageIcon | null;
   closed_by_name: string;
   prefix_label: string | null;
-  comment_provider: CommentProvider;
-  giscus_settings: GiscusSettings | null;
 };
 
 type SeriesItem = {
@@ -141,6 +160,9 @@ type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
+  previousPost?: AdjacentPost | null;
+  nextPost?: AdjacentPost | null;
+  selectedCategory?: SelectedCategory | null;
   isAuthor: boolean;
   isStaff: boolean;
   error?: string;
@@ -183,17 +205,9 @@ type PollResponse = {
   error?: string;
 };
 
-type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
-type GiscusInputPosition = 'top' | 'bottom';
-type GiscusFlag = '0' | '1';
-
-type GiscusSettings = {
-  repo: string;
-  repoId: string;
-  strict: GiscusFlag;
-  reactionsEnabled: GiscusFlag;
-  emitMetadata: GiscusFlag;
-  inputPosition: GiscusInputPosition;
+type SelectedCategory = {
+  category_key: string;
+  category_label: string;
 };
 
 function normalizeHashtags(value: unknown) {
@@ -257,13 +271,17 @@ function extractUrls(value: string) {
 export default function Opt({ isCommunity }: Props) {
   const theme = useTheme();
   const params = useParams();
+  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
+  const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
 
   const [board, setBoard] = useState<BoardInfo | null>(null);
   const [content, setContent] = useState<PostContent | null>(null);
   const [series, setSeries] = useState<SeriesItem | null>(null);
+  const [previousPost, setPreviousPost] = useState<AdjacentPost | null>(null);
+  const [nextPost, setNextPost] = useState<AdjacentPost | null>(null);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -275,6 +293,7 @@ export default function Opt({ isCommunity }: Props) {
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
   const [pollErrorMessage, setPollErrorMessage] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(null);
 
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
@@ -352,7 +371,11 @@ export default function Opt({ isCommunity }: Props) {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
+        const contentUrl = categoryName
+          ? `/api/boards/${boardName}/${contentId}?siteName=${siteName}&categoryName=${categoryName}`
+          : `/api/boards/${boardName}/${contentId}?siteName=${siteName}`;
+
+        const response = await fetch(contentUrl, {
           method: 'GET',
           credentials: 'include',
         });
@@ -366,8 +389,11 @@ export default function Opt({ isCommunity }: Props) {
         setBoard(result.board ?? null);
         setContent(result.content ?? null);
         setSeries(result.series ?? null);
+        setPreviousPost(result.previousPost ?? null);
+        setNextPost(result.nextPost ?? null);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
+        setSelectedCategory(result.selectedCategory ?? null);
 
         if (result.content?.poll) {
           void loadPollResult(boardName, result.content.id);
@@ -394,7 +420,7 @@ export default function Opt({ isCommunity }: Props) {
     }
 
     void loadContent();
-  }, [siteName, boardName, contentId]);
+  }, [siteName, boardName, contentId, categoryName]);
 
   async function loadPollResult(nextBoardName: string, nextContentId: string) {
     try {
@@ -504,19 +530,27 @@ export default function Opt({ isCommunity }: Props) {
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
+  const listHref = categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
 
   return (
     <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
       {!isPage ? (
         <div className={styles['top-buttons']}>
-          <Anchor href={`/${siteName}/${boardName}`} className="button">
-            <ArrowBackIosRoundedIcon />
+          <Anchor href={listHref} className="button">
             <span>목록</span>
           </Anchor>
-          <Anchor href="" className="button">
-            <span>다음글</span>
-            <ArrowForwardIosRoundedIcon />
-          </Anchor>
+          {previousPost ? (
+            <Anchor href={previousPost.href} className="button">
+              <ArrowBackIosRoundedIcon />
+              <span>이전글</span>
+            </Anchor>
+          ) : null}
+          {nextPost ? (
+            <Anchor href={nextPost.href} className="button">
+              <span>다음글</span>
+              <ArrowForwardIosRoundedIcon />
+            </Anchor>
+          ) : null}
         </div>
       ) : null}
       <article>
@@ -551,11 +585,22 @@ export default function Opt({ isCommunity }: Props) {
             <header className={styles['content-header']}>
               <div className={styles['content-board-name']}>
                 <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
-                  {board.board_type === 'blog' ? <span>글 목록</span> : <span>{board.board_label}</span>}
+                  {board.board_type === 'blog' ? (
+                    <span>{selectedCategory ? selectedCategory.category_label : '글 목록'}</span>
+                  ) : (
+                    <span>{board.board_label}</span>
+                  )}
                   <ArrowForwardIosRoundedIcon />
                 </Anchor>
                 {canEdit ? (
-                  <Anchor href={`/${siteName}/${boardName}/${content.slug}/edit`} className={styles['edit-link']}>
+                  <Anchor
+                    href={
+                      board.board_type === 'blog'
+                        ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
+                        : `/${siteName}/${boardName}/${content.slug}/edit`
+                    }
+                    className={styles['edit-link']}
+                  >
                     <span>글 수정</span>
                     <EditNoteRoundedIcon />
                   </Anchor>

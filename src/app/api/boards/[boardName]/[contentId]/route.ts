@@ -208,6 +208,120 @@ function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
   };
 }
 
+function getPostHref(siteName: string, boardKey: string, slug: number | string, categoryName: string) {
+  const href = `/${siteName}/${boardKey}/${slug}`;
+
+  if (!categoryName) {
+    return href;
+  }
+
+  return `${href}?categoryName=${categoryName}`;
+}
+
+async function getAdjacentPosts({
+  siteId,
+  siteName,
+  boardId,
+  boardKey,
+  currentIdx,
+  categoryName,
+  isStaff,
+}: {
+  siteId: string;
+  siteName: string;
+  boardId: string;
+  boardKey: string;
+  currentIdx: number;
+  categoryName: string;
+  isStaff: boolean;
+}) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  let categoryId = '';
+  let selectedCategory: {
+    category_key: string;
+    category_label: string;
+  } | null = null;
+
+  if (categoryName) {
+    const category = await supabaseAdmin
+      .from('board_categories')
+      .select('id, category_key, category_label')
+      .eq('site_id', siteId)
+      .eq('board_id', boardId)
+      .eq('category_key', categoryName)
+      .maybeSingle();
+
+    if (category.error || !category.data?.id) {
+      return {
+        previousPost: null,
+        nextPost: null,
+        selectedCategory: null,
+      };
+    }
+
+    categoryId = category.data.id;
+    selectedCategory = {
+      category_key: category.data.category_key,
+      category_label: category.data.category_label,
+    };
+  }
+
+  let previousQuery = supabaseAdmin
+    .from('posts')
+    .select('slug, subject')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('published_status', 'published')
+    .gt('idx', currentIdx)
+    .order('idx', { ascending: true })
+    .limit(1);
+
+  let nextQuery = supabaseAdmin
+    .from('posts')
+    .select('slug, subject')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('published_status', 'published')
+    .lt('idx', currentIdx)
+    .order('idx', { ascending: false })
+    .limit(1);
+
+  if (!isStaff) {
+    previousQuery = previousQuery.eq('is_closed', false);
+    nextQuery = nextQuery.eq('is_closed', false);
+  }
+
+  if (categoryId) {
+    previousQuery = previousQuery.contains('categories', [categoryId]);
+    nextQuery = nextQuery.contains('categories', [categoryId]);
+  }
+
+  const [previousResult, nextResult] = await Promise.all([previousQuery.maybeSingle(), nextQuery.maybeSingle()]);
+
+  if (previousResult.error || nextResult.error) {
+    throw new Error('이전글/다음글 정보를 불러오지 못했습니다.');
+  }
+
+  return {
+    previousPost: previousResult.data
+      ? {
+          slug: String(previousResult.data.slug),
+          subject: previousResult.data.subject,
+          href: getPostHref(siteName, boardKey, previousResult.data.slug, categoryName),
+        }
+      : null,
+    nextPost: nextResult.data
+      ? {
+          slug: String(nextResult.data.slug),
+          subject: nextResult.data.subject,
+          href: getPostHref(siteName, boardKey, nextResult.data.slug, categoryName),
+        }
+      : null,
+    selectedCategory,
+  };
+}
+
 async function getUserDisplayInfo(siteId: string, boardId: string, userId: string | null | undefined) {
   const normalizedUserId = normalizeText(userId);
 
@@ -397,6 +511,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const categoryName = normalizeText(requestUrl.searchParams.get('categoryName')).toLowerCase();
 
     if (!siteName) {
       return NextResponse.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -443,7 +558,7 @@ export async function GET(request: Request, context: RouteContext) {
       const page = await supabaseAdmin
         .from('pages')
         .select(
-          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, attachment_slug, attachment_origin, is_comment',
+          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
         )
         .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
@@ -469,6 +584,8 @@ export async function GET(request: Request, context: RouteContext) {
           author_manage_roles: author.manageRoles,
           author_manage_icon: author.manageIcon,
         },
+        previousPost: null,
+        nextPost: null,
         isAuthor,
         isStaff,
       });
@@ -612,6 +729,16 @@ export async function GET(request: Request, context: RouteContext) {
       giscusSettings = normalizeGiscusSettings(blogResult.data.giscus_settings);
     }
 
+    const adjacentPosts = await getAdjacentPosts({
+      siteId: rhizomeData.id,
+      siteName,
+      boardId: board.data.id,
+      boardKey: board.data.board_key,
+      currentIdx: post.data.idx,
+      categoryName,
+      isStaff,
+    });
+
     const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(post.data.thumbnail_image);
 
@@ -637,6 +764,9 @@ export async function GET(request: Request, context: RouteContext) {
       categories,
       series,
       prefixes,
+      previousPost: adjacentPosts.previousPost,
+      nextPost: adjacentPosts.nextPost,
+      selectedCategory: adjacentPosts.selectedCategory,
       isAuthor,
       isStaff,
     });
