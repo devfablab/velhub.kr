@@ -253,6 +253,7 @@ export async function getPostList({
   const to = from + size - 1;
   const searchKeyword = normalizeText(keyword);
   const shouldUsePinnedPosts = filter === 'all' && sort === 'latest' && includePin;
+  const isAllBoardList = !boardId;
 
   let pinnedPosts: RawPostRow[] = [];
 
@@ -263,11 +264,14 @@ export async function getPostList({
       .eq('site_id', siteId)
       .eq('is_pin', true)
       .eq('is_closed', false)
-      .eq('published_status', 'published')
-      .order('idx', { ascending: false });
+      .eq('published_status', 'published');
 
     if (boardId) {
-      pinnedQuery = pinnedQuery.eq('board_id', boardId);
+      pinnedQuery = pinnedQuery.eq('board_id', boardId).order('idx', { ascending: false });
+    } else {
+      pinnedQuery = pinnedQuery
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
     }
 
     if (searchKeyword) {
@@ -317,6 +321,10 @@ export async function getPostList({
     postsQuery = postsQuery.order('post_count', { ascending: false, nullsFirst: false }).order('created_at', {
       ascending: false,
     });
+  } else if (isAllBoardList) {
+    postsQuery = postsQuery
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
   } else {
     postsQuery = postsQuery.order('idx', { ascending: false });
   }
