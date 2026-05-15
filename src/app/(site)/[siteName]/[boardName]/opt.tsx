@@ -55,6 +55,7 @@ type PostItem = {
   board_key: string;
   board_label: string;
   prefix_label: string | null;
+  series_key: string | null;
   series_label: string | null;
   is_poll: boolean;
   published_at: string | null;
@@ -70,6 +71,11 @@ type PostItem = {
   youtube_id: string | null;
 };
 
+type SelectedSeries = {
+  series_key: string;
+  series_label: string;
+};
+
 type BoardListResponse = {
   board: BoardItem;
   contents?: PostItem[];
@@ -78,7 +84,9 @@ type BoardListResponse = {
   totalCount?: number;
   totalPage?: number;
   keyword?: string;
+  selectedSeries?: SelectedSeries | null;
   actions?: {
+    canPinPost?: boolean;
     canWritePost?: boolean;
   };
   error?: string;
@@ -250,6 +258,7 @@ export default function Opt({ isCommunity }: Props) {
   const [contents, setContents] = useState<PostItem[]>([]);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
   const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
+  const [selectedSeries, setSelectedSeries] = useState<SelectedSeries | null>(null);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPage, setTotalPage] = useState(1);
@@ -258,7 +267,7 @@ export default function Opt({ isCommunity }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  async function loadContents(nextPage = 1, nextKeyword = '') {
+  async function loadContents(nextPage = 1, nextKeyword = '', nextSeriesName = '') {
     try {
       setErrorMessage('');
 
@@ -272,6 +281,10 @@ export default function Opt({ isCommunity }: Props) {
 
       if (nextKeyword) {
         queryParams.set('keyword', nextKeyword);
+      }
+
+      if (nextSeriesName) {
+        queryParams.set('seriesName', nextSeriesName);
       }
 
       const response = await fetch(`/api/boards/${boardName}?${queryParams.toString()}`, {
@@ -291,9 +304,11 @@ export default function Opt({ isCommunity }: Props) {
       setTotalCount(typeof result.totalCount === 'number' ? result.totalCount : 0);
       setTotalPage(typeof result.totalPage === 'number' ? result.totalPage : 1);
       setSearchKeyword(nextKeyword);
+      setSelectedSeries(result.selectedSeries ?? null);
       setCanWritePost(Boolean(result.actions?.canWritePost));
     } catch (unknownError) {
       setCanWritePost(false);
+      setSelectedSeries(null);
 
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '전체 게시글을 불러오지 못했습니다.');
@@ -305,7 +320,7 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
-  function updateRoute(nextPage: number, nextKeyword: string) {
+  function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '') {
     const queryParams = new URLSearchParams();
 
     if (nextPage > 1) {
@@ -316,6 +331,10 @@ export default function Opt({ isCommunity }: Props) {
       queryParams.set('keyword', nextKeyword);
     }
 
+    if (nextSeriesName) {
+      queryParams.set('seriesName', nextSeriesName);
+    }
+
     const queryString = queryParams.toString();
 
     router.push(queryString ? `/${siteName}/${boardName}?${queryString}` : `/${siteName}/${boardName}`);
@@ -324,10 +343,11 @@ export default function Opt({ isCommunity }: Props) {
   useEffect(() => {
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
+    const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
     setKeywordInput(nextKeyword);
     setIsLoading(true);
-    void loadContents(nextPage, nextKeyword);
+    void loadContents(nextPage, nextKeyword, nextSeriesName);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, boardName, searchParams]);
 
@@ -339,8 +359,9 @@ export default function Opt({ isCommunity }: Props) {
     event.preventDefault();
 
     const nextKeyword = normalizeText(keywordInput);
+    const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
-    updateRoute(1, nextKeyword);
+    updateRoute(1, nextKeyword, nextSeriesName);
   }
 
   function handlePageClick(nextPage: number) {
@@ -348,10 +369,23 @@ export default function Opt({ isCommunity }: Props) {
       return;
     }
 
-    updateRoute(nextPage, searchKeyword);
+    const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
+
+    updateRoute(nextPage, searchKeyword, nextSeriesName);
+  }
+
+  function handleSeriesClick(seriesKey: string | null) {
+    const nextSeriesName = normalizeText(seriesKey).toLowerCase();
+
+    if (!nextSeriesName) {
+      return;
+    }
+
+    updateRoute(1, searchKeyword, nextSeriesName);
   }
 
   const isSearchMode = Boolean(searchKeyword);
+  const seriesNameParam = normalizeText(searchParams.get('seriesName')).toLowerCase();
   const pageNumbers = getPageNumbers(currentPage, totalPage);
   const hasPreviousPager = pageNumbers[0] > 1;
   const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
@@ -392,6 +426,8 @@ export default function Opt({ isCommunity }: Props) {
               <strong>{searchKeyword}</strong>
               {` 검색 결과 (${totalCount}건)`}
             </span>
+          ) : selectedSeries ? (
+            <span>{selectedSeries.series_label}</span>
           ) : board ? (
             <span>{board.board_label}</span>
           ) : null}
@@ -542,10 +578,15 @@ export default function Opt({ isCommunity }: Props) {
                           {content.prefix_label}
                         </small>
                       ) : null}
-                      {content.series_label ? (
-                        <small className="series-name board-chip" aria-label="연재명">
+                      {!seriesNameParam && content.series_label ? (
+                        <button
+                          type="button"
+                          className="series-name board-chip"
+                          aria-label="연재명"
+                          onClick={() => handleSeriesClick(content.series_key)}
+                        >
                           {content.series_label}
-                        </small>
+                        </button>
                       ) : null}
                       {content.is_poll ? (
                         <i className="poll-icon" aria-label="투표글">
@@ -723,7 +764,7 @@ export default function Opt({ isCommunity }: Props) {
                 <div className={styles.info}>
                   <div className={styles.subject}>
                     <strong>
-                      {content.series_label ? `[${content.series_label}] ` : null}
+                      {content.series_label && !seriesNameParam ? `[${content.series_label}] ` : null}
                       {content.subject}
                     </strong>
                   </div>
@@ -780,10 +821,15 @@ export default function Opt({ isCommunity }: Props) {
                           {content.prefix_label}
                         </small>
                       ) : null}
-                      {content.series_label ? (
-                        <small className="series-name board-chip" aria-label="연재명">
+                      {!seriesNameParam && content.series_label ? (
+                        <button
+                          type="button"
+                          className="series-name board-chip"
+                          aria-label="연재명"
+                          onClick={() => handleSeriesClick(content.series_key)}
+                        >
                           {content.series_label}
-                        </small>
+                        </button>
                       ) : null}
                       {content.is_poll ? (
                         <i className="poll-icon" aria-label="투표글">
@@ -853,7 +899,7 @@ export default function Opt({ isCommunity }: Props) {
 
       {canWritePost ? (
         <div className={styles['button-group']}>
-          <Anchor href={`/${siteName}/manage/contents/posts/new?t=i`} className={`${styles.submit} button`}>
+          <Anchor href={`/${siteName}/manage/contents/posts/new`} className={`${styles.submit} button`}>
             글쓰기
           </Anchor>
         </div>

@@ -608,7 +608,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
         }
 
-        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
+        if (session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
           return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
         }
 
