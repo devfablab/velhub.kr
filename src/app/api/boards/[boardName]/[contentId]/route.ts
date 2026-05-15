@@ -46,6 +46,7 @@ type AuthorManageIcon = {
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';
 type GiscusFlag = '0' | '1';
+type DrawType = 'first_come' | 'random' | null;
 
 type GiscusSettings = {
   repo: string;
@@ -54,6 +55,26 @@ type GiscusSettings = {
   reactionsEnabled: GiscusFlag;
   emitMetadata: GiscusFlag;
   inputPosition: GiscusInputPosition;
+};
+
+type DrawWinnerRow = {
+  id: string;
+  post_id: string;
+  site_id: string;
+  board_id: string;
+  comment_id: string;
+  user_id: string;
+  draw_order: number;
+};
+
+type DrawWinner = {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  draw_order: number;
+  author_name: string;
+  author_email: string;
+  author_avatar_url: string;
 };
 
 const AVATAR_BUCKET = 'avatar';
@@ -218,6 +239,49 @@ function getPostHref(siteName: string, boardKey: string, slug: number | string, 
   return `${href}?categoryName=${categoryName}`;
 }
 
+function shuffleItems<T>(items: T[]) {
+  const nextItems = [...items];
+
+  for (let index = nextItems.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [nextItems[index], nextItems[randomIndex]] = [nextItems[randomIndex], nextItems[index]];
+  }
+
+  return nextItems;
+}
+
+function normalizeDrawType(value: unknown): DrawType {
+  if (value === 'first_come' || value === 'random') {
+    return value;
+  }
+
+  return null;
+}
+
+function normalizeDrawLimit(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const limit = Math.floor(value);
+
+  return limit > 0 ? limit : null;
+}
+
+function isPastDateTime(value: string | null) {
+  if (!value) {
+    return false;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  return date.getTime() <= Date.now();
+}
+
 async function getAdjacentPosts({
   siteId,
   siteName,
@@ -328,6 +392,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   if (!normalizedUserId) {
     return {
       name: '',
+      email: '',
       avatarUrl: '',
       level: null,
       role: 'member' as AuthorRole,
@@ -340,7 +405,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
 
   const stigmaByIdResult = await supabaseAdmin
     .from('stigmas')
-    .select('id, user_id, user_name, avatar')
+    .select('id, user_id, user_name, email, avatar')
     .eq('id', normalizedUserId)
     .maybeSingle();
 
@@ -348,7 +413,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     ? null
     : await supabaseAdmin
         .from('stigmas')
-        .select('id, user_id, user_name, avatar')
+        .select('id, user_id, user_name, email, avatar')
         .eq('user_id', normalizedUserId)
         .maybeSingle();
 
@@ -374,6 +439,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   const levelId = normalizeText(membershipResult.data?.lv);
 
   let name = '';
+  let email = '';
   let avatarUrl = '';
   let role: AuthorRole = baseRole === 'owner' ? 'owner' : 'member';
   let manageRoles: AuthorManageRole[] = [];
@@ -476,6 +542,14 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   if (stigma) {
     avatarUrl = getAvatarUrl(stigma.avatar ?? null);
 
+    if (stigma.email) {
+      try {
+        email = decrypt(stigma.email as string);
+      } catch {
+        email = '';
+      }
+    }
+
     if (!name && stigma.user_name) {
       try {
         name = decrypt(stigma.user_name as string);
@@ -487,12 +561,153 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
 
   return {
     name,
+    email,
     avatarUrl,
     level,
     role,
     manageRoles,
     manageIcon,
   };
+}
+
+async function createRandomDrawIfNeeded({
+  siteId,
+  boardId,
+  postId,
+  drawType,
+  drawLimit,
+  drawEndsAt,
+}: {
+  siteId: string;
+  boardId: string;
+  postId: string;
+  drawType: DrawType;
+  drawLimit: number | null;
+  drawEndsAt: string | null;
+}) {
+  if (drawType !== 'random' || !drawLimit || !isPastDateTime(drawEndsAt)) {
+    return;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const existingDraws = await supabaseAdmin
+    .from('post_draws')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('post_id', postId)
+    .limit(1);
+
+  if (existingDraws.error) {
+    throw new Error('추첨 정보를 확인하지 못했습니다.');
+  }
+
+  if ((existingDraws.data ?? []).length > 0) {
+    return;
+  }
+
+  const commentsResult = await supabaseAdmin
+    .from('post_comments')
+    .select('id, user_id, created_at')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('post_id', postId)
+    .eq('is_deleted', false)
+    .eq('is_blinded', false)
+    .lte('created_at', drawEndsAt as string)
+    .order('created_at', { ascending: true });
+
+  if (commentsResult.error) {
+    throw new Error('추첨 대상 댓글을 확인하지 못했습니다.');
+  }
+
+  const candidateMap = new Map<string, { comment_id: string; user_id: string }>();
+
+  (commentsResult.data ?? []).forEach((comment) => {
+    const userId = normalizeText(comment.user_id);
+    const commentId = normalizeText(comment.id);
+
+    if (!userId || !commentId || candidateMap.has(userId)) {
+      return;
+    }
+
+    candidateMap.set(userId, {
+      comment_id: commentId,
+      user_id: userId,
+    });
+  });
+
+  const winners = shuffleItems(Array.from(candidateMap.values())).slice(0, drawLimit);
+
+  if (winners.length === 0) {
+    return;
+  }
+
+  const insertDraws = await supabaseAdmin.from('post_draws').insert(
+    winners.map((winner, index) => ({
+      post_id: postId,
+      site_id: siteId,
+      board_id: boardId,
+      comment_id: winner.comment_id,
+      user_id: winner.user_id,
+      draw_order: index + 1,
+    })),
+  );
+
+  if (insertDraws.error) {
+    throw new Error('추첨 결과를 저장하지 못했습니다.');
+  }
+}
+
+async function getDrawWinners({
+  siteId,
+  boardId,
+  postId,
+  canViewDraws,
+}: {
+  siteId: string;
+  boardId: string;
+  postId: string;
+  canViewDraws: boolean;
+}) {
+  if (!canViewDraws) {
+    return [];
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const drawsResult = await supabaseAdmin
+    .from('post_draws')
+    .select('id, post_id, site_id, board_id, comment_id, user_id, draw_order')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('post_id', postId)
+    .order('draw_order', { ascending: true });
+
+  if (drawsResult.error) {
+    throw new Error('당첨자 목록을 불러오지 못했습니다.');
+  }
+
+  const drawRows = (drawsResult.data ?? []) as DrawWinnerRow[];
+
+  const winners = await Promise.all(
+    drawRows.map(async (draw) => {
+      const author = await getUserDisplayInfo(siteId, boardId, draw.user_id);
+
+      return {
+        id: draw.id,
+        comment_id: draw.comment_id,
+        user_id: draw.user_id,
+        draw_order: draw.draw_order,
+        author_name: author.name,
+        author_email: author.email,
+        author_avatar_url: author.avatarUrl,
+      } satisfies DrawWinner;
+    }),
+  );
+
+  return winners;
 }
 
 export async function GET(request: Request, context: RouteContext) {
@@ -586,6 +801,7 @@ export async function GET(request: Request, context: RouteContext) {
         },
         previousPost: null,
         nextPost: null,
+        draw: null,
         isAuthor,
         isStaff,
       });
@@ -598,7 +814,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id)
@@ -621,6 +837,51 @@ export async function GET(request: Request, context: RouteContext) {
 
     const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.closed_by);
+
+    const drawType = normalizeDrawType(post.data.draw_type);
+    const drawLimit = normalizeDrawLimit(post.data.draw_limit);
+    const drawEndsAt = typeof post.data.draw_ends_at === 'string' ? post.data.draw_ends_at : null;
+
+    await createRandomDrawIfNeeded({
+      siteId: rhizomeData.id,
+      boardId: board.data.id,
+      postId: post.data.id,
+      drawType,
+      drawLimit,
+      drawEndsAt,
+    });
+
+    const drawCountResult = drawType
+      ? await supabaseAdmin
+          .from('post_draws')
+          .select('id', { count: 'exact', head: true })
+          .eq('site_id', rhizomeData.id)
+          .eq('board_id', board.data.id)
+          .eq('post_id', post.data.id)
+      : { count: 0, error: null };
+
+    if (drawCountResult.error) {
+      return NextResponse.json({ error: '추첨 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const drawCount = drawCountResult.count ?? 0;
+    const isDrawCompleted =
+      drawType === 'first_come'
+        ? Boolean(drawLimit && drawCount >= drawLimit)
+        : drawType === 'random'
+          ? Boolean(drawEndsAt && isPastDateTime(drawEndsAt) && drawCount > 0)
+          : false;
+
+    const canViewDraws = isAuthor || isStaff;
+
+    const drawWinners = drawType
+      ? await getDrawWinners({
+          siteId: rhizomeData.id,
+          boardId: board.data.id,
+          postId: post.data.id,
+          canViewDraws,
+        })
+      : [];
 
     const categoryIds = Array.isArray(post.data.categories)
       ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
@@ -767,6 +1028,17 @@ export async function GET(request: Request, context: RouteContext) {
       previousPost: adjacentPosts.previousPost,
       nextPost: adjacentPosts.nextPost,
       selectedCategory: adjacentPosts.selectedCategory,
+      draw: drawType
+        ? {
+            draw_type: drawType,
+            draw_limit: drawLimit,
+            draw_ends_at: drawEndsAt,
+            draw_count: drawCount,
+            is_completed: isDrawCompleted,
+            can_view_draws: canViewDraws,
+            winners: drawWinners,
+          }
+        : null,
       isAuthor,
       isStaff,
     });

@@ -22,10 +22,6 @@ import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import styles from '@/app/board.module.sass';
 
-type Props = {
-  isCommunity: boolean;
-};
-
 type BoardInfo = {
   id: string;
   board_key: string;
@@ -135,10 +131,31 @@ type SeriesItem = {
   is_completed: boolean;
 };
 
+type DrawWinner = {
+  id: string;
+  comment_id: string;
+  user_id: string;
+  draw_order: number;
+  author_name: string;
+  author_email: string;
+  author_avatar_url: string;
+};
+
+type DrawInfo = {
+  draw_type: 'first_come' | 'random';
+  draw_limit: number | null;
+  draw_ends_at: string | null;
+  draw_count: number;
+  is_completed: boolean;
+  can_view_draws: boolean;
+  winners: DrawWinner[];
+};
+
 type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
+  draw?: DrawInfo | null;
   isAuthor: boolean;
   isStaff: boolean;
   error?: string;
@@ -239,7 +256,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt() {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -262,6 +279,7 @@ export default function Opt({ isCommunity }: Props) {
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
   const [pollErrorMessage, setPollErrorMessage] = useState('');
+  const [draw, setDraw] = useState<DrawInfo | null>(null);
 
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
@@ -353,6 +371,7 @@ export default function Opt({ isCommunity }: Props) {
         setBoard(result.board ?? null);
         setContent(result.content ?? null);
         setSeries(result.series ?? null);
+        setDraw(result.draw ?? null);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
 
@@ -485,14 +504,6 @@ export default function Opt({ isCommunity }: Props) {
           <span>글 보기</span>
         </h2>
         <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
-      </div>
-    );
-  }
-
-  if (!isCommunity) {
-    return (
-      <div className={`${styles.content} content`}>
-        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }
@@ -858,6 +869,62 @@ export default function Opt({ isCommunity }: Props) {
                       </>
                     );
                   })()}
+                </div>
+              </div>
+            ) : null}
+            {draw ? (
+              <div className="paper">
+                <div className={styles['content-draw']}>
+                  {draw.is_completed ? (
+                    <p className={styles.warning}>추첨 이벤트가 완료되었습니다.</p>
+                  ) : draw.draw_type === 'first_come' ? (
+                    <p className={styles.info}>{`선착순 ${draw.draw_limit ?? 0}명 추첨 이벤트가 진행중입니다.`}</p>
+                  ) : (
+                    <p
+                      className={styles.info}
+                    >{`${draw.draw_ends_at ? formatDateTimeDetail(draw.draw_ends_at) : ''}까지 댓글을 남긴 회원 중 ${
+                      draw.draw_limit ?? 0
+                    }명을 무작위 추첨합니다.`}</p>
+                  )}
+                  {!draw.is_completed ? (
+                    <p className={styles.warning}>
+                      하나의 계정으로 여러번 댓글을 작성하셔도 단 하나의 댓글로만 추첨됩니다. (확률에 영향 없음)
+                    </p>
+                  ) : null}
+
+                  {draw.can_view_draws && draw.winners.length > 0 ? (
+                    <>
+                      <p className={styles.info}>당첨자 목록은 글 작성자와 매니저만 보실 수 있어요.</p>
+                      <table>
+                        <colgroup>
+                          <col style={{ width: 100 }} />
+                          <col />
+                        </colgroup>
+                        <thead>
+                          <tr>
+                            <th scope="col">당첨 번호</th>
+                            <th scope="col">당첨자</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {draw.winners.map((winner) => (
+                            <tr key={winner.id}>
+                              <td>{winner.draw_order}</td>
+                              <td>
+                                <div>
+                                  <Avatar src={winner.author_avatar_url} alt={winner.author_name} />
+                                  <cite>
+                                    {winner.author_name}
+                                    {winner.author_email ? ` (${winner.author_email})` : null}
+                                  </cite>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : null}
                 </div>
               </div>
             ) : null}

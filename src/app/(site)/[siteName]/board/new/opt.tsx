@@ -6,6 +6,8 @@ import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import Dialog from '@mui/material/Dialog';
@@ -38,11 +40,8 @@ import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
+import NumberField from '@/components/custom-ui/NumberField';
 import styles from '@/app/board.module.sass';
-
-type Props = {
-  isCommunity: boolean;
-};
 
 type BoardItem = {
   id: string;
@@ -183,6 +182,20 @@ type PollPayload = {
 
 type AccessDialogType = 'login' | 'join' | 'pending' | null;
 
+type DrawType = '' | 'first_come' | 'random';
+
+type DrawState = {
+  type: DrawType;
+  limit: number;
+  endsAt: Date | null;
+};
+
+type DrawPayload = {
+  drawType: 'first_come' | 'random' | null;
+  drawLimit: number | null;
+  drawEndsAt: string | null;
+};
+
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
 const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
 const MAX_GALLERY_IMAGE_COUNT = 9;
@@ -218,6 +231,14 @@ function createRelativeTimeValue(hour: number, minute: number) {
   const dateValue = new Date();
   dateValue.setHours(hour, minute, 0, 0);
   return dateValue;
+}
+
+function createEmptyDraw(): DrawState {
+  return {
+    type: '',
+    limit: 1,
+    endsAt: null,
+  };
 }
 
 function getYoutubeId(value: string) {
@@ -366,6 +387,13 @@ function clonePollState(poll: PollState): PollState {
   };
 }
 
+function cloneDrawState(draw: DrawState): DrawState {
+  return {
+    ...draw,
+    endsAt: draw.endsAt ? new Date(draw.endsAt) : null,
+  };
+}
+
 function getPollPreviewUrls(poll: PollState) {
   return poll.options.map((option) => option.imagePreviewUrl).filter((previewUrl) => previewUrl.startsWith('blob:'));
 }
@@ -447,7 +475,53 @@ function buildPollEndsAt(poll: PollState) {
   throw new Error('투표 종료 방식을 선택해주세요.');
 }
 
-export default function Opt({ isCommunity }: Props) {
+
+function buildDrawPayload(draw: DrawState): DrawPayload {
+  if (!draw.type) {
+    return {
+      drawType: null,
+      drawLimit: null,
+      drawEndsAt: null,
+    };
+  }
+
+  const limit = Number.isFinite(draw.limit) ? Math.floor(draw.limit) : 0;
+
+  if (limit < 1) {
+    throw new Error('당첨 인원수를 입력해주세요.');
+  }
+
+  if (draw.type === 'first_come') {
+    return {
+      drawType: 'first_come',
+      drawLimit: limit,
+      drawEndsAt: null,
+    };
+  }
+
+  if (!draw.endsAt || Number.isNaN(draw.endsAt.getTime())) {
+    throw new Error('추첨 마감 일시를 입력해주세요.');
+  }
+
+  const normalizedEndsAt = new Date(draw.endsAt);
+  normalizedEndsAt.setSeconds(0, 0);
+
+  const minimumEndsAt = new Date();
+  minimumEndsAt.setSeconds(0, 0);
+  minimumEndsAt.setMinutes(minimumEndsAt.getMinutes() + 1);
+
+  if (normalizedEndsAt.getTime() < minimumEndsAt.getTime()) {
+    throw new Error('추첨 마감 일시는 최소 1분 뒤로 설정해주세요.');
+  }
+
+  return {
+    drawType: 'random',
+    drawLimit: limit,
+    drawEndsAt: normalizedEndsAt.toISOString(),
+  };
+}
+
+export default function Opt() {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -503,6 +577,11 @@ export default function Opt({ isCommunity }: Props) {
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
   const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogMessage, setPollDialogMessage] = useState('');
+  const [isDrawEnabled, setIsDrawEnabled] = useState(false);
+  const [draw, setDraw] = useState<DrawState>(() => createEmptyDraw());
+  const [drawDialogOpen, setDrawDialogOpen] = useState(false);
+  const [drawDialog, setDrawDialog] = useState<DrawState>(() => createEmptyDraw());
+  const [drawDialogMessage, setDrawDialogMessage] = useState('');
   const [isLoadingBoards, setIsLoadingBoards] = useState(true);
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
@@ -806,6 +885,11 @@ export default function Opt({ isCommunity }: Props) {
     setIsPollEnabled(false);
     setPoll(createEmptyPoll());
     setPollDialog(createEmptyPoll());
+    setIsDrawEnabled(false);
+    setDraw(createEmptyDraw());
+    setDrawDialog(createEmptyDraw());
+    setDrawDialogMessage('');
+    setDrawDialogOpen(false);
     setErrorMessage('');
     setAlertMessage('');
     setAccessDialogType(null);
@@ -1106,6 +1190,42 @@ export default function Opt({ isCommunity }: Props) {
     setIsPollEnabled(false);
     setPollDialogMessage('');
     setPollDialogOpen(false);
+  }
+
+  function openDrawDialog() {
+    setDrawDialog(cloneDrawState(draw));
+    setDrawDialogMessage('');
+    setDrawDialogOpen(true);
+  }
+
+  function closeDrawDialog() {
+    setDrawDialog(cloneDrawState(draw));
+    setDrawDialogMessage('');
+    setDrawDialogOpen(false);
+  }
+
+  function applyDrawDialog() {
+    try {
+      buildDrawPayload(drawDialog);
+      setDraw(cloneDrawState(drawDialog));
+      setIsDrawEnabled(true);
+      setDrawDialogMessage('');
+      setDrawDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDrawDialogMessage(unknownError.message || '추첨 이벤트 설정을 확인해주세요.');
+      } else {
+        setDrawDialogMessage('추첨 이벤트 설정을 확인해주세요.');
+      }
+    }
+  }
+
+  function removeDraw() {
+    setDraw(createEmptyDraw());
+    setDrawDialog(createEmptyDraw());
+    setIsDrawEnabled(false);
+    setDrawDialogMessage('');
+    setDrawDialogOpen(false);
   }
 
   function updatePollDialogOptionLabel(index: number, value: string) {
@@ -1511,6 +1631,18 @@ export default function Opt({ isCommunity }: Props) {
     };
   }
 
+  function buildDrawPayloadIfNeeded() {
+    if (!isDrawEnabled) {
+      return {
+        drawType: null,
+        drawLimit: null,
+        drawEndsAt: null,
+      };
+    }
+
+    return buildDrawPayload(draw);
+  }
+
   async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -1543,6 +1675,7 @@ export default function Opt({ isCommunity }: Props) {
       const uploadedImages = await uploadGalleryImagesIfNeeded();
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
       const pollPayload = await buildPollPayloadIfNeeded();
+      const drawPayload = buildDrawPayloadIfNeeded();
 
       const response = await fetch(`/api/boards/${selectedBoardKey}/new`, {
         method: 'POST',
@@ -1569,6 +1702,9 @@ export default function Opt({ isCommunity }: Props) {
           prefixId: selectedPrefixId || null,
           isComment,
           isPin: canPinPost ? isPin : false,
+          drawType: isBasicBoard ? drawPayload.drawType : null,
+          drawLimit: isBasicBoard ? drawPayload.drawLimit : null,
+          drawEndsAt: isBasicBoard ? drawPayload.drawEndsAt : null,
         }),
       });
 
@@ -1628,14 +1764,6 @@ export default function Opt({ isCommunity }: Props) {
           <span>글쓰기</span>
         </h2>
         <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
-      </div>
-    );
-  }
-
-  if (!isCommunity) {
-    return (
-      <div className={`${styles.content} content`}>
-        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
       </div>
     );
   }
@@ -1808,6 +1936,19 @@ export default function Opt({ isCommunity }: Props) {
                       <button type="button" onClick={openPollDialog}>
                         <HowToVoteOutlinedIcon />
                         <span>{isPollEnabled ? '투표 수정' : '투표'}</span>
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {isBasicBoard ? (
+                    <div className={styles.image}>
+                      <button
+                        type="button"
+                        onClick={openDrawDialog}
+                        className={isDrawEnabled ? styles.enabled : undefined}
+                      >
+                        {isDrawEnabled ? <Inventory2RoundedIcon /> : <Inventory2OutlinedIcon />}
+                        <span>추첨 이벤트</span>
                       </button>
                     </div>
                   ) : null}
@@ -2244,6 +2385,107 @@ export default function Opt({ isCommunity }: Props) {
           <button type="button" onClick={applyPollDialog}>
             투표 설정
           </button>
+        </DialogActions>
+      </Dialog>
+
+
+      <Dialog
+        open={drawDialogOpen}
+        onClose={closeDrawDialog}
+        fullWidth={true}
+        maxWidth="sm"
+        className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
+      >
+        <DialogTitle>추첨 이벤트 설정</DialogTitle>
+        <DialogContent className={styles['draw-dialog-content']}>
+          {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
+
+          <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
+            <FormLabel id="draw-type-label">추첨 방식</FormLabel>
+            <RadioGroup
+              row
+              className="vh-radio"
+              aria-labelledby="draw-type-label"
+              value={drawDialog.type}
+              onChange={(event) =>
+                setDrawDialog((previousDraw) => ({
+                  ...previousDraw,
+                  type: event.target.value as DrawType,
+                  endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
+                }))
+              }
+            >
+              <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
+              <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
+            </RadioGroup>
+          </FormControl>
+
+          <div className={`${styles['form-group']} vh-form-control`}>
+            <NumberField
+              label="당첨 인원수"
+              min={1}
+              value={drawDialog.limit}
+              size="small"
+              onValueChange={(value) =>
+                setDrawDialog((previousDraw) => ({
+                  ...previousDraw,
+                  limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
+                }))
+              }
+            />
+          </div>
+
+          {drawDialog.type === 'random' ? (
+            <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DateTimePicker
+                  value={drawDialog.endsAt}
+                  onChange={(value) =>
+                    setDrawDialog((previousDraw) => ({
+                      ...previousDraw,
+                      endsAt: value,
+                    }))
+                  }
+                  ampm={false}
+                  views={['year', 'month', 'day', 'hours', 'minutes']}
+                  format="yyyy년 MM월 dd일 hh시 m분"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: 'small',
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+              <span>에 마감</span>
+            </div>
+          ) : null}
+        </DialogContent>
+        <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
+          {isDrawEnabled ? (
+            <>
+              <button type="button" onClick={removeDraw} className="delete-button">
+                추첨 이벤트 삭제
+              </button>
+              <div className="complex-button">
+                <button type="button" onClick={closeDrawDialog} className="cancel-button">
+                  취소
+                </button>
+                <button type="button" onClick={applyDrawDialog}>
+                  추첨 이벤트 설정
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={closeDrawDialog} className="cancel-button">
+                취소
+              </button>
+              <button type="button" onClick={applyDrawDialog}>
+                추첨 이벤트 설정
+              </button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 

@@ -590,7 +590,7 @@ a, button, select, input
     color: ds.$hex-accent!important
 
 .vh-form-control
-  .Mui-focused
+  .Mui-focused, .MuiFormLabel-root
     @include ds.fw(neo, 400)
 
     html[data-site-type='blog'] &
@@ -603,6 +603,10 @@ a, button, select, input
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-bright!important
+
+    &.MuiOutlinedInput-root, &.MuiPickersTextField-root
+      fieldset
+        border-color: ds.$hex-accent!important
 
 .button
   display: flex

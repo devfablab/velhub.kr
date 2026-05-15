@@ -4,9 +4,9 @@ import IconButton from '@mui/material/IconButton';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
-import InputLabel from '@mui/material/InputLabel';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import { FormLabel } from '@mui/material';
 
 /**
  * This component is a placeholder for FormControl to correctly set the shrink label state on SSR.
@@ -20,7 +20,7 @@ export default function NumberField({
   id: idProp,
   label,
   error,
-  size = 'medium',
+  size = 'small',
   ...other
 }: BaseNumberField.Root.Props & {
   label?: React.ReactNode;
@@ -48,12 +48,24 @@ export default function NumberField({
       )}
     >
       <SSRInitialFilled {...other} />
-      <InputLabel htmlFor={id}>{label}</InputLabel>
+      <FormLabel
+        htmlFor={id}
+        sx={{
+          display: 'inline-block',
+          cursor: 'ew-resize',
+          fontSize: '0.875rem',
+          color: 'text.primary',
+          fontWeight: 500,
+          lineHeight: 1.5,
+          mb: 0.5,
+        }}
+      >
+        {label}
+      </FormLabel>
       <BaseNumberField.Input
         id={id}
         render={(props, state) => (
           <OutlinedInput
-            label={label}
             inputRef={props.ref}
             value={state.inputValue}
             onBlur={props.onBlur}

@@ -6,11 +6,14 @@ import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
+import HowToVoteRoundedIcon from '@mui/icons-material/HowToVoteRounded';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -41,6 +44,7 @@ import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
+import NumberField from '@/components/custom-ui/NumberField';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -52,14 +56,14 @@ type BoardItem = {
   board_key: string;
   board_label: string;
   board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
-  post_type?: 'none' | 'prefix' | 'series' | null;
+  post_type?: 'none' | 'prefix' | 'series' | 'both' | null;
   is_active: boolean;
 };
 
 type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
-    post_type: 'none' | 'prefix' | 'series';
+    post_type: 'none' | 'prefix' | 'series' | 'both';
     markdown_status: string | null;
   };
   actions?: {
@@ -91,6 +95,9 @@ type ContentResponse = {
     published_status: 'draft' | 'published';
     is_comment: boolean;
     is_pin: boolean;
+    draw_type: 'first_come' | 'random' | null;
+    draw_limit: number | null;
+    draw_ends_at: string | null;
   };
   prefixes?: PrefixRow[];
   series?: SeriesRow | null;
@@ -210,6 +217,20 @@ type PollPayload = {
   }[];
 };
 
+type DrawType = '' | 'first_come' | 'random';
+
+type DrawState = {
+  type: DrawType;
+  limit: number;
+  endsAt: Date | null;
+};
+
+type DrawPayload = {
+  drawType: 'first_come' | 'random' | null;
+  drawLimit: number | null;
+  drawEndsAt: string | null;
+};
+
 type AccessDialogType = 'login' | 'join' | 'pending' | null;
 
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
@@ -246,6 +267,14 @@ function createEmptyPoll(): PollState {
     relativeDays: 0,
     relativeTime: createRelativeTimeValue(0, 1),
     options: Array.from({ length: MAX_POLL_OPTION_COUNT }, () => createEmptyPollOption()),
+  };
+}
+
+function createEmptyDraw(): DrawState {
+  return {
+    type: '',
+    limit: 1,
+    endsAt: null,
   };
 }
 
@@ -411,6 +440,13 @@ function clonePollState(poll: PollState): PollState {
   };
 }
 
+function cloneDrawState(draw: DrawState): DrawState {
+  return {
+    ...draw,
+    endsAt: draw.endsAt ? new Date(draw.endsAt) : null,
+  };
+}
+
 function getPollPreviewUrls(poll: PollState) {
   return poll.options.map((option) => option.imagePreviewUrl).filter((previewUrl) => previewUrl.startsWith('blob:'));
 }
@@ -529,6 +565,63 @@ function createPollStateFromPayload(payload: PollPayload | null | undefined) {
   return nextPoll;
 }
 
+function createDrawStateFromContent(content: ContentResponse['content']): DrawState {
+  if (!content?.draw_type) {
+    return createEmptyDraw();
+  }
+
+  return {
+    type: content.draw_type,
+    limit: typeof content.draw_limit === 'number' && Number.isFinite(content.draw_limit) ? content.draw_limit : 1,
+    endsAt: content.draw_ends_at ? parseDateTimeValue(content.draw_ends_at) : null,
+  };
+}
+
+function buildDrawPayload(draw: DrawState): DrawPayload {
+  if (!draw.type) {
+    return {
+      drawType: null,
+      drawLimit: null,
+      drawEndsAt: null,
+    };
+  }
+
+  const limit = Number.isFinite(draw.limit) ? Math.floor(draw.limit) : 0;
+
+  if (limit < 1) {
+    throw new Error('당첨 인원수를 입력해주세요.');
+  }
+
+  if (draw.type === 'first_come') {
+    return {
+      drawType: 'first_come',
+      drawLimit: limit,
+      drawEndsAt: null,
+    };
+  }
+
+  if (!draw.endsAt || Number.isNaN(draw.endsAt.getTime())) {
+    throw new Error('추첨 마감 일시를 입력해주세요.');
+  }
+
+  const normalizedEndsAt = new Date(draw.endsAt);
+  normalizedEndsAt.setSeconds(0, 0);
+
+  const minimumEndsAt = new Date();
+  minimumEndsAt.setSeconds(0, 0);
+  minimumEndsAt.setMinutes(minimumEndsAt.getMinutes() + 1);
+
+  if (normalizedEndsAt.getTime() < minimumEndsAt.getTime()) {
+    throw new Error('추첨 마감 일시는 최소 1분 뒤로 설정해주세요.');
+  }
+
+  return {
+    drawType: 'random',
+    drawLimit: limit,
+    drawEndsAt: normalizedEndsAt.toISOString(),
+  };
+}
+
 function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
   if (boardType === 'gallery') {
     return <CollectionsOutlinedIcon sx={{ width: 16, height: 16 }} />;
@@ -564,7 +657,7 @@ export default function Opt({ isCommunity }: Props) {
   const [alertMessage, setAlertMessage] = useState('');
   const [board, setBoard] = useState<BoardItem | null>(null);
   const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>('none');
   const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
@@ -603,6 +696,11 @@ export default function Opt({ isCommunity }: Props) {
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
   const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogMessage, setPollDialogMessage] = useState('');
+  const [isDrawEnabled, setIsDrawEnabled] = useState(false);
+  const [draw, setDraw] = useState<DrawState>(() => createEmptyDraw());
+  const [drawDialogOpen, setDrawDialogOpen] = useState(false);
+  const [drawDialog, setDrawDialog] = useState<DrawState>(() => createEmptyDraw());
+  const [drawDialogMessage, setDrawDialogMessage] = useState('');
   const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>('draft');
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
@@ -665,7 +763,7 @@ export default function Opt({ isCommunity }: Props) {
       onCancel: () => undefined,
       onConfirm: () => undefined,
     };
-  }, [accessDialogType, router, siteName]);
+  }, [accessDialogType, router, siteName, boardName]);
 
   useEffect(() => {
     return () => {
@@ -753,6 +851,11 @@ export default function Opt({ isCommunity }: Props) {
         setPoll(nextPoll);
         setPollDialog(clonePollState(nextPoll));
         setIsPollEnabled(Boolean(result.content.poll));
+
+        const nextDraw = createDrawStateFromContent(result.content);
+        setDraw(nextDraw);
+        setDrawDialog(cloneDrawState(nextDraw));
+        setIsDrawEnabled(Boolean(result.content.draw_type));
 
         if (Array.isArray(result.prefixes)) {
           setPrefixList(result.prefixes);
@@ -850,7 +953,7 @@ export default function Opt({ isCommunity }: Props) {
           setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
         }
 
-        if (nextPostType === 'series') {
+        if (nextPostType === 'series' || nextPostType === 'both') {
           const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
             method: 'GET',
             credentials: 'include',
@@ -886,7 +989,7 @@ export default function Opt({ isCommunity }: Props) {
         return;
       }
 
-      if (postType === 'series') {
+      if (postType === 'series' || postType === 'both') {
         const width = seriesSelectReference.current?.getBoundingClientRect().width ?? 0;
         setSubjectPaddingLeft(Math.ceil(width) + 12);
         return;
@@ -1188,6 +1291,42 @@ export default function Opt({ isCommunity }: Props) {
     setIsPollEnabled(false);
     setPollDialogMessage('');
     setPollDialogOpen(false);
+  }
+
+  function openDrawDialog() {
+    setDrawDialog(cloneDrawState(draw));
+    setDrawDialogMessage('');
+    setDrawDialogOpen(true);
+  }
+
+  function closeDrawDialog() {
+    setDrawDialog(cloneDrawState(draw));
+    setDrawDialogMessage('');
+    setDrawDialogOpen(false);
+  }
+
+  function applyDrawDialog() {
+    try {
+      buildDrawPayload(drawDialog);
+      setDraw(cloneDrawState(drawDialog));
+      setIsDrawEnabled(true);
+      setDrawDialogMessage('');
+      setDrawDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDrawDialogMessage(unknownError.message || '추첨 이벤트 설정을 확인해주세요.');
+      } else {
+        setDrawDialogMessage('추첨 이벤트 설정을 확인해주세요.');
+      }
+    }
+  }
+
+  function removeDraw() {
+    setDraw(createEmptyDraw());
+    setDrawDialog(createEmptyDraw());
+    setIsDrawEnabled(false);
+    setDrawDialogMessage('');
+    setDrawDialogOpen(false);
   }
 
   function updatePollDialogOptionLabel(index: number, value: string) {
@@ -1570,6 +1709,18 @@ export default function Opt({ isCommunity }: Props) {
     };
   }
 
+  function buildDrawPayloadIfNeeded() {
+    if (!isDrawEnabled) {
+      return {
+        drawType: null,
+        drawLimit: null,
+        drawEndsAt: null,
+      };
+    }
+
+    return buildDrawPayload(draw);
+  }
+
   async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -1597,6 +1748,7 @@ export default function Opt({ isCommunity }: Props) {
       const uploadedImages = await uploadGalleryImagesIfNeeded();
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
       const pollPayload = await buildPollPayloadIfNeeded();
+      const drawPayload = buildDrawPayloadIfNeeded();
 
       const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
         method: 'PATCH',
@@ -1623,6 +1775,9 @@ export default function Opt({ isCommunity }: Props) {
           prefixId: selectedPrefixId || null,
           isComment,
           isPin: canPinPost ? isPin : false,
+          drawType: isBasicBoard ? drawPayload.drawType : null,
+          drawLimit: isBasicBoard ? drawPayload.drawLimit : null,
+          drawEndsAt: isBasicBoard ? drawPayload.drawEndsAt : null,
         }),
       });
 
@@ -1735,7 +1890,7 @@ export default function Opt({ isCommunity }: Props) {
                         </div>
                       ) : null}
 
-                      {postType === 'series' ? (
+                      {postType === 'series' || postType === 'both' ? (
                         <div ref={seriesSelectReference} className={styles['form-select']}>
                           <Select
                             displayEmpty
@@ -1844,9 +1999,26 @@ export default function Opt({ isCommunity }: Props) {
 
                   {isBasicBoard ? (
                     <div className={styles.image}>
-                      <button type="button" onClick={openPollDialog}>
-                        <HowToVoteOutlinedIcon />
-                        <span>{isPollEnabled ? '투표 수정' : '투표'}</span>
+                      <button
+                        type="button"
+                        onClick={openPollDialog}
+                        className={isPollEnabled ? styles.enabled : undefined}
+                      >
+                        {isPollEnabled ? <HowToVoteRoundedIcon /> : <HowToVoteOutlinedIcon />}
+                        <span>투표</span>
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {isBasicBoard ? (
+                    <div className={styles.image}>
+                      <button
+                        type="button"
+                        onClick={openDrawDialog}
+                        className={isDrawEnabled ? styles.enabled : undefined}
+                      >
+                        {isDrawEnabled ? <Inventory2RoundedIcon /> : <Inventory2OutlinedIcon />}
+                        <span>추첨 이벤트</span>
                       </button>
                     </div>
                   ) : null}
@@ -2092,12 +2264,12 @@ export default function Opt({ isCommunity }: Props) {
           <div className={styles['form-group']}>
             <div className={styles['form-control']}>
               <input
-                id="poll-question"
                 type="text"
                 value={pollDialog.question}
                 placeholder="투표 질문을 입력해주세요"
                 onChange={(event) => {
                   const nextQuestion = event.currentTarget.value;
+
                   setPollDialog((previousPoll) => ({
                     ...previousPoll,
                     question: nextQuestion,
@@ -2231,7 +2403,7 @@ export default function Opt({ isCommunity }: Props) {
           ) : null}
 
           {pollDialog.endType === 'relative' ? (
-            <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']}`}>
+            <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
               <Select
                 value={String(pollDialog.relativeDays)}
                 onChange={(event: SelectChangeEvent) =>
@@ -2273,28 +2445,115 @@ export default function Opt({ isCommunity }: Props) {
             </div>
           ) : null}
         </DialogContent>
-        <DialogActions className={isPollEnabled ? 'complex-buttons' : undefined}>
+        <DialogActions>
           {isPollEnabled ? (
+            <button type="button" onClick={removePoll} className="delete-button">
+              투표 삭제
+            </button>
+          ) : null}
+          <button type="button" onClick={closePollDialog} className="cancel-button">
+            취소
+          </button>
+          <button type="button" onClick={applyPollDialog}>
+            투표 설정
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={drawDialogOpen}
+        onClose={closeDrawDialog}
+        fullWidth={true}
+        maxWidth="sm"
+        className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
+      >
+        <DialogTitle>추첨 이벤트 설정</DialogTitle>
+        <DialogContent className={styles['draw-dialog-content']}>
+          {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
+
+          <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
+            <FormLabel id="draw-type-label">추첨 방식</FormLabel>
+            <RadioGroup
+              row
+              className="vh-radio"
+              aria-labelledby="draw-type-label"
+              value={drawDialog.type}
+              onChange={(event) =>
+                setDrawDialog((previousDraw) => ({
+                  ...previousDraw,
+                  type: event.target.value as DrawType,
+                  endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
+                }))
+              }
+            >
+              <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
+              <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
+            </RadioGroup>
+          </FormControl>
+
+          <div className={`${styles['form-group']} vh-form-control`}>
+            <NumberField
+              label="당첨 인원수"
+              min={1}
+              value={drawDialog.limit}
+              size="small"
+              onValueChange={(value) =>
+                setDrawDialog((previousDraw) => ({
+                  ...previousDraw,
+                  limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
+                }))
+              }
+            />
+          </div>
+
+          {drawDialog.type === 'random' ? (
+            <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <DateTimePicker
+                  value={drawDialog.endsAt}
+                  onChange={(value) =>
+                    setDrawDialog((previousDraw) => ({
+                      ...previousDraw,
+                      endsAt: value,
+                    }))
+                  }
+                  ampm={false}
+                  views={['year', 'month', 'day', 'hours', 'minutes']}
+                  format="yyyy년 MM월 dd일 hh시 m분"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: 'small',
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+              <span>에 마감</span>
+            </div>
+          ) : null}
+        </DialogContent>
+        <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
+          {isDrawEnabled ? (
             <>
-              <button type="button" onClick={removePoll} className="delete-button">
-                투표 삭제
+              <button type="button" onClick={removeDraw} className="delete-button">
+                추첨 이벤트 삭제
               </button>
               <div className="complex-button">
-                <button type="button" onClick={closePollDialog} className="cancel-button">
+                <button type="button" onClick={closeDrawDialog} className="cancel-button">
                   취소
                 </button>
-                <button type="button" onClick={applyPollDialog}>
-                  투표 설정
+                <button type="button" onClick={applyDrawDialog}>
+                  추첨 이벤트 설정
                 </button>
               </div>
             </>
           ) : (
             <>
-              <button type="button" onClick={closePollDialog} className="cancel-button">
+              <button type="button" onClick={closeDrawDialog} className="cancel-button">
                 취소
               </button>
-              <button type="button" onClick={applyPollDialog}>
-                투표 설정
+              <button type="button" onClick={applyDrawDialog}>
+                추첨 이벤트 설정
               </button>
             </>
           )}

@@ -307,6 +307,9 @@
             border-radius: ds.rem(7)
             background-color: transparent
 
+            &.enabled
+              color: ds.$hex-accent!important
+
             html[data-theme="yellow-light"] &
               color: ds.$hex-primary
 
@@ -617,6 +620,35 @@
             font-family: var(--blog-description-font-family)
             font-weight: 800
             font-variation-settings: "wght" 800
+
+  .content-draw
+    display: flex
+    flex-direction: column
+    gap: ds.rem(7)
+
+    p, th, td
+      font-size: ds.rem(14)
+
+    .warning
+      @include ds.fw(pre, 600)
+      color: ds.$hex-warning
+
+    .info
+      @include ds.fw(pre, 600)
+      color: ds.$hex-accent
+
+    td
+      padding: ds.rem(12) 0
+
+      div
+        display: flex
+        align-items: center
+        gap: ds.rem(7)
+        height: ds.rem(27)
+
+        > div, img
+          width: ds.rem(27)
+          height: ds.rem(27)
 
   .content-images
     display: grid
@@ -1337,6 +1369,83 @@
   .poll-relative-end
     .poll-relative-time-picker
       width: ds.rem(150)
+
+.draw-dialog
+  .draw-dialog-content
+    display: flex
+    flex-direction: column
+    gap: ds.rem(7)
+
+  .form-control
+    display: flex
+    flex-direction: row
+    justify-content: space-between
+    align-items: center
+    width: 100%
+
+    input
+      width: 100%
+      height: ds.rem(37)
+      border: 0
+      border-radius: ds.rem(7)
+      padding: 0 ds.rem(17)
+      @include ds.fw(pre, 700)
+
+      html[data-site-type='blog'] &
+        font-family: var(--blog-description-font-family)
+        font-weight: 700
+        font-variation-settings: "wght" 700
+
+      html[data-theme="yellow-light"] &
+        background-color: rgba(ds.$rgb-accent, .1)
+        color: ds.$hex-accent
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-bright, .1)
+        color: ds.$hex-bright
+
+  .form-group
+    display: flex
+    flex-direction: row
+
+    > div
+      display: flex
+      flex-direction: row
+      width: 50%
+
+      > div
+        @include ds.col
+        border: 0
+
+    label
+      display: inline-flex
+      align-items: center
+      margin-right: 0
+      margin-left: 0
+      width: ds.rem(117)
+
+  .draw-end-at
+    flex-direction: row
+
+    > label
+      display: flex
+      align-items: center
+      width: ds.rem(117)
+      font-size: ds.rem(14)
+
+  .draw-setting-end
+    display: flex
+    flex-direction: row
+    gap: ds.rem(7)
+    padding-left: ds.rem(117)
+
+    > span
+      display: flex
+      align-items: center
+
+  .draw-absolute-end
+    > div
+      width: ds.rem(290)
 
 .gallery-viewer-dialog
   div[aria-hidden="true"]

@@ -8,6 +8,8 @@ type RouteContext = {
   }>;
 };
 
+type DrawType = 'first_come' | 'random' | null;
+
 type PollOptionImageRow = {
   path: string;
   url: string;
@@ -57,6 +59,9 @@ type RequestBody = {
   prefixId?: string | null;
   isComment?: boolean | null;
   isPin?: boolean | null;
+  drawType?: 'first_come' | 'random' | null;
+  drawLimit?: number | null;
+  drawEndsAt?: string | null;
 };
 
 function isValidCategoryKey(value: string) {
@@ -105,6 +110,44 @@ function isValidSeriesKey(value: string) {
   }
 
   return true;
+}
+
+function normalizeDrawType(value: unknown): DrawType {
+  if (value === 'first_come' || value === 'random') {
+    return value;
+  }
+
+  return null;
+}
+
+function normalizeDrawLimit(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const limit = Math.floor(value);
+
+  return limit > 0 ? limit : null;
+}
+
+function normalizeDrawEndsAt(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const date = new Date(normalizedValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
 }
 
 function normalizeHashtags(value: unknown) {
@@ -392,6 +435,9 @@ export async function POST(request: Request, context: RouteContext) {
     const images = normalizeImages(requestBody.images);
     const requestedIsComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : true;
     const isPin = requestBody.isPin === true;
+    const requestedDrawType = normalizeDrawType(requestBody.drawType);
+    const requestedDrawLimit = normalizeDrawLimit(requestBody.drawLimit);
+    const requestedDrawEndsAt = normalizeDrawEndsAt(requestBody.drawEndsAt);
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -479,6 +525,38 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (board.data.board_type === 'page') {
       return Response.json({ error: '페이지 게시판에는 글을 작성할 수 없습니다.' }, { status: 403 });
+    }
+
+    let resolvedDrawType: DrawType = null;
+    let resolvedDrawLimit: number | null = null;
+    let resolvedDrawEndsAt: string | null = null;
+
+    if (requestedDrawType) {
+      if (rhizomeData.site_type !== 'community' || board.data.board_type !== 'basic') {
+        return Response.json(
+          { error: '커뮤니티 기본 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' },
+          { status: 400 },
+        );
+      }
+
+      if (!requestedDrawLimit) {
+        return Response.json({ error: '당첨 인원수를 입력해주세요.' }, { status: 400 });
+      }
+
+      resolvedDrawType = requestedDrawType;
+      resolvedDrawLimit = requestedDrawLimit;
+
+      if (requestedDrawType === 'random') {
+        if (!requestedDrawEndsAt) {
+          return Response.json({ error: '추첨 마감 일시를 입력해주세요.' }, { status: 400 });
+        }
+
+        if (new Date(requestedDrawEndsAt).getTime() <= Date.now()) {
+          return Response.json({ error: '추첨 마감 일시는 현재보다 이후로 설정해주세요.' }, { status: 400 });
+        }
+
+        resolvedDrawEndsAt = requestedDrawEndsAt;
+      }
     }
 
     let resolvedIsComment = requestedIsComment;
@@ -726,6 +804,9 @@ export async function POST(request: Request, context: RouteContext) {
         is_comment: resolvedIsComment,
         post_count: 1,
         is_pin: isPin,
+        draw_type: resolvedDrawType,
+        draw_limit: resolvedDrawLimit,
+        draw_ends_at: resolvedDrawEndsAt,
       })
       .select('id, slug')
       .maybeSingle();

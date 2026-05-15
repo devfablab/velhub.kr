@@ -9,6 +9,8 @@ type RouteContext = {
   }>;
 };
 
+type DrawType = 'first_come' | 'random' | null;
+
 type PollOptionImageRow = {
   path: string;
   url: string;
@@ -58,6 +60,9 @@ type RequestBody = {
   prefixId?: string | null;
   isComment?: boolean | null;
   isPin?: boolean | null;
+  drawType?: 'first_come' | 'random' | null;
+  drawLimit?: number | null;
+  drawEndsAt?: string | null;
 };
 
 function isNumericSlug(value: string) {
@@ -110,6 +115,44 @@ function isValidSeriesKey(value: string) {
   }
 
   return true;
+}
+
+function normalizeDrawType(value: unknown): DrawType {
+  if (value === 'first_come' || value === 'random') {
+    return value;
+  }
+
+  return null;
+}
+
+function normalizeDrawLimit(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const limit = Math.floor(value);
+
+  return limit > 0 ? limit : null;
+}
+
+function normalizeDrawEndsAt(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const date = new Date(normalizedValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
 }
 
 function normalizeHashtags(value: unknown) {
@@ -434,6 +477,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     const images = normalizeImages(requestBody.images);
     const requestedIsComment = requestBody.isComment;
     const isPin = requestBody.isPin === true;
+    const requestedDrawType = normalizeDrawType(requestBody.drawType);
+    const requestedDrawLimit = normalizeDrawLimit(requestBody.drawLimit);
+    const requestedDrawEndsAt = normalizeDrawEndsAt(requestBody.drawEndsAt);
     const thumbnailWidth =
       typeof requestBody.thumbnailWidth === 'number' && Number.isFinite(requestBody.thumbnailWidth)
         ? Math.floor(requestBody.thumbnailWidth)
@@ -497,7 +543,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_comment',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_comment, draw_type',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -515,6 +561,66 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!isStaff && !isAuthor) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    let resolvedDrawType: DrawType = null;
+    let resolvedDrawLimit: number | null = null;
+    let resolvedDrawEndsAt: string | null = null;
+
+    if (requestedDrawType) {
+      if (rhizomeData.site_type !== 'community' || board.data.board_type !== 'basic') {
+        return Response.json(
+          { error: '커뮤니티 기본 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' },
+          { status: 400 },
+        );
+      }
+
+      if (!requestedDrawLimit) {
+        return Response.json({ error: '당첨 인원수를 입력해주세요.' }, { status: 400 });
+      }
+
+      const existingDraws = await supabaseAdmin
+        .from('post_draws')
+        .select('id')
+        .eq('post_id', currentPost.data.id)
+        .limit(1);
+
+      if (existingDraws.error) {
+        return Response.json({ error: '추첨 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      if ((existingDraws.data ?? []).length > 0) {
+        return Response.json({ error: '당첨자가 확정된 추첨 이벤트는 수정할 수 없습니다.' }, { status: 400 });
+      }
+
+      resolvedDrawType = requestedDrawType;
+      resolvedDrawLimit = requestedDrawLimit;
+
+      if (requestedDrawType === 'random') {
+        if (!requestedDrawEndsAt) {
+          return Response.json({ error: '추첨 마감 일시를 입력해주세요.' }, { status: 400 });
+        }
+
+        if (new Date(requestedDrawEndsAt).getTime() <= Date.now()) {
+          return Response.json({ error: '추첨 마감 일시는 현재보다 이후로 설정해주세요.' }, { status: 400 });
+        }
+
+        resolvedDrawEndsAt = requestedDrawEndsAt;
+      }
+    } else if (currentPost.data.draw_type) {
+      const existingDraws = await supabaseAdmin
+        .from('post_draws')
+        .select('id')
+        .eq('post_id', currentPost.data.id)
+        .limit(1);
+
+      if (existingDraws.error) {
+        return Response.json({ error: '추첨 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      if ((existingDraws.data ?? []).length > 0) {
+        return Response.json({ error: '당첨자가 확정된 추첨 이벤트는 해제할 수 없습니다.' }, { status: 400 });
+      }
     }
 
     let resolvedIsComment =
@@ -777,6 +883,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       edited_at?: string | null;
       is_comment: boolean;
       is_pin: boolean;
+      draw_type: DrawType;
+      draw_limit: number | null;
+      draw_ends_at: string | null;
     } = {
       subject: finalSubject || null,
       summary: finalSummary,
@@ -798,6 +907,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       published_status: nextPublishedStatus,
       is_comment: resolvedIsComment,
       is_pin: isPin,
+      draw_type: resolvedDrawType,
+      draw_limit: resolvedDrawLimit,
+      draw_ends_at: resolvedDrawEndsAt,
     };
 
     if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {

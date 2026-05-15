@@ -116,6 +116,8 @@ type PollChoice = {
   label: string;
 };
 
+type DrawType = 'first_come' | 'random' | null;
+
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
 const MANAGER_ICON_BUCKET = 'manager_icon';
@@ -128,9 +130,17 @@ function isExternalUrl(value: string) {
   return value.startsWith('http://') || value.startsWith('https://');
 }
 
+function isSupabaseStorageValue(value: string | null | undefined) {
+  return Boolean(value && value.startsWith('supabase:'));
+}
+
 function getStoragePath(value: string | null | undefined) {
   if (!value) {
     return '';
+  }
+
+  if (isSupabaseStorageValue(value)) {
+    return value.replace('supabase:', '').trim();
   }
 
   return value.trim();
@@ -490,7 +500,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
 
   const postQuery = supabaseAdmin
     .from('posts')
-    .select('id, user_id, is_closed, published_status, is_comment, poll')
+    .select('id, user_id, is_closed, published_status, is_comment, poll, draw_type, draw_limit, draw_ends_at')
     .eq('site_id', rhizome.data.id)
     .eq('board_id', board.data.id);
 
@@ -516,10 +526,85 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
       isPublished: post.data.published_status === 'published',
       isCommentEnabled: post.data.is_comment !== false,
       poll: isPollRow(post.data.poll) ? post.data.poll : null,
+      drawType: (post.data.draw_type === 'first_come' || post.data.draw_type === 'random'
+        ? post.data.draw_type
+        : null) as DrawType,
+      drawLimit:
+        typeof post.data.draw_limit === 'number' && Number.isFinite(post.data.draw_limit)
+          ? Math.floor(post.data.draw_limit)
+          : null,
+      drawEndsAt: typeof post.data.draw_ends_at === 'string' ? post.data.draw_ends_at : null,
       visibilityType: rhizome.data.visibility_type as string,
       isShutdown: rhizome.data.is_shutdown === true,
     },
   };
+}
+
+async function insertFirstComeDrawIfNeeded({
+  siteId,
+  boardId,
+  postId,
+  commentId,
+  userId,
+  drawType,
+  drawLimit,
+}: {
+  siteId: string;
+  boardId: string;
+  postId: string;
+  commentId: string;
+  userId: string;
+  drawType: DrawType;
+  drawLimit: number | null;
+}) {
+  if (drawType !== 'first_come' || !drawLimit) {
+    return;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const existingDraw = await supabaseAdmin
+    .from('post_draws')
+    .select('id')
+    .eq('post_id', postId)
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (existingDraw.error) {
+    throw new Error('추첨 정보를 확인하지 못했습니다.');
+  }
+
+  if ((existingDraw.data ?? []).length > 0) {
+    return;
+  }
+
+  const drawCount = await supabaseAdmin
+    .from('post_draws')
+    .select('id', { count: 'exact', head: true })
+    .eq('post_id', postId);
+
+  if (drawCount.error) {
+    throw new Error('추첨 정보를 확인하지 못했습니다.');
+  }
+
+  const nextOrder = (drawCount.count ?? 0) + 1;
+
+  if (nextOrder > drawLimit) {
+    return;
+  }
+
+  const insertDraw = await supabaseAdmin.from('post_draws').insert({
+    post_id: postId,
+    site_id: siteId,
+    board_id: boardId,
+    comment_id: commentId,
+    user_id: userId,
+    draw_order: nextOrder,
+  });
+
+  if (insertDraw.error) {
+    throw new Error('추첨 정보를 저장하지 못했습니다.');
+  }
 }
 
 async function buildCommentItem({
@@ -872,6 +957,16 @@ export async function POST(request: Request, context: RouteContext) {
     if (insertResult.error || !insertResult.data) {
       return Response.json({ error: '댓글 작성에 실패했습니다.' }, { status: 500 });
     }
+
+    await insertFirstComeDrawIfNeeded({
+      siteId: target.data.siteId,
+      boardId: target.data.boardId,
+      postId: target.data.postId,
+      commentId: insertResult.data.id,
+      userId: session.authUserId,
+      drawType: target.data.drawType,
+      drawLimit: target.data.drawLimit,
+    });
 
     const canManageComment = await getCommentAccess(
       target.data.siteId,

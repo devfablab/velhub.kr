@@ -55,6 +55,13 @@ export function formatTimeAgo(value: DateInput): string {
 
   const diffInHours = Math.floor(diffInSeconds / 3600);
 
+  // 1분 ~ 60분 사이
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}분 전`;
+  }
+
   // 24시간 미만: x시간 전
   if (diffInHours < 24) {
     return `${diffInHours}시간 전`;
