@@ -46,6 +46,7 @@ type ContentRow = {
   edited_at: string;
   created_at: string;
   idx: number;
+  series_idx: number | null;
   board_id: string;
   site_id: string;
   user_id: string;
@@ -580,7 +581,7 @@ export default function Opt() {
                   </TableCell>
 
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {content.is_pin ? <PushPinIcon fontSize="small" /> : content.idx}
+                    {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
                   </TableCell>
 
                   <TableCell>

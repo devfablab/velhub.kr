@@ -11,7 +11,17 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, useTheme } from '@mui/material';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  useTheme,
+} from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -148,6 +158,7 @@ type PostContent = {
   poll: PollData | null;
   hashtags: unknown;
   idx: number;
+  series_idx: number | null;
   user_id: string;
   created_at: string;
   is_closed: boolean;
@@ -176,10 +187,19 @@ type SeriesItem = {
   is_completed: boolean;
 };
 
+type SeriesContentItem = {
+  id: string;
+  slug: string;
+  subject: string;
+  series_idx: number;
+  href: string;
+};
+
 type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
+  seriesContents?: SeriesContentItem[];
   previousPost?: AdjacentPost | null;
   nextPost?: AdjacentPost | null;
   selectedCategory?: SelectedCategory | null;
@@ -301,6 +321,7 @@ export default function Opt({ isCommunity }: Props) {
   const [board, setBoard] = useState<BoardInfo | null>(null);
   const [content, setContent] = useState<PostContent | null>(null);
   const [series, setSeries] = useState<SeriesItem | null>(null);
+  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>([]);
   const [previousPost, setPreviousPost] = useState<AdjacentPost | null>(null);
   const [nextPost, setNextPost] = useState<AdjacentPost | null>(null);
   const [isAuthor, setIsAuthor] = useState(false);
@@ -411,6 +432,7 @@ export default function Opt({ isCommunity }: Props) {
         setBoard(result.board ?? null);
         setContent(result.content ?? null);
         setSeries(result.series ?? null);
+        setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
         setPreviousPost(result.previousPost ?? null);
         setNextPost(result.nextPost ?? null);
         setIsAuthor(result.isAuthor === true);
@@ -554,6 +576,27 @@ export default function Opt({ isCommunity }: Props) {
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
   const listHref = categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
+  const seriesList =
+    series && seriesContents.length > 0 ? (
+      <div className="paper paper-p0">
+        <Accordion disableGutters className={styles['vh-accordion']}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <strong>{series.series_label}</strong>
+          </AccordionSummary>
+          <AccordionDetails>
+            <ol>
+              {seriesContents.map((seriesContent) => (
+                <li key={seriesContent.id}>
+                  <Anchor href={seriesContent.href}>
+                    {seriesContent.series_idx}. {seriesContent.subject}
+                  </Anchor>
+                </li>
+              ))}
+            </ol>
+          </AccordionDetails>
+        </Accordion>
+      </div>
+    ) : null;
 
   return (
     <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
@@ -1005,6 +1048,7 @@ export default function Opt({ isCommunity }: Props) {
             ) : null}
           </div>
         ) : null}
+        {seriesList}
       </article>
       {content.published_status === 'published' ? (
         isBlogBoard ? (

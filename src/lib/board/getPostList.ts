@@ -37,6 +37,7 @@ type RawPostRow = {
   edited_at: string;
   created_at: string;
   idx: number;
+  series_idx: number | null;
   board_id: string;
   site_id: string;
   user_id: string;
@@ -73,6 +74,7 @@ export type PostListItem = {
   edited_at: string;
   created_at: string;
   idx: number;
+  series_idx: number | null;
   board_id: string;
   site_id: string;
   user_id: string;
@@ -111,7 +113,7 @@ export type GetPostListResult = {
 };
 
 const POST_SELECT =
-  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id';
+  'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, created_at, idx, series_idx, board_id, site_id, user_id, is_closed, closed_by, closed_at, closed_message, prefix_id, series_id, poll, published_at, published_status, post_count, is_pin, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id';
 
 function stripHtml(value: string | null) {
   const normalizedValue = normalizeText(value);
@@ -476,6 +478,7 @@ export async function getPostList({
       edited_at: post.edited_at,
       created_at: post.created_at,
       idx: post.idx,
+      series_idx: post.series_idx,
       board_id: post.board_id,
       site_id: post.site_id,
       user_id: post.user_id,

@@ -66,6 +66,7 @@ type PostRow = {
   thumbnail_width: number | null;
   thumbnail_height: number | null;
   idx: number;
+  series_idx: number | null;
   user_id: string;
   site_id: string;
   board_id: string;

@@ -32,6 +32,7 @@ type PostImageRow = {
 type PostRow = {
   id: string;
   idx: number;
+  series_idx: number | null;
   slug: number | string;
   subject: string | null;
   summary: string | null;
@@ -263,7 +264,7 @@ async function getSeriesFilteredPostList({
   let postsQuery = supabaseAdmin
     .from('posts')
     .select(
-      'id, idx, slug, subject, summary, content_simple, created_at, user_id, post_count, is_pin, board_id, prefix_id, series_id, poll, published_at, published_status, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id',
+      'id, idx, series_idx, slug, subject, summary, content_simple, created_at, user_id, post_count, is_pin, board_id, prefix_id, series_id, poll, published_at, published_status, thumbnail_image, thumbnail_width, thumbnail_height, images, youtube_id',
       { count: 'exact' },
     )
     .eq('site_id', siteId)
@@ -289,8 +290,9 @@ async function getSeriesFilteredPostList({
   if (sort === 'post_count') {
     postsQuery = postsQuery.order('post_count', { ascending: false });
   } else {
-    postsQuery = postsQuery.order('published_at', { ascending: false, nullsFirst: false }).order('idx', {
-      ascending: false,
+    postsQuery = postsQuery.order('series_idx', { ascending: true, nullsFirst: false }).order('published_at', {
+      ascending: true,
+      nullsFirst: false,
     });
   }
 
@@ -352,6 +354,7 @@ async function getSeriesFilteredPostList({
     return {
       id: post.id,
       idx: post.idx,
+      series_idx: post.series_idx,
       slug: String(post.slug),
       subject,
       summary: normalizeText(post.summary),

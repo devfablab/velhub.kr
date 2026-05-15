@@ -1,6 +1,7 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 
 type RouteContext = {
   params: Promise<{
@@ -772,6 +773,14 @@ export async function POST(request: Request, context: RouteContext) {
     const nextIdx = typeof lastPost.data?.idx === 'number' ? Number(lastPost.data.idx) + 1 : 1;
     const nextSlug = typeof lastPost.data?.slug === 'number' ? Number(lastPost.data.slug) + 1 : Date.now();
     const nowIsoString = new Date().toISOString();
+    const seriesIdx =
+      seriesId && action === 'publish'
+        ? await getNextSeriesIdx({
+            siteId: rhizomeData.id,
+            boardId: board.data.id,
+            seriesId,
+          })
+        : null;
 
     const insertPost = await supabaseAdmin
       .from('posts')
@@ -798,6 +807,7 @@ export async function POST(request: Request, context: RouteContext) {
         is_closed: false,
         categories: categoryIds,
         series_id: seriesId,
+        series_idx: seriesIdx,
         prefix_id: resolvedPrefixId,
         published_status: action === 'draft' ? 'draft' : 'published',
         published_at: action === 'publish' ? nowIsoString : null,

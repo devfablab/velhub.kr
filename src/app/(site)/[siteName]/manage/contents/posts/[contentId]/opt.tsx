@@ -71,6 +71,7 @@ type PostResponse = {
     edited_at: string;
     created_at: string;
     idx: number;
+    series_idx: number | null;
     board_id: string;
     site_id: string;
     user_id: string;

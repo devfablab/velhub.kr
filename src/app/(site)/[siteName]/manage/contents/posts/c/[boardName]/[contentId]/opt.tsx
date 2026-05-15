@@ -68,6 +68,7 @@ type ContentResponse = {
     poll?: PollRow | null;
     hashtags?: string[] | null;
     idx?: number | null;
+    series_idx?: number | null;
     created_at: string;
     author_name: string;
     is_closed?: boolean;
@@ -406,7 +407,12 @@ export default function Opt() {
           ) : null}
           {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
 
-          {typeof content.idx === 'number' ? (
+          {typeof content.series_idx === 'number' ? (
+            <Stack spacing={0.75}>
+              <Typography variant="subtitle2">연재 번호</Typography>
+              <Typography variant="body2">{content.series_idx}</Typography>
+            </Stack>
+          ) : typeof content.idx === 'number' ? (
             <Stack spacing={0.75}>
               <Typography variant="subtitle2">번호</Typography>
               <Typography variant="body2">{content.idx}</Typography>

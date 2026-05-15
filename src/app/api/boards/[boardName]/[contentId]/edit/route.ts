@@ -1,6 +1,7 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 
 type RouteContext = {
   params: Promise<{
@@ -543,7 +544,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, prefix_id, published_status, poll, is_comment, draw_type',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, poll, is_comment, draw_type',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -858,6 +859,23 @@ export async function PATCH(request: Request, context: RouteContext) {
     const nowIsoString = new Date().toISOString();
     const nextPublishedStatus =
       action === 'draft' ? 'draft' : currentPost.data.published_status === 'draft' ? 'published' : 'published';
+    const previousSeriesId = currentPost.data.series_id ?? null;
+    const shouldKeepCurrentSeriesIdx =
+      currentPost.data.is_closed === false &&
+      currentPost.data.published_status === 'published' &&
+      nextPublishedStatus === 'published' &&
+      previousSeriesId === seriesId &&
+      typeof currentPost.data.series_idx === 'number';
+    const nextSeriesIdx =
+      seriesId && nextPublishedStatus === 'published'
+        ? shouldKeepCurrentSeriesIdx
+          ? currentPost.data.series_idx
+          : await getNextSeriesIdx({
+              siteId: rhizomeData.id,
+              boardId: board.data.id,
+              seriesId,
+            })
+        : null;
 
     const updatePayload: {
       idx?: number;
@@ -877,6 +895,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       hashtags: string[];
       categories: string[];
       series_id: string | null;
+      series_idx: number | null;
       prefix_id: string | null;
       published_status: 'draft' | 'published';
       published_at?: string | null;
@@ -903,6 +922,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       hashtags,
       categories: categoryIds,
       series_id: seriesId,
+      series_idx: nextSeriesIdx,
       prefix_id: resolvedPrefixId,
       published_status: nextPublishedStatus,
       is_comment: resolvedIsComment,
@@ -947,7 +967,25 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
     }
 
+    if (
+      previousSeriesId &&
+      currentPost.data.published_status === 'published' &&
+      (previousSeriesId !== seriesId || nextPublishedStatus !== 'published')
+    ) {
+      await reorderSeriesIdx({
+        siteId: rhizomeData.id,
+        boardId: board.data.id,
+        seriesId: previousSeriesId,
+      });
+    }
+
     if (seriesId && nextPublishedStatus === 'published') {
+      await reorderSeriesIdx({
+        siteId: rhizomeData.id,
+        boardId: board.data.id,
+        seriesId,
+      });
+
       await supabaseAdmin
         .from('board_series')
         .update({

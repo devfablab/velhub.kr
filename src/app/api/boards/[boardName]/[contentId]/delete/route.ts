@@ -2,6 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 
 type RouteContext = {
   params: Promise<{
@@ -187,6 +188,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           closed_by: sessionClaims.userId,
           closed_at: new Date().toISOString(),
           closed_message: isStaff ? closedMessage : null,
+          series_idx: null,
         })
         .eq('id', post.data.id)
         .select('id, is_closed, closed_by, closed_at, closed_message')
@@ -194,6 +196,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       if (closeResult.error || !closeResult.data) {
         return Response.json({ error: '게시물 삭제에 실패했습니다.' }, { status: 500 });
+      }
+
+      if (post.data.series_id && post.data.published_status === 'published') {
+        await reorderSeriesIdx({
+          siteId: rhizome.data.id,
+          boardId: board.data.id,
+          seriesId: post.data.series_id,
+        });
       }
 
       return Response.json({
@@ -221,6 +231,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '이 게시물은 복구할 수 없습니다.' }, { status: 400 });
     }
 
+    const restoredSeriesIdx =
+      post.data.series_id && post.data.published_status === 'published'
+        ? await getNextSeriesIdx({
+            siteId: rhizome.data.id,
+            boardId: board.data.id,
+            seriesId: post.data.series_id,
+          })
+        : null;
+
     const restoreResult = await supabaseAdmin
       .from('posts')
       .update({
@@ -228,6 +247,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         closed_by: null,
         closed_at: null,
         closed_message: null,
+        series_idx: restoredSeriesIdx,
       })
       .eq('id', post.data.id)
       .select('id, is_closed, closed_by, closed_at, closed_message')
@@ -235,6 +255,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (restoreResult.error || !restoreResult.data) {
       return Response.json({ error: '게시물 복구에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (post.data.series_id && post.data.published_status === 'published') {
+      await reorderSeriesIdx({
+        siteId: rhizome.data.id,
+        boardId: board.data.id,
+        seriesId: post.data.series_id,
+      });
     }
 
     return Response.json({

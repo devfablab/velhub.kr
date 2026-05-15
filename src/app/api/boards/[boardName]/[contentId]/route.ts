@@ -814,7 +814,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id)
@@ -928,6 +928,13 @@ export async function GET(request: Request, context: RouteContext) {
       is_completed: boolean;
       user_id: string | null;
     } | null = null;
+    let seriesContents: Array<{
+      id: string;
+      slug: string;
+      subject: string;
+      series_idx: number;
+      href: string;
+    }> = [];
 
     if (post.data.series_id) {
       const seriesResult = await supabaseAdmin
@@ -945,6 +952,31 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       series = seriesResult.data ?? null;
+
+      if (series) {
+        const seriesContentsResult = await supabaseAdmin
+          .from('posts')
+          .select('id, slug, subject, series_idx')
+          .eq('site_id', rhizomeData.id)
+          .eq('board_id', board.data.id)
+          .eq('series_id', series.id)
+          .eq('is_closed', false)
+          .eq('published_status', 'published')
+          .not('series_idx', 'is', null)
+          .order('series_idx', { ascending: true });
+
+        if (seriesContentsResult.error) {
+          return NextResponse.json({ error: '연재 글 목록을 불러오지 못했습니다.' }, { status: 500 });
+        }
+
+        seriesContents = (seriesContentsResult.data ?? []).map((seriesContent) => ({
+          id: seriesContent.id,
+          slug: String(seriesContent.slug),
+          subject: normalizeText(seriesContent.subject),
+          series_idx: Number(seriesContent.series_idx),
+          href: `/${siteName}/${board.data.board_key}/${seriesContent.slug}`,
+        }));
+      }
     }
 
     let prefixes: Array<{ id: string; prefix_label: string }> = [];
@@ -1024,6 +1056,7 @@ export async function GET(request: Request, context: RouteContext) {
       },
       categories,
       series,
+      seriesContents,
       prefixes,
       previousPost: adjacentPosts.previousPost,
       nextPost: adjacentPosts.nextPost,

@@ -44,6 +44,7 @@ type PostImage = {
 type PostItem = {
   id: string;
   idx: number;
+  series_idx: number | null;
   slug: string;
   subject: string;
   summary: string;
@@ -386,6 +387,8 @@ export default function Opt({ isCommunity }: Props) {
 
   const isSearchMode = Boolean(searchKeyword);
   const seriesNameParam = normalizeText(searchParams.get('seriesName')).toLowerCase();
+  const getDisplayIdx = (content: PostItem) =>
+    seriesNameParam && typeof content.series_idx === 'number' ? content.series_idx : content.idx;
   const pageNumbers = getPageNumbers(currentPage, totalPage);
   const hasPreviousPager = pageNumbers[0] > 1;
   const hasNextPager = pageNumbers[pageNumbers.length - 1] < totalPage;
@@ -569,7 +572,7 @@ export default function Opt({ isCommunity }: Props) {
                               <PushPinRoundedIcon />
                             </i>
                           ) : (
-                            <i className="number">{content.idx}</i>
+                            <i className="number">{getDisplayIdx(content)}</i>
                           )}
                         </>
                       ) : null}
@@ -631,7 +634,7 @@ export default function Opt({ isCommunity }: Props) {
                           <PushPinRoundedIcon />
                         </i>
                       ) : (
-                        <i className={styles.number}>{content.idx}</i>
+                        <i className={styles.number}>{getDisplayIdx(content)}</i>
                       )}
                       {content.published_status === 'draft' ? <em>(임시글)</em> : null}
                     </span>
@@ -677,7 +680,7 @@ export default function Opt({ isCommunity }: Props) {
                         <PushPinRoundedIcon />
                       </i>
                     ) : (
-                      <i className={styles.number}>{content.idx}</i>
+                      <i className={styles.number}>{getDisplayIdx(content)}</i>
                     )}
                     {content.published_status === 'draft' ? <em>(임시글)</em> : null}
                   </span>
@@ -720,7 +723,7 @@ export default function Opt({ isCommunity }: Props) {
                         <PushPinRoundedIcon />
                       </i>
                     ) : (
-                      <i className={styles.number}>{content.idx}</i>
+                      <i className={styles.number}>{getDisplayIdx(content)}</i>
                     )}
                     {content.published_status === 'draft' ? <em>(임시글)</em> : null}
                   </span>
@@ -814,7 +817,7 @@ export default function Opt({ isCommunity }: Props) {
                           <PushPinRoundedIcon />
                         </i>
                       ) : (
-                        <i className="number">{content.idx}</i>
+                        <i className="number">{getDisplayIdx(content)}</i>
                       )}
                       {content.prefix_label ? (
                         <small className="prefix-name board-chip" aria-label="말머리">
