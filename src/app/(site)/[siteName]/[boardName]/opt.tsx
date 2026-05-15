@@ -853,7 +853,7 @@ export default function Opt({ isCommunity }: Props) {
 
       {canWritePost ? (
         <div className={styles['button-group']}>
-          <Anchor href={`/${siteName}/${boardName}/new`} className={`${styles.submit} button`}>
+          <Anchor href={`/${siteName}/manage/contents/posts/new?t=i`} className={`${styles.submit} button`}>
             글쓰기
           </Anchor>
         </div>

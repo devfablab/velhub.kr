@@ -145,7 +145,6 @@ export default async function Page(context: RouteContext) {
                       <div className={styles.subject}>
                         <strong>{content.subject}</strong>
                       </div>
-                      {content.comment_count > 0 ? <span>({content.comment_count.toLocaleString()})</span> : null}
                     </div>
                   </Anchor>
                 ))}

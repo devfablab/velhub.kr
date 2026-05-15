@@ -590,7 +590,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     let seriesId: string | null = currentPost.data.series_id ?? null;
 
-    if (board.data.post_type === 'series') {
+    if (board.data.post_type === 'series' || board.data.post_type === 'both') {
       if (seriesKey) {
         const seriesResult = await supabaseAdmin
           .from('board_series')

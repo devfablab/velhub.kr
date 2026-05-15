@@ -13,7 +13,7 @@ type BoardRow = {
   id: string;
   board_key: string;
   board_label: string;
-  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
+  board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page' | 'blog';
   markdown_status: string | null;
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
@@ -63,6 +63,10 @@ function shouldLoadContents(requestUrl: URL) {
   );
 }
 
+function canWriteBlogPost(siteType: string, sessionCase: string) {
+  return siteType === 'blog' && (sessionCase === 'member' || sessionCase === 'staff');
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName } = await context.params;
@@ -83,12 +87,22 @@ export async function GET(request: Request, context: RouteContext) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, visibility_type, is_shutdown')
+      .select('id, site_type, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const session = await verifySession({
+      siteId: rhizome.data.id,
+    });
+
+    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
+      if (session.case !== 'staff') {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
     }
 
     const board = await supabaseAdmin
@@ -104,23 +118,15 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const session = await verifySession({
-      siteId: rhizome.data.id,
-    });
-
-    if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
-      if (session.case !== 'staff') {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
-    }
-
     const boardData = board.data as BoardRow;
+    const canWritePost = canWriteBlogPost(rhizome.data.site_type, session.case);
 
     if (!shouldLoadContents(requestUrl)) {
       return Response.json({
         board: boardData,
         actions: {
           canPinPost: session.case === 'staff',
+          canWritePost,
         },
       });
     }
@@ -153,6 +159,7 @@ export async function GET(request: Request, context: RouteContext) {
       board: boardData,
       actions: {
         canPinPost: session.case === 'staff',
+        canWritePost,
       },
       contents: result.contents,
       page,

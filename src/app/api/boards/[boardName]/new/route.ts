@@ -525,7 +525,7 @@ export async function POST(request: Request, context: RouteContext) {
     let seriesId: string | null = null;
 
     if (seriesKey) {
-      if (board.data.post_type !== 'series') {
+      if (board.data.post_type !== 'series' && board.data.post_type !== 'both') {
         return Response.json({ error: '연재형 게시판에서만 연재를 선택할 수 있습니다.' }, { status: 400 });
       }
 

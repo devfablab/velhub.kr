@@ -79,6 +79,9 @@ export default function MenuItems({ siteName, isBlog }: Props) {
   const categoryHref = `/${siteName}/c`;
   const isCategoryHrefCurrent = pathname === categoryHref || pathname.startsWith(`${categoryHref}/`);
 
+  const seriesHref = `/${siteName}/s`;
+  const isSeriesHrefCurrent = pathname === seriesHref || pathname.startsWith(`${seriesHref}/`);
+
   return (
     <div className={styles.navigationbar}>
       <nav>
@@ -107,6 +110,15 @@ export default function MenuItems({ siteName, isBlog }: Props) {
               >
                 <Anchor href={categoryHref}>
                   <span>카테고리</span>
+                  <i />
+                </Anchor>
+              </li>
+              <li
+                className={isSeriesHrefCurrent ? styles.current : undefined}
+                aria-current={isSeriesHrefCurrent ? 'page' : false}
+              >
+                <Anchor href={seriesHref}>
+                  <span>연재</span>
                   <i />
                 </Anchor>
               </li>

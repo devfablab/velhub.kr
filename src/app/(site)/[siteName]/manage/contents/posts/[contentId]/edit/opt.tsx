@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 import Link from '@mui/material/Link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -209,8 +209,10 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
   const contentId = normalizeText(params.contentId);
+  const ti = normalizeText(searchParams.get('t'));
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
@@ -632,7 +634,8 @@ export default function Opt() {
         throw new Error(editResult.error ?? '블로그 글 수정에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
+      if (ti === 'i') router.replace(`/${siteName}/b/${contentId}`);
+      else router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 수정에 실패했습니다.');
