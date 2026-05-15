@@ -466,12 +466,6 @@ export default function Opt({ isCommunity }: Props) {
           ) : null}
         </nav>
       ) : null}
-
-      <div className={styles['button-group']}>
-        <Anchor href={`/${siteName}/board/new`} className={`${styles.submit} button`}>
-          글쓰기
-        </Anchor>
-      </div>
     </div>
   );
 }

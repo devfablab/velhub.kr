@@ -42,6 +42,11 @@
     display: flex
     justify-content: space-between
 
+    .buttons
+      display: flex
+      gap: ds.rem(7)
+      align-items: center
+
     a
       display: inline-flex
       gap: ds.rem(5)
@@ -58,6 +63,9 @@
 
       span
         padding-left: ds.rem(3)
+
+      &.button span
+        padding-right: ds.rem(3)
 
       svg
         width: ds.rem(16)
