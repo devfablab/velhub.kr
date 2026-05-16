@@ -2,9 +2,10 @@
 
 import { useMemo } from 'react';
 import Link from '@mui/material/Link';
-import { Avatar, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Chip, Paper, Stack, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 
 type SiteType = 'blog' | 'community';
 
@@ -49,12 +50,12 @@ export default function ComponentJoinSites({ siteType, joinSites }: Props) {
     const avatarPath = normalizeText(value);
 
     if (!avatarPath) {
-      return '/broken-image.jpg';
+      return null;
     }
 
     const publicUrlResult = supabase.storage.from('avatar').getPublicUrl(avatarPath);
 
-    return publicUrlResult.data.publicUrl || '/broken-image.jpg';
+    return publicUrlResult.data.publicUrl || null;
   }
 
   const filteredSites = joinSites.filter((site) => site.site_type === siteType);
@@ -71,7 +72,7 @@ export default function ComponentJoinSites({ siteType, joinSites }: Props) {
         {filteredSites.map((site) => (
           <Paper key={site.id} variant="outlined" sx={{ p: 2 }}>
             <Stack direction="row" spacing={2} alignItems="center">
-              <Avatar src={getAvatarUrl(site.avatar)} alt={site.site_label} />
+              <AppIconAvatar src={getAvatarUrl(site.avatar) || null} alt={site.site_label || null} size={58} />
 
               <Stack sx={{ minWidth: 0, flex: 1 }}>
                 <Link href={`/${site.site_key}`} underline="hover">

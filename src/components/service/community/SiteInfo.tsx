@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Dialog from '@mui/material/Dialog';
-import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -144,11 +143,7 @@ export default function SiteInfo() {
   return (
     <div className={`${styles['site-info']} paper`}>
       <div className={styles.avatar}>
-        {siteInfo.profilePictureUrl ? (
-          <AppIconAvatar src={siteInfo.profilePictureUrl} alt={siteInfo.siteLabel} imageSize={58} svgSize={58} />
-        ) : (
-          <InterestsRoundedIcon />
-        )}
+        <AppIconAvatar src={siteInfo.profilePictureUrl || null} alt={siteInfo.siteLabel || null} size={58} />
       </div>
       <div className={styles.info}>
         <div className={styles['info-detail']}>
