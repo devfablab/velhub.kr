@@ -94,9 +94,6 @@ export async function POST(request: Request) {
       )
       .maybeSingle();
 
-    console.log('insertGeneral.error: ', insertGeneral.error);
-    console.log('insertGeneral.data: ', insertGeneral.data);
-
     if (insertGeneral.error || !insertGeneral.data) {
       return Response.json({ error: '팀원 기본 정보 등록에 실패했습니다.' }, { status: 500 });
     }

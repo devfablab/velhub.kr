@@ -1,0 +1,97 @@
+.home-content
+  display: flex
+  flex-direction: column
+  gap: ds.rem(23)
+  max-width: ds.rem(807)
+
+  .profile
+    display: flex
+    flex-direction: column
+    gap: ds.rem(23)
+
+    .profile-header
+      display: flex
+      flex-direction: column
+      align-items: center
+      gap: ds.rem(12)
+
+      .meta
+        display: flex
+        flex-direction: column
+        align-items: center
+
+      cite
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(20)
+        line-height: 1
+
+      span
+        font-size: ds.rem(14)
+        color: ds.$hex-secondary
+        opacity: .7
+
+    .profile-bio
+      p
+        white-space: pre-wrap
+        font-size: ds.rem(14)
+
+  .invite
+    display: flex
+    flex-direction: column
+
+    h2
+      font-size: ds.rem(18)
+
+    .invite-site
+      display: flex
+      flex-direction: column
+
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      .invite-header
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+        align-items: center
+
+        .site-name
+          display: flex
+          gap: ds.rem(7)
+          align-items: center
+
+          em
+            display: flex
+            background-color: ds.$hex-accent
+            border-radius: ds.rem(13)
+            padding: ds.rem(7) ds.rem(12)
+            @include ds.fw(pre, 600)
+            font-size: ds.rem(12)
+            font-style: normal
+            color: ds.$hex-white
+            line-height: 1
+
+            html[data-site-type='blog'] &
+              font-family: var(--blog-description-font-family)
+              font-weight: 600
+              font-variation-settings: "wght" 600
+
+          strong
+            @include ds.fw(neo, 800)
+            font-size: ds.rem(14)
+
+            html[data-site-type='blog'] &
+              font-family: var(--blog-subject-font-family)
+              font-weight: 800
+              font-variation-settings: "wght" 800
+
+        a
+          padding: 0 ds.rem(12)
+
+      p
+        @include ds.fw(pre, 500)
+        font-size: ds.rem(14)
+        color: ds.$hex-action

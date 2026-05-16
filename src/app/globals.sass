@@ -683,45 +683,45 @@ a, button, select, input
   flex-direction: column
   min-height: 100vh
 
-  main
+main
+  display: flex
+  flex: 1
+  justify-content: center
+
+  html[data-theme="yellow-light"] &
+    background-color: rgba(ds.$rgb-bright, .5)
+    color: ds.$hex-primary
+
+  html[data-theme="yellow-dark"] &
+    background-color: rgba(ds.$rgb-primary, .5)
+    color: ds.$hex-bright
+
+  .container
     display: flex
-    flex: 1
+    flex-direction: row
+    gap: ds.rem(23)
     justify-content: center
+    max-width: ds.rem(1347)
+    width: 100%
+    padding: ds.rem(38) ds.rem(17) ds.rem(70)
 
-    html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$rgb-bright, .5)
-      color: ds.$hex-primary
-
-    html[data-theme="yellow-dark"] &
-      background-color: rgba(ds.$rgb-primary, .5)
-      color: ds.$hex-bright
-
-    .container
+    aside
       display: flex
-      flex-direction: row
-      gap: ds.rem(23)
-      justify-content: center
-      max-width: ds.rem(1347)
-      width: 100%
-      padding: ds.rem(38) ds.rem(17) ds.rem(70)
+      flex-direction: column
+      gap: ds.rem(17)
+      width: ds.rem(230)
 
-      aside
-        display: flex
-        flex-direction: column
-        gap: ds.rem(17)
-        width: ds.rem(230)
+    .content
+      @include ds.col
 
-      .content
-        @include ds.col
+  h2
+    @include ds.fw(neo, 700)
+    font-size: ds.rem(24)
 
-    h2
-      @include ds.fw(neo, 700)
-      font-size: ds.rem(24)
-
-      html[data-site-type='blog'] &
-        font-family: var(--blog-subject-font-family)
-        font-weight: 700
-        font-variation-settings: "wght" 700
+    html[data-site-type='blog'] &
+      font-family: var(--blog-subject-font-family)
+      font-weight: 700
+      font-variation-settings: "wght" 700
 
 .viewer
   p

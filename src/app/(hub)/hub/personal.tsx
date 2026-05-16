@@ -1,0 +1,29 @@
+import { Avatar } from '@mui/material';
+import styles from '@/app/hub.module.sass';
+
+type PersonalProps = {
+  avatarUrl: string;
+  email: string;
+  userName: string;
+  bio: string;
+};
+
+export default function Personal({ avatarUrl, email, userName, bio }: PersonalProps) {
+  return (
+    <section className={styles.profile}>
+      <div className={styles['profile-header']}>
+        <Avatar src={avatarUrl || '/avatar.png'} alt={userName} sx={{ width: 72, height: 72 }} />
+        <div className={styles.meta}>
+          <cite>{userName}</cite>
+          <span>{email}</span>
+        </div>
+      </div>
+
+      {bio ? (
+        <div className={`paper ${styles['profile-bio']}`}>
+          <p>{bio}</p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
