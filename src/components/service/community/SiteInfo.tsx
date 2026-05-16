@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
+import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/aside.module.sass';
 
 type SiteInfoData = {
@@ -143,11 +144,15 @@ export default function SiteInfo() {
   return (
     <div className={`${styles['site-info']} paper`}>
       <div className={styles.avatar}>
-        <Avatar src={siteInfo.profilePictureUrl || '/broken-image.jpg'} alt={siteInfo.siteLabel} />
+        {siteInfo.profilePictureUrl ? (
+          <AppIconAvatar src={siteInfo.profilePictureUrl} alt={siteInfo.siteLabel} imageSize={58} svgSize={58} />
+        ) : (
+          <InterestsRoundedIcon />
+        )}
       </div>
       <div className={styles.info}>
         <div className={styles['info-detail']}>
-          <em>{siteInfo.ownerNickname}</em>
+          <cite>{siteInfo.siteLabel}</cite>
           <span>{formatDate(siteInfo.createdAt)} 개설</span>
         </div>
 
