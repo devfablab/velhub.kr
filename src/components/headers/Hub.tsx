@@ -43,6 +43,9 @@ import Anchor from '../Anchor';
 import BlogSearch from '../header-groups/site/BlogSearch';
 import CommunitySearch from '../header-groups/site/CommunitySearch';
 import MenuItems from '../header-groups/site/Menu';
+import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
+import { ServiceLogo } from '../Svgs';
+import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -68,9 +71,6 @@ type UserProfile = {
   name: string | null;
   email: string | null;
   avatarUrl: string | null;
-  isLoggedIn: boolean;
-  globalRole: string | null;
-  siteRole: string | null;
 };
 
 type BlogFontSettings = {
@@ -224,19 +224,11 @@ export default function HeaderSite() {
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
   const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: null,
     email: null,
     avatarUrl: null,
-    isLoggedIn: false,
-    globalRole: null,
-    siteRole: null,
   });
-
-  const [siteLabel, setSiteLabel] = useState('');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -267,11 +259,7 @@ export default function HeaderSite() {
 
   useEffect(() => {
     async function loadHeader() {
-      if (!siteName) {
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
+      const response = await fetch('/api/header/settings', {
         method: 'GET',
         credentials: 'include',
       });
@@ -279,38 +267,15 @@ export default function HeaderSite() {
       const result = (await response.json()) as HeaderResponse | { error?: string };
 
       if (!response.ok || !('isLoggedIn' in result)) {
-        clearBlogFontSettings();
-        setSiteType(null);
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          globalRole: null,
-          siteRole: null,
-        });
-        setSiteLabel('');
-        setProfilePictureUrl(null);
-        setProfileLogoUrl(null);
+        window.location.href = '/auth/sign-in';
         return;
       }
-
-      applyColorSet(result.themeType);
-      applyBlogFontSettings(result.siteType, result.blogFontSettings);
-      setSiteType(result.siteType);
 
       setUserProfile({
         name: result.userName,
         email: result.email,
         avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        globalRole: result.globalRole,
-        siteRole: result.siteRole,
       });
-
-      setSiteLabel(result.siteLabel || result.siteName || '');
-      setProfilePictureUrl(result.profilePictureUrl);
-      setProfileLogoUrl(result.profileLogoUrl);
     }
 
     if (!isReady) {
@@ -390,9 +355,6 @@ export default function HeaderSite() {
     return <SettingsBrightnessIcon />;
   }
 
-  const isSiteStaff = isStaffRole(userProfile.siteRole);
-  const isBlog = siteType === 'blog' ? true : false;
-
   if (!isMounted || !isReady) {
     return null;
   }
@@ -403,22 +365,11 @@ export default function HeaderSite() {
         <div className={styles.top}>
           <div className={styles.gnb}>
             <h1>
-              <Anchor href={`/${siteName}`} aria-label={profileLogoUrl ? siteLabel : undefined}>
-                {profileLogoUrl ? (
-                  <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
-                ) : (
-                  <>
-                    {profilePictureUrl ? <Avatar src={profilePictureUrl} alt="" aria-hidden="true" /> : null}
-                    <span>{siteLabel}</span>
-                  </>
-                )}
+              <Anchor href="/" aria-label="데브허브 velhub">
+                <ServiceLogo />
               </Anchor>
             </h1>
-            {siteType === 'blog' ? (
-              <BlogSearch siteName={siteName} isBlog={isBlog} />
-            ) : (
-              <CommunitySearch siteName={siteName} isBlog={isBlog} />
-            )}
+            <PrimaryMenu />
           </div>
 
           <div className={styles.iconbuttons}>
@@ -487,152 +438,30 @@ export default function HeaderSite() {
             {isMobile ? (
               <Drawer anchor="right" open={isProfileDrawerOpen} onClose={handleCloseProfileDrawer}>
                 <Box sx={{ minWidth: 320, py: 1 }}>
-                  {userProfile.isLoggedIn && (
-                    <>
-                      <Box sx={{ px: 2, py: 1 }}>
-                        {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
-                        {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
-                      </Box>
+                  <MenuItem onClick={handleCloseProfileDrawer}>
+                    <ListItemIcon>
+                      <HomeIcon fontSize="small" />
+                    </ListItemIcon>
+                    <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
+                      라운지
+                    </Link>
+                  </MenuItem>
 
-                      <Divider />
-                    </>
-                  )}
+                  <MenuItem onClick={handleCloseProfileDrawer}>
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" />
+                    </ListItemIcon>
+                    <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
+                      개인 설정
+                    </Link>
+                  </MenuItem>
 
-                  {isSiteStaff ? (
-                    <>
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <DashboardIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href={`/${siteName}/manage`} underline="none" sx={{ flex: '1 0 0%' }}>
-                          관리 홈
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          {siteType === 'blog' ? <ArticleIcon fontSize="small" /> : <ForumIcon fontSize="small" />}
-                        </ListItemIcon>
-                        <Link href={`/${siteName}/manage/settings`} underline="none" sx={{ flex: '1 0 0%' }}>
-                          {siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영'}
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          {siteType === 'blog' ? (
-                            <FontDownloadIcon fontSize="small" />
-                          ) : (
-                            <MenuBookIcon fontSize="small" />
-                          )}
-                        </ListItemIcon>
-                        <Link
-                          href={
-                            siteType === 'blog'
-                              ? `/${siteName}/manage/design/blog/fonts`
-                              : `/${siteName}/manage/design/community/menu`
-                          }
-                          underline="none"
-                          sx={{ flex: '1 0 0%' }}
-                        >
-                          디자인
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          {siteType === 'blog' ? <GroupsIcon fontSize="small" /> : <PeopleIcon fontSize="small" />}
-                        </ListItemIcon>
-                        <Link
-                          href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}
-                          underline="none"
-                          sx={{ flex: '1 0 0%' }}
-                        >
-                          {siteType === 'blog' ? '팀원 관리' : '멤버 관리'}
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <FontDownloadIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href={`/${siteName}/manage/contents/posts`} underline="none" sx={{ flex: '1 0 0%' }}>
-                          콘텐츠 관리
-                        </Link>
-                      </MenuItem>
-
-                      {siteType === 'community' && (
-                        <MenuItem onClick={handleCloseProfileDrawer}>
-                          <ListItemIcon>
-                            <ReportGmailerrorredIcon fontSize="small" />
-                          </ListItemIcon>
-                          <Link href={`/${siteName}/manage/filtered`} underline="none" sx={{ flex: '1 0 0%' }}>
-                            제한된 콘텐츠
-                          </Link>
-                        </MenuItem>
-                      )}
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <BarChartIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href={`/${siteName}/manage/stats`} underline="none" sx={{ flex: '1 0 0%' }}>
-                          통계
-                        </Link>
-                      </MenuItem>
-
-                      <Divider />
-                    </>
-                  ) : null}
-
-                  {userProfile.isLoggedIn ? (
-                    <>
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <HomeIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
-                          라운지
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <SettingsIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
-                          개인 설정
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleLogout}>
-                        <ListItemIcon>
-                          <LogoutIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>로그아웃</ListItemText>
-                      </MenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <LoginIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/auth/sign-in" underline="none" sx={{ flex: '1 0 0%' }}>
-                          로그인
-                        </Link>
-                      </MenuItem>
-
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <ListItemIcon>
-                          <PersonAddIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/auth/sign-up" underline="none" sx={{ flex: '1 0 0%' }}>
-                          회원가입
-                        </Link>
-                      </MenuItem>
-                    </>
-                  )}
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogoutIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>로그아웃</ListItemText>
+                  </MenuItem>
                 </Box>
               </Drawer>
             ) : (
@@ -641,77 +470,39 @@ export default function HeaderSite() {
                 open={Boolean(profileAnchorElement)}
                 onClose={handleCloseProfileMenu}
               >
-                {userProfile.isLoggedIn && (
-                  <Box sx={{ px: 2, py: 1 }}>
-                    {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
-                    {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
-                  </Box>
-                )}
-
-                {userProfile.isLoggedIn && <Divider />}
-
-                {isSiteStaff
-                  ? [
-                      <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
-                        <ListItemIcon>
-                          <DashboardIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href={`/${siteName}/manage`} underline="none" sx={{ flex: '1 0 0%' }}>
-                          사이트 설정
-                        </Link>
-                      </MenuItem>,
-                    ]
-                  : null}
-
-                {userProfile.isLoggedIn
-                  ? [
-                      <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                        <ListItemIcon>
-                          <SettingsIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
-                          개인 설정
-                        </Link>
-                      </MenuItem>,
-                      <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                        <ListItemIcon>
-                          <HomeIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
-                          라운지 이동
-                        </Link>
-                      </MenuItem>,
-                      <MenuItem key="logout" onClick={handleLogout}>
-                        <ListItemIcon>
-                          <LogoutIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>로그아웃</ListItemText>
-                      </MenuItem>,
-                    ]
-                  : [
-                      <MenuItem key="signin" onClick={handleCloseProfileMenu}>
-                        <ListItemIcon>
-                          <LoginIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/auth/sign-in" underline="none" sx={{ flex: '1 0 0%' }}>
-                          로그인
-                        </Link>
-                      </MenuItem>,
-                      <MenuItem key="signup" onClick={handleCloseProfileMenu}>
-                        <ListItemIcon>
-                          <PersonAddIcon fontSize="small" />
-                        </ListItemIcon>
-                        <Link href="/auth/sign-up" underline="none" sx={{ flex: '1 0 0%' }}>
-                          회원가입
-                        </Link>
-                      </MenuItem>,
-                    ]}
+                <Box sx={{ px: 2, py: 1 }}>
+                  {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
+                  {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
+                </Box>
+                <Divider />
+                <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                  <ListItemIcon>
+                    <SettingsIcon fontSize="small" />
+                  </ListItemIcon>
+                  <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
+                    개인 설정
+                  </Link>
+                </MenuItem>
+                <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
+                  <ListItemIcon>
+                    <HomeIcon fontSize="small" />
+                  </ListItemIcon>
+                  <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
+                    라운지 이동
+                  </Link>
+                </MenuItem>
+                <MenuItem key="logout" onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>로그아웃</ListItemText>
+                </MenuItem>
               </Menu>
             )}
           </div>
         </div>
         <div className={styles.bottom}>
-          <MenuItems siteName={siteName} isBlog={isBlog} />
+          <SecondaryMenu />
         </div>
       </div>
     </header>
