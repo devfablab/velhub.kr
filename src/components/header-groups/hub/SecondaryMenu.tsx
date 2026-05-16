@@ -1,43 +1,56 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/header.module.sass';
 
+const secondaryMenus = [
+  {
+    href: '/hub',
+    label: '마이허브 홈',
+    exact: true,
+  },
+  {
+    href: '/hub/blogs',
+    label: '블로그 허브',
+  },
+  {
+    href: '/hub/communities',
+    label: '커뮤니티 허브',
+  },
+  {
+    href: '/hub/purchase',
+    label: '구입내역',
+  },
+  {
+    href: '/hub/notifications',
+    label: '알림내역',
+  },
+];
+
 export default function SecondaryMenu() {
+  const pathname = usePathname();
+
   return (
     <div className={styles.navigationbar}>
       <nav>
         <ol>
-          <li className={styles.current} aria-current="page">
-            <Anchor href="/hub">
-              <span>마이허브 홈</span>
-              <i />
-            </Anchor>
-          </li>
-          <li>
-            <Anchor href="/hub/blogs">
-              <span>블로그 허브</span>
-              <i />
-            </Anchor>
-          </li>
-          <li>
-            <Anchor href="/hub/communities">
-              <span>커뮤니티 허브</span>
-              <i />
-            </Anchor>
-          </li>
-          <li>
-            <Anchor href="/hub/purchase">
-              <span>구입내역</span>
-              <i />
-            </Anchor>
-          </li>
-          <li>
-            <Anchor href="/hub/notifications">
-              <span>알림내역</span>
-              <i />
-            </Anchor>
-          </li>
+          {secondaryMenus.map((menu) => {
+            const isCurrent = menu.exact ? pathname === menu.href : pathname.startsWith(menu.href);
+
+            return (
+              <li
+                key={menu.href}
+                className={isCurrent ? styles.current : undefined}
+                aria-current={isCurrent ? 'page' : undefined}
+              >
+                <Anchor href={menu.href}>
+                  <span>{menu.label}</span>
+                  <i />
+                </Anchor>
+              </li>
+            );
+          })}
         </ol>
       </nav>
     </div>
