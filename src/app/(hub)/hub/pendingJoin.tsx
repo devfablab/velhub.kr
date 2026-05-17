@@ -77,7 +77,7 @@ export default function PendingJoin() {
   }
 
   return (
-    <section className={`paper ${styles.pending}`}>
+    <section className={`paper ${styles.paper} ${styles.pending}`}>
       <h2>가입 승인을 기다리고 있어요 💁‍♀️</h2>
       <div className={`paper ${styles['pending-sites']}`}>
         {joins.map((join) => (
@@ -89,7 +89,7 @@ export default function PendingJoin() {
                   <img src={join.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    {join.profilePictureUrl ? <AppIconAvatar src={join.profilePictureUrl} alt="" size={40} /> : null}
+                    {join.profilePictureUrl ? <AppIconAvatar src={join.profilePictureUrl} alt="" size={52} /> : null}
                     <strong>{join.siteLabel}</strong>
                   </>
                 )}

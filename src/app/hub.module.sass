@@ -1,12 +1,18 @@
-.home-content
+.content
   display: flex
   flex-direction: column
   gap: ds.rem(23)
   max-width: ds.rem(807)
 
-  .profile
+  .paper
     display: flex
     flex-direction: column
+
+    h2
+      font-size: ds.rem(18)
+
+.home-content
+  .profile
     gap: ds.rem(23)
 
     .profile-header
@@ -36,12 +42,6 @@
         font-size: ds.rem(14)
 
   .pending
-    display: flex
-    flex-direction: column
-
-    h2
-      font-size: ds.rem(18)
-
     .pending-sites
       display: flex
       flex-direction: column
@@ -113,3 +113,148 @@
         @include ds.fw(pre, 500)
         font-size: ds.rem(14)
         color: ds.$hex-action
+
+.hub-content
+  .join
+    .join-sites
+      display: flex
+      flex-direction: column
+      gap: 0
+
+    .join-site
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
+      padding: ds.rem(17) 0
+
+      html[data-theme="yellow-light"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+      html[data-theme="yellow-dark"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      &:first-of-type
+        padding-top: 0
+        border-top: 0!important
+
+      &:last-of-type
+        padding-bottom: 0
+
+      .join-site-info
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+        align-items: center
+
+        .site-name
+          display: flex
+          gap: ds.rem(7)
+          align-items: center
+
+          img
+            width: auto
+            height: ds.rem(24)
+            display: block
+
+          strong
+            @include ds.fw(neo, 800)
+            font-size: ds.rem(14)
+
+            html[data-site-type='blog'] &
+              font-family: var(--blog-subject-font-family)
+              font-weight: 800
+              font-variation-settings: "wght" 800
+
+          em
+            display: flex
+            background-color: ds.$hex-accent
+            border-radius: ds.rem(13)
+            padding: ds.rem(7) ds.rem(12)
+            @include ds.fw(pre, 600)
+            font-size: ds.rem(12)
+            font-style: normal
+            color: ds.$hex-white
+            line-height: 1
+
+            html[data-site-type='blog'] &
+              font-family: var(--blog-description-font-family)
+              font-weight: 600
+              font-variation-settings: "wght" 600
+
+        a
+          padding: 0 ds.rem(12)
+
+      .join-site-list
+        display: flex
+        flex-direction: column
+
+        ol
+          display: flex
+          flex-direction: column
+
+          li
+            display: flex
+            flex-direction: column
+
+            a
+              display: flex
+              flex-direction: row
+              align-items: center
+              gap: ds.rem(17)
+              height: ds.rem(23)
+              font-size: ds.rem(14)
+              color: ds.$hex-secondary
+
+              &:hover, &:focus-visible
+                strong
+                  text-decoration: underline
+
+              span
+                display: flex
+                @include ds.col
+                flex-direction: row
+                align-items: center
+                gap: ds.rem(7)
+                height: ds.rem(37)
+
+              strong
+                display: block
+                @include ds.fw(pre, 500)
+
+              strong, cite
+                overflow: hidden
+                text-overflow: ellipsis
+                white-space: nowrap
+                padding-top: ds.rem(3)
+                min-width: 0
+                height: ds.rem(22)
+                font-size: ds.rem(14)
+                line-height: ds.rem(14)
+                letter-spacing: -.05em
+
+                html[data-theme="yellow-light"] &
+                  color: ds.$hex-primary
+
+                html[data-theme="yellow-dark"] &
+                  color: ds.$hex-bright
+
+              small
+                font-size: ds.rem(12)
+                opacity: .5
+
+              cite, time
+                opacity: .7
+
+              cite
+                width: ds.rem(127)
+                justify-content: flex-end
+
+              time
+                width: ds.rem(72)
+                justify-content: flex-end
+
+              cite, time, small
+                display: flex
+                align-items: center
+                flex: none
+                height: ds.rem(22)

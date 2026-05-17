@@ -77,7 +77,7 @@ export default function PendingInvite() {
   }
 
   return (
-    <section className={`paper ${styles.pending}`}>
+    <section className={`paper ${styles.paper} ${styles.pending}`}>
       <h2>초대장이 날라왔어요 😎</h2>
       <div className={`paper ${styles['pending-sites']}`}>
         {invites.map((invite) => (
@@ -89,9 +89,7 @@ export default function PendingInvite() {
                   <img src={invite.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    {invite.profilePictureUrl ? (
-                      <AppIconAvatar src={invite.profilePictureUrl} alt="" size={40} />
-                    ) : null}
+                    <AppIconAvatar src={invite.profilePictureUrl} alt="" size={52} />
                     <strong>{invite.siteLabel}</strong>
                   </>
                 )}

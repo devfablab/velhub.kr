@@ -10,7 +10,7 @@ type PersonalProps = {
 
 export default function Personal({ avatarUrl, email, userName, bio }: PersonalProps) {
   return (
-    <section className={styles.profile}>
+    <section className={`${styles.paper} ${styles.profile}`}>
       <div className={styles['profile-header']}>
         <Avatar src={avatarUrl || '/avatar.png'} alt={userName} sx={{ width: 72, height: 72 }} />
         <div className={styles.meta}>

@@ -5,8 +5,8 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Personal from './personal';
 import PendingInvite from './pendingInvite';
-import styles from '@/app/hub.module.sass';
 import PendingJoin from './pendingJoin';
+import styles from '@/app/hub.module.sass';
 
 type AccountRow = {
   email: string | null;
@@ -70,7 +70,7 @@ export default async function Page() {
   return (
     <main>
       <div className="container">
-        <div className={`content ${styles['home-content']}`}>
+        <div className={`content ${styles.content} ${styles['home-content']}`}>
           <Personal
             avatarUrl={getAvatarUrl(account.avatar)}
             email={decryptValue(account.email)}
