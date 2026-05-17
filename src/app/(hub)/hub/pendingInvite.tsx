@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Alert, Button, Paper, Stack, Typography } from '@mui/material';
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/hub.module.sass';
 
 type PendingInviteRow = {
@@ -15,6 +15,8 @@ type PendingInviteRow = {
   token: string;
   expiresAt: string | null;
   href: string;
+  profilePictureUrl: string | null;
+  profileLogoUrl: string | null;
 };
 
 type PendingInviteResponse = {
@@ -22,7 +24,7 @@ type PendingInviteResponse = {
   error?: string;
 };
 
-export default function Pending() {
+export default function PendingInvite() {
   const [invites, setInvites] = useState<PendingInviteRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -75,21 +77,33 @@ export default function Pending() {
   }
 
   return (
-    <section className={`paper ${styles.invite}`}>
+    <section className={`paper ${styles.pending}`}>
       <h2>초대장이 날라왔어요 😎</h2>
-      {invites.map((invite) => (
-        <div key={invite.id} className={`paper ${styles['invite-site']}`}>
-          <div className={styles['invite-header']}>
-            <div className={styles['site-name']}>
-              <em>{invite.siteTypeLabel}</em> <strong>{invite.siteLabel}</strong>
+      <div className={`paper ${styles['pending-sites']}`}>
+        {invites.map((invite) => (
+          <div key={invite.id} className={styles['pending-site']}>
+            <div className={styles['pending-header']}>
+              <div className={styles['site-name']}>
+                <em>{invite.siteTypeLabel} </em>
+                {invite.profileLogoUrl ? (
+                  <img src={invite.profileLogoUrl} alt="" />
+                ) : (
+                  <>
+                    {invite.profilePictureUrl ? (
+                      <AppIconAvatar src={invite.profilePictureUrl} alt="" size={40} />
+                    ) : null}
+                    <strong>{invite.siteLabel}</strong>
+                  </>
+                )}
+              </div>
+              <Anchor className="button action small" href={invite.href}>
+                가입하러 가기
+              </Anchor>
             </div>
-            <Anchor className="button action" href={invite.href}>
-              가입하러 가기
-            </Anchor>
+            {invite.expiresAt ? <p>{formatDateTimeFull(invite.expiresAt)}까지 초대에 응하실 수 있어요!</p> : null}
           </div>
-          {invite.expiresAt ? <p>{formatDateTimeFull(invite.expiresAt)}까지 초대에 응하실 수 있어요!</p> : null}
-        </div>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }

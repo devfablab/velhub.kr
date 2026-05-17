@@ -143,7 +143,7 @@ export default function SiteInfo() {
   return (
     <div className={`${styles['site-info']} paper`}>
       <div className={styles.avatar}>
-        <AppIconAvatar src={siteInfo.profilePictureUrl || null} alt={siteInfo.siteLabel || null} size={58} />
+        <AppIconAvatar src={siteInfo.profilePictureUrl || null} alt={siteInfo.siteLabel || ''} size={58} />
       </div>
       <div className={styles.info}>
         <div className={styles['info-detail']}>

@@ -4,8 +4,9 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Personal from './personal';
-import Pending from './pending';
+import PendingInvite from './pendingInvite';
 import styles from '@/app/hub.module.sass';
+import PendingJoin from './pendingJoin';
 
 type AccountRow = {
   email: string | null;
@@ -76,7 +77,8 @@ export default async function Page() {
             userName={decryptValue(account.user_name)}
             bio={decryptValue(account.bio)}
           />
-          <Pending />
+          <PendingInvite />
+          <PendingJoin />
         </div>
       </div>
     </main>

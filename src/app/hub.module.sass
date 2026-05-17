@@ -35,24 +35,37 @@
         white-space: pre-wrap
         font-size: ds.rem(14)
 
-  .invite
+  .pending
     display: flex
     flex-direction: column
 
     h2
       font-size: ds.rem(18)
 
-    .invite-site
+    .pending-sites
       display: flex
       flex-direction: column
+      gap: 0
+
+    .pending-site
+      display: flex
+      flex-direction: column
+      padding: ds.rem(17) 0
 
       html[data-theme="yellow-light"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
 
       html[data-theme="yellow-dark"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
 
-      .invite-header
+      &:first-of-type
+        padding-top: 0
+        border-top: 0!important
+
+      &:last-of-type
+        padding-bottom: 0
+
+      .pending-header
         display: flex
         flex-direction: row
         justify-content: space-between
@@ -78,6 +91,11 @@
               font-family: var(--blog-description-font-family)
               font-weight: 600
               font-variation-settings: "wght" 600
+
+          img
+            width: auto
+            height: ds.rem(24)
+            display: block
 
           strong
             @include ds.fw(neo, 800)

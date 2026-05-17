@@ -1,5 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type InviteRow = {
   id: string;
@@ -17,8 +18,10 @@ type InviteRow = {
 type RhizomeRow = {
   id: string;
   site_key: string;
-  site_label: string | null;
+  site_label: string;
   site_type: string;
+  profile_picture: string | null;
+  profile_logo: string | null;
 };
 
 function isExpired(value: string | null) {
@@ -57,6 +60,26 @@ function getSiteTypeLabel(siteType: string) {
   }
 
   return siteType;
+}
+
+function getStorageImageUrl(bucket: string, path: string | null) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    return normalizedPath;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return null;
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${normalizedPath}`;
 }
 
 export async function GET() {
@@ -112,7 +135,7 @@ export async function GET() {
 
     const rhizomeResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type')
+      .select('id, site_key, site_label, site_type, profile_picture, profile_logo')
       .in('id', uniqueSiteIds);
 
     if (rhizomeResult.error) {
@@ -127,6 +150,8 @@ export async function GET() {
           site_key: rhizome.site_key,
           site_label: rhizome.site_label,
           site_type: rhizome.site_type,
+          profile_picture: rhizome.profile_picture,
+          profile_logo: rhizome.profile_logo,
         },
       ]),
     );
@@ -171,6 +196,8 @@ export async function GET() {
         token: string;
         expiresAt: string | null;
         href: string;
+        profilePictureUrl: string | null;
+        profileLogoUrl: string | null;
       }
     >();
 
@@ -200,6 +227,8 @@ export async function GET() {
         siteName: rhizome.site_key,
         siteLabel: rhizome.site_label?.trim() || rhizome.site_key,
         siteType: rhizome.site_type,
+        profilePictureUrl: getStorageImageUrl('site-logo', rhizome.profile_picture),
+        profileLogoUrl: getStorageImageUrl('site-logo', rhizome.profile_logo),
         siteTypeLabel: getSiteTypeLabel(rhizome.site_type),
         token: invite.token,
         expiresAt: invite.expires_at,
