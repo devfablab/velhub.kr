@@ -1,5 +1,8 @@
 import { cookies, headers } from 'next/headers';
 import JoinSites from '../shared/joinSites';
+import Liked from '../shared/liked';
+import PostHistory from '../shared/postHistory';
+import FavoriteBlogs from './favoriteBlogs';
 import styles from '@/app/hub.module.sass';
 
 type JoinSiteRow = {
@@ -75,22 +78,23 @@ export default async function SectionJoinSites() {
 
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
 
-  if (joinSites.length === 0) {
-    return null;
-  }
-
   const hasBlog = joinSites.some((site) => site.site_type === 'blog');
-  const hasCommunity = joinSites.some((site) => site.site_type === 'community');
-
-  if (!hasBlog && !hasCommunity) {
-    return null;
-  }
 
   return (
     <main>
       <div className="container">
         <div className={`content ${styles.content} ${styles['hub-content']}`}>
-          {hasBlog ? <JoinSites siteType="blog" joinSites={joinSites} /> : null}
+          {joinSites.length > 0 && hasBlog ? (
+            <JoinSites siteType="blog" joinSites={joinSites} />
+          ) : (
+            <section className={`paper ${styles.paper}`}>
+              <p>참여중인 블로그가 없어요 🫠</p>
+            </section>
+          )}
+          <FavoriteBlogs />
+          <Liked siteType="blog" />
+          <PostHistory siteType="blog" type="saved" />
+          <PostHistory siteType="blog" type="read" />
         </div>
       </div>
     </main>

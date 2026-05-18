@@ -258,3 +258,114 @@
                 align-items: center
                 flex: none
                 height: ds.rem(22)
+
+  h3
+    @include ds.fw(neo, 600)
+    font-size: ds.rem(16)
+
+  .likey
+    .likey-sites
+      gap: 0
+
+      .items
+        display: flex
+        flex-direction: column
+        padding: ds.rem(17) 0
+
+        html[data-theme="yellow-light"] &
+          border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+        html[data-theme="yellow-dark"] &
+          border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        &:first-of-type
+          padding-top: 0
+          border-top: 0!important
+
+        &:last-of-type
+          padding-bottom: 0
+
+        ol
+          padding-top: ds.rem(7)
+
+          a
+            display: flex
+            flex-direction: column
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-bright
+
+            strong, p
+              @include ds.fw(pre, 500)
+              font-size: ds.rem(14)
+
+            p
+              & ~ strong
+                font-size: ds.rem(12)
+                opacity: .9
+
+            cite, .tail
+              font-size: ds.rem(12)
+              opacity: .7
+
+            .tail
+              display: flex
+              gap: ds.rem(7)
+
+              em
+                font-style: normal
+
+  .history
+    .items
+      display: flex
+      flex-direction: column
+      padding: ds.rem(17) 0
+
+      html[data-theme="yellow-light"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+      html[data-theme="yellow-dark"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      &:first-of-type
+        padding-top: 0
+        border-top: 0!important
+
+      &:last-of-type
+        padding-bottom: 0
+
+      ol
+        padding-top: ds.rem(7)
+
+        a
+          display: flex
+          flex-direction: column
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+          strong, p
+            @include ds.fw(pre, 500)
+            font-size: ds.rem(14)
+
+          p
+            & ~ strong
+              font-size: ds.rem(12)
+              opacity: .9
+
+          cite, .tail
+            font-size: ds.rem(12)
+            opacity: .7
+
+          .tail
+            display: flex
+            gap: ds.rem(7)
+
+            em
+              font-style: normal
