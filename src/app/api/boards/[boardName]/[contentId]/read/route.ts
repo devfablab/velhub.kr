@@ -108,19 +108,29 @@ export async function PATCH(request: Request, context: RouteContext) {
       .eq('site_id', targetPost.siteId)
       .eq('board_id', targetPost.boardId)
       .eq('post_id', targetPost.postId)
-      .limit(1);
+      .order('read_at', { ascending: false, nullsFirst: false });
 
     if (existingResult.error) {
       return NextResponse.json({ ok: true, recorded: false });
     }
 
-    const existingId = existingResult.data?.[0]?.id;
+    const existingRows = existingResult.data ?? [];
+    const existingId = existingRows[0]?.id;
 
     if (existingId) {
       const updateResult = await supabaseAdmin.from('post_reads').update({ read_at: readAt }).eq('id', existingId);
 
       if (updateResult.error) {
         return NextResponse.json({ ok: true, recorded: false });
+      }
+
+      const duplicateIds = existingRows
+        .slice(1)
+        .map((row) => row.id)
+        .filter((id): id is string => Boolean(id));
+
+      if (duplicateIds.length > 0) {
+        await supabaseAdmin.from('post_reads').delete().in('id', duplicateIds);
       }
 
       return NextResponse.json({
