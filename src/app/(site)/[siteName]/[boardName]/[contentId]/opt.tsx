@@ -18,6 +18,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -28,11 +29,11 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import CommentSection from '@/components/comments/CommunityCommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
-import styles from '@/app/board.module.sass';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import CommunityCommentSection from '@/components/comments/CommunityCommentSection';
 import BlogCommentSection from '@/components/comments/BlogCommentSection';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
@@ -704,27 +705,35 @@ export default function Opt({ isCommunity }: Props) {
 
   const postActionButtons =
     content.published_status === 'published' && !isPage ? (
-      <div className="paper">
+      <div className={styles.options}>
         <div className={styles.buttons}>
           <button
             type="button"
-            className={`${styles.button} ${styles['button-like']}`}
+            className={`${styles.button} ${isLiked ? styles.active : ''}`}
             onClick={() => void togglePostLike()}
             disabled={isTogglingLike}
             aria-label={isLiked ? '좋아요 취소' : '좋아요'}
           >
-            <FavoriteBorderRoundedIcon />
+            {isTogglingLike ? (
+              <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
+            ) : (
+              <FavoriteBorderRoundedIcon />
+            )}
             <strong>좋아요</strong>
             {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
           </button>
           <button
             type="button"
-            className={`${styles.button} ${styles['button-save']}`}
+            className={`${styles.button} ${isSaved ? styles.active : ''}`}
             onClick={() => void togglePostSave()}
             disabled={isTogglingSave}
             aria-label={isSaved ? '저장 취소' : '저장'}
           >
-            <TurnedInNotRoundedIcon />
+            {isTogglingSave ? (
+              <CircularProgress color="inherit" aria-label="저장" size={24} />
+            ) : (
+              <TurnedInNotRoundedIcon />
+            )}
             <strong>저장</strong>
           </button>
         </div>
@@ -1200,7 +1209,7 @@ export default function Opt({ isCommunity }: Props) {
             slug={content.slug}
           />
         ) : (
-          <CommentSection
+          <CommunityCommentSection
             siteName={siteName}
             boardName={boardName}
             contentId={content.id}

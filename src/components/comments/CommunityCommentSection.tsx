@@ -89,7 +89,7 @@ function updateCommentLikeState({
   }));
 }
 
-export default function CommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
+export default function CommunityCommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
   const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(null);
