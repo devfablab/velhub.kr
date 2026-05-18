@@ -120,6 +120,11 @@
         color: ds.$hex-action
 
 .hub-content
+  ol
+    display: flex
+    flex-direction: column
+    gap: ds.rem(7)
+
   .join
     .join-sites
       display: flex
@@ -302,6 +307,14 @@
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
+
+            &:hover, &:focus-visible
+              strong, p
+                text-decoration: underline
+
+              p
+                & ~ strong
+                  text-decoration: none
 
             strong, p
               @include ds.fw(pre, 500)
