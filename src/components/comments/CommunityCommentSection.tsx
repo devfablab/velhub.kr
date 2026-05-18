@@ -40,6 +40,13 @@ type CommentActionResponse = {
   error?: string;
 };
 
+type CommentLikeResponse = {
+  ok?: boolean;
+  isLiked?: boolean;
+  likeCount?: number;
+  error?: string;
+};
+
 type CommentWithReplies = CommentData & {
   replies?: CommentData[];
   children?: CommentData[];
@@ -56,6 +63,30 @@ function getCommentCount(nextComments: CommentData[]): number {
 
     return totalCount + 1 + getCommentCount(replies);
   }, 0);
+}
+
+function updateCommentLikeState({
+  comments,
+  commentId,
+  isLiked,
+  likeCount,
+}: {
+  comments: CommentData[];
+  commentId: string;
+  isLiked: boolean;
+  likeCount: number;
+}): CommentData[] {
+  return comments.map((comment) => ({
+    ...comment,
+    is_liked: comment.id === commentId ? isLiked : comment.is_liked,
+    like_count: comment.id === commentId ? likeCount : comment.like_count,
+    replies: updateCommentLikeState({
+      comments: comment.replies,
+      commentId,
+      isLiked,
+      likeCount,
+    }),
+  }));
 }
 
 export default function CommentSection({ siteName, boardName, contentId, isCommentEnabled }: Props) {
@@ -276,6 +307,41 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
     }
   }
 
+  async function likeComment(commentId: string) {
+    try {
+      setErrorMessage('');
+
+      const response = await fetch(
+        `/api/boards/${boardName}/${contentId}/comments/${commentId}/like?siteName=${siteName}`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+        },
+      );
+
+      const result = (await response.json()) as CommentLikeResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '댓글 좋아요를 처리하지 못했습니다.');
+      }
+
+      setComments((previousComments) =>
+        updateCommentLikeState({
+          comments: previousComments,
+          commentId,
+          isLiked: result.isLiked === true,
+          likeCount: typeof result.likeCount === 'number' ? result.likeCount : 0,
+        }),
+      );
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '댓글 좋아요를 처리하지 못했습니다.');
+      } else {
+        setErrorMessage('댓글 좋아요를 처리하지 못했습니다.');
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <section className="comment-section paper">
@@ -343,6 +409,7 @@ export default function CommentSection({ siteName, boardName, contentId, isComme
               onDelete={deleteComment}
               onBlind={blindComment}
               onUnblind={unblindComment}
+              onLike={likeComment}
             />
           ))
         ) : (

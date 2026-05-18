@@ -43,7 +43,8 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'auth' ||
     firstSegment === 'settings' ||
     firstSegment === 'new' ||
-    firstSegment === 'concierge'
+    firstSegment === 'concierge' ||
+    firstSegment === 'hub'
   );
 }
 

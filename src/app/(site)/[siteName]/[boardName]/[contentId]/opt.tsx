@@ -12,6 +12,8 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import {
   Accordion,
   AccordionDetails,
@@ -138,6 +140,20 @@ type DrawInfo = {
   winners: DrawWinner[];
 };
 
+type PostActions = {
+  isLiked: boolean;
+  isSaved: boolean;
+  likeCount: number;
+};
+
+type PostActionResponse = {
+  ok?: boolean;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  likeCount?: number;
+  error?: string;
+};
+
 type PostContent = {
   id: string;
   slug: string;
@@ -203,6 +219,7 @@ type ContentResponse = {
   previousPost?: AdjacentPost | null;
   nextPost?: AdjacentPost | null;
   selectedCategory?: SelectedCategory | null;
+  postActions?: PostActions;
   draw?: DrawInfo | null;
   isAuthor: boolean;
   isStaff: boolean;
@@ -338,6 +355,13 @@ export default function Opt({ isCommunity }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(null);
   const [draw, setDraw] = useState<DrawInfo | null>(null);
 
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [isTogglingSave, setIsTogglingSave] = useState(false);
+  const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
       previousContent
@@ -409,6 +433,82 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
+  async function recordPostRead(nextBoardName: string, nextContentId: string) {
+    try {
+      await fetch(`/api/boards/${nextBoardName}/${nextContentId}/read?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+    } catch {
+      return;
+    }
+  }
+
+  async function togglePostLike() {
+    if (isTogglingLike) {
+      return;
+    }
+
+    try {
+      setIsTogglingLike(true);
+      setPostActionErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/like?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PostActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '좋아요를 처리하지 못했습니다.');
+      }
+
+      setIsLiked(result.isLiked === true);
+      setLikeCount(typeof result.likeCount === 'number' ? result.likeCount : 0);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPostActionErrorMessage(unknownError.message || '좋아요를 처리하지 못했습니다.');
+      } else {
+        setPostActionErrorMessage('좋아요를 처리하지 못했습니다.');
+      }
+    } finally {
+      setIsTogglingLike(false);
+    }
+  }
+
+  async function togglePostSave() {
+    if (isTogglingSave) {
+      return;
+    }
+
+    try {
+      setIsTogglingSave(true);
+      setPostActionErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/save?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PostActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '글 저장을 처리하지 못했습니다.');
+      }
+
+      setIsSaved(result.isSaved === true);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPostActionErrorMessage(unknownError.message || '글 저장을 처리하지 못했습니다.');
+      } else {
+        setPostActionErrorMessage('글 저장을 처리하지 못했습니다.');
+      }
+    } finally {
+      setIsTogglingSave(false);
+    }
+  }
+
   useEffect(() => {
     async function loadContent() {
       try {
@@ -439,6 +539,9 @@ export default function Opt({ isCommunity }: Props) {
         setIsStaff(result.isStaff === true);
         setSelectedCategory(result.selectedCategory ?? null);
         setDraw(result.draw ?? null);
+        setIsLiked(result.postActions?.isLiked === true);
+        setIsSaved(result.postActions?.isSaved === true);
+        setLikeCount(typeof result.postActions?.likeCount === 'number' ? result.postActions.likeCount : 0);
 
         if (result.content?.poll) {
           void loadPollResult(boardName, result.content.id);
@@ -446,6 +549,7 @@ export default function Opt({ isCommunity }: Props) {
 
         if (result.content?.published_status === 'published') {
           void increasePostCount(boardName, contentId);
+          void recordPostRead(boardName, contentId);
         }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -595,6 +699,36 @@ export default function Opt({ isCommunity }: Props) {
             </ol>
           </AccordionDetails>
         </Accordion>
+      </div>
+    ) : null;
+
+  const postActionButtons =
+    content.published_status === 'published' && !isPage ? (
+      <div className="paper">
+        <div className={styles.buttons}>
+          <button
+            type="button"
+            className={`${styles.button} ${styles['button-like']}`}
+            onClick={() => void togglePostLike()}
+            disabled={isTogglingLike}
+            aria-label={isLiked ? '좋아요 취소' : '좋아요'}
+          >
+            <FavoriteBorderRoundedIcon />
+            <strong>좋아요</strong>
+            {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
+          </button>
+          <button
+            type="button"
+            className={`${styles.button} ${styles['button-save']}`}
+            onClick={() => void togglePostSave()}
+            disabled={isTogglingSave}
+            aria-label={isSaved ? '저장 취소' : '저장'}
+          >
+            <TurnedInNotRoundedIcon />
+            <strong>저장</strong>
+          </button>
+        </div>
+        {postActionErrorMessage ? <p>{postActionErrorMessage}</p> : null}
       </div>
     ) : null;
 
@@ -1048,6 +1182,7 @@ export default function Opt({ isCommunity }: Props) {
             ) : null}
           </div>
         ) : null}
+        {postActionButtons}
         {seriesList}
       </article>
       {content.published_status === 'published' ? (

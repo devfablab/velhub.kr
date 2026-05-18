@@ -34,7 +34,7 @@ export default function PendingJoin() {
       try {
         setErrorMessage('');
 
-        const response = await fetch('/api/home/pending-join', {
+        const response = await fetch('/api/hub/pending-join', {
           method: 'GET',
           credentials: 'include',
         });

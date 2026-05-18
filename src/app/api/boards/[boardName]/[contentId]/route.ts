@@ -38,7 +38,7 @@ type AuthorManageRole = {
 };
 
 type AuthorManageIcon = {
-  role: Exclude<AuthorRole, 'member'>;
+  role: Exclude<AuthorRole, 'owner' | 'member'>;
   icon: string | null;
   iconUrl: string;
 };
@@ -75,6 +75,12 @@ type DrawWinner = {
   author_name: string;
   author_email: string;
   author_avatar_url: string;
+};
+
+type PostActions = {
+  isLiked: boolean;
+  isSaved: boolean;
+  likeCount: number;
 };
 
 const AVATAR_BUCKET = 'avatar';
@@ -244,6 +250,7 @@ function shuffleItems<T>(items: T[]) {
 
   for (let index = nextItems.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1));
+
     [nextItems[index], nextItems[randomIndex]] = [nextItems[randomIndex], nextItems[index]];
   }
 
@@ -507,7 +514,6 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
           const communityWideRole = manageRoles.find(
             (item) => item.role === 'community-manager' || item.role === 'board-manager',
           );
-
           const boardRole = manageRoles.find(
             (item) =>
               item.boardId === boardId &&
@@ -622,7 +628,13 @@ async function createRandomDrawIfNeeded({
     throw new Error('추첨 대상 댓글을 확인하지 못했습니다.');
   }
 
-  const candidateMap = new Map<string, { comment_id: string; user_id: string }>();
+  const candidateMap = new Map<
+    string,
+    {
+      comment_id: string;
+      user_id: string;
+    }
+  >();
 
   (commentsResult.data ?? []).forEach((comment) => {
     const userId = normalizeText(comment.user_id);
@@ -708,6 +720,63 @@ async function getDrawWinners({
   );
 
   return winners;
+}
+
+async function getPostActions({
+  siteId,
+  boardId,
+  postId,
+  authUserId,
+}: {
+  siteId: string;
+  boardId: string;
+  postId: string;
+  authUserId: string | null;
+}): Promise<PostActions> {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const [likeCountResult, likeResult, saveResult] = await Promise.all([
+    supabaseAdmin
+      .from('post_likes')
+      .select('id', { count: 'exact', head: true })
+      .eq('site_id', siteId)
+      .eq('board_id', boardId)
+      .eq('post_id', postId),
+    authUserId
+      ? supabaseAdmin
+          .from('post_likes')
+          .select('id')
+          .eq('user_id', authUserId)
+          .eq('site_id', siteId)
+          .eq('board_id', boardId)
+          .eq('post_id', postId)
+          .limit(1)
+      : Promise.resolve({ data: [], error: null }),
+    authUserId
+      ? supabaseAdmin
+          .from('post_saves')
+          .select('id')
+          .eq('user_id', authUserId)
+          .eq('site_id', siteId)
+          .eq('board_id', boardId)
+          .eq('post_id', postId)
+          .limit(1)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (likeCountResult.error || likeResult.error || saveResult.error) {
+    return {
+      isLiked: false,
+      isSaved: false,
+      likeCount: 0,
+    };
+  }
+
+  return {
+    isLiked: (likeResult.data ?? []).length > 0,
+    isSaved: (saveResult.data ?? []).length > 0,
+    likeCount: likeCountResult.count ?? 0,
+  };
 }
 
 export async function GET(request: Request, context: RouteContext) {
@@ -837,7 +906,6 @@ export async function GET(request: Request, context: RouteContext) {
 
     const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.closed_by);
-
     const drawType = normalizeDrawType(post.data.draw_type);
     const drawLimit = normalizeDrawLimit(post.data.draw_limit);
     const drawEndsAt = typeof post.data.draw_ends_at === 'string' ? post.data.draw_ends_at : null;
@@ -871,9 +939,7 @@ export async function GET(request: Request, context: RouteContext) {
         : drawType === 'random'
           ? Boolean(drawEndsAt && isPastDateTime(drawEndsAt) && drawCount > 0)
           : false;
-
     const canViewDraws = isAuthor || isStaff;
-
     const drawWinners = drawType
       ? await getDrawWinners({
           siteId: rhizomeData.id,
@@ -886,7 +952,6 @@ export async function GET(request: Request, context: RouteContext) {
     const categoryIds = Array.isArray(post.data.categories)
       ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
       : [];
-
     let categories: Array<{
       id: string;
       category_key: string;
@@ -979,7 +1044,10 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
-    let prefixes: Array<{ id: string; prefix_label: string }> = [];
+    let prefixes: Array<{
+      id: string;
+      prefix_label: string;
+    }> = [];
     let prefixLabel: string | null = null;
 
     if (board.data.post_type === 'prefix') {
@@ -1031,9 +1099,14 @@ export async function GET(request: Request, context: RouteContext) {
       categoryName,
       isStaff,
     });
-
     const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(post.data.thumbnail_image);
+    const postActions = await getPostActions({
+      siteId: rhizomeData.id,
+      boardId: board.data.id,
+      postId: post.data.id,
+      authUserId: session.authUserId,
+    });
 
     return NextResponse.json({
       board: board.data,
@@ -1061,6 +1134,7 @@ export async function GET(request: Request, context: RouteContext) {
       previousPost: adjacentPosts.previousPost,
       nextPost: adjacentPosts.nextPost,
       selectedCategory: adjacentPosts.selectedCategory,
+      postActions,
       draw: drawType
         ? {
             draw_type: drawType,
@@ -1078,8 +1152,12 @@ export async function GET(request: Request, context: RouteContext) {
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return NextResponse.json(
-        { error: unknownError.message || '게시글 정보를 불러오지 못했습니다.' },
-        { status: 500 },
+        {
+          error: unknownError.message || '게시글 정보를 불러오지 못했습니다.',
+        },
+        {
+          status: 500,
+        },
       );
     }
 

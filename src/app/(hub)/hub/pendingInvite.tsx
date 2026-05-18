@@ -34,7 +34,7 @@ export default function PendingInvite() {
       try {
         setErrorMessage('');
 
-        const response = await fetch('/api/home/pending-invites', {
+        const response = await fetch('/api/hub/pending-invites', {
           method: 'GET',
           credentials: 'include',
         });

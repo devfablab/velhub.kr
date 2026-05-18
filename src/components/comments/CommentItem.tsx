@@ -72,6 +72,8 @@ export type CommentData = {
   can_blind: boolean;
   can_unblind: boolean;
   poll_choice: PollChoice | null;
+  like_count: number;
+  is_liked: boolean;
   replies: CommentData[];
 };
 
@@ -89,6 +91,7 @@ type Props = {
   onDelete: (commentId: string) => Promise<void>;
   onBlind: (commentId: string) => Promise<void>;
   onUnblind: (commentId: string) => Promise<void>;
+  onLike: (commentId: string) => Promise<void>;
 };
 
 function formatDateTime(value: string) {
@@ -145,9 +148,11 @@ export default function CommentItem({
   onDelete,
   onBlind,
   onUnblind,
+  onLike,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [isLiking, setIsLiking] = useState(false);
 
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
@@ -210,6 +215,19 @@ export default function CommentItem({
     await onCreateReply(comment.id, content);
   }
 
+  async function handleLike() {
+    if (isLiking) {
+      return;
+    }
+
+    try {
+      setIsLiking(true);
+      await onLike(comment.id);
+    } finally {
+      setIsLiking(false);
+    }
+  }
+
   return (
     <div className={depth === 1 ? `${styles['comment-item']} ${styles['comment-reply-item']}` : styles['comment-item']}>
       <Avatar src={comment.author_avatar_url} alt={comment.author_name} sx={{ width: 28, height: 28 }} />
@@ -264,6 +282,14 @@ export default function CommentItem({
 
         <div className={styles.options}>
           <time>{formatDateTime(comment.created_at)}</time>
+
+          {!comment.is_deleted && !comment.is_blinded ? (
+            <button type="button" onClick={() => void handleLike()} disabled={isSubmitting || isLiking}>
+              {comment.is_liked ? '좋아요 취소' : '좋아요'}
+              {comment.like_count > 0 ? ` ${comment.like_count}` : null}
+            </button>
+          ) : null}
+
           {!comment.is_deleted && !comment.is_blinded ? (
             <button type="button" onClick={() => onReplyClick(comment)} disabled={isSubmitting}>
               답글 달기
@@ -323,6 +349,7 @@ export default function CommentItem({
                 onDelete={onDelete}
                 onBlind={onBlind}
                 onUnblind={onUnblind}
+                onLike={onLike}
                 avatarUrl={avatarUrl}
                 myPollChoiceLabel={myPollChoiceLabel}
               />

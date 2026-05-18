@@ -26,7 +26,7 @@ async function getUserJoinSites() {
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
 
-  const response = await fetch(`${baseUrl}/api/home/user-join-sites`, {
+  const response = await fetch(`${baseUrl}/api/hub/user-join-sites`, {
     method: 'GET',
     headers: {
       cookie: cookieHeader,

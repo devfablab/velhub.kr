@@ -84,6 +84,8 @@ type CommentItem = {
   can_blind: boolean;
   can_unblind: boolean;
   poll_choice: PollChoice | null;
+  like_count: number;
+  is_liked: boolean;
   replies: CommentItem[];
 };
 
@@ -130,17 +132,9 @@ function isExternalUrl(value: string) {
   return value.startsWith('http://') || value.startsWith('https://');
 }
 
-function isSupabaseStorageValue(value: string | null | undefined) {
-  return Boolean(value && value.startsWith('supabase:'));
-}
-
 function getStoragePath(value: string | null | undefined) {
   if (!value) {
     return '';
-  }
-
-  if (isSupabaseStorageValue(value)) {
-    return value.replace('supabase:', '').trim();
   }
 
   return value.trim();
@@ -617,6 +611,8 @@ async function buildCommentItem({
   authUserId,
   canManageComment,
   pollChoiceMap,
+  commentLikeCountMap,
+  likedCommentIdSet,
 }: {
   comment: CommentRow;
   commentMap: Map<string, CommentRow>;
@@ -627,6 +623,8 @@ async function buildCommentItem({
   authUserId: string | null;
   canManageComment: boolean;
   pollChoiceMap: Map<string, PollChoice>;
+  commentLikeCountMap: Map<string, number>;
+  likedCommentIdSet: Set<string>;
 }) {
   let author = authorMap.get(comment.user_id);
 
@@ -692,6 +690,8 @@ async function buildCommentItem({
     can_blind: canManageComment && !isDeleted && !isBlinded,
     can_unblind: canManageComment && !isDeleted && isBlinded,
     poll_choice: pollChoiceMap.get(comment.user_id) ?? null,
+    like_count: commentLikeCountMap.get(comment.id) ?? 0,
+    is_liked: likedCommentIdSet.has(comment.id),
     replies: [],
   } satisfies CommentItem;
 }
@@ -789,10 +789,42 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const commentRows = (commentsResult.data ?? []) as CommentRow[];
+    const commentIds = commentRows.map((comment) => comment.id);
     const commentMap = new Map(commentRows.map((comment) => [comment.id, comment]));
     const authorMap = new Map<string, Awaited<ReturnType<typeof getUserDisplayInfo>>>();
     const pollChoiceMap = new Map<string, PollChoice>();
+    const commentLikeCountMap = new Map<string, number>();
+    const likedCommentIdSet = new Set<string>();
     let myPollChoice: PollChoice | null = null;
+
+    if (commentIds.length > 0) {
+      const commentLikesResult = await supabaseAdmin
+        .from('comment_likes')
+        .select('comment_id, user_id')
+        .eq('site_id', target.data.siteId)
+        .eq('board_id', target.data.boardId)
+        .eq('post_id', target.data.postId)
+        .in('comment_id', commentIds);
+
+      if (commentLikesResult.error) {
+        return Response.json({ error: '댓글 좋아요 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      (commentLikesResult.data ?? []).forEach((like) => {
+        const commentId = normalizeText(like.comment_id);
+        const userId = normalizeText(like.user_id);
+
+        if (!commentId) {
+          return;
+        }
+
+        commentLikeCountMap.set(commentId, (commentLikeCountMap.get(commentId) ?? 0) + 1);
+
+        if (session.authUserId && userId === session.authUserId) {
+          likedCommentIdSet.add(commentId);
+        }
+      });
+    }
 
     if (target.data.poll && getPollAnonymity(target.data.poll) === 'named') {
       const pollOptionMap = buildPollOptionMap(target.data.poll);
@@ -834,6 +866,8 @@ export async function GET(request: Request, context: RouteContext) {
           authUserId: session.authUserId ?? null,
           canManageComment,
           pollChoiceMap,
+          commentLikeCountMap,
+          likedCommentIdSet,
         }),
       ),
     );
@@ -988,6 +1022,8 @@ export async function POST(request: Request, context: RouteContext) {
       authUserId: session.authUserId,
       canManageComment,
       pollChoiceMap: new Map(),
+      commentLikeCountMap: new Map(),
+      likedCommentIdSet: new Set(),
     });
 
     return Response.json({
