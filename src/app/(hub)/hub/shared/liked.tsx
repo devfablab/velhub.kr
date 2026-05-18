@@ -120,10 +120,10 @@ export default function Liked({ siteType }: Props) {
                   <li key={comment.id}>
                     <Anchor href={comment.href}>
                       <p aria-label="댓글">{comment.comment}</p>
-                      <strong>{comment.postTitle}</strong>
+                      <strong aria-label="글 제목">{comment.postTitle}</strong>
                       <div className={styles.tail}>
-                        <em>{comment.siteName}</em>
-                        <time>{formatDateSimple(comment.likedAt)}</time>
+                        <em aria-label="사이트명">{comment.siteName}</em>
+                        <time aria-label="좋아요 누른 일시">{formatDateSimple(comment.likedAt)}</time>
                       </div>
                     </Anchor>
                   </li>

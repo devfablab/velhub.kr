@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 
@@ -19,7 +20,7 @@ const tabs = [
     icon: <MenuBookRoundedIcon />,
   },
   {
-    href: '/hub/blogs/likes',
+    href: '/hub/blogs/liked',
     label: '좋아요',
     icon: <FavoriteBorderRoundedIcon />,
   },
@@ -27,6 +28,11 @@ const tabs = [
     href: '/hub/blogs/saved',
     label: '저장',
     icon: <TurnedInNotRoundedIcon />,
+  },
+  {
+    href: '/hub/blogs/reads',
+    label: '읽은글',
+    icon: <ScheduleRoundedIcon />,
   },
 ];
 
