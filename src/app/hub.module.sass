@@ -2,7 +2,7 @@
   display: flex
   flex-direction: column
   gap: ds.rem(23)
-  max-width: ds.rem(807)
+  max-width: ds.rem(572)
 
   .paper
     display: flex
@@ -10,6 +10,10 @@
 
     h2
       font-size: ds.rem(18)
+
+    > p
+      text-align: center
+      @include ds.fw(neo, 600)
 
 .home-content
   .profile
@@ -50,6 +54,7 @@
     .pending-site
       display: flex
       flex-direction: column
+      gap: ds.rem(12)
       padding: ds.rem(17) 0
 
       html[data-theme="yellow-light"] &
