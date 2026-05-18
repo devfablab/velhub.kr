@@ -1,7 +1,19 @@
 'use client';
 
-import { useState, type ChangeEvent, type ReactNode } from 'react';
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField } from '@mui/material';
+import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from '@mui/material';
+import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -123,6 +135,14 @@ type NicknameResponse = {
     id: string;
     nickname: string;
   };
+  error?: string;
+};
+
+type FavoriteResponse = {
+  ok?: boolean;
+  isLoggedIn?: boolean;
+  isFavorited?: boolean;
+  favoriteCount?: number;
   error?: string;
 };
 
@@ -341,6 +361,86 @@ export default function Opt({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNicknameSubmitting, setIsNicknameSubmitting] = useState(false);
   const [isItemSubmitting, setIsItemSubmitting] = useState(false);
+
+  const [isFavoriteLoaded, setIsFavoriteLoaded] = useState(false);
+  const [isFavoriteLoggedIn, setIsFavoriteLoggedIn] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [isFavoriteSubmitting, setIsFavoriteSubmitting] = useState(false);
+  const [favoriteErrorMessage, setFavoriteErrorMessage] = useState('');
+  const [isFavoriteErrorDialogOpen, setIsFavoriteErrorDialogOpen] = useState(false);
+
+  async function loadFavoriteStatus() {
+    try {
+      setFavoriteErrorMessage('');
+
+      const response = await fetch(`/api/site/blog/${siteName}/favorites`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as FavoriteResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '즐겨찾기 정보를 불러오지 못했습니다.');
+      }
+
+      setIsFavoriteLoggedIn(result.isLoggedIn === true);
+      setIsFavorited(result.isFavorited === true);
+      setFavoriteCount(typeof result.favoriteCount === 'number' ? result.favoriteCount : 0);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setFavoriteErrorMessage(unknownError.message || '즐겨찾기 정보를 불러오지 못했습니다.');
+      } else {
+        setFavoriteErrorMessage('즐겨찾기 정보를 불러오지 못했습니다.');
+      }
+
+      setIsFavoriteErrorDialogOpen(true);
+    } finally {
+      setIsFavoriteLoaded(true);
+    }
+  }
+
+  async function handleToggleFavorite() {
+    if (isFavoriteSubmitting) {
+      return;
+    }
+
+    setIsFavoriteSubmitting(true);
+    setFavoriteErrorMessage('');
+
+    try {
+      const response = await fetch(`/api/site/blog/${siteName}/favorites`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as FavoriteResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '즐겨찾기를 처리하지 못했습니다.');
+      }
+
+      setIsFavoriteLoggedIn(true);
+      setIsFavorited(result.isFavorited === true);
+      setFavoriteCount(typeof result.favoriteCount === 'number' ? result.favoriteCount : 0);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setFavoriteErrorMessage(unknownError.message || '즐겨찾기를 처리하지 못했습니다.');
+      } else {
+        setFavoriteErrorMessage('즐겨찾기를 처리하지 못했습니다.');
+      }
+
+      setIsFavoriteErrorDialogOpen(true);
+    } finally {
+      setIsFavoriteSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadFavoriteStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteName]);
 
   function getMyMemberGeneral() {
     return members.find((member) => member.isMine) ?? null;
@@ -1217,8 +1317,36 @@ export default function Opt({
       <div className="container">
         <div className={`content ${styles.content}`}>
           <div className={`${styles['site-info']} paper`}>
-            <div className={styles['info-site-name']}>
-              <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>
+            <div className={styles['site-info-header']}>
+              <div className={styles['info-site-name']}>
+                <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>
+              </div>
+              <div className={styles['info-site-favorite']}>
+                {isFavoriteLoaded ? (
+                  isFavoriteLoggedIn ? (
+                    <button
+                      type="button"
+                      className={`${styles.button} ${isFavorited ? styles.active : ''}`}
+                      onClick={() => void handleToggleFavorite()}
+                      disabled={isFavoriteSubmitting}
+                      aria-label={isFavorited ? '즐겨찾기 해제' : '즐겨찾기'}
+                    >
+                      {isFavoriteSubmitting ? (
+                        <CircularProgress color="inherit" aria-label="즐겨찾기 등록상태 저장중" size={24} />
+                      ) : (
+                        <StarBorderRoundedIcon />
+                      )}
+                      <strong>즐겨찾기</strong>
+                      {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
+                    </button>
+                  ) : (
+                    <Anchor href="/auth/sign-in" className={styles.button}>
+                      <strong>즐겨찾기</strong>
+                      {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
+                    </Anchor>
+                  )
+                ) : null}
+              </div>
             </div>
             <p className={styles['info-date']}>({formatDate(siteInfo.created_at)} 개설)</p>
             {siteInfo.summary ? <p className={styles['info-summary']}>{siteInfo.summary}</p> : null}
@@ -1499,6 +1627,25 @@ export default function Opt({
             disabled={isItemSubmitDisabled}
           >
             저장
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={isFavoriteErrorDialogOpen}
+        onClose={() => setIsFavoriteErrorDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>즐겨찾기 오류</DialogTitle>
+        <DialogContent>
+          <Alert severity="error" variant="filled">
+            {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button type="button" variant="contained" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+            확인
           </Button>
         </DialogActions>
       </Dialog>
