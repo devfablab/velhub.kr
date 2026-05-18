@@ -60,7 +60,6 @@ export default function JoinSites({ siteType, joinSites }: Props) {
   return (
     <section className={`paper ${styles.paper} ${styles.join}`}>
       <h2>{siteType === 'blog' ? '팀블로그' : '가입 커뮤니티'}</h2>
-
       <div className={`paper ${styles['join-sites']}`}>
         {filteredSites.map((site) => (
           <div key={site.id} className={styles['join-site']}>

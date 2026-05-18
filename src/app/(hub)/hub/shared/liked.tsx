@@ -35,10 +35,6 @@ type Props = {
   siteType: SiteType;
 };
 
-function getSiteTypeLabel(siteType: SiteType) {
-  return siteType === 'blog' ? '블로그' : '커뮤니티';
-}
-
 export default function Liked({ siteType }: Props) {
   const [postLikes, setPostLikes] = useState<PostLikeRow[]>([]);
   const [commentLikes, setCommentLikes] = useState<CommentLikeRow[]>([]);
@@ -50,7 +46,7 @@ export default function Liked({ siteType }: Props) {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/hub/liked?siteType=${siteType}`, {
+        const response = await fetch(`/api/hub/liked?siteType=${siteType}&limit=3`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -92,7 +88,6 @@ export default function Liked({ siteType }: Props) {
   return (
     <section className={`paper ${styles.paper} ${styles.likey}`}>
       <h2>좋아요 👍</h2>
-
       {postLikes.length === 0 && commentLikes.length === 0 ? (
         <p>하나도 맘에 든 글이 없으셨나봐요 😭</p>
       ) : (

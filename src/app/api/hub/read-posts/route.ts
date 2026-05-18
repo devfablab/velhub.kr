@@ -56,6 +56,12 @@ function normalizeSiteType(value: string | null): SiteType | null {
   return null;
 }
 
+function normalizeLimit(value: string | null) {
+  const limitValue = Number(value);
+
+  return Number.isFinite(limitValue) && limitValue > 0 ? Math.floor(limitValue) : null;
+}
+
 function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
@@ -80,10 +86,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
     return authorMap;
   }
 
-  const stigmasResult = await supabaseAdmin
-    .from('stigmas')
-    .select('id, user_id, user_name')
-    .in('user_id', uniqueAuthUserIds);
+  const stigmasResult = await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', uniqueAuthUserIds);
 
   if (stigmasResult.error) {
     throw new Error('작성자 정보를 불러오지 못했습니다.');
@@ -106,9 +109,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
   }
 
   const memberRows = (membersResult.data ?? []) as MemberRow[];
-  const memberMap = new Map(
-    memberRows.map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]),
-  );
+  const memberMap = new Map(memberRows.map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]));
 
   stigmaRows.forEach((stigma) => {
     const authUserId = normalizeText(stigma.user_id);
@@ -117,9 +118,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
       return;
     }
 
-    const nickname = uniqueSiteIds
-      .map((siteId) => memberMap.get(`${siteId}:${stigma.id}`))
-      .find((value) => Boolean(value));
+    const nickname = uniqueSiteIds.map((siteId) => memberMap.get(`${siteId}:${stigma.id}`)).find((value) => Boolean(value));
 
     authorMap.set(authUserId, nickname || decryptValue(stigma.user_name));
   });
@@ -131,6 +130,7 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const siteType = normalizeSiteType(normalizeText(requestUrl.searchParams.get('siteType')).toLowerCase());
+    const limit = normalizeLimit(requestUrl.searchParams.get('limit'));
 
     if (!siteType) {
       return Response.json({ error: 'siteType이 유효하지 않습니다.' }, { status: 400 });
@@ -175,7 +175,6 @@ export async function GET(request: Request) {
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteMap = new Map(sites.map((site) => [site.id, site]));
     const filteredReads = readRows.filter((row) => siteMap.has(row.site_id));
-
     const postIds = filteredReads.map((row) => row.post_id);
     const boardIds = Array.from(new Set(filteredReads.map((row) => row.board_id)));
 
@@ -186,9 +185,7 @@ export async function GET(request: Request) {
             .select('id, slug, subject, user_id, site_id, board_id, published_status, is_closed')
             .in('id', postIds)
         : { data: [], error: null },
-      boardIds.length > 0
-        ? supabaseAdmin.from('boards').select('id, board_key').in('id', boardIds)
-        : { data: [], error: null },
+      boardIds.length > 0 ? supabaseAdmin.from('boards').select('id, board_key').in('id', boardIds) : { data: [], error: null },
     ]);
 
     if (postsResult.error || boardsResult.error) {
@@ -223,7 +220,8 @@ export async function GET(request: Request) {
           href: `/${site.site_key}/${boardKey}/${post.slug}`,
         };
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .slice(0, limit ?? undefined);
 
     return Response.json({ posts: resultPosts });
   } catch (unknownError) {

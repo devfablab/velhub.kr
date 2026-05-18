@@ -12,7 +12,9 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, useTheme } from '@mui/material';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import { CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, useTheme } from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -85,6 +87,20 @@ type PollData = {
   options: PollOption[];
 };
 
+type PostActions = {
+  isLiked: boolean;
+  isSaved: boolean;
+  likeCount: number;
+};
+
+type PostActionResponse = {
+  ok?: boolean;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  likeCount?: number;
+  error?: string;
+};
+
 type PostContent = {
   id: string;
   slug: string;
@@ -155,6 +171,7 @@ type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
+  postActions?: PostActions;
   draw?: DrawInfo | null;
   isAuthor: boolean;
   isStaff: boolean;
@@ -281,6 +298,13 @@ export default function Opt() {
   const [pollErrorMessage, setPollErrorMessage] = useState('');
   const [draw, setDraw] = useState<DrawInfo | null>(null);
 
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [isTogglingSave, setIsTogglingSave] = useState(false);
+  const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
       previousContent
@@ -352,6 +376,82 @@ export default function Opt() {
     }
   }
 
+  async function recordPostRead(nextBoardName: string, nextContentId: string) {
+    try {
+      await fetch(`/api/boards/${nextBoardName}/${nextContentId}/read?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+    } catch {
+      return;
+    }
+  }
+
+  async function togglePostLike() {
+    if (isTogglingLike) {
+      return;
+    }
+
+    try {
+      setIsTogglingLike(true);
+      setPostActionErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/like?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PostActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '좋아요를 처리하지 못했습니다.');
+      }
+
+      setIsLiked(result.isLiked === true);
+      setLikeCount(typeof result.likeCount === 'number' ? result.likeCount : 0);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPostActionErrorMessage(unknownError.message || '좋아요를 처리하지 못했습니다.');
+      } else {
+        setPostActionErrorMessage('좋아요를 처리하지 못했습니다.');
+      }
+    } finally {
+      setIsTogglingLike(false);
+    }
+  }
+
+  async function togglePostSave() {
+    if (isTogglingSave) {
+      return;
+    }
+
+    try {
+      setIsTogglingSave(true);
+      setPostActionErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/save?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PostActionResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '글 저장을 처리하지 못했습니다.');
+      }
+
+      setIsSaved(result.isSaved === true);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setPostActionErrorMessage(unknownError.message || '글 저장을 처리하지 못했습니다.');
+      } else {
+        setPostActionErrorMessage('글 저장을 처리하지 못했습니다.');
+      }
+    } finally {
+      setIsTogglingSave(false);
+    }
+  }
+
   useEffect(() => {
     async function loadContent() {
       try {
@@ -374,6 +474,9 @@ export default function Opt() {
         setDraw(result.draw ?? null);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
+        setIsLiked(result.postActions?.isLiked === true);
+        setIsSaved(result.postActions?.isSaved === true);
+        setLikeCount(typeof result.postActions?.likeCount === 'number' ? result.postActions.likeCount : 0);
 
         if (result.content?.poll) {
           void loadPollResult(boardName, result.content.id);
@@ -381,6 +484,7 @@ export default function Opt() {
 
         if (result.content?.published_status === 'published') {
           void increasePostCount(boardName, contentId);
+          void recordPostRead(boardName, contentId);
         }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -516,6 +620,43 @@ export default function Opt() {
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
+  const postActionButtons =
+    content.published_status === 'published' ? (
+      <div className={styles.options}>
+        <div className={styles.buttons}>
+          <button
+            type="button"
+            className={`${styles.button} ${isLiked ? styles.active : ''}`}
+            onClick={() => void togglePostLike()}
+            disabled={isTogglingLike}
+            aria-label={isLiked ? '좋아요 취소' : '좋아요'}
+          >
+            {isTogglingLike ? (
+              <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
+            ) : (
+              <FavoriteBorderRoundedIcon />
+            )}
+            <strong>좋아요</strong>
+            {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
+          </button>
+          <button
+            type="button"
+            className={`${styles.button} ${isSaved ? styles.active : ''}`}
+            onClick={() => void togglePostSave()}
+            disabled={isTogglingSave}
+            aria-label={isSaved ? '저장 취소' : '저장'}
+          >
+            {isTogglingSave ? (
+              <CircularProgress color="inherit" aria-label="저장" size={24} />
+            ) : (
+              <TurnedInNotRoundedIcon />
+            )}
+            <strong>저장</strong>
+          </button>
+        </div>
+        {postActionErrorMessage ? <p>{postActionErrorMessage}</p> : null}
+      </div>
+    ) : null;
 
   return (
     <div className={`${styles.content} content`}>
@@ -930,6 +1071,7 @@ export default function Opt() {
             ) : null}
           </div>
         ) : null}
+        {postActionButtons}
       </article>
       {content.published_status === 'published' ? (
         <CommentSection

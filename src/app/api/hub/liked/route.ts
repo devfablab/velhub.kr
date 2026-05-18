@@ -75,6 +75,12 @@ function normalizeSiteType(value: string | null): SiteType | null {
   return null;
 }
 
+function normalizeLimit(value: string | null) {
+  const limitValue = Number(value);
+
+  return Number.isFinite(limitValue) && limitValue > 0 ? Math.floor(limitValue) : null;
+}
+
 function truncateText(value: string, maxLength: number) {
   const normalizedValue = normalizeText(value);
 
@@ -109,10 +115,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
     return authorMap;
   }
 
-  const stigmasResult = await supabaseAdmin
-    .from('stigmas')
-    .select('id, user_id, user_name')
-    .in('user_id', uniqueAuthUserIds);
+  const stigmasResult = await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', uniqueAuthUserIds);
 
   if (stigmasResult.error) {
     throw new Error('작성자 정보를 불러오지 못했습니다.');
@@ -135,9 +138,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
   }
 
   const memberRows = (membersResult.data ?? []) as MemberRow[];
-  const memberMap = new Map(
-    memberRows.map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]),
-  );
+  const memberMap = new Map(memberRows.map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]));
 
   stigmaRows.forEach((stigma) => {
     const authUserId = normalizeText(stigma.user_id);
@@ -146,9 +147,7 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
       return;
     }
 
-    const nickname = uniqueSiteIds
-      .map((siteId) => memberMap.get(`${siteId}:${stigma.id}`))
-      .find((value) => Boolean(value));
+    const nickname = uniqueSiteIds.map((siteId) => memberMap.get(`${siteId}:${stigma.id}`)).find((value) => Boolean(value));
 
     authorMap.set(authUserId, nickname || decryptValue(stigma.user_name));
   });
@@ -160,6 +159,7 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const siteType = normalizeSiteType(normalizeText(requestUrl.searchParams.get('siteType')).toLowerCase());
+    const limit = normalizeLimit(requestUrl.searchParams.get('limit'));
 
     if (!siteType) {
       return Response.json({ error: 'siteType이 유효하지 않습니다.' }, { status: 400 });
@@ -197,10 +197,7 @@ export async function GET(request: Request) {
 
     const postLikeRows = (postLikesResult.data ?? []) as PostLikeRow[];
     const commentLikeRows = (commentLikesResult.data ?? []) as CommentLikeRow[];
-
-    const siteIds = Array.from(
-      new Set([...postLikeRows.map((row) => row.site_id), ...commentLikeRows.map((row) => row.site_id)]),
-    );
+    const siteIds = Array.from(new Set([...postLikeRows.map((row) => row.site_id), ...commentLikeRows.map((row) => row.site_id)]));
 
     if (siteIds.length === 0) {
       return Response.json({
@@ -222,16 +219,13 @@ export async function GET(request: Request) {
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteMap = new Map(sites.map((site) => [site.id, site]));
     const filteredSiteIds = sites.map((site) => site.id);
-
     const postIds = Array.from(
       new Set([
         ...postLikeRows.filter((row) => filteredSiteIds.includes(row.site_id)).map((row) => row.post_id),
         ...commentLikeRows.filter((row) => filteredSiteIds.includes(row.site_id)).map((row) => row.post_id),
       ]),
     );
-    const commentIds = commentLikeRows
-      .filter((row) => filteredSiteIds.includes(row.site_id))
-      .map((row) => row.comment_id);
+    const commentIds = commentLikeRows.filter((row) => filteredSiteIds.includes(row.site_id)).map((row) => row.comment_id);
     const boardIds = Array.from(
       new Set([
         ...postLikeRows.filter((row) => filteredSiteIds.includes(row.site_id)).map((row) => row.board_id),
@@ -252,9 +246,7 @@ export async function GET(request: Request) {
             .select('id, content, post_id, site_id, board_id, is_deleted, is_blinded')
             .in('id', commentIds)
         : { data: [], error: null },
-      boardIds.length > 0
-        ? supabaseAdmin.from('boards').select('id, board_key').in('id', boardIds)
-        : { data: [], error: null },
+      boardIds.length > 0 ? supabaseAdmin.from('boards').select('id, board_key').in('id', boardIds) : { data: [], error: null },
     ]);
 
     if (postsResult.error || commentsResult.error || boardsResult.error) {
@@ -264,7 +256,6 @@ export async function GET(request: Request) {
     const posts = (postsResult.data ?? []) as PostRow[];
     const comments = (commentsResult.data ?? []) as CommentRow[];
     const boards = (boardsResult.data ?? []) as BoardRow[];
-
     const postMap = new Map(posts.map((post) => [post.id, post]));
     const commentMap = new Map(comments.map((comment) => [comment.id, comment]));
     const boardMap = new Map(boards.map((board) => [board.id, board.board_key]));
@@ -292,7 +283,8 @@ export async function GET(request: Request) {
           href: `/${site.site_key}/${boardKey}/${post.slug}`,
         };
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .slice(0, limit ?? undefined);
 
     const commentLikes = commentLikeRows
       .map((like) => {
@@ -323,7 +315,8 @@ export async function GET(request: Request) {
           href: `/${site.site_key}/${boardKey}/${post.slug}`,
         };
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .slice(0, limit ?? undefined);
 
     return Response.json({
       postLikes,

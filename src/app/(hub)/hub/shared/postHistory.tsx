@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
+
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
-
 type HistoryType = 'read' | 'saved';
 
 type PostRow = {
@@ -50,7 +50,7 @@ export default function PostHistory({ siteType, type }: Props) {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`${getApiPath(type)}?siteType=${siteType}`, {
+        const response = await fetch(`${getApiPath(type)}?siteType=${siteType}&limit=3`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -95,7 +95,6 @@ export default function PostHistory({ siteType, type }: Props) {
   return (
     <section className={`paper ${styles.paper} ${styles.history}`}>
       <h2>{getTitle(type)}</h2>
-
       {posts.length === 0 ? (
         <p>좋은 글, 좋은 생각.</p>
       ) : (
