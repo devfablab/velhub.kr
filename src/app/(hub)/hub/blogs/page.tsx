@@ -3,6 +3,7 @@ import JoinSites from '../shared/joinSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import FavoriteBlogs from './favoriteBlogs';
+import Container from './tab';
 import styles from '@/app/hub.module.sass';
 
 type JoinSiteRow = {
@@ -83,7 +84,7 @@ export default async function SectionJoinSites() {
   return (
     <main>
       <div className="container">
-        <div className={`content ${styles.content} ${styles['hub-content']}`}>
+        <Container>
           {joinSites.length > 0 && hasBlog ? (
             <JoinSites siteType="blog" joinSites={joinSites} />
           ) : (
@@ -95,7 +96,7 @@ export default async function SectionJoinSites() {
           <Liked siteType="blog" />
           <PostHistory siteType="blog" type="saved" />
           <PostHistory siteType="blog" type="read" />
-        </div>
+        </Container>
       </div>
     </main>
   );

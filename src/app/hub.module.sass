@@ -120,10 +120,70 @@
         color: ds.$hex-action
 
 .hub-content
-  ol
+  > ol
     display: flex
-    flex-direction: column
-    gap: ds.rem(7)
+    flex-direction: row
+    gap: 0
+
+    li
+      display: inline-flex
+      align-items: center
+      padding-right: ds.rem(12)
+
+      &::before
+        display: inline-block
+        content: ''
+        width: 1px
+        height: ds.rem(17)
+
+        html[data-theme="yellow-light"] &
+          background-color: rgba(ds.$rgb-tertiary, .3)
+
+        html[data-theme="yellow-dark"] &
+          background-color: rgba(ds.$rgb-tertiary, .5)
+
+      &:first-of-type
+        &::before
+          display: none
+
+        a
+          padding-left: 0
+
+      &:last-of-type
+        padding-right: 0
+
+      a
+        display: inline-flex
+        padding-left: ds.rem(12)
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-secondary
+          opacity: .7
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+          opacity: .7
+
+        &:hover, &:focus-visible
+          color: ds.$hex-accent!important
+          opacity: 1!important
+
+      &.current
+        a
+          color: ds.$hex-accent!important
+          opacity: 1!important
+
+  h3
+    & ~ ol
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
+
+  .items
+    ol
+      display: flex
+      flex-direction: column
+      gap: ds.rem(7)
 
   .join
     .join-sites
