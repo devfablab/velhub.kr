@@ -6,46 +6,37 @@ import { useParams } from 'next/navigation';
 import {
   Avatar,
   Box,
-  Divider,
   Drawer,
   IconButton,
-  Link,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Menu,
   MenuItem,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import LogoutIcon from '@mui/icons-material/Logout';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LoginIcon from '@mui/icons-material/Login';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import HomeIcon from '@mui/icons-material/Home';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ArticleIcon from '@mui/icons-material/Article';
-import ForumIcon from '@mui/icons-material/Forum';
-import FontDownloadIcon from '@mui/icons-material/FontDownload';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import GroupsIcon from '@mui/icons-material/Groups';
-import PeopleIcon from '@mui/icons-material/People';
-import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
-import BlogSearch from '../header-groups/site/BlogSearch';
-import CommunitySearch from '../header-groups/site/CommunitySearch';
-import MenuItems from '../header-groups/site/Menu';
-import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
+import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -57,7 +48,6 @@ type HeaderResponse = {
   themeType: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
-  blogFontSettings: BlogFontSettings | null;
   isLoggedIn: boolean;
   email: string | null;
   userName: string | null;
@@ -73,106 +63,7 @@ type UserProfile = {
   avatarUrl: string | null;
 };
 
-type BlogFontSettings = {
-  subjectFontFamily: string | null;
-  subjectLetterSpacing: number | null;
-  subjectLineHeight: number | null;
-  descriptionFontFamily: string | null;
-  descriptionLetterSpacing: number | null;
-  descriptionLineHeight: number | null;
-  descriptionFontSize: number | null;
-  descriptionMargin: number | null;
-};
-
-function getBlogFontFamily(value: string | null) {
-  if (value === 'neo') {
-    return 'var(--neo)';
-  }
-
-  if (value === 'pre') {
-    return 'var(--pre)';
-  }
-
-  if (value === 'sans') {
-    return 'var(--sans)';
-  }
-
-  if (value === 'serif') {
-    return 'var(--serif)';
-  }
-
-  if (value === 'ham') {
-    return 'var(--ham)';
-  }
-
-  return '';
-}
-
-function setCssVariable(name: string, value: string | number | null) {
-  if (value === null || value === '') {
-    document.documentElement.style.removeProperty(name);
-    return;
-  }
-
-  document.documentElement.style.setProperty(name, String(value));
-}
-
-function clearBlogFontSettings() {
-  document.documentElement.removeAttribute('data-site-type');
-  document.documentElement.style.removeProperty('--blog-subject-font-family');
-  document.documentElement.style.removeProperty('--blog-subject-letter-spacing');
-  document.documentElement.style.removeProperty('--blog-subject-line-height');
-  document.documentElement.style.removeProperty('--blog-description-font-family');
-  document.documentElement.style.removeProperty('--blog-description-letter-spacing');
-  document.documentElement.style.removeProperty('--blog-description-line-height');
-  document.documentElement.style.removeProperty('--blog-description-font-size');
-  document.documentElement.style.removeProperty('--blog-description-margin');
-}
-
-function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: BlogFontSettings | null) {
-  if (siteType !== 'blog') {
-    clearBlogFontSettings();
-    return;
-  }
-
-  document.documentElement.setAttribute('data-site-type', 'blog');
-
-  setCssVariable('--blog-subject-font-family', getBlogFontFamily(blogFontSettings?.subjectFontFamily ?? null));
-  setCssVariable(
-    '--blog-subject-letter-spacing',
-    blogFontSettings?.subjectLetterSpacing !== null && blogFontSettings?.subjectLetterSpacing !== undefined
-      ? `${blogFontSettings.subjectLetterSpacing}em`
-      : null,
-  );
-  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? null);
-
-  setCssVariable('--blog-description-font-family', getBlogFontFamily(blogFontSettings?.descriptionFontFamily ?? null));
-  setCssVariable(
-    '--blog-description-letter-spacing',
-    blogFontSettings?.descriptionLetterSpacing !== null && blogFontSettings?.descriptionLetterSpacing !== undefined
-      ? `${blogFontSettings.descriptionLetterSpacing}em`
-      : null,
-  );
-  setCssVariable('--blog-description-line-height', blogFontSettings?.descriptionLineHeight ?? null);
-  setCssVariable(
-    '--blog-description-font-size',
-    blogFontSettings?.descriptionFontSize !== null && blogFontSettings?.descriptionFontSize !== undefined
-      ? `${blogFontSettings.descriptionFontSize}px`
-      : null,
-  );
-  setCssVariable(
-    '--blog-description-margin',
-    blogFontSettings?.descriptionMargin !== null && blogFontSettings?.descriptionMargin !== undefined
-      ? `${blogFontSettings.descriptionMargin}px`
-      : null,
-  );
-}
-
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
-
-function isStaffRole(role: string | null) {
-  return role === 'owner' || role === 'manager';
-}
 
 function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'light' || value === 'system' || value === 'dark';
@@ -202,10 +93,6 @@ function getResolvedThemeMode(themeMode: ThemeMode) {
 
 function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
-}
-
-function applyColorSet(themeType: string) {
-  document.documentElement.setAttribute('data-colorset', themeType);
 }
 
 export default function HeaderSite() {
@@ -436,66 +323,107 @@ export default function HeaderSite() {
             </IconButton>
 
             {isMobile ? (
-              <Drawer anchor="right" open={isProfileDrawerOpen} onClose={handleCloseProfileDrawer}>
-                <Box sx={{ minWidth: 320, py: 1 }}>
-                  <MenuItem onClick={handleCloseProfileDrawer}>
-                    <ListItemIcon>
-                      <HomeIcon fontSize="small" />
-                    </ListItemIcon>
-                    <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
-                      라운지
-                    </Link>
-                  </MenuItem>
-
-                  <MenuItem onClick={handleCloseProfileDrawer}>
-                    <ListItemIcon>
-                      <SettingsIcon fontSize="small" />
-                    </ListItemIcon>
-                    <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
-                      개인 설정
-                    </Link>
-                  </MenuItem>
-
-                  <MenuItem onClick={handleLogout}>
-                    <ListItemIcon>
-                      <LogoutIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>로그아웃</ListItemText>
-                  </MenuItem>
-                </Box>
+              <Drawer
+                anchor="right"
+                open={isProfileDrawerOpen}
+                onClose={handleCloseProfileDrawer}
+                className={styles.VhiDrawer}
+              >
+                <li className={styles['VhiMenu-profile']}>
+                  <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                  <div className={styles['VhiMenu-profile-info']}>
+                    <em>{userProfile.name}</em>
+                    <span>{userProfile.email}</span>
+                  </div>
+                </li>
+                <ListSubheader className={styles['VhiDrawer-subheader']}>마이허브</ListSubheader>
+                <MenuItem key="hub" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/hub">
+                    <HubOutlinedIcon fontSize="small" />
+                    <span>마이허브 홈</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="blogs" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/hub/blogs">
+                    <MenuBookRoundedIcon fontSize="small" />
+                    <span>블로그 허브</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="communities" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/hub/communities">
+                    <InterestsOutlinedIcon fontSize="small" />
+                    <span>커뮤니티 허브</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="purchase" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/hub/purchase">
+                    <SellOutlinedIcon fontSize="small" />
+                    <span>구입내역</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="notifications" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/hub/notifications">
+                    <NotificationsOutlinedIcon fontSize="small" />
+                    <span>알림내역</span>
+                  </Anchor>
+                </MenuItem>
+                <ListSubheader className={styles['VhiDrawer-subheader']}>라운지</ListSubheader>
+                <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/">
+                    <HomeOutlinedIcon fontSize="small" />
+                    <span>라운지 홈</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="concierge" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/concierge">
+                    <HearingOutlinedIcon fontSize="small" />
+                    <span>컨시어지</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="help" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/help">
+                    <LightbulbOutlinedIcon fontSize="small" />
+                    <span>이용안내</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
+                  <ListItemIcon className={styles['logout-icon']}>
+                    <LogoutOutlinedIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                </MenuItem>
               </Drawer>
             ) : (
               <Menu
                 anchorEl={profileAnchorElement}
                 open={Boolean(profileAnchorElement)}
                 onClose={handleCloseProfileMenu}
+                className={styles.VhiMenu}
               >
-                <Box sx={{ px: 2, py: 1 }}>
-                  {userProfile.name ? <Typography>{userProfile.name}</Typography> : null}
-                  {userProfile.email ? <Typography>{userProfile.email}</Typography> : null}
-                </Box>
-                <Divider />
-                <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                  <ListItemIcon>
-                    <SettingsIcon fontSize="small" />
-                  </ListItemIcon>
-                  <Link href="/settings" underline="none" sx={{ flex: '1 0 0%' }}>
-                    개인 설정
-                  </Link>
-                </MenuItem>
+                <li className={styles['VhiMenu-profile']}>
+                  <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                  <div className={styles['VhiMenu-profile-info']}>
+                    <em>{userProfile.name}</em>
+                    <span>{userProfile.email}</span>
+                  </div>
+                </li>
                 <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                  <ListItemIcon>
-                    <HomeIcon fontSize="small" />
-                  </ListItemIcon>
-                  <Link href="/" underline="none" sx={{ flex: '1 0 0%' }}>
-                    라운지 이동
-                  </Link>
+                  <Anchor href="/">
+                    <HomeOutlinedIcon fontSize="small" />
+                    <span>라운지 이동</span>
+                  </Anchor>
                 </MenuItem>
-                <MenuItem key="logout" onClick={handleLogout}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" />
+                <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/settings">
+                    <SettingsOutlinedIcon fontSize="small" />
+                    <span>개인 설정</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
+                  <ListItemIcon className={styles['logout-icon']}>
+                    <LogoutOutlinedIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText>로그아웃</ListItemText>
+                  <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
                 </MenuItem>
               </Menu>
             )}
