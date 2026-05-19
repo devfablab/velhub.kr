@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useMediaQuery, useTheme } from '@mui/material';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import Anchor from '@/components/Anchor';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -244,13 +245,19 @@ function renderBoardContents(siteName: string, homeBoard: HomeBoard) {
 }
 
 export default function Community({ siteName, homeBoards }: Props) {
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
+
   return (
     <main>
       <div className="container">
-        <aside>
-          <SiteInfo />
-          <TableList />
-        </aside>
+        {!isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
 
         <div className={`content ${styles.content} ${styles['home-content']} `}>
           {homeBoards.length === 0 ? (
@@ -282,10 +289,12 @@ export default function Community({ siteName, homeBoards }: Props) {
           )}
         </div>
 
-        <aside>
-          <UserInfo />
-          <PostCountTableList />
-        </aside>
+        {!isMobile ? (
+          <aside>
+            <UserInfo />
+            <PostCountTableList />
+          </aside>
+        ) : null}
       </div>
     </main>
   );

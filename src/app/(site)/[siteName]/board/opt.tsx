@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useMediaQuery, useTheme } from '@mui/material';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
@@ -12,6 +13,10 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import SiteInfo from '@/components/service/community/SiteInfo';
+import TableList from '@/components/service/community/TableList';
+import UserInfo from '@/components/service/community/UserInfo';
+import PostCountTableList from '@/components/service/community/PostCountTableList';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -124,6 +129,9 @@ export default function Opt({ isCommunity }: Props) {
   const [totalPage, setTotalPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadContents(nextPage = 1, nextKeyword = '') {
     try {
@@ -215,14 +223,16 @@ export default function Opt({ isCommunity }: Props) {
 
   if (isLoading) {
     return (
-      <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>최신글 보기</span>
-        </h2>
-        <div className="paper">
-          <div className="loading-container">
-            <LoadingIndicator />
+      <div className="container">
+        <div className={`${styles.content} content`}>
+          <h2>
+            <ListAltOutlinedIcon />
+            <span>최신글 보기</span>
+          </h2>
+          <div className="paper">
+            <div className="loading-container">
+              <LoadingIndicator />
+            </div>
           </div>
         </div>
       </div>
@@ -231,240 +241,262 @@ export default function Opt({ isCommunity }: Props) {
 
   if (errorMessage) {
     return (
-      <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>최신글 보기</span>
-        </h2>
-        <div className="paper paper-error">{errorMessage}</div>
+      <div className="container">
+        <div className={`${styles.content} content`}>
+          <h2>
+            <ListAltOutlinedIcon />
+            <span>최신글 보기</span>
+          </h2>
+          <div className="paper paper-error">{errorMessage}</div>
+        </div>
       </div>
     );
   }
 
   if (!isCommunity) {
     return (
-      <div className={`${styles.content} content`}>
-        <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+      <div className="container">
+        <div className={`${styles.content} content`}>
+          <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`${styles.content} content`}>
-      <h2>
-        {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}
-        {isSearchMode ? (
-          <span>
-            <strong>{searchKeyword}</strong>
-            {` 검색 결과 (${totalCount}건)`}
-          </span>
-        ) : (
-          <span>최신글 보기</span>
-        )}
-      </h2>
+    <div className="container">
+      {isCommunity && !isMobile ? (
+        <aside>
+          <SiteInfo />
+          <TableList />
+        </aside>
+      ) : null}
 
-      <div className={styles['board-search-container']}>
-        <form onSubmit={handleSearchSubmit} className="form">
-          <fieldset>
-            <legend>게시글 검색</legend>
-            <div className={styles['form-group']}>
-              <div className={styles['form-control']}>
-                <input
-                  type="search"
-                  value={keywordInput}
-                  placeholder="검색어를 입력해주세요"
-                  onChange={(event) => setKeywordInput(event.currentTarget.value)}
-                />
+      <div className={`${styles.content} content`}>
+        <h2>
+          {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}
+          {isSearchMode ? (
+            <span>
+              <strong>{searchKeyword}</strong>
+              {` 검색 결과 (${totalCount}건)`}
+            </span>
+          ) : (
+            <span>최신글 보기</span>
+          )}
+        </h2>
+
+        <div className={styles['board-search-container']}>
+          <form onSubmit={handleSearchSubmit} className="form">
+            <fieldset>
+              <legend>게시글 검색</legend>
+              <div className={styles['form-group']}>
+                <div className={styles['form-control']}>
+                  <input
+                    type="search"
+                    value={keywordInput}
+                    placeholder="검색어를 입력해주세요"
+                    onChange={(event) => setKeywordInput(event.currentTarget.value)}
+                  />
+                </div>
+                <button type="submit" aria-label="검색">
+                  <SearchIcon />
+                </button>
               </div>
-              <button type="submit" aria-label="검색">
-                <SearchIcon />
+            </fieldset>
+          </form>
+        </div>
+
+        {contents.length === 0 ? (
+          <div className="paper paper-error">
+            {isSearchMode ? '검색 결과가 없습니다.' : '등록된 게시글이 없습니다.'}
+          </div>
+        ) : isSearchMode ? (
+          <div className="paper">
+            <table>
+              <caption>게시글 검색 결과</caption>
+              <colgroup>
+                <col />
+                <col style={{ width: 127 }} />
+                <col style={{ width: 77 }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="long-cell">제목</th>
+                  <th className="long-cell">작성자</th>
+                  <th>작성일</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {contents.map((content) => (
+                  <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                    <td className="long-cell">
+                      <div className="board-subject">
+                        {content.is_pin ? (
+                          <i className="pin-icon" aria-label="상단고정글">
+                            <PushPinRoundedIcon />
+                          </i>
+                        ) : null}
+                        <small className="board-name board-chip" aria-label="게시판명">
+                          {content.board_label}
+                        </small>
+                        {content.prefix_label ? (
+                          <small className="prefix-name board-chip" aria-label="말머리">
+                            {content.prefix_label}
+                          </small>
+                        ) : null}
+                        {content.series_label ? (
+                          <small className="series-name board-chip" aria-label="연재명">
+                            {content.series_label}
+                          </small>
+                        ) : null}
+                        {content.is_poll ? (
+                          <i className="poll-icon" aria-label="투표글">
+                            <HowToVoteIcon />
+                          </i>
+                        ) : null}
+                        <Anchor
+                          href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                        >
+                          {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
+                        </Anchor>
+                        {content.comment_count > 0 ? (
+                          <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                        ) : null}
+                      </div>
+                      {content.search_content_matched ? (
+                        <div className="board-content">
+                          {renderHighlightedText(content.search_content, searchKeyword)}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="long-cell">
+                      <cite>{content.author_name}</cite>
+                    </td>
+                    <td>{formatTimeAgo(content.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="paper">
+            <table>
+              <caption>게시글 목록</caption>
+              <colgroup>
+                <col />
+                <col style={{ width: 127 }} />
+                <col style={{ width: 77 }} />
+                <col style={{ width: 67 }} />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="long-cell">제목</th>
+                  <th className="long-cell">작성자</th>
+                  <th>작성일</th>
+                  <th>조회수</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {contents.map((content) => (
+                  <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                    <td className="long-cell">
+                      <div className="board-subject">
+                        {content.is_pin ? (
+                          <i className="pin-icon" aria-label="상단고정글">
+                            <PushPinRoundedIcon />
+                          </i>
+                        ) : null}
+                        <small className="board-name board-chip" aria-label="게시판명">
+                          {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
+                        </small>
+                        {content.prefix_label ? (
+                          <small className="prefix-name board-chip" aria-label="말머리">
+                            {content.prefix_label}
+                          </small>
+                        ) : null}
+                        {content.series_label ? (
+                          <small className="series-name board-chip" aria-label="연재명">
+                            {content.series_label}
+                          </small>
+                        ) : null}
+                        {content.is_poll ? (
+                          <i className="poll-icon" aria-label="투표글">
+                            <HowToVoteIcon />
+                          </i>
+                        ) : null}
+                        {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                        <Anchor
+                          href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                        >
+                          {content.subject}
+                        </Anchor>
+                        {content.comment_count > 0 ? (
+                          <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="long-cell">
+                      <cite>{content.author_name}</cite>
+                    </td>
+                    <td>
+                      {formatTimeAgo(
+                        content.published_status === 'published' ? content.published_at : content.created_at,
+                      )}
+                    </td>
+                    <td>{content.post_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {totalPage > 1 ? (
+          <nav className={styles.pagination} aria-label="페이지네이션">
+            {hasPreviousPager ? (
+              <button
+                type="button"
+                onClick={() => handlePageClick(pageNumbers[0] - 1)}
+                className={styles.pager}
+                aria-label="이전 페이지 묶음"
+              >
+                <ArrowBackIosRoundedIcon />
               </button>
-            </div>
-          </fieldset>
-        </form>
+            ) : null}
+
+            {pageNumbers.map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => handlePageClick(pageNumber)}
+                className={pageNumber === currentPage ? styles.current : undefined}
+                aria-current={pageNumber === currentPage ? 'page' : undefined}
+              >
+                {pageNumber}
+              </button>
+            ))}
+
+            {hasNextPager ? (
+              <button
+                type="button"
+                onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
+                className={styles.pager}
+                aria-label="다음 페이지 묶음"
+              >
+                <ArrowForwardIosRoundedIcon />
+              </button>
+            ) : null}
+          </nav>
+        ) : null}
       </div>
 
-      {contents.length === 0 ? (
-        <div className="paper paper-error">{isSearchMode ? '검색 결과가 없습니다.' : '등록된 게시글이 없습니다.'}</div>
-      ) : isSearchMode ? (
-        <div className="paper">
-          <table>
-            <caption>게시글 검색 결과</caption>
-            <colgroup>
-              <col />
-              <col style={{ width: 127 }} />
-              <col style={{ width: 77 }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th className="long-cell">제목</th>
-                <th className="long-cell">작성자</th>
-                <th>작성일</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {contents.map((content) => (
-                <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
-                  <td className="long-cell">
-                    <div className="board-subject">
-                      {content.is_pin ? (
-                        <i className="pin-icon" aria-label="상단고정글">
-                          <PushPinRoundedIcon />
-                        </i>
-                      ) : null}
-                      <small className="board-name board-chip" aria-label="게시판명">
-                        {content.board_label}
-                      </small>
-                      {content.prefix_label ? (
-                        <small className="prefix-name board-chip" aria-label="말머리">
-                          {content.prefix_label}
-                        </small>
-                      ) : null}
-                      {content.series_label ? (
-                        <small className="series-name board-chip" aria-label="연재명">
-                          {content.series_label}
-                        </small>
-                      ) : null}
-                      {content.is_poll ? (
-                        <i className="poll-icon" aria-label="투표글">
-                          <HowToVoteIcon />
-                        </i>
-                      ) : null}
-                      <Anchor
-                        href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
-                      >
-                        {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
-                      </Anchor>
-                      {content.comment_count > 0 ? (
-                        <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
-                      ) : null}
-                    </div>
-                    {content.search_content_matched ? (
-                      <div className="board-content">
-                        {renderHighlightedText(content.search_content, searchKeyword)}
-                      </div>
-                    ) : null}
-                  </td>
-                  <td className="long-cell">
-                    <cite>{content.author_name}</cite>
-                  </td>
-                  <td>{formatTimeAgo(content.created_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="paper">
-          <table>
-            <caption>게시글 목록</caption>
-            <colgroup>
-              <col />
-              <col style={{ width: 127 }} />
-              <col style={{ width: 77 }} />
-              <col style={{ width: 67 }} />
-            </colgroup>
-            <thead>
-              <tr>
-                <th className="long-cell">제목</th>
-                <th className="long-cell">작성자</th>
-                <th>작성일</th>
-                <th>조회수</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {contents.map((content) => (
-                <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
-                  <td className="long-cell">
-                    <div className="board-subject">
-                      {content.is_pin ? (
-                        <i className="pin-icon" aria-label="상단고정글">
-                          <PushPinRoundedIcon />
-                        </i>
-                      ) : null}
-                      <small className="board-name board-chip" aria-label="게시판명">
-                        {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
-                      </small>
-                      {content.prefix_label ? (
-                        <small className="prefix-name board-chip" aria-label="말머리">
-                          {content.prefix_label}
-                        </small>
-                      ) : null}
-                      {content.series_label ? (
-                        <small className="series-name board-chip" aria-label="연재명">
-                          {content.series_label}
-                        </small>
-                      ) : null}
-                      {content.is_poll ? (
-                        <i className="poll-icon" aria-label="투표글">
-                          <HowToVoteIcon />
-                        </i>
-                      ) : null}
-                      {content.published_status === 'draft' ? <em>(임시글)</em> : null}
-                      <Anchor
-                        href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
-                      >
-                        {content.subject}
-                      </Anchor>
-                      {content.comment_count > 0 ? (
-                        <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="long-cell">
-                    <cite>{content.author_name}</cite>
-                  </td>
-                  <td>
-                    {formatTimeAgo(
-                      content.published_status === 'published' ? content.published_at : content.created_at,
-                    )}
-                  </td>
-                  <td>{content.post_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {totalPage > 1 ? (
-        <nav className={styles.pagination} aria-label="페이지네이션">
-          {hasPreviousPager ? (
-            <button
-              type="button"
-              onClick={() => handlePageClick(pageNumbers[0] - 1)}
-              className={styles.pager}
-              aria-label="이전 페이지 묶음"
-            >
-              <ArrowBackIosRoundedIcon />
-            </button>
-          ) : null}
-
-          {pageNumbers.map((pageNumber) => (
-            <button
-              key={pageNumber}
-              type="button"
-              onClick={() => handlePageClick(pageNumber)}
-              className={pageNumber === currentPage ? styles.current : undefined}
-              aria-current={pageNumber === currentPage ? 'page' : undefined}
-            >
-              {pageNumber}
-            </button>
-          ))}
-
-          {hasNextPager ? (
-            <button
-              type="button"
-              onClick={() => handlePageClick(pageNumbers[pageNumbers.length - 1] + 1)}
-              className={styles.pager}
-              aria-label="다음 페이지 묶음"
-            >
-              <ArrowForwardIosRoundedIcon />
-            </button>
-          ) : null}
-        </nav>
+      {isCommunity && !isMobile ? (
+        <aside>
+          <UserInfo />
+          <PostCountTableList />
+        </aside>
       ) : null}
     </div>
   );

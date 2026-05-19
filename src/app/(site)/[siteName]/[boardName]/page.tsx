@@ -38,23 +38,7 @@ export default async function Page(context: RouteContext) {
 
   return (
     <main>
-      <div className="container">
-        {isCommunity ? (
-          <aside>
-            <SiteInfo />
-            <TableList />
-          </aside>
-        ) : null}
-
-        <Opt isCommunity={isCommunity} />
-
-        {isCommunity ? (
-          <aside>
-            <UserInfo />
-            <BoardPostCountTableList />
-          </aside>
-        ) : null}
-      </div>
+      <Opt isCommunity={isCommunity} />
     </main>
   );
 }

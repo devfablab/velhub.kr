@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import SiteInfo from '@/components/service/community/SiteInfo';
-import TableList from '@/components/service/community/TableList';
 import Opt from './opt';
 
 type RouteContext = {
@@ -35,15 +33,7 @@ export default async function Page(context: RouteContext) {
   const isCommunity = rhizomeResult.data.site_type === 'community';
   return (
     <main>
-      <div className="container">
-        {isCommunity ? (
-          <aside>
-            <SiteInfo />
-            <TableList />
-          </aside>
-        ) : null}
-        <Opt isCommunity={isCommunity} />
-      </div>
+      <Opt isCommunity={isCommunity} />
     </main>
   );
 }

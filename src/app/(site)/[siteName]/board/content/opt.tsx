@@ -14,7 +14,15 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
-import { CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, useTheme } from '@mui/material';
+import {
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -22,7 +30,16 @@ import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import CommentSection from '@/components/comments/CommunityCommentSection';
 import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import SiteInfo from '@/components/service/community/SiteInfo';
+import TableList from '@/components/service/community/TableList';
+import UserInfo from '@/components/service/community/UserInfo';
+import PostCountTableList from '@/components/service/community/PostCountTableList';
+import RecentTableList from '@/components/service/community/RecentTableList';
 import styles from '@/app/board.module.sass';
+
+type Props = {
+  isCommunity: boolean;
+};
 
 type BoardInfo = {
   id: string;
@@ -273,7 +290,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt() {
+export default function Opt({ isCommunity }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -304,6 +321,9 @@ export default function Opt() {
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   function updatePostCount(nextPostCount: number) {
     setContent((previousContent) =>
@@ -659,428 +679,450 @@ export default function Opt() {
     ) : null;
 
   return (
-    <div className={`${styles.content} content`}>
-      <h2>
-        <ListAltOutlinedIcon />
-        <span>최신글 보기</span>
-      </h2>
+    <div className="container">
+      {isCommunity && !isMobile ? (
+        <aside>
+          <SiteInfo />
+          <TableList />
+        </aside>
+      ) : null}
 
-      <div className={styles['top-buttons']}>
-        <Anchor href={`/${siteName}/board`} className="button">
-          <ArrowBackIosRoundedIcon />
-          <span>목록</span>
-        </Anchor>
-        <Anchor href="" className="button">
-          <span>다음글</span>
-          <ArrowForwardIosRoundedIcon />
-        </Anchor>
-      </div>
+      <div className={`${styles.content} content`}>
+        <h2>
+          <ListAltOutlinedIcon />
+          <span>최신글 보기</span>
+        </h2>
 
-      <article>
-        <div className="paper">
-          <header className={styles['content-header']}>
-            <div className={styles['content-board-name']}>
-              <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
-                <span>{board.board_label}</span>
-                <ArrowForwardIosRoundedIcon />
-              </Anchor>
-              {canEdit ? (
-                <Anchor
-                  href={`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${content.slug}`}
-                  className={styles['edit-link']}
-                >
-                  <span>글 수정</span>
-                  <EditNoteRoundedIcon />
-                </Anchor>
-              ) : null}
-            </div>
-            <h3>
-              {content.is_pin ? (
-                <i className={styles['pin-icon']} aria-label="상단고정글">
-                  <PushPinRoundedIcon />
-                </i>
-              ) : null}
-              {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
-              {series ? (
-                <small>
-                  [{series.series_label}
-                  {series.is_completed ? ' (완결)' : null}]
-                </small>
-              ) : null}
-              {!isFeedBoard ? <strong>{content.subject}</strong> : null}
-            </h3>
-
-            <div className={styles['author-profile']}>
-              <div className={styles.avatar}>
-                <Avatar src={content.author_avatar_url} alt={content.author_name} />
-              </div>
-              <div className={styles.info}>
-                <div className={styles.name}>
-                  <cite>{content.author_name}</cite>
-                  {authorRoleLabel ? (
-                    <em>
-                      <span>{authorRoleLabel}</span>
-                      {content.author_manage_icon?.iconUrl ? (
-                        <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
-                      ) : null}
-                    </em>
-                  ) : content.author_level ? (
-                    <em>
-                      <span>{content.author_level.name}</span>
-                      {content.author_level.iconUrl ? (
-                        <img src={content.author_level.iconUrl} alt={content.author_level.name} />
-                      ) : null}
-                    </em>
-                  ) : null}
-                </div>
-                <div className={styles.datetime}>
-                  <span aria-label="작성일">{formatDateTimeDetail(content.published_at || content.created_at)}</span>
-                  {content.edited_at ? <span>{`(수정됨)`}</span> : null}
-                  <span aria-label="조회수">
-                    <VisibilityOutlinedIcon /> {content.post_count}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </header>
+        <div className={styles['top-buttons']}>
+          <Anchor href={`/${siteName}/board`} className="button">
+            <ArrowBackIosRoundedIcon />
+            <span>목록</span>
+          </Anchor>
+          <Anchor href="" className="button">
+            <span>다음글</span>
+            <ArrowForwardIosRoundedIcon />
+          </Anchor>
         </div>
-        {isGalleryBoard ? (
-          <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
-            <div className="paper">
-              {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
-              {content.content_html ? (
-                <EmbeddedContentHtml
-                  contentHtml={content.content_html}
-                  contentMarkdown={content.content_markdown}
-                  markdownStatus={board.markdown_status}
-                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                  className="viewer"
-                />
-              ) : null}
-              {content.images && content.images.length > 0 ? (
-                <div className={styles['content-images']}>
-                  {content.images.map((image, index) => (
-                    <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <button type="button" onClick={() => openGalleryViewer(index)}>
-                        <img src={image.url} alt="" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {content.images && content.images.length > 0 ? (
-                <Dialog
-                  open={galleryViewerOpen}
-                  onClose={closeGalleryViewer}
-                  fullScreen
-                  className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
-                >
-                  <DialogTitle className={styles['dialog-title']}>{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
-                  <DialogContent className={styles['dialog-content']}>
-                    <img src={content.images[galleryViewerIndex].url} alt="" />
-                  </DialogContent>
-                  <DialogActions className={styles['dialog-actions']}>
-                    <button
-                      type="button"
-                      onClick={showPreviousGalleryImage}
-                      className={`${styles['control-button']} ${styles['prev-button']}`}
-                      aria-label="이전 이미지"
-                    >
-                      <ArrowBackRoundedIcon />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={showNextGalleryImage}
-                      className={`${styles['control-button']} ${styles['next-button']}`}
-                      aria-label="다음 이미지"
-                    >
-                      <ArrowForwardRoundedIcon />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closeGalleryViewer}
-                      className={styles['close-button']}
-                      aria-label="갤러리 닫기"
-                    >
-                      <CloseRoundedIcon />
-                    </button>
-                  </DialogActions>
-                </Dialog>
-              ) : null}
-              {hashtags.length > 0 ? (
-                <div className={styles['content-tags']}>
-                  {hashtags.map((hashtag) => (
-                    <span key={hashtag}>{`#${hashtag}`}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-        {isYoutubeBoard && content.youtube_id ? (
-          <div className={`${styles['board-container']} ${styles['youtube-board']}`}>
-            <div className="paper paper-p0">
-              <YoutubeEmbed
-                videoId={content.youtube_id}
-                thumbnailImage={content.thumbnail_image ? content.thumbnail_image_url : undefined}
-              />
-            </div>
-            <div className="paper">
-              <strong>{`유튜브 공개: ${formatDateSimple(content.youtube_created_at)}`}</strong>
-              {content.summary ? <div className={styles['content-simple']}>{content.summary}</div> : null}
-              {hashtags.length > 0 ? (
-                <div className={styles['content-tags']}>
-                  {hashtags.map((hashtag) => (
-                    <span key={hashtag}>{`#${hashtag}`}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-        {isFeedBoard ? (
-          <div className={`${styles['board-container']} ${styles['feed-board']}`}>
-            <div className="paper">
-              {content.content_simple ? <div className={styles['content-simple']}>{content.content_simple}</div> : null}
-              {feedLinkPreviewUrls.length > 0 ? (
-                <div className={styles['link-previews']}>
-                  {feedLinkPreviewUrls.map((url) => (
-                    <LinkPreview key={url} href={url} />
-                  ))}
-                </div>
-              ) : null}
 
-              {content.images && content.images.length > 0 ? (
-                <div className={styles['content-images']}>
-                  {content.images.map((image) => (
-                    <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <img src={image.url} alt="" />
-                    </div>
-                  ))}
+        <article>
+          <div className="paper">
+            <header className={styles['content-header']}>
+              <div className={styles['content-board-name']}>
+                <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
+                  <span>{board.board_label}</span>
+                  <ArrowForwardIosRoundedIcon />
+                </Anchor>
+                {canEdit ? (
+                  <Anchor
+                    href={`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${content.slug}`}
+                    className={styles['edit-link']}
+                  >
+                    <span>글 수정</span>
+                    <EditNoteRoundedIcon />
+                  </Anchor>
+                ) : null}
+              </div>
+              <h3>
+                {content.is_pin ? (
+                  <i className={styles['pin-icon']} aria-label="상단고정글">
+                    <PushPinRoundedIcon />
+                  </i>
+                ) : null}
+                {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
+                {series ? (
+                  <small>
+                    [{series.series_label}
+                    {series.is_completed ? ' (완결)' : null}]
+                  </small>
+                ) : null}
+                {!isFeedBoard ? <strong>{content.subject}</strong> : null}
+              </h3>
+
+              <div className={styles['author-profile']}>
+                <div className={styles.avatar}>
+                  <Avatar src={content.author_avatar_url} alt={content.author_name} />
                 </div>
-              ) : null}
-              {content.images && content.images.length > 0 ? (
-                <div className={styles['content-images']}>
-                  {content.images.map((image, index) => (
-                    <div key={image.path} className={styles['content-thumbnail-image']}>
-                      <button type="button" onClick={() => openGalleryViewer(index)}>
-                        <img src={image.url} alt="" />
-                      </button>
-                    </div>
-                  ))}
+                <div className={styles.info}>
+                  <div className={styles.name}>
+                    <cite>{content.author_name}</cite>
+                    {authorRoleLabel ? (
+                      <em>
+                        <span>{authorRoleLabel}</span>
+                        {content.author_manage_icon?.iconUrl ? (
+                          <img src={content.author_manage_icon.iconUrl} alt={authorRoleLabel} />
+                        ) : null}
+                      </em>
+                    ) : content.author_level ? (
+                      <em>
+                        <span>{content.author_level.name}</span>
+                        {content.author_level.iconUrl ? (
+                          <img src={content.author_level.iconUrl} alt={content.author_level.name} />
+                        ) : null}
+                      </em>
+                    ) : null}
+                  </div>
+                  <div className={styles.datetime}>
+                    <span aria-label="작성일">{formatDateTimeDetail(content.published_at || content.created_at)}</span>
+                    {content.edited_at ? <span>{`(수정됨)`}</span> : null}
+                    <span aria-label="조회수">
+                      <VisibilityOutlinedIcon /> {content.post_count}
+                    </span>
+                  </div>
                 </div>
-              ) : null}
-              {content.images && content.images.length > 0 ? (
-                <Dialog
-                  open={galleryViewerOpen}
-                  onClose={closeGalleryViewer}
-                  fullScreen
-                  className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
-                >
-                  <DialogTitle className={styles['dialog-title']}>{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
-                  <DialogContent className={styles['dialog-content']}>
-                    <img src={content.images[galleryViewerIndex].url} alt="" />
-                  </DialogContent>
-                  <DialogActions className={styles['dialog-actions']}>
-                    <button
-                      type="button"
-                      onClick={showPreviousGalleryImage}
-                      className={`${styles['control-button']} ${styles['prev-button']}`}
-                      aria-label="이전 이미지"
-                    >
-                      <ArrowBackRoundedIcon />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={showNextGalleryImage}
-                      className={`${styles['control-button']} ${styles['next-button']}`}
-                      aria-label="다음 이미지"
-                    >
-                      <ArrowForwardRoundedIcon />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={closeGalleryViewer}
-                      className={styles['close-button']}
-                      aria-label="갤러리 닫기"
-                    >
-                      <CloseRoundedIcon />
-                    </button>
-                  </DialogActions>
-                </Dialog>
-              ) : null}
-              {hashtags.length > 0 ? (
-                <div className={styles['content-tags']}>
-                  {hashtags.map((hashtag) => (
-                    <span key={hashtag}>{`#${hashtag}`}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+              </div>
+            </header>
           </div>
-        ) : null}
-        {isBasicBoard ? (
-          <div className={`${styles['board-container']} ${styles['basic-board']}`}>
-            <div className="paper">
-              {content.content_html ? (
-                <EmbeddedContentHtml
-                  contentHtml={content.content_html}
-                  contentMarkdown={content.content_markdown}
-                  markdownStatus={board.markdown_status}
-                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                  className="viewer"
-                />
-              ) : null}
-              {hashtags.length > 0 ? (
-                <div className={styles['content-tags']}>
-                  {hashtags.map((hashtag) => (
-                    <span key={hashtag}>{`#${hashtag}`}</span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            {content.poll ? (
+          {isGalleryBoard ? (
+            <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
               <div className="paper">
-                <div className={styles['content-poll']}>
-                  {(() => {
-                    const isPollEnded = isPastDateTime(content.poll.endsAt) || pollResult?.is_ended === true;
+                {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
+                {content.content_html ? (
+                  <EmbeddedContentHtml
+                    contentHtml={content.content_html}
+                    contentMarkdown={content.content_markdown}
+                    markdownStatus={board.markdown_status}
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    className="viewer"
+                  />
+                ) : null}
+                {content.images && content.images.length > 0 ? (
+                  <div className={styles['content-images']}>
+                    {content.images.map((image, index) => (
+                      <div key={image.path} className={styles['content-thumbnail-image']}>
+                        <button type="button" onClick={() => openGalleryViewer(index)}>
+                          <img src={image.url} alt="" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {content.images && content.images.length > 0 ? (
+                  <Dialog
+                    open={galleryViewerOpen}
+                    onClose={closeGalleryViewer}
+                    fullScreen
+                    className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+                  >
+                    <DialogTitle
+                      className={styles['dialog-title']}
+                    >{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
+                    <DialogContent className={styles['dialog-content']}>
+                      <img src={content.images[galleryViewerIndex].url} alt="" />
+                    </DialogContent>
+                    <DialogActions className={styles['dialog-actions']}>
+                      <button
+                        type="button"
+                        onClick={showPreviousGalleryImage}
+                        className={`${styles['control-button']} ${styles['prev-button']}`}
+                        aria-label="이전 이미지"
+                      >
+                        <ArrowBackRoundedIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showNextGalleryImage}
+                        className={`${styles['control-button']} ${styles['next-button']}`}
+                        aria-label="다음 이미지"
+                      >
+                        <ArrowForwardRoundedIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={closeGalleryViewer}
+                        className={styles['close-button']}
+                        aria-label="갤러리 닫기"
+                      >
+                        <CloseRoundedIcon />
+                      </button>
+                    </DialogActions>
+                  </Dialog>
+                ) : null}
+                {hashtags.length > 0 ? (
+                  <div className={styles['content-tags']}>
+                    {hashtags.map((hashtag) => (
+                      <span key={hashtag}>{`#${hashtag}`}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {isYoutubeBoard && content.youtube_id ? (
+            <div className={`${styles['board-container']} ${styles['youtube-board']}`}>
+              <div className="paper paper-p0">
+                <YoutubeEmbed
+                  videoId={content.youtube_id}
+                  thumbnailImage={content.thumbnail_image ? content.thumbnail_image_url : undefined}
+                />
+              </div>
+              <div className="paper">
+                <strong>{`유튜브 공개: ${formatDateSimple(content.youtube_created_at)}`}</strong>
+                {content.summary ? <div className={styles['content-simple']}>{content.summary}</div> : null}
+                {hashtags.length > 0 ? (
+                  <div className={styles['content-tags']}>
+                    {hashtags.map((hashtag) => (
+                      <span key={hashtag}>{`#${hashtag}`}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {isFeedBoard ? (
+            <div className={`${styles['board-container']} ${styles['feed-board']}`}>
+              <div className="paper">
+                {content.content_simple ? (
+                  <div className={styles['content-simple']}>{content.content_simple}</div>
+                ) : null}
+                {feedLinkPreviewUrls.length > 0 ? (
+                  <div className={styles['link-previews']}>
+                    {feedLinkPreviewUrls.map((url) => (
+                      <LinkPreview key={url} href={url} />
+                    ))}
+                  </div>
+                ) : null}
 
-                    return (
-                      <>
-                        <strong>{content.poll.question}</strong>
-                        <div className={styles.tail}>
-                          <span className={styles.total}>{`${pollResult?.total_count ?? 0}명 투표`}</span>
-                          {isPollEnded ? (
-                            <span className={styles.end}>(종료됨)</span>
-                          ) : (
-                            <span className={styles.end}>({formatDateTimeFull(content.poll.endsAt)}에 종료)</span>
-                          )}
-                          {pollErrorMessage ? <p className={styles.fin}>{pollErrorMessage}</p> : null}
-                        </div>
+                {content.images && content.images.length > 0 ? (
+                  <div className={styles['content-images']}>
+                    {content.images.map((image) => (
+                      <div key={image.path} className={styles['content-thumbnail-image']}>
+                        <img src={image.url} alt="" />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {content.images && content.images.length > 0 ? (
+                  <div className={styles['content-images']}>
+                    {content.images.map((image, index) => (
+                      <div key={image.path} className={styles['content-thumbnail-image']}>
+                        <button type="button" onClick={() => openGalleryViewer(index)}>
+                          <img src={image.url} alt="" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {content.images && content.images.length > 0 ? (
+                  <Dialog
+                    open={galleryViewerOpen}
+                    onClose={closeGalleryViewer}
+                    fullScreen
+                    className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+                  >
+                    <DialogTitle
+                      className={styles['dialog-title']}
+                    >{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
+                    <DialogContent className={styles['dialog-content']}>
+                      <img src={content.images[galleryViewerIndex].url} alt="" />
+                    </DialogContent>
+                    <DialogActions className={styles['dialog-actions']}>
+                      <button
+                        type="button"
+                        onClick={showPreviousGalleryImage}
+                        className={`${styles['control-button']} ${styles['prev-button']}`}
+                        aria-label="이전 이미지"
+                      >
+                        <ArrowBackRoundedIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={showNextGalleryImage}
+                        className={`${styles['control-button']} ${styles['next-button']}`}
+                        aria-label="다음 이미지"
+                      >
+                        <ArrowForwardRoundedIcon />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={closeGalleryViewer}
+                        className={styles['close-button']}
+                        aria-label="갤러리 닫기"
+                      >
+                        <CloseRoundedIcon />
+                      </button>
+                    </DialogActions>
+                  </Dialog>
+                ) : null}
+                {hashtags.length > 0 ? (
+                  <div className={styles['content-tags']}>
+                    {hashtags.map((hashtag) => (
+                      <span key={hashtag}>{`#${hashtag}`}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {isBasicBoard ? (
+            <div className={`${styles['board-container']} ${styles['basic-board']}`}>
+              <div className="paper">
+                {content.content_html ? (
+                  <EmbeddedContentHtml
+                    contentHtml={content.content_html}
+                    contentMarkdown={content.content_markdown}
+                    markdownStatus={board.markdown_status}
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    className="viewer"
+                  />
+                ) : null}
+                {hashtags.length > 0 ? (
+                  <div className={styles['content-tags']}>
+                    {hashtags.map((hashtag) => (
+                      <span key={hashtag}>{`#${hashtag}`}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              {content.poll ? (
+                <div className="paper">
+                  <div className={styles['content-poll']}>
+                    {(() => {
+                      const isPollEnded = isPastDateTime(content.poll.endsAt) || pollResult?.is_ended === true;
 
-                        <ol>
-                          {content.poll.options.map((option, optionIndex) => {
-                            const optionResult = getPollOptionResult(optionIndex);
+                      return (
+                        <>
+                          <strong>{content.poll.question}</strong>
+                          <div className={styles.tail}>
+                            <span className={styles.total}>{`${pollResult?.total_count ?? 0}명 투표`}</span>
+                            {isPollEnded ? (
+                              <span className={styles.end}>(종료됨)</span>
+                            ) : (
+                              <span className={styles.end}>({formatDateTimeFull(content.poll.endsAt)}에 종료)</span>
+                            )}
+                            {pollErrorMessage ? <p className={styles.fin}>{pollErrorMessage}</p> : null}
+                          </div>
 
-                            const selectedOptionIndex =
-                              typeof pollResult?.selected_option_index === 'number' &&
-                              pollResult.selected_option_index >= 0
-                                ? pollResult.selected_option_index
-                                : null;
+                          <ol>
+                            {content.poll.options.map((option, optionIndex) => {
+                              const optionResult = getPollOptionResult(optionIndex);
 
-                            const hasVoted = selectedOptionIndex !== null;
-                            const shouldShowResult = hasVoted || isPollEnded;
-                            const count = optionResult?.count ?? 0;
-                            const percent = optionResult?.percent ?? 0;
-                            const isSelected = selectedOptionIndex === optionIndex;
+                              const selectedOptionIndex =
+                                typeof pollResult?.selected_option_index === 'number' &&
+                                pollResult.selected_option_index >= 0
+                                  ? pollResult.selected_option_index
+                                  : null;
 
-                            return (
-                              <li key={option.id}>
-                                {shouldShowResult ? (
-                                  <div
-                                    className={`${styles.option} ${isSelected ? styles.selected : styles['un-selected']}`}
-                                  >
+                              const hasVoted = selectedOptionIndex !== null;
+                              const shouldShowResult = hasVoted || isPollEnded;
+                              const count = optionResult?.count ?? 0;
+                              const percent = optionResult?.percent ?? 0;
+                              const isSelected = selectedOptionIndex === optionIndex;
+
+                              return (
+                                <li key={option.id}>
+                                  {shouldShowResult ? (
                                     <div
-                                      className={`${styles.progress} ${option.image ? styles['stack-progress'] : ''}`}
+                                      className={`${styles.option} ${isSelected ? styles.selected : styles['un-selected']}`}
                                     >
-                                      <i style={{ width: `${percent}%` }} />
+                                      <div
+                                        className={`${styles.progress} ${option.image ? styles['stack-progress'] : ''}`}
+                                      >
+                                        <i style={{ width: `${percent}%` }} />
+                                      </div>
+                                      <div className={styles.label}>
+                                        {option.image ? <img src={option.image.url} alt="" /> : null}
+                                        <span>{option.label}</span>
+                                      </div>
+                                      <span>{`(${count}명) ${percent}%`}</span>
                                     </div>
-                                    <div className={styles.label}>
-                                      {option.image ? <img src={option.image.url} alt="" /> : null}
-                                      <span>{option.label}</span>
-                                    </div>
-                                    <span>{`(${count}명) ${percent}%`}</span>
-                                  </div>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => void submitPoll(optionIndex)}
-                                    disabled={isSubmittingPoll}
-                                  >
-                                    <div className={styles.label}>
-                                      {option.image ? <img src={option.image.url} alt="" /> : null}
-                                      <span>{option.label}</span>
-                                    </div>
-                                  </button>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ol>
-                      </>
-                    );
-                  })()}
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => void submitPoll(optionIndex)}
+                                      disabled={isSubmittingPoll}
+                                    >
+                                      <div className={styles.label}>
+                                        {option.image ? <img src={option.image.url} alt="" /> : null}
+                                        <span>{option.label}</span>
+                                      </div>
+                                    </button>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </>
+                      );
+                    })()}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-            {draw ? (
-              <div className="paper">
-                <div className={styles['content-draw']}>
-                  {draw.is_completed ? (
-                    <p className={styles.warning}>추첨 이벤트가 완료되었습니다.</p>
-                  ) : draw.draw_type === 'first_come' ? (
-                    <p className={styles.info}>{`선착순 ${draw.draw_limit ?? 0}명 추첨 이벤트가 진행중입니다.`}</p>
-                  ) : (
-                    <p
-                      className={styles.info}
-                    >{`${draw.draw_ends_at ? formatDateTimeDetail(draw.draw_ends_at) : ''}까지 댓글을 남긴 회원 중 ${
-                      draw.draw_limit ?? 0
-                    }명을 무작위 추첨합니다.`}</p>
-                  )}
-                  {!draw.is_completed ? (
-                    <p className={styles.warning}>
-                      하나의 계정으로 여러번 댓글을 작성하셔도 단 하나의 댓글로만 추첨됩니다. (확률에 영향 없음)
-                    </p>
-                  ) : null}
+              ) : null}
+              {draw ? (
+                <div className="paper">
+                  <div className={styles['content-draw']}>
+                    {draw.is_completed ? (
+                      <p className={styles.warning}>추첨 이벤트가 완료되었습니다.</p>
+                    ) : draw.draw_type === 'first_come' ? (
+                      <p className={styles.info}>{`선착순 ${draw.draw_limit ?? 0}명 추첨 이벤트가 진행중입니다.`}</p>
+                    ) : (
+                      <p
+                        className={styles.info}
+                      >{`${draw.draw_ends_at ? formatDateTimeDetail(draw.draw_ends_at) : ''}까지 댓글을 남긴 회원 중 ${
+                        draw.draw_limit ?? 0
+                      }명을 무작위 추첨합니다.`}</p>
+                    )}
+                    {!draw.is_completed ? (
+                      <p className={styles.warning}>
+                        하나의 계정으로 여러번 댓글을 작성하셔도 단 하나의 댓글로만 추첨됩니다. (확률에 영향 없음)
+                      </p>
+                    ) : null}
 
-                  {draw.can_view_draws && draw.winners.length > 0 ? (
-                    <>
-                      <p className={styles.info}>당첨자 목록은 글 작성자와 매니저만 보실 수 있어요.</p>
-                      <table>
-                        <colgroup>
-                          <col style={{ width: 100 }} />
-                          <col />
-                        </colgroup>
-                        <thead>
-                          <tr>
-                            <th scope="col">당첨 번호</th>
-                            <th scope="col">당첨자</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {draw.winners.map((winner) => (
-                            <tr key={winner.id}>
-                              <td>{winner.draw_order}</td>
-                              <td>
-                                <div>
-                                  <Avatar src={winner.author_avatar_url} alt={winner.author_name} />
-                                  <cite>
-                                    {winner.author_name}
-                                    {winner.author_email ? ` (${winner.author_email})` : null}
-                                  </cite>
-                                </div>
-                              </td>
+                    {draw.can_view_draws && draw.winners.length > 0 ? (
+                      <>
+                        <p className={styles.info}>당첨자 목록은 글 작성자와 매니저만 보실 수 있어요.</p>
+                        <table>
+                          <colgroup>
+                            <col style={{ width: 100 }} />
+                            <col />
+                          </colgroup>
+                          <thead>
+                            <tr>
+                              <th scope="col">당첨 번호</th>
+                              <th scope="col">당첨자</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </>
-                  ) : null}
+                          </thead>
+                          <tbody>
+                            {draw.winners.map((winner) => (
+                              <tr key={winner.id}>
+                                <td>{winner.draw_order}</td>
+                                <td>
+                                  <div>
+                                    <Avatar src={winner.author_avatar_url} alt={winner.author_name} />
+                                    <cite>
+                                      {winner.author_name}
+                                      {winner.author_email ? ` (${winner.author_email})` : null}
+                                    </cite>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          ) : null}
+          {postActionButtons}
+        </article>
+        {content.published_status === 'published' ? (
+          <CommentSection
+            siteName={siteName}
+            boardName={boardName}
+            contentId={content.id}
+            postAuthorId={content.user_id}
+            isCommentEnabled={content.is_comment}
+          />
         ) : null}
-        {postActionButtons}
-      </article>
-      {content.published_status === 'published' ? (
-        <CommentSection
-          siteName={siteName}
-          boardName={boardName}
-          contentId={content.id}
-          postAuthorId={content.user_id}
-          isCommentEnabled={content.is_comment}
-        />
+      </div>
+      {isCommunity && !isMobile ? (
+        <aside>
+          <UserInfo />
+          <PostCountTableList />
+          <RecentTableList />
+        </aside>
       ) : null}
     </div>
   );
