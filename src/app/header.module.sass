@@ -176,20 +176,24 @@ header.header
 
 .VhiDrawer, .VhiMenu
   div[tabindex="-1"]
+    html[data-theme="yellow-dark"] &
+      background: ds.$hex-primary
+
     li
       padding: ds.rem(7) ds.rem(17)
       line-height: 1
       min-height: 0
 
+      html[data-theme="yellow-dark"] &
+        background: ds.$hex-primary
+
       a, span
         line-height: 1
 
     .VhiMenu-theme
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
       padding: ds.rem(17)
       margin-bottom: ds.rem(7)
-
-      html[data-theme="yellow-light"] &
-        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
 
       strong
         @include ds.fw(neo, 800)
@@ -197,28 +201,29 @@ header.header
 
     .VhiMenu-profile
       display: flex
-      gap: ds.rem(7)
+      gap: ds.rem(12)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
       padding: ds.rem(17)
       margin-bottom: ds.rem(7)
 
-      html[data-theme="yellow-light"] &
-        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
-
-        & + .VhiDrawer-subheader
-          border-top: 0
-          padding-top: ds.rem(7)
+      & + .VhiDrawer-subheader
+        border-top: 0
+        padding-top: ds.rem(7)
 
       .VhiMenu-profile-info
         display: flex
         flex-direction: column
         justify-content: center
-        gap: ds.rem(3)
+        gap: ds.rem(7)
         width: calc(100% - ds.rem(50))
 
         em, span
           display: block
           line-height: 1
           @include ds.ellipsis
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-secondary
 
         em
           @include ds.fw(neo, 800)
@@ -227,9 +232,18 @@ header.header
 
         span
           font-size: ds.rem(12)
+          opacity: .5
+
+    .VhiDrawer-subheader
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
 
     .logout, .logout-icon, .logout-text, .theme, .theme-icon, .theme-text
-      color: ds.$hex-secondary
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
 
     .logout-icon
       min-width: 0
@@ -244,7 +258,13 @@ header.header
       align-items: center
       gap: ds.rem(7)
       flex: 1 0 0%
-      color: ds.$hex-secondary
+      opacity: .7
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
 
       span
         @include ds.fw(pre, 600)
@@ -262,11 +282,9 @@ header.header
 
     .VhiDrawer-subheader
       margin-top: ds.rem(7)
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
       padding: ds.rem(12) ds.rem(17) ds.rem(7)
       @include ds.fw(neo, 800)
       font-size: ds.rem(16)
       color: ds.$hex-primary
       line-height: 1
-
-      html[data-theme="yellow-light"] &
-        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
