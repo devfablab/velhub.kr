@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
-import { normalizeText } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/header.module.sass';
 
@@ -34,7 +33,7 @@ function isCurrentPath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export default function MenuItems({ siteName, isBlog }: Props) {
+export default function NavMenu({ siteName, isBlog }: Props) {
   const pathname = usePathname();
 
   const [menus, setMenus] = useState<MenuRow[]>([]);

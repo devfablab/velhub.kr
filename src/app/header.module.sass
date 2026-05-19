@@ -20,6 +20,13 @@ header.header
     .top
       height: ds.rem(64)
 
+    .bottom
+      overflow: auto
+      scrollbar-width: none
+
+      &::-webkit-scrollbar
+        display: none
+
   .gnb
     display: flex
     gap: ds.rem(23)
@@ -127,7 +134,6 @@ header.header
   .navigationbar
     display: flex
     align-items: center
-
     nav
       ol
         display: flex
@@ -148,6 +154,7 @@ header.header
             display: inline-flex
             flex-direction: column
             transition: all .4s cubic-bezier(.4,0,.2,1)
+            white-space: nowrap
 
             span
               display: inline-flex
@@ -186,6 +193,9 @@ header.header
 
       html[data-theme="yellow-dark"] &
         background: ds.$hex-primary
+
+      &:hover
+        background: rgba(0,0,0,.1)!important
 
       a, span
         line-height: 1
