@@ -18,6 +18,7 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import styles from '@/app/board.module.sass';
+import FabNew from '@/components/service/common/FabNew';
 
 type Props = {
   isCommunity: boolean;
@@ -491,6 +492,7 @@ export default function Opt({ isCommunity }: Props) {
           </nav>
         ) : null}
       </div>
+      <FabNew />
 
       {isCommunity && !isMobile ? (
         <aside>

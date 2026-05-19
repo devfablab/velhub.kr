@@ -24,6 +24,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
+import FabNew from '@/components/service/common/FabNew';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -925,11 +926,15 @@ export default function Opt({ isCommunity }: Props) {
         ) : null}
 
         {canWritePost ? (
-          <div className={styles['button-group']}>
-            <Anchor href={`/${siteName}/manage/contents/posts/new`} className={`${styles.submit} button`}>
-              글쓰기
-            </Anchor>
-          </div>
+          isMobile ? (
+            <FabNew isBlog={true} />
+          ) : (
+            <div className={styles['button-group']}>
+              <Anchor href={`/${siteName}/manage/contents/posts/new`} className={`${styles.submit} button`}>
+                글쓰기
+              </Anchor>
+            </div>
+          )
         ) : null}
       </div>
       {isCommunity && !isMobile ? (

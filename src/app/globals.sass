@@ -1027,3 +1027,20 @@ html[data-site-type='blog']
   h2, h3
     letter-spacing: var(--blog-subject-letter-spacing)!important
     line-height: var(--blog-subject-line-height)!important
+
+.fab
+  display: flex
+  justify-content: center
+  align-items: center
+  position: fixed
+  right: 0
+  bottom: 0
+  width: ds.rem(102)
+  height: ds.rem(102)
+
+  a
+    background-color: ds.$hex-accent
+    color: ds.$hex-white
+
+    &:hover, &:focus-visible
+      background-color: ds.$hex-secondary
