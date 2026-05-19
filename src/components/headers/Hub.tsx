@@ -2,10 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import {
   Avatar,
-  Box,
   Drawer,
   IconButton,
   ListItemIcon,
@@ -31,7 +29,6 @@ import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import { ServiceLogo } from '../Svgs';
@@ -42,7 +39,6 @@ import styles from '@/app/header.module.sass';
 type SiteType = 'blog' | 'community';
 
 type HeaderResponse = {
-  siteName: string | null;
   siteLabel: string | null;
   siteType: SiteType | null;
   themeType: string;
@@ -96,9 +92,6 @@ function applyThemeMode(themeMode: ThemeMode) {
 }
 
 export default function HeaderSite() {
-  const params = useParams();
-  const siteName = normalizeText(params.siteName);
-
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = !isNotMobile;
@@ -170,7 +163,7 @@ export default function HeaderSite() {
     }
 
     void loadHeader();
-  }, [isReady, siteName]);
+  }, [isReady]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
     if (isMobile) {
@@ -256,7 +249,7 @@ export default function HeaderSite() {
                 <ServiceLogo />
               </Anchor>
             </h1>
-            <PrimaryMenu />
+            {!isMobile ? <PrimaryMenu /> : null}
           </div>
 
           <div className={styles.iconbuttons}>
@@ -393,6 +386,13 @@ export default function HeaderSite() {
                     <span>이용안내</span>
                   </Anchor>
                 </MenuItem>
+                <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                  <Anchor href="/settings">
+                    <SettingsOutlinedIcon fontSize="small" />
+                    <span>개인 설정</span>
+                  </Anchor>
+                </MenuItem>
                 <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
                   <ListItemIcon className={styles['logout-icon']}>
                     <LogoutOutlinedIcon fontSize="small" />
@@ -436,9 +436,11 @@ export default function HeaderSite() {
             )}
           </div>
         </div>
-        <div className={styles.bottom}>
-          <SecondaryMenu />
-        </div>
+        {!isMobile ? (
+          <div className={styles.bottom}>
+            <SecondaryMenu />
+          </div>
+        ) : null}
       </div>
     </header>
   );
