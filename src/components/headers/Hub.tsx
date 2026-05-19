@@ -265,55 +265,62 @@ export default function HeaderSite() {
             </IconButton>
 
             {isMobile ? (
-              <Drawer anchor="right" open={isThemeModeDrawerOpen} onClose={handleCloseThemeModeDrawer}>
-                <Box sx={{ minWidth: 280, py: 1 }}>
-                  <MenuItem onClick={() => handleSelectThemeMode('light')}>
-                    <ListItemIcon>
-                      <LightModeIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>라이트모드</ListItemText>
-                  </MenuItem>
+              <Drawer
+                anchor="right"
+                open={isThemeModeDrawerOpen}
+                onClose={handleCloseThemeModeDrawer}
+                className={styles.VhiDrawer}
+              >
+                <li className={styles['VhiMenu-theme']}>
+                  <strong>다크모드 설정</strong>
+                </li>
+                <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
+                    <LightModeIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText className={styles['theme-text']}>라이트모드</ListItemText>
+                </MenuItem>
 
-                  <MenuItem onClick={() => handleSelectThemeMode('system')}>
-                    <ListItemIcon>
-                      <SettingsBrightnessIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>시스템</ListItemText>
-                  </MenuItem>
+                <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
+                    <SettingsBrightnessIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText className={styles['theme-text']}>시스템</ListItemText>
+                </MenuItem>
 
-                  <MenuItem onClick={() => handleSelectThemeMode('dark')}>
-                    <ListItemIcon>
-                      <DarkModeIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>다크모드</ListItemText>
-                  </MenuItem>
-                </Box>
+                <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
+                    <DarkModeIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText className={styles['theme-text']}>다크모드</ListItemText>
+                </MenuItem>
               </Drawer>
             ) : (
               <Menu
                 anchorEl={themeModeAnchorElement}
                 open={Boolean(themeModeAnchorElement)}
                 onClose={handleCloseThemeModeMenu}
+                className={styles.VhiMenu}
               >
-                <MenuItem onClick={() => handleSelectThemeMode('light')}>
-                  <ListItemIcon>
+                <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
                     <LightModeIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText>라이트모드</ListItemText>
+                  <ListItemText className={styles['theme-text']}>라이트모드</ListItemText>
                 </MenuItem>
 
-                <MenuItem onClick={() => handleSelectThemeMode('system')}>
-                  <ListItemIcon>
+                <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
                     <SettingsBrightnessIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText>시스템</ListItemText>
+                  <ListItemText className={styles['theme-text']}>시스템</ListItemText>
                 </MenuItem>
 
-                <MenuItem onClick={() => handleSelectThemeMode('dark')}>
-                  <ListItemIcon>
+                <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.theme}>
+                  <ListItemIcon className={styles['theme-icon']}>
                     <DarkModeIcon fontSize="small" />
                   </ListItemIcon>
-                  <ListItemText>다크모드</ListItemText>
+                  <ListItemText className={styles['theme-text']}>다크모드</ListItemText>
                 </MenuItem>
               </Menu>
             )}
