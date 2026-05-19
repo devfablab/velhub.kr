@@ -812,6 +812,8 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const postData = post.data;
+
     const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
 
     if (post.data.published_status === 'draft' && !isAuthor) {
@@ -950,7 +952,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       prefixes = prefixResult.data ?? [];
-      prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
+      prefixLabel = prefixes.find((prefix) => prefix.id === postData.prefix_id)?.prefix_label ?? null;
     }
 
     let commentProvider: CommentProvider = 'velhub';

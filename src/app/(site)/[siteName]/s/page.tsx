@@ -89,7 +89,8 @@ export default async function Page(context: RouteContext) {
     )
     .eq('site_id', rhizome.data.id)
     .order('last_published_at', { ascending: false, nullsFirst: false })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .overrideTypes<SeriesRow[], { merge: false }>();
 
   if (series.error) {
     notFound();

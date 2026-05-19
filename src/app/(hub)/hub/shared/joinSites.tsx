@@ -14,7 +14,7 @@ type LatestPostRow = {
   publishedAt: string;
 };
 
-type JoinSiteRow = {
+export type JoinSiteRow = {
   id: string;
   site_key: string;
   site_label: string;

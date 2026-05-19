@@ -543,11 +543,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const contents = (result.contents ?? []).map((content) => ({
       ...content,
-      series_key:
-        selectedSeries?.series_key ??
-        (typeof content.series_key === 'string' && content.series_key
-          ? content.series_key
-          : (seriesKeyMap.get(normalizeText(content.series_label)) ?? null)),
+      series_key: selectedSeries?.series_key ?? seriesKeyMap.get(normalizeText(content.series_label)) ?? null,
     }));
 
     return Response.json({

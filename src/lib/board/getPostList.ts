@@ -17,6 +17,7 @@ type GetPostListOptions = {
   keyword?: string | null;
   sort?: PostListSort;
   includePin?: boolean;
+  categoryId?: string | null;
 };
 
 type PostImage = {

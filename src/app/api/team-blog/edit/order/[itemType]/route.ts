@@ -54,6 +54,8 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const rhizomeData = rhizome.data;
+
     if (rhizome.data.site_type !== 'blog') {
       return Response.json({ error: '블로그에서만 사용할 수 있습니다.' }, { status: 400 });
     }
@@ -92,7 +94,7 @@ export async function POST(request: Request, context: RouteContext) {
           sort_order: sortOrder,
         })
         .eq('id', id)
-        .eq('site_id', rhizome.data.id)
+        .eq('site_id', rhizomeData.id)
         .eq('member_id', session.rhizomeStigmaId);
     });
 

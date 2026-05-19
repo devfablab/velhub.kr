@@ -1,19 +1,10 @@
 import { cookies, headers } from 'next/headers';
-import JoinSites from '../shared/joinSites';
+import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import FavoriteBlogs from './favoriteBlogs';
 import Container from './tab';
 import styles from '@/app/hub.module.sass';
-
-type JoinSiteRow = {
-  id: string;
-  site_key: string;
-  site_label: string;
-  site_type: string;
-  avatar: string | null;
-  role: string;
-};
 
 type UserResponse = {
   isLoggedIn: boolean;

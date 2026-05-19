@@ -27,8 +27,8 @@ import {
   useTheme,
   Paper,
   InputAdornment,
+  styled,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];

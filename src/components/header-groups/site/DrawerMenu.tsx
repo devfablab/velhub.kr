@@ -20,9 +20,16 @@ type Props = {
   onClose: () => void;
 };
 
+type MenuResponse = {
+  menus?: MenuRow[];
+  error?: string;
+};
+
+type BoardType = 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed';
+
 type MenuRow = {
   id: string;
-  board_type: string;
+  board_type: BoardType;
   board_label: string;
   slug: string;
   display_label: string;
@@ -30,16 +37,11 @@ type MenuRow = {
   is_renameable: boolean;
 };
 
-type MenuResponse = {
-  menus?: MenuRow[];
-  error?: string;
-};
-
 type BoardItem = {
   id: string;
   board_key: string;
   board_label: string;
-  board_type: 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed';
+  board_type: BoardType;
   is_active: boolean;
 };
 

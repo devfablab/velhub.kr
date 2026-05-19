@@ -526,7 +526,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
     }
   }
 
-  if (role !== 'member') {
+  if (isManageRole(role)) {
     const managerIconResult = await supabaseAdmin
       .from('community_manage_icons')
       .select('role, icon')
@@ -838,6 +838,8 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    const boardData = board.data;
+
     if (board.data.board_type === 'page') {
       const page = await supabaseAdmin
         .from('pages')
@@ -893,6 +895,8 @@ export async function GET(request: Request, context: RouteContext) {
     if (post.error || !post.data) {
       return NextResponse.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
+
+    const postData = post.data;
 
     const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
 
@@ -1039,7 +1043,7 @@ export async function GET(request: Request, context: RouteContext) {
           slug: String(seriesContent.slug),
           subject: normalizeText(seriesContent.subject),
           series_idx: Number(seriesContent.series_idx),
-          href: `/${siteName}/${board.data.board_key}/${seriesContent.slug}`,
+          href: `/${siteName}/${boardData.board_key}/${seriesContent.slug}`,
         }));
       }
     }
@@ -1063,7 +1067,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       prefixes = prefixResult.data ?? [];
-      prefixLabel = prefixes.find((prefix) => prefix.id === post.data.prefix_id)?.prefix_label ?? null;
+      prefixLabel = prefixes.find((prefix) => prefix.id === postData.prefix_id)?.prefix_label ?? null;
     }
 
     let commentProvider: CommentProvider = 'velhub';

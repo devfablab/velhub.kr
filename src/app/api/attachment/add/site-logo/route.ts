@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const extension = getExtension(file.name);
 
-    let uploadBuffer = fileBuffer;
+    let uploadBuffer: Buffer<ArrayBufferLike> = fileBuffer;
     let contentType = file.type;
     let filePath = `${crypto.randomUUID()}${extension}`;
 

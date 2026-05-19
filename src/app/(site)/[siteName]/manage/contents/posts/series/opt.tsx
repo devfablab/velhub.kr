@@ -15,6 +15,7 @@ import {
   Paper,
   Snackbar,
   Stack,
+  styled,
   Table,
   TableBody,
   TableCell,
@@ -26,7 +27,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];

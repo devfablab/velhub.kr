@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatTimeAgo, normalizeText } from '@/lib/utils';
+import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/board.module.sass';
 
@@ -65,19 +65,6 @@ function getPageNumber(value: string | undefined) {
   return pageNumber;
 }
 
-function getSeriesImageUrl(path: string | null) {
-  const normalizedPath = normalizeText(path);
-
-  if (!normalizedPath) {
-    return '';
-  }
-
-  const supabaseAdmin = getSupabaseAdmin();
-  const publicUrl = supabaseAdmin.storage.from('series').getPublicUrl(normalizedPath);
-
-  return publicUrl.data.publicUrl ?? '';
-}
-
 export default async function Page(context: RouteContext) {
   const { siteName, seriesName } = await context.params;
   const searchParams = await context.searchParams;
@@ -129,7 +116,8 @@ export default async function Page(context: RouteContext) {
     )
     .eq('site_id', rhizome.data.id)
     .eq('series_key', normalizedSeriesName)
-    .maybeSingle();
+    .maybeSingle()
+    .overrideTypes<SeriesRow, { merge: false }>();
 
   if (series.error || !series.data) {
     notFound();
@@ -167,7 +155,8 @@ export default async function Page(context: RouteContext) {
     .eq('published_status', 'published')
     .eq('is_closed', false)
     .order('idx', { ascending: false })
-    .range(from, to);
+    .range(from, to)
+    .overrideTypes<PostRow[], { merge: false }>();
 
   if (posts.error) {
     notFound();
@@ -176,7 +165,6 @@ export default async function Page(context: RouteContext) {
   const contents = (posts.data ?? []) as PostRow[];
   const totalCount = posts.count ?? 0;
   const totalPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const imageUrl = getSeriesImageUrl(seriesData.thumbnail_image);
 
   return (
     <main>

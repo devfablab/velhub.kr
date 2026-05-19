@@ -20,10 +20,12 @@ type CategoryRow = {
   sort_order: number;
   board_id: string;
   site_id: string;
-  boards: {
-    board_key: string;
-    board_label: string;
-  } | null;
+  boards:
+    | {
+        board_key: string;
+        board_label: string;
+      }[]
+    | null;
 };
 
 function getCategoryImageUrl(path: string | null) {

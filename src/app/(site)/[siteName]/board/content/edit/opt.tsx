@@ -2073,7 +2073,7 @@ export default function Opt({ isCommunity }: Props) {
                           <IOSSwitch
                             sx={{ m: 1 }}
                             checked={isComment}
-                            onChange={(event) => setIsComment(event.target.checked)}
+                            onChange={(event: ChangeEvent<HTMLInputElement>) => setIsComment(event.target.checked)}
                           />
                         }
                       />
@@ -2085,7 +2085,7 @@ export default function Opt({ isCommunity }: Props) {
                             <IOSSwitch
                               sx={{ m: 1 }}
                               checked={isPin}
-                              onChange={(event) => setIsPin(event.target.checked)}
+                              onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
                             />
                           }
                         />
