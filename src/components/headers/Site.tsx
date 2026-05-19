@@ -33,6 +33,8 @@ import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -42,9 +44,9 @@ import BlogSearch from '../header-groups/site/BlogSearch';
 import CommunitySearch from '../header-groups/site/CommunitySearch';
 import NavMenu from '../header-groups/site/NavMenu';
 import NavManage from '../header-groups/site/NavManage';
+import DrawerMenu from '../header-groups/site/DrawerMenu';
 import DrawerManage from '../header-groups/site/DrawerManage';
 import styles from '@/app/header.module.sass';
-import DrawerMenu from '../header-groups/site/DrawerMenu';
 
 type SiteType = 'blog' | 'community';
 
@@ -238,6 +240,7 @@ export default function HeaderSite() {
   const [siteLabel, setSiteLabel] = useState('');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
   const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
+  const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
   const pathname = usePathname();
 
@@ -367,6 +370,14 @@ export default function HeaderSite() {
     setIsProfileDrawerOpen(false);
   }
 
+  function handleOpenSearchDrawer() {
+    setIsSearchDrawerOpen(true);
+  }
+
+  function handleCloseSearchDrawer() {
+    setIsSearchDrawerOpen(false);
+  }
+
   async function handleLogout() {
     handleCloseProfileMenu();
     handleCloseProfileDrawer();
@@ -419,18 +430,51 @@ export default function HeaderSite() {
                 )}
               </Anchor>
             </h1>
-            {siteType === 'blog' ? (
-              <BlogSearch siteName={siteName} isBlog={isBlog} />
-            ) : (
-              <CommunitySearch siteName={siteName} isBlog={isBlog} />
-            )}
+            {!isMobile ? (
+              <>
+                {siteType === 'blog' ? (
+                  <BlogSearch siteName={siteName} isBlog={isBlog} />
+                ) : (
+                  <CommunitySearch siteName={siteName} isBlog={isBlog} />
+                )}
+              </>
+            ) : null}
           </div>
 
           <div className={styles.iconbuttons}>
-            <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
+            {isMobile ? (
+              <IconButton className={styles['icon-button']} onClick={handleOpenSearchDrawer}>
+                <SearchOutlinedIcon />
+              </IconButton>
+            ) : null}
+            {isMobile ? (
+              <Drawer
+                anchor="top"
+                open={isSearchDrawerOpen}
+                onClose={handleCloseSearchDrawer}
+                className={styles['VhiDrawer-search']}
+              >
+                <div className={styles['mobile-search']}>
+                  <IconButton
+                    className={styles['icon-button']}
+                    onClick={handleCloseSearchDrawer}
+                    aria-label="검색 닫기"
+                  >
+                    <CloseRoundedIcon />
+                  </IconButton>
+
+                  {siteType === 'blog' ? (
+                    <BlogSearch siteName={siteName} isBlog={isBlog} />
+                  ) : (
+                    <CommunitySearch siteName={siteName} isBlog={isBlog} />
+                  )}
+                </div>
+              </Drawer>
+            ) : null}
+
+            <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
               {renderThemeModeIcon()}
             </IconButton>
-
             {isMobile ? (
               <Drawer
                 anchor="right"
@@ -491,11 +535,13 @@ export default function HeaderSite() {
                 </MenuItem>
               </Menu>
             )}
-
             <IconButton onClick={handleOpenProfileMenu}>
-              <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+              <Avatar
+                src={userProfile.avatarUrl || '/broken-image.jpg'}
+                alt={userProfile.name || ''}
+                sx={{ width: 24, height: 24 }}
+              />
             </IconButton>
-
             {isMobile ? (
               <Drawer
                 anchor="right"
