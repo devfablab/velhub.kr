@@ -6,9 +6,9 @@ import { useParams, usePathname } from 'next/navigation';
 import {
   Avatar,
   Box,
-  Divider,
   Drawer,
   IconButton,
+  List,
   ListItemIcon,
   ListItemText,
   ListSubheader,
@@ -549,84 +549,87 @@ export default function HeaderSite() {
                 onClose={handleCloseProfileDrawer}
                 className={styles.VhiDrawer}
               >
-                <Box sx={{ minWidth: 320, py: 1 }}>
-                  {userProfile.isLoggedIn ? (
-                    <li className={styles['VhiMenu-profile']}>
-                      <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                      <div className={styles['VhiMenu-profile-info']}>
-                        <em>{userProfile.name}</em>
-                        <span>{userProfile.email}</span>
-                      </div>
-                    </li>
-                  ) : (
-                    <li className={styles['VhiMenu-profile']}>
-                      <Avatar src="" alt="" />
-                      <div className={styles['VhiMenu-profile-info']}>
-                        <em>로그인이 필요합니다</em>
-                      </div>
-                    </li>
-                  )}
+                <Box role="presentation">
+                  <List>
+                    {userProfile.isLoggedIn ? (
+                      <li className={styles['VhiMenu-profile']}>
+                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>{userProfile.name}</em>
+                          <span>{userProfile.email}</span>
+                        </div>
+                      </li>
+                    ) : (
+                      <li className={styles['VhiMenu-profile']}>
+                        <Avatar src="" alt="" />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>로그인이 필요합니다</em>
+                        </div>
+                      </li>
+                    )}
 
-                  {isSiteStaff ? (
-                    <>
-                      <ListSubheader className={styles['VhiDrawer-subheader']}>커뮤니티 관리</ListSubheader>
-                      <DrawerManage siteName={siteName} siteType={siteType} onClose={handleCloseProfileDrawer} />
-                      <Divider />
-                    </>
-                  ) : null}
+                    {isSiteStaff ? (
+                      <>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>
+                          {isBlog ? '블로그' : '커뮤니티'} 관리
+                        </ListSubheader>
+                        <DrawerManage siteName={siteName} siteType={siteType} onClose={handleCloseProfileDrawer} />
+                      </>
+                    ) : null}
 
-                  <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
-                  <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
+                    <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
 
-                  {userProfile.isLoggedIn ? (
-                    <>
-                      <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/">
-                          <HomeOutlinedIcon fontSize="small" />
-                          <span>라운지</span>
-                        </Anchor>
-                      </MenuItem>
+                    {userProfile.isLoggedIn ? (
+                      <>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                        <MenuItem onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/">
+                            <HomeOutlinedIcon fontSize="small" />
+                            <span>라운지</span>
+                          </Anchor>
+                        </MenuItem>
 
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/hub">
-                          <HubOutlinedIcon fontSize="small" />
-                          <span>마이허브</span>
-                        </Anchor>
-                      </MenuItem>
+                        <MenuItem onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/hub">
+                            <HubOutlinedIcon fontSize="small" />
+                            <span>마이허브</span>
+                          </Anchor>
+                        </MenuItem>
 
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/settings">
-                          <SettingsOutlinedIcon fontSize="small" />
-                          <span>개인 설정</span>
-                        </Anchor>
-                      </MenuItem>
+                        <MenuItem onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/settings">
+                            <SettingsOutlinedIcon fontSize="small" />
+                            <span>개인 설정</span>
+                          </Anchor>
+                        </MenuItem>
 
-                      <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
-                        <ListItemIcon className={styles['logout-icon']}>
-                          <LogoutOutlinedIcon fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
-                      </MenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/auth/sign-in">
-                          <LoginOutlinedIcon fontSize="small" />
-                          <span>로그인</span>
-                        </Anchor>
-                      </MenuItem>
+                        <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
+                          <ListItemIcon className={styles['logout-icon']}>
+                            <LogoutOutlinedIcon fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                        </MenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+                        <MenuItem onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/auth/sign-in">
+                            <LoginOutlinedIcon fontSize="small" />
+                            <span>로그인</span>
+                          </Anchor>
+                        </MenuItem>
 
-                      <MenuItem onClick={handleCloseProfileDrawer}>
-                        <Anchor href="/auth/sign-up">
-                          <CheckOutlinedIcon fontSize="small" />
-                          <span>회원가입</span>
-                        </Anchor>
-                      </MenuItem>
-                    </>
-                  )}
+                        <MenuItem onClick={handleCloseProfileDrawer}>
+                          <Anchor href="/auth/sign-up">
+                            <CheckOutlinedIcon fontSize="small" />
+                            <span>회원가입</span>
+                          </Anchor>
+                        </MenuItem>
+                      </>
+                    )}
+                  </List>
                 </Box>
               </Drawer>
             ) : (
@@ -652,8 +655,6 @@ export default function HeaderSite() {
                     </div>
                   </li>
                 )}
-
-                {userProfile.isLoggedIn && <Divider />}
 
                 {isSiteStaff && !isManagePage
                   ? [

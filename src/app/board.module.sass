@@ -124,6 +124,8 @@
           height: ds.rem(37)
 
   .form
+    width: 100%
+
     fieldset
       display: flex
       flex-direction: column
@@ -326,6 +328,9 @@
       .editor
         @include ds.mq(maxLarge)
           width: calc(100vw - ds.rem(287))
+
+        @include ds.mq(maxMedium)
+          width: calc(100vw - ds.rem(34))
 
       .content-simple
         width: 100%

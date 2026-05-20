@@ -1047,7 +1047,9 @@ export default function Opt({ isCommunity }: Props) {
               </Anchor>
             </div>
           )
-        ) : null}
+        ) : (
+          <FabNew />
+        )}
       </div>
       {isCommunity && !isTablet ? (
         <aside>

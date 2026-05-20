@@ -12,6 +12,8 @@ import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import WysiwygOutlinedIcon from '@mui/icons-material/WysiwygOutlined';
 import Anchor from '@/components/Anchor';
 
 type Props = {
@@ -62,7 +64,15 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
     return <DynamicFeedOutlinedIcon sx={{ width: 16, height: 16 }} />;
   }
 
-  return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  if (boardType === 'basic') {
+    return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  if (boardType === 'blog') {
+    return <WysiwygOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  }
+
+  return <DescriptionOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
 export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
