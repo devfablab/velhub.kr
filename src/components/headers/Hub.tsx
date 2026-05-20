@@ -91,7 +91,7 @@ function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
-export default function HeaderSite() {
+export default function HeaderHub() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
