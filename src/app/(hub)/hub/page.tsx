@@ -7,6 +7,7 @@ import Personal from './personal';
 import PendingInvite from './pendingInvite';
 import PendingJoin from './pendingJoin';
 import styles from '@/app/hub.module.sass';
+import Container from './menu';
 
 type AccountRow = {
   email: string | null;
@@ -68,7 +69,7 @@ export default async function Page() {
   const account = accountResult.data as AccountRow;
 
   return (
-    <main>
+    <Container pageTitle="마이허브" pageBack="/">
       <div className="container">
         <div className={`content ${styles.content} ${styles['home-content']}`}>
           <Personal
@@ -81,6 +82,6 @@ export default async function Page() {
           <PendingJoin />
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

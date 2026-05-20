@@ -36,7 +36,7 @@ const tabs = [
   },
 ];
 
-export default function Container({ children }: ContainerProps) {
+export default function Content({ children }: ContainerProps) {
   const pathname = usePathname();
   return (
     <div className={`content ${styles.content} ${styles['hub-content']}`}>

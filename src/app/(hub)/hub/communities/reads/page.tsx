@@ -1,14 +1,15 @@
-import Container from '../tab';
+import Content from '../tab';
 import ReadsItems from '../../shared/readsItems';
+import Container from '../../menu';
 
 export default function Page() {
   return (
-    <main>
+    <Container pageTitle="커뮤니티 허브" pageBack="/hub">
       <div className="container">
-        <Container>
+        <Content>
           <ReadsItems siteType="community" />
-        </Container>
+        </Content>
       </div>
-    </main>
+    </Container>
   );
 }

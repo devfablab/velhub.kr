@@ -3,8 +3,9 @@ import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import FavoriteBlogs from './favoriteBlogs';
-import Container from './tab';
+import Content from './tab';
 import styles from '@/app/hub.module.sass';
+import Container from '../menu';
 
 type UserResponse = {
   isLoggedIn: boolean;
@@ -73,9 +74,9 @@ export default async function SectionJoinSites() {
   const hasBlog = joinSites.some((site) => site.site_type === 'blog');
 
   return (
-    <main>
+    <Container pageTitle="블로그 허브" pageBack="/hub">
       <div className="container">
-        <Container>
+        <Content>
           {joinSites.length > 0 && hasBlog ? (
             <JoinSites siteType="blog" joinSites={joinSites} />
           ) : (
@@ -87,8 +88,8 @@ export default async function SectionJoinSites() {
           <Liked siteType="blog" />
           <PostHistory siteType="blog" type="saved" />
           <PostHistory siteType="blog" type="read" />
-        </Container>
+        </Content>
       </div>
-    </main>
+    </Container>
   );
 }

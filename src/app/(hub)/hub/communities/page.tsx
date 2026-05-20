@@ -3,7 +3,8 @@ import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import styles from '@/app/hub.module.sass';
-import Container from './tab';
+import Content from './tab';
+import Container from '../menu';
 
 type UserResponse = {
   isLoggedIn: boolean;
@@ -68,13 +69,12 @@ export default async function SectionJoinSites() {
   }
 
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
-
   const hasCommunity = joinSites.some((site) => site.site_type === 'community');
 
   return (
-    <main>
+    <Container pageTitle="커뮤니티 허브" pageBack="/hub">
       <div className="container">
-        <Container>
+        <Content>
           {joinSites.length > 0 && hasCommunity ? (
             <JoinSites siteType="community" joinSites={joinSites} />
           ) : (
@@ -85,8 +85,8 @@ export default async function SectionJoinSites() {
           <Liked siteType="community" />
           <PostHistory siteType="community" type="saved" />
           <PostHistory siteType="community" type="read" />
-        </Container>
+        </Content>
       </div>
-    </main>
+    </Container>
   );
 }

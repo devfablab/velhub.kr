@@ -1,14 +1,15 @@
-import Container from '../tab';
+import Content from '../tab';
 import SavedItems from '../../shared/savedItems';
+import Container from '../../menu';
 
 export default function Page() {
   return (
-    <main>
+    <Container pageTitle="블로그 허브" pageBack="/hub">
       <div className="container">
-        <Container>
+        <Content>
           <SavedItems siteType="blog" />
-        </Container>
+        </Content>
       </div>
-    </main>
+    </Container>
   );
 }

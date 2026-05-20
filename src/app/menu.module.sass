@@ -1,0 +1,283 @@
+.appbar
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+  height: ds.rem(64)
+  display: flex
+  justify-content: space-between
+  align-items: center
+  padding: 0 ds.rem(17)
+
+  &.hidden
+    display: none
+
+  html[data-theme="yellow-light"] &
+    background-color: ds.$hex-white
+
+  html[data-theme="yellow-dark"] &
+    background-color: ds.$hex-black
+
+  .location
+    width: ds.rem(24)
+    height: ds.rem(24)
+    display: flex
+    justify-content: center
+    align-items: center
+
+  h1
+    span
+      @include ds.screen-reader-only
+
+    strong
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(24)
+      line-height: 1
+
+.VhiDrawer
+  div[tabindex="-1"]
+    width: ds.rem(407)
+    border-top-left-radius: ds.rem(17)
+    border-bottom-left-radius: ds.rem(17)
+
+    html[data-theme="yellow-dark"] &
+      border-left: 1px solid rgba(ds.$rgb-tertiary, .2)
+      background: ds.$hex-black
+
+    li
+      padding: ds.rem(7) ds.rem(17)
+      line-height: 1
+      min-height: 0
+
+      html[data-theme="yellow-dark"] &
+        background: ds.$hex-black
+
+      &:hover
+        background: rgba(0,0,0,.1)!important
+
+      a, span
+        line-height: 1
+
+    .VhiDrawer-header
+      display: flex
+      justify-content: flex-end
+      position: relative
+      padding: ds.rem(7)
+
+      strong
+        position: absolute
+        top: 50%
+        left: 50%
+        transform: translate(-50%, -50%)
+        @include ds.fw(neo, 900)
+        font-size: ds.rem(18)
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
+
+    .VhiMenu-theme
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
+      padding: ds.rem(17)
+      margin-bottom: ds.rem(7)
+
+      strong
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(16)
+
+    .VhiMenu-profile
+      display: flex
+      gap: ds.rem(12)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
+      padding: ds.rem(17)
+      margin-bottom: ds.rem(7)
+
+      &:hover
+        background: transparent!important
+
+      & + .VhiDrawer-subheader
+        border-top: 0
+        padding-top: ds.rem(7)
+
+      .VhiMenu-profile-info
+        display: flex
+        flex-direction: column
+        justify-content: center
+        gap: ds.rem(5)
+        width: calc(100% - ds.rem(50))
+
+        em, span
+          display: block
+          line-height: 1.2
+          @include ds.ellipsis
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-secondary
+
+        em
+          @include ds.fw(neo, 800)
+          font-size: ds.rem(14)
+          font-style: normal
+
+        span
+          font-size: ds.rem(12)
+          opacity: .5
+
+    .theme-buttons
+      display: flex
+      padding-top: ds.rem(3)
+      margin: 0 ds.rem(17)
+
+      html[data-theme="yellow-light"] &
+
+      button
+        display: flex
+        align-items: center
+        justify-content: center
+        gap: ds.rem(7)
+        @include ds.col
+        background-color: transparent
+        margin-left: -1px
+        padding: ds.rem(12) ds.rem(7)
+
+        span
+          @include ds.fw(pre, 600)
+
+        html[data-theme="yellow-light"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        html[data-theme="yellow-dark"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        &.active
+          border-color: ds.$hex-accent!important
+          background-color: ds.$hex-accent
+          color: rgba(ds.$rgb-secondary, .8)
+
+          span
+            @include ds.fw(pre, 800)
+
+        &:first-of-type
+          margin-left: 0
+          border-top-left-radius: ds.rem(12)
+          border-bottom-left-radius: ds.rem(12)
+
+        &:last-of-type
+          border-top-right-radius: ds.rem(12)
+          border-bottom-right-radius: ds.rem(12)
+
+    .VhiDrawer-subheader
+      margin-top: ds.rem(7)
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+      padding: ds.rem(12) ds.rem(17) ds.rem(7)
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(16)
+      line-height: 1
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-primary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
+
+      &:hover
+        background: transparent!important
+
+    .logout, .logout-icon, .logout-text, .logout-text span, .theme, .theme-icon, .theme-text span
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+    .logout, .theme
+      opacity: .7
+
+      &:hover
+        opacity: 1
+
+    .logout-icon
+      min-width: 0
+      width: ds.rem(20)
+      margin-right: ds.rem(7)
+
+    .logout-text span
+      @include ds.fw(pre, 600)
+
+    a
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      flex: 1 0 0%
+      opacity: .7
+
+      &:hover, &:focus-visible
+        opacity: 1
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      span
+        @include ds.fw(pre, 600)
+
+.VhiDrawer-search
+  div[tabindex="-1"]
+    .mobile-search
+      display: flex
+      align-items: center
+      gap: ds.rem(7)
+      padding: 0 ds.rem(17) 0 ds.rem(12)
+      height: ds.rem(58)
+
+      form
+        @include ds.col
+
+      .search
+        .form-group
+          display: flex
+          flex-direction: row
+          gap: ds.rem(7)
+          width: 100%
+          position: relative
+          border: 1px solid ds.$hex-accent
+          border-radius: ds.rem(37)
+          @include ds.fw(pre, 700)
+
+          html[data-site-type='blog'] &
+            font-family: var(--blog-description-font-family)
+            font-weight: 700
+            font-variation-settings: "wght" 700
+
+          html[data-theme="yellow-light"] &
+            background-color: ds.$rgb-white
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            background-color: ds.$rgb-black
+            color: ds.$hex-bright
+
+          .form-control
+            @include ds.col
+
+            input
+              background-color: transparent
+              border: 0
+              padding: 0 ds.rem(17)
+              width: 100%
+              height: ds.rem(37)
+
+          button
+            posiation: absolute
+            top: 0
+            right: 0
+            display: flex
+            justify-content: center
+            align-items: center
+            background-color: transparent
+            width: ds.rem(37)
+            height: ds.rem(37)
