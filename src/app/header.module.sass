@@ -201,6 +201,9 @@ header.header
       a, span
         line-height: 1
 
+      &[role="menuitem"]:not(.logout)
+        padding: 0
+
     .VhiMenu-theme
       border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
       padding: ds.rem(17)
@@ -282,6 +285,8 @@ header.header
       gap: ds.rem(7)
       flex: 1 0 0%
       opacity: .7
+      transition: all .4s cubic-bezier(.4,0,.2,1)
+      padding: ds.rem(7) ds.rem(17)
 
       &:hover, &:focus-visible
         opacity: 1
