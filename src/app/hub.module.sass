@@ -3,6 +3,7 @@
   flex-direction: column
   gap: ds.rem(23)
   max-width: ds.rem(572)
+  width: 100%
 
   .paper
     display: flex
@@ -318,6 +319,9 @@
               cite
                 width: ds.rem(127)
                 justify-content: flex-end
+
+                @include ds.mq(maxExtraSmall)
+                  @include ds.screen-reader-only
 
               time
                 width: ds.rem(72)
