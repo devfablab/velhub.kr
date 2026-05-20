@@ -321,72 +321,127 @@ export default function Opt({ isCommunity }: Props) {
           </div>
         ) : isSearchMode ? (
           <div className="paper">
-            <table>
-              <caption>게시글 검색 결과</caption>
-              <colgroup>
-                <col />
-                <col style={{ width: 127 }} />
-                <col style={{ width: 77 }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th className="long-cell">제목</th>
-                  <th className="long-cell">작성자</th>
-                  <th>작성일</th>
-                </tr>
-              </thead>
-
-              <tbody>
+            {isMobile ? (
+              <ol className="list">
                 {contents.map((content) => (
-                  <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
-                    <td className="long-cell">
-                      <div className="board-subject">
-                        {content.is_pin ? (
-                          <i className="pin-icon" aria-label="상단고정글">
-                            <PushPinRoundedIcon />
-                          </i>
-                        ) : null}
-                        <small className="board-name board-chip" aria-label="게시판명">
-                          {content.board_label}
-                        </small>
-                        {content.prefix_label ? (
-                          <small className="prefix-name board-chip" aria-label="말머리">
-                            {content.prefix_label}
+                  <li key={content.id}>
+                    <Anchor
+                      href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                    >
+                      <div className="subject">
+                        <div className="board-subject">
+                          {content.is_pin ? (
+                            <i className="pin-icon" aria-label="상단고정글">
+                              <PushPinRoundedIcon />
+                            </i>
+                          ) : null}
+                          <small className="board-name board-chip" aria-label="게시판명">
+                            {content.board_label}
                           </small>
-                        ) : null}
-                        {content.series_label ? (
-                          <small className="series-name board-chip" aria-label="연재명">
-                            {content.series_label}
-                          </small>
-                        ) : null}
-                        {content.is_poll ? (
-                          <i className="poll-icon" aria-label="투표글">
-                            <HowToVoteIcon />
-                          </i>
-                        ) : null}
-                        <Anchor
-                          href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
-                        >
-                          {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
-                        </Anchor>
-                        {content.comment_count > 0 ? (
-                          <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                          {content.prefix_label ? (
+                            <small className="prefix-name board-chip" aria-label="말머리">
+                              {content.prefix_label}
+                            </small>
+                          ) : null}
+                          {content.series_label ? (
+                            <small className="series-name board-chip" aria-label="연재명">
+                              {content.series_label}
+                            </small>
+                          ) : null}
+                          {content.is_poll ? (
+                            <i className="poll-icon" aria-label="투표글">
+                              <HowToVoteIcon />
+                            </i>
+                          ) : null}
+                          <span>
+                            {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
+                          </span>
+                          {content.comment_count > 0 ? (
+                            <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                          ) : null}
+                        </div>
+                        {content.search_content_matched ? (
+                          <div className="board-content">
+                            {renderHighlightedText(content.search_content, searchKeyword)}
+                          </div>
                         ) : null}
                       </div>
-                      {content.search_content_matched ? (
-                        <div className="board-content">
-                          {renderHighlightedText(content.search_content, searchKeyword)}
-                        </div>
-                      ) : null}
-                    </td>
-                    <td className="long-cell">
-                      <cite>{content.author_name}</cite>
-                    </td>
-                    <td>{formatTimeAgo(content.created_at)}</td>
-                  </tr>
+                      <div className="tail">
+                        <cite aria-label="작성자">{content.author_name}</cite>
+                        <time aria-label="작성일">{formatTimeAgo(content.created_at)}</time>
+                      </div>
+                    </Anchor>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ol>
+            ) : (
+              <table>
+                <caption>게시글 검색 결과</caption>
+                <colgroup>
+                  <col />
+                  <col style={{ width: 127 }} />
+                  <col style={{ width: 77 }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th className="long-cell">제목</th>
+                    <th className="long-cell">작성자</th>
+                    <th>작성일</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {contents.map((content) => (
+                    <tr key={content.id}>
+                      <td className="long-cell">
+                        <div className="board-subject">
+                          {content.is_pin ? (
+                            <i className="pin-icon" aria-label="상단고정글">
+                              <PushPinRoundedIcon />
+                            </i>
+                          ) : null}
+                          <small className="board-name board-chip" aria-label="게시판명">
+                            {content.board_label}
+                          </small>
+                          {content.prefix_label ? (
+                            <small className="prefix-name board-chip" aria-label="말머리">
+                              {content.prefix_label}
+                            </small>
+                          ) : null}
+                          {content.series_label ? (
+                            <small className="series-name board-chip" aria-label="연재명">
+                              {content.series_label}
+                            </small>
+                          ) : null}
+                          {content.is_poll ? (
+                            <i className="poll-icon" aria-label="투표글">
+                              <HowToVoteIcon />
+                            </i>
+                          ) : null}
+                          <Anchor
+                            href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                          >
+                            {renderHighlightedText(content.subject, content.search_title_matched ? searchKeyword : '')}
+                          </Anchor>
+                          {content.comment_count > 0 ? (
+                            <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                          ) : null}
+                        </div>
+                        {content.search_content_matched ? (
+                          <div className="board-content">
+                            {renderHighlightedText(content.search_content, searchKeyword)}
+                          </div>
+                        ) : null}
+                      </td>
+                      <td className="long-cell">
+                        <cite>{content.author_name}</cite>
+                      </td>
+                      <td>{formatTimeAgo(content.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         ) : (
           <div className="paper">
