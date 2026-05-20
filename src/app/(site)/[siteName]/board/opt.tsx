@@ -393,8 +393,9 @@ export default function Opt({ isCommunity }: Props) {
             {isMobile ? (
               <ol className="list">
                 {contents.map((content) => (
-                  <li key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                  <li key={content.id}>
                     <Anchor
+                      className={content.is_pin ? 'pinned' : undefined}
                       href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
                     >
                       <div className="subject">
