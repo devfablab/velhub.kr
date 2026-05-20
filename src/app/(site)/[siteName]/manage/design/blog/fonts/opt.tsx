@@ -92,7 +92,7 @@ export default function Opt() {
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   useEffect(() => {

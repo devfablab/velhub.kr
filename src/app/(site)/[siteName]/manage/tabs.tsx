@@ -113,7 +113,7 @@ export default function StaffTabs({ pageTitle }: Props) {
 
   const siteName = normalizeText(params.siteName);
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   const [siteType, setSiteType] = useState<SiteType | null>(null);

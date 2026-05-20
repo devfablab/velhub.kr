@@ -23,7 +23,7 @@ export default function HeaderSiteGuard() {
   const searchParams = useSearchParams();
   const siteName = normalizeText(pathname.split('/')[1]);
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   useEffect(() => {

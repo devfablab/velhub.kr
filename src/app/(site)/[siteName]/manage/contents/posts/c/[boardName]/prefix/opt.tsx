@@ -69,7 +69,7 @@ export default function Opt() {
   const boardName = normalizeText(params.boardName).toLowerCase();
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
 
   const [board, setBoard] = useState<BoardRow | null>(null);
   const [prefixes, setPrefixes] = useState<PrefixRow[]>([]);

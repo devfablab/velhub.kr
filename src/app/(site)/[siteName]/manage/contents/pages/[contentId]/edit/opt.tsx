@@ -171,7 +171,7 @@ export default function Opt() {
   const contentId = normalizeText(params.contentId);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);

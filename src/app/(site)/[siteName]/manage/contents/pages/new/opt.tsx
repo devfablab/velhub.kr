@@ -147,7 +147,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);

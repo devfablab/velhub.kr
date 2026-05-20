@@ -50,7 +50,7 @@ type UserProfile = {
 
 export default function HeaderConcierge() {
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   const { themeMode, setThemeMode } = useThemeMode();

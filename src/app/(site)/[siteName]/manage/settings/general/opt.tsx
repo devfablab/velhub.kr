@@ -141,7 +141,7 @@ export default function Opt() {
   const [siteLabelCheckMessage, setSiteLabelCheckMessage] = useState('');
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
 
   useEffect(() => {
     async function loadInfo() {

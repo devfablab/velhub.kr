@@ -133,7 +133,9 @@ export default function Opt({ isCommunity }: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
   const isMobile = !isNotMobile;
+  const isTablet = !isNotTablet;
 
   async function loadContents(nextPage = 1, nextKeyword = '') {
     try {
@@ -615,7 +617,7 @@ export default function Opt({ isCommunity }: Props) {
       </div>
       <FabNew />
 
-      {isCommunity && !isMobile ? (
+      {isCommunity && !isTablet ? (
         <aside>
           <UserInfo />
           <PostCountTableList />

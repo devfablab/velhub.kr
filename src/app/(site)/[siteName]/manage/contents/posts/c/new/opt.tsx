@@ -91,7 +91,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
 
   const [boardLabel, setBoardLabel] = useState('');
   const [boardKey, setBoardKey] = useState('');

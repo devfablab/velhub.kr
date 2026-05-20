@@ -100,7 +100,7 @@ export default function Opt() {
   const [renameValue, setRenameValue] = useState('');
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   useEffect(() => {

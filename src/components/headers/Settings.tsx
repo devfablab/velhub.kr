@@ -78,7 +78,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function HeaderSettings() {
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
   const { isReady } = useAuthState();
