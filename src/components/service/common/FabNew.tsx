@@ -4,7 +4,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { normalizeText } from '@/lib/utils';
 
 type Props = {
-  isBlog: boolean;
+  isBlog?: boolean;
 };
 
 export default function FabNew({ isBlog }: Props) {

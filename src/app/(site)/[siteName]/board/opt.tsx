@@ -10,6 +10,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -273,7 +274,14 @@ export default function Opt({ isCommunity }: Props) {
         </aside>
       ) : null}
 
-      <div className={`${styles.content} content`}>
+      <div
+        className={`${styles.content} content`}
+        style={{
+          maxWidth: isMobile ? 992 : 'none',
+          flex: isMobile ? 'none' : '1 0',
+          width: isMobile ? '100%' : 'auto',
+        }}
+      >
         <h2>
           {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}
           {isSearchMode ? (
@@ -382,75 +390,132 @@ export default function Opt({ isCommunity }: Props) {
           </div>
         ) : (
           <div className="paper">
-            <table>
-              <caption>게시글 목록</caption>
-              <colgroup>
-                <col />
-                <col style={{ width: 127 }} />
-                <col style={{ width: 77 }} />
-                <col style={{ width: 67 }} />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th className="long-cell">제목</th>
-                  <th className="long-cell">작성자</th>
-                  <th>작성일</th>
-                  <th>조회수</th>
-                </tr>
-              </thead>
-
-              <tbody>
+            {isMobile ? (
+              <ol className="list">
                 {contents.map((content) => (
-                  <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
-                    <td className="long-cell">
-                      <div className="board-subject">
-                        {content.is_pin ? (
-                          <i className="pin-icon" aria-label="상단고정글">
-                            <PushPinRoundedIcon />
-                          </i>
-                        ) : null}
-                        <small className="board-name board-chip" aria-label="게시판명">
-                          {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
-                        </small>
-                        {content.prefix_label ? (
-                          <small className="prefix-name board-chip" aria-label="말머리">
-                            {content.prefix_label}
+                  <li key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                    <Anchor
+                      href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                    >
+                      <div className="subject">
+                        <div className="board-subject">
+                          {content.is_pin ? (
+                            <i className="pin-icon" aria-label="상단고정글">
+                              <PushPinRoundedIcon />
+                            </i>
+                          ) : null}
+                          <small className="board-name board-chip" aria-label="게시판명">
+                            {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
                           </small>
-                        ) : null}
-                        {content.series_label ? (
-                          <small className="series-name board-chip" aria-label="연재명">
-                            {content.series_label}
-                          </small>
-                        ) : null}
-                        {content.is_poll ? (
-                          <i className="poll-icon" aria-label="투표글">
-                            <HowToVoteIcon />
-                          </i>
-                        ) : null}
-                        {content.published_status === 'draft' ? <em>(임시글)</em> : null}
-                        <Anchor
-                          href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
-                        >
-                          {content.subject}
-                        </Anchor>
-                        {content.comment_count > 0 ? (
-                          <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
-                        ) : null}
+                          {content.prefix_label ? (
+                            <small className="prefix-name board-chip" aria-label="말머리">
+                              {content.prefix_label}
+                            </small>
+                          ) : null}
+                          {content.series_label ? (
+                            <small className="series-name board-chip" aria-label="연재명">
+                              {content.series_label}
+                            </small>
+                          ) : null}
+                          {content.is_poll ? (
+                            <i className="poll-icon" aria-label="투표글">
+                              <HowToVoteIcon />
+                            </i>
+                          ) : null}
+                          {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                          <span>{content.subject}</span>
+                          {content.comment_count > 0 ? (
+                            <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                          ) : null}
+                        </div>
                       </div>
-                    </td>
-                    <td className="long-cell">
-                      <cite>{content.author_name}</cite>
-                    </td>
-                    <td>
-                      {formatTimeAgo(
-                        content.published_status === 'published' ? content.published_at : content.created_at,
-                      )}
-                    </td>
-                    <td>{content.post_count}</td>
-                  </tr>
+                      <div className="tail">
+                        <cite aria-label="작성자">{content.author_name}</cite>
+                        <time aria-label="작성일">
+                          {formatTimeAgo(
+                            content.published_status === 'published' ? content.published_at : content.created_at,
+                          )}
+                        </time>
+                        <span>
+                          <VisibilityOutlinedIcon aria-label="조회수" sx={{ width: 14, height: 14 }} />
+                          {content.post_count}
+                        </span>
+                      </div>
+                    </Anchor>
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ol>
+            ) : (
+              <table>
+                <caption>게시글 목록</caption>
+                <colgroup>
+                  <col />
+                  <col style={{ width: 127 }} />
+                  <col style={{ width: 77 }} />
+                  <col style={{ width: 67 }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th className="long-cell">제목</th>
+                    <th className="long-cell">작성자</th>
+                    <th>작성일</th>
+                    <th>조회수</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {contents.map((content) => (
+                    <tr key={content.id} className={content.is_pin ? 'pinned' : undefined}>
+                      <td className="long-cell">
+                        <div className="board-subject">
+                          {content.is_pin ? (
+                            <i className="pin-icon" aria-label="상단고정글">
+                              <PushPinRoundedIcon />
+                            </i>
+                          ) : null}
+                          <small className="board-name board-chip" aria-label="게시판명">
+                            {content.board_label} {!content.is_pin ? `/ ${content.idx}번째 글` : null}
+                          </small>
+                          {content.prefix_label ? (
+                            <small className="prefix-name board-chip" aria-label="말머리">
+                              {content.prefix_label}
+                            </small>
+                          ) : null}
+                          {content.series_label ? (
+                            <small className="series-name board-chip" aria-label="연재명">
+                              {content.series_label}
+                            </small>
+                          ) : null}
+                          {content.is_poll ? (
+                            <i className="poll-icon" aria-label="투표글">
+                              <HowToVoteIcon />
+                            </i>
+                          ) : null}
+                          {content.published_status === 'draft' ? <em>(임시글)</em> : null}
+                          <Anchor
+                            href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                          >
+                            {content.subject}
+                          </Anchor>
+                          {content.comment_count > 0 ? (
+                            <strong aria-label="댓글 수">{`(${content.comment_count})`}</strong>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="long-cell">
+                        <cite>{content.author_name}</cite>
+                      </td>
+                      <td>
+                        {formatTimeAgo(
+                          content.published_status === 'published' ? content.published_at : content.created_at,
+                        )}
+                      </td>
+                      <td>{content.post_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
 

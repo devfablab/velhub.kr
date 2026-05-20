@@ -415,88 +415,157 @@ a, button, select, input
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
 
-          .board-subject
-            display: flex
-            flex-direction: row
-            align-items: center
-            gap: ds.rem(7)
-            height: ds.rem(37)
+  ol.list
+    display: flex
+    flex-direction: column
 
-            i
-              color: ds.$hex-accent
+    li, a
+      display: flex
+      flex-direction: column
 
-              &.number
-                margin-right: ds.rem(7)
-                color: ds.$hex-action
-                @include ds.fw(pre, 700)
-                font-style: normal
-                font-size: ds.rem(12)
+    li
+      &:first-of-type
+        a
+          border-top: 0!important
+          padding-top: 0
 
-              &.pin-icon
-                color: ds.$hex-warning
+      &:last-of-type
+        a
+          padding-bottom: 0
 
-                svg
-                  transform: rotate(45deg)
+    a
+      gap: ds.rem(7)
+      padding: ds.rem(12) 0
 
-            i, small, > strong, em
-              display: flex
-              align-items: center
-              flex: none
-              height: ds.rem(22)
+      html[data-theme="yellow-light"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
 
-            > strong
-              @include ds.fw(neo, 800)
-              font-size: ds.rem(11)
-              opacity: .5
+      html[data-theme="yellow-dark"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
 
-            em
-              @include ds.fw(pre, 700)
-              font-size: ds.rem(12)
-              font-style: normal
-              color: ds.$hex-warning
+      .board-subject
+        height: ds.rem(22)
 
-            svg
-              width: ds.rem(16)
-              height: ds.rem(16)
+        i, small, strong
+          flex-shrink: 0
+          flex: 0 0 auto
 
-            .board-chip
-              overflow: hidden
-              text-overflow: ellipsis
-              white-space: nowrap
-              max-width: ds.rem(120)
-              padding: ds.rem(4) ds.rem(5) ds.rem(3)
-              border-radius: ds.rem(6)
-              line-height: 1
-              font-size: ds.rem(12)
+        small
+          max-width: 70%
 
-              &.prefix-name
-                border: 1px solid ds.$hex-accent
+        span
+          min-width: 0
+          @include ds.ellipsis
+          letter-spacing: -.05em
+          font-size: ds.rem(14)
+          line-height: ds.rem(14)
 
-                html[data-theme="yellow-light"] &
-                  background-color: ds.$hex-white
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
 
-                html[data-theme="yellow-dark"] &
-                  background-color: ds.$hex-black
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
 
-              &.series-name
-                background-color: transparent!important
-                border: 1px solid ds.$hex-action
+      .tail
+        display: flex
+        gap: ds.rem(7)
+        align-items: center
+        font-size: ds.rem(12)
+        color: ds.$hex-secondary
+        opacity: .7
+        line-height: 1
 
-              html[data-theme="yellow-light"] &
-                background-color: rgba(ds.$rgb-tertiary, .2)
-                color: rgba(ds.$rgb-primary, .7)
+        cite
+          display: inline-block
+          @include ds.ellipsis
 
-              html[data-theme="yellow-dark"] &
-                background-color: rgba(ds.$rgb-tertiary, .5)
-                color: rgba(ds.$rgb-bright, .7)
+        span
+          display: flex
+          align-items: center
+          gap: ds.rem(3)
 
-          .board-content
-            margin-bottom: ds.rem(3)
-            @include ds.line-abbr(2, 42, 1.5)
+  .board-subject
+    display: flex
+    flex-direction: row
+    align-items: center
+    gap: ds.rem(7)
+    height: ds.rem(37)
 
-            strong
-              @include ds.fw(pre, 800)
-              color: ds.$hex-warning
+    i
+      color: ds.$hex-accent
+
+      &.number
+        margin-right: ds.rem(7)
+        color: ds.$hex-action
+        @include ds.fw(pre, 700)
+        font-style: normal
+        font-size: ds.rem(12)
+
+      &.pin-icon
+        color: ds.$hex-warning
+
+        svg
+          transform: rotate(45deg)
+
+    i, small, > strong, em
+      display: flex
+      align-items: center
+      flex: none
+      height: ds.rem(22)
+
+    > strong
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(11)
+      opacity: .5
+
+    em
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(12)
+      font-style: normal
+      color: ds.$hex-warning
+
+    svg
+      width: ds.rem(16)
+      height: ds.rem(16)
+
+    .board-chip
+      overflow: hidden
+      text-overflow: ellipsis
+      white-space: nowrap
+      max-width: ds.rem(120)
+      padding: ds.rem(4) ds.rem(5) ds.rem(3)
+      border-radius: ds.rem(6)
+      line-height: 1
+      font-size: ds.rem(12)
+
+      &.prefix-name
+        border: 1px solid ds.$hex-accent
+
+        html[data-theme="yellow-light"] &
+          background-color: ds.$hex-white
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-black
+
+      &.series-name
+        background-color: transparent!important
+        border: 1px solid ds.$hex-action
+
+      html[data-theme="yellow-light"] &
+        background-color: rgba(ds.$rgb-tertiary, .2)
+        color: rgba(ds.$rgb-primary, .7)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-tertiary, .5)
+        color: rgba(ds.$rgb-bright, .7)
+
+  .board-content
+    margin-bottom: ds.rem(3)
+    @include ds.line-abbr(2, 42, 1.5)
+
+    strong
+      @include ds.fw(pre, 800)
+      color: ds.$hex-warning
 
 .vh-dialog
   .MuiDialog-paper
