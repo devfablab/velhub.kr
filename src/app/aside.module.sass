@@ -532,3 +532,38 @@
           font-family: var(--blog-subject-font-family)
           font-weight: 400
           font-variation-settings: "wght" 400
+
+.table-list-header
+  display: flex
+  flex-direction: row
+  align-items: center
+  justify-content: space-between
+
+  .board-selector
+    button
+      border: 0
+      padding: 0
+      display: inline-flex
+      gap: ds.rem(3)
+      align-items: center
+      background-color: transparent
+      color: ds.$hex-secondary
+      font-size: ds.rem(16)
+
+      span
+        @include ds.fw(pre, 600)
+
+  .board-post
+    a
+      display: inline-flex
+      justify-content: center
+      align-items: center
+      width: ds.rem(38)
+      height: ds.rem(38)
+      background-color: ds.$hex-accent
+      border-radius: 100%
+      color: ds.$hex-white
+
+      svg
+        width: ds.rem(20)
+        height: ds.rem(20)

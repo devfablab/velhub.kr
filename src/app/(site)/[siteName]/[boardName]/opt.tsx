@@ -28,6 +28,7 @@ import BoardPostCountTableList from '@/components/service/community/BoardPostCou
 import FabNew from '@/components/service/common/FabNew';
 import styles from '@/app/board.module.sass';
 import Container from '../menu';
+import TableListMobile from '@/components/service/community/TableListMobile';
 
 type Props = {
   isCommunity: boolean;
@@ -458,25 +459,31 @@ export default function Opt({ isCommunity }: Props) {
           }}
         >
           {isCommunity ? (
-            <h2>
-              {isSearchMode ? (
-                <ManageSearchIcon />
-              ) : board ? (
-                renderBoardTypeIcon(board.board_type)
+            <>
+              {isMobile ? (
+                <TableListMobile />
               ) : (
-                <ListAltOutlinedIcon />
+                <h2>
+                  {isSearchMode ? (
+                    <ManageSearchIcon />
+                  ) : board ? (
+                    renderBoardTypeIcon(board.board_type)
+                  ) : (
+                    <ListAltOutlinedIcon />
+                  )}
+                  {isSearchMode ? (
+                    <span>
+                      <strong>{searchKeyword}</strong>
+                      {` 검색 결과 (${totalCount}건)`}
+                    </span>
+                  ) : selectedSeries ? (
+                    <span>{selectedSeries.series_label}</span>
+                  ) : board ? (
+                    <span>{board.board_label}</span>
+                  ) : null}
+                </h2>
               )}
-              {isSearchMode ? (
-                <span>
-                  <strong>{searchKeyword}</strong>
-                  {` 검색 결과 (${totalCount}건)`}
-                </span>
-              ) : selectedSeries ? (
-                <span>{selectedSeries.series_label}</span>
-              ) : board ? (
-                <span>{board.board_label}</span>
-              ) : null}
-            </h2>
+            </>
           ) : null}
 
           <div className={styles['board-search-container']}>

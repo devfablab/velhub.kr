@@ -399,9 +399,11 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
         {isMobile ? (
           <>
             {pageBack ? (
-              <IconButton href={pageBack} aria-label="이전화면으로 이동" sx={{ width: 24, height: 24 }}>
-                <ArrowBackIosNewRoundedIcon />
-              </IconButton>
+              <div className={styles.location}>
+                <IconButton href={pageBack} aria-label="이전화면으로 이동">
+                  <ArrowBackIosNewRoundedIcon />
+                </IconButton>
+              </div>
             ) : (
               <i style={{ width: 120, height: 1, display: 'inline-flex' }} aria-hidden />
             )}

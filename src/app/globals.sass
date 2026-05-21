@@ -309,6 +309,9 @@ a, button, select, input
   padding: ds.rem(23)
   box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
 
+  @include ds.mq(maxMedium)
+    padding: ds.rem(12)
+
   &.paper-p0
     padding: 0
     overflow: hidden
@@ -818,6 +821,10 @@ main
     width: 100%
     padding: ds.rem(38) ds.rem(17) ds.rem(70)
 
+    @include ds.mq(maxMedium)
+      padding: ds.rem(17) ds.rem(17) ds.rem(53)
+      gap: ds.rem(12)
+
     aside
       display: flex
       flex-direction: column
@@ -1156,3 +1163,28 @@ html[data-site-type='blog']
 
     &:hover, &:focus-visible
       background-color: ds.$hex-secondary
+
+.VhiMenu-popover
+  li
+    padding: 0
+
+  a
+    display: flex
+    flex-direction: row
+    align-items: center
+    gap: ds.rem(5)
+    padding: ds.rem(7) ds.rem(17)
+    color: ds.$hex-secondary
+    opacity: .8
+
+    svg, i
+      width: ds.rem(16)
+      height: ds.rem(16)
+
+    i
+      display: inline-flex
+
+    &.current
+      @include ds.fw(pre, 600)
+      color: ds.$hex-accent
+      opacity: 1

@@ -20,6 +20,7 @@ import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import styles from '@/app/board.module.sass';
 import FabNew from '@/components/service/common/FabNew';
+import TableListMobile from '@/components/service/community/TableListMobile';
 
 type Props = {
   isCommunity: boolean;
@@ -284,17 +285,21 @@ export default function Opt({ isCommunity }: Props) {
           width: isMobile ? '100%' : 'auto',
         }}
       >
-        <h2>
-          {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}
-          {isSearchMode ? (
-            <span>
-              <strong>{searchKeyword}</strong>
-              {` 검색 결과 (${totalCount}건)`}
-            </span>
-          ) : (
-            <span>최신글 보기</span>
-          )}
-        </h2>
+        {isMobile ? (
+          <TableListMobile />
+        ) : (
+          <h2>
+            {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}
+            {isSearchMode ? (
+              <span>
+                <strong>{searchKeyword}</strong>
+                {` 검색 결과 (${totalCount}건)`}
+              </span>
+            ) : (
+              <span>최신글 보기</span>
+            )}
+          </h2>
+        )}
 
         <div className={styles['board-search-container']}>
           <form onSubmit={handleSearchSubmit} className="form">
