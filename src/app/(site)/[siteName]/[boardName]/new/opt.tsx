@@ -49,6 +49,7 @@ import NumberField from '@/components/custom-ui/NumberField';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
+import Container from '../../menu';
 
 type Props = {
   isCommunity: boolean;
@@ -1770,801 +1771,809 @@ export default function Opt({ isCommunity }: Props) {
 
   if (isLoadingBoards) {
     return (
-      <div className="container">
-        <div className={`${styles.content} content`}>
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
+      <main>
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <div className="paper">
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (boards.length === 0) {
     return (
-      <div className="container">
-        <div className={`${styles.content} content`}>
-          <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
+      <main>
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (!isCommunity) {
     return (
-      <div className="container">
-        <div className={`${styles.content} content`}>
-          <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+      <main>
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+          </div>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="container">
-      {isCommunity && !isMobile ? (
-        <aside>
-          <SiteInfo />
-          <TableList />
-        </aside>
-      ) : null}
+    <Container pageBack={`/${siteName}/${boardName}`} pageTitle="새글 쓰기" pageFin>
+      <div className="container">
+        {isCommunity && !isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
 
-      <div className={`${styles.content} content`}>
-        <h2>
-          {boardType ? renderBoardTypeIcon(boardType) : <ListAltOutlinedIcon />}
-          <span>글쓰기</span>
-        </h2>
+        <div className={`${styles.content} content`}>
+          <h2>
+            {boardType ? renderBoardTypeIcon(boardType) : <ListAltOutlinedIcon />}
+            <span>글쓰기</span>
+          </h2>
 
-        {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
+          {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
 
-        <form onSubmit={(event) => void handleSubmit('publish', event)} className={`${styles.form} form`}>
-          <fieldset>
-            <legend>글쓰기 폼</legend>
-            <div className="paper">
-              <div className={styles['board-select']}>
-                <div className={styles['form-select']}>
-                  <Select
-                    displayEmpty
-                    value={selectedBoardKey}
-                    onChange={(event: SelectChangeEvent) => resetBoardSpecificFields(event.target.value)}
-                    className={styles['MuiInputBase-root']}
-                  >
-                    <MenuItem value="">게시판을 선택하세요</MenuItem>
-                    {boards.map((board) => (
-                      <MenuItem key={board.id} value={board.board_key}>
-                        {board.board_label}
-                      </MenuItem>
-                    ))}
-                  </Select>
+          <form onSubmit={(event) => void handleSubmit('publish', event)} className={`${styles.form} form`}>
+            <fieldset>
+              <legend>글쓰기 폼</legend>
+              <div className="paper">
+                <div className={styles['board-select']}>
+                  <div className={styles['form-select']}>
+                    <Select
+                      displayEmpty
+                      value={selectedBoardKey}
+                      onChange={(event: SelectChangeEvent) => resetBoardSpecificFields(event.target.value)}
+                      className={styles['MuiInputBase-root']}
+                    >
+                      <MenuItem value="">게시판을 선택하세요</MenuItem>
+                      {boards.map((board) => (
+                        <MenuItem key={board.id} value={board.board_key}>
+                          {board.board_label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </div>
+                  <p>게시판 선택시 입력했던 내용들이 초기화됩니다.</p>
                 </div>
-                <p>게시판 선택시 입력했던 내용들이 초기화됩니다.</p>
-              </div>
 
-              {isLoadingBoardMeta ? (
-                <div className="loading-container">
-                  <LoadingIndicator />
-                </div>
-              ) : selectedBoard ? (
-                <>
-                  {!isFeedBoard ? (
-                    <div className={styles['post-info']}>
-                      <div className={styles['form-group']}>
-                        {postType === 'prefix' ? (
-                          <div ref={prefixSelectReference} className={styles['form-select']}>
-                            <Select
-                              displayEmpty
-                              value={selectedPrefixId}
-                              onChange={(event: SelectChangeEvent) => setSelectedPrefixId(event.target.value)}
-                              className={styles['MuiInputBase-root']}
-                            >
-                              <MenuItem value="">말머리 선택</MenuItem>
-                              {prefixList.map((prefix) => (
-                                <MenuItem key={prefix.id} value={prefix.id}>
-                                  {prefix.prefix_label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </div>
-                        ) : null}
-
-                        {postType === 'series' || postType === 'both' ? (
-                          <div ref={seriesSelectReference} className={styles['form-select']}>
-                            <Select
-                              displayEmpty
-                              value={selectedSeriesKey}
-                              onChange={(event: SelectChangeEvent) => setSelectedSeriesKey(event.target.value)}
-                              className={styles['MuiInputBase-root']}
-                            >
-                              <MenuItem value="">연재 선택</MenuItem>
-                              {seriesList
-                                .filter((series) => !series.is_completed)
-                                .map((series) => (
-                                  <MenuItem key={series.id} value={series.series_key}>
-                                    {series.series_label}
+                {isLoadingBoardMeta ? (
+                  <div className="loading-container">
+                    <LoadingIndicator />
+                  </div>
+                ) : selectedBoard ? (
+                  <>
+                    {!isFeedBoard ? (
+                      <div className={styles['post-info']}>
+                        <div className={styles['form-group']}>
+                          {postType === 'prefix' ? (
+                            <div ref={prefixSelectReference} className={styles['form-select']}>
+                              <Select
+                                displayEmpty
+                                value={selectedPrefixId}
+                                onChange={(event: SelectChangeEvent) => setSelectedPrefixId(event.target.value)}
+                                className={styles['MuiInputBase-root']}
+                              >
+                                <MenuItem value="">말머리 선택</MenuItem>
+                                {prefixList.map((prefix) => (
+                                  <MenuItem key={prefix.id} value={prefix.id}>
+                                    {prefix.prefix_label}
                                   </MenuItem>
                                 ))}
-                            </Select>
+                              </Select>
+                            </div>
+                          ) : null}
+
+                          {postType === 'series' || postType === 'both' ? (
+                            <div ref={seriesSelectReference} className={styles['form-select']}>
+                              <Select
+                                displayEmpty
+                                value={selectedSeriesKey}
+                                onChange={(event: SelectChangeEvent) => setSelectedSeriesKey(event.target.value)}
+                                className={styles['MuiInputBase-root']}
+                              >
+                                <MenuItem value="">연재 선택</MenuItem>
+                                {seriesList
+                                  .filter((series) => !series.is_completed)
+                                  .map((series) => (
+                                    <MenuItem key={series.id} value={series.series_key}>
+                                      {series.series_label}
+                                    </MenuItem>
+                                  ))}
+                              </Select>
+                            </div>
+                          ) : null}
+
+                          <div className={styles['form-control']}>
+                            <input
+                              type="text"
+                              value={subject}
+                              placeholder="제목을 입력해 주세요 (필수)"
+                              style={{ paddingLeft: subjectPaddingLeft }}
+                              onChange={(event) => setSubject(event.currentTarget.value)}
+                            />
                           </div>
-                        ) : null}
-
-                        <div className={styles['form-control']}>
-                          <input
-                            type="text"
-                            value={subject}
-                            placeholder="제목을 입력해 주세요 (필수)"
-                            style={{ paddingLeft: subjectPaddingLeft }}
-                            onChange={(event) => setSubject(event.currentTarget.value)}
-                          />
                         </div>
                       </div>
+                    ) : null}
+
+                    {isGalleryBoard ? (
+                      <div className={styles['post-info']}>
+                        <div className={styles['form-group']}>
+                          <div className={styles['form-control']}>
+                            <input
+                              type="text"
+                              value={summary}
+                              placeholder="부제목을 입력해 해주세요"
+                              style={{ paddingLeft: 12 }}
+                              onChange={(event) => setSummary(event.currentTarget.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {isYoutubeBoard ? (
+                      <div className={`${styles['post-info']} ${styles['post-row']}`}>
+                        <input type="hidden" value={youtubeId} />
+                        <div className={styles['form-group']}>
+                          <div className={styles['form-control']}>
+                            <input
+                              type="text"
+                              value={youtubeUrl}
+                              placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
+                              style={{ paddingLeft: 12 }}
+                              onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className={styles['form-group']}>
+                          <label htmlFor="youtube-created-at">유튜브 업로드 날짜 (필수)</label>
+                          <div className={styles['form-control']}>
+                            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                              <DatePicker
+                                value={parseDateValue(youtubeCreatedAt)}
+                                onChange={(value) => setYoutubeCreatedAt(formatDateValue(value))}
+                                className={styles['MuiFormControl-root']}
+                                format="yyyy년 MM월 dd일"
+                                slotProps={{
+                                  textField: {
+                                    fullWidth: true,
+                                    size: 'small',
+                                  },
+                                }}
+                              />
+                            </LocalizationProvider>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className={`${styles['post-info']} ${styles['post-row']}`}>
+                      {!isFeedBoard ? (
+                        <div className={styles.image}>
+                          <button type="button" onClick={openThumbnailDialog}>
+                            <CropOriginalOutlinedIcon />
+                            <span>썸네일 이미지</span>
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {isGalleryBoard || isFeedBoard ? (
+                        <div className={styles.image}>
+                          <button type="button" onClick={openGalleryDialog}>
+                            <CollectionsOutlinedIcon />
+                            <span>갤러리 이미지</span>
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {isBasicBoard ? (
+                        <div className={styles.image}>
+                          <button
+                            type="button"
+                            onClick={openPollDialog}
+                            className={isPollEnabled ? styles.enabled : undefined}
+                          >
+                            {isPollEnabled ? <HowToVoteRoundedIcon /> : <HowToVoteOutlinedIcon />}
+                            <span>투표</span>
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {isBasicBoard ? (
+                        <div className={styles.image}>
+                          <button
+                            type="button"
+                            onClick={openDrawDialog}
+                            className={isDrawEnabled ? styles.enabled : undefined}
+                          >
+                            {isDrawEnabled ? <Inventory2RoundedIcon /> : <Inventory2OutlinedIcon />}
+                            <span>추첨 이벤트</span>
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  </>
+                ) : null}
+              </div>
 
-                  {isGalleryBoard ? (
-                    <div className={styles['post-info']}>
-                      <div className={styles['form-group']}>
-                        <div className={styles['form-control']}>
-                          <input
-                            type="text"
-                            value={summary}
-                            placeholder="부제목을 입력해 해주세요"
-                            style={{ paddingLeft: 12 }}
-                            onChange={(event) => setSummary(event.currentTarget.value)}
-                          />
-                        </div>
-                      </div>
+              {isLoadingBoardMeta ? null : selectedBoard ? (
+                <>
+                  {isFeedBoard ? (
+                    <div className="paper paper-p0">
+                      <textarea
+                        className={styles['content-simple']}
+                        value={contentSimple}
+                        placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
+                        onChange={(event) => setContentSimple(event.currentTarget.value)}
+                      />
                     </div>
                   ) : null}
 
                   {isYoutubeBoard ? (
-                    <div className={`${styles['post-info']} ${styles['post-row']}`}>
-                      <input type="hidden" value={youtubeId} />
-                      <div className={styles['form-group']}>
-                        <div className={styles['form-control']}>
-                          <input
-                            type="text"
-                            value={youtubeUrl}
-                            placeholder="유튜브 영상 주소를 입력해주세요 (필수)"
-                            style={{ paddingLeft: 12 }}
-                            onChange={(event) => setYoutubeUrl(event.currentTarget.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className={styles['form-group']}>
-                        <label htmlFor="youtube-created-at">유튜브 업로드 날짜 (필수)</label>
-                        <div className={styles['form-control']}>
-                          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                            <DatePicker
-                              value={parseDateValue(youtubeCreatedAt)}
-                              onChange={(value) => setYoutubeCreatedAt(formatDateValue(value))}
-                              className={styles['MuiFormControl-root']}
-                              format="yyyy년 MM월 dd일"
-                              slotProps={{
-                                textField: {
-                                  fullWidth: true,
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                          </LocalizationProvider>
-                        </div>
-                      </div>
+                    <div className="paper paper-p0">
+                      <textarea
+                        className={styles['content-simple']}
+                        value={summary}
+                        placeholder="영상설명을 간단히 입력해주세요"
+                        onChange={(event) => setSummary(event.currentTarget.value)}
+                      />
                     </div>
                   ) : null}
 
-                  <div className={`${styles['post-info']} ${styles['post-row']}`}>
-                    {!isFeedBoard ? (
-                      <div className={styles.image}>
-                        <button type="button" onClick={openThumbnailDialog}>
-                          <CropOriginalOutlinedIcon />
-                          <span>썸네일 이미지</span>
-                        </button>
-                      </div>
-                    ) : null}
-
-                    {isGalleryBoard || isFeedBoard ? (
-                      <div className={styles.image}>
-                        <button type="button" onClick={openGalleryDialog}>
-                          <CollectionsOutlinedIcon />
-                          <span>갤러리 이미지</span>
-                        </button>
-                      </div>
-                    ) : null}
-
-                    {isBasicBoard ? (
-                      <div className={styles.image}>
-                        <button
-                          type="button"
-                          onClick={openPollDialog}
-                          className={isPollEnabled ? styles.enabled : undefined}
-                        >
-                          {isPollEnabled ? <HowToVoteRoundedIcon /> : <HowToVoteOutlinedIcon />}
-                          <span>투표</span>
-                        </button>
-                      </div>
-                    ) : null}
-
-                    {isBasicBoard ? (
-                      <div className={styles.image}>
-                        <button
-                          type="button"
-                          onClick={openDrawDialog}
-                          className={isDrawEnabled ? styles.enabled : undefined}
-                        >
-                          {isDrawEnabled ? <Inventory2RoundedIcon /> : <Inventory2OutlinedIcon />}
-                          <span>추첨 이벤트</span>
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                </>
-              ) : null}
-            </div>
-
-            {isLoadingBoardMeta ? null : selectedBoard ? (
-              <>
-                {isFeedBoard ? (
-                  <div className="paper paper-p0">
-                    <textarea
-                      className={styles['content-simple']}
-                      value={contentSimple}
-                      placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
-                      onChange={(event) => setContentSimple(event.currentTarget.value)}
-                    />
-                  </div>
-                ) : null}
-
-                {isYoutubeBoard ? (
-                  <div className="paper paper-p0">
-                    <textarea
-                      className={styles['content-simple']}
-                      value={summary}
-                      placeholder="영상설명을 간단히 입력해주세요"
-                      onChange={(event) => setSummary(event.currentTarget.value)}
-                    />
-                  </div>
-                ) : null}
-
-                {isBasicBoard || isGalleryBoard ? (
-                  <div className={`${styles.editor} service-editor`}>
-                    <ToastEditor
-                      initialValue={contentHtml}
-                      initialMarkdown={contentMarkdown}
-                      initialEditType="wysiwyg"
-                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                      markdownStatus={markdownStatus}
-                      hideModeSwitch
-                      onHtmlChange={setContentHtml}
-                      onMarkdownChange={setContentMarkdown}
-                      onUploadImage={handleUploadEditorImage}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="paper">
-                  <div className={styles['post-option']}>
-                    <FormGroup row>
-                      <FormControlLabel
-                        label="댓글 허용"
-                        control={
-                          <IOSSwitch
-                            sx={{ m: 1 }}
-                            checked={isComment}
-                            onChange={(event: ChangeEvent<HTMLInputElement>) => setIsComment(event.target.checked)}
-                          />
-                        }
+                  {isBasicBoard || isGalleryBoard ? (
+                    <div className={`${styles.editor} service-editor`}>
+                      <ToastEditor
+                        initialValue={contentHtml}
+                        initialMarkdown={contentMarkdown}
+                        initialEditType="wysiwyg"
+                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                        markdownStatus={markdownStatus}
+                        hideModeSwitch
+                        onHtmlChange={setContentHtml}
+                        onMarkdownChange={setContentMarkdown}
+                        onUploadImage={handleUploadEditorImage}
                       />
-                      <Divider orientation="vertical" variant="middle" flexItem sx={{ mr: 2 }} />
-                      {canPinPost ? (
+                    </div>
+                  ) : null}
+
+                  <div className="paper">
+                    <div className={styles['post-option']}>
+                      <FormGroup row>
                         <FormControlLabel
-                          label="상단고정글 등록"
+                          label="댓글 허용"
                           control={
                             <IOSSwitch
                               sx={{ m: 1 }}
-                              checked={isPin}
-                              onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
+                              checked={isComment}
+                              onChange={(event: ChangeEvent<HTMLInputElement>) => setIsComment(event.target.checked)}
                             />
                           }
                         />
-                      ) : null}
-                    </FormGroup>
+                        <Divider orientation="vertical" variant="middle" flexItem sx={{ mr: 2 }} />
+                        {canPinPost ? (
+                          <FormControlLabel
+                            label="상단고정글 등록"
+                            control={
+                              <IOSSwitch
+                                sx={{ m: 1 }}
+                                checked={isPin}
+                                onChange={(event: ChangeEvent<HTMLInputElement>) => setIsPin(event.target.checked)}
+                              />
+                            }
+                          />
+                        ) : null}
+                      </FormGroup>
+                    </div>
                   </div>
-                </div>
-              </>
-            ) : null}
+                </>
+              ) : null}
 
-            {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
-            <div className={styles['button-group']}>
-              <a href={`/${siteName}/${boardName}`} className={`${styles.link} link`}>
-                취소
-              </a>
-              <button
-                type="button"
-                className={`${styles.button} button`}
-                disabled={isSubmittingDraft || isSubmittingPublish}
-                onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
-              >
-                임시 저장
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingDraft || isSubmittingPublish}
-                className={`${styles.submit} button`}
-              >
-                저장
-              </button>
-            </div>
-          </fieldset>
-        </form>
-
-        <Dialog
-          open={thumbnailDialogOpen}
-          onClose={closeThumbnailDialog}
-          className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
-        >
-          <DialogTitle>썸네일 이미지 업로드</DialogTitle>
-          <DialogContent className={styles['thumbnail-dialog-content']}>
-            {thumbnailDialogMessage ? (
-              <DialogContentText className={styles['thumbnail-dialog-message']}>
-                {thumbnailDialogMessage}
-              </DialogContentText>
-            ) : null}
-
-            <div className={styles['thumbnail-uploader']}>
-              <button
-                type="button"
-                onClick={() => thumbnailDialogInputReference.current?.click()}
-                className={styles['thumbnail-upload-button']}
-              >
-                <span>이미지를 선택해주세요</span>
-                <CropOriginalOutlinedIcon />
-              </button>
-
-              <input
-                ref={thumbnailDialogInputReference}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className={styles['thumbnail-file-input']}
-                onChange={handleThumbnailDialogFileChange}
-              />
-            </div>
-
-            {thumbnailDialogPreviewUrl ? (
-              <div className={styles['thumbnail-dialog-preview']}>
-                <img src={thumbnailDialogPreviewUrl} alt="" />
+              {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
+              <div className={styles['button-group']}>
+                <a href={`/${siteName}/${boardName}`} className={`${styles.link} link`}>
+                  취소
+                </a>
+                <button
+                  type="button"
+                  className={`${styles.button} button`}
+                  disabled={isSubmittingDraft || isSubmittingPublish}
+                  onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+                >
+                  임시 저장
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingDraft || isSubmittingPublish}
+                  className={`${styles.submit} button`}
+                >
+                  저장
+                </button>
               </div>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
-              취소
-            </button>
-            <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
-              이미지 업로드
-            </button>
-          </DialogActions>
-        </Dialog>
+            </fieldset>
+          </form>
 
-        <Dialog
-          open={galleryDialogOpen}
-          onClose={closeGalleryDialog}
-          className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
-        >
-          <DialogTitle>갤러리 이미지 업로드</DialogTitle>
-          <DialogContent className={styles['thumbnail-dialog-content']}>
-            {galleryDialogMessage ? (
-              <DialogContentText className={styles['thumbnail-dialog-message']}>
-                {galleryDialogMessage}
-              </DialogContentText>
-            ) : null}
+          <Dialog
+            open={thumbnailDialogOpen}
+            onClose={closeThumbnailDialog}
+            className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+          >
+            <DialogTitle>썸네일 이미지 업로드</DialogTitle>
+            <DialogContent className={styles['thumbnail-dialog-content']}>
+              {thumbnailDialogMessage ? (
+                <DialogContentText className={styles['thumbnail-dialog-message']}>
+                  {thumbnailDialogMessage}
+                </DialogContentText>
+              ) : null}
 
-            <div className={styles['thumbnail-uploader']}>
-              <button
-                type="button"
-                onClick={() => galleryDialogInputReference.current?.click()}
-                className={styles['thumbnail-upload-button']}
-              >
-                <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
-                <CollectionsOutlinedIcon />
+              <div className={styles['thumbnail-uploader']}>
+                <button
+                  type="button"
+                  onClick={() => thumbnailDialogInputReference.current?.click()}
+                  className={styles['thumbnail-upload-button']}
+                >
+                  <span>이미지를 선택해주세요</span>
+                  <CropOriginalOutlinedIcon />
+                </button>
+
+                <input
+                  ref={thumbnailDialogInputReference}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className={styles['thumbnail-file-input']}
+                  onChange={handleThumbnailDialogFileChange}
+                />
+              </div>
+
+              {thumbnailDialogPreviewUrl ? (
+                <div className={styles['thumbnail-dialog-preview']}>
+                  <img src={thumbnailDialogPreviewUrl} alt="" />
+                </div>
+              ) : null}
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
+                취소
               </button>
+              <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
+                이미지 업로드
+              </button>
+            </DialogActions>
+          </Dialog>
 
-              <input
-                ref={galleryDialogInputReference}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                multiple
-                className={styles['thumbnail-file-input']}
-                onChange={handleGalleryDialogFileChange}
-              />
-            </div>
+          <Dialog
+            open={galleryDialogOpen}
+            onClose={closeGalleryDialog}
+            className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+          >
+            <DialogTitle>갤러리 이미지 업로드</DialogTitle>
+            <DialogContent className={styles['thumbnail-dialog-content']}>
+              {galleryDialogMessage ? (
+                <DialogContentText className={styles['thumbnail-dialog-message']}>
+                  {galleryDialogMessage}
+                </DialogContentText>
+              ) : null}
 
-            {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
-              <div className={styles['gallery-dialog-preview']}>
-                {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
-                  if ('file' in image) {
+              <div className={styles['thumbnail-uploader']}>
+                <button
+                  type="button"
+                  onClick={() => galleryDialogInputReference.current?.click()}
+                  className={styles['thumbnail-upload-button']}
+                >
+                  <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
+                  <CollectionsOutlinedIcon />
+                </button>
+
+                <input
+                  ref={galleryDialogInputReference}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  multiple
+                  className={styles['thumbnail-file-input']}
+                  onChange={handleGalleryDialogFileChange}
+                />
+              </div>
+
+              {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
+                <div className={styles['gallery-dialog-preview']}>
+                  {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
+                    if ('file' in image) {
+                      return (
+                        <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryDialogBlobImage(image.id)}
+                            aria-label="이미지 삭제"
+                            className={styles['gallery-dialog-remove-button']}
+                          >
+                            <CloseRoundedIcon />
+                          </button>
+                          <img src={image.previewUrl} alt="" />
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                      <div key={image.path}>
                         <button
                           type="button"
-                          onClick={() => removeGalleryDialogBlobImage(image.id)}
+                          onClick={() => removeGalleryDialogServerImage(image.path)}
                           aria-label="이미지 삭제"
                           className={styles['gallery-dialog-remove-button']}
                         >
                           <CloseRoundedIcon />
                         </button>
-                        <img src={image.previewUrl} alt="" />
+                        <img src={image.url} alt="" />
                       </div>
                     );
+                  })}
+                </div>
+              ) : null}
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={closeGalleryDialog} className="cancel-button">
+                취소
+              </button>
+              <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
+                이미지 업로드
+              </button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={pollDialogOpen}
+            onClose={closePollDialog}
+            fullWidth={true}
+            maxWidth="sm"
+            className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
+          >
+            <DialogTitle>투표 설정</DialogTitle>
+            <DialogContent className={styles['poll-dialog-content']}>
+              {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
+
+              <div className={styles['form-group']}>
+                <div className={styles['form-control']}>
+                  <input
+                    type="text"
+                    value={pollDialog.question}
+                    placeholder="투표 질문을 입력해주세요"
+                    onChange={(event) => {
+                      const nextQuestion = event.currentTarget.value;
+
+                      setPollDialog((previousPoll) => ({
+                        ...previousPoll,
+                        question: nextQuestion,
+                      }));
+                    }}
+                  />
+                </div>
+                <FormControlLabel
+                  label="항목에 이미지 등록"
+                  className="vh-checkbox"
+                  control={
+                    <Checkbox
+                      checked={pollDialog.useOptionThumbnail}
+                      onChange={(event) =>
+                        setPollDialog((previousPoll) => ({
+                          ...previousPoll,
+                          useOptionThumbnail: event.target.checked,
+                        }))
+                      }
+                    />
                   }
-
-                  return (
-                    <div key={image.path}>
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryDialogServerImage(image.path)}
-                        aria-label="이미지 삭제"
-                        className={styles['gallery-dialog-remove-button']}
-                      >
-                        <CloseRoundedIcon />
-                      </button>
-                      <img src={image.url} alt="" />
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={closeGalleryDialog} className="cancel-button">
-              취소
-            </button>
-            <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
-              이미지 업로드
-            </button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={pollDialogOpen}
-          onClose={closePollDialog}
-          fullWidth={true}
-          maxWidth="sm"
-          className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
-        >
-          <DialogTitle>투표 설정</DialogTitle>
-          <DialogContent className={styles['poll-dialog-content']}>
-            {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
-
-            <div className={styles['form-group']}>
-              <div className={styles['form-control']}>
-                <input
-                  type="text"
-                  value={pollDialog.question}
-                  placeholder="투표 질문을 입력해주세요"
-                  onChange={(event) => {
-                    const nextQuestion = event.currentTarget.value;
-
-                    setPollDialog((previousPoll) => ({
-                      ...previousPoll,
-                      question: nextQuestion,
-                    }));
-                  }}
                 />
               </div>
-              <FormControlLabel
-                label="항목에 이미지 등록"
-                className="vh-checkbox"
-                control={
-                  <Checkbox
-                    checked={pollDialog.useOptionThumbnail}
-                    onChange={(event) =>
-                      setPollDialog((previousPoll) => ({
-                        ...previousPoll,
-                        useOptionThumbnail: event.target.checked,
-                      }))
-                    }
-                  />
-                }
-              />
-            </div>
 
-            <div className={styles['poll-options']}>
-              {pollDialog.options.map((option, index) => (
-                <div key={index} className={styles['poll-option']}>
-                  <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
-                  <div className={styles['form-control']}>
-                    <input
-                      id={`poll-option-${index}`}
-                      placeholder="항목을 입력해주세요"
-                      type="text"
-                      value={option.label}
-                      onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
-                    />
-                  </div>
-
-                  {pollDialog.useOptionThumbnail ? (
-                    <div className={styles['poll-option-image']}>
-                      {option.imagePreviewUrl || option.imageUrl ? (
-                        <div className={styles['poll-option-image-preview']}>
-                          <button type="button" onClick={() => removePollOptionImage(index)}>
-                            <CloseRoundedIcon />
-                          </button>
-                          <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
-                        </div>
-                      ) : (
-                        <div className={styles['poll-option-image-upload']}>
-                          <button type="button">
-                            <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
-                              <InsertPhotoOutlinedIcon />
-                            </label>
-                          </button>
-                          <input
-                            id={`poll-option-image-${index}`}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            onChange={(event) => handlePollOptionImageChange(index, event)}
-                          />
-                        </div>
-                      )}
+              <div className={styles['poll-options']}>
+                {pollDialog.options.map((option, index) => (
+                  <div key={index} className={styles['poll-option']}>
+                    <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                    <div className={styles['form-control']}>
+                      <input
+                        id={`poll-option-${index}`}
+                        placeholder="항목을 입력해주세요"
+                        type="text"
+                        value={option.label}
+                        onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                      />
                     </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
 
-            <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
-              <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
-              <RadioGroup
-                row
-                className="vh-radio"
-                aria-labelledby="poll-anonymity-label"
-                value={pollDialog.anonymity}
-                onChange={(event) =>
-                  setPollDialog((previousPoll) => ({
-                    ...previousPoll,
-                    anonymity: event.target.value as PollAnonymity,
-                  }))
-                }
-              >
-                <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
-                <FormControlLabel value="named" control={<Radio />} label="기명" />
-              </RadioGroup>
-            </FormControl>
-
-            <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
-              <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
-              <RadioGroup
-                row
-                className="vh-radio"
-                aria-labelledby="poll-end-type-label"
-                value={pollDialog.endType}
-                onChange={(event) =>
-                  setPollDialog((previousPoll) => ({
-                    ...previousPoll,
-                    endType: event.target.value as PollEndType,
-                  }))
-                }
-              >
-                <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
-                <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
-              </RadioGroup>
-            </FormControl>
-
-            {pollDialog.endType === 'absolute' ? (
-              <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                  <DateTimePicker
-                    value={pollDialog.absoluteEndAt}
-                    onChange={(value) =>
-                      setPollDialog((previousPoll) => ({
-                        ...previousPoll,
-                        absoluteEndAt: value,
-                      }))
-                    }
-                    ampm={false}
-                    views={['year', 'month', 'day', 'hours', 'minutes']}
-                    format="yyyy년 MM월 dd일 hh시 m분"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-                <span>에 종료</span>
+                    {pollDialog.useOptionThumbnail ? (
+                      <div className={styles['poll-option-image']}>
+                        {option.imagePreviewUrl || option.imageUrl ? (
+                          <div className={styles['poll-option-image-preview']}>
+                            <button type="button" onClick={() => removePollOptionImage(index)}>
+                              <CloseRoundedIcon />
+                            </button>
+                            <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                          </div>
+                        ) : (
+                          <div className={styles['poll-option-image-upload']}>
+                            <button type="button">
+                              <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                                <InsertPhotoOutlinedIcon />
+                              </label>
+                            </button>
+                            <input
+                              id={`poll-option-image-${index}`}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              onChange={(event) => handlePollOptionImageChange(index, event)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
               </div>
-            ) : null}
 
-            {pollDialog.endType === 'relative' ? (
-              <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
-                <Select
-                  value={String(pollDialog.relativeDays)}
-                  onChange={(event: SelectChangeEvent) =>
+              <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
+                <RadioGroup
+                  row
+                  className="vh-radio"
+                  aria-labelledby="poll-anonymity-label"
+                  value={pollDialog.anonymity}
+                  onChange={(event) =>
                     setPollDialog((previousPoll) => ({
                       ...previousPoll,
-                      relativeDays: Number(event.target.value),
+                      anonymity: event.target.value as PollAnonymity,
                     }))
                   }
-                  size="small"
                 >
-                  {Array.from({ length: 8 }, (_, index) => (
-                    <MenuItem key={index} value={String(index)}>
-                      {index}일
-                    </MenuItem>
-                  ))}
-                </Select>
+                  <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
+                  <FormControlLabel value="named" control={<Radio />} label="기명" />
+                </RadioGroup>
+              </FormControl>
 
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                  <TimePicker
-                    value={pollDialog.relativeTime}
-                    className={styles['poll-relative-time-picker']}
-                    onChange={(value) =>
+              <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
+                <RadioGroup
+                  row
+                  className="vh-radio"
+                  aria-labelledby="poll-end-type-label"
+                  value={pollDialog.endType}
+                  onChange={(event) =>
+                    setPollDialog((previousPoll) => ({
+                      ...previousPoll,
+                      endType: event.target.value as PollEndType,
+                    }))
+                  }
+                >
+                  <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
+                  <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
+                </RadioGroup>
+              </FormControl>
+
+              {pollDialog.endType === 'absolute' ? (
+                <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                    <DateTimePicker
+                      value={pollDialog.absoluteEndAt}
+                      onChange={(value) =>
+                        setPollDialog((previousPoll) => ({
+                          ...previousPoll,
+                          absoluteEndAt: value,
+                        }))
+                      }
+                      ampm={false}
+                      views={['year', 'month', 'day', 'hours', 'minutes']}
+                      format="yyyy년 MM월 dd일 hh시 m분"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                  <span>에 종료</span>
+                </div>
+              ) : null}
+
+              {pollDialog.endType === 'relative' ? (
+                <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
+                  <Select
+                    value={String(pollDialog.relativeDays)}
+                    onChange={(event: SelectChangeEvent) =>
                       setPollDialog((previousPoll) => ({
                         ...previousPoll,
-                        relativeTime: value,
+                        relativeDays: Number(event.target.value),
                       }))
                     }
-                    ampm={false}
-                    views={['hours', 'minutes']}
-                    format="H시간 mm분"
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-                <span>후에 종료</span>
-              </div>
-            ) : null}
-          </DialogContent>
-          <DialogActions>
-            {isPollEnabled ? (
-              <button type="button" onClick={removePoll} className="delete-button">
-                투표 삭제
-              </button>
-            ) : null}
-            <button type="button" onClick={closePollDialog} className="cancel-button">
-              취소
-            </button>
-            <button type="button" onClick={applyPollDialog}>
-              투표 설정
-            </button>
-          </DialogActions>
-        </Dialog>
+                    size="small"
+                  >
+                    {Array.from({ length: 8 }, (_, index) => (
+                      <MenuItem key={index} value={String(index)}>
+                        {index}일
+                      </MenuItem>
+                    ))}
+                  </Select>
 
-        <Dialog
-          open={drawDialogOpen}
-          onClose={closeDrawDialog}
-          fullWidth={true}
-          maxWidth="sm"
-          className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
-        >
-          <DialogTitle>추첨 이벤트 설정</DialogTitle>
-          <DialogContent className={styles['draw-dialog-content']}>
-            {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
-
-            <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
-              <FormLabel id="draw-type-label">추첨 방식</FormLabel>
-              <RadioGroup
-                row
-                className="vh-radio"
-                aria-labelledby="draw-type-label"
-                value={drawDialog.type}
-                onChange={(event) =>
-                  setDrawDialog((previousDraw) => ({
-                    ...previousDraw,
-                    type: event.target.value as DrawType,
-                    endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
-                  }))
-                }
-              >
-                <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
-                <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
-              </RadioGroup>
-            </FormControl>
-
-            <div className={`${styles['form-group']} vh-form-control`}>
-              <NumberField
-                label="당첨 인원수"
-                min={1}
-                value={drawDialog.limit}
-                size="small"
-                onValueChange={(value) =>
-                  setDrawDialog((previousDraw) => ({
-                    ...previousDraw,
-                    limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
-                  }))
-                }
-              />
-            </div>
-
-            {drawDialog.type === 'random' ? (
-              <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                  <DateTimePicker
-                    value={drawDialog.endsAt}
-                    onChange={(value) =>
-                      setDrawDialog((previousDraw) => ({
-                        ...previousDraw,
-                        endsAt: value,
-                      }))
-                    }
-                    ampm={false}
-                    views={['year', 'month', 'day', 'hours', 'minutes']}
-                    format="yyyy년 MM월 dd일 hh시 m분"
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-                <span>에 마감</span>
-              </div>
-            ) : null}
-          </DialogContent>
-          <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
-            {isDrawEnabled ? (
-              <>
-                <button type="button" onClick={removeDraw} className="delete-button">
-                  추첨 이벤트 삭제
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                    <TimePicker
+                      value={pollDialog.relativeTime}
+                      className={styles['poll-relative-time-picker']}
+                      onChange={(value) =>
+                        setPollDialog((previousPoll) => ({
+                          ...previousPoll,
+                          relativeTime: value,
+                        }))
+                      }
+                      ampm={false}
+                      views={['hours', 'minutes']}
+                      format="H시간 mm분"
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                  <span>후에 종료</span>
+                </div>
+              ) : null}
+            </DialogContent>
+            <DialogActions>
+              {isPollEnabled ? (
+                <button type="button" onClick={removePoll} className="delete-button">
+                  투표 삭제
                 </button>
-                <div className="complex-button">
+              ) : null}
+              <button type="button" onClick={closePollDialog} className="cancel-button">
+                취소
+              </button>
+              <button type="button" onClick={applyPollDialog}>
+                투표 설정
+              </button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={drawDialogOpen}
+            onClose={closeDrawDialog}
+            fullWidth={true}
+            maxWidth="sm"
+            className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
+          >
+            <DialogTitle>추첨 이벤트 설정</DialogTitle>
+            <DialogContent className={styles['draw-dialog-content']}>
+              {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
+
+              <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
+                <FormLabel id="draw-type-label">추첨 방식</FormLabel>
+                <RadioGroup
+                  row
+                  className="vh-radio"
+                  aria-labelledby="draw-type-label"
+                  value={drawDialog.type}
+                  onChange={(event) =>
+                    setDrawDialog((previousDraw) => ({
+                      ...previousDraw,
+                      type: event.target.value as DrawType,
+                      endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
+                    }))
+                  }
+                >
+                  <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
+                  <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
+                </RadioGroup>
+              </FormControl>
+
+              <div className={`${styles['form-group']} vh-form-control`}>
+                <NumberField
+                  label="당첨 인원수"
+                  min={1}
+                  value={drawDialog.limit}
+                  size="small"
+                  onValueChange={(value) =>
+                    setDrawDialog((previousDraw) => ({
+                      ...previousDraw,
+                      limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
+                    }))
+                  }
+                />
+              </div>
+
+              {drawDialog.type === 'random' ? (
+                <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                    <DateTimePicker
+                      value={drawDialog.endsAt}
+                      onChange={(value) =>
+                        setDrawDialog((previousDraw) => ({
+                          ...previousDraw,
+                          endsAt: value,
+                        }))
+                      }
+                      ampm={false}
+                      views={['year', 'month', 'day', 'hours', 'minutes']}
+                      format="yyyy년 MM월 dd일 hh시 m분"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                  <span>에 마감</span>
+                </div>
+              ) : null}
+            </DialogContent>
+            <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
+              {isDrawEnabled ? (
+                <>
+                  <button type="button" onClick={removeDraw} className="delete-button">
+                    추첨 이벤트 삭제
+                  </button>
+                  <div className="complex-button">
+                    <button type="button" onClick={closeDrawDialog} className="cancel-button">
+                      취소
+                    </button>
+                    <button type="button" onClick={applyDrawDialog}>
+                      추첨 이벤트 설정
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
                   <button type="button" onClick={closeDrawDialog} className="cancel-button">
                     취소
                   </button>
                   <button type="button" onClick={applyDrawDialog}>
                     추첨 이벤트 설정
                   </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <button type="button" onClick={closeDrawDialog} className="cancel-button">
-                  취소
-                </button>
-                <button type="button" onClick={applyDrawDialog}>
-                  추첨 이벤트 설정
-                </button>
-              </>
-            )}
-          </DialogActions>
-        </Dialog>
+                </>
+              )}
+            </DialogActions>
+          </Dialog>
 
-        <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
-          <DialogTitle>{accessDialog.title}</DialogTitle>
-          <DialogContent>
-            <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            {accessDialog.cancelLabel ? (
-              <button type="button" onClick={accessDialog.onCancel}>
-                {accessDialog.cancelLabel}
+          <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
+            <DialogTitle>{accessDialog.title}</DialogTitle>
+            <DialogContent>
+              <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              {accessDialog.cancelLabel ? (
+                <button type="button" onClick={accessDialog.onCancel}>
+                  {accessDialog.cancelLabel}
+                </button>
+              ) : null}
+
+              <button type="button" onClick={accessDialog.onConfirm}>
+                {accessDialog.confirmLabel}
               </button>
-            ) : null}
+            </DialogActions>
+          </Dialog>
 
-            <button type="button" onClick={accessDialog.onConfirm}>
-              {accessDialog.confirmLabel}
-            </button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
-          <DialogContent>
-            <DialogContentText>{alertMessage}</DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={() => setAlertMessage('')}>
-              확인
-            </button>
-          </DialogActions>
-        </Dialog>
+          <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+            <DialogContent>
+              <DialogContentText>{alertMessage}</DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <button type="button" onClick={() => setAlertMessage('')}>
+                확인
+              </button>
+            </DialogActions>
+          </Dialog>
+        </div>
       </div>
-    </div>
+    </Container>
   );
 }

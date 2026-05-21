@@ -36,7 +36,7 @@ import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/menu.module.sass';
+import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
   pageTitle: string;
@@ -235,12 +235,12 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 onClose={handleCloseProfileDrawer}
                 className={styles.VhiDrawer}
               >
-                <div className={styles['VhiDrawer-header']}>
+                <li className={styles['VhiDrawer-header']}>
                   <strong>마이 메뉴</strong>
                   <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
                     <CloseRoundedIcon />
                   </IconButton>
-                </div>
+                </li>
 
                 <li className={styles['VhiMenu-profile']}>
                   <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />

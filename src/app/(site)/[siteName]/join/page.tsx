@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
-import { Box, Container, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Opt from './opt';
+import Container from '../menu';
 
 type RouteContext = {
   params: Promise<{
@@ -30,7 +31,7 @@ export default async function Page(context: RouteContext) {
   }
 
   return (
-    <Container maxWidth="sm">
+    <Container pageBack={`/${siteName}`} pageTitle="가입하기">
       <Box sx={{ py: 8 }}>
         <Stack spacing={3}>
           <Typography variant="h5" component="h1">

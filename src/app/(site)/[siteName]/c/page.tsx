@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/board.module.sass';
+import Container from '../menu';
 
 type RouteContext = {
   params: Promise<{
@@ -97,7 +98,7 @@ export default async function Page(context: RouteContext) {
   const rows = (categories.data ?? []) as CategoryRow[];
 
   return (
-    <main>
+    <Container pageTitle="카테고리" pageBack={`/${siteName}`}>
       <div className="container">
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
           <div className="paper">
@@ -129,6 +130,6 @@ export default async function Page(context: RouteContext) {
           </div>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

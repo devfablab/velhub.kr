@@ -9,6 +9,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import UserInfo from '@/components/service/community/UserInfo';
 import TableList from '@/components/service/community/TableList';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
+import Container from './menu';
 import styles from '@/app/board.module.sass';
 
 type RowValue = string | number | boolean | null;
@@ -250,7 +251,7 @@ export default function Community({ siteName, homeBoards }: Props) {
   const isMobile = !isNotMobile;
 
   return (
-    <main>
+    <Container>
       <div className="container">
         {!isMobile ? (
           <aside>
@@ -296,6 +297,6 @@ export default function Community({ siteName, homeBoards }: Props) {
           </aside>
         ) : null}
       </div>
-    </main>
+    </Container>
   );
 }

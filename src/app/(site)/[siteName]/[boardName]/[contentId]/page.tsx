@@ -32,9 +32,5 @@ export default async function Page(context: RouteContext) {
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
 
-  return (
-    <main>
-      <Opt isCommunity={isCommunity} />
-    </main>
-  );
+  return <Opt isCommunity={isCommunity} />;
 }

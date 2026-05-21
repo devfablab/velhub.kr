@@ -53,26 +53,26 @@ function getMenuHref(siteName: string, menu: MenuRow) {
 
 function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
   if (boardType === 'gallery') {
-    return <CollectionsOutlinedIcon sx={{ width: 16, height: 16 }} />;
+    return <CollectionsOutlinedIcon sx={{ width: 20, height: 20 }} />;
   }
 
   if (boardType === 'youtube') {
-    return <OndemandVideoOutlinedIcon sx={{ width: 16, height: 16 }} />;
+    return <OndemandVideoOutlinedIcon sx={{ width: 20, height: 20 }} />;
   }
 
   if (boardType === 'feed') {
-    return <DynamicFeedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+    return <DynamicFeedOutlinedIcon sx={{ width: 20, height: 20 }} />;
   }
 
   if (boardType === 'basic') {
-    return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
+    return <FormatListNumberedOutlinedIcon sx={{ width: 20, height: 20 }} />;
   }
 
   if (boardType === 'blog') {
-    return <WysiwygOutlinedIcon sx={{ width: 16, height: 16 }} />;
+    return <WysiwygOutlinedIcon sx={{ width: 20, height: 20 }} />;
   }
 
-  return <DescriptionOutlinedIcon sx={{ width: 16, height: 16 }} />;
+  return <DescriptionOutlinedIcon sx={{ width: 20, height: 20 }} />;
 }
 
 export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {

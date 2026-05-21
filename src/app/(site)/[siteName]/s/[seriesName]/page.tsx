@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/board.module.sass';
+import Container from '../../menu';
 
 type RouteContext = {
   params: Promise<{
@@ -167,7 +168,7 @@ export default async function Page(context: RouteContext) {
   const totalPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
-    <main>
+    <Container pageBack={`/${siteName}/s`} pageTitle={seriesData.series_label}>
       <div className="container">
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
           <div className={styles.headline}>
@@ -228,6 +229,6 @@ export default async function Page(context: RouteContext) {
           </div>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

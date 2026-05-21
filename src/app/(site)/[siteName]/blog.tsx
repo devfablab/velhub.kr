@@ -1,8 +1,9 @@
 import Image from 'next/image';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import Anchor from '@/components/Anchor';
 import type { PostListItem } from '@/lib/board/getPostList';
+import Anchor from '@/components/Anchor';
+import Container from './menu';
 import styles from '@/app/board.module.sass';
 
 type RowValue = string | number | boolean | null;
@@ -57,7 +58,7 @@ function getThumbnailImageUrl(content: PostListItem) {
 
 export default function Blog(props: Props) {
   return (
-    <main>
+    <Container>
       <div className="container">
         <div className={`content ${styles.content} ${styles['blog-content']} `}>
           {props.blogContents.length === 0 ? (
@@ -101,6 +102,6 @@ export default function Blog(props: Props) {
           )}
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

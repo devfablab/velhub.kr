@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
+import Container from '../menu';
 
 type RouteContext = {
   params: Promise<{
@@ -32,8 +33,8 @@ export default async function Page(context: RouteContext) {
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
   return (
-    <main>
+    <Container pageBack={`/${siteName}`} pageTitle="최근글 보기">
       <Opt isCommunity={isCommunity} />
-    </main>
+    </Container>
   );
 }

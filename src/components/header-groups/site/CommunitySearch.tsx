@@ -40,7 +40,7 @@ export default function CommunitySearch({ siteName, isBlog }: Props) {
               type="search"
               value={keyword}
               onChange={(event) => setKeyword(event.currentTarget.value)}
-              placeholder="글 검색"
+              placeholder="글 전체 검색"
               aria-label="커뮤니티 검색어"
             />
           </div>

@@ -3,6 +3,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
 type RouteContext = {
@@ -99,7 +100,7 @@ export default async function Page(context: RouteContext) {
   const rows = (series.data ?? []) as SeriesRow[];
 
   return (
-    <main>
+    <Container pageBack={`/${siteName}`} pageTitle="연재물">
       <div className="container">
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
           <div className="paper">
@@ -133,6 +134,6 @@ export default async function Page(context: RouteContext) {
           </div>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }
