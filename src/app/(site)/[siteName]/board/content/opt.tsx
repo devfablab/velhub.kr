@@ -608,14 +608,16 @@ export default function Opt({ isCommunity }: Props) {
   if (isLoading) {
     return (
       <main>
-        <div className={`${styles.content} content`}>
-          <h2>
-            <ListAltOutlinedIcon />
-            <span>글 보기</span>
-          </h2>
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <h2>
+              <ListAltOutlinedIcon />
+              <span>글 보기</span>
+            </h2>
+            <div className="paper">
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
             </div>
           </div>
         </div>
@@ -626,12 +628,14 @@ export default function Opt({ isCommunity }: Props) {
   if (errorMessage || !board || !content) {
     return (
       <main>
-        <div className={`${styles.content} content`}>
-          <h2>
-            <ListAltOutlinedIcon />
-            <span>글 보기</span>
-          </h2>
-          <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <h2>
+              <ListAltOutlinedIcon />
+              <span>글 보기</span>
+            </h2>
+            <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
+          </div>
         </div>
       </main>
     );
@@ -694,21 +698,24 @@ export default function Opt({ isCommunity }: Props) {
         ) : null}
 
         <div className={`${styles.content} content`}>
-          <h2>
-            <ListAltOutlinedIcon />
-            <span>최신글 보기</span>
-          </h2>
-
-          <div className={styles['top-buttons']}>
-            <Anchor href={`/${siteName}/board`} className="button">
-              <ArrowBackIosRoundedIcon />
-              <span>목록</span>
-            </Anchor>
-            <Anchor href="" className="button">
-              <span>다음글</span>
-              <ArrowForwardIosRoundedIcon />
-            </Anchor>
-          </div>
+          {isMobile ? null : (
+            <>
+              <h2>
+                <ListAltOutlinedIcon />
+                <span>최신글 보기</span>
+              </h2>
+              <div className={styles['top-buttons']}>
+                <Anchor href={`/${siteName}/board`} className="button">
+                  <ArrowBackIosRoundedIcon />
+                  <span>목록</span>
+                </Anchor>
+                <Anchor href="" className="button">
+                  <span>다음글</span>
+                  <ArrowForwardIosRoundedIcon />
+                </Anchor>
+              </div>
+            </>
+          )}
 
           <article>
             <div className="paper">

@@ -134,6 +134,9 @@
       flex-direction: column
       gap: ds.rem(23)
 
+      @include ds.mq(maxMedium)
+        gap: ds.rem(12)
+
       .board-name
         strong
           @include ds.fw(neo, 700)
@@ -150,6 +153,11 @@
         flex-direction: row
         align-items: center
         width: 100%
+
+        @include ds.mq(maxMedium)
+          flex-direction: column
+          align-items: flex-start
+          gap: ds.rem(7)
 
         .form-select
           .MuiInputBase-root
@@ -191,6 +199,9 @@
           font-size: ds.rem(14)
           color: ds.$hex-warning
 
+          @include ds.mq(maxMedium)
+            padding-left: 0
+
           html[data-site-type='blog'] &
             font-family: var(--blog-description-font-family)
             font-weight: 700
@@ -203,7 +214,11 @@
           gap: ds.rem(12)
 
           .form-group
-            @include ds.col
+            @include ds.mq(minLarge)
+              @include ds.col
+
+          @include ds.mq(maxMedium)
+            flex-direction: column
 
         .form-group
           display: flex
@@ -301,6 +316,11 @@
                 background-color: ds.$hex-black
                 border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
+      .post-options
+        display: flex
+        flex-direction: row
+        gap: ds.rem(12)
+
         .image
           button
             display: flex
@@ -335,11 +355,40 @@
         @include ds.mq(maxMedium)
           width: calc(100vw - ds.rem(34))
 
+          &.editor-basic
+            > div
+              height: calc(100vh - ds.rem(322))!important
+
+          &.editor-gallery
+            > div
+              height: calc(100vh - ds.rem(371))!important
+
+          &.editor-basic-edit
+            > div
+              height: calc(100vh - ds.rem(281))!important
+
+          &.editor-gallery-edit
+            > div
+              height: calc(100vh - ds.rem(330))!important
+
       .content-simple
         width: 100%
         height: ds.rem(120)
         border-radius: ds.rem(17)
         padding: ds.rem(23)
+
+        @include ds.mq(maxMedium)
+          &.content-simple-youtube
+            height: calc(100vh - ds.rem(420))
+
+          &.content-simple-feed
+            height: calc(100vh - ds.rem(273))
+
+          &.content-simple-youtube-edit
+            height: calc(100vh - ds.rem(379))
+
+          &.content-simple-feed-edit
+            height: calc(100vh - ds.rem(232))
 
         html[data-theme="yellow-light"] &
           background-color: ds.$hex-white
@@ -350,6 +399,26 @@
           background-color: ds.$hex-black
           border: 1px solid rgba(ds.$rgb-tertiary, .5)
           color: ds.$hex-bright
+
+  .button-top
+    position: fixed
+    top: 0
+    right: ds.rem(17)
+    z-index: 1225
+    height: ds.rem(70)
+    display: flex
+    align-items: center
+    background-color: ds.$hex-white
+
+    button.button
+      background-color: transparent!important
+      padding: ds.rem(8)
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(16)
+      color: ds.$hex-action
+
+      &:disabled
+        color: rgba(ds.$rgb-primary, .2)!important
 
   .button-group
     display: flex

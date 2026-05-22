@@ -600,9 +600,7 @@ export default function Opt({ isCommunity }: Props) {
                 <ol className="list">
                   {contents.map((content) => (
                     <li key={content.id}>
-                      <Anchor
-                        href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
-                      >
+                      <Anchor href={`/${siteName}/${boardName}/${content.slug}`}>
                         <div className="subject">
                           <div className="board-subject">
                             {content.prefix_label ? (
@@ -902,7 +900,7 @@ export default function Opt({ isCommunity }: Props) {
                     <li key={content.id}>
                       <Anchor
                         className={content.is_pin ? 'pinned' : undefined}
-                        href={`/${siteName}/board/content?boardName=${content.board_key}&contentId=${content.slug}`}
+                        href={`/${siteName}/${boardName}/${content.slug}`}
                       >
                         <div className="subject">
                           <div className="board-subject">

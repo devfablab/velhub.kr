@@ -771,25 +771,29 @@ export default function Opt({ isCommunity }: Props) {
 
         <div className={`${styles.content} content`} style={{ maxWidth: isCommunity ? undefined : 807 }}>
           {!isPage ? (
-            <div className={styles['top-buttons']}>
-              <Anchor href={listHref} className={`${styles.button} button`}>
-                <span>목록</span>
-              </Anchor>
-              <div className={styles.buttons}>
-                {previousPost ? (
-                  <Anchor href={previousPost.href} className="button">
-                    <ArrowBackIosRoundedIcon />
-                    <span>이전글</span>
+            <>
+              {isMobile ? null : (
+                <div className={styles['top-buttons']}>
+                  <Anchor href={listHref} className={`${styles.button} button`}>
+                    <span>목록</span>
                   </Anchor>
-                ) : null}
-                {nextPost ? (
-                  <Anchor href={nextPost.href} className="button">
-                    <span>다음글</span>
-                    <ArrowForwardIosRoundedIcon />
-                  </Anchor>
-                ) : null}
-              </div>
-            </div>
+                  <div className={styles.buttons}>
+                    {previousPost ? (
+                      <Anchor href={previousPost.href} className="button">
+                        <ArrowBackIosRoundedIcon />
+                        <span>이전글</span>
+                      </Anchor>
+                    ) : null}
+                    {nextPost ? (
+                      <Anchor href={nextPost.href} className="button">
+                        <span>다음글</span>
+                        <ArrowForwardIosRoundedIcon />
+                      </Anchor>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </>
           ) : null}
           <article>
             {isPage ? (

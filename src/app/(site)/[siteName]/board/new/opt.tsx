@@ -1789,10 +1789,12 @@ export default function Opt({ isCommunity }: Props) {
         </aside>
       ) : null}
       <div className={`${styles.content} content`}>
-        <h2>
-          <ListAltOutlinedIcon />
-          <span>글쓰기</span>
-        </h2>
+        {isMobile ? null : (
+          <h2>
+            <ListAltOutlinedIcon />
+            <span>글쓰기</span>
+          </h2>
+        )}
 
         {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
 
@@ -1931,7 +1933,7 @@ export default function Opt({ isCommunity }: Props) {
                     </div>
                   ) : null}
 
-                  <div className={`${styles['post-info']} ${styles['post-row']}`}>
+                  <div className={styles['post-options']}>
                     {!isFeedBoard ? (
                       <div className={styles.image}>
                         <button type="button" onClick={openThumbnailDialog}>
@@ -1981,7 +1983,7 @@ export default function Opt({ isCommunity }: Props) {
                 {isFeedBoard ? (
                   <div className="paper paper-p0">
                     <textarea
-                      className={styles['content-simple']}
+                      className={`${styles['content-simple']} ${styles['content-simple-feed']}`}
                       value={contentSimple}
                       placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
                       onChange={(event) => setContentSimple(event.currentTarget.value)}
@@ -1992,7 +1994,7 @@ export default function Opt({ isCommunity }: Props) {
                 {isYoutubeBoard ? (
                   <div className="paper paper-p0">
                     <textarea
-                      className={styles['content-simple']}
+                      className={`${styles['content-simple']} ${styles['content-simple-youtube']}`}
                       value={summary}
                       placeholder="영상설명을 간단히 입력해주세요"
                       onChange={(event) => setSummary(event.currentTarget.value)}
@@ -2001,7 +2003,9 @@ export default function Opt({ isCommunity }: Props) {
                 ) : null}
 
                 {isBasicBoard || isGalleryBoard ? (
-                  <div className={`${styles.editor} service-editor`}>
+                  <div
+                    className={`${styles.editor} ${isBasicBoard ? styles['editor-basic'] : styles['editor-gallery']} service-editor`}
+                  >
                     <ToastEditor
                       initialValue={contentHtml}
                       initialMarkdown={contentMarkdown}
@@ -2049,6 +2053,13 @@ export default function Opt({ isCommunity }: Props) {
             ) : null}
 
             {errorMessage ? <div className="paper paper-error">{errorMessage}</div> : null}
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="submit" className={`button ${styles.button}`}>
+                  저장
+                </button>
+              </div>
+            ) : null}
             <div className={styles['button-group']}>
               <a href={`/${siteName}/board`} className={`${styles.link} link`}>
                 취소
