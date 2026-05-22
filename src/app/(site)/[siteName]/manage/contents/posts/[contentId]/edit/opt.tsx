@@ -27,6 +27,8 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -653,7 +655,7 @@ export default function Opt() {
 
   if (!hasBoard) {
     return (
-      <Paper sx={{ p: 3 }}>
+      <Container pageTitle="블로그 글 수정">
         <Stack spacing={2}>
           <Alert severity="error" variant="filled">
             블로그 게시판을 찾을 수 없습니다.
@@ -665,138 +667,141 @@ export default function Opt() {
             </Button>
           </Box>
         </Stack>
-      </Paper>
+      </Container>
     );
   }
 
   return (
-    <Paper sx={{ p: 3 }}>
-      {isNotMobile ? (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-          블로그 글 수정
-        </Typography>
-      ) : null}
+    <Container pageTitle="블로그 글 수정" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+            <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
-        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-
-        <FormControl fullWidth size="small">
-          <InputLabel id="post-series-select-label">연재</InputLabel>
-          <Select
-            labelId="post-series-select-label"
-            value={selectedSeriesKey}
-            onChange={handleSeriesChange}
-            input={<OutlinedInput label="연재" />}
-            disabled={isSeriesLocked}
-          >
-            <MenuItem value="">
-              <ListItemText primary="선택 안함" />
-            </MenuItem>
-            {seriesList
-              .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
-              .map((series) => (
-                <MenuItem key={series.id} value={series.series_key}>
-                  <ListItemText primary={series.series_label} />
+            <FormControl fullWidth size="small">
+              <InputLabel id="post-series-select-label">연재</InputLabel>
+              <Select
+                labelId="post-series-select-label"
+                value={selectedSeriesKey}
+                onChange={handleSeriesChange}
+                input={<OutlinedInput label="연재" />}
+                disabled={isSeriesLocked}
+              >
+                <MenuItem value="">
+                  <ListItemText primary="선택 안함" />
                 </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
+                {seriesList
+                  .filter((series) => !series.is_completed || series.series_key === selectedSeriesKey)
+                  .map((series) => (
+                    <MenuItem key={series.id} value={series.series_key}>
+                      <ListItemText primary={series.series_label} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
 
-        {isSeriesLocked ? (
-          <Alert severity="info" variant="outlined">
-            연재가 설정된 글은 연재를 변경할 수 없습니다.
-          </Alert>
-        ) : null}
+            {isSeriesLocked ? (
+              <Alert severity="info" variant="outlined">
+                연재가 설정된 글은 연재를 변경할 수 없습니다.
+              </Alert>
+            ) : null}
 
-        <FormControl fullWidth size="small">
-          <InputLabel id="post-category-select-label">카테고리</InputLabel>
-          <Select
-            labelId="post-category-select-label"
-            multiple
-            value={selectedCategories}
-            onChange={handleCategoryChange}
-            input={<OutlinedInput label="카테고리" />}
-            renderValue={(selected) =>
-              categories
-                .filter((category) => selected.includes(category.category_key))
-                .map((category) => category.category_label)
-                .join(', ')
-            }
-          >
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.category_key}>
-                <Checkbox checked={selectedCategories.includes(category.category_key)} />
-                <ListItemText primary={category.category_label} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel id="post-category-select-label">카테고리</InputLabel>
+              <Select
+                labelId="post-category-select-label"
+                multiple
+                value={selectedCategories}
+                onChange={handleCategoryChange}
+                input={<OutlinedInput label="카테고리" />}
+                renderValue={(selected) =>
+                  categories
+                    .filter((category) => selected.includes(category.category_key))
+                    .map((category) => category.category_label)
+                    .join(', ')
+                }
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.category_key}>
+                    <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                    <ListItemText primary={category.category_label} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
+            <Box>
+              <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
 
-          {thumbnailImageUrl ? (
-            <Box
-              component="img"
-              src={thumbnailImageUrl}
-              alt="오픈그래프 이미지"
-              sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
-            />
-          ) : null}
+              {thumbnailImageUrl ? (
+                <Box
+                  component="img"
+                  src={thumbnailImageUrl}
+                  alt="오픈그래프 이미지"
+                  sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+                />
+              ) : null}
 
-          <VisuallyHiddenInput
-            ref={fileInputReference}
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailFileChange}
-          />
+              <VisuallyHiddenInput
+                ref={fileInputReference}
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailFileChange}
+              />
 
-          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
-            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
-        </Box>
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={handleClickThumbnailUpload}
+                disabled={isUploadingThumbnail}
+              >
+                {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+              </Button>
+            </Box>
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
-          <ToastEditor
-            initialValue={contentHtml}
-            initialMarkdown={contentMarkdown}
-            initialEditType="markdown"
-            onHtmlChange={setContentHtml}
-            onMarkdownChange={setContentMarkdown}
-            onUploadImage={handleUploadEditorImage}
-          />
-        </Box>
+            <Box>
+              <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
+              <ToastEditor
+                initialValue={contentHtml}
+                initialMarkdown={contentMarkdown}
+                initialEditType="markdown"
+                onHtmlChange={setContentHtml}
+                onMarkdownChange={setContentMarkdown}
+                onUploadImage={handleUploadEditorImage}
+              />
+            </Box>
 
-        {commentProvider !== 'none' ? (
-          <FormControlLabel
-            control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
-            label={isComment ? '댓글 열기' : '댓글 닫기'}
-          />
-        ) : null}
+            {commentProvider !== 'none' ? (
+              <FormControlLabel
+                control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
+                label={isComment ? '댓글 열기' : '댓글 닫기'}
+              />
+            ) : null}
 
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href={`/${siteName}/manage/contents/posts/${contentId}`}
-            underline="none"
-            variant="outlined"
-            size="large"
-          >
-            취소
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-            저장
-          </Button>
-        </Stack>
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                component={Link}
+                href={`/${siteName}/manage/contents/posts/${contentId}`}
+                underline="none"
+                variant="outlined"
+                size="large"
+              >
+                취소
+              </Button>
+              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+                저장
+              </Button>
+            </Stack>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-    </Paper>
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </div>
+      </div>
+    </Container>
   );
 }

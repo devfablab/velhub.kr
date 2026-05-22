@@ -18,6 +18,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';
@@ -235,140 +237,138 @@ export default function Opt() {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
+    <Container pageTitle="댓글 설정" menu="design">
       <Stack spacing={3}>
-        {isNotMobile ? (
-          <Typography variant="h5" component="h1">
-            댓글 설정
-          </Typography>
-        ) : null}
+        <div className="container">
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <FormControl>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                댓글 방식
+              </Typography>
 
-        <FormControl>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            댓글 방식
-          </Typography>
+              <RadioGroup
+                value={commentProvider}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
 
-          <RadioGroup
-            value={commentProvider}
-            onChange={(event) => {
-              const nextValue = event.target.value;
+                  if (!isCommentProvider(nextValue)) {
+                    return;
+                  }
 
-              if (!isCommentProvider(nextValue)) {
-                return;
-              }
+                  setCommentProvider(nextValue);
+                  setErrorMessage('');
+                  setSuccessMessage('');
+                }}
+              >
+                {COMMENT_PROVIDER_OPTIONS.map((option) => (
+                  <FormControlLabel
+                    key={option.value}
+                    value={option.value}
+                    control={<Radio />}
+                    label={
+                      <Stack spacing={0.25}>
+                        <Typography variant="body1">{option.label}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {option.description}
+                        </Typography>
+                      </Stack>
+                    }
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
 
-              setCommentProvider(nextValue);
-              setErrorMessage('');
-              setSuccessMessage('');
-            }}
-          >
-            {COMMENT_PROVIDER_OPTIONS.map((option) => (
-              <FormControlLabel
-                key={option.value}
-                value={option.value}
-                control={<Radio />}
-                label={
-                  <Stack spacing={0.25}>
-                    <Typography variant="body1">{option.label}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {option.description}
-                    </Typography>
-                  </Stack>
-                }
-              />
-            ))}
-          </RadioGroup>
-        </FormControl>
+            {commentProvider === 'giscus' ? (
+              <Stack spacing={2}>
+                <TextField
+                  label="repo"
+                  value={giscusSettings.repo}
+                  onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
+                  fullWidth
+                  size="small"
+                  required
+                />
 
-        {commentProvider === 'giscus' ? (
-          <Stack spacing={2}>
-            <TextField
-              label="repo"
-              value={giscusSettings.repo}
-              onChange={(event) => handleChangeGiscusTextField('repo', event.target.value)}
-              fullWidth
-              size="small"
-              required
-            />
+                <TextField
+                  label="repoId"
+                  value={giscusSettings.repoId}
+                  onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
+                  fullWidth
+                  size="small"
+                  required
+                />
 
-            <TextField
-              label="repoId"
-              value={giscusSettings.repoId}
-              onChange={(event) => handleChangeGiscusTextField('repoId', event.target.value)}
-              fullWidth
-              size="small"
-              required
-            />
+                <TextField
+                  select
+                  label="inputPosition"
+                  value={giscusSettings.inputPosition}
+                  onChange={(event) => handleChangeGiscusInputPosition(event.target.value)}
+                  fullWidth
+                  size="small"
+                  required
+                >
+                  <MenuItem value="top">top</MenuItem>
+                  <MenuItem value="bottom">bottom</MenuItem>
+                </TextField>
 
-            <TextField
-              select
-              label="inputPosition"
-              value={giscusSettings.inputPosition}
-              onChange={(event) => handleChangeGiscusInputPosition(event.target.value)}
-              fullWidth
-              size="small"
-              required
-            >
-              <MenuItem value="top">top</MenuItem>
-              <MenuItem value="bottom">bottom</MenuItem>
-            </TextField>
+                <TextField
+                  select
+                  label="strict"
+                  value={giscusSettings.strict}
+                  onChange={(event) => handleChangeGiscusFlag('strict', event.target.value)}
+                  fullWidth
+                  size="small"
+                >
+                  <MenuItem value="0">0</MenuItem>
+                  <MenuItem value="1">1</MenuItem>
+                </TextField>
 
-            <TextField
-              select
-              label="strict"
-              value={giscusSettings.strict}
-              onChange={(event) => handleChangeGiscusFlag('strict', event.target.value)}
-              fullWidth
-              size="small"
-            >
-              <MenuItem value="0">0</MenuItem>
-              <MenuItem value="1">1</MenuItem>
-            </TextField>
+                <TextField
+                  select
+                  label="reactionsEnabled"
+                  value={giscusSettings.reactionsEnabled}
+                  onChange={(event) => handleChangeGiscusFlag('reactionsEnabled', event.target.value)}
+                  fullWidth
+                  size="small"
+                >
+                  <MenuItem value="0">0</MenuItem>
+                  <MenuItem value="1">1</MenuItem>
+                </TextField>
 
-            <TextField
-              select
-              label="reactionsEnabled"
-              value={giscusSettings.reactionsEnabled}
-              onChange={(event) => handleChangeGiscusFlag('reactionsEnabled', event.target.value)}
-              fullWidth
-              size="small"
-            >
-              <MenuItem value="0">0</MenuItem>
-              <MenuItem value="1">1</MenuItem>
-            </TextField>
+                <TextField
+                  select
+                  label="emitMetadata"
+                  value={giscusSettings.emitMetadata}
+                  onChange={(event) => handleChangeGiscusFlag('emitMetadata', event.target.value)}
+                  fullWidth
+                  size="small"
+                >
+                  <MenuItem value="0">0</MenuItem>
+                  <MenuItem value="1">1</MenuItem>
+                </TextField>
+              </Stack>
+            ) : null}
 
-            <TextField
-              select
-              label="emitMetadata"
-              value={giscusSettings.emitMetadata}
-              onChange={(event) => handleChangeGiscusFlag('emitMetadata', event.target.value)}
-              fullWidth
-              size="small"
-            >
-              <MenuItem value="0">0</MenuItem>
-              <MenuItem value="1">1</MenuItem>
-            </TextField>
-          </Stack>
-        ) : null}
+            <Stack direction="row" justifyContent="flex-end">
+              <Button type="button" variant="contained" onClick={() => void handleSubmit()} disabled={isSubmitDisabled}>
+                적용하기
+              </Button>
+            </Stack>
 
-        <Stack direction="row" justifyContent="flex-end">
-          <Button type="button" variant="contained" onClick={() => void handleSubmit()} disabled={isSubmitDisabled}>
-            적용하기
-          </Button>
-        </Stack>
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
+          </div>
+        </div>
       </Stack>
-    </Paper>
+    </Container>
   );
 }

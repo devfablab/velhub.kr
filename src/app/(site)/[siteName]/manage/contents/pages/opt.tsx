@@ -8,6 +8,8 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type PageRow = {
   id: string;
@@ -191,43 +193,47 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          페이지
-        </Typography>
-      )}
-      <Stack direction="row" justifyContent="flex-end">
-        <Button LinkComponent={Link} type="button" variant="contained" href={`/${siteName}/manage/contents/pages/new`}>
-          페이지 추가
-        </Button>
-      </Stack>
+    <Container pageTitle="페이지" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack direction="row" justifyContent="flex-end">
+            <Button
+              LinkComponent={Link}
+              type="button"
+              variant="contained"
+              href={`/${siteName}/manage/contents/pages/new`}
+            >
+              페이지 추가
+            </Button>
+          </Stack>
 
-      {pages.length === 0 ? (
-        <Typography variant="subtitle2">페이지가 없습니다</Typography>
-      ) : pages.length === 1 ? (
-        <>
-          {pages.map((page: PageRow) => (
-            <Link href={`/${siteName}/manage/contents/pages/${page.slug}`} variant="subtitle2" key={page.id}>
-              {page.subject}
-            </Link>
-          ))}
-        </>
-      ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={items} strategy={verticalListSortingStrategy}>
-            {pages.map((page: PageRow) => (
-              <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
-            ))}
-          </SortableContext>
-        </DndContext>
-      )}
+          {pages.length === 0 ? (
+            <Typography variant="subtitle2">페이지가 없습니다</Typography>
+          ) : pages.length === 1 ? (
+            <>
+              {pages.map((page: PageRow) => (
+                <Link href={`/${siteName}/manage/contents/pages/${page.slug}`} variant="subtitle2" key={page.id}>
+                  {page.subject}
+                </Link>
+              ))}
+            </>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={items} strategy={verticalListSortingStrategy}>
+                {pages.map((page: PageRow) => (
+                  <SortableItem key={page.id} page={page} onClick={handleMoveToDetail} />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-    </Stack>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
+        </div>
+      </div>
+    </Container>
   );
 }

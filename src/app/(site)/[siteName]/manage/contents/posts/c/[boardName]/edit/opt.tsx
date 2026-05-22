@@ -20,6 +20,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -452,189 +454,190 @@ export default function Opt() {
   }, [siteName, boardName]);
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          게시판 수정
-        </Typography>
-      ) : null}
+    <Container pageTitle="게시판 수정" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
 
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
 
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
+            <TextField
+              label="게시판 종류"
+              value={
+                boardType === 'basic'
+                  ? '일반 게시판 (변경 불가)'
+                  : boardType === 'gallery'
+                    ? '갤러리 게시판 (변경 불가)'
+                    : boardType === 'youtube'
+                      ? '유튜브 영상 공유 게시판 (변경 불가)'
+                      : '피드 게시판 (변경 불가)'
+              }
+              fullWidth
+              size="small"
+              slotProps={{ input: { readOnly: true, disabled: true } }}
+            />
 
-        <TextField
-          label="게시판 종류"
-          value={
-            boardType === 'basic'
-              ? '일반 게시판 (변경 불가)'
-              : boardType === 'gallery'
-                ? '갤러리 게시판 (변경 불가)'
-                : boardType === 'youtube'
-                  ? '유튜브 영상 공유 게시판 (변경 불가)'
-                  : '피드 게시판 (변경 불가)'
-          }
-          fullWidth
-          size="small"
-          slotProps={{ input: { readOnly: true, disabled: true } }}
-        />
+            <TextField
+              label="게시판 식별자 (필수)"
+              value={boardKey}
+              onChange={handleBoardKeyChange}
+              fullWidth
+              size="medium"
+              helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      {baseUrl}/{siteName}/
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        onClick={handleCheckBoardKey}
+                        disabled={isChecking}
+                        size="small"
+                      >
+                        중복 확인
+                      </Button>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
 
-        <TextField
-          label="게시판 식별자 (필수)"
-          value={boardKey}
-          onChange={handleBoardKeyChange}
-          fullWidth
-          size="medium"
-          helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  {baseUrl}/{siteName}/
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleCheckBoardKey}
-                    disabled={isChecking}
-                    size="small"
-                  >
-                    중복 확인
-                  </Button>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
+            <TextField
+              label="게시판 이름 (필수)"
+              value={boardLabel}
+              onChange={handleBoardLabelChange}
+              fullWidth
+              size="small"
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        onClick={handleCheckBoardLabel}
+                        disabled={isCheckingBoardLabel}
+                        size="small"
+                      >
+                        중복 확인
+                      </Button>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
 
-        <TextField
-          label="게시판 이름 (필수)"
-          value={boardLabel}
-          onChange={handleBoardLabelChange}
-          fullWidth
-          size="small"
-          slotProps={{
-            input: {
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleCheckBoardLabel}
-                    disabled={isCheckingBoardLabel}
-                    size="small"
-                  >
-                    중복 확인
-                  </Button>
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
+            {boardLabelCheckMessage ? (
+              <Alert severity="success" variant="outlined">
+                {boardLabelCheckMessage}
+              </Alert>
+            ) : null}
 
-        {boardLabelCheckMessage ? (
-          <Alert severity="success" variant="outlined">
-            {boardLabelCheckMessage}
-          </Alert>
-        ) : null}
-
-        <FormControl>
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            게시판 상태
-          </Typography>
-          <FormControlLabel control={<Switch checked={isActive} onChange={handleIsActiveChange} />} label="활성화" />
-        </FormControl>
-
-        <TextField
-          select
-          label="목록 표시 개수 (필수)"
-          value={postPerPage}
-          onChange={handlePostPerPageChange}
-          fullWidth
-          size="small"
-        >
-          {POST_PER_PAGE_OPTIONS.map((count) => (
-            <MenuItem key={count} value={count}>
-              {count}개씩
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          select
-          label="마크다운 사용"
-          value={markdownStatus || 'markdown_default'}
-          onChange={handleMarkdownStatusChange}
-          fullWidth
-          size="small"
-        >
-          {MARKDOWN_STATUS_OPTIONS.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        <TextField
-          select
-          label="글 작성 권한"
-          value={writePermission}
-          onChange={handleWritePermissionChange}
-          fullWidth
-          size="small"
-        >
-          {WRITE_PERMISSION_OPTIONS.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {canUsePostType ? (
-          <>
             <FormControl>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                말머리/연재 설정
+                게시판 상태
               </Typography>
-              <RadioGroup row value={postType} onChange={handlePostTypeChange}>
-                <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
-                <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
-                <FormControlLabel value="series" control={<Radio />} label="연재형" />
-              </RadioGroup>
+              <FormControlLabel
+                control={<Switch checked={isActive} onChange={handleIsActiveChange} />}
+                label="활성화"
+              />
             </FormControl>
 
-            <Alert severity="warning" variant="outlined">
-              말머리/연재 여부는 한번 설정되면 변경하실 수 없습니다.
-            </Alert>
-          </>
-        ) : null}
+            <TextField
+              select
+              label="목록 표시 개수 (필수)"
+              value={postPerPage}
+              onChange={handlePostPerPageChange}
+              fullWidth
+              size="small"
+            >
+              {POST_PER_PAGE_OPTIONS.map((count) => (
+                <MenuItem key={count} value={count}>
+                  {count}개씩
+                </MenuItem>
+              ))}
+            </TextField>
 
-        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button
-            component={Link}
-            href={`/${siteName}/manage/contents/posts/c/${boardName}`}
-            underline="none"
-            variant="outlined"
-          >
-            취소
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            저장
-          </Button>
-        </Stack>
-      </Stack>
-    </Stack>
+            <TextField
+              select
+              label="마크다운 사용"
+              value={markdownStatus || 'markdown_default'}
+              onChange={handleMarkdownStatusChange}
+              fullWidth
+              size="small"
+            >
+              {MARKDOWN_STATUS_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="글 작성 권한"
+              value={writePermission}
+              onChange={handleWritePermissionChange}
+              fullWidth
+              size="small"
+            >
+              {WRITE_PERMISSION_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            {canUsePostType ? (
+              <>
+                <FormControl>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    말머리/연재 설정
+                  </Typography>
+                  <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+                    <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
+                    <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                    <FormControlLabel value="series" control={<Radio />} label="연재형" />
+                  </RadioGroup>
+                </FormControl>
+
+                <Alert severity="warning" variant="outlined">
+                  말머리/연재 여부는 한번 설정되면 변경하실 수 없습니다.
+                </Alert>
+              </>
+            ) : null}
+
+            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+              <Button
+                component={Link}
+                href={`/${siteName}/manage/contents/posts/c/${boardName}`}
+                underline="none"
+                variant="outlined"
+              >
+                취소
+              </Button>
+              <Button type="submit" variant="contained" disabled={isSubmitting}>
+                저장
+              </Button>
+            </Stack>
+          </Stack>
+        </div>
+      </div>
+    </Container>
   );
 }

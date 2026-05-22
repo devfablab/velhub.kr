@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Alert, Avatar, Box, Button, Grid, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Alert, Avatar, Box, Stack, Typography } from '@mui/material';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
+import Container from './menu';
+import styles from '@/app/manage.module.sass';
 
 type StaffResponse = {
   site?: {
@@ -20,31 +22,13 @@ type StaffResponse = {
   error?: string;
 };
 
-type StaffMenuItem = {
-  label: string;
-  href: string;
-  startsWith?: boolean;
-};
-
-function LinkButton({ label, href }: { label: string; href: string }) {
-  return (
-    <Button href={href} variant="outlined" fullWidth>
-      {label}
-    </Button>
-  );
-}
-
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
 
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [siteAvatar, setSiteAvatar] = useState<string | null>(null);
-  const [siteType, setSiteType] = useState('');
   const [siteNameText, setSiteNameText] = useState('');
   const [siteCreatedAt, setSiteCreatedAt] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState('');
@@ -69,7 +53,6 @@ export default function Opt() {
 
         setSiteAvatar(result.site?.avatar ?? null);
         setSiteNameText(result.site?.name ?? '');
-        setSiteType(result.site?.siteType ?? '');
         setSiteCreatedAt(result.site?.createdAt ?? null);
         setOwnerName(result.site?.ownerName ?? '');
         setMemberCount(result.stats?.memberCount ?? 0);
@@ -98,43 +81,17 @@ export default function Opt() {
     return null;
   }
 
-  const tabItems: StaffMenuItem[] = [
-    ...(siteType === 'blog' ? [{ label: '블로그 이동', href: `/${siteName}` }] : []),
-    { label: siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영', href: `/${siteName}/manage` },
-    {
-      label: '디자인',
-      href: `/${siteName}/design`,
-    },
-    {
-      label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/team` : `/${siteName}/members`,
-    },
-    { label: '콘텐츠 관리', href: `/${siteName}/contents` },
-    ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/filtered` }] : []),
-    { label: '통계', href: `/${siteName}/stats` },
-  ];
-
   return (
-    <Grid spacing={2}>
+    <Container pageEnterance>
       {errorMessage ? (
         <Alert severity="error" variant="filled">
           {errorMessage}
         </Alert>
       ) : null}
 
-      {isMobile && (
-        <Grid container spacing={1}>
-          {tabItems.map((tabItem) => (
-            <Grid size={{ xs: 4 }} key={tabItem.href}>
-              <LinkButton key={tabItem.href} label={tabItem.label} href={tabItem.href} />
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Paper variant="outlined" sx={{ p: 3 }}>
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <div className="paper">
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar src={siteAvatar ?? '/broken-image.jpg'} alt={siteNameText} sx={{ width: 72, height: 72 }} />
 
@@ -144,24 +101,22 @@ export default function Opt() {
                 <Typography variant="body2">w/ {ownerName}</Typography>
               </Box>
             </Stack>
-          </Paper>
-        </Grid>
+          </div>
 
-        <Grid container rowSpacing={1} size={{ xs: 12 }}>
-          <Grid size={6}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1">활동 멤버</Typography>
-              <Typography variant="body1">{memberCount} 명</Typography>
-            </Paper>
-          </Grid>
-          <Grid size={6}>
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography variant="subtitle1">전체 글</Typography>
-              <Typography variant="body1">{postCount} 개</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+          <div className={`paper ${styles.stat}`}>
+            <dl>
+              <div>
+                <dt>활동 멤버</dt>
+                <dd>{memberCount} 명</dd>
+              </div>
+              <div>
+                <dt>전체 글</dt>
+                <dd>{postCount} 개</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </Container>
   );
 }

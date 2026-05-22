@@ -19,6 +19,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type ApplyScope = 'subject' | 'description' | 'both';
 type FontFamily = 'neo' | 'pre' | 'sans' | 'serif' | 'ham';
@@ -260,182 +262,180 @@ export default function Opt() {
   }
 
   return (
-    <Paper variant="outlined">
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          기본 서체 설정
-        </Typography>
-      )}
-
-      <Stack spacing={3}>
-        <FormControl>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            적용 범위
-          </Typography>
-          <RadioGroup row value={applyScope} onChange={(event) => setApplyScope(event.target.value as ApplyScope)}>
-            <FormControlLabel value="subject" control={<Radio />} label="제목" />
-            <FormControlLabel value="description" control={<Radio />} label="본문" />
-            <FormControlLabel value="both" control={<Radio />} label="제목+본문" />
-          </RadioGroup>
-        </FormControl>
-
-        {(applyScope === 'subject' || applyScope === 'both') && (
-          <Stack spacing={2}>
-            <Typography variant="h6">제목</Typography>
-
-            <FormControl fullWidth>
-              <InputLabel>서체</InputLabel>
-              <Select
-                size="small"
-                label="서체"
-                value={subjectFontFamily}
-                onChange={(event) => setSubjectFontFamily(event.target.value as FontFamily | '')}
-              >
-                {SUBJECT_FONT_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
+    <Container pageTitle="기본 서체 설정" menu="design">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack spacing={3}>
+            <FormControl>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                적용 범위
+              </Typography>
+              <RadioGroup row value={applyScope} onChange={(event) => setApplyScope(event.target.value as ApplyScope)}>
+                <FormControlLabel value="subject" control={<Radio />} label="제목" />
+                <FormControlLabel value="description" control={<Radio />} label="본문" />
+                <FormControlLabel value="both" control={<Radio />} label="제목+본문" />
+              </RadioGroup>
             </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>자간</InputLabel>
-              <Select
-                size="small"
-                label="자간"
-                value={subjectLetterSpacing}
-                onChange={(event) => setSubjectLetterSpacing(event.target.value as number | '')}
-              >
-                {LETTER_SPACING_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {(applyScope === 'subject' || applyScope === 'both') && (
+              <Stack spacing={2}>
+                <Typography variant="h6">제목</Typography>
 
-            <FormControl fullWidth>
-              <InputLabel>행간</InputLabel>
-              <Select
-                size="small"
-                label="행간"
-                value={subjectLineHeight}
-                onChange={(event) => setSubjectLineHeight(event.target.value as number | '')}
-              >
-                {LINE_HEIGHT_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>서체</InputLabel>
+                  <Select
+                    size="small"
+                    label="서체"
+                    value={subjectFontFamily}
+                    onChange={(event) => setSubjectFontFamily(event.target.value as FontFamily | '')}
+                  >
+                    {SUBJECT_FONT_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>자간</InputLabel>
+                  <Select
+                    size="small"
+                    label="자간"
+                    value={subjectLetterSpacing}
+                    onChange={(event) => setSubjectLetterSpacing(event.target.value as number | '')}
+                  >
+                    {LETTER_SPACING_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>행간</InputLabel>
+                  <Select
+                    size="small"
+                    label="행간"
+                    value={subjectLineHeight}
+                    onChange={(event) => setSubjectLineHeight(event.target.value as number | '')}
+                  >
+                    {LINE_HEIGHT_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+            )}
+
+            {(applyScope === 'description' || applyScope === 'both') && (
+              <Stack spacing={2}>
+                <Typography variant="h6">본문</Typography>
+
+                <FormControl fullWidth>
+                  <InputLabel>서체</InputLabel>
+                  <Select
+                    size="small"
+                    label="서체"
+                    value={descriptionFontFamily}
+                    onChange={(event) => setDescriptionFontFamily(event.target.value as FontFamily | '')}
+                  >
+                    {DESCRIPTION_FONT_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>크기</InputLabel>
+                  <Select
+                    size="small"
+                    label="크기"
+                    value={descriptionFontSize}
+                    onChange={(event) => setDescriptionFontSize(event.target.value as number | '')}
+                  >
+                    {FONT_SIZE_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>자간</InputLabel>
+                  <Select
+                    size="small"
+                    label="자간"
+                    value={descriptionLetterSpacing}
+                    onChange={(event) => setDescriptionLetterSpacing(event.target.value as number | '')}
+                  >
+                    {LETTER_SPACING_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>행간</InputLabel>
+                  <Select
+                    size="small"
+                    label="행간"
+                    value={descriptionLineHeight}
+                    onChange={(event) => setDescriptionLineHeight(event.target.value as number | '')}
+                  >
+                    {LINE_HEIGHT_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth>
+                  <InputLabel>마진</InputLabel>
+                  <Select
+                    size="small"
+                    label="마진"
+                    value={descriptionMargin}
+                    onChange={(event) => setDescriptionMargin(event.target.value as number | '')}
+                  >
+                    {MARGIN_OPTIONS.map((option) => (
+                      <MenuItem key={option.label} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+            )}
+
+            <Stack direction="row" justifyContent="flex-end">
+              <Button type="button" variant="contained" onClick={() => void handleSubmit()} disabled={isSubmitting}>
+                적용하기
+              </Button>
+            </Stack>
+
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
           </Stack>
-        )}
-
-        {(applyScope === 'description' || applyScope === 'both') && (
-          <Stack spacing={2}>
-            <Typography variant="h6">본문</Typography>
-
-            <FormControl fullWidth>
-              <InputLabel>서체</InputLabel>
-              <Select
-                size="small"
-                label="서체"
-                value={descriptionFontFamily}
-                onChange={(event) => setDescriptionFontFamily(event.target.value as FontFamily | '')}
-              >
-                {DESCRIPTION_FONT_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>크기</InputLabel>
-              <Select
-                size="small"
-                label="크기"
-                value={descriptionFontSize}
-                onChange={(event) => setDescriptionFontSize(event.target.value as number | '')}
-              >
-                {FONT_SIZE_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>자간</InputLabel>
-              <Select
-                size="small"
-                label="자간"
-                value={descriptionLetterSpacing}
-                onChange={(event) => setDescriptionLetterSpacing(event.target.value as number | '')}
-              >
-                {LETTER_SPACING_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>행간</InputLabel>
-              <Select
-                size="small"
-                label="행간"
-                value={descriptionLineHeight}
-                onChange={(event) => setDescriptionLineHeight(event.target.value as number | '')}
-              >
-                {LINE_HEIGHT_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth>
-              <InputLabel>마진</InputLabel>
-              <Select
-                size="small"
-                label="마진"
-                value={descriptionMargin}
-                onChange={(event) => setDescriptionMargin(event.target.value as number | '')}
-              >
-                {MARGIN_OPTIONS.map((option) => (
-                  <MenuItem key={option.label} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-        )}
-
-        <Stack direction="row" justifyContent="flex-end">
-          <Button type="button" variant="contained" onClick={() => void handleSubmit()} disabled={isSubmitting}>
-            적용하기
-          </Button>
-        </Stack>
-
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-    </Paper>
+        </div>
+      </div>
+    </Container>
   );
 }

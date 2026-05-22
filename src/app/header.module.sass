@@ -457,6 +457,9 @@ header.header
     .searchform
       padding: ds.rem(7) ds.rem(17)
 
+      &:hover
+        background: none!important
+
     .search
       .form-group
         display: flex
@@ -668,3 +671,61 @@ header.header
             background-color: transparent
             width: ds.rem(37)
             height: ds.rem(37)
+
+main.manage
+  flex-direction: column
+  justify-content: flex-start
+
+  .tabs
+    padding-bottom: 0
+    display: flex
+    flex-direction: row
+
+    & + div
+      @include ds.mq(minLarge)
+        padding-top: ds.rem(23)
+
+    ul
+      display: flex
+      flex-direction: row
+      max-width: ds.rem(572)
+
+      @include ds.mq(minLarge)
+        gap: ds.rem(12)
+
+      li
+        @include ds.mq(maxMedium)
+          @include ds.col
+
+        a
+          display: inline-flex
+          @include ds.fw(neo, 500)
+          font-size: ds.rem(16)
+          color: rgba(ds.$rgb-secondary, .8)
+
+          @include ds.mq(maxMedium)
+            width: 100%
+            justify-content: center
+            border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
+            padding: ds.rem(5) 0 ds.rem(3)
+
+          @include ds.mq(minLarge)
+            align-items: center
+            background-color: ds.$hex-white
+            height: ds.rem(32)
+            border: 1px solid rgba(ds.$rgb-tertiary, .5)
+            border-radius: ds.rem(32)
+            padding: 0 ds.rem(12)
+
+        &.current
+          a
+            @include ds.fw(neo, 700)
+            color: ds.$hex-secondary
+
+            @include ds.mq(maxMedium)
+              border-bottom: ds.rem(3) solid ds.$hex-accent
+
+            @include ds.mq(minLarge)
+              border: 1px solid ds.$hex-accent
+              background-color: ds.$hex-accent
+              color: ds.$hex-white

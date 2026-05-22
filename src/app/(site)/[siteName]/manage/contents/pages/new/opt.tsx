@@ -18,6 +18,8 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import ToastEditor from '@/components/editor/ToastEditor';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -522,118 +524,125 @@ export default function Opt() {
   }, []);
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      {isNotMobile && (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-          페이지 추가
-        </Typography>
-      )}
+    <Container pageTitle="페이지 추가" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            <Stack spacing={1}>
+              <TextField
+                label="페이지 식별자 (필수)"
+                value={slug}
+                onChange={handleSlugChange}
+                fullWidth
+                size="medium"
+                helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        {baseUrl}/{siteName}/p/
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          onClick={() => void handleCheckSlug()}
+                          disabled={isCheckingSlug}
+                          size="small"
+                        >
+                          중복 확인
+                        </Button>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {slugMessage ? (
+                <Alert
+                  severity={isSlugAvailable ? 'success' : 'error'}
+                  variant={isSlugAvailable ? 'outlined' : 'filled'}
+                >
+                  {slugMessage}
+                </Alert>
+              ) : null}
+            </Stack>
 
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <Stack spacing={1}>
-          <TextField
-            label="페이지 식별자 (필수)"
-            value={slug}
-            onChange={handleSlugChange}
-            fullWidth
-            size="medium"
-            helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    {baseUrl}/{siteName}/p/
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={() => void handleCheckSlug()}
-                      disabled={isCheckingSlug}
-                      size="small"
-                    >
-                      중복 확인
-                    </Button>
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          {slugMessage ? (
-            <Alert severity={isSlugAvailable ? 'success' : 'error'} variant={isSlugAvailable ? 'outlined' : 'filled'}>
-              {slugMessage}
-            </Alert>
-          ) : null}
-        </Stack>
-
-        <TextField label="페이지 제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
-        <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-
-        <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
-
-          {ogImageUrl ? (
-            <Box
-              component="img"
-              src={ogImageUrl}
-              alt="오픈그래프 이미지"
-              sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+            <TextField
+              label="페이지 제목 (필수)"
+              value={subject}
+              onChange={handleSubjectChange}
+              fullWidth
+              size="small"
             />
-          ) : null}
+            <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
-          <VisuallyHiddenInput
-            ref={fileInputReference}
-            type="file"
-            accept="image/*"
-            onChange={handleOgImageFileChange}
-          />
+            <Box>
+              <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
 
-          <Button
-            type="button"
-            variant="outlined"
-            onClick={handleClickOgImageUpload}
-            disabled={isUploadingOgImage}
-            size="small"
-          >
-            {ogImageUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
-        </Box>
+              {ogImageUrl ? (
+                <Box
+                  component="img"
+                  src={ogImageUrl}
+                  alt="오픈그래프 이미지"
+                  sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+                />
+              ) : null}
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>페이지 내용 (필수)</Typography>
-          <ToastEditor
-            initialValue={contentHtml}
-            initialMarkdown={contentMarkdown}
-            initialEditType="markdown"
-            onHtmlChange={setContentHtml}
-            onMarkdownChange={setContentMarkdown}
-            onUploadImage={handleUploadEditorImage}
-          />
-        </Box>
+              <VisuallyHiddenInput
+                ref={fileInputReference}
+                type="file"
+                accept="image/*"
+                onChange={handleOgImageFileChange}
+              />
 
-        <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-          <Button
-            component={Link}
-            href={`/${siteName}/manage/contents/pages`}
-            underline="none"
-            variant="outlined"
-            size="large"
-          >
-            취소
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-            저장
-          </Button>
-        </Stack>
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={handleClickOgImageUpload}
+                disabled={isUploadingOgImage}
+                size="small"
+              >
+                {ogImageUrl ? '이미지 교체' : '이미지 추가'}
+              </Button>
+            </Box>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-    </Paper>
+            <Box>
+              <Typography sx={{ mb: 1 }}>페이지 내용 (필수)</Typography>
+              <ToastEditor
+                initialValue={contentHtml}
+                initialMarkdown={contentMarkdown}
+                initialEditType="markdown"
+                onHtmlChange={setContentHtml}
+                onMarkdownChange={setContentMarkdown}
+                onUploadImage={handleUploadEditorImage}
+              />
+            </Box>
+
+            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+              <Button
+                component={Link}
+                href={`/${siteName}/manage/contents/pages`}
+                underline="none"
+                variant="outlined"
+                size="large"
+              >
+                취소
+              </Button>
+              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+                저장
+              </Button>
+            </Stack>
+
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </div>
+      </div>
+    </Container>
   );
 }

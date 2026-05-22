@@ -26,6 +26,8 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -607,126 +609,135 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          블로그 글쓰기
-        </Typography>
-      ) : null}
-
-      <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-        <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
-        <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-
-        <FormControl fullWidth size="small">
-          <InputLabel id="post-series-select-label">연재</InputLabel>
-          <Select
-            labelId="post-series-select-label"
-            value={selectedSeriesKey}
-            onChange={handleSeriesChange}
-            input={<OutlinedInput label="연재" />}
-          >
-            <MenuItem value="">
-              <ListItemText primary="선택 안함" />
-            </MenuItem>
-            {seriesList
-              .filter((series) => !series.is_completed)
-              .map((series) => (
-                <MenuItem key={series.id} value={series.series_key}>
-                  <ListItemText primary={series.series_label} />
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
-
-        <FormControl fullWidth size="small">
-          <InputLabel id="post-category-select-label">카테고리</InputLabel>
-          <Select
-            labelId="post-category-select-label"
-            multiple
-            value={selectedCategories}
-            onChange={handleCategoryChange}
-            input={<OutlinedInput label="카테고리" />}
-            renderValue={(selected) =>
-              categories
-                .filter((category) => selected.includes(category.category_key))
-                .map((category) => category.category_label)
-                .join(', ')
-            }
-          >
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.category_key}>
-                <Checkbox checked={selectedCategories.includes(category.category_key)} />
-                <ListItemText primary={category.category_label} />
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <Box>
-          <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
-
-          {thumbnailImageUrl ? (
-            <Box
-              component="img"
-              src={thumbnailImageUrl}
-              alt="오픈그래프 이미지"
-              sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
-            />
+    <Container pageTitle="블로그 글쓰기" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {isNotMobile ? (
+            <Typography variant="h5" component="h1">
+              블로그 글쓰기
+            </Typography>
           ) : null}
 
-          <VisuallyHiddenInput
-            ref={fileInputReference}
-            type="file"
-            accept="image/*"
-            onChange={handleThumbnailFileChange}
-          />
+          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
+            <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
 
-          <Button type="button" variant="outlined" onClick={handleClickThumbnailUpload} disabled={isUploadingThumbnail}>
-            {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-          </Button>
-        </Box>
+            <FormControl fullWidth size="small">
+              <InputLabel id="post-series-select-label">연재</InputLabel>
+              <Select
+                labelId="post-series-select-label"
+                value={selectedSeriesKey}
+                onChange={handleSeriesChange}
+                input={<OutlinedInput label="연재" />}
+              >
+                <MenuItem value="">
+                  <ListItemText primary="선택 안함" />
+                </MenuItem>
+                {seriesList
+                  .filter((series) => !series.is_completed)
+                  .map((series) => (
+                    <MenuItem key={series.id} value={series.series_key}>
+                      <ListItemText primary={series.series_label} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
 
-        <Box>
-          <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
-          <ToastEditor
-            initialValue={contentHtml}
-            initialMarkdown={contentMarkdown}
-            initialEditType="markdown"
-            onHtmlChange={setContentHtml}
-            onMarkdownChange={setContentMarkdown}
-            onUploadImage={handleUploadEditorImage}
-          />
-        </Box>
+            <FormControl fullWidth size="small">
+              <InputLabel id="post-category-select-label">카테고리</InputLabel>
+              <Select
+                labelId="post-category-select-label"
+                multiple
+                value={selectedCategories}
+                onChange={handleCategoryChange}
+                input={<OutlinedInput label="카테고리" />}
+                renderValue={(selected) =>
+                  categories
+                    .filter((category) => selected.includes(category.category_key))
+                    .map((category) => category.category_label)
+                    .join(', ')
+                }
+              >
+                {categories.map((category) => (
+                  <MenuItem key={category.id} value={category.category_key}>
+                    <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                    <ListItemText primary={category.category_label} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-        {commentProvider !== 'none' ? (
-          <FormControlLabel
-            control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
-            label={isComment ? '댓글 열기' : '댓글 닫기'}
-          />
-        ) : null}
+            <Box>
+              <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
 
-        <Stack direction="row" spacing={1.5}>
-          <Button
-            component={Link}
-            href={`/${siteName}/manage/contents/posts`}
-            underline="none"
-            variant="outlined"
-            size="large"
-          >
-            취소
-          </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-            저장
-          </Button>
-        </Stack>
+              {thumbnailImageUrl ? (
+                <Box
+                  component="img"
+                  src={thumbnailImageUrl}
+                  alt="오픈그래프 이미지"
+                  sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+                />
+              ) : null}
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-    </Stack>
+              <VisuallyHiddenInput
+                ref={fileInputReference}
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailFileChange}
+              />
+
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={handleClickThumbnailUpload}
+                disabled={isUploadingThumbnail}
+              >
+                {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+              </Button>
+            </Box>
+
+            <Box>
+              <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
+              <ToastEditor
+                initialValue={contentHtml}
+                initialMarkdown={contentMarkdown}
+                initialEditType="markdown"
+                onHtmlChange={setContentHtml}
+                onMarkdownChange={setContentMarkdown}
+                onUploadImage={handleUploadEditorImage}
+              />
+            </Box>
+
+            {commentProvider !== 'none' ? (
+              <FormControlLabel
+                control={<Switch checked={isComment} onChange={handleIsCommentChange} />}
+                label={isComment ? '댓글 열기' : '댓글 닫기'}
+              />
+            ) : null}
+
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                component={Link}
+                href={`/${siteName}/manage/contents/posts`}
+                underline="none"
+                variant="outlined"
+                size="large"
+              >
+                취소
+              </Button>
+              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
+                저장
+              </Button>
+            </Stack>
+
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
+        </div>
+      </div>
+    </Container>
   );
 }

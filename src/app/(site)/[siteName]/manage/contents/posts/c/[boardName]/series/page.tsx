@@ -1,9 +1,6 @@
 import { redirect } from 'next/navigation';
-import { Box, Container, Stack } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import StaffTabs from '@/app/(site)/[siteName]/manage/tabs';
-import SiteContentsBreadcrumb from '../../../../breadcrumb';
 import Opt from './opt';
 
 type RouteContext = {
@@ -29,17 +26,5 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}/manage/contents/posts`);
   }
 
-  return (
-    <Container maxWidth="md">
-      <Box sx={{ pt: 1, pb: 8 }}>
-        <Stack spacing={3}>
-          <StaffTabs pageTitle="연재 관리" />
-
-          <SiteContentsBreadcrumb />
-
-          <Opt />
-        </Stack>
-      </Box>
-    </Container>
-  );
+  return <Opt />;
 }

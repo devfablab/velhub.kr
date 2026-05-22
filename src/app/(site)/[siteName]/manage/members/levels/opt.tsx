@@ -21,6 +21,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextFieldChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
@@ -438,277 +440,286 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2.5}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          멤버 등급 관리
-        </Typography>
-      ) : null}
+    <Container pageTitle="멤버 등급 관리" menu="members">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          {!enabled ? (
+            <Paper variant="outlined">
+              <Stack spacing={2}>
+                <Typography variant="h6" component="h2">
+                  등업 시스템을 사용하시겠어요?
+                </Typography>
 
-      {!enabled ? (
-        <Paper variant="outlined">
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              등업 시스템을 사용하시겠어요?
-            </Typography>
-
-            <Box>
-              <Button type="button" variant="contained" onClick={handleEnableLevels} disabled={isEnabling}>
-                등업 시스템 사용하기
-              </Button>
-            </Box>
-          </Stack>
-        </Paper>
-      ) : (
-        <>
-          <Stack direction="row" justifyContent="flex-end">
-            <Button type="button" variant="outlined" onClick={handleOpenIconDialog}>
-              아이콘 변경
-            </Button>
-          </Stack>
-
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2}>
-              {levels.map((level) => (
-                <Stack key={level.id} direction="row" spacing={1.5}>
-                  <Box sx={{ pt: 1 }}>
-                    {level.icon_url ? (
-                      <Box
-                        component="img"
-                        src={level.icon_url}
-                        alt={`lv${level.lv}`}
-                        sx={{
-                          width: 25,
-                          height: 25,
-                          objectFit: 'contain',
-                          display: 'block',
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="body2">lv.{level.lv}</Typography>
-                    )}
-                  </Box>
-
-                  <Stack spacing={1.5} sx={{ flex: 1 }}>
-                    <Stack direction="row" spacing={1.5}>
-                      <TextField
-                        value={level.name ?? ''}
-                        onChange={(event) => handleNameChange(level.id, event)}
-                        sx={{ width: 270 }}
-                        size="small"
-                        placeholder="등급명"
-                      />
-                      <TextField
-                        value={level.description ?? ''}
-                        onChange={(event) => handleDescriptionChange(level.id, event)}
-                        fullWidth
-                        size="small"
-                        placeholder="설명"
-                      />
-                      <Select
-                        value={level.lv === 1 ? 'manual' : level.requirement_type}
-                        onChange={(event) =>
-                          handleRequirementTypeChange(
-                            level.id,
-                            event.target.value === 'automatic' ? 'automatic' : 'manual',
-                          )
-                        }
-                        size="small"
-                        sx={{ minWidth: 120 }}
-                        disabled={level.lv === 1}
-                      >
-                        {requirementTypeOptions.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <Button type="button" variant="outlined" color="error" onClick={() => handleClearLevel(level.id)}>
-                        삭제
-                      </Button>
-                    </Stack>
-
-                    {level.lv !== 1 && level.requirement_type === 'automatic' ? (
-                      <Stack
-                        direction={isNotMobile ? 'row' : 'column'}
-                        spacing={1}
-                        alignItems={isNotMobile ? 'center' : 'flex-start'}
-                      >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">게시글</Typography>
-                          <TextField
-                            type="text"
-                            inputMode="numeric"
-                            value={level.required_posts}
-                            onChange={(event) => handleNumericChange(level.id, 'required_posts', event)}
-                            size="small"
-                            sx={{ width: 60 }}
-                          />
-                          <Typography variant="body2">개,</Typography>
-                        </Stack>
-
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">댓글</Typography>
-                          <TextField
-                            type="text"
-                            inputMode="numeric"
-                            value={level.required_comments}
-                            onChange={(event) => handleNumericChange(level.id, 'required_comments', event)}
-                            size="small"
-                            sx={{ width: 60 }}
-                          />
-                          <Typography variant="body2">개,</Typography>
-                        </Stack>
-
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">방문</Typography>
-                          <TextField
-                            type="text"
-                            inputMode="numeric"
-                            value={level.required_checkins}
-                            onChange={(event) => handleNumericChange(level.id, 'required_checkins', event)}
-                            size="small"
-                            sx={{ width: 60 }}
-                          />
-                          <Typography variant="body2">회,</Typography>
-                        </Stack>
-
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">좋아요</Typography>
-                          <TextField
-                            type="text"
-                            inputMode="numeric"
-                            value={level.required_likes}
-                            onChange={(event) => handleNumericChange(level.id, 'required_likes', event)}
-                            size="small"
-                            sx={{ width: 60 }}
-                          />
-                          <Typography variant="body2">회,</Typography>
-                        </Stack>
-
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="body2">가입</Typography>
-                          <TextField
-                            type="text"
-                            inputMode="numeric"
-                            value={level.required_days}
-                            onChange={(event) => handleNumericChange(level.id, 'required_days', event)}
-                            size="small"
-                            sx={{ width: 60 }}
-                          />
-                          <Typography variant="body2">일 후 만족 시 자동등업</Typography>
-                        </Stack>
-                      </Stack>
-                    ) : null}
-                  </Stack>
-                </Stack>
-              ))}
-
+                <Box>
+                  <Button type="button" variant="contained" onClick={handleEnableLevels} disabled={isEnabling}>
+                    등업 시스템 사용하기
+                  </Button>
+                </Box>
+              </Stack>
+            </Paper>
+          ) : (
+            <>
               <Stack direction="row" justifyContent="flex-end">
-                <Button type="submit" variant="contained" disabled={isSubmitting}>
-                  저장
+                <Button type="button" variant="outlined" onClick={handleOpenIconDialog}>
+                  아이콘 변경
                 </Button>
               </Stack>
-            </Stack>
-          </Box>
-        </>
-      )}
 
-      <Dialog open={isIconDialogOpen} onClose={handleCloseIconDialog} fullWidth maxWidth="sm">
-        <DialogTitle>아이콘 변경</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {levels.map((level) => (
-                <Stack key={level.id} direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Typography variant="subtitle2">lv {level.lv}</Typography>
+              <Box component="form" onSubmit={handleSubmit}>
+                <Stack spacing={2}>
+                  {levels.map((level) => (
+                    <Stack key={level.id} direction="row" spacing={1.5}>
+                      <Box sx={{ pt: 1 }}>
+                        {level.icon_url ? (
+                          <Box
+                            component="img"
+                            src={level.icon_url}
+                            alt={`lv${level.lv}`}
+                            sx={{
+                              width: 25,
+                              height: 25,
+                              objectFit: 'contain',
+                              display: 'block',
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2">lv.{level.lv}</Typography>
+                        )}
+                      </Box>
 
-                    <Box
-                      sx={{
-                        width: 25,
-                        height: 25,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      <Stack spacing={1.5} sx={{ flex: 1 }}>
+                        <Stack direction="row" spacing={1.5}>
+                          <TextField
+                            value={level.name ?? ''}
+                            onChange={(event) => handleNameChange(level.id, event)}
+                            sx={{ width: 270 }}
+                            size="small"
+                            placeholder="등급명"
+                          />
+                          <TextField
+                            value={level.description ?? ''}
+                            onChange={(event) => handleDescriptionChange(level.id, event)}
+                            fullWidth
+                            size="small"
+                            placeholder="설명"
+                          />
+                          <Select
+                            value={level.lv === 1 ? 'manual' : level.requirement_type}
+                            onChange={(event) =>
+                              handleRequirementTypeChange(
+                                level.id,
+                                event.target.value === 'automatic' ? 'automatic' : 'manual',
+                              )
+                            }
+                            size="small"
+                            sx={{ minWidth: 120 }}
+                            disabled={level.lv === 1}
+                          >
+                            {requirementTypeOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleClearLevel(level.id)}
+                          >
+                            삭제
+                          </Button>
+                        </Stack>
+
+                        {level.lv !== 1 && level.requirement_type === 'automatic' ? (
+                          <Stack
+                            direction={isNotMobile ? 'row' : 'column'}
+                            spacing={1}
+                            alignItems={isNotMobile ? 'center' : 'flex-start'}
+                          >
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">게시글</Typography>
+                              <TextField
+                                type="text"
+                                inputMode="numeric"
+                                value={level.required_posts}
+                                onChange={(event) => handleNumericChange(level.id, 'required_posts', event)}
+                                size="small"
+                                sx={{ width: 60 }}
+                              />
+                              <Typography variant="body2">개,</Typography>
+                            </Stack>
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">댓글</Typography>
+                              <TextField
+                                type="text"
+                                inputMode="numeric"
+                                value={level.required_comments}
+                                onChange={(event) => handleNumericChange(level.id, 'required_comments', event)}
+                                size="small"
+                                sx={{ width: 60 }}
+                              />
+                              <Typography variant="body2">개,</Typography>
+                            </Stack>
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">방문</Typography>
+                              <TextField
+                                type="text"
+                                inputMode="numeric"
+                                value={level.required_checkins}
+                                onChange={(event) => handleNumericChange(level.id, 'required_checkins', event)}
+                                size="small"
+                                sx={{ width: 60 }}
+                              />
+                              <Typography variant="body2">회,</Typography>
+                            </Stack>
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">좋아요</Typography>
+                              <TextField
+                                type="text"
+                                inputMode="numeric"
+                                value={level.required_likes}
+                                onChange={(event) => handleNumericChange(level.id, 'required_likes', event)}
+                                size="small"
+                                sx={{ width: 60 }}
+                              />
+                              <Typography variant="body2">회,</Typography>
+                            </Stack>
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Typography variant="body2">가입</Typography>
+                              <TextField
+                                type="text"
+                                inputMode="numeric"
+                                value={level.required_days}
+                                onChange={(event) => handleNumericChange(level.id, 'required_days', event)}
+                                size="small"
+                                sx={{ width: 60 }}
+                              />
+                              <Typography variant="body2">일 후 만족 시 자동등업</Typography>
+                            </Stack>
+                          </Stack>
+                        ) : null}
+                      </Stack>
+                    </Stack>
+                  ))}
+
+                  <Stack direction="row" justifyContent="flex-end">
+                    <Button type="submit" variant="contained" disabled={isSubmitting}>
+                      저장
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Box>
+            </>
+          )}
+
+          <Dialog open={isIconDialogOpen} onClose={handleCloseIconDialog} fullWidth maxWidth="sm">
+            <DialogTitle>아이콘 변경</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {levels.map((level) => (
+                    <Stack
+                      key={level.id}
+                      direction="row"
+                      spacing={2}
+                      alignItems="center"
+                      justifyContent="space-between"
                     >
-                      {level.icon_url ? (
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Typography variant="subtitle2">lv {level.lv}</Typography>
+
                         <Box
-                          component="img"
-                          src={level.icon_url}
-                          alt={`lv-${level.lv}`}
                           sx={{
                             width: 25,
                             height: 25,
-                            objectFit: 'contain',
-                            display: 'block',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                           }}
-                        />
-                      ) : (
-                        <Typography variant="body2">{level.lv}</Typography>
-                      )}
-                    </Box>
-                  </Stack>
+                        >
+                          {level.icon_url ? (
+                            <Box
+                              component="img"
+                              src={level.icon_url}
+                              alt={`lv-${level.lv}`}
+                              sx={{
+                                width: 25,
+                                height: 25,
+                                objectFit: 'contain',
+                                display: 'block',
+                              }}
+                            />
+                          ) : (
+                            <Typography variant="body2">{level.lv}</Typography>
+                          )}
+                        </Box>
+                      </Stack>
 
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={() => handleClickIconUpload(level.id)}
-                      disabled={isUploadingIcon}
-                    >
-                      아이콘 변경
-                    </Button>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          onClick={() => handleClickIconUpload(level.id)}
+                          disabled={isUploadingIcon}
+                        >
+                          아이콘 변경
+                        </Button>
 
-                    {level.icon ? (
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        color="error"
-                        onClick={() => handleDeleteIcon(level.id)}
-                        disabled={deletingIconLevelId === level.id}
-                      >
-                        삭제
-                      </Button>
-                    ) : null}
-                  </Stack>
-                </Stack>
-              ))}
-            </Paper>
+                        {level.icon ? (
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleDeleteIcon(level.id)}
+                            disabled={deletingIconLevelId === level.id}
+                          >
+                            삭제
+                          </Button>
+                        ) : null}
+                      </Stack>
+                    </Stack>
+                  ))}
+                </Paper>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-              style={{ display: 'none' }}
-              onChange={handleIconFileChange}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            type="button"
-            onClick={handleCloseIconDialog}
-            disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
-          >
-            닫기
-          </Button>
-        </DialogActions>
-      </Dialog>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                  style={{ display: 'none' }}
+                  onChange={handleIconFileChange}
+                />
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                type="button"
+                onClick={handleCloseIconDialog}
+                disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
+              >
+                닫기
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }

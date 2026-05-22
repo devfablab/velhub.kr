@@ -35,6 +35,8 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from '../../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -468,286 +470,283 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile ? (
-        <Typography variant="h4" component="h1" sx={{ mb: 2.5 }}>
-          {board?.board_label ? board.board_label : '글 목록'}
-        </Typography>
-      ) : (
-        <Typography variant="h5" component="h2">
-          {board?.board_label}
-        </Typography>
-      )}
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Stack direction="row" spacing={1}>
-          {board?.post_type === 'prefix' ? (
-            <Button type="button" variant="outlined" onClick={handleMoveToPrefixManage}>
-              말머리 관리
-            </Button>
-          ) : null}
-
-          {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-            <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-              삭제
-            </Button>
-          ) : null}
-        </Stack>
-
-        <Button type="button" variant="contained" onClick={handleMoveToNew}>
-          새 글 쓰기
-        </Button>
-      </Stack>
-
-      <Stack
-        direction="row"
-        spacing={1}
-        justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
-        alignItems="center"
-      >
-        <ButtonGroup size="medium">
-          <Button
-            LinkComponent={NextLink}
-            type="button"
-            variant={currentFilter === 'all' ? 'contained' : 'outlined'}
-            href={getListHref({ page: 1, filter: 'all' })}
-          >
-            전체글
-          </Button>
-
-          <Button
-            LinkComponent={NextLink}
-            type="button"
-            variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
-            href={getListHref({ page: 1, filter: 'deleted' })}
-          >
-            삭제글
-          </Button>
-        </ButtonGroup>
-
-        <TextField
-          select
-          value={currentSize}
-          onChange={(event) => {
-            router.push(getListHref({ page: 1, size: Number(event.target.value) }));
-          }}
-          size="small"
-          sx={{ minWidth: 180 }}
-        >
-          {SIZE_OPTIONS.map((sizeOption) => (
-            <MenuItem key={sizeOption} value={sizeOption}>
-              {sizeOption}개씩
-              {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Stack>
-
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-
-      <Box sx={{ position: 'relative' }}>
-        <TableContainer variant="outlined" component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={isAllCurrentPageChecked}
-                    indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
-                    onChange={handleToggleAllCurrentPage}
-                  />
-                </TableCell>
-                <TableCell />
-                <TableCell>제목</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
-                <TableCell>작성일</TableCell>
-                <TableCell>작성자</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {contents.map((content) => (
-                <TableRow key={content.id}>
-                  <TableCell padding="checkbox">
-                    <Checkbox checked={selectedIds.includes(content.id)} onChange={() => handleToggleOne(content.id)} />
-                  </TableCell>
-
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
-                  </TableCell>
-
-                  <TableCell>
-                    <Stack direction="row" gap={1}>
-                      {content.published_status === 'draft' ? (
-                        <Chip label="임시저장글" color="warning" size="small" />
-                      ) : null}
-                      {content.prefix_label ? (
-                        <Chip label={content.prefix_label} size="small" variant="outlined" />
-                      ) : null}
-
-                      <Link
-                        href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
-                        sx={{
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          width: 270,
-                          display: 'inline-block',
-                        }}
-                      >
-                        {content.subject}
-                      </Link>
-                    </Stack>
-                  </TableCell>
-
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {typeof content.post_count === 'number' ? content.post_count : 0}
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
-                  </TableCell>
-                  <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{content.closed_message}</TableCell>
-
-                  <TableCell align="right">
-                    {content.is_closed ? (
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        color="warning"
-                        onClick={() => handleOpenRestoreDialog(content)}
-                      >
-                        복구
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        color="error"
-                        variant="outlined"
-                        onClick={() => handleOpenSingleDeleteDialog(content)}
-                      >
-                        삭제
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {contents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
-                  </TableCell>
-                </TableRow>
+    <Container pageTitle="글 목록" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack direction="row" spacing={1}>
+              {board?.post_type === 'prefix' ? (
+                <Button type="button" variant="outlined" onClick={handleMoveToPrefixManage}>
+                  말머리 관리
+                </Button>
               ) : null}
-            </TableBody>
-          </Table>
 
-          <Backdrop
-            open={isFetching}
-            sx={{
-              position: 'absolute',
-              zIndex: 1,
-              color: '#fff',
-            }}
-          >
-            <Stack spacing={2} alignItems="center">
-              <Stack justifyContent="center" alignItems="center">
-                <LoadingIndicator />
-              </Stack>
+              {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
+                  삭제
+                </Button>
+              ) : null}
             </Stack>
-          </Backdrop>
-        </TableContainer>
-      </Box>
 
-      {totalPage > 1 ? (
-        <Stack alignItems="center">
-          <Pagination
-            page={safeCurrentPage}
-            count={totalPage}
-            color="primary"
-            siblingCount={1}
-            boundaryCount={1}
-            renderItem={(item) => (
-              <PaginationItem {...item} component={NextLink} href={getListHref({ page: item.page ?? 1 })} />
-            )}
-          />
-        </Stack>
-      ) : null}
+            <Button type="button" variant="contained" onClick={handleMoveToNew}>
+              새 글 쓰기
+            </Button>
+          </Stack>
 
-      <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
-        <DialogTitle>게시물 삭제</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Alert severity="info" variant="filled">
-              삭제시 언제든 복구가 가능합니다.
-              <br />
-              삭제사유를 입력해 주세요. (필수)
-            </Alert>
+          <Stack
+            direction="row"
+            spacing={1}
+            justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
+            alignItems="center"
+          >
+            <ButtonGroup size="medium">
+              <Button
+                LinkComponent={NextLink}
+                type="button"
+                variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+                href={getListHref({ page: 1, filter: 'all' })}
+              >
+                전체글
+              </Button>
+
+              <Button
+                LinkComponent={NextLink}
+                type="button"
+                variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+                href={getListHref({ page: 1, filter: 'deleted' })}
+              >
+                삭제글
+              </Button>
+            </ButtonGroup>
 
             <TextField
-              label="삭제 사유"
-              value={closedMessage}
-              onChange={handleClosedMessageChange}
-              fullWidth
-              multiline
-              minRows={3}
+              select
+              value={currentSize}
+              onChange={(event) => {
+                router.push(getListHref({ page: 1, size: Number(event.target.value) }));
+              }}
               size="small"
-            />
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="outlined">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
+              sx={{ minWidth: 180 }}
+            >
+              {SIZE_OPTIONS.map((sizeOption) => (
+                <MenuItem key={sizeOption} value={sizeOption}>
+                  {sizeOption}개씩
+                  {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-            삭제
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-        <DialogTitle>게시물 복구</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>
-              해당 게시물을 복구하시겠습니까?
-              <br />
-              복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-            </Typography>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+          <Box sx={{ position: 'relative' }}>
+            <TableContainer variant="outlined" component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isAllCurrentPageChecked}
+                        indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
+                        onChange={handleToggleAllCurrentPage}
+                      />
+                    </TableCell>
+                    <TableCell />
+                    <TableCell>제목</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
+                    <TableCell>작성일</TableCell>
+                    <TableCell>작성자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {contents.map((content) => (
+                    <TableRow key={content.id}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedIds.includes(content.id)}
+                          onChange={() => handleToggleOne(content.id)}
+                        />
+                      </TableCell>
+
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
+                      </TableCell>
+
+                      <TableCell>
+                        <Stack direction="row" gap={1}>
+                          {content.published_status === 'draft' ? (
+                            <Chip label="임시저장글" color="warning" size="small" />
+                          ) : null}
+                          {content.prefix_label ? (
+                            <Chip label={content.prefix_label} size="small" variant="outlined" />
+                          ) : null}
+
+                          <Link
+                            href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
+                            sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              width: 270,
+                              display: 'inline-block',
+                            }}
+                          >
+                            {content.subject}
+                          </Link>
+                        </Stack>
+                      </TableCell>
+
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {typeof content.post_count === 'number' ? content.post_count : 0}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{content.closed_message}</TableCell>
+
+                      <TableCell align="right">
+                        {content.is_closed ? (
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            color="warning"
+                            onClick={() => handleOpenRestoreDialog(content)}
+                          >
+                            복구
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            color="error"
+                            variant="outlined"
+                            onClick={() => handleOpenSingleDeleteDialog(content)}
+                          >
+                            삭제
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {contents.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} align="center">
+                        {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+              </Table>
+
+              <Backdrop
+                open={isFetching}
+                sx={{
+                  position: 'absolute',
+                  zIndex: 1,
+                  color: '#fff',
+                }}
+              >
+                <Stack spacing={2} alignItems="center">
+                  <Stack justifyContent="center" alignItems="center">
+                    <LoadingIndicator />
+                  </Stack>
+                </Stack>
+              </Backdrop>
+            </TableContainer>
+          </Box>
+
+          {totalPage > 1 ? (
+            <Stack alignItems="center">
+              <Pagination
+                page={safeCurrentPage}
+                count={totalPage}
+                color="primary"
+                siblingCount={1}
+                boundaryCount={1}
+                renderItem={(item) => (
+                  <PaginationItem {...item} component={NextLink} href={getListHref({ page: item.page ?? 1 })} />
+                )}
+              />
+            </Stack>
+          ) : null}
+
+          <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+            <DialogTitle>게시물 삭제</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Alert severity="info" variant="filled">
+                  삭제시 언제든 복구가 가능합니다.
+                  <br />
+                  삭제사유를 입력해 주세요. (필수)
+                </Alert>
+
+                <TextField
+                  label="삭제 사유"
+                  value={closedMessage}
+                  onChange={handleClosedMessageChange}
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  size="small"
+                />
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="outlined">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+                삭제
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+            <DialogTitle>게시물 복구</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>
+                  해당 게시물을 복구하시겠습니까?
+                  <br />
+                  복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                </Typography>
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+                확인
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </div>
+    </Container>
   );
 }

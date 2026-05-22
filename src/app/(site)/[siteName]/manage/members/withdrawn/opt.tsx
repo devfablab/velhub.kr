@@ -23,6 +23,8 @@ import {
   Typography,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type TextFieldChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -269,133 +271,127 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2.5}>
-      <Typography variant="h5" component="h1">
-        탈퇴 멤버 관리
-      </Typography>
+    <Container pageTitle="탈퇴 멤버 관리" menu="members">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <TextField
+                label="별명 검색"
+                value={nicknameKeyword}
+                onChange={handleNicknameKeywordChange}
+                fullWidth
+                size="small"
+              />
+              <Button type="button" variant="contained" onClick={handleSearch}>
+                검색
+              </Button>
+            </Stack>
+          </Paper>
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={() => handleOpenActionDialog('unkick')}
+                disabled={isActionSubmitting}
+              >
+                강제탈퇴 해제
+              </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                color="error"
+                onClick={() => handleOpenActionDialog('ban')}
+                disabled={isActionSubmitting}
+              >
+                가입 불가
+              </Button>
+            </Stack>
 
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <TextField
-            label="별명 검색"
-            value={nicknameKeyword}
-            onChange={handleNicknameKeywordChange}
-            fullWidth
-            size="small"
-          />
-          <Button type="button" variant="contained" onClick={handleSearch}>
-            검색
-          </Button>
-        </Stack>
-      </Paper>
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
+                    </TableCell>
+                    <TableCell>이메일 (별명)</TableCell>
+                    <TableCell>탈퇴 사유</TableCell>
+                    <TableCell>탈퇴 처리일 (처리자)</TableCell>
+                    <TableCell>탈퇴 종류</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.userId}>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedUserIds.includes(user.userId)}
+                          onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                        />
+                      </TableCell>
+                      <TableCell>{user.displayName}</TableCell>
+                      <TableCell>{user.reason}</TableCell>
+                      <TableCell>
+                        {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
+                      </TableCell>
+                      <TableCell>{user.type}</TableCell>
+                    </TableRow>
+                  ))}
 
-      <Stack spacing={1.5}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Button
-            type="button"
-            variant="outlined"
-            onClick={() => handleOpenActionDialog('unkick')}
-            disabled={isActionSubmitting}
-          >
-            강제탈퇴 해제
-          </Button>
-          <Button
-            type="button"
-            variant="outlined"
-            color="error"
-            onClick={() => handleOpenActionDialog('ban')}
-            disabled={isActionSubmitting}
-          >
-            가입 불가
-          </Button>
-        </Stack>
-
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
-                </TableCell>
-                <TableCell>이메일 (별명)</TableCell>
-                <TableCell>탈퇴 사유</TableCell>
-                <TableCell>탈퇴 처리일 (처리자)</TableCell>
-                <TableCell>탈퇴 종류</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.userId}>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectedUserIds.includes(user.userId)}
-                      onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
-                    />
-                  </TableCell>
-                  <TableCell>{user.displayName}</TableCell>
-                  <TableCell>{user.reason}</TableCell>
-                  <TableCell>
-                    {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
-                  </TableCell>
-                  <TableCell>{user.type}</TableCell>
-                </TableRow>
-              ))}
-
-              {filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    검색 결과가 없습니다.
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Stack>
-
-      <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{getActionTitle()}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              label={getActionReasonLabel()}
-              value={actionReason}
-              onChange={(event) => setActionReason(event.currentTarget.value)}
-              fullWidth
-              multiline
-              minRows={4}
-              size="small"
-            />
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        검색 결과가 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseActionDialog} disabled={isActionSubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+          <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
+            <DialogTitle>{getActionTitle()}</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <TextField
+                  label={getActionReasonLabel()}
+                  value={actionReason}
+                  onChange={(event) => setActionReason(event.currentTarget.value)}
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  size="small"
+                />
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" variant="outlined" onClick={handleCloseActionDialog} disabled={isActionSubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+                확인
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }

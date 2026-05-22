@@ -30,6 +30,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
 
@@ -352,48 +354,46 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          소셜 링크 관리
-        </Typography>
-      )}
+    <Container pageTitle="소셜 링크 관리" menu="design">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              <Stack spacing={1.5}>
+                {items.map((item) => (
+                  <SortableItem
+                    key={item.localId}
+                    item={item}
+                    onServiceChange={handleServiceChange}
+                    onAccountChange={handleAccountChange}
+                    onRemove={handleRemove}
+                  />
+                ))}
+              </Stack>
+            </SortableContext>
+          </DndContext>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-          <Stack spacing={1.5}>
-            {items.map((item) => (
-              <SortableItem
-                key={item.localId}
-                item={item}
-                onServiceChange={handleServiceChange}
-                onAccountChange={handleAccountChange}
-                onRemove={handleRemove}
-              />
-            ))}
-          </Stack>
-        </SortableContext>
-      </DndContext>
-
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Button type="button" variant="outlined" onClick={handleAdd}>
-          링크 추가
-        </Button>
-      </Box>
-      <Alert severity="warning" variant="outlined">
-        순서를 변경하시면 반드시 하단 저장을 눌러주세요.
-      </Alert>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button type="button" variant="contained" onClick={handleSave} disabled={isSaving}>
-          저장
-        </Button>
-      </Box>
-    </Stack>
+          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Button type="button" variant="outlined" onClick={handleAdd}>
+              링크 추가
+            </Button>
+          </Box>
+          <Alert severity="warning" variant="outlined">
+            순서를 변경하시면 반드시 하단 저장을 눌러주세요.
+          </Alert>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button type="button" variant="contained" onClick={handleSave} disabled={isSaving}>
+              저장
+            </Button>
+          </Box>
+        </div>
+      </div>
+    </Container>
   );
 }

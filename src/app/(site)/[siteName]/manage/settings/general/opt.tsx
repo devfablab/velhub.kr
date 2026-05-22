@@ -25,6 +25,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
@@ -626,447 +628,451 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          기본 설정
-        </Typography>
-      )}
+    <Container pageTitle="기본 설정" menu="settings">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Typography variant="subtitle2">
+            {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
+            {formatDate(siteInfo.created_at)}에 개설
+          </Typography>
 
-      <Typography variant="subtitle2">
-        {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
-        {formatDate(siteInfo.created_at)}에 개설
-      </Typography>
-
-      <Stack spacing={1.5} alignItems="center">
-        <Avatar
-          src={profilePictureUrl || '/broken-image.jpg'}
-          alt={siteInfo.site_label ?? ''}
-          sx={{ width: 96, height: 96 }}
-        />
-
-        <VisuallyHiddenInput
-          ref={fileInputReference}
-          type="file"
-          accept="image/*"
-          onChange={handleProfilePictureFileChange}
-        />
-
-        <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isUploadingAvatar}>
-          {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
-        </Button>
-      </Stack>
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
-          <Typography variant="subtitle2">사이트 로고</Typography>
-
-          {profileLogoUrl ? (
-            <Box
-              component="img"
-              src={profileLogoUrl}
-              alt={`${siteInfo.site_label ?? siteInfo.site_key} 로고`}
-              sx={{
-                maxWidth: 240,
-                maxHeight: 80,
-                objectFit: 'contain',
-              }}
+          <Stack spacing={1.5} alignItems="center">
+            <Avatar
+              src={profilePictureUrl || '/broken-image.jpg'}
+              alt={siteInfo.site_label ?? ''}
+              sx={{ width: 96, height: 96 }}
             />
-          ) : (
-            <Typography variant="body2">등록된 사이트 로고가 없습니다.</Typography>
-          )}
 
-          <VisuallyHiddenInput
-            ref={logoInputReference}
-            type="file"
-            accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
-            onChange={handleProfileLogoFileChange}
-          />
+            <VisuallyHiddenInput
+              ref={fileInputReference}
+              type="file"
+              accept="image/*"
+              onChange={handleProfilePictureFileChange}
+            />
 
-          <Stack direction="row" justifyContent="flex-end">
-            <Button type="button" variant="outlined" onClick={handleClickLogoUpload} disabled={isUploadingLogo}>
-              {profileLogoUrl ? '로고 교체' : '로고 추가'}
+            <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isUploadingAvatar}>
+              {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
             </Button>
           </Stack>
-        </Stack>
-      </Paper>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">사이트 식별자</Typography>
-          {editingField === 'site_key' ? (
-            <>
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  alignItems: 'flex-start',
-                }}
-              >
-                <TextField
-                  value={String(draftValue)}
-                  onChange={handleSiteKeyChange}
-                  fullWidth
-                  size="small"
-                  helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                  slotProps={{
-                    input: {
-                      startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            onClick={() => void handleCheckSiteKey()}
-                            disabled={isCheckingSiteKey}
-                            size="small"
-                          >
-                            중복 확인
-                          </Button>
-                        </InputAdornment>
-                      ),
-                    },
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1.5}>
+              <Typography variant="subtitle2">사이트 로고</Typography>
+
+              {profileLogoUrl ? (
+                <Box
+                  component="img"
+                  src={profileLogoUrl}
+                  alt={`${siteInfo.site_label ?? siteInfo.site_key} 로고`}
+                  sx={{
+                    maxWidth: 240,
+                    maxHeight: 80,
+                    objectFit: 'contain',
                   }}
                 />
-                <Button
-                  type="button"
-                  onClick={() => cancelEdit()}
-                  size="large"
-                  variant="outlined"
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('site_key')}
-                  disabled={isSubmitting || isCheckingSiteKey}
-                  sx={{ whiteSpace: 'nowrap' }}
-                  size="large"
-                >
-                  수정 완료
-                </Button>
-              </Stack>
-              {siteKeyCheckMessage ? (
-                <Alert severity="success" variant="outlined">
-                  {siteKeyCheckMessage}
-                </Alert>
-              ) : null}
-            </>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.site_key}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('site_key', siteInfo.site_key)}>
-                수정
-              </Button>
-            </Stack>
-          )}
-        </Stack>
-      </Paper>
+              ) : (
+                <Typography variant="body2">등록된 사이트 로고가 없습니다.</Typography>
+              )}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">사이트명</Typography>
-          {editingField === 'site_label' ? (
-            <>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                }}
-              >
-                <TextField
-                  value={String(draftValue)}
-                  onChange={handleSiteLabelChange}
-                  fullWidth
-                  size="small"
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            onClick={() => void handleCheckSiteLabel()}
-                            disabled={isCheckingSiteLabel}
-                            size="small"
-                          >
-                            중복 확인
-                          </Button>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-                <Button
-                  type="button"
-                  onClick={() => cancelEdit()}
-                  size="large"
-                  variant="outlined"
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('site_label')}
-                  disabled={isSubmitting || isCheckingSiteLabel}
-                  size="large"
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  수정 완료
-                </Button>
-              </Stack>
-              {siteLabelCheckMessage ? (
-                <Alert severity="success" variant="outlined">
-                  {siteLabelCheckMessage}
-                </Alert>
-              ) : null}
-            </>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.site_label ?? ''}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('site_label', siteInfo.site_label)}>
-                수정
-              </Button>
-            </Stack>
-          )}
-        </Stack>
-      </Paper>
-
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">사이트 설명</Typography>
-          {editingField === 'summary' ? (
-            <>
-              <TextField
-                value={String(draftValue)}
-                onChange={handleTextChange}
-                fullWidth
-                multiline
-                size="small"
-                minRows={4}
+              <VisuallyHiddenInput
+                ref={logoInputReference}
+                type="file"
+                accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
+                onChange={handleProfileLogoFileChange}
               />
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                }}
-              >
-                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('summary')}
-                  disabled={isSubmitting}
-                >
-                  수정 완료
+
+              <Stack direction="row" justifyContent="flex-end">
+                <Button type="button" variant="outlined" onClick={handleClickLogoUpload} disabled={isUploadingLogo}>
+                  {profileLogoUrl ? '로고 교체' : '로고 추가'}
                 </Button>
               </Stack>
-            </>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.summary ?? ''}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('summary', siteInfo.summary)}>
-                수정
-              </Button>
             </Stack>
-          )}
-        </Stack>
-      </Paper>
+          </Paper>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">테마</Typography>
-          {editingField === 'theme_type' ? (
-            <>
-              <TextField
-                select
-                value={String(draftValue || 'default')}
-                onChange={handleThemeTypeChange}
-                fullWidth
-                size="small"
-              >
-                {THEME_TYPES.map((themeValue) => (
-                  <MenuItem key={themeValue} value={themeValue}>
-                    {themeValue}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                }}
-              >
-                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('theme_type')}
-                  disabled={isSubmitting}
-                >
-                  변경 완료
-                </Button>
-              </Stack>
-            </>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography>{siteInfo.theme_type}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('theme_type', siteInfo.theme_type)}>
-                변경
-              </Button>
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">사이트 식별자</Typography>
+              {editingField === 'site_key' ? (
+                <>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      alignItems: 'flex-start',
+                    }}
+                  >
+                    <TextField
+                      value={String(draftValue)}
+                      onChange={handleSiteKeyChange}
+                      fullWidth
+                      size="small"
+                      helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                      slotProps={{
+                        input: {
+                          startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={() => void handleCheckSiteKey()}
+                                disabled={isCheckingSiteKey}
+                                size="small"
+                              >
+                                중복 확인
+                              </Button>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => cancelEdit()}
+                      size="large"
+                      variant="outlined"
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('site_key')}
+                      disabled={isSubmitting || isCheckingSiteKey}
+                      sx={{ whiteSpace: 'nowrap' }}
+                      size="large"
+                    >
+                      수정 완료
+                    </Button>
+                  </Stack>
+                  {siteKeyCheckMessage ? (
+                    <Alert severity="success" variant="outlined">
+                      {siteKeyCheckMessage}
+                    </Alert>
+                  ) : null}
+                </>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography>{siteInfo.site_key}</Typography>
+                  <Button type="button" variant="outlined" onClick={() => startEdit('site_key', siteInfo.site_key)}>
+                    수정
+                  </Button>
+                </Stack>
+              )}
             </Stack>
-          )}
-        </Stack>
-      </Paper>
+          </Paper>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
-          {editingField === 'visibility_type' ? (
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={draftValue === 'public'}
-                    onChange={(event) => setDraftValue(event.currentTarget.checked ? 'public' : 'private')}
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">사이트명</Typography>
+              {editingField === 'site_label' ? (
+                <>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <TextField
+                      value={String(draftValue)}
+                      onChange={handleSiteLabelChange}
+                      fullWidth
+                      size="small"
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={() => void handleCheckSiteLabel()}
+                                disabled={isCheckingSiteLabel}
+                                size="small"
+                              >
+                                중복 확인
+                              </Button>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => cancelEdit()}
+                      size="large"
+                      variant="outlined"
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('site_label')}
+                      disabled={isSubmitting || isCheckingSiteLabel}
+                      size="large"
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      수정 완료
+                    </Button>
+                  </Stack>
+                  {siteLabelCheckMessage ? (
+                    <Alert severity="success" variant="outlined">
+                      {siteLabelCheckMessage}
+                    </Alert>
+                  ) : null}
+                </>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography>{siteInfo.site_label ?? ''}</Typography>
+                  <Button type="button" variant="outlined" onClick={() => startEdit('site_label', siteInfo.site_label)}>
+                    수정
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">사이트 설명</Typography>
+              {editingField === 'summary' ? (
+                <>
+                  <TextField
+                    value={String(draftValue)}
+                    onChange={handleTextChange}
+                    fullWidth
+                    multiline
+                    size="small"
+                    minRows={4}
                   />
-                }
-                label={draftValue === 'public' ? '공개' : '비공개'}
-              />
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  alignItems: 'center',
-                }}
-              >
-                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('visibility_type')}
-                  disabled={isSubmitting}
-                  sx={{ whiteSpace: 'nowrap' }}
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('summary')}
+                      disabled={isSubmitting}
+                    >
+                      수정 완료
+                    </Button>
+                  </Stack>
+                </>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography>{siteInfo.summary ?? ''}</Typography>
+                  <Button type="button" variant="outlined" onClick={() => startEdit('summary', siteInfo.summary)}>
+                    수정
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">테마</Typography>
+              {editingField === 'theme_type' ? (
+                <>
+                  <TextField
+                    select
+                    value={String(draftValue || 'default')}
+                    onChange={handleThemeTypeChange}
+                    fullWidth
+                    size="small"
+                  >
+                    {THEME_TYPES.map((themeValue) => (
+                      <MenuItem key={themeValue} value={themeValue}>
+                        {themeValue}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('theme_type')}
+                      disabled={isSubmitting}
+                    >
+                      변경 완료
+                    </Button>
+                  </Stack>
+                </>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography>{siteInfo.theme_type}</Typography>
+                  <Button type="button" variant="outlined" onClick={() => startEdit('theme_type', siteInfo.theme_type)}>
+                    변경
+                  </Button>
+                </Stack>
+              )}
+            </Stack>
+          </Paper>
+
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
+              {editingField === 'visibility_type' ? (
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
                 >
-                  변경 완료
-                </Button>
-              </Stack>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={draftValue === 'public'}
+                        onChange={(event) => setDraftValue(event.currentTarget.checked ? 'public' : 'private')}
+                      />
+                    }
+                    label={draftValue === 'public' ? '공개' : '비공개'}
+                  />
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('visibility_type')}
+                      disabled={isSubmitting}
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      변경 완료
+                    </Button>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle2">
+                    {siteInfo.visibility_type === 'public' ? '공개' : '비공개'}
+                  </Typography>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
+                  >
+                    변경
+                  </Button>
+                </Stack>
+              )}
             </Stack>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
-              >
-                변경
-              </Button>
-            </Stack>
-          )}
-        </Stack>
-      </Paper>
+          </Paper>
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">운영중단</Typography>
-          {editingField === 'is_shutdown' ? (
-            <Stack
-              direction="row"
-              spacing={2}
-              sx={{
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <FormControlLabel
-                control={<Switch checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
-                label={Boolean(draftValue) ? '중단' : '운영'}
-              />
-              <Stack
-                direction="row"
-                spacing={2}
-                sx={{
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                }}
-              >
-                <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => void saveField('is_shutdown')}
-                  disabled={isSubmitting}
+          <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">운영 여부</Typography>
+              {editingField === 'is_shutdown' ? (
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
                 >
-                  변경 완료
-                </Button>
-              </Stack>
+                  <FormControlLabel
+                    control={<Switch checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
+                    label={Boolean(draftValue) ? '중단' : '운영'}
+                  />
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    sx={{
+                      justifyContent: 'flex-end',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
+                      취소
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="contained"
+                      onClick={() => void saveField('is_shutdown')}
+                      disabled={isSubmitting}
+                    >
+                      변경 완료
+                    </Button>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                  <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}
+                  >
+                    변경
+                  </Button>
+                </Stack>
+              )}
             </Stack>
-          ) : (
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
-              <Button type="button" variant="outlined" onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}>
-                변경
-              </Button>
-            </Stack>
-          )}
-        </Stack>
-      </Paper>
+          </Paper>
 
-      <Paper variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>수정내역</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>수정일</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>수정자</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.log}</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(sites.updated_at)} 변경</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.updated_by_name}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </Paper>
+          <Paper variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>수정내역</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>수정일</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>수정자</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.log}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(sites.updated_at)} 변경</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{sites.updated_by_name}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Paper>
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-      {successMessage ? (
-        <Alert severity="success" variant="outlined">
-          {successMessage}
-        </Alert>
-      ) : null}
-    </Stack>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
+          {successMessage ? (
+            <Alert severity="success" variant="outlined">
+              {successMessage}
+            </Alert>
+          ) : null}
+        </div>
+      </div>
+    </Container>
   );
 }

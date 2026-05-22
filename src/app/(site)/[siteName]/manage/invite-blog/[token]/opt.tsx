@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from '@mui/material/Link';
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InviteResponse = {
   ok: boolean;

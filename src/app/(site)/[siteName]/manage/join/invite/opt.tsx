@@ -26,6 +26,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -266,123 +268,127 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1">
-          초대 관리
-        </Typography>
-      )}
+    <Container pageTitle="초대 관리" menu="join">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          <Stack direction="row" justifyContent="flex-end">
+            <Button type="button" variant="contained" color="primary" size="small" onClick={handleOpenInviteDialog}>
+              멤버 초대
+            </Button>
+          </Stack>
 
-      <Stack direction="row" justifyContent="flex-end">
-        <Button type="button" variant="contained" color="primary" size="small" onClick={handleOpenInviteDialog}>
-          멤버 초대
-        </Button>
-      </Stack>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>초대 이메일</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                  <TableCell>유효일</TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedInvites.map((invite) => (
+                  <TableRow key={invite.id}>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
+                    <TableCell align="right">
+                      {invite.status === 'pending' ? (
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          color="inherit"
+                          size="small"
+                          onClick={() => handleOpenCancelDialog(invite)}
+                        >
+                          취소
+                        </Button>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>초대 이메일</TableCell>
-              <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
-              <TableCell>유효일</TableCell>
-              <TableCell />
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sortedInvites.map((invite) => (
-              <TableRow key={invite.id}>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
-                <TableCell align="right">
-                  {invite.status === 'pending' ? (
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      color="inherit"
-                      size="small"
-                      onClick={() => handleOpenCancelDialog(invite)}
-                    >
-                      취소
-                    </Button>
-                  ) : null}
-                </TableCell>
-              </TableRow>
-            ))}
+                {sortedInvites.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      생성된 초대가 없습니다.
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-            {sortedInvites.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center">
-                  생성된 초대가 없습니다.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          <Dialog open={isInviteDialogOpen} onClose={handleCloseInviteDialog} fullWidth maxWidth="sm">
+            <DialogTitle>멤버 초대</DialogTitle>
+            <DialogContent>
+              <Box component="form" onSubmit={handleSubmitInvite}>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <TextField
+                    label="이메일"
+                    value={inviteEmail}
+                    onChange={handleInviteEmailChange}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseInviteDialog} disabled={isInviteSubmitting}>
+                취소
+              </Button>
+              <Button
+                type="button"
+                variant="contained"
+                onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
+                disabled={isInviteSubmitting}
+              >
+                초대하기
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      <Dialog open={isInviteDialogOpen} onClose={handleCloseInviteDialog} fullWidth maxWidth="sm">
-        <DialogTitle>멤버 초대</DialogTitle>
-        <DialogContent>
-          <Box component="form" onSubmit={handleSubmitInvite}>
-            <Stack spacing={2} sx={{ pt: 1 }}>
-              <TextField label="이메일" value={inviteEmail} onChange={handleInviteEmailChange} fullWidth size="small" />
-            </Stack>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseInviteDialog} disabled={isInviteSubmitting}>
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={(event) => void handleSubmitInvite(event as unknown as FormSubmitEvent)}
-            disabled={isInviteSubmitting}
-          >
-            초대하기
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={Boolean(targetInvite)} onClose={handleCloseCancelDialog} fullWidth maxWidth="xs">
+            <DialogTitle>초대 취소</DialogTitle>
+            <DialogContent>
+              <Typography>
+                정말로 초대를 취소하시겠습니까?
+                <br />
+                취소된 초대장은 더이상 사용할 수 없습니다.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseCancelDialog} disabled={isCancelSubmitting}>
+                초대 유지
+              </Button>
+              <Button
+                type="button"
+                variant="contained"
+                color="error"
+                onClick={handleSubmitCancelInvite}
+                disabled={isCancelSubmitting}
+              >
+                초대 취소
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      <Dialog open={Boolean(targetInvite)} onClose={handleCloseCancelDialog} fullWidth maxWidth="xs">
-        <DialogTitle>초대 취소</DialogTitle>
-        <DialogContent>
-          <Typography>
-            정말로 초대를 취소하시겠습니까?
-            <br />
-            취소된 초대장은 더이상 사용할 수 없습니다.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseCancelDialog} disabled={isCancelSubmitting}>
-            초대 유지
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            color="error"
-            onClick={handleSubmitCancelInvite}
-            disabled={isCancelSubmitting}
-          >
-            초대 취소
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }

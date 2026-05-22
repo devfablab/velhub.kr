@@ -34,6 +34,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type HomeOrderItem = {
   id: string;
@@ -316,71 +318,69 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2.5}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          커뮤니티 홈 설정
-        </Typography>
-      ) : null}
+    <Container pageTitle="커뮤니티 홈 설정" menu="design">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-
-      {!hasHomeOrders ? (
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
-            <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
-            <Box>
-              <Button
-                type="button"
-                variant="contained"
-                onClick={() => void handleInitialize()}
-                disabled={isInitializing}
-              >
-                커뮤니티 홈 초기 세팅하기
-              </Button>
-            </Box>
-          </Stack>
-        </Paper>
-      ) : (
-        <>
-          {items.length === 0 ? (
+          {!hasHomeOrders ? (
             <Paper variant="outlined" sx={{ p: 3 }}>
-              <Typography>등록된 게시판이 없습니다.</Typography>
+              <Stack spacing={2}>
+                <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
+                <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
+                <Box>
+                  <Button
+                    type="button"
+                    variant="contained"
+                    onClick={() => void handleInitialize()}
+                    disabled={isInitializing}
+                  >
+                    커뮤니티 홈 초기 세팅하기
+                  </Button>
+                </Box>
+              </Stack>
             </Paper>
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                <Stack spacing={1.5}>
-                  {items.map((item) => (
-                    <SortableHomeOrderItem key={item.id} item={item} onChangeShow={handleChangeShow} />
-                  ))}
-                </Stack>
-              </SortableContext>
-            </DndContext>
+            <>
+              {items.length === 0 ? (
+                <Paper variant="outlined" sx={{ p: 3 }}>
+                  <Typography>등록된 게시판이 없습니다.</Typography>
+                </Paper>
+              ) : (
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                    <Stack spacing={1.5}>
+                      {items.map((item) => (
+                        <SortableHomeOrderItem key={item.id} item={item} onChangeShow={handleChangeShow} />
+                      ))}
+                    </Stack>
+                  </SortableContext>
+                </DndContext>
+              )}
+
+              <Stack direction="row" spacing={1} justifyContent="flex-end">
+                <Button type="button" variant="outlined" onClick={() => void loadHomeOrders()} disabled={isSubmitting}>
+                  다시 불러오기
+                </Button>
+                <Button type="button" variant="contained" onClick={() => void handleSave()} disabled={isSubmitting}>
+                  저장
+                </Button>
+              </Stack>
+            </>
           )}
 
-          <Stack direction="row" spacing={1} justifyContent="flex-end">
-            <Button type="button" variant="outlined" onClick={() => void loadHomeOrders()} disabled={isSubmitting}>
-              다시 불러오기
-            </Button>
-            <Button type="button" variant="contained" onClick={() => void handleSave()} disabled={isSubmitting}>
-              저장
-            </Button>
-          </Stack>
-        </>
-      )}
-
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }

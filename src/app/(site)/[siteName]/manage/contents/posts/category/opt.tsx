@@ -30,6 +30,8 @@ import {
   styled,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -947,237 +949,240 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          카테고리 관리
-        </Typography>
-      ) : null}
+    <Container pageTitle="카테고리 설정" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={1}>
+            {isOrderChanged ? (
+              <Button type="button" variant="contained" color="primary" onClick={handleSaveOrder} disabled={isOrdering}>
+                순서 저장
+              </Button>
+            ) : null}
+            <Button type="button" variant="outlined" onClick={handleOpenNewDialog}>
+              카테고리 추가
+            </Button>
+          </Stack>
 
-      <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={1}>
-        {isOrderChanged ? (
-          <Button type="button" variant="contained" color="primary" onClick={handleSaveOrder} disabled={isOrdering}>
-            순서 저장
-          </Button>
-        ) : null}
-        <Button type="button" variant="outlined" onClick={handleOpenNewDialog}>
-          카테고리 추가
-        </Button>
-      </Stack>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          {isOrderChanged ? (
+            <Alert severity="warning" variant="outlined">
+              순서를 변경하시면 반드시 저장을 눌러주세요.
+            </Alert>
+          ) : null}
 
-      {isOrderChanged ? (
-        <Alert severity="warning" variant="outlined">
-          순서를 변경하시면 반드시 저장을 눌러주세요.
-        </Alert>
-      ) : null}
+          {sortedCategories.length === 0 ? (
+            <Paper sx={{ p: 3 }}>
+              <Typography>등록된 카테고리가 없습니다.</Typography>
+            </Paper>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={sortedCategories.map((category) => category.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell width={64}></TableCell>
+                        <TableCell>식별자</TableCell>
+                        <TableCell>카테고리명</TableCell>
+                        <TableCell>설명</TableCell>
+                        <TableCell>썸네일</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableHead>
 
-      {sortedCategories.length === 0 ? (
-        <Paper sx={{ p: 3 }}>
-          <Typography>등록된 카테고리가 없습니다.</Typography>
-        </Paper>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext
-              items={sortedCategories.map((category) => category.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell width={64}></TableCell>
-                    <TableCell>식별자</TableCell>
-                    <TableCell>카테고리명</TableCell>
-                    <TableCell>설명</TableCell>
-                    <TableCell>썸네일</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableHead>
+                    <TableBody>
+                      {sortedCategories.map((category) => (
+                        <SortableCategoryRow
+                          key={category.id}
+                          category={category}
+                          onEdit={handleOpenEditDialog}
+                          onDelete={handleOpenDeleteDialog}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </SortableContext>
+              </DndContext>
+            </TableContainer>
+          )}
 
-                <TableBody>
-                  {sortedCategories.map((category) => (
-                    <SortableCategoryRow
-                      key={category.id}
-                      category={category}
-                      onEdit={handleOpenEditDialog}
-                      onDelete={handleOpenDeleteDialog}
+          <Dialog
+            open={dialogMode === 'new' || dialogMode === 'edit'}
+            onClose={handleCloseDialog}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <TextField
+                  label="카테고리 식별자"
+                  value={categoryKey}
+                  onChange={handleCategoryKeyChange}
+                  fullWidth
+                  required
+                  size="medium"
+                  helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {baseUrl}/{siteName}/b/c/
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            onClick={handleCheckCategoryKey}
+                            disabled={isCheckingKey}
+                            size="small"
+                          >
+                            중복 확인
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+
+                <TextField
+                  label="카테고리명"
+                  value={categoryLabel}
+                  onChange={handleCategoryLabelChange}
+                  fullWidth
+                  size="medium"
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            onClick={handleCheckCategoryLabel}
+                            disabled={isCheckingLabel}
+                            size="small"
+                          >
+                            중복 확인
+                          </Button>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+
+                <TextField
+                  label="카테고리 설명"
+                  value={summary}
+                  onChange={handleSummaryChange}
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  size="small"
+                />
+
+                <Stack spacing={1}>
+                  <Typography variant="body2">카테고리 썸네일 이미지</Typography>
+
+                  <Stack direction="row" spacing={1}>
+                    <Button component="label" variant="outlined" disabled={isUploadingImage}>
+                      이미지 선택
+                      <VisuallyHiddenInput
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageFileChange}
+                      />
+                    </Button>
+
+                    {thumbnailImage ? (
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        color="error"
+                        onClick={handleDeleteImage}
+                        disabled={isDeletingImage}
+                      >
+                        이미지 삭제
+                      </Button>
+                    ) : null}
+                  </Stack>
+
+                  {thumbnailImageUrl ? (
+                    <Box
+                      component="img"
+                      src={thumbnailImageUrl}
+                      alt="카테고리 썸네일"
+                      sx={{ width: '100%', maxWidth: 320, display: 'block', borderRadius: 1 }}
                     />
-                  ))}
-                </TableBody>
-              </Table>
-            </SortableContext>
-          </DndContext>
-        </TableContainer>
-      )}
+                  ) : null}
+                </Stack>
 
-      <Dialog open={dialogMode === 'new' || dialogMode === 'edit'} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{dialogMode === 'new' ? '카테고리 추가' : '카테고리 수정'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              label="카테고리 식별자"
-              value={categoryKey}
-              onChange={handleCategoryKeyChange}
-              fullWidth
-              required
-              size="medium"
-              helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      {baseUrl}/{siteName}/b/c/
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        onClick={handleCheckCategoryKey}
-                        disabled={isCheckingKey}
-                        size="small"
-                      >
-                        중복 확인
-                      </Button>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
 
-            <TextField
-              label="카테고리명"
-              value={categoryLabel}
-              onChange={handleCategoryLabelChange}
-              fullWidth
-              size="medium"
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        onClick={handleCheckCategoryLabel}
-                        disabled={isCheckingLabel}
-                        size="small"
-                      >
-                        중복 확인
-                      </Button>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-
-            <TextField
-              label="카테고리 설명"
-              value={summary}
-              onChange={handleSummaryChange}
-              fullWidth
-              multiline
-              minRows={3}
-              size="small"
-            />
-
-            <Stack spacing={1}>
-              <Typography variant="body2">카테고리 썸네일 이미지</Typography>
-
-              <Stack direction="row" spacing={1}>
-                <Button component="label" variant="outlined" disabled={isUploadingImage}>
-                  이미지 선택
-                  <VisuallyHiddenInput
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                  />
-                </Button>
-
-                {thumbnailImage ? (
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    color="error"
-                    onClick={handleDeleteImage}
-                    disabled={isDeletingImage}
-                  >
-                    이미지 삭제
-                  </Button>
+                {dialogSuccessMessage ? (
+                  <Alert severity="success" variant="outlined">
+                    {dialogSuccessMessage}
+                  </Alert>
                 ) : null}
               </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                type="button"
+                onClick={handleCloseDialog}
+                disabled={isSubmitting || isUploadingImage || isDeletingImage}
+              >
+                취소
+              </Button>
+              <Button
+                type="button"
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={isSubmitting || isUploadingImage || isDeletingImage}
+              >
+                저장
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-              {thumbnailImageUrl ? (
-                <Box
-                  component="img"
-                  src={thumbnailImageUrl}
-                  alt="카테고리 썸네일"
-                  sx={{ width: '100%', maxWidth: 320, display: 'block', borderRadius: 1 }}
-                />
-              ) : null}
-            </Stack>
+          <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
+            <DialogTitle>카테고리 삭제</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
 
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-
-            {dialogSuccessMessage ? (
-              <Alert severity="success" variant="outlined">
-                {dialogSuccessMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            type="button"
-            onClick={handleCloseDialog}
-            disabled={isSubmitting || isUploadingImage || isDeletingImage}
-          >
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={isSubmitting || isUploadingImage || isDeletingImage}
-          >
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-        <DialogTitle>카테고리 삭제</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isSubmitting}>
-            삭제
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isSubmitting}>
+                삭제
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </div>
+    </Container>
   );
 }

@@ -20,6 +20,8 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -270,70 +272,68 @@ export default function Opt() {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      {isNotMobile && (
-        <Typography variant="h5" component="h1" sx={{ mb: 2 }}>
-          메뉴 설정
-        </Typography>
-      )}
+    <Container pageTitle="메뉴 설정" menu="design">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack spacing={3}>
+            <Alert variant="outlined" severity="info">
+              메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.
+            </Alert>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
+                  <Paper variant="outlined" sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
+                    <Typography>홈</Typography>
+                  </Paper>
 
-      <Stack spacing={3}>
-        <Alert variant="outlined" severity="info">
-          메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.
-        </Alert>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-            <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap' }}>
-              <Paper variant="outlined" sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
-                <Typography>홈</Typography>
-              </Paper>
+                  {menus.map((menu) => (
+                    <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
+                  ))}
+                </Stack>
+              </SortableContext>
+            </DndContext>
 
-              {menus.map((menu) => (
-                <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
-              ))}
+            <Stack direction="row" justifyContent="flex-end">
+              <Button type="button" variant="contained" onClick={() => void handleApply()} disabled={isSubmitting}>
+                적용
+              </Button>
             </Stack>
-          </SortableContext>
-        </DndContext>
 
-        <Stack direction="row" justifyContent="flex-end">
-          <Button type="button" variant="contained" onClick={() => void handleApply()} disabled={isSubmitting}>
-            적용
-          </Button>
-        </Stack>
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+            {successMessage ? (
+              <Alert severity="success" variant="outlined">
+                {successMessage}
+              </Alert>
+            ) : null}
+          </Stack>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-        {successMessage ? (
-          <Alert severity="success" variant="outlined">
-            {successMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-
-      <Dialog open={Boolean(renameTarget)} onClose={handleCloseRenameDialog} fullWidth maxWidth="xs">
-        <DialogTitle>게시판 이름 변경</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="게시판 이름"
-            value={renameValue}
-            onChange={handleRenameValueChange}
-            fullWidth
-            size="small"
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseRenameDialog} disabled={isRenaming}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={() => void handleRename()} disabled={isRenaming}>
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Paper>
+          <Dialog open={Boolean(renameTarget)} onClose={handleCloseRenameDialog} fullWidth maxWidth="xs">
+            <DialogTitle>게시판 이름 변경</DialogTitle>
+            <DialogContent>
+              <TextField
+                label="게시판 이름"
+                value={renameValue}
+                onChange={handleRenameValueChange}
+                fullWidth
+                size="small"
+                sx={{ mt: 1 }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" variant="outlined" onClick={handleCloseRenameDialog} disabled={isRenaming}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={() => void handleRename()} disabled={isRenaming}>
+                저장
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </div>
+    </Container>
   );
 }

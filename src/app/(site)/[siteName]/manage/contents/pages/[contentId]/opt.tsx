@@ -19,6 +19,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type ContentRow = {
   id: string;
@@ -254,155 +256,160 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3}>
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack spacing={2.5}>
-          <Typography variant="h5" component="h2">
-            {content.subject}
-          </Typography>
-
-          {content.summary ? (
-            <Typography variant="h6" component="h3">
-              {content.summary}
-            </Typography>
-          ) : null}
-
-          <Stack direction="row" gap={3} flexWrap="wrap">
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2">작성</Typography>
-              <Typography variant="body2">
-                {content.author_name} / {formatDateTimeDetail(content.created_at)}
+    <Container pageTitle="페이지 보기" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Paper variant="outlined" sx={{ p: 3 }}>
+            <Stack spacing={2.5}>
+              <Typography variant="h5" component="h2">
+                {content.subject}
               </Typography>
-            </Stack>
 
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2">수정</Typography>
-              <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
-            </Stack>
-          </Stack>
-          <Divider />
-          {content.is_closed ? (
-            <>
-              <Stack gap={1}>
+              {content.summary ? (
+                <Typography variant="h6" component="h3">
+                  {content.summary}
+                </Typography>
+              ) : null}
+
+              <Stack direction="row" gap={3} flexWrap="wrap">
                 <Stack direction="row" gap={1}>
-                  <Typography variant="subtitle2">삭제 정보</Typography>
+                  <Typography variant="subtitle2">작성</Typography>
                   <Typography variant="body2">
-                    {content.closed_by_name || ''} / {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                    {content.author_name} / {formatDateTimeDetail(content.created_at)}
                   </Typography>
                 </Stack>
-                <Stack>
-                  <Typography variant="subtitle2">삭제 사유</Typography>
-                  <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
-                    {content.closed_message || ''}
-                  </Typography>
+
+                <Stack direction="row" gap={1}>
+                  <Typography variant="subtitle2">수정</Typography>
+                  <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
                 </Stack>
               </Stack>
               <Divider />
-            </>
-          ) : null}
+              {content.is_closed ? (
+                <>
+                  <Stack gap={1}>
+                    <Stack direction="row" gap={1}>
+                      <Typography variant="subtitle2">삭제 정보</Typography>
+                      <Typography variant="body2">
+                        {content.closed_by_name || ''} /{' '}
+                        {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                      </Typography>
+                    </Stack>
+                    <Stack>
+                      <Typography variant="subtitle2">삭제 사유</Typography>
+                      <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                        {content.closed_message || ''}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                  <Divider />
+                </>
+              ) : null}
 
-          {profileImageUrl ? (
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">오픈그래프 이미지</Typography>
-              <Box
-                component="img"
-                src={profileImageUrl}
-                alt="오픈그래프 이미지"
-                sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-              />
+              {profileImageUrl ? (
+                <Stack spacing={1}>
+                  <Typography variant="subtitle2">오픈그래프 이미지</Typography>
+                  <Box
+                    component="img"
+                    src={profileImageUrl}
+                    alt="오픈그래프 이미지"
+                    sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                  />
+                </Stack>
+              ) : null}
+
+              <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
             </Stack>
+          </Paper>
+
+          <Stack direction="row" spacing={1.5} justifyContent="space-between">
+            <Button component={Link} href={`/${siteName}/manage/contents/pages`} underline="none" variant="outlined">
+              목록으로 이동
+            </Button>
+
+            <Stack direction="row" spacing={1.5}>
+              {content.is_closed ? (
+                <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog} disabled={!boardName}>
+                  복구
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    color="error"
+                    variant="outlined"
+                    onClick={handleOpenDeleteDialog}
+                    disabled={!boardName}
+                  >
+                    삭제하기
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="contained"
+                    color="warning"
+                    onClick={handleMoveToEdit}
+                    disabled={!boardName}
+                  >
+                    수정하기
+                  </Button>
+                </>
+              )}
+            </Stack>
+          </Stack>
+
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
           ) : null}
 
-          <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
-        </Stack>
-      </Paper>
+          <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+            <DialogTitle>페이지 삭제</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
 
-      <Stack direction="row" spacing={1.5} justifyContent="space-between">
-        <Button component={Link} href={`/${siteName}/manage/contents/pages`} underline="none" variant="outlined">
-          목록으로 이동
-        </Button>
-
-        <Stack direction="row" spacing={1.5}>
-          {content.is_closed ? (
-            <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog} disabled={!boardName}>
-              복구
-            </Button>
-          ) : (
-            <>
-              <Button
-                type="button"
-                color="error"
-                variant="outlined"
-                onClick={handleOpenDeleteDialog}
-                disabled={!boardName}
-              >
-                삭제하기
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isSubmitting}>
+                취소
               </Button>
-              <Button
-                type="button"
-                variant="contained"
-                color="warning"
-                onClick={handleMoveToEdit}
-                disabled={!boardName}
-              >
-                수정하기
+              <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
+                삭제
               </Button>
-            </>
-          )}
-        </Stack>
-      </Stack>
+            </DialogActions>
+          </Dialog>
 
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
+          <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
+            <DialogTitle>페이지 복구</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>해당 페이지를 복구하시겠습니까?</Typography>
 
-      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-        <DialogTitle>페이지 삭제</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDeleteDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
-            삭제
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
-        <DialogTitle>페이지 복구</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography>해당 페이지를 복구하시겠습니까?</Typography>
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseRestoreDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" color="warning" onClick={handleRestore} disabled={isSubmitting}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseRestoreDialog} disabled={isSubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" color="warning" onClick={handleRestore} disabled={isSubmitting}>
+                확인
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </div>
+    </Container>
   );
 }

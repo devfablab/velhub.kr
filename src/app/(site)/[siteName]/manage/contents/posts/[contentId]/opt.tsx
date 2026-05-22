@@ -26,6 +26,8 @@ import {
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
+import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -507,285 +509,283 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          블로그 글 보기
-        </Typography>
-      ) : null}
-
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-
-      {post ? (
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={2.5}>
-            <Box>
-              <Typography variant="subtitle2">제목</Typography>
-              <Typography variant="body2">{post.subject}</Typography>
-            </Box>
-
-            {post.summary ? (
-              <Box>
-                <Typography variant="subtitle2">부제목</Typography>
-                <Typography variant="body2">{post.summary}</Typography>
-              </Box>
-            ) : null}
-
-            <Box>
-              <Typography variant="subtitle2">작성일</Typography>
-              <Typography variant="body2">{formatDate(post.created_at)}</Typography>
-            </Box>
-
-            <Box>
-              <Typography variant="subtitle2">수정일</Typography>
-              <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
-            </Box>
-
-            <Box>
-              <Typography variant="subtitle2">작성자</Typography>
-              <Typography variant="body2">{post.author_name}</Typography>
-            </Box>
-
-            {series ? (
-              <Box>
-                <Typography variant="subtitle2">연재</Typography>
-                <Typography variant="body2">{series.series_label}</Typography>
-              </Box>
-            ) : null}
-
-            {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
-              <Box>
-                <Typography variant="subtitle2">카테고리</Typography>
-                <Typography variant="body2">
-                  {categories
-                    .filter((category) => selectedCategories.includes(category.category_key))
-                    .map((category) => category.category_label)
-                    .join(', ')}
-                </Typography>
-              </Box>
-            ) : null}
-
-            {post.thumbnail_image ? (
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                  오픈그래프 이미지
-                </Typography>
-                <Box
-                  component="img"
-                  src={getOgImageUrl(post.thumbnail_image)}
-                  alt="오픈그래프 이미지"
-                  sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-                />
-              </Box>
-            ) : null}
-
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                내용
-              </Typography>
-              <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
-            </Box>
-
-            <Stack direction="row" spacing={1.5}>
-              <Button type="button" variant="outlined" onClick={handleMoveToList}>
-                목록
-              </Button>
-
-              {!post.is_closed && isAuthor ? (
-                <Button type="button" variant="contained" onClick={handleMoveToEdit}>
-                  수정
-                </Button>
-              ) : null}
-
-              {isAuthor || isStaff ? (
-                <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
-                  카테고리 설정
-                </Button>
-              ) : null}
-
-              {isAuthor || isStaff ? (
-                <Button type="button" variant="outlined" onClick={handleOpenSeriesDialog}>
-                  연재 설정
-                </Button>
-              ) : null}
-
-              {post.is_closed ? (
-                <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
-                  복구
-                </Button>
-              ) : (
-                <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
-                  삭제
-                </Button>
-              )}
-            </Stack>
-          </Stack>
-        </Paper>
-      ) : null}
-
-      <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
-        <DialogTitle>게시물 삭제</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Alert severity="info" variant="outlined">
-              삭제시 언제든 복구가 가능합니다.
-              <br />
-              삭제사유를 입력해 주세요. (필수)
-            </Alert>
-
-            <TextField
-              label="삭제 사유"
-              value={closedMessage}
-              onChange={handleClosedMessageChange}
-              fullWidth
-              multiline
-              minRows={3}
-              size="small"
-            />
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            type="button"
-            variant="outlined"
-            color="inherit"
-            onClick={handleCloseDeleteDialog}
-            disabled={isDeleting}
-          >
-            취소
-          </Button>
-          <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-            삭제
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
-        <DialogTitle>게시물 복구</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-          </Typography>
-          {dialogErrorMessage ? (
-            <Alert severity="error" variant="filled" sx={{ mt: 2 }}>
-              {dialogErrorMessage}
+    <Container pageTitle="글 보기" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
             </Alert>
           ) : null}
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseRestoreDialog} disabled={isRestoring}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleRestore} disabled={isRestoring}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Dialog open={isCategoryDialogOpen} onClose={handleCloseCategoryDialog} fullWidth maxWidth="sm">
-        <DialogTitle>카테고리 설정</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="detail-post-category-select-label">카테고리</InputLabel>
-              <Select
-                labelId="detail-post-category-select-label"
-                multiple
-                value={selectedCategories}
-                onChange={handleCategoryChange}
-                input={<OutlinedInput label="카테고리" />}
-                renderValue={(selected) =>
-                  categories
-                    .filter((category) => selected.includes(category.category_key))
-                    .map((category) => category.category_label)
-                    .join(', ')
-                }
+          {post ? (
+            <Paper sx={{ p: 3 }}>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography variant="subtitle2">제목</Typography>
+                  <Typography variant="body2">{post.subject}</Typography>
+                </Box>
+
+                {post.summary ? (
+                  <Box>
+                    <Typography variant="subtitle2">부제목</Typography>
+                    <Typography variant="body2">{post.summary}</Typography>
+                  </Box>
+                ) : null}
+
+                <Box>
+                  <Typography variant="subtitle2">작성일</Typography>
+                  <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2">수정일</Typography>
+                  <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="subtitle2">작성자</Typography>
+                  <Typography variant="body2">{post.author_name}</Typography>
+                </Box>
+
+                {series ? (
+                  <Box>
+                    <Typography variant="subtitle2">연재</Typography>
+                    <Typography variant="body2">{series.series_label}</Typography>
+                  </Box>
+                ) : null}
+
+                {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
+                  <Box>
+                    <Typography variant="subtitle2">카테고리</Typography>
+                    <Typography variant="body2">
+                      {categories
+                        .filter((category) => selectedCategories.includes(category.category_key))
+                        .map((category) => category.category_label)
+                        .join(', ')}
+                    </Typography>
+                  </Box>
+                ) : null}
+
+                {post.thumbnail_image ? (
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      오픈그래프 이미지
+                    </Typography>
+                    <Box
+                      component="img"
+                      src={getOgImageUrl(post.thumbnail_image)}
+                      alt="오픈그래프 이미지"
+                      sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                    />
+                  </Box>
+                ) : null}
+
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    내용
+                  </Typography>
+                  <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+                </Box>
+
+                <Stack direction="row" spacing={1.5}>
+                  <Button type="button" variant="outlined" onClick={handleMoveToList}>
+                    목록
+                  </Button>
+
+                  {!post.is_closed && isAuthor ? (
+                    <Button type="button" variant="contained" onClick={handleMoveToEdit}>
+                      수정
+                    </Button>
+                  ) : null}
+
+                  {isAuthor || isStaff ? (
+                    <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
+                      카테고리 설정
+                    </Button>
+                  ) : null}
+
+                  {isAuthor || isStaff ? (
+                    <Button type="button" variant="outlined" onClick={handleOpenSeriesDialog}>
+                      연재 설정
+                    </Button>
+                  ) : null}
+
+                  {post.is_closed ? (
+                    <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
+                      복구
+                    </Button>
+                  ) : (
+                    <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
+                      삭제
+                    </Button>
+                  )}
+                </Stack>
+              </Stack>
+            </Paper>
+          ) : null}
+
+          <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+            <DialogTitle>게시물 삭제</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Alert severity="info" variant="outlined">
+                  삭제시 언제든 복구가 가능합니다.
+                  <br />
+                  삭제사유를 입력해 주세요. (필수)
+                </Alert>
+
+                <TextField
+                  label="삭제 사유"
+                  value={closedMessage}
+                  onChange={handleClosedMessageChange}
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  size="small"
+                />
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                type="button"
+                variant="outlined"
+                color="inherit"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
               >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.category_key}>
-                    <Checkbox checked={selectedCategories.includes(category.category_key)} />
-                    <ListItemText primary={category.category_label} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                취소
+              </Button>
+              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
+                삭제
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseCategoryDialog} disabled={isCategorySubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleSaveCategories} disabled={isCategorySubmitting}>
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
+            <DialogTitle>게시물 복구</DialogTitle>
+            <DialogContent>
+              <Typography variant="body2">
+                해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+              </Typography>
+              {dialogErrorMessage ? (
+                <Alert severity="error" variant="filled" sx={{ mt: 2 }}>
+                  {dialogErrorMessage}
+                </Alert>
+              ) : null}
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseRestoreDialog} disabled={isRestoring}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={handleRestore} disabled={isRestoring}>
+                확인
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-      <Dialog open={isSeriesDialogOpen} onClose={handleCloseSeriesDialog} fullWidth maxWidth="sm">
-        <DialogTitle>연재 설정</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="detail-post-series-select-label">연재</InputLabel>
-              <Select
-                labelId="detail-post-series-select-label"
-                value={selectedSeriesKey}
-                onChange={handleSeriesChange}
-                input={<OutlinedInput label="연재" />}
-                disabled={isSeriesLocked}
-              >
-                <MenuItem value="">
-                  <ListItemText primary="선택 안함" />
-                </MenuItem>
+          <Dialog open={isCategoryDialogOpen} onClose={handleCloseCategoryDialog} fullWidth maxWidth="sm">
+            <DialogTitle>카테고리 설정</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="detail-post-category-select-label">카테고리</InputLabel>
+                  <Select
+                    labelId="detail-post-category-select-label"
+                    multiple
+                    value={selectedCategories}
+                    onChange={handleCategoryChange}
+                    input={<OutlinedInput label="카테고리" />}
+                    renderValue={(selected) =>
+                      categories
+                        .filter((category) => selected.includes(category.category_key))
+                        .map((category) => category.category_label)
+                        .join(', ')
+                    }
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.category_key}>
+                        <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                        <ListItemText primary={category.category_label} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-                {seriesList
-                  .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
-                  .map((seriesItem) => (
-                    <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
-                      <ListItemText primary={seriesItem.series_label} />
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseCategoryDialog} disabled={isCategorySubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={handleSaveCategories} disabled={isCategorySubmitting}>
+                저장
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={isSeriesDialogOpen} onClose={handleCloseSeriesDialog} fullWidth maxWidth="sm">
+            <DialogTitle>연재 설정</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel id="detail-post-series-select-label">연재</InputLabel>
+                  <Select
+                    labelId="detail-post-series-select-label"
+                    value={selectedSeriesKey}
+                    onChange={handleSeriesChange}
+                    input={<OutlinedInput label="연재" />}
+                    disabled={isSeriesLocked}
+                  >
+                    <MenuItem value="">
+                      <ListItemText primary="선택 안함" />
                     </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
 
-            {isSeriesLocked ? (
-              <Alert severity="info" variant="outlined">
-                연재가 설정된 글은 연재를 변경할 수 없습니다.
-              </Alert>
-            ) : null}
+                    {seriesList
+                      .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
+                      .map((seriesItem) => (
+                        <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                          <ListItemText primary={seriesItem.series_label} />
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
 
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseSeriesDialog} disabled={isSeriesSubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Stack>
+                {isSeriesLocked ? (
+                  <Alert severity="info" variant="outlined">
+                    연재가 설정된 글은 연재를 변경할 수 없습니다.
+                  </Alert>
+                ) : null}
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseSeriesDialog} disabled={isSeriesSubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
+                저장
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </div>
+    </Container>
   );
 }

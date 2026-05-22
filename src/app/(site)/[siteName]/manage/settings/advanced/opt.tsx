@@ -16,6 +16,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -158,50 +160,48 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={5}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          추가 설정
-        </Typography>
-      ) : null}
+    <Container pageTitle="추가 설정" menu="settings">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack component="form" spacing={3} onSubmit={handleSubmit}>
+            <Stack spacing={1}>
+              <Typography variant="subtitle2">멤버 목록 공개여부</Typography>
+              <RadioGroup value={visibilityMember} onChange={handleVisibilityMemberChange} row>
+                <FormControlLabel value="public" control={<Radio />} label="공개" />
+                <FormControlLabel value="private" control={<Radio />} label="비공개" />
+              </RadioGroup>
+            </Stack>
 
-      <Stack component="form" spacing={3} onSubmit={handleSubmit}>
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">멤버 목록 공개여부</Typography>
-          <RadioGroup value={visibilityMember} onChange={handleVisibilityMemberChange} row>
-            <FormControlLabel value="public" control={<Radio />} label="공개" />
-            <FormControlLabel value="private" control={<Radio />} label="비공개" />
-          </RadioGroup>
-        </Stack>
+            <TextField
+              label="검색용 키워드"
+              value={searchKeywords}
+              onChange={handleSearchKeywordsChange}
+              fullWidth
+              size="small"
+              helperText="쉼표(,)로 구분해서 입력"
+            />
 
-        <TextField
-          label="검색용 키워드"
-          value={searchKeywords}
-          onChange={handleSearchKeywordsChange}
-          fullWidth
-          size="small"
-          helperText="쉼표(,)로 구분해서 입력"
-        />
+            <Stack direction="row" justifyContent="flex-end">
+              <Button type="submit" variant="contained" disabled={isSubmitting}>
+                저장
+              </Button>
+            </Stack>
 
-        <Stack direction="row" justifyContent="flex-end">
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            저장
-          </Button>
-        </Stack>
+            {errorMessage ? (
+              <Alert severity="error" variant="filled">
+                {errorMessage}
+              </Alert>
+            ) : null}
+          </Stack>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }

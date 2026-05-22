@@ -24,6 +24,8 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import Container from '../../../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -306,137 +308,146 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
-      {isNotMobile ? (
-        <Typography variant="h5" component="h1">
-          말머리 관리
-        </Typography>
-      ) : null}
+    <Container pageTitle="말머리 관리" menu="contents">
+      <div className="container">
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {board ? (
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle2">게시판</Typography>
+              <Typography variant="body2">{board.board_label ?? ''}</Typography>
+            </Stack>
+          ) : null}
 
-      {board ? (
-        <Stack spacing={0.5}>
-          <Typography variant="subtitle2">게시판</Typography>
-          <Typography variant="body2">{board.board_label ?? ''}</Typography>
-        </Stack>
-      ) : null}
+          <Alert severity="warning" variant="outlined">
+            포스팅에 1번 이상 사용한 말머리는 삭제할 수 없습니다.
+          </Alert>
 
-      <Alert severity="warning" variant="outlined">
-        포스팅에 1번 이상 사용한 말머리는 삭제할 수 없습니다.
-      </Alert>
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Button type="button" variant="contained" onClick={handleOpenNewDialog}>
-          말머리 추가
-        </Button>
-        <span />
-      </Stack>
-
-      {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
-      ) : null}
-
-      {sortedPrefixes.length === 0 ? (
-        <Paper sx={{ p: 3 }}>
-          <Typography>등록된 말머리가 없습니다.</Typography>
-        </Paper>
-      ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>번호</TableCell>
-                <TableCell>말머리명</TableCell>
-                <TableCell>생성일</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {sortedPrefixes.map((prefix) => (
-                <TableRow key={prefix.id}>
-                  <TableCell>{prefix.prefix_key}</TableCell>
-                  <TableCell>{prefix.prefix_label}</TableCell>
-                  <TableCell>{formatDateTimeDetail(prefix.created_at)}</TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        size="small"
-                        onClick={() => handleOpenEditDialog(prefix)}
-                      >
-                        수정
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outlined"
-                        color="error"
-                        size="small"
-                        onClick={() => handleOpenDeleteDialog(prefix)}
-                      >
-                        삭제
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-      <Dialog open={dialogMode === 'new' || dialogMode === 'edit'} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField label="말머리명" value={prefixLabel} onChange={handlePrefixLabelChange} fullWidth size="small" />
-
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Button type="button" variant="contained" onClick={handleOpenNewDialog}>
+              말머리 추가
+            </Button>
+            <span />
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-        <DialogTitle>말머리 삭제</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+          {errorMessage ? (
+            <Alert severity="error" variant="filled">
+              {errorMessage}
+            </Alert>
+          ) : null}
 
-            {dialogErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {dialogErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
-            삭제
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {sortedPrefixes.length === 0 ? (
+            <Paper sx={{ p: 3 }}>
+              <Typography>등록된 말머리가 없습니다.</Typography>
+            </Paper>
+          ) : (
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>번호</TableCell>
+                    <TableCell>말머리명</TableCell>
+                    <TableCell>생성일</TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedPrefixes.map((prefix) => (
+                    <TableRow key={prefix.id}>
+                      <TableCell>{prefix.prefix_key}</TableCell>
+                      <TableCell>{prefix.prefix_label}</TableCell>
+                      <TableCell>{formatDateTimeDetail(prefix.created_at)}</TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            size="small"
+                            onClick={() => handleOpenEditDialog(prefix)}
+                          >
+                            수정
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() => handleOpenDeleteDialog(prefix)}
+                          >
+                            삭제
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+          <Dialog
+            open={dialogMode === 'new' || dialogMode === 'edit'}
+            onClose={handleCloseDialog}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <TextField
+                  label="말머리명"
+                  value={prefixLabel}
+                  onChange={handlePrefixLabelChange}
+                  fullWidth
+                  size="small"
+                />
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2500}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-    </Stack>
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                취소
+              </Button>
+              <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
+                저장
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
+            <DialogTitle>말머리 삭제</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+
+                {dialogErrorMessage ? (
+                  <Alert severity="error" variant="filled">
+                    {dialogErrorMessage}
+                  </Alert>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                취소
+              </Button>
+              <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
+                삭제
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Snackbar
+            open={Boolean(snackbarMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSnackbarMessage('')}
+            message={snackbarMessage}
+          />
+        </div>
+      </div>
+    </Container>
   );
 }
