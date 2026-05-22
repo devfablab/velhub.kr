@@ -193,7 +193,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="페이지" menu="contents">
+    <Container pageTitle="페이지 관리" pageBack={`/${siteName}/manage`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="flex-end">

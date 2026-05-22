@@ -628,7 +628,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="기본 설정" menu="settings">
+    <Container pageTitle="기본 설정" pageBack={`/${siteName}/manage`} menu="settings">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Typography variant="subtitle2">

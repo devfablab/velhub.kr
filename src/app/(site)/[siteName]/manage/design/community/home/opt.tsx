@@ -318,7 +318,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="커뮤니티 홈 설정" menu="design">
+    <Container pageTitle="커뮤니티 홈 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? (

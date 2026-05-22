@@ -271,7 +271,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="탈퇴 멤버 관리" menu="members">
+    <Container pageTitle="탈퇴 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Paper variant="outlined" sx={{ p: 3 }}>

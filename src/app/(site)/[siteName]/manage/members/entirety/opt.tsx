@@ -711,7 +711,7 @@ export default function Opt() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      <Container pageTitle="활동 멤버 관리" menu="members">
+      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
         <div className="container">
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             {errorMessage ? (

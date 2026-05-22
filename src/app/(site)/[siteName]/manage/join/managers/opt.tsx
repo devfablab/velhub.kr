@@ -810,7 +810,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="매니저 관리" menu="join">
+    <Container pageTitle="매니저 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? (

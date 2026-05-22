@@ -30,7 +30,11 @@ export default async function Page(context: RouteContext) {
   }
 
   return (
-    <Container pageTitle={siteInfo.data.site_type === 'blog' ? '글 목록' : '게시판 목록'} menu="contents">
+    <Container
+      pageTitle={siteInfo.data.site_type === 'blog' ? '글 목록' : '게시판 목록'}
+      pageBack={`/${siteName}/manage`}
+      menu="contents"
+    >
       <Opt />
     </Container>
   );

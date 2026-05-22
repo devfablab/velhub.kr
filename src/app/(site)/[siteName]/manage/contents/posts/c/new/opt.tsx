@@ -420,7 +420,7 @@ export default function Opt() {
   }, [siteName]);
 
   return (
-    <Container pageTitle="게시판 생성" menu="contents">
+    <Container pageTitle="게시판 생성" pageBack={`/${siteName}/manage/contents/posts/c`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>

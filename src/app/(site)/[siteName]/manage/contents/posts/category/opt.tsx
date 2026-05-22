@@ -949,7 +949,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="카테고리 설정" menu="contents">
+    <Container pageTitle="카테고리 설정" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="flex-end" alignItems="center" gap={1}>

@@ -729,3 +729,25 @@ main.manage
               border: 1px solid ds.$hex-accent
               background-color: ds.$hex-accent
               color: ds.$hex-white
+
+  .breadcrumbs
+    display: flex
+    flex-direction: row
+    padding-bottom: ds.rem(12)
+
+    nav[aria-label="breadcrumb"]
+      display: flex
+      flex-direction: row
+      max-width: ds.rem(572)
+
+      li[aria-hidden="true"]
+        margin: 0 ds.rem(3)
+
+      a
+        @include ds.fw(pre, 500)
+        color: ds.$hex-action
+        text-decoration: underline
+
+      span
+        @include ds.fw(pre, 700)
+        color: ds.$hex-secondary

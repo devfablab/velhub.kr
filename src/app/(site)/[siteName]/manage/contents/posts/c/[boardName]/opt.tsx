@@ -470,7 +470,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="글 목록" menu="contents">
+    <Container pageTitle="글 목록" pageBack={`/${siteName}/manage/contents/posts/c`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">

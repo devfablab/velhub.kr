@@ -509,7 +509,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="글 보기" menu="contents">
+    <Container pageTitle="글 보기" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? (

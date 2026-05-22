@@ -440,7 +440,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="멤버 등급 관리" menu="members">
+    <Container pageTitle="멤버 등급 관리" pageBack={`/${siteName}/manage`} menu="members">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? (

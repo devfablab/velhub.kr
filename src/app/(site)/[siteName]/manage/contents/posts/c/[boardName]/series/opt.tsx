@@ -871,7 +871,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="연재 관리" menu="contents">
+    <Container pageTitle="연재 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="space-between">

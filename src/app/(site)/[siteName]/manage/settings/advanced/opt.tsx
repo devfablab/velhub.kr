@@ -160,7 +160,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="추가 설정" menu="settings">
+    <Container pageTitle="추가 설정" pageBack={`/${siteName}/manage`} menu="settings">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" spacing={3} onSubmit={handleSubmit}>

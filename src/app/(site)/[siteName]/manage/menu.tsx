@@ -6,6 +6,7 @@ import { useRouter, useParams, usePathname } from 'next/navigation';
 import {
   Avatar,
   Box,
+  Breadcrumbs,
   Drawer,
   IconButton,
   List,
@@ -31,6 +32,7 @@ import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -44,6 +46,7 @@ import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
   pageTitle?: string;
+  pageBack?: string;
   pageEnterance?: boolean;
   menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team';
   children: React.ReactNode;
@@ -93,6 +96,211 @@ type BlogFontSettings = {
   descriptionFontSize: number | null;
   descriptionMargin: number | null;
 };
+
+type BreadcrumbItem = {
+  label: string;
+  href?: string;
+};
+
+function createBreadcrumbItems(pathname: string): BreadcrumbItem[] {
+  const segments = pathname.split('/').filter(Boolean);
+
+  const siteName = segments[0];
+
+  if (!siteName) {
+    return [];
+  }
+
+  const contentsIndex = segments.indexOf('contents');
+
+  if (contentsIndex === -1) {
+    return [];
+  }
+
+  const basePath = `/${siteName}/manage/contents`;
+  const rest = segments.slice(contentsIndex + 1);
+
+  const section = rest[0];
+
+  if (!section) {
+    return [];
+  }
+
+  if (section === 'pages') {
+    const contentId = rest[1];
+    const action = rest[2];
+
+    if (!contentId) {
+      return [];
+    }
+
+    const items: BreadcrumbItem[] = [
+      {
+        label: '페이지 관리',
+        href: `${basePath}/pages`,
+      },
+    ];
+
+    if (contentId === 'new') {
+      items.push({
+        label: '페이지 생성',
+      });
+
+      return items;
+    }
+
+    items.push({
+      label: action === 'edit' ? '페이지 보기' : '페이지 보기',
+      href: action === 'edit' ? `${basePath}/pages/${contentId}` : undefined,
+    });
+
+    if (action === 'edit') {
+      items.push({
+        label: '페이지 수정',
+      });
+    }
+
+    return items;
+  }
+
+  if (section === 'posts') {
+    const second = rest[1];
+
+    if (!second) {
+      return [];
+    }
+
+    const items: BreadcrumbItem[] = [
+      {
+        label: '글 관리',
+        href: `${basePath}/posts`,
+      },
+    ];
+
+    if (second === 'new') {
+      items.push({
+        label: '글 쓰기',
+      });
+
+      return items;
+    }
+
+    if (second === 'category') {
+      items.push({
+        label: '카테고리 관리',
+      });
+
+      return items;
+    }
+
+    if (second === 'series') {
+      items.push({
+        label: '연재 관리',
+      });
+
+      return items;
+    }
+
+    if (second === 'c') {
+      const boardName = rest[2];
+      const third = rest[3];
+      const fourth = rest[4];
+
+      items.push({
+        label: '게시판 목록',
+        href: `${basePath}/posts/c`,
+      });
+
+      if (!boardName) {
+        return items;
+      }
+
+      if (boardName === 'new') {
+        items.push({
+          label: '게시판 생성',
+        });
+
+        return items;
+      }
+
+      items.push({
+        label: boardName,
+        href: `${basePath}/posts/c/${boardName}`,
+      });
+
+      if (!third) {
+        items.push({
+          label: '글 목록',
+        });
+
+        return items;
+      }
+
+      if (third === 'new') {
+        items.push({
+          label: '글 쓰기',
+        });
+
+        return items;
+      }
+
+      if (third === 'edit') {
+        items.push({
+          label: '게시판 수정',
+        });
+
+        return items;
+      }
+
+      if (third === 'prefix') {
+        items.push({
+          label: '말머리 관리',
+        });
+
+        return items;
+      }
+
+      if (third === 'series') {
+        items.push({
+          label: '연재 관리',
+        });
+
+        return items;
+      }
+
+      items.push({
+        label: fourth === 'edit' ? '글 보기' : '글 보기',
+        href: fourth === 'edit' ? `${basePath}/posts/c/${boardName}/${third}` : undefined,
+      });
+
+      if (fourth === 'edit') {
+        items.push({
+          label: '글 수정',
+        });
+      }
+
+      return items;
+    }
+
+    const contentId = second;
+    const action = rest[2];
+
+    items.push({
+      label: action === 'edit' ? '글 보기' : '글 보기',
+      href: action === 'edit' ? `${basePath}/posts/${contentId}` : undefined,
+    });
+
+    if (action === 'edit') {
+      items.push({
+        label: '글 수정',
+      });
+    }
+
+    return items;
+  }
+
+  return [];
+}
 
 function getBlogFontFamily(value: string | null) {
   if (value === 'neo') {
@@ -286,7 +494,7 @@ function isCurrentTab(pathname: string, item: TabMenuItem) {
   return pathname === item.href;
 }
 
-export default function Container({ pageTitle, pageEnterance, menu, children }: ContainerProps) {
+export default function Container({ pageTitle, pageBack, pageEnterance, menu, children }: ContainerProps) {
   const params = useParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -295,13 +503,11 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const breadcrumbs = createBreadcrumbItems(pathname);
 
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
-  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
   const [siteLabel, setSiteLabel] = useState('');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -314,8 +520,6 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
     globalRole: null,
     siteRole: null,
   });
-
-  const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -369,8 +573,6 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
           siteRole: null,
         });
         setSiteLabel('');
-        setProfilePictureUrl(null);
-        setProfileLogoUrl(null);
         return;
       }
 
@@ -387,8 +589,6 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
         siteRole: result.siteRole,
       });
       setSiteLabel(result.siteLabel || result.siteName || '');
-      setProfilePictureUrl(result.profilePictureUrl);
-      setProfileLogoUrl(result.profileLogoUrl);
     }
 
     if (!isReady) {
@@ -398,47 +598,18 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
     void loadHeader();
   }, [isReady, siteName]);
 
-  function renderThemeModeIcon() {
-    if (themeMode === 'light') {
-      return <LightModeIcon />;
-    }
-
-    if (themeMode === 'dark') {
-      return <DarkModeIcon />;
-    }
-
-    return <SettingsBrightnessIcon />;
-  }
-
   function handleOpenProfileDrawer() {
     setIsProfileDrawerOpen(true);
-  }
-
-  function handleOpenThemeModeMenu() {
-    setIsThemeModeDrawerOpen(true);
-  }
-
-  function handleCloseThemeModeDrawer() {
-    setIsThemeModeDrawerOpen(false);
   }
 
   function handleSelectThemeMode(nextThemeMode: ThemeMode) {
     window.localStorage.setItem(THEME_MODE_STORAGE_KEY, nextThemeMode);
     setThemeMode(nextThemeMode);
     applyThemeMode(nextThemeMode);
-    handleCloseThemeModeDrawer();
   }
 
   function handleCloseProfileDrawer() {
     setIsProfileDrawerOpen(false);
-  }
-
-  function handleOpenSearchDrawer() {
-    setIsSearchDrawerOpen(true);
-  }
-
-  function handleCloseSearchDrawer() {
-    setIsSearchDrawerOpen(false);
   }
 
   async function handleLogout() {
@@ -475,9 +646,13 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
                   <CloseRoundedIcon />
                 </IconButton>
               ) : (
-                <IconButton onClick={() => router.back()} aria-label="이전화면으로 이동">
-                  <ArrowBackIosNewRoundedIcon />
-                </IconButton>
+                <>
+                  {pageBack ? (
+                    <IconButton href={pageBack} aria-label="이전화면으로 이동">
+                      <ArrowBackIosNewRoundedIcon />
+                    </IconButton>
+                  ) : null}
+                </>
               )}
             </div>
             <h1>
@@ -645,6 +820,33 @@ export default function Container({ pageTitle, pageEnterance, menu, children }: 
             </ul>
           </div>
         ) : null}
+        {isMobile ? null : (
+          <>
+            {breadcrumbs.length > 0 && (
+              <div className={`container ${styles.breadcrumbs}`}>
+                <Breadcrumbs
+                  separator={<NavigateNextRoundedIcon fontSize="small" />}
+                  aria-label="breadcrumb"
+                  className="content"
+                >
+                  {breadcrumbs.map((item, index) => {
+                    const isLast = index === breadcrumbs.length - 1;
+
+                    if (isLast || !item.href) {
+                      return <span key={`${item.label}-${index}`}>{item.label}</span>;
+                    }
+
+                    return (
+                      <Anchor key={`${item.label}-${index}`} href={item.href}>
+                        {item.label}
+                      </Anchor>
+                    );
+                  })}
+                </Breadcrumbs>
+              </div>
+            )}
+          </>
+        )}
         {children}
       </main>
     </>

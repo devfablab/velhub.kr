@@ -256,7 +256,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="페이지 보기" menu="contents">
+    <Container pageTitle="페이지 보기" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Paper variant="outlined" sx={{ p: 3 }}>

@@ -237,7 +237,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="댓글 설정" menu="design">
+    <Container pageTitle="댓글 설정" pageBack={`/${siteName}/manage`} menu="design">
       <Stack spacing={3}>
         <div className="container">
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
