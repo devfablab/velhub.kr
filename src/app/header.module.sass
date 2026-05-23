@@ -510,6 +510,9 @@ header.header
       padding-top: ds.rem(3)
       margin: 0 ds.rem(17)
 
+      &:hover
+        background-color: transparent!important
+
       @include ds.mq(maxExtraSmall)
         svg
           display: none
@@ -702,13 +705,18 @@ main.manage
           display: inline-flex
           @include ds.fw(neo, 500)
           font-size: ds.rem(16)
-          color: rgba(ds.$rgb-secondary, .8)
+
+          html[data-theme="yellow-light"] &
+            color: rgba(ds.$rgb-secondary, .8)
+
+          html[data-theme="yellow-dark"] &
+            color: rgba(ds.$rgb-light, .8)
 
           @include ds.mq(maxMedium)
             width: 100%
             justify-content: center
             border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
-            padding: ds.rem(5) 0 ds.rem(3)
+            padding: ds.rem(5) 0 ds.rem(7)
 
           @include ds.mq(minLarge)
             align-items: center

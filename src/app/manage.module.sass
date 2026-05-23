@@ -1,13 +1,34 @@
-.content
-  width: 100%
+.container
+  @include ds.mq(maxSmall)
+    padding-right: 0!important
+    padding-left: 0!important
+
+    .paper
+      border-radius: 0
 
 .content
+  width: 100%
   max-width: ds.rem(572)
 
 .content-manage
   display: flex
   flex-direction: column
   gap: ds.rem(12)
+
+  .profile
+    display: flex
+    flex-direction: row
+    align-items: center
+
+    .info
+      p
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(16)
+
+        &:not(.text)
+          @include ds.fw(pre, 400)
+          font-size: ds.rem(14)
+          opacity: .7
 
   .stat
     dl
@@ -22,7 +43,10 @@
         padding: 0 ds.rem(12)
 
         html[data-theme="yellow-light"] &
-          border-left: 1px solid rgba(ds.$rgb-tertiary, .5)
+          border-left: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+        html[data-theme="yellow-dark"] &
+          border-left: 1px solid rgba(ds.$rgb-tertiary, .3)
 
         &:first-of-type
           padding-left: 0
@@ -37,3 +61,38 @@
 
         dd
           font-size: ds.rem(14)
+
+  .menu
+    ul
+      padding: ds.rem(12) 0
+      display: flex
+      flex-direction: column
+
+      li
+        a
+          display: flex
+          justify-content: space-between
+          align-items: center
+          height: ds.rem(37)
+          padding: 0 ds.rem(12)
+
+          @include ds.mq(minLarge)
+            padding: 0 ds.rem(23)
+
+          html[data-theme="yellow-light"] &
+            border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+            color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            border-top: 1px solid rgba(ds.$rgb-tertiary, .3)
+            color: ds.$hex-light
+
+          span
+            @include ds.fw(neo, 600)
+
+          svg
+            opacity: .7
+
+        &:first-of-type
+          a
+            border-top: 0!important
