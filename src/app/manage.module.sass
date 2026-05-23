@@ -3,6 +3,9 @@
     padding-right: 0!important
     padding-left: 0!important
 
+    .content
+      max-width: none!important
+
     .paper
       border-radius: 0
 
@@ -63,21 +66,22 @@
           font-size: ds.rem(14)
 
   .menu
+    padding-top: 0
+    padding-bottom: 0
+
     ul
-      padding: ds.rem(12) 0
       display: flex
       flex-direction: column
+
+      @include ds.mq(maxSmall)
+        padding: 0
 
       li
         a
           display: flex
           justify-content: space-between
           align-items: center
-          height: ds.rem(37)
-          padding: 0 ds.rem(12)
-
-          @include ds.mq(minLarge)
-            padding: 0 ds.rem(23)
+          height: ds.rem(52)
 
           html[data-theme="yellow-light"] &
             border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
@@ -96,3 +100,29 @@
         &:first-of-type
           a
             border-top: 0!important
+
+  .button-top
+    position: fixed
+    top: 0
+    right: ds.rem(17)
+    z-index: 1225
+    margin-top: 0
+    height: ds.rem(70)
+    display: flex
+    align-items: center
+
+    html[data-theme="yellow-light"] &
+      background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+    button.button
+      background-color: transparent!important
+      padding: ds.rem(8)
+      @include ds.fw(pre, 700)
+      font-size: ds.rem(16)
+      color: ds.$hex-action
+
+      &:disabled
+        color: rgba(ds.$rgb-primary, .2)!important

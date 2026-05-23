@@ -18,6 +18,7 @@ import {
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -51,6 +52,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -156,42 +158,60 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="추가 설정" pageBack={`/${siteName}/manage`} menu="settings">
-      <div className="container">
+    <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" spacing={3} onSubmit={handleSubmit}>
-            <Stack spacing={1}>
+            <div className={`paper ${styles.paper}`}>
               <Typography variant="subtitle2">멤버 목록 공개여부</Typography>
               <RadioGroup value={visibilityMember} onChange={handleVisibilityMemberChange} row>
                 <FormControlLabel value="public" control={<Radio />} label="공개" />
                 <FormControlLabel value="private" control={<Radio />} label="비공개" />
               </RadioGroup>
-            </Stack>
+            </div>
 
-            <TextField
-              label="검색용 키워드"
-              value={searchKeywords}
-              onChange={handleSearchKeywordsChange}
-              fullWidth
-              size="small"
-              helperText="쉼표(,)로 구분해서 입력"
-            />
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle2">검색용 키워드</Typography>
+              <TextField
+                value={searchKeywords}
+                onChange={handleSearchKeywordsChange}
+                fullWidth
+                size="small"
+                helperText="쉼표(,)로 구분해서 입력"
+              />
+            </div>
 
-            <Stack direction="row" justifyContent="flex-end">
-              <Button type="submit" variant="contained" disabled={isSubmitting}>
-                저장
-              </Button>
-            </Stack>
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="submit" className={`button ${styles.button}`}>
+                  저장
+                </button>
+              </div>
+            ) : (
+              <Stack direction="row" justifyContent="flex-end">
+                <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                  저장
+                </button>
+              </Stack>
+            )}
 
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
           </Stack>
 
           <Snackbar

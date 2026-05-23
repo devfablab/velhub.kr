@@ -6,14 +6,12 @@ import {
   Alert,
   Avatar,
   Box,
-  Button,
   FormControlLabel,
   InputAdornment,
   MenuItem,
-  Paper,
+  Snackbar,
   Stack,
   styled,
-  Switch,
   Table,
   TableBody,
   TableCell,
@@ -24,7 +22,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -623,19 +624,65 @@ export default function Opt() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  if (isLoading || !siteInfo || !sites) {
-    return null;
+  if (isLoading) {
+    return (
+      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+  if (!siteInfo) {
+    return (
+      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <div className={`paper paper-error ${styles.paper}`}>사이트 정보를 불러오지 못했습니다</div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+  if (!sites) {
+    return (
+      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <div className={`paper paper-error ${styles.paper}`}>업데이트 정보를 불러오지 못했습니다</div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="기본 설정" pageBack={`/${siteName}/manage`} menu="settings">
-      <div className="container">
+    <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Typography variant="subtitle2">
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+
+          <Snackbar
+            open={Boolean(successMessage)}
+            message={successMessage}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+            autoHideDuration={3000}
+            onClose={() => setSuccessMessage('')}
+          />
+
+          <Typography variant="subtitle2" sx={{ p: 2 }}>
             {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
             {formatDate(siteInfo.created_at)}에 개설
           </Typography>
-
           <Stack spacing={1.5} alignItems="center">
             <Avatar
               src={profilePictureUrl || '/broken-image.jpg'}
@@ -650,15 +697,19 @@ export default function Opt() {
               onChange={handleProfilePictureFileChange}
             />
 
-            <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isUploadingAvatar}>
-              {profilePictureUrl ? '이미지 교체' : '이미지 추가'}
-            </Button>
+            <button
+              type="button"
+              className="button small action"
+              onClick={handleClickAvatarUpload}
+              disabled={isUploadingAvatar}
+            >
+              {profilePictureUrl ? '사이트 아바타 이미지 교체' : '사이트 아바타 이미지 추가'}
+            </button>
           </Stack>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">사이트 로고</Typography>
 
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1.5}>
-              <Typography variant="subtitle2">사이트 로고</Typography>
-
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               {profileLogoUrl ? (
                 <Box
                   component="img"
@@ -681,368 +732,361 @@ export default function Opt() {
                 onChange={handleProfileLogoFileChange}
               />
 
-              <Stack direction="row" justifyContent="flex-end">
-                <Button type="button" variant="outlined" onClick={handleClickLogoUpload} disabled={isUploadingLogo}>
-                  {profileLogoUrl ? '로고 교체' : '로고 추가'}
-                </Button>
-              </Stack>
+              <button
+                type="button"
+                className="button small action"
+                onClick={handleClickLogoUpload}
+                disabled={isUploadingLogo}
+              >
+                {profileLogoUrl ? '로고 교체' : '로고 추가'}
+              </button>
             </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">사이트 식별자</Typography>
-              {editingField === 'site_key' ? (
-                <>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    sx={{
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <TextField
-                      value={String(draftValue)}
-                      onChange={handleSiteKeyChange}
-                      fullWidth
-                      size="small"
-                      helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                      slotProps={{
-                        input: {
-                          startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <Button
-                                type="button"
-                                variant="outlined"
-                                onClick={() => void handleCheckSiteKey()}
-                                disabled={isCheckingSiteKey}
-                                size="small"
-                              >
-                                중복 확인
-                              </Button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => cancelEdit()}
-                      size="large"
-                      variant="outlined"
-                      sx={{ whiteSpace: 'nowrap' }}
-                    >
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('site_key')}
-                      disabled={isSubmitting || isCheckingSiteKey}
-                      sx={{ whiteSpace: 'nowrap' }}
-                      size="large"
-                    >
-                      수정 완료
-                    </Button>
-                  </Stack>
-                  {siteKeyCheckMessage ? (
-                    <Alert severity="success" variant="outlined">
-                      {siteKeyCheckMessage}
-                    </Alert>
-                  ) : null}
-                </>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography>{siteInfo.site_key}</Typography>
-                  <Button type="button" variant="outlined" onClick={() => startEdit('site_key', siteInfo.site_key)}>
-                    수정
-                  </Button>
-                </Stack>
-              )}
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">사이트명</Typography>
-              {editingField === 'site_label' ? (
-                <>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <TextField
-                      value={String(draftValue)}
-                      onChange={handleSiteLabelChange}
-                      fullWidth
-                      size="small"
-                      slotProps={{
-                        input: {
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <Button
-                                type="button"
-                                variant="outlined"
-                                onClick={() => void handleCheckSiteLabel()}
-                                disabled={isCheckingSiteLabel}
-                                size="small"
-                              >
-                                중복 확인
-                              </Button>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => cancelEdit()}
-                      size="large"
-                      variant="outlined"
-                      sx={{ whiteSpace: 'nowrap' }}
-                    >
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('site_label')}
-                      disabled={isSubmitting || isCheckingSiteLabel}
-                      size="large"
-                      sx={{ whiteSpace: 'nowrap' }}
-                    >
-                      수정 완료
-                    </Button>
-                  </Stack>
-                  {siteLabelCheckMessage ? (
-                    <Alert severity="success" variant="outlined">
-                      {siteLabelCheckMessage}
-                    </Alert>
-                  ) : null}
-                </>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography>{siteInfo.site_label ?? ''}</Typography>
-                  <Button type="button" variant="outlined" onClick={() => startEdit('site_label', siteInfo.site_label)}>
-                    수정
-                  </Button>
-                </Stack>
-              )}
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">사이트 설명</Typography>
-              {editingField === 'summary' ? (
-                <>
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">사이트 식별자</Typography>
+            {editingField === 'site_key' ? (
+              <>
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    alignItems: 'flex-start',
+                  }}
+                >
                   <TextField
                     value={String(draftValue)}
-                    onChange={handleTextChange}
+                    onChange={handleSiteKeyChange}
                     fullWidth
-                    multiline
                     size="small"
-                    minRows={4}
-                  />
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
+                    helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                    slotProps={{
+                      input: {
+                        startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => void handleCheckSiteKey()}
+                              disabled={isCheckingSiteKey}
+                            >
+                              중복 확인
+                            </button>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
+                  />
+                  <button type="button" onClick={() => cancelEdit()} className="button medium cancel">
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void saveField('site_key')}
+                    disabled={isSubmitting || isCheckingSiteKey}
                   >
-                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('summary')}
-                      disabled={isSubmitting}
-                    >
-                      수정 완료
-                    </Button>
-                  </Stack>
-                </>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography>{siteInfo.summary ?? ''}</Typography>
-                  <Button type="button" variant="outlined" onClick={() => startEdit('summary', siteInfo.summary)}>
-                    수정
-                  </Button>
+                    수정 완료
+                  </button>
                 </Stack>
-              )}
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">테마</Typography>
-              {editingField === 'theme_type' ? (
-                <>
+                {siteKeyCheckMessage ? (
+                  <Snackbar
+                    open={Boolean(siteKeyCheckMessage)}
+                    message={siteKeyCheckMessage}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'center',
+                    }}
+                    autoHideDuration={3000}
+                    onClose={() => setSiteKeyCheckMessage('')}
+                  />
+                ) : null}
+              </>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography>{siteInfo.site_key}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('site_key', siteInfo.site_key)}
+                >
+                  수정
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">사이트명</Typography>
+            {editingField === 'site_label' ? (
+              <>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                  }}
+                >
                   <TextField
-                    select
-                    value={String(draftValue || 'default')}
-                    onChange={handleThemeTypeChange}
+                    value={String(draftValue)}
+                    onChange={handleSiteLabelChange}
                     fullWidth
                     size="small"
-                  >
-                    {THEME_TYPES.map((themeValue) => (
-                      <MenuItem key={themeValue} value={themeValue}>
-                        {themeValue}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => void handleCheckSiteLabel()}
+                              disabled={isCheckingSiteLabel}
+                            >
+                              중복 확인
+                            </button>
+                          </InputAdornment>
+                        ),
+                      },
                     }}
+                  />
+                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void saveField('site_label')}
+                    disabled={isSubmitting || isCheckingSiteLabel}
                   >
-                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('theme_type')}
-                      disabled={isSubmitting}
-                    >
-                      변경 완료
-                    </Button>
-                  </Stack>
-                </>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography>{siteInfo.theme_type}</Typography>
-                  <Button type="button" variant="outlined" onClick={() => startEdit('theme_type', siteInfo.theme_type)}>
-                    변경
-                  </Button>
+                    수정 완료
+                  </button>
                 </Stack>
-              )}
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
-              {editingField === 'visibility_type' ? (
+                {siteLabelCheckMessage ? (
+                  <Alert severity="success" variant="outlined">
+                    {siteLabelCheckMessage}
+                  </Alert>
+                ) : null}
+              </>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography>{siteInfo.site_label ?? ''}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('site_label', siteInfo.site_label)}
+                >
+                  수정
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">사이트 설명</Typography>
+            {editingField === 'summary' ? (
+              <>
+                <TextField
+                  value={String(draftValue)}
+                  onChange={handleTextChange}
+                  fullWidth
+                  multiline
+                  size="small"
+                  minRows={4}
+                />
                 <Stack
                   direction="row"
                   spacing={2}
                   sx={{
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     alignItems: 'center',
                   }}
                 >
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={draftValue === 'public'}
-                        onChange={(event) => setDraftValue(event.currentTarget.checked ? 'public' : 'private')}
-                      />
-                    }
-                    label={draftValue === 'public' ? '공개' : '비공개'}
-                  />
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('visibility_type')}
-                      disabled={isSubmitting}
-                      sx={{ whiteSpace: 'nowrap' }}
-                    >
-                      변경 완료
-                    </Button>
-                  </Stack>
-                </Stack>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle2">
-                    {siteInfo.visibility_type === 'public' ? '공개' : '비공개'}
-                  </Typography>
-                  <Button
+                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
+                    취소
+                  </button>
+                  <button
                     type="button"
-                    variant="outlined"
-                    onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
+                    className="button medium submit"
+                    onClick={() => void saveField('summary')}
+                    disabled={isSubmitting}
                   >
-                    변경
-                  </Button>
+                    수정 완료
+                  </button>
                 </Stack>
-              )}
-            </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">운영 여부</Typography>
-              {editingField === 'is_shutdown' ? (
+              </>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography>{siteInfo.summary ?? ''}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('summary', siteInfo.summary)}
+                >
+                  수정
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">테마</Typography>
+            {editingField === 'theme_type' ? (
+              <>
+                <TextField
+                  select
+                  value={String(draftValue || 'default')}
+                  onChange={handleThemeTypeChange}
+                  fullWidth
+                  size="small"
+                >
+                  {THEME_TYPES.map((themeValue) => (
+                    <MenuItem key={themeValue} value={themeValue}>
+                      {draftValue === themeValue ? (
+                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                      ) : (
+                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                      )}
+                      {themeValue}
+                    </MenuItem>
+                  ))}
+                </TextField>
                 <Stack
                   direction="row"
                   spacing={2}
                   sx={{
-                    justifyContent: 'space-between',
+                    justifyContent: 'flex-end',
                     alignItems: 'center',
                   }}
                 >
-                  <FormControlLabel
-                    control={<Switch checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
-                    label={Boolean(draftValue) ? '중단' : '운영'}
-                  />
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    sx={{
-                      justifyContent: 'flex-end',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Button type="button" onClick={() => cancelEdit()} variant="outlined" sx={{ whiteSpace: 'nowrap' }}>
-                      취소
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      onClick={() => void saveField('is_shutdown')}
-                      disabled={isSubmitting}
-                    >
-                      변경 완료
-                    </Button>
-                  </Stack>
-                </Stack>
-              ) : (
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                  <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
-                  <Button
+                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
+                    취소
+                  </button>
+                  <button
                     type="button"
-                    variant="outlined"
-                    onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}
+                    className="button medium submit"
+                    onClick={() => void saveField('theme_type')}
+                    disabled={isSubmitting}
                   >
-                    변경
-                  </Button>
+                    변경 완료
+                  </button>
                 </Stack>
-              )}
-            </Stack>
-          </Paper>
+              </>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography>{siteInfo.theme_type}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('theme_type', siteInfo.theme_type)}
+                >
+                  변경
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">{siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} 공개</Typography>
+            {editingField === 'visibility_type' ? (
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <FormControlLabel
+                  label={draftValue === 'public' ? '공개' : '비공개'}
+                  control={
+                    <IOSSwitch
+                      sx={{ m: 1 }}
+                      checked={draftValue === 'public'}
+                      onChange={(event) => setDraftValue(event.currentTarget.checked ? 'public' : 'private')}
+                    />
+                  }
+                />
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    alignItems: 'center',
+                  }}
+                >
+                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void saveField('visibility_type')}
+                    disabled={isSubmitting}
+                  >
+                    변경 완료
+                  </button>
+                </Stack>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
+                >
+                  변경
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">운영 여부</Typography>
+            {editingField === 'is_shutdown' ? (
+              <Stack
+                direction="row"
+                spacing={2}
+                sx={{
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <FormControlLabel
+                  label={Boolean(draftValue) ? '중단' : '운영'}
+                  control={<IOSSwitch sx={{ m: 1 }} checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
+                />
 
-          <Paper variant="outlined">
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                  }}
+                >
+                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void saveField('is_shutdown')}
+                    disabled={isSubmitting}
+                  >
+                    변경 완료
+                  </button>
+                </Stack>
+              </Stack>
+            ) : (
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}
+                >
+                  변경
+                </button>
+              </Stack>
+            )}
+          </div>
+          <div className={`paper paper-p0 ${styles.paper}`}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -1059,18 +1103,7 @@ export default function Opt() {
                 </TableRow>
               </TableBody>
             </Table>
-          </Paper>
-
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
-          {successMessage ? (
-            <Alert severity="success" variant="outlined">
-              {successMessage}
-            </Alert>
-          ) : null}
+          </div>
         </div>
       </div>
     </Container>

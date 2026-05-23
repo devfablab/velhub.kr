@@ -139,7 +139,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <div className={`paper ${styles.paper} ${styles.profile}`}>
-            <AppIconAvatar src={siteAvatar} alt={siteNameText} size={72} />
+            <AppIconAvatar src={siteAvatar || null} alt={siteNameText} size={72} />
             <div className={styles.info}>
               <p className={styles.text}>{siteNameText}</p>
               <p>SINCE {formatDateSimple(siteCreatedAt)}</p>
@@ -158,7 +158,7 @@ export default function Opt() {
               </div>
             </dl>
           </div>
-          <div className={`paper paper-p0 ${styles.paper} ${styles.menu}`}>
+          <div className={`paper ${styles.paper} ${styles.menu}`}>
             <ul>
               {tabItems.map((tabItem) => (
                 <li key={tabItem.href}>

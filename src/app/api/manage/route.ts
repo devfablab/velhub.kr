@@ -6,6 +6,7 @@ import { normalizeText } from '@/lib/utils';
 type SiteRow = {
   id: string;
   profile_picture: string | null;
+  profile_logo: string | null;
   site_type: string;
   site_label: string | null;
   created_at: string;
@@ -29,6 +30,23 @@ function decryptValue(value: string | null | undefined) {
   }
 }
 
+function getPublicStorageUrl(bucket: string, path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    return normalizedPath;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrlResult = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+
+  return publicUrlResult.data.publicUrl || null;
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -42,7 +60,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, profile_picture, site_type, site_label, created_at')
+      .select('id, profile_picture, profile_logo, site_type, site_label, created_at')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -106,7 +124,8 @@ export async function GET(request: Request) {
 
     return Response.json({
       site: {
-        avatar: site.profile_picture ?? null,
+        avatar: getPublicStorageUrl('avatar', site.profile_picture),
+        logo: getPublicStorageUrl('site-logo', site.profile_logo),
         name: site.site_label ?? null,
         createdAt: site.created_at ?? null,
         siteType: site.site_type,

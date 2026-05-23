@@ -308,13 +308,13 @@ a, button, select, input
   border-radius: ds.rem(17)
   padding: ds.rem(23)
   box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
+  overflow: auto
 
   @include ds.mq(maxMedium)
     padding: ds.rem(12)
 
   &.paper-p0
     padding: 0
-    overflow: hidden
 
   &.paper-error
     background-color: ds.$hex-warning!important
@@ -336,7 +336,7 @@ a, button, select, input
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
 
-  table
+  table:not(.MuiTable-root)
     table-layout: fixed
     border-collapse: collapse
     width: 100%
@@ -750,15 +750,94 @@ a, button, select, input
     font-variation-settings: "wght" 700
 
   html[data-theme="yellow-light"] &
-    color: ds.$hex-bright
+    color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-bright
 
   &.small
     height: ds.rem(27)
-    border-radius: ds.rem(3)
+    padding: 0 ds.rem(12)
     font-size: ds.rem(14)
+
+  &.medium
+    height: ds.rem(40)
+    padding: 0 ds.rem(17)
+    font-size: ds.rem(16)
+    white-space: nowrap
+
+  &.small, &.medium
+    border-radius: ds.rem(5)
+    @include ds.fw(pre, 500)
+    transition: all .4s cubic-bezier(.4,0,.2,1)
+
+    &.submit
+      border: 1px solid ds.$hex-accent
+      background-color: ds.$hex-accent
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-white
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-black
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+
+    &.action
+      border: 1px solid ds.$hex-accent!important
+
+      html[data-theme="yellow-light"] &
+        background-color: ds.$hex-white
+        color: rgba(ds.$rgb-secondary, .8)
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-black
+        color: rgba(ds.$rgb-light, .8)
+
+    &.submit, &.action
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgb(ds.$rgb-accent, .5)
+
+    &.cancel
+      html[data-theme="yellow-light"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+        background-color: ds.$hex-white
+        color: rgba(ds.$rgb-secondary, .7)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+        background-color: ds.$hex-black
+        color: rgba(ds.$rgb-light, .7)
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .1)
+
+    &.danger
+      border: 1px solid ds.$hex-warning
+      background-color: ds.$hex-warning
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-white
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-black
+
+    &.warning
+      border: 1px solid ds.$hex-warning
+      background-color: ds.$hex-warning
+
+      html[data-theme="yellow-light"] &
+        background-color: ds.$hex-white
+        color: rgba(ds.$rgb-secondary, .8)
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-black
+        color: rgba(ds.$rgb-light, .8)
+
+    &.danger, &.warning
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
   &.action
     html[data-theme="yellow-light"] &
@@ -1188,3 +1267,12 @@ html[data-site-type='blog']
       @include ds.fw(pre, 600)
       color: ds.$hex-accent
       opacity: 1
+
+.MuiInputBase-root.MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline
+    border-color: ds.$hex-accent
+    border-size: 1px
+    box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+
+.MuiButtonBase-root.MuiRadio-root.Mui-checked
+  color: ds.$hex-accent

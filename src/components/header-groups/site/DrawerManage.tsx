@@ -31,7 +31,7 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
       <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/settings`}>
           {siteType === 'blog' ? <ArticleOutlinedIcon fontSize="small" /> : <InterestsRoundedIcon fontSize="small" />}
-          <span>{siteType === 'blog' ? '블로그 운영' : '커뮤니티 운영'}</span>
+          <span>{siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보'}</span>
         </Anchor>
       </MenuItem>
 
