@@ -9,6 +9,8 @@ import {
   FormControlLabel,
   InputAdornment,
   MenuItem,
+  Select,
+  SelectChangeEvent,
   Snackbar,
   Stack,
   styled,
@@ -242,7 +244,7 @@ export default function Opt() {
     resetSiteLabelCheck();
   }
 
-  function handleThemeTypeChange(event: InputChangeEvent) {
+  function handleThemeTypeChange(event: SelectChangeEvent) {
     const nextValue = event.target.value;
 
     if (!isThemeType(nextValue)) {
@@ -930,13 +932,7 @@ export default function Opt() {
             <Typography variant="subtitle2">테마</Typography>
             {editingField === 'theme_type' ? (
               <>
-                <TextField
-                  select
-                  value={String(draftValue || 'default')}
-                  onChange={handleThemeTypeChange}
-                  fullWidth
-                  size="small"
-                >
+                <Select value={String(draftValue || 'default')} onChange={handleThemeTypeChange} fullWidth size="small">
                   {THEME_TYPES.map((themeValue) => (
                     <MenuItem key={themeValue} value={themeValue}>
                       {draftValue === themeValue ? (
@@ -947,7 +943,7 @@ export default function Opt() {
                       {themeValue}
                     </MenuItem>
                   ))}
-                </TextField>
+                </Select>
                 <Stack
                   direction="row"
                   spacing={2}

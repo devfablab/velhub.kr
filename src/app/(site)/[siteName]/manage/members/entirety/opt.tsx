@@ -31,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -782,9 +783,30 @@ export default function Opt() {
                 <Stack direction="column" spacing={1.5} sx={{ width: '100%' }}>
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <Select value={countPeriod} onChange={handleCountPeriodChange} size="small" fullWidth>
-                      <MenuItem value="all">전체 기간</MenuItem>
-                      <MenuItem value="recent_1month">최근 1개월</MenuItem>
-                      <MenuItem value="custom">기간 선택</MenuItem>
+                      <MenuItem value="all">
+                        {countPeriod === 'all' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        전체 기간
+                      </MenuItem>
+                      <MenuItem value="recent_1month">
+                        {countPeriod === 'recent_1month' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        최근 1개월
+                      </MenuItem>
+                      <MenuItem value="custom">
+                        {countPeriod === 'custom' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        기간 선택
+                      </MenuItem>
                     </Select>
                     <Typography variant="body2">동안</Typography>
                   </Stack>
@@ -802,8 +824,22 @@ export default function Opt() {
                       {detailSearchType === 'checkin_count' ? '회' : '개'}
                     </Typography>
                     <Select value={countCompare} onChange={handleCountCompareChange} size="small">
-                      <MenuItem value="gte">이상</MenuItem>
-                      <MenuItem value="lte">이하</MenuItem>
+                      <MenuItem value="gte">
+                        {countCompare === 'gte' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        이상
+                      </MenuItem>
+                      <MenuItem value="lte">
+                        {countCompare === 'lte' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        이하
+                      </MenuItem>
                     </Select>
                     <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                       인 멤버
@@ -814,7 +850,6 @@ export default function Opt() {
                 {countPeriod === 'custom' ? (
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <DatePicker
-                      label="시작 날짜"
                       value={countStartDate}
                       onChange={setCountStartDate}
                       slotProps={{
@@ -825,7 +860,6 @@ export default function Opt() {
                     />
                     <Typography variant="body2">부터</Typography>
                     <DatePicker
-                      label="종료 날짜"
                       value={countEndDate}
                       onChange={setCountEndDate}
                       slotProps={{
@@ -855,7 +889,6 @@ export default function Opt() {
                 <Stack direction="column" spacing={1.5}>
                   <Stack direction="row" spacing={1.5} alignItems="center">
                     <DatePicker
-                      label="시작 날짜"
                       value={dateStartDate}
                       onChange={setDateStartDate}
                       slotProps={{
@@ -866,7 +899,6 @@ export default function Opt() {
                     />
                     <Typography variant="body2">부터</Typography>
                     <DatePicker
-                      label="종료 날짜"
                       value={dateEndDate}
                       onChange={setDateEndDate}
                       slotProps={{
@@ -926,7 +958,7 @@ export default function Opt() {
 
             <Stack justifyContent="space-between" direction="row" alignItems="center" sx={{ p: 2 }}>
               <Typography variant="h6" component="h2">
-                커뮤니티 멤버 수 {filteredUsers.length}
+                커뮤니티 멤버 수 {filteredUsers.length}명
               </Typography>
               <div>
                 <button
@@ -960,10 +992,38 @@ export default function Opt() {
                     disabled={isActionSubmitting}
                     fullWidth
                   >
-                    <MenuItem value="">활동상태 선택</MenuItem>
-                    <MenuItem value="block">활동 정지</MenuItem>
-                    <MenuItem value="kick">강제 탈퇴</MenuItem>
-                    <MenuItem value="ban">가입 불가</MenuItem>
+                    <MenuItem value="">
+                      {actionType === null ? (
+                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                      ) : (
+                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                      )}
+                      활동상태 선택
+                    </MenuItem>
+                    <MenuItem value="block">
+                      {actionType === 'block' ? (
+                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                      ) : (
+                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                      )}
+                      활동 정지
+                    </MenuItem>
+                    <MenuItem value="kick">
+                      {actionType === 'kick' ? (
+                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                      ) : (
+                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                      )}
+                      강제 탈퇴
+                    </MenuItem>
+                    <MenuItem value="ban">
+                      {actionType === 'ban' ? (
+                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                      ) : (
+                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                      )}
+                      가입 불가
+                    </MenuItem>
                   </Select>
                   <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     하거나
@@ -977,6 +1037,11 @@ export default function Opt() {
                   <Select value={selectedLevelId} onChange={handleLevelSelectChange} size="small" fullWidth>
                     {selectableLevels.map((level) => (
                       <MenuItem key={level.id} value={level.id}>
+                        {selectedLevelId === level.id ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {level.label}
                       </MenuItem>
                     ))}
