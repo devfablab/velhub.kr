@@ -3,27 +3,30 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
-  Box,
   Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
+  Drawer,
   Snackbar,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
-  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDate, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -64,6 +67,10 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadUsers() {
     const response = await fetch(`/api/manage/members/blocked?siteName=${siteName}`, {
@@ -265,20 +272,28 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
     <Container pageTitle="활동정지 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
-      <div className="container">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Paper variant="outlined" sx={{ p: 3 }}>
+          <div className={`paper ${styles.paper}`}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <TextField
                 label="별명 검색"
@@ -287,43 +302,43 @@ export default function Opt() {
                 fullWidth
                 size="small"
               />
-              <Button type="button" variant="contained" onClick={handleSearch}>
+              <button type="button" className="button medium action" onClick={handleSearch}>
                 검색
-              </Button>
+              </button>
             </Stack>
-          </Paper>
+          </div>
 
           <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Button
+            <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
+              <button
                 type="button"
-                variant="outlined"
+                className="button medium action"
                 onClick={() => handleOpenActionDialog('unblock')}
                 disabled={isActionSubmitting}
               >
                 활동 정지 해제
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                color="error"
-                onClick={() => handleOpenActionDialog('kick')}
-                disabled={isActionSubmitting}
-              >
-                강제 탈퇴
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                color="error"
-                onClick={() => handleOpenActionDialog('ban')}
-                disabled={isActionSubmitting}
-              >
-                가입 불가
-              </Button>
+              </button>
+              <Stack direction="row" spacing={1.5} justifyContent="space-between">
+                <button
+                  type="button"
+                  className="button medium warning"
+                  onClick={() => handleOpenActionDialog('kick')}
+                  disabled={isActionSubmitting}
+                >
+                  강제 탈퇴
+                </button>
+                <button
+                  type="button"
+                  className="button medium warning"
+                  onClick={() => handleOpenActionDialog('ban')}
+                  disabled={isActionSubmitting}
+                >
+                  가입 불가
+                </button>
+              </Stack>
             </Stack>
 
-            <TableContainer component={Paper} variant="outlined">
+            <div className={`paper ${styles.paper}`}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -361,41 +376,96 @@ export default function Opt() {
                   ) : null}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </div>
           </Stack>
 
-          <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
-            <DialogTitle>{getActionTitle()}</DialogTitle>
-            <DialogContent>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(actionType)}
+              onClose={handleCloseActionDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>{getActionTitle()}</h2>
+              <button className="close-button" onClick={handleCloseActionDialog}>
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                {actionType === 'kick' || actionType === 'ban' ? (
-                  <TextField
-                    label={getActionReasonLabel()}
-                    value={actionReason}
-                    onChange={(event) => setActionReason(event.currentTarget.value)}
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    size="small"
-                  />
-                ) : null}
-
+                <TextField
+                  placeholder={getActionReasonLabel()}
+                  value={actionReason}
+                  onChange={(event) => setActionReason(event.currentTarget.value)}
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  size="small"
+                />
                 {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
                 ) : null}
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseActionDialog}
+                    disabled={isActionSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSubmitAction}
+                    disabled={isActionSubmitting}
+                  >
+                    확인
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" variant="outlined" onClick={handleCloseActionDialog} disabled={isActionSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
+              <DialogTitle>{getActionTitle()}</DialogTitle>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  {actionType === 'kick' || actionType === 'ban' ? (
+                    <TextField
+                      label={getActionReasonLabel()}
+                      value={actionReason}
+                      onChange={(event) => setActionReason(event.currentTarget.value)}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+                  ) : null}
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={handleCloseActionDialog}
+                  disabled={isActionSubmitting}
+                >
+                  취소
+                </Button>
+                <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+                  확인
+                </Button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}

@@ -792,7 +792,10 @@ a, button, select, input
         color: rgba(ds.$rgb-secondary, .7)
 
       html[data-theme="yellow-dark"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+        color: rgba(ds.$rgb-light, .7)
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-action, .5)
 
     &.action
       border: 1px solid ds.$hex-accent!important
@@ -810,14 +813,14 @@ a, button, select, input
         box-shadow: 0 0 0 ds.rem(3) rgb(ds.$rgb-accent, .5)
 
     &.cancel
+      background-color: transparent!important
+
       html[data-theme="yellow-light"] &
         border: 1px solid rgba(ds.$rgb-tertiary, .2)
-        background-color: ds.$hex-white
         color: rgba(ds.$rgb-secondary, .7)
 
       html[data-theme="yellow-dark"] &
         border: 1px solid rgba(ds.$rgb-tertiary, .5)
-        background-color: ds.$hex-black
         color: rgba(ds.$rgb-light, .7)
 
       &:hover, &:focus-visible
@@ -1316,13 +1319,24 @@ html[data-site-type='blog']
     border-radius: ds.rem(17)
     padding: ds.rem(17)
 
-    > div, h2
-      padding: 0!important
+    h2, .MuiDialogContent-root, .MuiDialogActions-root
+      padding-right: 0
+      padding-left: 0
+
+    h2, .MuiDialogActions-root
+      padding-top: 0
+      padding-bottom: 0
 
     h2
-      margin-bottom: ds.rem(12)
       @include ds.fw(neo, 700)
       font-size: ds.rem(20)
+
+    .MuiDialogContent-root
+      padding-top: ds.rem(7)
+      padding-bottom: ds.rem(23)
+
+      .MuiFormControl-root
+        padding: ds.rem(6)
 
     .close-button
       background-color: transparent
@@ -1335,3 +1349,29 @@ html[data-site-type='blog']
       svg
         width: ds.rem(20)
         height: ds.rem(20)
+
+.alert
+  display: flex
+  gap: ds.rem(12)
+  padding: 0 ds.rem(17)
+
+  &.info
+    color: ds.$hex-accent
+
+    span
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+  &.error, &.warning
+    color: ds.$hex-warning
+
+  svg
+    width: ds.rem(22)
+    height: ds.rem(22)
+
+  span
+    @include ds.fw(pre, 500)
+    font-size: ds.rem(14)

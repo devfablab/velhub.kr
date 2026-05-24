@@ -15,7 +15,6 @@ import {
   Drawer,
   FormControlLabel,
   MenuItem,
-  Paper,
   Radio,
   RadioGroup,
   Select,
@@ -24,7 +23,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -1085,14 +1083,14 @@ export default function Opt() {
                         >
                           취소
                         </button>
-                        <Button
+                        <button
                           type="button"
                           className="button medium submit"
                           onClick={() => void handleChangeLevel()}
                           disabled={isLevelChanging}
                         >
                           변경
-                        </Button>
+                        </button>
                       </DialogActions>
                     </Dialog>
                   )}
