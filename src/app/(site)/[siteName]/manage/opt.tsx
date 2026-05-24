@@ -99,7 +99,7 @@ export default function Opt() {
     ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/manage/filtered` }] : []),
     {
       label: '디자인',
-      href: `/${siteName}/manage/design`,
+      href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`,
     },
     { label: '통계', href: `/${siteName}/manage/stats` },
   ];

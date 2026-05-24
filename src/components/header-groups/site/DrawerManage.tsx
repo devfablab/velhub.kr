@@ -36,17 +36,6 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
       </MenuItem>
 
       <MenuItem onClick={onClose}>
-        <Anchor
-          href={
-            siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/menu`
-          }
-        >
-          <DesignServicesOutlinedIcon fontSize="small" />
-          <span>디자인</span>
-        </Anchor>
-      </MenuItem>
-
-      <MenuItem onClick={onClose}>
         <Anchor href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}>
           {siteType === 'blog' ? (
             <RememberMeOutlinedIcon fontSize="small" />
@@ -72,6 +61,17 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
           </Anchor>
         </MenuItem>
       ) : null}
+
+      <MenuItem onClick={onClose}>
+        <Anchor
+          href={
+            siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`
+          }
+        >
+          <DesignServicesOutlinedIcon fontSize="small" />
+          <span>디자인</span>
+        </Anchor>
+      </MenuItem>
 
       <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/stats`}>

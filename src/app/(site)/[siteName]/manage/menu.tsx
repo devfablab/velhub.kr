@@ -452,11 +452,11 @@ function getTabMenuItems(menu: ContainerProps['menu'], siteName: string, isBlog:
 
   if (menu === 'join') {
     return [
-      { href: `/${siteName}/manage/join/conditions`, label: '가입정보관리' },
-      { href: `/${siteName}/manage/join/approved`, label: '가입신청관리' },
+      { href: `/${siteName}/manage/join/conditions`, label: '가입정보' },
+      { href: `/${siteName}/manage/join/approved`, label: '가입신청' },
       { href: `/${siteName}/manage/join/invite`, label: '초대관리' },
-      { href: `/${siteName}/manage/join/banned`, label: '가입불가관리' },
-      { href: `/${siteName}/manage/join/managers`, label: '매니저관리' },
+      { href: `/${siteName}/manage/join/banned`, label: '가입불가' },
+      { href: `/${siteName}/manage/join/managers`, label: '매니저' },
     ];
   }
 
@@ -465,7 +465,7 @@ function getTabMenuItems(menu: ContainerProps['menu'], siteName: string, isBlog:
       { href: `/${siteName}/manage/members/entirety`, label: '활동멤버' },
       { href: `/${siteName}/manage/members/blocked`, label: '활동정지' },
       { href: `/${siteName}/manage/members/withdrawn`, label: '탈퇴멤버' },
-      { href: `/${siteName}/manage/members/levels`, label: '멤버등급 관리' },
+      { href: `/${siteName}/manage/members/levels`, label: '멤버등급' },
     ];
   }
 

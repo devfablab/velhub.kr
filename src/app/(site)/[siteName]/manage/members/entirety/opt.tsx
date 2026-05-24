@@ -28,6 +28,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -35,6 +37,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -237,6 +240,10 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadUsers() {
     const response = await fetch(`/api/users/${siteName}`, {
@@ -706,7 +713,19 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
@@ -714,224 +733,236 @@ export default function Opt() {
       <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
         <div className="container">
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Stack spacing={3}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2">검색 방법</Typography>
-                  <RadioGroup row value={searchMethod} onChange={handleSearchMethodChange}>
-                    <FormControlLabel value="nickname" control={<Radio />} label="별명 검색" />
-                    <FormControlLabel value="detail" control={<Radio />} label="상세 검색" />
-                  </RadioGroup>
-                </Stack>
+            <div className={`paper ${styles.paper}`}>
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">멤버 검색</Typography>
+                <RadioGroup row value={searchMethod} onChange={handleSearchMethodChange}>
+                  <FormControlLabel value="nickname" control={<Radio />} label="별명 검색" />
+                  <FormControlLabel value="detail" control={<Radio />} label="상세 검색" />
+                </RadioGroup>
+              </Stack>
 
-                {searchMethod === 'nickname' ? (
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+              {searchMethod === 'nickname' ? (
+                <Stack direction="row" spacing={1.5} alignItems="flex-end">
+                  <Stack direction="column" spacing={1.5} sx={{ flex: '1 0 0%' }}>
+                    <Typography variant="subtitle2">별명 검색</Typography>
                     <TextField
-                      label="별명 검색"
+                      placeholder="별명 검색"
                       value={nicknameKeyword}
                       onChange={handleNicknameKeywordChange}
                       fullWidth
                       size="small"
                     />
-                    <Button type="button" variant="contained" onClick={handleSearchNickname}>
-                      검색
-                    </Button>
                   </Stack>
-                ) : null}
+                  <button type="button" className="button medium submit" onClick={handleSearchNickname}>
+                    검색
+                  </button>
+                </Stack>
+              ) : null}
 
-                {searchMethod === 'detail' ? (
-                  <Stack spacing={2.5}>
-                    <Stack spacing={1}>
-                      <Typography variant="subtitle2">상세 검색</Typography>
-                      <RadioGroup row value={detailSearchType} onChange={handleDetailSearchTypeChange}>
-                        <FormControlLabel value="post_count" control={<Radio />} label="게시글 수" />
-                        <FormControlLabel value="comment_count" control={<Radio />} label="댓글 수" />
-                        <FormControlLabel value="checkin_count" control={<Radio />} label="방문 수" />
-                        <FormControlLabel value="date" control={<Radio />} label="가입/최종방문일" />
+              {searchMethod === 'detail' ? (
+                <Stack spacing={1}>
+                  <Stack spacing={1}>
+                    <Typography variant="subtitle2">상세 검색</Typography>
+                    <RadioGroup row value={detailSearchType} onChange={handleDetailSearchTypeChange}>
+                      <FormControlLabel value="post_count" control={<Radio />} label="게시글 수" />
+                      <FormControlLabel value="comment_count" control={<Radio />} label="댓글 수" />
+                      <FormControlLabel value="checkin_count" control={<Radio />} label="방문 수" />
+                      <FormControlLabel value="date" control={<Radio />} label="가입/최종방문일" />
+                    </RadioGroup>
+                  </Stack>
+
+                  {detailSearchType === 'post_count' ? (
+                    <>
+                      <Stack direction="column" spacing={1.5}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small" fullWidth>
+                            <MenuItem value="all">전체 기간</MenuItem>
+                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
+                            <MenuItem value="custom">기간 선택</MenuItem>
+                          </Select>
+                          <Typography variant="body2">동안</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            게시글 수
+                          </Typography>
+                          <TextField value={countValue} onChange={handleCountValueChange} size="small" fullWidth />
+                          <Typography variant="body2">개</Typography>
+                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
+                            <MenuItem value="gte">이상</MenuItem>
+                            <MenuItem value="lte">이하</MenuItem>
+                          </Select>
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            인 멤버
+                          </Typography>
+                        </Stack>
+                      </Stack>
+
+                      {countPeriod === 'custom' ? (
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <DatePicker
+                            label="시작 날짜"
+                            value={countStartDate}
+                            onChange={setCountStartDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">부터</Typography>
+                          <DatePicker
+                            label="종료 날짜"
+                            value={countEndDate}
+                            onChange={setCountEndDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">까지</Typography>
+                        </Stack>
+                      ) : null}
+                      <button type="button" className="button medium submit" onClick={handleSearchDetail}>
+                        검색
+                      </button>
+                    </>
+                  ) : null}
+
+                  {detailSearchType === 'comment_count' ? (
+                    <>
+                      <Stack direction="column" spacing={1.5}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small" fullWidth>
+                            <MenuItem value="all">전체 기간</MenuItem>
+                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
+                            <MenuItem value="custom">기간 선택</MenuItem>
+                          </Select>
+                          <Typography variant="body2">동안</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            댓글 수
+                          </Typography>
+                          <TextField value={countValue} onChange={handleCountValueChange} size="small" fullWidth />
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            개
+                          </Typography>
+                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
+                            <MenuItem value="gte">이상</MenuItem>
+                            <MenuItem value="lte">이하</MenuItem>
+                          </Select>
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            인 멤버
+                          </Typography>
+                        </Stack>
+                      </Stack>
+
+                      {countPeriod === 'custom' ? (
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <DatePicker
+                            label="시작 날짜"
+                            value={countStartDate}
+                            onChange={setCountStartDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">부터</Typography>
+                          <DatePicker
+                            label="종료 날짜"
+                            value={countEndDate}
+                            onChange={setCountEndDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">까지</Typography>
+                        </Stack>
+                      ) : null}
+                      <button type="button" className="button medium submit" onClick={handleSearchDetail}>
+                        검색
+                      </button>
+                    </>
+                  ) : null}
+
+                  {detailSearchType === 'checkin_count' ? (
+                    <>
+                      <Stack direction="column" spacing={1.5}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small" fullWidth>
+                            <MenuItem value="all">전체 기간</MenuItem>
+                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
+                            <MenuItem value="custom">기간 선택</MenuItem>
+                          </Select>
+                          <Typography variant="body2">동안</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            방문 수
+                          </Typography>
+                          <TextField value={countValue} onChange={handleCountValueChange} size="small" fullWidth />
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            회
+                          </Typography>
+                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
+                            <MenuItem value="gte">이상</MenuItem>
+                            <MenuItem value="lte">이하</MenuItem>
+                          </Select>
+                          <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                            인 멤버
+                          </Typography>
+                        </Stack>
+                      </Stack>
+
+                      {countPeriod === 'custom' ? (
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <DatePicker
+                            label="시작 날짜"
+                            value={countStartDate}
+                            onChange={setCountStartDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">부터</Typography>
+                          <DatePicker
+                            label="종료 날짜"
+                            value={countEndDate}
+                            onChange={setCountEndDate}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                              },
+                            }}
+                          />
+                          <Typography variant="body2">까지</Typography>
+                        </Stack>
+                      ) : null}
+                      <button type="button" className="button medium submit" onClick={handleSearchDetail}>
+                        검색
+                      </button>
+                    </>
+                  ) : null}
+
+                  {detailSearchType === 'date' ? (
+                    <>
+                      <RadioGroup row value={dateSearchType} onChange={handleDateSearchTypeChange}>
+                        <FormControlLabel value="approval_at" control={<Radio />} label="가입일" />
+                        <FormControlLabel value="last_checkin_at" control={<Radio />} label="최종방문일" />
                       </RadioGroup>
-                    </Stack>
 
-                    {detailSearchType === 'post_count' ? (
-                      <Stack spacing={2}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small">
-                            <MenuItem value="all">전체 기간</MenuItem>
-                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
-                            <MenuItem value="custom">기간 선택</MenuItem>
-                          </Select>
-                          <Typography variant="body2">동안</Typography>
-                          <Typography variant="body2">게시글 수</Typography>
-                          <TextField
-                            value={countValue}
-                            onChange={handleCountValueChange}
-                            size="small"
-                            sx={{ width: 100 }}
-                          />
-                          <Typography variant="body2">개</Typography>
-                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
-                            <MenuItem value="gte">이상</MenuItem>
-                            <MenuItem value="lte">이하</MenuItem>
-                          </Select>
-                          <Typography variant="body2">인 멤버</Typography>
-                          <Button type="button" variant="contained" onClick={handleSearchDetail}>
-                            검색
-                          </Button>
-                        </Stack>
-
-                        {countPeriod === 'custom' ? (
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <DatePicker
-                              label="시작 날짜"
-                              value={countStartDate}
-                              onChange={setCountStartDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">부터</Typography>
-                            <DatePicker
-                              label="종료 날짜"
-                              value={countEndDate}
-                              onChange={setCountEndDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">까지</Typography>
-                          </Stack>
-                        ) : null}
-                      </Stack>
-                    ) : null}
-
-                    {detailSearchType === 'comment_count' ? (
-                      <Stack spacing={2}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small">
-                            <MenuItem value="all">전체 기간</MenuItem>
-                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
-                            <MenuItem value="custom">기간 선택</MenuItem>
-                          </Select>
-                          <Typography variant="body2">동안</Typography>
-                          <Typography variant="body2">댓글 수</Typography>
-                          <TextField
-                            value={countValue}
-                            onChange={handleCountValueChange}
-                            size="small"
-                            sx={{ width: 100 }}
-                          />
-                          <Typography variant="body2">개</Typography>
-                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
-                            <MenuItem value="gte">이상</MenuItem>
-                            <MenuItem value="lte">이하</MenuItem>
-                          </Select>
-                          <Typography variant="body2">인 멤버</Typography>
-                          <Button type="button" variant="contained" onClick={handleSearchDetail}>
-                            검색
-                          </Button>
-                        </Stack>
-
-                        {countPeriod === 'custom' ? (
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <DatePicker
-                              label="시작 날짜"
-                              value={countStartDate}
-                              onChange={setCountStartDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">부터</Typography>
-                            <DatePicker
-                              label="종료 날짜"
-                              value={countEndDate}
-                              onChange={setCountEndDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">까지</Typography>
-                          </Stack>
-                        ) : null}
-                      </Stack>
-                    ) : null}
-
-                    {detailSearchType === 'checkin_count' ? (
-                      <Stack spacing={2}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                          <Select value={countPeriod} onChange={handleCountPeriodChange} size="small">
-                            <MenuItem value="all">전체 기간</MenuItem>
-                            <MenuItem value="recent_1month">최근 1개월</MenuItem>
-                            <MenuItem value="custom">기간 선택</MenuItem>
-                          </Select>
-                          <Typography variant="body2">동안</Typography>
-                          <Typography variant="body2">방문 수</Typography>
-                          <TextField
-                            value={countValue}
-                            onChange={handleCountValueChange}
-                            size="small"
-                            sx={{ width: 100 }}
-                          />
-                          <Typography variant="body2">회</Typography>
-                          <Select value={countCompare} onChange={handleCountCompareChange} size="small">
-                            <MenuItem value="gte">이상</MenuItem>
-                            <MenuItem value="lte">이하</MenuItem>
-                          </Select>
-                          <Typography variant="body2">인 멤버</Typography>
-                          <Button type="button" variant="contained" onClick={handleSearchDetail}>
-                            검색
-                          </Button>
-                        </Stack>
-
-                        {countPeriod === 'custom' ? (
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <DatePicker
-                              label="시작 날짜"
-                              value={countStartDate}
-                              onChange={setCountStartDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">부터</Typography>
-                            <DatePicker
-                              label="종료 날짜"
-                              value={countEndDate}
-                              onChange={setCountEndDate}
-                              slotProps={{
-                                textField: {
-                                  size: 'small',
-                                },
-                              }}
-                            />
-                            <Typography variant="body2">까지</Typography>
-                          </Stack>
-                        ) : null}
-                      </Stack>
-                    ) : null}
-
-                    {detailSearchType === 'date' ? (
-                      <Stack spacing={2}>
-                        <RadioGroup row value={dateSearchType} onChange={handleDateSearchTypeChange}>
-                          <FormControlLabel value="approval_at" control={<Radio />} label="가입일" />
-                          <FormControlLabel value="last_checkin_at" control={<Radio />} label="최종방문일" />
-                        </RadioGroup>
-
+                      <Stack direction="column" spacing={1.5}>
                         <Stack direction="row" spacing={1.5} alignItems="center">
                           <DatePicker
                             label="시작 날짜"
@@ -954,20 +985,16 @@ export default function Opt() {
                               },
                             }}
                           />
-                          <Typography variant="body2">사이에</Typography>
-                          <Typography variant="body2">
-                            {dateSearchType === 'approval_at' ? '가입' : '최종 방문'}한 사람
-                          </Typography>
-                          <Button type="button" variant="contained" onClick={handleSearchDetail}>
-                            검색
-                          </Button>
                         </Stack>
                       </Stack>
-                    ) : null}
-                  </Stack>
-                ) : null}
-              </Stack>
-            </Paper>
+                      <button type="button" className="button medium submit" onClick={handleSearchDetail}>
+                        검색
+                      </button>
+                    </>
+                  ) : null}
+                </Stack>
+              ) : null}
+            </div>
 
             <Stack spacing={1.5}>
               <Typography variant="h6" component="h2">

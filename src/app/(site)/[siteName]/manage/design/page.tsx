@@ -32,5 +32,5 @@ export default async function Page({ params }: PageProps) {
     redirect(`/${normalizedSiteName}/manage/design/blog/fonts`);
   }
 
-  redirect(`/${normalizedSiteName}/manage/design/community/menu`);
+  redirect(`/${normalizedSiteName}/manage/design/community/home`);
 }

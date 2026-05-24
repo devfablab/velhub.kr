@@ -3,8 +3,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
-  Button,
   FormControlLabel,
   Radio,
   RadioGroup,
@@ -16,9 +14,9 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -187,7 +185,7 @@ export default function Opt() {
             </div>
 
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">검색용 키워드</Typography>
+              <Typography variant="subtitle2">검색엔진 등록 키워드</Typography>
               <TextField
                 value={searchKeywords}
                 onChange={handleSearchKeywordsChange}
