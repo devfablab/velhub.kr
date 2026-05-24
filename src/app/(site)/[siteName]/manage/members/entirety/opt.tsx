@@ -236,6 +236,7 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLevelChanging, setIsLevelChanging] = useState(false);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
+  const [isLevelChangeDialogOpen, setIsLevelChangeDialogOpen] = useState(false);
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
@@ -892,7 +893,7 @@ export default function Opt() {
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
-        <div className="container">
+        <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
@@ -925,150 +926,250 @@ export default function Opt() {
               </Dialog>
             )}
 
-            <Stack spacing={1.5}>
-              <Stack justifyContent="space-between" direction="row" alignItems="center">
-                <Typography variant="h6" component="h2">
-                  커뮤니티 멤버 수 {filteredUsers.length}
-                </Typography>
-                <div>
+            <Stack justifyContent="space-between" direction="row" alignItems="center" sx={{ p: 2 }}>
+              <Typography variant="h6" component="h2">
+                커뮤니티 멤버 수 {filteredUsers.length}
+              </Typography>
+              <div>
+                <button
+                  type="button"
+                  className="button medium action"
+                  aria-label="검색"
+                  onClick={() => setIsSearchOpen(true)}
+                >
+                  <SearchRoundedIcon sx={{ width: 20, height: 20 }} />
+                </button>
+              </div>
+            </Stack>
+
+            <div className={`paper ${styles.paper}`}>
+              <Stack direction="column" spacing={1.5}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    선택 멤버를
+                  </Typography>
+                  <Select
+                    value={actionType ?? ''}
+                    onChange={(event: SelectChangeEvent<string>) => {
+                      const nextActionType = event.target.value;
+
+                      if (nextActionType === 'block' || nextActionType === 'kick' || nextActionType === 'ban') {
+                        handleOpenActionDialog(nextActionType);
+                      }
+                    }}
+                    displayEmpty
+                    size="small"
+                    disabled={isActionSubmitting}
+                    fullWidth
+                  >
+                    <MenuItem value="">활동상태 선택</MenuItem>
+                    <MenuItem value="block">활동 정지</MenuItem>
+                    <MenuItem value="kick">강제 탈퇴</MenuItem>
+                    <MenuItem value="ban">가입 불가</MenuItem>
+                  </Select>
+                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    하거나
+                  </Typography>
+                </Stack>
+
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    또는
+                  </Typography>
+                  <Select value={selectedLevelId} onChange={handleLevelSelectChange} size="small" fullWidth>
+                    {selectableLevels.map((level) => (
+                      <MenuItem key={level.id} value={level.id}>
+                        {level.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                    (으)로
+                  </Typography>
                   <button
                     type="button"
                     className="button medium action"
-                    aria-label="검색"
-                    onClick={() => setIsSearchOpen(true)}
+                    onClick={() => {
+                      if (selectedUserIds.length === 0) {
+                        setErrorMessage('멤버를 선택해주세요.');
+                        return;
+                      }
+
+                      if (!selectedLevelId) {
+                        setErrorMessage('등급을 선택해주세요.');
+                        return;
+                      }
+
+                      setErrorMessage('');
+                      setIsLevelChangeDialogOpen(true);
+                    }}
+                    disabled={isLevelChanging}
                   >
-                    <SearchRoundedIcon sx={{ width: 20, height: 20 }} />
+                    변경
                   </button>
-                </div>
-              </Stack>
-
-              <div className={`paper ${styles.paper}`}>
-                <Stack direction="column" spacing={1.5}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                      선택 멤버를
-                    </Typography>
-                    <Select
-                      value={actionType ?? ''}
-                      onChange={(event: SelectChangeEvent<string>) => {
-                        const nextActionType = event.target.value;
-
-                        if (nextActionType === 'block' || nextActionType === 'kick' || nextActionType === 'ban') {
-                          handleOpenActionDialog(nextActionType);
+                  {isMobile ? (
+                    <Drawer
+                      anchor="bottom"
+                      open={isLevelChangeDialogOpen}
+                      onClose={() => {
+                        if (!isLevelChanging) {
+                          setIsLevelChangeDialogOpen(false);
                         }
                       }}
-                      displayEmpty
-                      size="small"
-                      disabled={isActionSubmitting}
+                      className="VhiDrawer-bottom"
+                    >
+                      <h2>등급 변경</h2>
+                      <button
+                        type="button"
+                        className="close-button"
+                        onClick={() => setIsLevelChangeDialogOpen(false)}
+                        aria-label="등급 변경창 닫기"
+                        disabled={isLevelChanging}
+                      >
+                        <CloseRoundedIcon />
+                      </button>
+
+                      <Stack spacing={3}>
+                        <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                        <Stack direction="column" spacing={1.5}>
+                          <button
+                            type="button"
+                            className="button medium cancel"
+                            onClick={() => setIsLevelChangeDialogOpen(false)}
+                            disabled={isLevelChanging}
+                          >
+                            취소
+                          </button>
+                          <button
+                            type="button"
+                            className="button medium submit"
+                            onClick={() => void handleChangeLevel()}
+                            disabled={isLevelChanging}
+                          >
+                            변경
+                          </button>
+                        </Stack>
+                      </Stack>
+                    </Drawer>
+                  ) : (
+                    <Dialog
+                      open={isLevelChangeDialogOpen}
+                      onClose={() => {
+                        if (!isLevelChanging) {
+                          setIsLevelChangeDialogOpen(false);
+                        }
+                      }}
                       fullWidth
+                      maxWidth="xs"
+                      className="VhiDialog"
                     >
-                      <MenuItem value="">활동상태 선택</MenuItem>
-                      <MenuItem value="block">활동 정지</MenuItem>
-                      <MenuItem value="kick">강제 탈퇴</MenuItem>
-                      <MenuItem value="ban">가입 불가</MenuItem>
-                    </Select>
-                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                      하거나
-                    </Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                      또는
-                    </Typography>
-                    <Select value={selectedLevelId} onChange={handleLevelSelectChange} size="small" fullWidth>
-                      {selectableLevels.map((level) => (
-                        <MenuItem key={level.id} value={level.id}>
-                          {level.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
-                      (으)로
-                    </Typography>
-                    <button
-                      type="button"
-                      className="button medium action"
-                      onClick={handleChangeLevel}
-                      disabled={isLevelChanging}
-                    >
-                      변경
-                    </button>
-                  </Stack>
+                      <DialogTitle>등급 변경</DialogTitle>
+                      <button
+                        type="button"
+                        className="close-button"
+                        onClick={() => setIsLevelChangeDialogOpen(false)}
+                        aria-label="등급 변경창 닫기"
+                        disabled={isLevelChanging}
+                      >
+                        <CloseRoundedIcon />
+                      </button>
+                      <DialogContent>
+                        <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
+                      </DialogContent>
+                      <DialogActions>
+                        <button
+                          type="button"
+                          className="button medium close"
+                          onClick={() => setIsLevelChangeDialogOpen(false)}
+                          disabled={isLevelChanging}
+                        >
+                          취소
+                        </button>
+                        <Button
+                          type="button"
+                          className="button medium submit"
+                          onClick={() => void handleChangeLevel()}
+                          disabled={isLevelChanging}
+                        >
+                          변경
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                  )}
                 </Stack>
-              </div>
+              </Stack>
+            </div>
 
-              <div className={`paper ${styles.paper}`}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
+            <div className={`paper ${styles.paper}`}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
+                    </TableCell>
+                    <TableCell>별명</TableCell>
+                    <TableCell>멤버 등급</TableCell>
+                    <TableCell>가입일</TableCell>
+                    <TableCell>최종방문일</TableCell>
+                    <TableCell>방문수</TableCell>
+                    <TableCell>게시글수</TableCell>
+                    <TableCell>댓글수</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.membership.user_id}>
                       <TableCell padding="checkbox">
-                        <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
+                        <Checkbox
+                          checked={selectedUserIds.includes(user.membership.user_id)}
+                          onChange={(event) => handleToggleUser(user.membership.user_id, event.currentTarget.checked)}
+                        />
                       </TableCell>
-                      <TableCell>별명</TableCell>
-                      <TableCell>멤버 등급</TableCell>
-                      <TableCell>가입일</TableCell>
-                      <TableCell>최종방문일</TableCell>
-                      <TableCell>방문수</TableCell>
-                      <TableCell>게시글수</TableCell>
-                      <TableCell>댓글수</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredUsers.map((user) => (
-                      <TableRow key={user.membership.user_id}>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={selectedUserIds.includes(user.membership.user_id)}
-                            onChange={(event) => handleToggleUser(user.membership.user_id, event.currentTarget.checked)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={1.5} alignItems="center">
-                            <Avatar src={user.avatar ?? ''} alt={getDisplayNickname(user)} />
-                            <Typography>{getDisplayNickname(user)}</Typography>
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user)} />
+                          <Typography>{getDisplayNickname(user)}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.membership.role !== '멤버' ? (
+                          <Typography variant="body2">{user.membership.role}</Typography>
+                        ) : user.level ? (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {user.level.iconUrl ? (
+                              <Box
+                                component="img"
+                                src={user.level.iconUrl}
+                                alt={user.level.name}
+                                sx={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
+                              />
+                            ) : null}
+                            <Typography variant="body2">{user.level.name}</Typography>
                           </Stack>
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {user.membership.role !== '멤버' ? (
-                            <Typography variant="body2">{user.membership.role}</Typography>
-                          ) : user.level ? (
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              {user.level.iconUrl ? (
-                                <Box
-                                  component="img"
-                                  src={user.level.iconUrl}
-                                  alt={user.level.name}
-                                  sx={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
-                                />
-                              ) : null}
-                              <Typography variant="body2">{user.level.name}</Typography>
-                            </Stack>
-                          ) : null}
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                          {user.membership.last_checkin_at ? formatDate(user.membership.last_checkin_at) : ''}
-                        </TableCell>
-                        <TableCell>{user.membership.checkin_count}</TableCell>
-                        <TableCell>{user.membership.post_count}</TableCell>
-                        <TableCell>{user.membership.comment_count}</TableCell>
-                      </TableRow>
-                    ))}
+                        ) : null}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.membership.approval_at ? formatDate(user.membership.approval_at) : ''}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.membership.last_checkin_at ? formatDate(user.membership.last_checkin_at) : ''}
+                      </TableCell>
+                      <TableCell>{user.membership.checkin_count}</TableCell>
+                      <TableCell>{user.membership.post_count}</TableCell>
+                      <TableCell>{user.membership.comment_count}</TableCell>
+                    </TableRow>
+                  ))}
 
-                    {filteredUsers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center">
-                          검색 결과가 없습니다.
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </div>
-            </Stack>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center">
+                        검색 결과가 없습니다.
+                      </TableCell>
+                    </TableRow>
+                  ) : null}
+                </TableBody>
+              </Table>
+            </div>
 
             <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
               <DialogTitle>{getActionTitle()}</DialogTitle>

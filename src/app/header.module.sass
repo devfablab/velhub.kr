@@ -207,8 +207,11 @@ header.header
       a, span
         line-height: 1
 
-      &[role="menuitem"]:not(.logout)
-        padding: 0
+      &[role="menuitem"]
+        padding: ds.rem(7) ds.rem(17)
+
+        &:not(.MenuItem)
+          padding: 0
 
     .VhiMenu-theme
       border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
@@ -264,25 +267,25 @@ header.header
       &:hover
         background: transparent!important
 
-    .logout, .logout-icon, .logout-text, .logout-text span, .theme, .theme-icon, .theme-text span
+    .MenuItem, .MenuItem-icon, .MenuItem-text
       html[data-theme="yellow-light"] &
         color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
 
-    .logout, .theme
+    .MenuItem
       opacity: .7
 
       &:hover
         opacity: 1
 
-    .logout-icon
+    .MenuItem-icon
       min-width: 0
       width: ds.rem(20)
       margin-right: ds.rem(7)
 
-    .logout-text span
+    .MenuItem-text span
       @include ds.fw(pre, 600)
 
     a

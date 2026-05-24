@@ -517,25 +517,25 @@ export default function HeaderSite() {
                     onClose={handleCloseThemeModeMenu}
                     className={styles.VhiMenu}
                   >
-                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
+                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
+                      <ListItemIcon className={styles['MenuItem-icon']}>
                         <LightModeIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>라이트모드</ListItemText>
+                      <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
                     </MenuItem>
 
-                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
+                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
+                      <ListItemIcon className={styles['MenuItem-icon']}>
                         <SettingsBrightnessIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>시스템</ListItemText>
+                      <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
                     </MenuItem>
 
-                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
+                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
+                      <ListItemIcon className={styles['MenuItem-icon']}>
                         <DarkModeIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>다크모드</ListItemText>
+                      <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
                     </MenuItem>
                   </Menu>
                 )}
@@ -608,11 +608,11 @@ export default function HeaderSite() {
                               </Anchor>
                             </MenuItem>
 
-                            <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
-                              <ListItemIcon className={styles['logout-icon']}>
+                            <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                              <ListItemIcon className={styles['MenuItem-icon']}>
                                 <LogoutOutlinedIcon fontSize="small" />
                               </ListItemIcon>
-                              <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                              <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
                             </MenuItem>
                           </>
                         ) : (
@@ -696,11 +696,11 @@ export default function HeaderSite() {
                               <span>개인 설정</span>
                             </Anchor>
                           </MenuItem>,
-                          <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
-                            <ListItemIcon className={styles['logout-icon']}>
+                          <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                            <ListItemIcon className={styles['MenuItem-icon']}>
                               <LogoutOutlinedIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                            <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
                           </MenuItem>,
                         ]
                       : [

@@ -784,6 +784,16 @@ a, button, select, input
       &:hover, &:focus-visible
         box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
+    &.close
+      border: 1px solid transparent
+      background-color: transparent
+
+      html[data-theme="yellow-light"] &
+        color: rgba(ds.$rgb-secondary, .7)
+
+      html[data-theme="yellow-dark"] &
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
     &.action
       border: 1px solid ds.$hex-accent!important
 
@@ -1274,8 +1284,10 @@ html[data-site-type='blog']
     border-size: 1px
     box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
-.MuiButtonBase-root.MuiRadio-root.Mui-checked
-  color: ds.$hex-accent
+.MuiButtonBase-root
+  &.MuiRadio-root, &.MuiCheckbox-root
+    &.Mui-checked
+      color: ds.$hex-accent
 
 .VhiDrawer-bottom
   div[role="dialog"]
