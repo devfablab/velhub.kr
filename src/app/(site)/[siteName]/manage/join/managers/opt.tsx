@@ -26,7 +26,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -183,6 +185,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [managers, setManagers] = useState<ManagerItem[]>([]);
@@ -819,26 +822,39 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="매니저 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
-            <Button type="button" variant="outlined" onClick={() => void openIconDialog()} disabled={isLoadingIcons}>
+            <button
+              type="button"
+              className="button medium action"
+              onClick={() => void openIconDialog()}
+              disabled={isLoadingIcons}
+            >
               아이콘 변경
-            </Button>
-            <Button type="button" variant="outlined" onClick={openSearchDialog}>
+            </button>
+            <button type="button" className="button medium action" onClick={openSearchDialog}>
               위임
-            </Button>
+            </button>
           </Stack>
 
           <TableContainer component={Paper} variant="outlined">

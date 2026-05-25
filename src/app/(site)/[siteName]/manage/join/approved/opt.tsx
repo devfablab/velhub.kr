@@ -298,7 +298,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="가입 신청 관리" pageBack={`/${siteName}/manage`} menu="join">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -313,7 +313,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="가입 신청 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}

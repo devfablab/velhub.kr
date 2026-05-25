@@ -461,7 +461,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="가입 정보 관리" pageBack={`/${siteName}/manage`} menu="join">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -477,7 +477,7 @@ export default function Opt() {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      <Container pageTitle="가입 정보 관리" pageBack={`/${siteName}/manage`} menu="join">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <Stack component="form" spacing={3} onSubmit={handleSubmit}>

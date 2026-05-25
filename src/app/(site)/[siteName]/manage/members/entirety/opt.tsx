@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
   Avatar,
   Box,
-  Button,
   Checkbox,
   Dialog,
   DialogActions,
@@ -34,6 +32,7 @@ import type { SelectChangeEvent } from '@mui/material/Select';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -1234,41 +1233,120 @@ export default function Opt() {
               </Table>
             </div>
 
-            <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
-              <DialogTitle>{getActionTitle()}</DialogTitle>
-              <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
-                  <TextField
-                    label={getActionReasonLabel()}
-                    value={actionReason}
-                    onChange={(event) => setActionReason(event.currentTarget.value)}
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    size="small"
-                  />
-
-                  {dialogErrorMessage ? (
-                    <Alert severity="error" variant="filled">
-                      {dialogErrorMessage}
-                    </Alert>
-                  ) : null}
-                </Stack>
-              </DialogContent>
-              <DialogActions>
-                <Button
+            {isMobile ? (
+              <Drawer
+                anchor="bottom"
+                open={Boolean(actionType)}
+                onClose={handleCloseActionDialog}
+                className="VhiDrawer-bottom"
+              >
+                <h2>{getActionTitle()}</h2>
+                <button
                   type="button"
-                  variant="outlined"
+                  className="close-button"
                   onClick={handleCloseActionDialog}
-                  disabled={isActionSubmitting}
+                  disabled={isLevelChanging}
                 >
-                  취소
-                </Button>
-                <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
-                  확인
-                </Button>
-              </DialogActions>
-            </Dialog>
+                  <CloseRoundedIcon />
+                </button>
+
+                <Stack spacing={3}>
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder={getActionReasonLabel()}
+                      value={actionReason}
+                      onChange={(event) => setActionReason(event.currentTarget.value)}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                  <Stack direction="column" spacing={1.5}>
+                    <button
+                      type="button"
+                      className="button medium cancel"
+                      onClick={handleCloseActionDialog}
+                      disabled={isLevelChanging}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      className="button medium submit"
+                      onClick={() => void handleChangeLevel()}
+                      disabled={isLevelChanging}
+                    >
+                      변경
+                    </button>
+                  </Stack>
+                </Stack>
+              </Drawer>
+            ) : (
+              <Dialog
+                open={Boolean(actionType)}
+                onClose={handleCloseActionDialog}
+                fullWidth
+                maxWidth="sm"
+                className="VhiDialog"
+              >
+                <DialogTitle>{getActionTitle()}</DialogTitle>
+                <button
+                  type="button"
+                  className="close-button"
+                  onClick={handleCloseActionDialog}
+                  disabled={isLevelChanging}
+                >
+                  <CloseRoundedIcon />
+                </button>
+
+                <DialogContent>
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <TextField
+                      placeholder={getActionReasonLabel()}
+                      value={actionReason}
+                      onChange={(event) => setActionReason(event.currentTarget.value)}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+
+                    {dialogErrorMessage ? (
+                      <p className="alert error">
+                        <ErrorOutlineRoundedIcon />
+                        <span>{dialogErrorMessage}</span>
+                      </p>
+                    ) : null}
+                  </Stack>
+                </DialogContent>
+                <DialogActions>
+                  <button
+                    type="button"
+                    className="button medium close"
+                    onClick={handleCloseActionDialog}
+                    disabled={isActionSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSubmitAction}
+                    disabled={isActionSubmitting}
+                  >
+                    확인
+                  </button>
+                </DialogActions>
+              </Dialog>
+            )}
 
             <Snackbar
               open={Boolean(snackbarMessage)}

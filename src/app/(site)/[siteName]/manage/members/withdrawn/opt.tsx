@@ -296,7 +296,7 @@ export default function Opt() {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <TextField
-                label="별명 검색"
+                placeholder="별명 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth

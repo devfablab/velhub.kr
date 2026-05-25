@@ -20,9 +20,11 @@ import {
   TableHead,
   TableRow,
   TextField,
-  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -62,6 +64,10 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadUsers() {
     const response = await fetch(`/api/manage/join/banned?siteName=${siteName}`, {
@@ -216,11 +222,23 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="가입불가 멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? (

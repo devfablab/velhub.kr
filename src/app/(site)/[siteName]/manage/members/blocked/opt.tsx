@@ -296,7 +296,7 @@ export default function Opt() {
           <div className={`paper ${styles.paper}`}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <TextField
-                label="별명 검색"
+                placeholder="별명 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth
@@ -391,21 +391,27 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <TextField
-                  placeholder={getActionReasonLabel()}
-                  value={actionReason}
-                  onChange={(event) => setActionReason(event.currentTarget.value)}
-                  fullWidth
-                  multiline
-                  minRows={4}
-                  size="small"
-                />
-                {dialogErrorMessage ? (
-                  <p className="alert error">
-                    <ErrorOutlineRoundedIcon />
-                    <span>{dialogErrorMessage}</span>
-                  </p>
-                ) : null}
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  {actionType === 'kick' || actionType === 'ban' ? (
+                    <TextField
+                      label={getActionReasonLabel()}
+                      value={actionReason}
+                      onChange={(event) => setActionReason(event.currentTarget.value)}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      size="small"
+                    />
+                  ) : null}
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+
                 <Stack direction="column" spacing={1.5}>
                   <button
                     type="button"
@@ -427,8 +433,17 @@ export default function Opt() {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={Boolean(actionType)} onClose={handleCloseActionDialog} fullWidth maxWidth="sm">
+            <Dialog
+              open={Boolean(actionType)}
+              onClose={handleCloseActionDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
               <DialogTitle>{getActionTitle()}</DialogTitle>
+              <button className="close-button" onClick={handleCloseActionDialog}>
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <Stack spacing={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
@@ -452,17 +467,22 @@ export default function Opt() {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <Button
+                <button
                   type="button"
-                  variant="outlined"
+                  className="button medium close`"
                   onClick={handleCloseActionDialog}
                   disabled={isActionSubmitting}
                 >
                   취소
-                </Button>
-                <Button type="button" variant="contained" onClick={handleSubmitAction} disabled={isActionSubmitting}>
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSubmitAction}
+                  disabled={isActionSubmitting}
+                >
                   확인
-                </Button>
+                </button>
               </DialogActions>
             </Dialog>
           )}
