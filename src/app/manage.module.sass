@@ -200,3 +200,37 @@
     width: ds.rem(36)!important
     height: ds.rem(36)!important
     justify-content: center
+
+.paper-sub
+  gap: 0
+
+  html[data-theme="yellow-light"] &
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+  html[data-theme="yellow-dark"] &
+    border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+  .question-item
+    padding: ds.rem(17) 0
+
+    html[data-theme="yellow-light"] &
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .3)
+
+    &:first-of-type
+      border-top: 0!important
+      padding-top: 0
+
+    &:last-of-type
+      padding-bottom: 0
+
+    button
+      padding: 0!important
+      width: ds.rem(36)!important
+      height: ds.rem(36)!important
+      justify-content: center
+
+    .remove
+      color: ds.$hex-warning!important

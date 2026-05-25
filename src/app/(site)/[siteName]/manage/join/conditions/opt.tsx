@@ -8,19 +8,23 @@ import {
   Box,
   Button,
   FormControlLabel,
-  IconButton,
   MenuItem,
-  Paper,
   Radio,
   RadioGroup,
   Snackbar,
   Stack,
-  Switch,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -29,6 +33,7 @@ import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -118,6 +123,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -454,221 +460,317 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="가입 정보 관리" pageBack={`/${siteName}/manage`} menu="join">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
       <Container pageTitle="가입 정보 관리" pageBack={`/${siteName}/manage`} menu="join">
-        <div className="container">
+        <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <Stack component="form" spacing={3} onSubmit={handleSubmit}>
-              <TextField
-                label="가입 안내"
-                value={joinNotice}
-                onChange={handleJoinNoticeChange}
-                fullWidth
-                multiline
-                minRows={4}
-                size="small"
-              />
+              {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle2">가입 안내 문구</Typography>
+                <TextField
+                  value={joinNotice}
+                  onChange={handleJoinNoticeChange}
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  size="small"
+                />
+              </div>
 
-              <Stack spacing={1}>
-                <Typography variant="subtitle2">가입 방식</Typography>
-                <RadioGroup value={joinType} onChange={handleJoinTypeChange} row>
-                  <FormControlLabel value="open" control={<Radio />} label="오픈 가입" />
-                  <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
-                </RadioGroup>
-              </Stack>
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle2">글 작성 정책</Typography>
+                <TextField select value={policyPost} onChange={handlePolicyPostChange} fullWidth size="small">
+                  <MenuItem value="comment_0">
+                    {policyPost === 'comment_0' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    가입 후 바로 글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="comment_1">
+                    {policyPost === 'comment_1' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    댓글 1개 등록 후 글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="comment_3">
+                    {policyPost === 'comment_3' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    댓글 3개 등록 후 글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="comment_5">
+                    {policyPost === 'comment_5' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    댓글 5개 등록 후 글쓰기 가능
+                  </MenuItem>
+                </TextField>
+              </div>
 
-              <TextField
-                select
-                label="글 작성 정책"
-                value={policyPost}
-                onChange={handlePolicyPostChange}
-                fullWidth
-                size="small"
-              >
-                <MenuItem value="comment_0">가입 후 바로 글쓰기 가능</MenuItem>
-                <MenuItem value="comment_1">댓글 1개 등록 후 글쓰기 가능</MenuItem>
-                <MenuItem value="comment_3">댓글 3개 등록 후 글쓰기 가능</MenuItem>
-                <MenuItem value="comment_5">댓글 5개 등록 후 글쓰기 가능</MenuItem>
-              </TextField>
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle2">댓글 작성 정책</Typography>
+                <TextField select value={policyComment} onChange={handlePolicyCommentChange} fullWidth size="small">
+                  <MenuItem value="estimate_0">
+                    {policyComment === 'estimate_0' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    가입 후 바로 댓글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="estimate_1">
+                    {policyComment === 'estimate_1' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    가입 6시간 이후 댓글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="estimate_3">
+                    {policyComment === 'estimate_3' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    가입 12시간 이후 댓글쓰기 가능
+                  </MenuItem>
+                  <MenuItem value="estimate_5">
+                    {policyComment === 'estimate_5' ? (
+                      <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                    ) : (
+                      <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                    )}
+                    가입 24시간 이후 댓글쓰기 가능
+                  </MenuItem>
+                </TextField>
+              </div>
 
-              <TextField
-                select
-                label="댓글 작성 정책"
-                value={policyComment}
-                onChange={handlePolicyCommentChange}
-                fullWidth
-                size="small"
-              >
-                <MenuItem value="estimate_0">가입 후 바로 댓글쓰기 가능</MenuItem>
-                <MenuItem value="estimate_1">가입 6시간 이후 댓글쓰기 가능</MenuItem>
-                <MenuItem value="estimate_3">가입 12시간 이후 댓글쓰기 가능</MenuItem>
-                <MenuItem value="estimate_5">가입 24시간 이후 댓글쓰기 가능</MenuItem>
-              </TextField>
-
-              <Stack spacing={1}>
-                <Typography variant="subtitle2">가입 질문</Typography>
-                <RadioGroup value={joinQuestionStatus} onChange={handleJoinQuestionStatusChange} row>
-                  <FormControlLabel value="enabled" control={<Radio />} label="사용함" />
-                  <FormControlLabel value="disabled" control={<Radio />} label="사용안함" />
-                </RadioGroup>
-              </Stack>
-
-              {joinQuestionStatus === 'enabled' ? (
-                <Stack spacing={2}>
-                  <Alert severity="warning" variant="outlined">
-                    답변 데이터 보호를 위해 저장된 가입 질문의 순서 변경은 제한됩니다.
-                  </Alert>
-
-                  <Alert severity="error" variant="outlined">
-                    문항 순서 변경은 지원하지 않습니다. 필요한 경우 새 문항을 추가하고 기존 문항을 삭제해주세요.
-                  </Alert>
-
-                  {joinQuestions.map((question, questionIndex) => (
-                    <Paper key={question.id} variant="outlined" sx={{ p: 2 }}>
-                      <Stack spacing={2}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="subtitle2">질문 {questionIndex + 1}</Typography>
-                          <IconButton onClick={() => handleDeleteQuestion(question.id)} size="small">
-                            <DeleteOutlineIcon />
-                          </IconButton>
-                        </Stack>
-
-                        <TextField
-                          select
-                          label="질문 유형"
-                          value={question.type}
-                          onChange={(event) =>
-                            handleQuestionTypeChange(
-                              question.id,
-                              event.target.value === 'objective' ? 'objective' : 'subjective',
-                            )
-                          }
-                          fullWidth
-                          size="small"
-                        >
-                          <MenuItem value="subjective">주관식</MenuItem>
-                          <MenuItem value="objective">객관식</MenuItem>
-                        </TextField>
-
-                        <TextField
-                          label="질문 내용"
-                          value={question.question}
-                          onChange={(event) => handleQuestionTextChange(question.id, event)}
-                          fullWidth
-                          multiline
-                          minRows={2}
-                          size="small"
-                        />
-
-                        {question.type === 'subjective' ? (
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={question.allow_image}
-                                onChange={(event) => handleQuestionAllowImageChange(question.id, event)}
-                              />
-                            }
-                            label={question.allow_image ? '이미지로 답변' : '텍스트로 답변'}
-                          />
-                        ) : null}
-
-                        {question.type === 'objective' ? (
-                          <Stack spacing={1.5}>
-                            <Typography variant="subtitle2">선택지</Typography>
-
-                            {question.options.map((option, optionIndex) => (
-                              <Stack key={`${question.id}-${optionIndex}`} direction="row" spacing={1}>
-                                <TextField
-                                  label={`문항 ${optionIndex + 1}`}
-                                  value={option}
-                                  onChange={(event) => handleOptionChange(question.id, optionIndex, event)}
-                                  fullWidth
-                                  size="small"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outlined"
-                                  color="error"
-                                  onClick={() => handleDeleteOption(question.id, optionIndex)}
-                                >
-                                  삭제
-                                </Button>
-                              </Stack>
-                            ))}
-
-                            <Box>
-                              <Button type="button" variant="outlined" onClick={() => handleAddOption(question.id)}>
-                                문항 추가
-                              </Button>
-                            </Box>
-                          </Stack>
-                        ) : null}
-                      </Stack>
-                    </Paper>
-                  ))}
-
-                  <Box>
-                    <Button type="button" variant="outlined" onClick={handleAddQuestion}>
-                      질문 추가
-                    </Button>
-                  </Box>
-                </Stack>
-              ) : null}
-
-              <Stack spacing={1}>
+              <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">가입 신청</Typography>
                 <RadioGroup value={joinAcceptStatus} onChange={handleJoinAcceptStatusChange} row>
                   <FormControlLabel value="enabled" control={<Radio />} label="항상 받음" />
                   <FormControlLabel value="disabled" control={<Radio />} label="받지 않음" />
                   <FormControlLabel value="period" control={<Radio />} label="가입불가 기간설정" />
                 </RadioGroup>
-              </Stack>
+                {joinAcceptStatus === 'period' ? (
+                  <Stack direction={isNotMobile ? 'row' : 'column'} spacing={2}>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">시작일</Typography>
+                      <DatePicker
+                        value={parseDayValue(joinAcceptStartDay)}
+                        onChange={(value) => setJoinAcceptStartDay(formatDayValue(value))}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </Stack>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">종료일</Typography>
+                      <DatePicker
+                        value={parseDayValue(joinAcceptEndDay)}
+                        onChange={(value) => setJoinAcceptEndDay(formatDayValue(value))}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </Stack>
+                  </Stack>
+                ) : null}
+              </div>
 
-              {joinAcceptStatus === 'period' ? (
-                <Stack direction={isNotMobile ? 'row' : 'column'} spacing={2}>
-                  <DatePicker
-                    label="시작일"
-                    value={parseDayValue(joinAcceptStartDay)}
-                    onChange={(value) => setJoinAcceptStartDay(formatDayValue(value))}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                  <DatePicker
-                    label="종료일"
-                    value={parseDayValue(joinAcceptEndDay)}
-                    onChange={(value) => setJoinAcceptEndDay(formatDayValue(value))}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle2">가입 방식</Typography>
+                <RadioGroup value={joinType} onChange={handleJoinTypeChange} row>
+                  <FormControlLabel value="open" control={<Radio />} label="오픈 가입" />
+                  <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
+                </RadioGroup>
+              </div>
+
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle2">가입 질문</Typography>
+                <RadioGroup value={joinQuestionStatus} onChange={handleJoinQuestionStatusChange} row>
+                  <FormControlLabel value="enabled" control={<Radio />} label="사용함" />
+                  <FormControlLabel value="disabled" control={<Radio />} label="사용안함" />
+                </RadioGroup>
+                {joinQuestionStatus === 'enabled' ? (
+                  <Stack spacing={2}>
+                    <p className="alert warning">
+                      <WarningAmberRoundedIcon />
+                      <span>답변 데이터 보호를 위해 저장된 가입 질문의 순서 변경은 제한됩니다.</span>
+                    </p>
+
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>
+                        문항 순서 변경은 지원하지 않습니다. 필요한 경우 새 문항을 추가하고 기존 문항을 삭제해주세요.
+                      </span>
+                    </p>
+
+                    <div className={`paper ${styles['paper-sub']}`}>
+                      {joinQuestions.map((question, questionIndex) => (
+                        <div key={question.id} className={styles['question-item']}>
+                          <Stack gap={1}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                              <Typography variant="subtitle2">질문 {questionIndex + 1}</Typography>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuestion(question.id)}
+                                className="button small warning"
+                              >
+                                <DeleteOutlineIcon />
+                              </button>
+                            </Stack>
+
+                            <Stack gap={1}>
+                              <Typography variant="subtitle2">질문 유형</Typography>
+                              <TextField
+                                select
+                                value={question.type}
+                                onChange={(event) =>
+                                  handleQuestionTypeChange(
+                                    question.id,
+                                    event.target.value === 'objective' ? 'objective' : 'subjective',
+                                  )
+                                }
+                                fullWidth
+                                size="small"
+                              >
+                                <MenuItem value="subjective">
+                                  {question.type === 'subjective' ? (
+                                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                                  ) : (
+                                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                                  )}
+                                  주관식
+                                </MenuItem>
+                                <MenuItem value="objective">
+                                  {question.type === 'objective' ? (
+                                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                                  ) : (
+                                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                                  )}
+                                  객관식
+                                </MenuItem>
+                              </TextField>
+                            </Stack>
+
+                            <Stack gap={1}>
+                              <Typography variant="subtitle2">질문 내용</Typography>
+                              <TextField
+                                value={question.question}
+                                onChange={(event) => handleQuestionTextChange(question.id, event)}
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                size="small"
+                              />
+
+                              {question.type === 'subjective' ? (
+                                <FormControlLabel
+                                  label={question.allow_image ? '이미지로 답변' : '텍스트로 답변'}
+                                  control={
+                                    <IOSSwitch
+                                      sx={{ m: 1 }}
+                                      checked={question.allow_image}
+                                      onChange={(event) => handleQuestionAllowImageChange(question.id, event)}
+                                    />
+                                  }
+                                />
+                              ) : null}
+                            </Stack>
+
+                            {question.type === 'objective' ? (
+                              <Stack gap={1}>
+                                <Stack direction="row" alignItems="center">
+                                  <Typography variant="subtitle2">선택지</Typography>
+                                  <button
+                                    type="button"
+                                    className="button small close"
+                                    onClick={() => handleAddOption(question.id)}
+                                    aria-label={`질문 ${questionIndex + 1}에 선택지 추가`}
+                                  >
+                                    <AddCircleOutlineRoundedIcon />
+                                  </button>
+                                </Stack>
+                                {question.options.map((option, optionIndex) => (
+                                  <Stack key={`${question.id}-${optionIndex}`} direction="row" gap={1}>
+                                    <TextField
+                                      placeholder={`문항 ${optionIndex + 1}`}
+                                      value={option}
+                                      onChange={(event) => handleOptionChange(question.id, optionIndex, event)}
+                                      fullWidth
+                                      size="small"
+                                    />
+                                    <button
+                                      type="button"
+                                      className={`button small close ${styles.remove}`}
+                                      onClick={() => handleDeleteOption(question.id, optionIndex)}
+                                      aria-label={`질문 ${questionIndex + 1}의 선택지 ${optionIndex + 1} 삭제`}
+                                    >
+                                      <RemoveCircleOutlineRoundedIcon />
+                                    </button>
+                                  </Stack>
+                                ))}
+                              </Stack>
+                            ) : null}
+                          </Stack>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button type="button" className="button medium action" onClick={handleAddQuestion}>
+                      질문 추가
+                    </button>
+                  </Stack>
+                ) : null}
+              </div>
+
+              {isMobile ? (
+                <div className={styles['button-top']}>
+                  <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                    저장
+                  </button>
+                </div>
+              ) : (
+                <Stack direction="row" justifyContent="flex-end">
+                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                    저장
+                  </button>
                 </Stack>
-              ) : null}
+              )}
 
-              <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-                <Button type="button" variant="outlined" onClick={() => router.push(`/${siteName}/manage`)}>
-                  취소
-                </Button>
-                <Button type="submit" variant="contained" disabled={isSubmitting}>
-                  저장
-                </Button>
-              </Stack>
-
-              {errorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {errorMessage}
-                </Alert>
-              ) : null}
+              {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             </Stack>
 
             <Snackbar

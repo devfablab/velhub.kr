@@ -1281,11 +1281,14 @@ html[data-site-type='blog']
       color: ds.$hex-accent
       opacity: 1
 
-.MuiInputBase-root.MuiOutlinedInput-root.Mui-focused
-  .MuiOutlinedInput-notchedOutline
-    border-color: ds.$hex-accent
-    border-size: 1px
-    box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+.MuiInputBase-root.MuiOutlinedInput-root,
+.MuiPickersInputBase-root.MuiPickersOutlinedInput-root
+  &.Mui-focused
+    .MuiOutlinedInput-notchedOutline,
+    .MuiPickersOutlinedInput-notchedOutline
+      border-color: ds.$hex-accent!important
+      border-size: 1px!important
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)!important
 
 .MuiButtonBase-root
   &.MuiRadio-root, &.MuiCheckbox-root
