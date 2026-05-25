@@ -3,26 +3,27 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
-  Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
+  Drawer,
   Snackbar,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
@@ -239,37 +240,33 @@ export default function Opt() {
 
   return (
     <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-      <div className="container">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Paper variant="outlined" sx={{ p: 3 }}>
+          <div className={`paper ${styles.paper}`}>
             <Stack direction="row" spacing={1.5} alignItems="center">
               <TextField
-                label="별명 검색"
+                placeholder="별명 검색"
                 value={nicknameKeyword}
                 onChange={handleNicknameKeywordChange}
                 fullWidth
                 size="small"
               />
-              <Button type="button" variant="contained" onClick={handleSearch}>
+              <button type="button" className="button medium action" onClick={handleSearch}>
                 검색
-              </Button>
+              </button>
             </Stack>
-          </Paper>
+          </div>
 
           <Stack spacing={1.5}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Button type="button" variant="outlined" onClick={handleOpenDialog} disabled={isSubmitting}>
+              <button type="button" className="button medium action" onClick={handleOpenDialog} disabled={isSubmitting}>
                 가입불가 해제
-              </Button>
+              </button>
             </Stack>
 
-            <TableContainer component={Paper} variant="outlined">
+            <div className={`paper paper-p0 ${styles.paper}`}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -309,39 +306,99 @@ export default function Opt() {
                   ) : null}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </div>
           </Stack>
 
-          <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-            <DialogTitle>가입불가 해제</DialogTitle>
-            <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <TextField
-                  label="가입불가 해제 사유"
-                  value={clearReason}
-                  onChange={(event) => setClearReason(event.currentTarget.value)}
-                  fullWidth
-                  multiline
-                  minRows={4}
-                  size="small"
-                />
+          {isMobile ? (
+            <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+              <h2>가입불가 해제</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                aria-label="가입불가 해제 닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+              <Stack gap={3}>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <TextField
+                    label="가입불가 해제 사유"
+                    value={clearReason}
+                    onChange={(event) => setClearReason(event.currentTarget.value)}
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                    확인
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" variant="outlined" onClick={handleCloseDialog} disabled={isSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="sm" className="VhiDialog">
+              <DialogTitle>가입불가 해제</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseDialog}
+                aria-label="가입불가 해제 닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <TextField
+                    label="가입불가 해제 사유"
+                    value={clearReason}
+                    onChange={(event) => setClearReason(event.currentTarget.value)}
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}
