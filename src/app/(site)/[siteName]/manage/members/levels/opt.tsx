@@ -20,6 +20,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -472,10 +473,10 @@ export default function Opt() {
               </Stack>
 
               <Box component="form" onSubmit={handleSubmit}>
-                <Stack spacing={2}>
+                <div className={`paper ${styles.paper} ${styles.levels}`}>
                   {levels.map((level) => (
-                    <Stack key={level.id} direction="row" spacing={1.5}>
-                      <Box sx={{ pt: 1 }}>
+                    <div key={level.id} className={styles['level-row']}>
+                      <div className={styles['level-icon']}>
                         {level.icon_url ? (
                           <Box
                             component="img"
@@ -489,19 +490,49 @@ export default function Opt() {
                             }}
                           />
                         ) : (
-                          <Typography variant="body2">lv.{level.lv}</Typography>
+                          <strong>lv.{level.lv}</strong>
                         )}
-                      </Box>
+                      </div>
 
                       <Stack spacing={1.5} sx={{ flex: 1 }}>
+                        <Stack direction="row" spacing={1.5} justifyContent="space-between">
+                          <Stack direction="row" spacing={1.5}>
+                            <TextField
+                              value={level.name ?? ''}
+                              onChange={(event) => handleNameChange(level.id, event)}
+                              fullWidth
+                              size="small"
+                              placeholder="등급명"
+                            />
+                            <Select
+                              value={level.lv === 1 ? 'manual' : level.requirement_type}
+                              onChange={(event) =>
+                                handleRequirementTypeChange(
+                                  level.id,
+                                  event.target.value === 'automatic' ? 'automatic' : 'manual',
+                                )
+                              }
+                              size="small"
+                              sx={{ minWidth: 120 }}
+                              disabled={level.lv === 1}
+                            >
+                              {requirementTypeOptions.map((option) => (
+                                <MenuItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </Stack>
+                          <button
+                            type="button"
+                            className="button medium close"
+                            onClick={() => handleClearLevel(level.id)}
+                            aria-label={`lv.${level.lv} 정보 초기화`}
+                          >
+                            <DeleteForeverRoundedIcon />
+                          </button>
+                        </Stack>
                         <Stack direction="row" spacing={1.5}>
-                          <TextField
-                            value={level.name ?? ''}
-                            onChange={(event) => handleNameChange(level.id, event)}
-                            sx={{ width: 270 }}
-                            size="small"
-                            placeholder="등급명"
-                          />
                           <TextField
                             value={level.description ?? ''}
                             onChange={(event) => handleDescriptionChange(level.id, event)}
@@ -509,42 +540,14 @@ export default function Opt() {
                             size="small"
                             placeholder="설명"
                           />
-                          <Select
-                            value={level.lv === 1 ? 'manual' : level.requirement_type}
-                            onChange={(event) =>
-                              handleRequirementTypeChange(
-                                level.id,
-                                event.target.value === 'automatic' ? 'automatic' : 'manual',
-                              )
-                            }
-                            size="small"
-                            sx={{ minWidth: 120 }}
-                            disabled={level.lv === 1}
-                          >
-                            {requirementTypeOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            color="error"
-                            onClick={() => handleClearLevel(level.id)}
-                          >
-                            삭제
-                          </Button>
                         </Stack>
 
                         {level.lv !== 1 && level.requirement_type === 'automatic' ? (
-                          <Stack
-                            direction={isNotMobile ? 'row' : 'column'}
-                            spacing={1}
-                            alignItems={isNotMobile ? 'center' : 'flex-start'}
-                          >
+                          <div className={styles['requirement-settings']}>
                             <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2">게시글</Typography>
+                              <Typography variant="body2" className={styles['requirement-type']}>
+                                게시글
+                              </Typography>
                               <TextField
                                 type="text"
                                 inputMode="numeric"
@@ -557,7 +560,9 @@ export default function Opt() {
                             </Stack>
 
                             <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2">댓글</Typography>
+                              <Typography variant="body2" className={styles['requirement-type']}>
+                                댓글
+                              </Typography>
                               <TextField
                                 type="text"
                                 inputMode="numeric"
@@ -570,7 +575,9 @@ export default function Opt() {
                             </Stack>
 
                             <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2">방문</Typography>
+                              <Typography variant="body2" className={styles['requirement-type']}>
+                                방문
+                              </Typography>
                               <TextField
                                 type="text"
                                 inputMode="numeric"
@@ -583,7 +590,9 @@ export default function Opt() {
                             </Stack>
 
                             <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2">좋아요</Typography>
+                              <Typography variant="body2" className={styles['requirement-type']}>
+                                좋아요
+                              </Typography>
                               <TextField
                                 type="text"
                                 inputMode="numeric"
@@ -596,7 +605,9 @@ export default function Opt() {
                             </Stack>
 
                             <Stack direction="row" spacing={1} alignItems="center">
-                              <Typography variant="body2">가입</Typography>
+                              <Typography variant="body2" className={styles['requirement-type']}>
+                                가입
+                              </Typography>
                               <TextField
                                 type="text"
                                 inputMode="numeric"
@@ -607,17 +618,16 @@ export default function Opt() {
                               />
                               <Typography variant="body2">일 후 만족 시 자동등업</Typography>
                             </Stack>
-                          </Stack>
+                          </div>
                         ) : null}
                       </Stack>
-                    </Stack>
+                    </div>
                   ))}
-
-                  <Stack direction="row" justifyContent="flex-end">
-                    <Button type="submit" variant="contained" disabled={isSubmitting}>
-                      저장
-                    </Button>
-                  </Stack>
+                </div>
+                <Stack direction="row" justifyContent="flex-end">
+                  <Button type="submit" variant="contained" disabled={isSubmitting}>
+                    저장
+                  </Button>
                 </Stack>
               </Box>
             </>

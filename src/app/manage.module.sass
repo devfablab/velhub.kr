@@ -126,3 +126,45 @@
 
       &:disabled
         color: rgba(ds.$rgb-primary, .2)!important
+
+  .levels
+    gap: 0
+
+  .level-row
+    display: flex
+    flex-direction: row
+    justify-content: space-between
+    gap: ds.rem(12)
+    padding: ds.rem(12) 0
+
+    @include ds.mq(minLarge)
+      gap: ds.rem(23)
+      padding: ds.rem(23) 0
+
+    html[data-theme="yellow-light"] &
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .3)
+
+    &:first-of-type
+      border-top: 0!important
+      padding-top: 0
+
+    &:last-of-type
+      padding-bottom: 0
+
+    .level-icon
+      display: flex
+      justify-content: center
+      align-items: center
+      width: ds.rem(25)
+      height: ds.rem(40)
+
+    .requirement-settings
+      display: flex
+      flex-wrap: wrap
+      gap: ds.rem(3)
+
+      p.requirement-type
+        width: ds.rem(37)
