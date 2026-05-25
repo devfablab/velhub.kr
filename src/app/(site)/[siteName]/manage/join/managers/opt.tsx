@@ -14,6 +14,7 @@ import {
   Paper,
   Snackbar,
   Stack,
+  styled,
   Table,
   TableBody,
   TableCell,
@@ -123,6 +124,18 @@ type ManagerIconResponse = {
   managerIcons?: ManagerIconItem[];
   error?: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const managerIconRoleOptions: Array<{ value: ManagerIconRole; label: string }> = [
   { value: 'owner', label: '운영자' },
@@ -1052,11 +1065,10 @@ export default function Opt() {
                   })}
                 </Paper>
 
-                <input
+                <VisuallyHiddenInput
                   ref={fileInputRef}
                   type="file"
                   accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                  style={{ display: 'none' }}
                   onChange={handleIconFileChange}
                 />
               </Stack>

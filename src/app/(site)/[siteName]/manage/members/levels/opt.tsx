@@ -10,18 +10,22 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   MenuItem,
-  Paper,
   Select,
   Snackbar,
   Stack,
+  styled,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -61,6 +65,18 @@ type IconResponse = {
   error?: string;
 };
 
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
 const requirementTypeOptions: Array<{ value: RequirementType; label: string }> = [
   { value: 'manual', label: '설정안함' },
   { value: 'automatic', label: '자동등업' },
@@ -72,6 +88,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -437,39 +454,45 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
     <Container pageTitle="멤버 등급 관리" pageBack={`/${siteName}/manage`} menu="members">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {!enabled ? (
-            <Paper variant="outlined">
-              <Stack spacing={2}>
-                <Typography variant="h6" component="h2">
-                  등업 시스템을 사용하시겠어요?
-                </Typography>
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="h6" component="h2">
+                등업 시스템을 사용하시겠어요?
+              </Typography>
 
-                <Box>
-                  <Button type="button" variant="contained" onClick={handleEnableLevels} disabled={isEnabling}>
-                    등업 시스템 사용하기
-                  </Button>
-                </Box>
-              </Stack>
-            </Paper>
+              <Box>
+                <Button type="button" variant="contained" onClick={handleEnableLevels} disabled={isEnabling}>
+                  등업 시스템 사용하기
+                </Button>
+              </Box>
+            </div>
           ) : (
             <>
               <Stack direction="row" justifyContent="flex-end">
-                <Button type="button" variant="outlined" onClick={handleOpenIconDialog}>
+                <button type="button" className="button medium action" onClick={handleOpenIconDialog}>
                   아이콘 변경
-                </Button>
+                </button>
               </Stack>
 
               <Box component="form" onSubmit={handleSubmit}>
@@ -624,28 +647,131 @@ export default function Opt() {
                     </div>
                   ))}
                 </div>
-                <Stack direction="row" justifyContent="flex-end">
-                  <Button type="submit" variant="contained" disabled={isSubmitting}>
-                    저장
-                  </Button>
-                </Stack>
+                {isMobile ? (
+                  <div className={styles['button-top']}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                      저장
+                    </button>
+                  </div>
+                ) : (
+                  <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+                    <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                      저장
+                    </button>
+                  </Stack>
+                )}
               </Box>
             </>
           )}
 
-          <Dialog open={isIconDialogOpen} onClose={handleCloseIconDialog} fullWidth maxWidth="sm">
-            <DialogTitle>아이콘 변경</DialogTitle>
-            <DialogContent>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isIconDialogOpen}
+              onClose={handleCloseIconDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>아이콘 변경</h2>
+              <button className="close-button" onClick={handleCloseIconDialog}>
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <div className={styles['popup-level-rows']}>
+                    {levels.map((level) => (
+                      <div key={level.id} className={styles['popup-level-row']}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Typography variant="subtitle2">lv {level.lv}</Typography>
+
+                          <Box
+                            sx={{
+                              width: 25,
+                              height: 25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {level.icon_url ? (
+                              <Box
+                                component="img"
+                                src={level.icon_url}
+                                alt={`lv-${level.lv}`}
+                                sx={{
+                                  width: 25,
+                                  height: 25,
+                                  objectFit: 'contain',
+                                  display: 'block',
+                                }}
+                              />
+                            ) : (
+                              <Typography variant="body2">{level.lv}</Typography>
+                            )}
+                          </Box>
+                        </Stack>
+
+                        <Stack direction="row" spacing={1}>
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => handleClickIconUpload(level.id)}
+                            disabled={isUploadingIcon}
+                            aria-label={`lv.${level.lv} 아이콘 변경`}
+                          >
+                            <VisuallyHiddenInput
+                              ref={fileInputRef}
+                              type="file"
+                              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                              onChange={handleIconFileChange}
+                            />
+                            <CompareArrowsRoundedIcon />
+                          </button>
+
+                          {level.icon ? (
+                            <button
+                              type="button"
+                              className="button small warning"
+                              onClick={() => handleDeleteIcon(level.id)}
+                              disabled={deletingIconLevelId === level.id}
+                              aria-label={`lv.${level.lv} 아이콘 삭제`}
+                            >
+                              <DeleteForeverRoundedIcon />
+                            </button>
+                          ) : null}
+                        </Stack>
+                      </div>
+                    ))}
+                  </div>
+                </Stack>
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseIconDialog}
+                    disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
+                  >
+                    닫기
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isIconDialogOpen}
+              onClose={handleCloseIconDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>아이콘 변경</DialogTitle>
+              <button className="close-button" onClick={handleCloseIconDialog}>
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <div className={styles['popup-level-rows']}>
                   {levels.map((level) => (
-                    <Stack
-                      key={level.id}
-                      direction="row"
-                      spacing={2}
-                      alignItems="center"
-                      justifyContent="space-between"
-                    >
+                    <div key={level.id} className={styles['popup-level-row']}>
                       <Stack direction="row" spacing={2} alignItems="center">
                         <Typography variant="subtitle2">lv {level.lv}</Typography>
 
@@ -677,50 +803,50 @@ export default function Opt() {
                       </Stack>
 
                       <Stack direction="row" spacing={1}>
-                        <Button
+                        <button
                           type="button"
-                          variant="outlined"
+                          className="button small action"
                           onClick={() => handleClickIconUpload(level.id)}
                           disabled={isUploadingIcon}
+                          aria-label={`lv.${level.lv} 아이콘 변경`}
                         >
-                          아이콘 변경
-                        </Button>
+                          <VisuallyHiddenInput
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                            onChange={handleIconFileChange}
+                          />
+                          <CompareArrowsRoundedIcon />
+                        </button>
 
                         {level.icon ? (
-                          <Button
+                          <button
                             type="button"
-                            variant="outlined"
-                            color="error"
+                            className="button small warning"
                             onClick={() => handleDeleteIcon(level.id)}
                             disabled={deletingIconLevelId === level.id}
+                            aria-label={`lv.${level.lv} 아이콘 삭제`}
                           >
-                            삭제
-                          </Button>
+                            <DeleteForeverRoundedIcon />
+                          </button>
                         ) : null}
                       </Stack>
-                    </Stack>
+                    </div>
                   ))}
-                </Paper>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                  style={{ display: 'none' }}
-                  onChange={handleIconFileChange}
-                />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                type="button"
-                onClick={handleCloseIconDialog}
-                disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
-              >
-                닫기
-              </Button>
-            </DialogActions>
-          </Dialog>
+                </div>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconLevelId)}
+                >
+                  닫기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}

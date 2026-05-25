@@ -1324,19 +1324,22 @@ html[data-site-type='blog']
       padding-left: 0
 
     h2, .MuiDialogActions-root
-      padding-top: 0
       padding-bottom: 0
 
     h2
+      padding-top: 0
       @include ds.fw(neo, 700)
       font-size: ds.rem(20)
 
     .MuiDialogContent-root
       padding-top: ds.rem(7)
-      padding-bottom: ds.rem(23)
+      padding-bottom: 0
 
       .MuiFormControl-root
         padding: ds.rem(6)
+
+    .MuiDialogActions-root
+      padding-top: ds.rem(23)
 
     .close-button
       background-color: transparent
