@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Button,
   Checkbox,
   Dialog,
   DialogActions,
@@ -22,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -302,8 +302,8 @@ export default function Opt() {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch}>
-                검색
+              <button type="button" className="button medium action" onClick={handleSearch} aria-label="별명으로 검색">
+                <SearchRoundedIcon />
               </button>
             </Stack>
           </div>

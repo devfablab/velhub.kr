@@ -3,22 +3,20 @@
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
   Box,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   MenuItem,
-  Paper,
+  Radio,
   Snackbar,
   Stack,
   styled,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -27,6 +25,9 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
@@ -179,6 +180,34 @@ function isBoardRole(role: ManagerRole) {
   return role === 'board-general-manager' || role === 'board-assistant-manager';
 }
 
+function getRoleFullMessage(role: ManagerRole) {
+  if (role === 'community-manager') {
+    return {
+      title: '역할 선택 불가',
+      message: '커뮤니티 매니저 자리가 꽉찼습니다. 커뮤니티 매니저 자리 하나를 남겨두세요.',
+    };
+  }
+
+  if (role === 'board-manager') {
+    return {
+      title: '역할 선택 불가',
+      message: '전체 게시판 매니저 자리가 꽉찼습니다. 전체 게시판 매니저 자리 하나를 남겨두세요.',
+    };
+  }
+
+  if (role === 'board-general-manager') {
+    return {
+      title: '역할 선택 불가',
+      message: '개별 게시판 총괄 매니저 자리가 꽉찼습니다. 개별 게시판 총괄 매니저 자리 하나를 남겨두세요.',
+    };
+  }
+
+  return {
+    title: '역할 선택 불가',
+    message: '개별 게시판 부 매니저 자리가 꽉찼습니다. 개별 게시판 부 매니저 자리 하나를 남겨두세요.',
+  };
+}
+
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -207,8 +236,6 @@ export default function Opt() {
   );
   const [moveRole, setMoveRole] = useState<ManagerRole>('community-manager');
   const [moveBoardId, setMoveBoardId] = useState('');
-  const [moveTargetManageRoleId, setMoveTargetManageRoleId] = useState('');
-  const [moveTargetMemberId, setMoveTargetMemberId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmittingNew, setIsSubmittingNew] = useState(false);
@@ -216,11 +243,16 @@ export default function Opt() {
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
+  const [isManagerEditOpen, setIsManagerEditOpen] = useState(false);
   const [targetIconId, setTargetIconId] = useState('');
   const [iconErrorMessage, setIconErrorMessage] = useState('');
   const [isLoadingIcons, setIsLoadingIcons] = useState(false);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconId, setDeletingIconId] = useState('');
+  const [roleLimitDialog, setRoleLimitDialog] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const selectedManager = useMemo(
     () => managers.find((manager) => manager.manageRoleId === selectedManagerRoleId) ?? null,
@@ -247,17 +279,6 @@ export default function Opt() {
     [managers],
   );
 
-  const boardGeneralManagerCandidates = useMemo(
-    () =>
-      managers.filter(
-        (manager) =>
-          manager.role === 'board-general-manager' &&
-          manager.manageRoleId !== selectedManagerRoleId &&
-          manager.boardId !== selectedManager?.boardId,
-      ),
-    [managers, selectedManagerRoleId, selectedManager],
-  );
-
   const boardOptionsForMove = useMemo(() => {
     if (moveRole === 'board-general-manager') {
       return boards.map((board) => ({
@@ -268,7 +289,6 @@ export default function Opt() {
             : board.boardGeneralManagerFull
               ? `${board.boardLabel} (꽉참)`
               : board.boardLabel,
-        disabled: selectedManager?.boardId === board.boardId ? false : board.boardGeneralManagerFull,
       }));
     }
 
@@ -281,7 +301,6 @@ export default function Opt() {
             : board.boardAssistantManagerFull
               ? `${board.boardLabel} (꽉참)`
               : board.boardLabel,
-        disabled: selectedManager?.boardId === board.boardId ? false : board.boardAssistantManagerFull,
       }));
     }
 
@@ -304,6 +323,76 @@ export default function Opt() {
       }
     })();
   }, []);
+
+  function isCommonRoleFull(role: 'community-manager' | 'board-manager') {
+    if (!limits) {
+      return false;
+    }
+
+    if (role === 'community-manager') {
+      return currentCommunityManagerCount >= limits.community_manager;
+    }
+
+    return currentBoardManagerCount >= limits.board_manager;
+  }
+
+  function isAssignBoardRoleFull(role: 'board-general-manager' | 'board-assistant-manager') {
+    if (!selectedAssignBoard) {
+      return false;
+    }
+
+    if (role === 'board-general-manager') {
+      return selectedAssignBoard.boardGeneralManagerFull;
+    }
+
+    return selectedAssignBoard.boardAssistantManagerFull;
+  }
+
+  function isMoveRoleFull(role: ManagerRole, boardId: string) {
+    if (!limits || !selectedManager) {
+      return false;
+    }
+
+    if (role === selectedManager.role && boardId === (selectedManager.boardId ?? '')) {
+      return false;
+    }
+
+    if (role === 'community-manager') {
+      return currentCommunityManagerCount >= limits.community_manager;
+    }
+
+    if (role === 'board-manager') {
+      return currentBoardManagerCount >= limits.board_manager;
+    }
+
+    const targetBoard = boards.find((board) => board.boardId === boardId);
+
+    if (!targetBoard) {
+      return false;
+    }
+
+    if (role === 'board-general-manager') {
+      return targetBoard.boardGeneralManagerFull;
+    }
+
+    return targetBoard.boardAssistantManagerFull;
+  }
+
+  function getBoardRoleLabel(role: 'board-general-manager' | 'board-assistant-manager', label: string) {
+    if (!selectedAssignBoard) {
+      return label;
+    }
+
+    if (role === 'board-general-manager' && selectedAssignBoard.boardGeneralManagerFull) {
+      return `${label} (꽉참)`;
+    }
+
+    if (role === 'board-assistant-manager' && selectedAssignBoard.boardAssistantManagerFull) {
+      return `${label} (꽉참)`;
+    }
+
+    return label;
+  }
 
   async function loadManagers() {
     const response = await fetch(`/api/manage/join/managers?siteName=${siteName}`, {
@@ -508,13 +597,21 @@ export default function Opt() {
     const nextRole = event.target.value as ManagerRole;
 
     setMoveRole(nextRole);
-    setMoveBoardId('');
-    setMoveTargetManageRoleId('');
-    setMoveTargetMemberId('');
+    setMoveBoardId(isBoardRole(nextRole) ? moveBoardId : '');
+
+    if (isMoveRoleFull(nextRole, isBoardRole(nextRole) ? moveBoardId : '')) {
+      setRoleLimitDialog(getRoleFullMessage(nextRole));
+    }
   }
 
   function handleMoveBoardChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setMoveBoardId(event.target.value);
+    const nextBoardId = event.target.value;
+
+    setMoveBoardId(nextBoardId);
+
+    if (isMoveRoleFull(moveRole, nextBoardId)) {
+      setRoleLimitDialog(getRoleFullMessage(moveRole));
+    }
   }
 
   function openSearchDialog() {
@@ -550,13 +647,10 @@ export default function Opt() {
       setErrorMessage('');
       setIsSearching(true);
 
-      const response = await fetch(
-        `/api/manage/join/managers/search?siteName=${siteName}&keyword=${encodeURIComponent(trimmedKeyword)}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-        },
-      );
+      const response = await fetch(`/api/manage/join/managers/search?siteName=${siteName}&keyword=${trimmedKeyword}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
       const result = (await response.json()) as SearchResponse;
 
@@ -581,6 +675,16 @@ export default function Opt() {
   async function handleCreateManager() {
     if (!selectedSearchMember) {
       setErrorMessage('위임할 멤버를 선택해주세요.');
+      return;
+    }
+
+    if (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) {
+      setRoleLimitDialog(getRoleFullMessage(assignCommonRole));
+      return;
+    }
+
+    if (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole)) {
+      setRoleLimitDialog(getRoleFullMessage(assignBoardRole));
       return;
     }
 
@@ -700,6 +804,7 @@ export default function Opt() {
 
       setManagers(Array.isArray(result.managers) ? result.managers : []);
       setSelectedManagerRoleId('');
+      setIsManagerEditOpen(false);
       setSnackbarMessage('해임되었습니다.');
       await loadManagers();
     } catch (unknownError) {
@@ -719,73 +824,31 @@ export default function Opt() {
       return;
     }
 
+    if (isBoardRole(moveRole) && !moveBoardId) {
+      setErrorMessage('게시판을 선택해주세요.');
+      return;
+    }
+
+    if (isMoveRoleFull(moveRole, isBoardRole(moveRole) ? moveBoardId : '')) {
+      setRoleLimitDialog(getRoleFullMessage(moveRole));
+      return;
+    }
+
     try {
       setErrorMessage('');
       setIsSubmittingMove(true);
 
-      let payload: {
-        siteName: string;
-        action:
-          | 'move-board-general-manager'
-          | 'move-board-general-manager-to-member'
-          | 'move-manager-role'
-          | 'move-manager-board'
-          | 'move-manager-role-board';
-        sourceManageRoleId: string;
-        targetManageRoleId?: string | null;
-        managerId?: string | null;
-        role?: string | null;
-        boardId?: string | null;
-      } | null = null;
-
-      if (selectedManager.role === 'board-general-manager' && moveRole === 'board-general-manager') {
-        if (!moveTargetManageRoleId) {
-          setErrorMessage('이동할 총괄 매니저를 선택해주세요.');
-          return;
-        }
-
-        payload = {
-          siteName,
-          action: 'move-board-general-manager',
-          sourceManageRoleId: selectedManager.manageRoleId,
-          targetManageRoleId: moveTargetManageRoleId,
-        };
-      } else if (selectedManager.role === 'board-general-manager' && moveRole !== 'board-general-manager') {
-        if (!moveTargetMemberId) {
-          setErrorMessage('이동 후 총괄 자리를 맡을 멤버를 선택해주세요.');
-          return;
-        }
-
-        payload = {
-          siteName,
-          action: 'move-board-general-manager-to-member',
-          sourceManageRoleId: selectedManager.manageRoleId,
-          managerId: moveTargetMemberId,
-        };
-      } else if (!selectedManager.boardId && !isBoardRole(moveRole) && selectedManager.role !== moveRole) {
-        payload = {
-          siteName,
-          action: 'move-manager-role',
-          sourceManageRoleId: selectedManager.manageRoleId,
-          role: moveRole,
-        };
-      } else if (selectedManager.role === moveRole && isBoardRole(moveRole) && moveBoardId) {
-        payload = {
-          siteName,
-          action: 'move-manager-board',
-          sourceManageRoleId: selectedManager.manageRoleId,
-          role: moveRole,
-          boardId: moveBoardId,
-        };
-      } else {
-        payload = {
-          siteName,
-          action: 'move-manager-role-board',
-          sourceManageRoleId: selectedManager.manageRoleId,
-          role: moveRole,
-          boardId: isBoardRole(moveRole) ? moveBoardId : null,
-        };
-      }
+      const payload = {
+        siteName,
+        action: isBoardRole(moveRole)
+          ? selectedManager.role === moveRole
+            ? 'move-manager-board'
+            : 'move-manager-role-board'
+          : 'move-manager-role',
+        sourceManageRoleId: selectedManager.manageRoleId,
+        role: moveRole,
+        boardId: isBoardRole(moveRole) ? moveBoardId : null,
+      };
 
       const response = await fetch('/api/manage/join/managers/move', {
         method: 'PATCH',
@@ -805,9 +868,8 @@ export default function Opt() {
       setManagers(Array.isArray(result.managers) ? result.managers : []);
       setMoveRole('community-manager');
       setMoveBoardId('');
-      setMoveTargetManageRoleId('');
-      setMoveTargetMemberId('');
       setSelectedManagerRoleId('');
+      setIsManagerEditOpen(false);
       setSnackbarMessage('이동되었습니다.');
       await loadManagers();
     } catch (unknownError) {
@@ -837,13 +899,118 @@ export default function Opt() {
     );
   }
 
+  const managerEditContent = selectedManager ? (
+    <Stack gap={3}>
+      <Stack direction="column" gap={1}>
+        <Stack sx={{ flexWrap: 'nowrap' }} direction="row" gap={3} alignItems="center">
+          <Stack gap={1} direction="row">
+            <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+              활동명
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+              {selectedManager.userName}
+            </Typography>
+          </Stack>
+          <Stack gap={1} direction="row">
+            <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+              별명
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+              {selectedManager.nickname}
+            </Typography>
+          </Stack>
+        </Stack>
+
+        <Stack sx={{ flexWrap: 'nowrap' }} direction="row" gap={3} alignItems="center">
+          <Stack gap={1} direction="row">
+            <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+              역할
+            </Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+              {getRoleLabel(selectedManager.role)}
+            </Typography>
+          </Stack>
+          {selectedManager.boardLabel ? (
+            <Stack gap={1} direction="row">
+              <Typography variant="subtitle2" sx={{ whiteSpace: 'nowrap' }}>
+                담당 게시판
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
+                {selectedManager.boardLabel}
+              </Typography>
+            </Stack>
+          ) : null}
+        </Stack>
+
+        <Stack direction="row" gap={1} alignItems="center">
+          <TextField
+            select
+            placeholder="이동 역할"
+            value={moveRole}
+            onChange={handleMoveRoleChange}
+            size="small"
+            fullWidth
+          >
+            {roleOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {isMoveRoleFull(option.value, isBoardRole(option.value) ? moveBoardId : '')
+                  ? `${getRoleLabel(option.value)} (꽉참)`
+                  : getRoleLabel(option.value)}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          {isBoardRole(moveRole) ? (
+            <TextField
+              select
+              placeholder="게시판"
+              value={moveBoardId}
+              onChange={handleMoveBoardChange}
+              size="small"
+              fullWidth
+            >
+              {boardOptionsForMove.map((board) => (
+                <MenuItem key={board.value} value={board.value}>
+                  {board.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : null}
+        </Stack>
+      </Stack>
+
+      <Stack direction={isMobile ? 'column' : 'row'} gap={1} justifyContent={isMobile ? undefined : 'space-between'}>
+        {selectedManager.role !== 'board-general-manager' ? (
+          <button
+            type="button"
+            className="button medium warning"
+            onClick={handleDeleteManager}
+            disabled={isSubmittingDelete}
+          >
+            해임
+          </button>
+        ) : (
+          <i />
+        )}
+        <button
+          type="button"
+          className="button medium submit"
+          onClick={handleMoveManager}
+          disabled={isSubmittingMove || isMoveRoleFull(moveRole, isBoardRole(moveRole) ? moveBoardId : '')}
+        >
+          이동
+        </button>
+      </Stack>
+    </Stack>
+  ) : null;
+
   return (
     <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-      <div className="container">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+          <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end" sx={{ p: 1 }}>
             <button
               type="button"
               className="button medium action"
@@ -857,11 +1024,10 @@ export default function Opt() {
             </button>
           </Stack>
 
-          <TableContainer component={Paper} variant="outlined">
+          <div className={`paper paper-p0 ${styles.paper}`}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>선택</TableCell>
                   <TableCell>별명</TableCell>
                   <TableCell>역할</TableCell>
                   <TableCell>게시판</TableCell>
@@ -871,409 +1037,733 @@ export default function Opt() {
               <TableBody>
                 {managers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5}>등록된 매니저가 없습니다.</TableCell>
+                    <TableCell colSpan={4}>등록된 매니저가 없습니다.</TableCell>
                   </TableRow>
                 ) : (
-                  managers.map((manager) => (
-                    <TableRow key={manager.manageRoleId}>
-                      <TableCell>
-                        <input
-                          type="radio"
-                          checked={selectedManagerRoleId === manager.manageRoleId}
-                          onChange={() => {
-                            setSelectedManagerRoleId(manager.manageRoleId);
-                            setMoveRole(manager.role);
-                            setMoveBoardId(manager.boardId ?? '');
-                            setMoveTargetManageRoleId('');
-                            setMoveTargetMemberId('');
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{manager.nickname || manager.userName || manager.email}</TableCell>
-                      <TableCell>{getRoleLabel(manager.role)}</TableCell>
-                      <TableCell>{manager.boardLabel ?? ''}</TableCell>
-                      <TableCell>{formatDateTime(manager.selectedAt || manager.createdAt)}</TableCell>
-                    </TableRow>
-                  ))
+                  managers.map((manager) => {
+                    const isSelected = selectedManagerRoleId === manager.manageRoleId;
+
+                    return (
+                      <TableRow
+                        key={manager.manageRoleId}
+                        hover
+                        selected={isSelected}
+                        onClick={() => {
+                          setSelectedManagerRoleId(manager.manageRoleId);
+                          setMoveRole(manager.role);
+                          setMoveBoardId(manager.boardId ?? '');
+                          setIsManagerEditOpen(true);
+                        }}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {manager.nickname || manager.userName || manager.email}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(manager.role)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{manager.boardLabel ?? ''}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {formatDateTime(manager.selectedAt || manager.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
-          </TableContainer>
+          </div>
 
-          {selectedManager ? (
-            <Paper variant="outlined" sx={{ p: 2 }}>
-              <Stack spacing={2}>
-                <Typography variant="subtitle1">선택된 매니저</Typography>
+          {isMobile ? (
+            <Drawer anchor="bottom" open={isIconDialogOpen} onClose={closeIconDialog} className="VhiDrawer-bottom">
+              <h2>아이콘 변경</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeIconDialog}
+                aria-label="아이콘 변경 닫기"
+                disabled={isUploadingIcon || Boolean(deletingIconId)}
+              >
+                <CloseRoundedIcon />
+              </button>
 
-                <Typography variant="body2">
-                  {selectedManager.nickname || selectedManager.userName || selectedManager.email} /{' '}
-                  {getRoleLabel(selectedManager.role)}
-                  {selectedManager.boardLabel ? ` / ${selectedManager.boardLabel}` : ''}
-                </Typography>
-
-                <Stack direction="row" spacing={1.5}>
-                  <TextField
-                    select
-                    label="이동 역할"
-                    value={moveRole}
-                    onChange={handleMoveRoleChange}
-                    size="small"
-                    sx={{ minWidth: 240 }}
-                  >
-                    {roleOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {getRoleLabel(option.value)}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-
-                  {isBoardRole(moveRole) ? (
-                    <TextField
-                      select
-                      label="게시판"
-                      value={moveBoardId}
-                      onChange={handleMoveBoardChange}
-                      size="small"
-                      sx={{ minWidth: 240 }}
-                    >
-                      {boardOptionsForMove.map((board) => (
-                        <MenuItem key={board.value} value={board.value} disabled={board.disabled}>
-                          {board.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  {iconErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{iconErrorMessage}</span>
+                    </p>
                   ) : null}
-                </Stack>
 
-                {selectedManager.role === 'board-general-manager' && moveRole === 'board-general-manager' ? (
-                  <TextField
-                    select
-                    label="이동 대상 총괄 매니저"
-                    value={moveTargetManageRoleId}
-                    onChange={(event) => setMoveTargetManageRoleId(event.target.value)}
-                    size="small"
-                    sx={{ width: 320 }}
-                  >
-                    {boardGeneralManagerCandidates.map((manager) => (
-                      <MenuItem key={manager.manageRoleId} value={manager.manageRoleId}>
-                        {`${manager.nickname || manager.userName || manager.email} / ${manager.boardLabel ?? ''}`}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                ) : null}
+                  <div className={styles['popup-level-rows']}>
+                    {managerIconRoleOptions.map((roleOption) => {
+                      const icon = managerIcons.find((managerIcon) => managerIcon.role === roleOption.value);
 
-                {selectedManager.role === 'board-general-manager' && moveRole !== 'board-general-manager' ? (
-                  <Stack spacing={1}>
-                    <Button type="button" variant="outlined" onClick={openSearchDialog}>
-                      총괄 자리 맡을 멤버 선택
-                    </Button>
-                    {moveTargetMemberId ? (
-                      <Typography variant="body2">
-                        선택된 멤버:{' '}
-                        {searchResults.find((member) => member.rhizomeStigmaId === moveTargetMemberId)?.nickname ?? ''}
-                      </Typography>
-                    ) : null}
-                  </Stack>
-                ) : null}
-
-                <Stack direction="row" spacing={1}>
-                  <Button type="button" variant="contained" onClick={handleMoveManager} disabled={isSubmittingMove}>
-                    이동
-                  </Button>
-
-                  {selectedManager.role !== 'board-general-manager' ? (
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      color="error"
-                      onClick={handleDeleteManager}
-                      disabled={isSubmittingDelete}
-                    >
-                      해임
-                    </Button>
-                  ) : null}
-                </Stack>
-              </Stack>
-            </Paper>
-          ) : null}
-
-          <Dialog open={isIconDialogOpen} onClose={closeIconDialog} fullWidth maxWidth="sm">
-            <DialogTitle>아이콘 변경</DialogTitle>
-            <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                {iconErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {iconErrorMessage}
-                  </Alert>
-                ) : null}
-
-                <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {managerIconRoleOptions.map((roleOption) => {
-                    const icon = managerIcons.find((managerIcon) => managerIcon.role === roleOption.value);
-
-                    if (!icon) {
-                      return null;
-                    }
-
-                    return (
-                      <Stack
-                        key={icon.id}
-                        direction="row"
-                        spacing={2}
-                        alignItems="center"
-                        justifyContent="space-between"
-                      >
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          <Typography variant="subtitle2" sx={{ minWidth: 170 }}>
-                            {roleOption.label}
-                          </Typography>
-
-                          <Box
-                            sx={{
-                              height: 25,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {icon.icon_url ? (
-                              <Box
-                                component="img"
-                                src={icon.icon_url}
-                                alt={roleOption.label}
-                                sx={{
-                                  width: 25,
-                                  height: 25,
-                                  objectFit: 'contain',
-                                  display: 'block',
-                                }}
-                              />
-                            ) : (
-                              <Typography variant="body2">아이콘 없음</Typography>
-                            )}
-                          </Box>
-                        </Stack>
-
-                        <Stack direction="row" spacing={1}>
-                          <Button
-                            type="button"
-                            variant="outlined"
-                            onClick={() => handleClickIconUpload(icon.id)}
-                            disabled={isUploadingIcon}
-                          >
-                            아이콘 변경
-                          </Button>
-
-                          {icon.icon ? (
-                            <Button
-                              type="button"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => void handleDeleteIcon(icon.id)}
-                              disabled={deletingIconId === icon.id}
-                            >
-                              삭제
-                            </Button>
-                          ) : null}
-                        </Stack>
-                      </Stack>
-                    );
-                  })}
-                </Paper>
-
-                <VisuallyHiddenInput
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
-                  onChange={handleIconFileChange}
-                />
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={closeIconDialog} disabled={isUploadingIcon || Boolean(deletingIconId)}>
-                닫기
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={isSearchDialogOpen} onClose={closeSearchDialog} fullWidth maxWidth="md">
-            <DialogTitle>멤버 검색</DialogTitle>
-            <DialogContent>
-              <Stack component="form" spacing={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
-                <Stack direction="row" spacing={1}>
-                  <TextField
-                    label="별명 검색"
-                    value={searchKeyword}
-                    onChange={handleSearchKeywordChange}
-                    fullWidth
-                    size="small"
-                  />
-                  <Button type="submit" variant="contained" disabled={isSearching}>
-                    검색
-                  </Button>
-                </Stack>
-
-                {searchedKeyword ? <Typography variant="body2">{`검색어: ${searchedKeyword}`}</Typography> : null}
-
-                <TableContainer component={Paper} variant="outlined">
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>선택</TableCell>
-                        <TableCell>별명</TableCell>
-                        <TableCell>이메일</TableCell>
-                        <TableCell>현재 매니저</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {searchResults.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4}>검색 결과가 없습니다.</TableCell>
-                        </TableRow>
-                      ) : (
-                        searchResults.map((member) => (
-                          <TableRow key={member.rhizomeStigmaId}>
-                            <TableCell>
-                              <input
-                                type="radio"
-                                checked={selectedSearchMemberId === member.rhizomeStigmaId}
-                                onChange={() => {
-                                  setSelectedSearchMemberId(member.rhizomeStigmaId);
-                                  setMoveTargetMemberId(member.rhizomeStigmaId);
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell>{member.nickname || member.userName || member.email}</TableCell>
-                            <TableCell>{member.email}</TableCell>
-                            <TableCell>
-                              {member.manageRoles.length > 0
-                                ? member.manageRoles
-                                    .map((role) =>
-                                      role.boardLabel
-                                        ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
-                                        : getRoleLabel(role.role),
-                                    )
-                                    .join(', ')
-                                : ''}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-
-                <Stack direction="row" spacing={1.5}>
-                  <TextField
-                    select
-                    label="매니저 구분"
-                    value={assignManagerGroup}
-                    onChange={(event) => {
-                      const nextGroup = event.target.value as AssignManagerGroup;
-                      setAssignManagerGroup(nextGroup);
-                      setAssignCommonRole('community-manager');
-                      setAssignBoardId('');
-                      setAssignBoardRole('board-general-manager');
-                    }}
-                    size="small"
-                    sx={{ minWidth: 180 }}
-                  >
-                    <MenuItem value="common">기타 매니저</MenuItem>
-                    <MenuItem value="board">개별 게시판 매니저</MenuItem>
-                  </TextField>
-
-                  {assignManagerGroup === 'common' ? (
-                    <TextField
-                      select
-                      label="위임 역할"
-                      value={assignCommonRole}
-                      onChange={(event) =>
-                        setAssignCommonRole(event.target.value as 'community-manager' | 'board-manager')
+                      if (!icon) {
+                        return null;
                       }
-                      size="small"
-                      sx={{ minWidth: 240 }}
-                    >
-                      <MenuItem
-                        value="community-manager"
-                        disabled={Boolean(limits) && currentCommunityManagerCount >= (limits?.community_manager ?? 0)}
-                      >
-                        커뮤니티 매니저
-                      </MenuItem>
-                      <MenuItem
-                        value="board-manager"
-                        disabled={Boolean(limits) && currentBoardManagerCount >= (limits?.board_manager ?? 0)}
-                      >
-                        전체 게시판 매니저
-                      </MenuItem>
-                    </TextField>
-                  ) : (
-                    <>
-                      <TextField
-                        select
-                        label="게시판"
-                        value={assignBoardId}
-                        onChange={(event) => {
-                          setAssignBoardId(event.target.value);
-                          setAssignBoardRole('board-general-manager');
-                        }}
-                        size="small"
-                        sx={{ minWidth: 240 }}
-                      >
-                        {boards.map((board) => (
-                          <MenuItem key={board.boardId} value={board.boardId}>
-                            {board.boardLabel}
-                          </MenuItem>
-                        ))}
-                      </TextField>
 
-                      {assignBoardId && selectedAssignBoard ? (
+                      return (
+                        <div key={icon.id} className={styles['popup-level-row']}>
+                          <Stack direction="row" gap={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 170 }}>
+                              {roleOption.label}
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                height: 25,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {icon.icon_url ? (
+                                <Box
+                                  component="img"
+                                  src={icon.icon_url}
+                                  alt={roleOption.label}
+                                  sx={{
+                                    width: 25,
+                                    height: 25,
+                                    objectFit: 'contain',
+                                    display: 'block',
+                                  }}
+                                />
+                              ) : (
+                                <Typography variant="body2">아이콘 없음</Typography>
+                              )}
+                            </Box>
+                          </Stack>
+
+                          <Stack direction="row" gap={1}>
+                            <button
+                              type="button"
+                              className="button medium action"
+                              onClick={() => handleClickIconUpload(icon.id)}
+                              disabled={isUploadingIcon}
+                              aria-label={`${roleOption.label} 아이콘 변경`}
+                            >
+                              <VisuallyHiddenInput
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                                onChange={handleIconFileChange}
+                              />
+                              <CompareArrowsRoundedIcon />
+                            </button>
+
+                            {icon.icon ? (
+                              <button
+                                type="button"
+                                className="button medium warning"
+                                onClick={() => void handleDeleteIcon(icon.id)}
+                                disabled={deletingIconId === icon.id}
+                                aria-label={`${roleOption.label} 아이콘 삭제`}
+                              >
+                                <DeleteForeverRoundedIcon />
+                              </button>
+                            ) : null}
+                          </Stack>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Stack>
+
+                <Stack direction="column" gap={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={closeIconDialog}
+                    disabled={isUploadingIcon || Boolean(deletingIconId)}
+                  >
+                    닫기
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog open={isIconDialogOpen} onClose={closeIconDialog} fullWidth maxWidth="sm" className="VhiDialog">
+              <DialogTitle>아이콘 변경</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeIconDialog}
+                aria-label="아이콘 변경 닫기"
+                disabled={isUploadingIcon || Boolean(deletingIconId)}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  {iconErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{iconErrorMessage}</span>
+                    </p>
+                  ) : null}
+
+                  <div className={styles['popup-level-rows']}>
+                    {managerIconRoleOptions.map((roleOption) => {
+                      const icon = managerIcons.find((managerIcon) => managerIcon.role === roleOption.value);
+
+                      if (!icon) {
+                        return null;
+                      }
+
+                      return (
+                        <div key={icon.id} className={styles['popup-level-row']}>
+                          <Stack direction="row" gap={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 170 }}>
+                              {roleOption.label}
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                height: 25,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {icon.icon_url ? (
+                                <Box
+                                  component="img"
+                                  src={icon.icon_url}
+                                  alt={roleOption.label}
+                                  sx={{
+                                    width: 25,
+                                    height: 25,
+                                    objectFit: 'contain',
+                                    display: 'block',
+                                  }}
+                                />
+                              ) : (
+                                <Typography variant="body2">아이콘 없음</Typography>
+                              )}
+                            </Box>
+                          </Stack>
+
+                          <Stack direction="row" gap={1}>
+                            <button
+                              type="button"
+                              className="button medium action"
+                              onClick={() => handleClickIconUpload(icon.id)}
+                              disabled={isUploadingIcon}
+                              aria-label={`${roleOption.label} 아이콘 변경`}
+                            >
+                              <CompareArrowsRoundedIcon />
+                            </button>
+
+                            {icon.icon ? (
+                              <button
+                                type="button"
+                                className="button medium warning"
+                                onClick={() => void handleDeleteIcon(icon.id)}
+                                disabled={deletingIconId === icon.id}
+                                aria-label=""
+                              >
+                                <DeleteForeverRoundedIcon />
+                              </button>
+                            ) : null}
+                          </Stack>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <VisuallyHiddenInput
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                    onChange={handleIconFileChange}
+                  />
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={closeIconDialog}
+                  disabled={isUploadingIcon || Boolean(deletingIconId)}
+                >
+                  닫기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer anchor="bottom" open={isSearchDialogOpen} onClose={closeSearchDialog} className="VhiDrawer-bottom">
+              <h2>멤버 검색</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeSearchDialog}
+                aria-label="멤버 검색 닫기"
+                disabled={isSubmittingNew}
+              >
+                <CloseRoundedIcon />
+              </button>
+
+              <Stack gap={3}>
+                <Stack component="form" gap={3} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    <TextField
+                      placeholder="별명 검색"
+                      value={searchKeyword}
+                      onChange={handleSearchKeywordChange}
+                      fullWidth
+                      size="small"
+                    />
+                    <button type="submit" className="button medium action" disabled={isSearching}>
+                      검색
+                    </button>
+                  </Stack>
+
+                  <div className={`paper paper-p0 ${styles.paper}`}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>선택</TableCell>
+                          <TableCell>별명</TableCell>
+                          <TableCell>이메일</TableCell>
+                          <TableCell>현재 매니저</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {searchResults.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4}>검색 결과가 없습니다.</TableCell>
+                          </TableRow>
+                        ) : (
+                          searchResults.map((member) => (
+                            <TableRow key={member.rhizomeStigmaId}>
+                              <TableCell>
+                                <Radio
+                                  checked={selectedSearchMemberId === member.rhizomeStigmaId}
+                                  onChange={() => {
+                                    setSelectedSearchMemberId(member.rhizomeStigmaId);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>{member.nickname || member.userName || member.email}</TableCell>
+                              <TableCell>{member.email}</TableCell>
+                              <TableCell>
+                                {member.manageRoles.length > 0
+                                  ? member.manageRoles
+                                      .map((role) =>
+                                        role.boardLabel
+                                          ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
+                                          : getRoleLabel(role.role),
+                                      )
+                                      .join(', ')
+                                  : ''}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {selectedSearchMemberId ? (
+                    <>
+                      <Stack direction="row" gap={1.5}>
+                        <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                          <Typography variant="subtitle2">매니저 구분</Typography>
+                          <TextField
+                            select
+                            value={assignManagerGroup}
+                            onChange={(event) => {
+                              const nextGroup = event.target.value as AssignManagerGroup;
+                              setAssignManagerGroup(nextGroup);
+                              setAssignCommonRole('community-manager');
+                              setAssignBoardId('');
+                              setAssignBoardRole('board-general-manager');
+                            }}
+                            size="small"
+                            fullWidth
+                          >
+                            <MenuItem value="common">기타 매니저</MenuItem>
+                            <MenuItem value="board">개별 게시판 매니저</MenuItem>
+                          </TextField>
+                        </Stack>
+
+                        {assignManagerGroup === 'common' ? (
+                          <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                            <Typography variant="subtitle2">위임 역할</Typography>
+                            <TextField
+                              select
+                              value={assignCommonRole}
+                              onChange={(event) => {
+                                const nextRole = event.target.value as 'community-manager' | 'board-manager';
+
+                                setAssignCommonRole(nextRole);
+
+                                if (isCommonRoleFull(nextRole)) {
+                                  setRoleLimitDialog(getRoleFullMessage(nextRole));
+                                }
+                              }}
+                              size="small"
+                              fullWidth
+                            >
+                              <MenuItem value="community-manager">
+                                {isCommonRoleFull('community-manager') ? '커뮤니티 매니저 (꽉참)' : '커뮤니티 매니저'}
+                              </MenuItem>
+                              <MenuItem value="board-manager">
+                                {isCommonRoleFull('board-manager') ? '전체 게시판 매니저 (꽉참)' : '전체 게시판 매니저'}
+                              </MenuItem>
+                            </TextField>
+                          </Stack>
+                        ) : (
+                          <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                            <Stack direction="column" gap={1}>
+                              <Typography variant="subtitle2">게시판</Typography>
+
+                              <TextField
+                                select
+                                value={assignBoardId}
+                                onChange={(event) => {
+                                  setAssignBoardId(event.target.value);
+                                  setAssignBoardRole('board-general-manager');
+                                }}
+                                size="small"
+                              >
+                                {boards.map((board) => (
+                                  <MenuItem key={board.boardId} value={board.boardId}>
+                                    {board.boardLabel}
+                                  </MenuItem>
+                                ))}
+                              </TextField>
+                            </Stack>
+
+                            {assignBoardId && selectedAssignBoard ? (
+                              <Stack direction="column" gap={1}>
+                                <Typography variant="subtitle2">위임 역할</Typography>
+
+                                <TextField
+                                  select
+                                  value={assignBoardRole}
+                                  onChange={(event) => {
+                                    const nextRole = event.target.value as
+                                      | 'board-general-manager'
+                                      | 'board-assistant-manager';
+
+                                    setAssignBoardRole(nextRole);
+
+                                    if (isAssignBoardRoleFull(nextRole)) {
+                                      setRoleLimitDialog(getRoleFullMessage(nextRole));
+                                    }
+                                  }}
+                                  size="small"
+                                  fullWidth
+                                >
+                                  <MenuItem value="board-general-manager">
+                                    {getBoardRoleLabel('board-general-manager', '개별 게시판 총괄 매니저')}
+                                  </MenuItem>
+                                  <MenuItem value="board-assistant-manager">
+                                    {getBoardRoleLabel('board-assistant-manager', '개별 게시판 부 매니저')}
+                                  </MenuItem>
+                                </TextField>
+                              </Stack>
+                            ) : null}
+                          </Stack>
+                        )}
+                      </Stack>
+
+                      <Stack direction="column">
+                        <button
+                          type="button"
+                          className="button medium submit"
+                          onClick={handleCreateManager}
+                          disabled={
+                            isSubmittingNew ||
+                            (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
+                            (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
+                          }
+                        >
+                          위임
+                        </button>
+                      </Stack>
+                    </>
+                  ) : null}
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog open={isSearchDialogOpen} onClose={closeSearchDialog} fullWidth maxWidth="md" className="VhiDialog">
+              <DialogTitle>멤버 검색</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeSearchDialog}
+                aria-label="멤버 검색 닫기"
+                disabled={isSubmittingNew}
+              >
+                <CloseRoundedIcon />
+              </button>
+
+              <DialogContent>
+                <Stack component="form" gap={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
+                  <Stack direction="row" gap={1} alignItems="center" sx={{ paddingRight: '3px' }}>
+                    <TextField
+                      placeholder="별명 검색"
+                      value={searchKeyword}
+                      onChange={handleSearchKeywordChange}
+                      fullWidth
+                      size="small"
+                    />
+                    <button type="submit" className="button medium action" disabled={isSearching}>
+                      검색
+                    </button>
+                  </Stack>
+
+                  <div className={`paper paper-p0 ${styles.paper}`}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>선택</TableCell>
+                          <TableCell>별명</TableCell>
+                          <TableCell>이메일</TableCell>
+                          <TableCell>현재 매니저</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {searchResults.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4}>검색 결과가 없습니다.</TableCell>
+                          </TableRow>
+                        ) : (
+                          searchResults.map((member) => (
+                            <TableRow key={member.rhizomeStigmaId}>
+                              <TableCell>
+                                <Radio
+                                  checked={selectedSearchMemberId === member.rhizomeStigmaId}
+                                  onChange={() => {
+                                    setSelectedSearchMemberId(member.rhizomeStigmaId);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>{member.nickname || member.userName || member.email}</TableCell>
+                              <TableCell>{member.email}</TableCell>
+                              <TableCell>
+                                {member.manageRoles.length > 0
+                                  ? member.manageRoles
+                                      .map((role) =>
+                                        role.boardLabel
+                                          ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
+                                          : getRoleLabel(role.role),
+                                      )
+                                      .join(', ')
+                                  : ''}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {selectedSearchMemberId ? (
+                    <Stack direction="row" gap={1.5}>
+                      <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                        <Typography variant="subtitle2">매니저 구분</Typography>
                         <TextField
                           select
-                          label="위임 역할"
-                          value={assignBoardRole}
-                          onChange={(event) =>
-                            setAssignBoardRole(
-                              event.target.value as 'board-general-manager' | 'board-assistant-manager',
-                            )
-                          }
+                          value={assignManagerGroup}
+                          onChange={(event) => {
+                            const nextGroup = event.target.value as AssignManagerGroup;
+                            setAssignManagerGroup(nextGroup);
+                            setAssignCommonRole('community-manager');
+                            setAssignBoardId('');
+                            setAssignBoardRole('board-general-manager');
+                          }}
                           size="small"
-                          sx={{ minWidth: 240 }}
+                          sx={{ minWidth: 180 }}
                         >
-                          <MenuItem
-                            value="board-general-manager"
-                            disabled={selectedAssignBoard.boardGeneralManagerFull}
-                          >
-                            {selectedAssignBoard.boardGeneralManagerFull
-                              ? '개별 게시판 총괄 매니저 (꽉참)'
-                              : '개별 게시판 총괄 매니저'}
-                          </MenuItem>
-                          <MenuItem
-                            value="board-assistant-manager"
-                            disabled={selectedAssignBoard.boardAssistantManagerFull}
-                          >
-                            {selectedAssignBoard.boardAssistantManagerFull
-                              ? '개별 게시판 부 매니저 (꽉참)'
-                              : '개별 게시판 부 매니저'}
-                          </MenuItem>
+                          <MenuItem value="common">기타 매니저</MenuItem>
+                          <MenuItem value="board">개별 게시판 매니저</MenuItem>
                         </TextField>
-                      ) : null}
-                    </>
-                  )}
-                </Stack>
+                      </Stack>
 
-                <Stack direction="row" spacing={1}>
-                  <Button type="button" variant="contained" onClick={handleCreateManager} disabled={isSubmittingNew}>
-                    위임
-                  </Button>
+                      {assignManagerGroup === 'common' ? (
+                        <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                          <Typography variant="subtitle2">위임 역할</Typography>
+
+                          <TextField
+                            select
+                            value={assignCommonRole}
+                            onChange={(event) => {
+                              const nextRole = event.target.value as 'community-manager' | 'board-manager';
+
+                              setAssignCommonRole(nextRole);
+
+                              if (isCommonRoleFull(nextRole)) {
+                                setRoleLimitDialog(getRoleFullMessage(nextRole));
+                              }
+                            }}
+                            size="small"
+                            sx={{ minWidth: 240 }}
+                          >
+                            <MenuItem value="community-manager">
+                              {isCommonRoleFull('community-manager') ? '커뮤니티 매니저 (꽉참)' : '커뮤니티 매니저'}
+                            </MenuItem>
+                            <MenuItem value="board-manager">
+                              {isCommonRoleFull('board-manager') ? '전체 게시판 매니저 (꽉참)' : '전체 게시판 매니저'}
+                            </MenuItem>
+                          </TextField>
+                        </Stack>
+                      ) : (
+                        <>
+                          <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                            <Typography variant="subtitle2">게시판</Typography>
+
+                            <TextField
+                              select
+                              value={assignBoardId}
+                              onChange={(event) => {
+                                setAssignBoardId(event.target.value);
+                                setAssignBoardRole('board-general-manager');
+                              }}
+                              size="small"
+                              fullWidth
+                            >
+                              {boards.map((board) => (
+                                <MenuItem key={board.boardId} value={board.boardId}>
+                                  {board.boardLabel}
+                                </MenuItem>
+                              ))}
+                            </TextField>
+                          </Stack>
+
+                          {assignBoardId && selectedAssignBoard ? (
+                            <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
+                              <Typography variant="subtitle2">위임 역할</Typography>
+
+                              <TextField
+                                select
+                                value={assignBoardRole}
+                                onChange={(event) => {
+                                  const nextRole = event.target.value as
+                                    | 'board-general-manager'
+                                    | 'board-assistant-manager';
+
+                                  setAssignBoardRole(nextRole);
+
+                                  if (isAssignBoardRoleFull(nextRole)) {
+                                    setRoleLimitDialog(getRoleFullMessage(nextRole));
+                                  }
+                                }}
+                                size="small"
+                                sx={{ minWidth: 240 }}
+                              >
+                                <MenuItem value="board-general-manager">
+                                  {getBoardRoleLabel('board-general-manager', '개별 게시판 총괄 매니저')}
+                                </MenuItem>
+                                <MenuItem value="board-assistant-manager">
+                                  {getBoardRoleLabel('board-assistant-manager', '개별 게시판 부 매니저')}
+                                </MenuItem>
+                              </TextField>
+                            </Stack>
+                          ) : null}
+                        </>
+                      )}
+                    </Stack>
+                  ) : null}
+
+                  <Stack direction="row" gap={1} justifyContent="flex-end">
+                    <button
+                      type="button"
+                      className="button medium submit"
+                      onClick={handleCreateManager}
+                      disabled={
+                        isSubmittingNew ||
+                        (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
+                        (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
+                      }
+                    >
+                      위임
+                    </button>
+                  </Stack>
                 </Stack>
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={closeSearchDialog}>
-                닫기
-              </Button>
-            </DialogActions>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {selectedManager && isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isManagerEditOpen}
+              onClose={() => setIsManagerEditOpen(false)}
+              className="VhiDrawer-bottom"
+            >
+              <h2>매니저 변경</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setIsManagerEditOpen(false)}
+                aria-label="매니저 변경 닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              {managerEditContent}
+            </Drawer>
+          ) : null}
+
+          {selectedManager && !isMobile ? (
+            <Dialog
+              open={isManagerEditOpen}
+              onClose={() => setIsManagerEditOpen(false)}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>매니저 변경</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={() => setIsManagerEditOpen(false)}
+                aria-label="매니저 변경 닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>{managerEditContent}</DialogContent>
+            </Dialog>
+          ) : null}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(roleLimitDialog)}
+              onClose={() => setRoleLimitDialog(null)}
+              className="VhiDrawer-bottom"
+            >
+              <h2>{roleLimitDialog?.title}</h2>
+              <p>{roleLimitDialog?.message}</p>
+              <button type="button" className="button medium submit" onClick={() => setRoleLimitDialog(null)}>
+                확인
+              </button>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(roleLimitDialog)}
+              onClose={() => setRoleLimitDialog(null)}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>{roleLimitDialog?.title}</DialogTitle>
+              <DialogContent>
+                <Typography variant="body2">{roleLimitDialog?.message}</Typography>
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="button medium submit" onClick={() => setRoleLimitDialog(null)}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}

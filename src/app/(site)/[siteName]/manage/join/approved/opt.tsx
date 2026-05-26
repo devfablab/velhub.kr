@@ -23,6 +23,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import { formatDate, normalizeText } from '@/lib/utils';
@@ -327,8 +328,13 @@ export default function Opt() {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch}>
-                검색
+              <button
+                type="button"
+                className="button medium action"
+                onClick={handleSearch}
+                aria-label="이메일 또는 별명으로 검색"
+              >
+                <SearchRoundedIcon />
               </button>
             </Stack>
           </div>

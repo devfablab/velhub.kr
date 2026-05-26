@@ -21,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -253,14 +254,14 @@ export default function Opt() {
                 fullWidth
                 size="small"
               />
-              <button type="button" className="button medium action" onClick={handleSearch}>
-                검색
+              <button type="button" className="button medium action" onClick={handleSearch} aria-label="별명으로 검색">
+                <SearchRoundedIcon />
               </button>
             </Stack>
           </div>
 
           <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
               <button type="button" className="button medium action" onClick={handleOpenDialog} disabled={isSubmitting}>
                 가입불가 해제
               </button>
@@ -325,7 +326,7 @@ export default function Opt() {
               <Stack gap={3}>
                 <Stack spacing={2} sx={{ pt: 1 }}>
                   <TextField
-                    label="가입불가 해제 사유"
+                    placeholder="가입불가 해제 사유"
                     value={clearReason}
                     onChange={(event) => setClearReason(event.currentTarget.value)}
                     fullWidth
@@ -372,7 +373,7 @@ export default function Opt() {
               <DialogContent>
                 <Stack spacing={2} sx={{ pt: 1 }}>
                   <TextField
-                    label="가입불가 해제 사유"
+                    placeholder="가입불가 해제 사유"
                     value={clearReason}
                     onChange={(event) => setClearReason(event.currentTarget.value)}
                     fullWidth
@@ -390,7 +391,12 @@ export default function Opt() {
                 </Stack>
               </DialogContent>
               <DialogActions>
-                <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isSubmitting}>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
                   취소
                 </button>
                 <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>

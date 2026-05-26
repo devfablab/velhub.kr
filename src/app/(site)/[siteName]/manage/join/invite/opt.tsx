@@ -286,7 +286,7 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Stack direction="row" justifyContent="flex-end">
+          <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
             <button type="button" className="button medium action" onClick={handleOpenInviteDialog}>
               멤버 초대
             </button>
@@ -387,8 +387,23 @@ export default function Opt() {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={isInviteDialogOpen} onClose={handleCloseInviteDialog} fullWidth maxWidth="sm">
+            <Dialog
+              open={isInviteDialogOpen}
+              onClose={handleCloseInviteDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
               <DialogTitle>멤버 초대</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseInviteDialog}
+                aria-label="멤버 초대 닫기"
+                disabled={isInviteSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <Box component="form" onSubmit={handleSubmitInvite}>
                   <Stack spacing={2} sx={{ pt: 1 }}>

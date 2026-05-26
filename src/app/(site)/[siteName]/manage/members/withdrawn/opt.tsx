@@ -21,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -303,7 +304,7 @@ export default function Opt() {
                 size="small"
               />
               <button type="button" className="button medium action" onClick={handleSearch}>
-                검색
+                <SearchRoundedIcon />
               </button>
             </Stack>
           </div>
