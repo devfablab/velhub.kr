@@ -3,22 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
-  Button,
   FormControl,
   FormControlLabel,
-  InputLabel,
   MenuItem,
-  Paper,
   Radio,
   RadioGroup,
   Select,
+  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -258,34 +260,55 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="기본 서체 설정" pageBack={`/${siteName}/manage`} menu="design">
-      <div className="container">
+    <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack spacing={3}>
-            <FormControl>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                적용 범위
-              </Typography>
-              <RadioGroup row value={applyScope} onChange={(event) => setApplyScope(event.target.value as ApplyScope)}>
-                <FormControlLabel value="subject" control={<Radio />} label="제목" />
-                <FormControlLabel value="description" control={<Radio />} label="본문" />
-                <FormControlLabel value="both" control={<Radio />} label="제목+본문" />
-              </RadioGroup>
-            </FormControl>
+          <Stack gap={3}>
+            <div className={`paper ${styles.paper}`}>
+              <FormControl>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  적용 범위
+                </Typography>
+                <RadioGroup
+                  row
+                  value={applyScope}
+                  onChange={(event) => setApplyScope(event.target.value as ApplyScope)}
+                >
+                  <FormControlLabel value="subject" control={<Radio />} label="제목" />
+                  <FormControlLabel value="description" control={<Radio />} label="본문" />
+                  <FormControlLabel value="both" control={<Radio />} label="제목+본문" />
+                </RadioGroup>
+              </FormControl>
+            </div>
 
             {(applyScope === 'subject' || applyScope === 'both') && (
-              <Stack spacing={2}>
-                <Typography variant="h6">제목</Typography>
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  제목
+                </Typography>
 
                 <FormControl fullWidth>
-                  <InputLabel>서체</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    서체
+                  </Typography>
                   <Select
                     size="small"
-                    label="서체"
                     value={subjectFontFamily}
                     onChange={(event) => setSubjectFontFamily(event.target.value as FontFamily | '')}
                   >
@@ -298,10 +321,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>자간</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    자간
+                  </Typography>
                   <Select
                     size="small"
-                    label="자간"
                     value={subjectLetterSpacing}
                     onChange={(event) => setSubjectLetterSpacing(event.target.value as number | '')}
                   >
@@ -314,10 +338,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>행간</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    행간
+                  </Typography>
                   <Select
                     size="small"
-                    label="행간"
                     value={subjectLineHeight}
                     onChange={(event) => setSubjectLineHeight(event.target.value as number | '')}
                   >
@@ -328,18 +353,21 @@ export default function Opt() {
                     ))}
                   </Select>
                 </FormControl>
-              </Stack>
+              </div>
             )}
 
             {(applyScope === 'description' || applyScope === 'both') && (
-              <Stack spacing={2}>
-                <Typography variant="h6">본문</Typography>
+              <div className={`paper ${styles.paper}`}>
+                <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                  본문
+                </Typography>
 
                 <FormControl fullWidth>
-                  <InputLabel>서체</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    서체
+                  </Typography>
                   <Select
                     size="small"
-                    label="서체"
                     value={descriptionFontFamily}
                     onChange={(event) => setDescriptionFontFamily(event.target.value as FontFamily | '')}
                   >
@@ -352,10 +380,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>크기</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    크기
+                  </Typography>
                   <Select
                     size="small"
-                    label="크기"
                     value={descriptionFontSize}
                     onChange={(event) => setDescriptionFontSize(event.target.value as number | '')}
                   >
@@ -368,10 +397,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>자간</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    자간
+                  </Typography>
                   <Select
                     size="small"
-                    label="자간"
                     value={descriptionLetterSpacing}
                     onChange={(event) => setDescriptionLetterSpacing(event.target.value as number | '')}
                   >
@@ -384,10 +414,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>행간</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    행간
+                  </Typography>
                   <Select
                     size="small"
-                    label="행간"
                     value={descriptionLineHeight}
                     onChange={(event) => setDescriptionLineHeight(event.target.value as number | '')}
                   >
@@ -400,10 +431,11 @@ export default function Opt() {
                 </FormControl>
 
                 <FormControl fullWidth>
-                  <InputLabel>마진</InputLabel>
+                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                    마진
+                  </Typography>
                   <Select
                     size="small"
-                    label="마진"
                     value={descriptionMargin}
                     onChange={(event) => setDescriptionMargin(event.target.value as number | '')}
                   >
@@ -414,25 +446,35 @@ export default function Opt() {
                     ))}
                   </Select>
                 </FormControl>
+              </div>
+            )}
+
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="submit" className={`button ${styles.button}`}>
+                  저장
+                </button>
+              </div>
+            ) : (
+              <Stack direction="row" justifyContent="flex-end">
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleSubmit()}
+                  disabled={isSubmitting}
+                >
+                  적용하기
+                </button>
               </Stack>
             )}
 
-            <Stack direction="row" justifyContent="flex-end">
-              <Button type="button" variant="contained" onClick={() => void handleSubmit()} disabled={isSubmitting}>
-                적용하기
-              </Button>
-            </Stack>
-
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <Snackbar
+              open={Boolean(successMessage)}
+              autoHideDuration={2500}
+              onClose={() => setSuccessMessage('')}
+              message={successMessage}
+            />
           </Stack>
         </div>
       </div>

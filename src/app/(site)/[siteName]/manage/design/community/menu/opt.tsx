@@ -308,7 +308,12 @@ export default function Opt() {
             </DndContext>
             {isMobile ? (
               <div className={styles['button-top']}>
-                <button type="button" className={`button ${styles.button}`}>
+                <button
+                  type="button"
+                  className={`button ${styles.button}`}
+                  onClick={() => void handleApply()}
+                  disabled={isSubmitting}
+                >
                   저장
                 </button>
               </div>

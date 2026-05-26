@@ -14,22 +14,23 @@ import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
-  Alert,
   Box,
-  Button,
   IconButton,
   InputAdornment,
   MenuItem,
-  Paper,
   Select,
   Stack,
   TextField,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -99,7 +100,7 @@ function SortableItem({
 
   return (
     <Box ref={setNodeRef} style={style}>
-      <Paper sx={{ p: 2 }}>
+      <div className={`paper ${styles.paper}`}>
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
             {...attributes}
@@ -133,7 +134,7 @@ function SortableItem({
 
               const SelectedIcon = selectedMeta.Icon;
 
-              return <SelectedIcon aria-label={selectedMeta.label} />;
+              return <SelectedIcon aria-label={selectedMeta.label} sx={{ width: 24, height: 24, marginTop: 1 }} />;
             }}
           >
             {SERVICE_OPTIONS.map((option) => {
@@ -141,7 +142,7 @@ function SortableItem({
 
               return (
                 <MenuItem key={option.value} value={option.value}>
-                  <ServiceIcon aria-label={option.label} />
+                  <ServiceIcon aria-label={option.label} sx={{ width: 24, height: 24 }} />
                 </MenuItem>
               );
             })}
@@ -163,7 +164,7 @@ function SortableItem({
             <CloseIcon />
           </IconButton>
         </Stack>
-      </Paper>
+      </div>
     </Box>
   );
 }
@@ -350,18 +351,31 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="소셜 링크 관리" pageBack={`/${siteName}/manage`} menu="design">
-      <div className="container">
+    <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+
+          <p className="alert info" style={{ paddingTop: 23 }}>
+            <InfoOutlineRoundedIcon />
+            <span>순서를 변경 또는 링크 추가시 반드시 저장 버튼을 누르셔야 저장됩니다.</span>
+          </p>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
@@ -379,19 +393,22 @@ export default function Opt() {
             </SortableContext>
           </DndContext>
 
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <Button type="button" variant="outlined" onClick={handleAdd}>
+          <Stack justifyContent="space-between" direction="row" sx={{ p: isMobile ? 2 : 0 }}>
+            <button type="button" className="button medium action" onClick={handleAdd}>
               링크 추가
-            </Button>
-          </Box>
-          <Alert severity="warning" variant="outlined">
-            순서를 변경하시면 반드시 하단 저장을 눌러주세요.
-          </Alert>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Button type="button" variant="contained" onClick={handleSave} disabled={isSaving}>
-              저장
-            </Button>
-          </Box>
+            </button>
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="button" className={`button ${styles.button}`} onClick={handleSave} disabled={isSaving}>
+                  저장
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="button medium submit" onClick={handleSave} disabled={isSaving}>
+                저장
+              </button>
+            )}
+          </Stack>
         </div>
       </div>
     </Container>
