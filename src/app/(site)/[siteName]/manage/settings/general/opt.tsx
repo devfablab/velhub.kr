@@ -146,7 +146,8 @@ export default function Opt() {
   const [siteLabelCheckMessage, setSiteLabelCheckMessage] = useState('');
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadInfo() {
@@ -641,6 +642,7 @@ export default function Opt() {
       </Container>
     );
   }
+
   if (!siteInfo) {
     return (
       <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
@@ -673,11 +675,8 @@ export default function Opt() {
           <Snackbar
             open={Boolean(successMessage)}
             message={successMessage}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'center',
-            }}
-            autoHideDuration={3000}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSuccessMessage('')}
           />
 
@@ -748,13 +747,7 @@ export default function Opt() {
             <Typography variant="subtitle2">사이트 식별자</Typography>
             {editingField === 'site_key' ? (
               <>
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{
-                    alignItems: 'flex-start',
-                  }}
-                >
+                <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
                   <TextField
                     value={String(draftValue)}
                     onChange={handleSiteKeyChange}
@@ -779,27 +772,30 @@ export default function Opt() {
                       },
                     }}
                   />
-                  <button type="button" onClick={() => cancelEdit()} className="button medium cancel">
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={() => void saveField('site_key')}
-                    disabled={isSubmitting || isCheckingSiteKey}
-                  >
-                    수정 완료
-                  </button>
+                  <Stack gap={1} direction="row" justifyContent="flex-end">
+                    <button
+                      type="button"
+                      onClick={() => cancelEdit()}
+                      className={`button ${isMobile ? 'small' : 'medium'} cancel`}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      className={`button ${isMobile ? 'small' : 'medium'} submit`}
+                      onClick={() => void saveField('site_key')}
+                      disabled={isSubmitting || isCheckingSiteKey}
+                    >
+                      수정 완료
+                    </button>
+                  </Stack>
                 </Stack>
                 {siteKeyCheckMessage ? (
                   <Snackbar
                     open={Boolean(siteKeyCheckMessage)}
                     message={siteKeyCheckMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
+                    autoHideDuration={2700}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                     onClose={() => setSiteKeyCheckMessage('')}
                   />
                 ) : null}
@@ -821,14 +817,7 @@ export default function Opt() {
             <Typography variant="subtitle2">사이트명</Typography>
             {editingField === 'site_label' ? (
               <>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  sx={{
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                  }}
-                >
+                <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
                   <TextField
                     value={String(draftValue)}
                     onChange={handleSiteLabelChange}
@@ -851,17 +840,23 @@ export default function Opt() {
                       },
                     }}
                   />
-                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={() => void saveField('site_label')}
-                    disabled={isSubmitting || isCheckingSiteLabel}
-                  >
-                    수정 완료
-                  </button>
+                  <Stack gap={1} direction="row" justifyContent="flex-end">
+                    <button
+                      type="button"
+                      className={`button ${isMobile ? 'small' : 'medium'} cancel`}
+                      onClick={() => cancelEdit()}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      className={`button ${isMobile ? 'small' : 'medium'} submit`}
+                      onClick={() => void saveField('site_label')}
+                      disabled={isSubmitting || isCheckingSiteLabel}
+                    >
+                      수정 완료
+                    </button>
+                  </Stack>
                 </Stack>
                 {siteLabelCheckMessage ? (
                   <p className="alert info">

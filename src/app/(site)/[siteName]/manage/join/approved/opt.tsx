@@ -386,13 +386,13 @@ export default function Opt() {
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.nickname || user.userName || user.email}
                         {user.isReApproval ? ' (재신청)' : ''}
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography>{formatDateKorean(user.createdAt)}</Typography>
+                          <Typography sx={{ whiteSpace: 'nowrap' }}>{formatDateKorean(user.createdAt)}</Typography>
                           <IconButton size="small" onClick={() => setSelectedUser(user)}>
                             <SearchIcon fontSize="small" />
                           </IconButton>
@@ -667,7 +667,8 @@ export default function Opt() {
           )}
           <Snackbar
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2500}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
           />

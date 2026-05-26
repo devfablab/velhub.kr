@@ -286,7 +286,7 @@ export default function Opt() {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
-            <button type="button" className="button medium action" onClick={handleOpenInviteDialog}>
+            <button type="button" className="button small action" onClick={handleOpenInviteDialog}>
               멤버 초대
             </button>
           </Stack>
@@ -513,7 +513,8 @@ export default function Opt() {
 
           <Snackbar
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2500}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
           />

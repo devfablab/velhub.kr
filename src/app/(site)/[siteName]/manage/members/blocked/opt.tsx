@@ -345,10 +345,10 @@ export default function Opt() {
                     <TableCell padding="checkbox">
                       <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
                     </TableCell>
-                    <TableCell>별명</TableCell>
-                    <TableCell>활동정지 사유</TableCell>
-                    <TableCell>활동정지 처리일</TableCell>
-                    <TableCell>활동정지 처리자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 사유</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리자</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -360,10 +360,12 @@ export default function Opt() {
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         />
                       </TableCell>
-                      <TableCell>{user.nickname}</TableCell>
-                      <TableCell>{user.blockReason}</TableCell>
-                      <TableCell>{user.blockedAt ? formatDate(user.blockedAt) : ''}</TableCell>
-                      <TableCell>{user.blockedBy}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.nickname}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{user.blockReason}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.blockedAt ? formatDate(user.blockedAt) : ''}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.blockedBy}</TableCell>
                     </TableRow>
                   ))}
 
@@ -489,7 +491,8 @@ export default function Opt() {
 
           <Snackbar
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2500}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
           />

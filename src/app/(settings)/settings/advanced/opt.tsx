@@ -208,7 +208,7 @@ export default function Opt() {
       <Snackbar
         open={isSnackbarOpen}
         onClose={handleCloseSnackbar}
-        autoHideDuration={3000}
+        autoHideDuration={2700}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         message={errorMessage ? undefined : successMessage || undefined}
       >

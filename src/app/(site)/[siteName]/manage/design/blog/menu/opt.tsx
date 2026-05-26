@@ -332,8 +332,8 @@ export default function Opt() {
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             <Snackbar
               open={Boolean(successMessage)}
+              autoHideDuration={2700}
               anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              autoHideDuration={2500}
               onClose={() => setSuccessMessage('')}
               message={successMessage}
             />

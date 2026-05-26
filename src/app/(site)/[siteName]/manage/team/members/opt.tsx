@@ -563,7 +563,7 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Stack direction="row" justifyContent="flex-end" spacing={1}>
+          <Stack direction="row" justifyContent="flex-end" gap={1} sx={{ p: 2, pb: 0 }}>
             <button
               type="button"
               className="button small cancel"

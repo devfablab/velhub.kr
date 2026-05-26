@@ -314,7 +314,7 @@ export default function Opt() {
                   onClick={() => void handleApply()}
                   disabled={isSubmitting}
                 >
-                  저장
+                  적용
                 </button>
               </div>
             ) : (
@@ -431,7 +431,8 @@ export default function Opt() {
           )}
           <Snackbar
             open={Boolean(successMessage)}
-            autoHideDuration={2500}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSuccessMessage('')}
             message={successMessage}
           />

@@ -9,7 +9,6 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
-  Alert,
   Backdrop,
   Box,
   Button,
@@ -19,16 +18,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Link,
   MenuItem,
   Pagination,
   PaginationItem,
-  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -36,8 +32,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -192,27 +193,21 @@ function SortableBoardRow({
       </TableCell>
 
       <TableCell>
-        <Button
-          type="button"
-          variant="text"
-          onClick={() => onMoveToCommunityBoard(board.board_key)}
-          sx={{
-            p: 0,
-            minWidth: 0,
-            justifyContent: 'flex-start',
-            textAlign: 'left',
-          }}
-        >
+        <button type="button" className="button medium cancel" onClick={() => onMoveToCommunityBoard(board.board_key)}>
           {board.board_label}
-        </Button>
+        </button>
       </TableCell>
 
       <TableCell>{formatDate(board.created_at ?? '')}</TableCell>
 
       <TableCell align="right">
-        <Button type="button" variant="outlined" onClick={() => onMoveToCommunityBoardEdit(board.board_key)}>
+        <button
+          type="button"
+          className="button medium action"
+          onClick={() => onMoveToCommunityBoardEdit(board.board_key)}
+        >
           수정
-        </Button>
+        </button>
       </TableCell>
     </TableRow>
   );
@@ -738,7 +733,17 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <div className={`container ${styles.container}`}>
+        <div className={`${styles.content} content`}>
+          <div className={`paper ${styles.paper}`}>
+            <div className="loading-container">
+              <LoadingIndicator />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (siteType === 'community') {
@@ -752,34 +757,35 @@ export default function Opt() {
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
-            <Button type="button" variant="contained" onClick={handleMoveToCommunityBoardNew}>
+            <button type="button" className="button medium cancel" onClick={handleMoveToCommunityBoardNew}>
               게시판 만들기
-            </Button>
+            </button>
           </Stack>
 
           {isBoardOrderChanged ? (
-            <Button type="button" variant="outlined" onClick={handleSaveBoardOrder} disabled={isOrderingBoards}>
+            <button type="button" className="outlined" onClick={handleSaveBoardOrder} disabled={isOrderingBoards}>
               순서 저장
-            </Button>
+            </button>
           ) : (
             <span />
           )}
         </Stack>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
+        {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+
+        {isBoardOrderChanged ? (
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>{dialogErrorMessage}</span>
+          </p>
         ) : null}
 
-        {isBoardOrderChanged ? <Alert severity="warning">순서를 변경하시면 반드시 저장을 눌러주세요.</Alert> : null}
-
         {boards.length === 0 ? (
-          <Paper variant="outlined" sx={{ p: 3 }}>
+          <div className={`paper ${styles.paper}`}>
             <Typography>게시판이 없습니다.</Typography>
-          </Paper>
+          </div>
         ) : (
-          <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+          <div className={`paper paper-p0 ${styles.paper}`}>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
               <SortableContext items={boards.map((board) => board.id)} strategy={verticalListSortingStrategy}>
                 <Table>
@@ -805,7 +811,7 @@ export default function Opt() {
                 </Table>
               </SortableContext>
             </DndContext>
-          </Paper>
+          </div>
         )}
       </Stack>
     );
@@ -816,31 +822,20 @@ export default function Opt() {
       <div className={`content ${styles.content} ${styles['content-manage']}`}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Stack direction="row" gap={1}>
-            <Button
-              LinkComponent={NextLink}
-              type="button"
-              variant="outlined"
-              color="inherit"
-              href={`/${siteName}/manage/contents/posts/category`}
-            >
+            <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/category`}>
               카테고리 관리
-            </Button>
+            </Anchor>
             {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-              <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
+              <button type="button" className="button small wanring" onClick={handleOpenBulkDeleteDialog}>
                 삭제
-              </Button>
+              </button>
             ) : null}
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">
-            <Button
-              LinkComponent={NextLink}
-              type="button"
-              variant="contained"
-              href={`/${siteName}/manage/contents/posts/new`}
-            >
+            <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/new`}>
               글쓰기
-            </Button>
+            </Anchor>
           </Stack>
         </Stack>
 
@@ -851,7 +846,7 @@ export default function Opt() {
           alignItems="center"
         >
           {isStaff ? (
-            <ButtonGroup size="medium">
+            <ButtonGroup size="medium" className={styles['button-group']}>
               <Button
                 LinkComponent={NextLink}
                 type="button"
@@ -890,21 +885,16 @@ export default function Opt() {
           </TextField>
         </Stack>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
+        {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
         {posts.length === 0 ? (
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Typography>
-              {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}
-            </Typography>
-          </Paper>
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}</span>
+          </p>
         ) : (
           <Box sx={{ position: 'relative' }}>
-            <TableContainer variant="outlined" component={Paper}>
+            <div className={`paper paper-p0 ${styles.paper}`}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -936,13 +926,12 @@ export default function Opt() {
                       </TableCell>
 
                       <TableCell>
-                        <Link
-                          type="button"
+                        <Anchor
+                          className="button medium action"
                           href={`/${siteName}/manage/contents/posts/${post.slug}`}
-                          sx={{ whiteSpace: 'nowrap' }}
                         >
                           {post.subject}
-                        </Link>
+                        </Anchor>
                       </TableCell>
 
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.created_at)}</TableCell>
@@ -955,30 +944,30 @@ export default function Opt() {
 
                       <TableCell align="right">
                         {post.is_closed ? (
-                          <Button
+                          <button
                             type="button"
                             color="warning"
                             variant="outlined"
                             onClick={() => handleOpenRestoreDialog(post)}
                           >
                             복구
-                          </Button>
+                          </button>
                         ) : (
-                          <Button
+                          <button
                             type="button"
                             color="error"
                             variant="outlined"
                             onClick={() => handleOpenSingleDeleteDialog(post)}
                           >
                             삭제
-                          </Button>
+                          </button>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </div>
 
             <Backdrop
               open={isFetching}
@@ -1018,15 +1007,24 @@ export default function Opt() {
           </Stack>
         ) : null}
 
-        <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+        <Dialog
+          open={dialogMode === 'delete'}
+          onClose={handleCloseDeleteDialog}
+          fullWidth
+          maxWidth="sm"
+          className="VhiDialog"
+        >
           <DialogTitle>게시물 삭제</DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <Alert severity="info" variant="filled">
-                삭제시 언제든 복구가 가능합니다.
-                <br />
-                삭제사유를 입력해 주세요. (필수)
-              </Alert>
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>
+                  삭제시 언제든 복구가 가능합니다.
+                  <br />
+                  삭제사유를 입력해 주세요. (필수)
+                </span>
+              </p>
 
               {isStaff ? (
                 <TextField
@@ -1045,19 +1043,20 @@ export default function Opt() {
               )}
 
               {dialogErrorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {dialogErrorMessage}
-                </Alert>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{dialogErrorMessage}</span>
+                </p>
               ) : null}
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+            <button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
               취소
-            </Button>
-            <Button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isDeleting}>
+            </button>
+            <button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isDeleting}>
               삭제
-            </Button>
+            </button>
           </DialogActions>
         </Dialog>
 
@@ -1072,19 +1071,20 @@ export default function Opt() {
               </Typography>
 
               {dialogErrorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {dialogErrorMessage}
-                </Alert>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{dialogErrorMessage}</span>
+                </p>
               ) : null}
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+            <button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
               취소
-            </Button>
-            <Button type="button" variant="contained" color="warning" onClick={handleDelete} disabled={isDeleting}>
+            </button>
+            <button type="button" variant="contained" color="warning" onClick={handleDelete} disabled={isDeleting}>
               확인
-            </Button>
+            </button>
           </DialogActions>
         </Dialog>
       </div>

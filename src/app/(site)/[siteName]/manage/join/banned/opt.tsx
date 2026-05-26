@@ -274,10 +274,10 @@ export default function Opt() {
                     <TableCell padding="checkbox">
                       <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
                     </TableCell>
-                    <TableCell>이메일 (별명)</TableCell>
-                    <TableCell>가입불가 사유</TableCell>
-                    <TableCell>가입불가 처리일 (처리자)</TableCell>
-                    <TableCell>처리 종류</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>가입불가 사유</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>가입불가 처리일 (처리자)</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>처리 종류</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -289,12 +289,12 @@ export default function Opt() {
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
                         />
                       </TableCell>
-                      <TableCell>{user.displayName}</TableCell>
-                      <TableCell>{user.reason}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.displayName}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{user.reason}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
                       </TableCell>
-                      <TableCell>{user.type}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.type}</TableCell>
                     </TableRow>
                   ))}
 
