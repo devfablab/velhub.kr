@@ -20,20 +20,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import {
-  Alert,
-  Box,
-  Button,
-  FormControlLabel,
-  Paper,
-  Snackbar,
-  Stack,
-  Switch,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, FormControlLabel, Snackbar, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -93,7 +87,7 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
   };
 
   return (
-    <Paper ref={setNodeRef} variant="outlined" style={style} sx={{ p: 2 }}>
+    <div ref={setNodeRef} className={`paper ${styles.paper}`}>
       <Stack direction="row" spacing={2} alignItems="center">
         <Box
           component="button"
@@ -126,12 +120,16 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
 
         <FormControlLabel
           control={
-            <Switch checked={item.isShow} onChange={(event) => onChangeShow(item.id, event.currentTarget.checked)} />
+            <IOSSwitch
+              sx={{ m: 1 }}
+              checked={item.isShow}
+              onChange={(event) => onChangeShow(item.id, event.currentTarget.checked)}
+            />
           }
           label={item.isShow ? '노출' : '숨김'}
         />
       </Stack>
-    </Paper>
+    </div>
   );
 }
 
@@ -141,6 +139,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [items, setItems] = useState<HomeOrderItem[]>([]);
   const [hasHomeOrders, setHasHomeOrders] = useState(false);
@@ -314,42 +313,49 @@ export default function Opt() {
   }, [siteName]);
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="커뮤니티 홈 설정" pageBack={`/${siteName}/manage`} menu="design">
-      <div className="container">
+    <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {!hasHomeOrders ? (
-            <Paper variant="outlined" sx={{ p: 3 }}>
-              <Stack spacing={2}>
-                <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
-                <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
-                <Box>
-                  <Button
-                    type="button"
-                    variant="contained"
-                    onClick={() => void handleInitialize()}
-                    disabled={isInitializing}
-                  >
-                    커뮤니티 홈 초기 세팅하기
-                  </Button>
-                </Box>
-              </Stack>
-            </Paper>
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle1">커뮤니티 홈 세팅이 필요합니다.</Typography>
+              <Typography variant="body2">현재 등록된 게시판을 기준으로 홈 노출 순서를 생성합니다.</Typography>
+              <Box>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleInitialize()}
+                  disabled={isInitializing}
+                >
+                  커뮤니티 홈 초기 세팅하기
+                </button>
+              </Box>
+            </div>
           ) : (
             <>
               {items.length === 0 ? (
-                <Paper variant="outlined" sx={{ p: 3 }}>
-                  <Typography>등록된 게시판이 없습니다.</Typography>
-                </Paper>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>등록된 게시판이 없습니다.</span>
+                </p>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
@@ -362,13 +368,31 @@ export default function Opt() {
                 </DndContext>
               )}
 
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button type="button" variant="outlined" onClick={() => void loadHomeOrders()} disabled={isSubmitting}>
+              <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
+                <button
+                  type="button"
+                  className="button medium action"
+                  onClick={() => void loadHomeOrders()}
+                  disabled={isSubmitting}
+                >
                   다시 불러오기
-                </Button>
-                <Button type="button" variant="contained" onClick={() => void handleSave()} disabled={isSubmitting}>
-                  저장
-                </Button>
+                </button>
+                {isMobile ? (
+                  <div className={styles['button-top']}>
+                    <button type="submit" className={`button ${styles.button}`}>
+                      저장
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void handleSave()}
+                    disabled={isSubmitting}
+                  >
+                    저장
+                  </button>
+                )}
               </Stack>
             </>
           )}

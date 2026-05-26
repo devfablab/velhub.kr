@@ -3,23 +3,27 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
+  Drawer,
+  Snackbar,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, horizontalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -45,15 +49,10 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
   });
 
   return (
-    <Paper
+    <div
       ref={setNodeRef}
-      variant="outlined"
-      sx={{
-        p: 2,
-        minWidth: 160,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1,
+      className={`paper ${styles.paper}`}
+      style={{
         transform: CSS.Transform.toString(transform),
         transition,
         cursor: 'grab',
@@ -64,9 +63,9 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
       <Typography>{menu.display_label}</Typography>
 
       {menu.is_renameable ? (
-        <Button
+        <button
           type="button"
-          variant="outlined"
+          className="button medium action"
           onPointerDown={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
           onClick={(event) => {
@@ -75,9 +74,9 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
           }}
         >
           이름 변경
-        </Button>
+        </button>
       ) : null}
-    </Paper>
+    </div>
   );
 }
 
@@ -268,23 +267,38 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="메뉴 설정" pageBack={`/${siteName}/manage`} menu="design">
-      <div className="container">
+    <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack spacing={3}>
-            <Alert variant="outlined" severity="info">
-              메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.
-            </Alert>
+          <Stack gap={2}>
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            <p className="alert info" style={{ paddingTop: 23 }}>
+              <InfoOutlineRoundedIcon />
+              <span>메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.</span>
+            </p>
+
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
                 <Stack spacing={2}>
-                  <Paper variant="outlined" sx={{ p: 2, minWidth: 160, display: 'flex', alignItems: 'center' }}>
+                  <div className={`paper ${styles.paper}`}>
                     <Typography>홈</Typography>
-                  </Paper>
+                  </div>
 
                   {menus.map((menu) => (
                     <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
@@ -292,46 +306,130 @@ export default function Opt() {
                 </Stack>
               </SortableContext>
             </DndContext>
-
-            <Stack direction="row" justifyContent="flex-end">
-              <Button type="button" variant="contained" onClick={() => void handleApply()} disabled={isSubmitting}>
-                적용
-              </Button>
-            </Stack>
-
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            {isMobile ? (
+              <div className={styles['button-top']}>
+                <button type="button" className={`button ${styles.button}`}>
+                  저장
+                </button>
+              </div>
+            ) : (
+              <Stack direction="row" justifyContent="flex-end">
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleApply()}
+                  disabled={isSubmitting}
+                >
+                  적용
+                </button>
+              </Stack>
+            )}
+            {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+            {successMessage ? <div className={`paper paper-success ${styles.paper}`}>{successMessage}</div> : null}
           </Stack>
 
-          <Dialog open={Boolean(renameTarget)} onClose={handleCloseRenameDialog} fullWidth maxWidth="xs">
-            <DialogTitle>게시판 이름 변경</DialogTitle>
-            <DialogContent>
-              <TextField
-                label="게시판 이름"
-                value={renameValue}
-                onChange={handleRenameValueChange}
-                fullWidth
-                size="small"
-                sx={{ mt: 1 }}
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" variant="outlined" onClick={handleCloseRenameDialog} disabled={isRenaming}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={() => void handleRename()} disabled={isRenaming}>
-                저장
-              </Button>
-            </DialogActions>
-          </Dialog>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(renameTarget)}
+              onClose={handleCloseRenameDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>게시판 이름 변경</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseRenameDialog}
+                aria-label="게시판 이름 변경 닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+
+              <Stack gap={3}>
+                <TextField
+                  placeholder="게시판 이름"
+                  value={renameValue}
+                  onChange={handleRenameValueChange}
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseRenameDialog}
+                    disabled={isRenaming}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => void handleRename()}
+                    disabled={isRenaming}
+                  >
+                    저장
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(renameTarget)}
+              onClose={handleCloseRenameDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>게시판 이름 변경</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseRenameDialog}
+                aria-label="게시판 이름 변경 닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <TextField
+                  placeholder="게시판 이름"
+                  value={renameValue}
+                  onChange={handleRenameValueChange}
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseRenameDialog}
+                  disabled={isRenaming}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleRename()}
+                  disabled={isRenaming}
+                >
+                  저장
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+          <Snackbar
+            open={Boolean(successMessage)}
+            autoHideDuration={2500}
+            onClose={() => setSuccessMessage('')}
+            message={successMessage}
+          />
         </div>
       </div>
     </Container>
