@@ -4,21 +4,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
   Box,
-  Button,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   MenuItem,
-  Paper,
   Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TextField,
@@ -26,7 +23,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -156,6 +158,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadTeams() {
     const response = await fetch(`/api/manage/team/members?siteName=${siteName}`, {
@@ -538,33 +541,43 @@ export default function Opt() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   return (
-    <Container pageTitle="팀원 목록" pageBack={`/${siteName}/manage`} menu="team">
-      <div className="container">
+    <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <Stack direction="row" justifyContent="flex-end" spacing={1}>
-            <Button
+            <button
               type="button"
-              variant="outlined"
-              color="inherit"
-              size="small"
+              className="button small cancel"
               disabled={!isLoading && sortedInvites.length === 0}
               onClick={handleOpenInviteListDialog}
             >
               초대 목록
-            </Button>
-            <Button type="button" variant="contained" color="primary" size="small" onClick={handleOpenInviteDialog}>
+            </button>
+            <button type="button" className="button small action" onClick={handleOpenInviteDialog}>
               팀원초대
-            </Button>
+            </button>
           </Stack>
 
-          <TableContainer component={Paper} variant="outlined">
+          <div className={`paper paper-p0 ${styles.paper}`}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -594,27 +607,21 @@ export default function Opt() {
                       {!team.is_self ? (
                         <Stack direction="row" spacing={1}>
                           {team.role !== 'owner' ? (
-                            <Button
+                            <button
                               type="button"
-                              size="small"
-                              variant="outlined"
-                              sx={{ whiteSpace: 'nowrap' }}
-                              color="secondary"
+                              className="button small action"
                               onClick={() => handleOpenRoleDialog(team)}
                             >
                               역할 변경
-                            </Button>
+                            </button>
                           ) : null}
-                          <Button
+                          <button
                             type="button"
-                            variant="outlined"
-                            size="small"
-                            sx={{ whiteSpace: 'nowrap' }}
-                            color={team.is_block ? 'inherit' : 'error'}
+                            className={`button small ${team.is_block ? 'action' : 'warning'}`}
                             onClick={() => handleOpenBlockDialog(team, !team.is_block)}
                           >
                             {team.is_block ? '차단풀기' : '차단하기'}
-                          </Button>
+                          </button>
                         </Stack>
                       ) : null}
                     </TableCell>
@@ -622,223 +629,655 @@ export default function Opt() {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
+          </div>
 
-          <Dialog open={Boolean(selectedTeam)} onClose={handleCloseDetail} fullWidth maxWidth="sm">
-            <DialogTitle>팀블로그 정보</DialogTitle>
-            <DialogContent>
-              {selectedTeam ? (
-                <Stack spacing={2} sx={{ pt: 1 }}>
-                  <Box>
-                    <Typography variant="subtitle2">이메일</Typography>
-                    <Typography variant="body2">{selectedTeam.email}</Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="subtitle2">이름</Typography>
-                    <Typography variant="body2">{selectedTeam.name}</Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="subtitle2">가입일</Typography>
-                    <Typography variant="body2">{formatDateTimeFull(selectedTeam.approval_at)}</Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="subtitle2">역할</Typography>
-                    <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="subtitle2">차단 여부</Typography>
-                    <Typography variant="body2">{selectedTeam.is_block ? '차단됨' : '정상'}</Typography>
-                  </Box>
-
-                  {selectedTeam.is_block ? (
-                    <Box>
-                      <Typography variant="subtitle2">차단일</Typography>
-                      <Typography variant="body2">{formatDateTimeFull(selectedTeam.blocked_at)}</Typography>
-                    </Box>
-                  ) : null}
-                  {selectedTeam.block_count >= 1 ? (
-                    <Box>
-                      <Typography variant="subtitle2">차단 횟수</Typography>
-                      <Typography variant="body2">{selectedTeam.block_count}회 차단</Typography>
-                    </Box>
-                  ) : null}
-                </Stack>
-              ) : null}
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDetail} autoFocus>
-                닫기
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={Boolean(targetRoleTeam)} onClose={handleCloseRoleDialog} fullWidth maxWidth="xs">
-            <DialogTitle>역할 변경</DialogTitle>
-            <DialogContent>
-              <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseRoleDialog} disabled={isRoleSubmitting} autoFocus>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSubmitRole} disabled={isRoleSubmitting}>
-                역할 변경
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={Boolean(targetTeam)} onClose={handleCloseBlockDialog} fullWidth maxWidth="xs">
-            <DialogTitle>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</DialogTitle>
-            <DialogContent>
-              <Typography>
-                {nextBlockState ? (
-                  <>
-                    정말로{' '}
-                    <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                      {targetTeam?.name} 님
-                    </strong>
-                    을 차단하시겠습니까?
-                    <br />
-                    차단된 팀원은 더 이상 글을 쓰실 수 없습니다.
-                  </>
-                ) : (
-                  <>
-                    정말로{' '}
-                    <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
-                      {targetTeam?.name} 님
-                    </strong>
-                    의 차단을 해제하시겠습니까?
-                    <br />
-                    차단이 해제되면 다시 글을 쓰실 수 있습니다.
-                  </>
-                )}
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseBlockDialog} disabled={isSubmitting} autoFocus>
-                취소
-              </Button>
-              <Button
-                type="button"
-                variant="contained"
-                color="error"
-                onClick={handleSubmitBlock}
-                disabled={isSubmitting}
-              >
-                {nextBlockState ? '차단' : '차단 해제'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={isInviteDialogOpen} onClose={handleCloseInviteDialog} fullWidth maxWidth="sm">
-            <DialogTitle>팀원 초대</DialogTitle>
-            <DialogContent>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(selectedTeam)}
+              onClose={handleCloseDetail}
+              className="VhiDrawer-bottom"
+            >
+              <h2>팀블로그 정보</h2>
+              <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <TextField
-                  label="이메일"
-                  value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                  fullWidth
-                  size="small"
-                />
+                {selectedTeam ? (
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2">이메일</Typography>
+                      <Typography variant="body2">{selectedTeam.email}</Typography>
+                    </Box>
 
-                <TextField
-                  select
-                  label="역할"
-                  value={inviteRole}
-                  onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
-                  fullWidth
-                  size="small"
-                >
-                  <MenuItem value="manager">매니저</MenuItem>
-                  <MenuItem value="member">멤버</MenuItem>
-                </TextField>
+                    <Box>
+                      <Typography variant="subtitle2">이름</Typography>
+                      <Typography variant="body2">{selectedTeam.name}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">가입일</Typography>
+                      <Typography variant="body2">{formatDateTimeFull(selectedTeam.approval_at)}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">역할</Typography>
+                      <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">차단 여부</Typography>
+                      <Typography variant="body2">{selectedTeam.is_block ? '차단됨' : '정상'}</Typography>
+                    </Box>
+
+                    {selectedTeam.is_block ? (
+                      <Box>
+                        <Typography variant="subtitle2">차단일</Typography>
+                        <Typography variant="body2">{formatDateTimeFull(selectedTeam.blocked_at)}</Typography>
+                      </Box>
+                    ) : null}
+                    {selectedTeam.block_count >= 1 ? (
+                      <Box>
+                        <Typography variant="subtitle2">차단 횟수</Typography>
+                        <Typography variant="body2">{selectedTeam.block_count}회 차단</Typography>
+                      </Box>
+                    ) : null}
+                  </Stack>
+                ) : null}
+                <Stack direction="column" spacing={1.5}>
+                  <button type="button" className="button medium cancel" onClick={handleCloseDetail}>
+                    닫기
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseInviteDialog} disabled={isInviteSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSubmitInvite} disabled={isInviteSubmitting}>
-                초대하기
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(selectedTeam)}
+              onClose={handleCloseDetail}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>팀블로그 정보</DialogTitle>
+              <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                {selectedTeam ? (
+                  <Stack spacing={2} sx={{ pt: 1 }}>
+                    <Box>
+                      <Typography variant="subtitle2">이메일</Typography>
+                      <Typography variant="body2">{selectedTeam.email}</Typography>
+                    </Box>
 
-          <Dialog open={isInviteListDialogOpen} onClose={handleCloseInviteListDialog} fullWidth maxWidth="md">
-            <DialogTitle>초대 현황</DialogTitle>
-            <DialogContent>
-              <TableContainer component={Paper} sx={{ mt: 1 }} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>초대 이메일</TableCell>
-                      <TableCell>역할</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
-                      <TableCell>유효일</TableCell>
-                      <TableCell />
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {sortedInvites.map((invite) => (
-                      <TableRow key={invite.id}>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(invite.role)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
-                        <TableCell>
-                          {invite.status === 'pending' ? (
-                            <Button
-                              type="button"
-                              variant="outlined"
-                              color="inherit"
-                              onClick={() => handleOpenCancelDialog(invite)}
-                            >
-                              취소
-                            </Button>
-                          ) : null}
-                        </TableCell>
+                    <Box>
+                      <Typography variant="subtitle2">이름</Typography>
+                      <Typography variant="body2">{selectedTeam.name}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">가입일</Typography>
+                      <Typography variant="body2">{formatDateTimeFull(selectedTeam.approval_at)}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">역할</Typography>
+                      <Typography variant="body2">{getRoleLabel(selectedTeam.role)}</Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle2">차단 여부</Typography>
+                      <Typography variant="body2">{selectedTeam.is_block ? '차단됨' : '정상'}</Typography>
+                    </Box>
+
+                    {selectedTeam.is_block ? (
+                      <Box>
+                        <Typography variant="subtitle2">차단일</Typography>
+                        <Typography variant="body2">{formatDateTimeFull(selectedTeam.blocked_at)}</Typography>
+                      </Box>
+                    ) : null}
+                    {selectedTeam.block_count >= 1 ? (
+                      <Box>
+                        <Typography variant="subtitle2">차단 횟수</Typography>
+                        <Typography variant="body2">{selectedTeam.block_count}회 차단</Typography>
+                      </Box>
+                    ) : null}
+                  </Stack>
+                ) : null}
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="button medium close" onClick={handleCloseDetail}>
+                  닫기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(targetRoleTeam)}
+              onClose={handleCloseRoleDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>역할 변경</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseRoleDialog}
+                airia-label="역할 변경 창 닫기"
+                disabled={isRoleSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseRoleDialog}
+                    disabled={isRoleSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSubmitRole}
+                    disabled={isRoleSubmitting}
+                  >
+                    역할 변경
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(targetRoleTeam)}
+              onClose={handleCloseRoleDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>역할 변경</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseRoleDialog}
+                disabled={isRoleSubmitting}
+                aria-label="역할 변경 창 닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+
+              <DialogContent>
+                <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseRoleDialog}
+                  disabled={isRoleSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSubmitRole}
+                  disabled={isRoleSubmitting}
+                >
+                  역할 변경
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(targetTeam)}
+              onClose={handleCloseBlockDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseBlockDialog}
+                disabled={isSubmitting}
+                aria-label={nextBlockState ? '팀원 차단 창 닫기' : '팀원 차단 해제 창 닫기'}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>
+                  {nextBlockState ? (
+                    <>
+                      정말로{' '}
+                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
+                        {targetTeam?.name} 님
+                      </strong>
+                      을 차단하시겠습니까?
+                      <br />
+                      차단된 팀원은 더 이상 글을 쓰실 수 없습니다.
+                    </>
+                  ) : (
+                    <>
+                      정말로{' '}
+                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
+                        {targetTeam?.name} 님
+                      </strong>
+                      의 차단을 해제하시겠습니까?
+                      <br />
+                      차단이 해제되면 다시 글을 쓰실 수 있습니다.
+                    </>
+                  )}
+                </Typography>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseBlockDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium warning"
+                    onClick={handleSubmitBlock}
+                    disabled={isSubmitting}
+                  >
+                    {nextBlockState ? '차단' : '차단 해제'}
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(targetTeam)}
+              onClose={handleCloseBlockDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>{nextBlockState ? '팀원 차단' : '팀원 차단 해제'}</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseBlockDialog}
+                disabled={isSubmitting}
+                aria-label={nextBlockState ? '팀원 차단 창 닫기' : '팀원 차단 해제 창 닫기'}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Typography>
+                  {nextBlockState ? (
+                    <>
+                      정말로{' '}
+                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
+                        {targetTeam?.name} 님
+                      </strong>
+                      을 차단하시겠습니까?
+                      <br />
+                      차단된 팀원은 더 이상 글을 쓰실 수 없습니다.
+                    </>
+                  ) : (
+                    <>
+                      정말로{' '}
+                      <strong style={{ fontWeight: 700, fontVariationSettings: '"wght" 700' }}>
+                        {targetTeam?.name} 님
+                      </strong>
+                      의 차단을 해제하시겠습니까?
+                      <br />
+                      차단이 해제되면 다시 글을 쓰실 수 있습니다.
+                    </>
+                  )}
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseBlockDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium warning"
+                  onClick={handleSubmitBlock}
+                  disabled={isSubmitting}
+                >
+                  {nextBlockState ? '차단' : '차단 해제'}
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isInviteDialogOpen}
+              onClose={handleCloseInviteDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>팀원 초대</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseInviteDialog}
+                aria-label="초대 창 닫기"
+                disabled={isInviteSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={1}>
+                  <Stack>
+                    <Typography variant="subtitle2">이메일</Typography>
+                    <TextField
+                      placeholder="초대할 팀원의 이메일을 입력해주세요."
+                      value={inviteEmail}
+                      onChange={(event) => setInviteEmail(event.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
+
+                  <Stack>
+                    <Typography variant="subtitle2">역할</Typography>
+                    <TextField
+                      select
+                      value={inviteRole}
+                      onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
+                      fullWidth
+                      size="small"
+                    >
+                      <MenuItem value="manager">매니저</MenuItem>
+                      <MenuItem value="member">멤버</MenuItem>
+                    </TextField>
+                  </Stack>
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseInviteDialog}
+                    disabled={isInviteSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSubmitInvite}
+                    disabled={isInviteSubmitting}
+                  >
+                    초대하기
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isInviteDialogOpen}
+              onClose={handleCloseInviteDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>팀원 초대</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseInviteDialog}
+                aria-label="초대 창 닫기"
+                disabled={isInviteSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={1}>
+                  <Stack>
+                    <Typography variant="subtitle2">이메일</Typography>
+                    <TextField
+                      placeholder="초대할 팀원의 이메일을 입력해주세요."
+                      value={inviteEmail}
+                      onChange={(event) => setInviteEmail(event.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Stack>
+
+                  <Stack>
+                    <Typography variant="subtitle2">역할</Typography>
+                    <TextField
+                      select
+                      value={inviteRole}
+                      onChange={(event) => setInviteRole(event.target.value as 'manager' | 'member')}
+                      fullWidth
+                      size="small"
+                    >
+                      <MenuItem value="manager">매니저</MenuItem>
+                      <MenuItem value="member">멤버</MenuItem>
+                    </TextField>
+                  </Stack>
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseInviteDialog}
+                  disabled={isInviteSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSubmitInvite}
+                  disabled={isInviteSubmitting}
+                >
+                  초대하기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isInviteListDialogOpen}
+              onClose={handleCloseInviteListDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>초대 현황</h2>
+              <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <div className={`paper ${styles.paper}`}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>초대 이메일</TableCell>
+                        <TableCell>역할</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                        <TableCell>유효일</TableCell>
+                        <TableCell />
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseInviteListDialog}>
-                닫기
-              </Button>
-            </DialogActions>
-          </Dialog>
+                    </TableHead>
+                    <TableBody>
+                      {sortedInvites.map((invite) => (
+                        <TableRow key={invite.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(invite.role)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
+                          <TableCell>
+                            {invite.status === 'pending' ? (
+                              <button
+                                type="button"
+                                className="button medium cancel"
+                                onClick={() => handleOpenCancelDialog(invite)}
+                              >
+                                취소
+                              </button>
+                            ) : null}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <Stack direction="column" spacing={1.5}>
+                  <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
+                    닫기
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isInviteListDialogOpen}
+              onClose={handleCloseInviteListDialog}
+              fullWidth
+              maxWidth="md"
+              className="VhiDialog"
+            >
+              <DialogTitle>초대 현황</DialogTitle>
+              <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
+                <CloseRoundedIcon />
+              </button>
 
-          <Dialog open={Boolean(targetInvite)} onClose={handleCloseCancelDialog} fullWidth maxWidth="xs">
-            <DialogTitle>초대 취소</DialogTitle>
-            <DialogContent>
-              <Typography>
-                정말로 초대를 취소하시겠습니까?
-                <br />
-                취소된 초대장은 상대방이 더이상 이용이 불가합니다.
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseCancelDialog} disabled={isCancelSubmitting}>
-                초대 유지
-              </Button>
-              <Button
-                type="button"
-                variant="contained"
-                color="error"
-                onClick={handleSubmitCancelInvite}
+              <DialogContent>
+                <div className={`paper ${styles.paper}`}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>초대 이메일</TableCell>
+                        <TableCell>역할</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                        <TableCell>유효일</TableCell>
+                        <TableCell />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sortedInvites.map((invite) => (
+                        <TableRow key={invite.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{getRoleLabel(invite.role)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
+                          <TableCell>
+                            {invite.status === 'pending' ? (
+                              <button
+                                type="button"
+                                className="button medium cancel"
+                                onClick={() => handleOpenCancelDialog(invite)}
+                              >
+                                취소
+                              </button>
+                            ) : null}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="button medium close" onClick={handleCloseInviteListDialog}>
+                  닫기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(targetInvite)}
+              onClose={handleCloseCancelDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>초대 취소</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseCancelDialog}
+                aria-label="초대 취소 창 닫기"
                 disabled={isCancelSubmitting}
               >
-                초대 취소
-              </Button>
-            </DialogActions>
-          </Dialog>
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>
+                  정말로 초대를 취소하시겠습니까?
+                  <br />
+                  취소된 초대장은 상대방이 더이상 이용이 불가합니다.
+                </Typography>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseCancelDialog}
+                    disabled={isCancelSubmitting}
+                  >
+                    초대 유지
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium warning"
+                    onClick={handleSubmitCancelInvite}
+                    disabled={isCancelSubmitting}
+                  >
+                    초대 취소
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={Boolean(targetInvite)}
+              onClose={handleCloseCancelDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>초대 취소</DialogTitle>
+              <button className="close-button" onClick={handleCloseCancelDialog} aria-label="초대 취소 창 닫기">
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Typography>
+                  정말로 초대를 취소하시겠습니까?
+                  <br />
+                  취소된 초대장은 상대방이 더이상 이용이 불가합니다.
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseCancelDialog}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 유지
+                </button>
+                <button
+                  type="button"
+                  className="button medium warning"
+                  onClick={handleSubmitCancelInvite}
+                  disabled={isCancelSubmitting}
+                >
+                  초대 취소
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
       </div>
     </Container>
