@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Box,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -310,15 +309,13 @@ export default function Opt() {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
                     <TableCell align="right">
                       {invite.status === 'pending' ? (
-                        <Button
+                        <button
                           type="button"
-                          variant="outlined"
-                          color="inherit"
-                          size="small"
+                          className="button medium cancel"
                           onClick={() => handleOpenCancelDialog(invite)}
                         >
                           취소
-                        </Button>
+                        </button>
                       ) : null}
                     </TableCell>
                   </TableRow>

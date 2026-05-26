@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
   Avatar,
   Box,
   FormControlLabel,
@@ -25,6 +24,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -864,9 +864,10 @@ export default function Opt() {
                   </button>
                 </Stack>
                 {siteLabelCheckMessage ? (
-                  <Alert severity="success" variant="outlined">
-                    {siteLabelCheckMessage}
-                  </Alert>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>{siteLabelCheckMessage}</span>
+                  </p>
                 ) : null}
               </>
             ) : (

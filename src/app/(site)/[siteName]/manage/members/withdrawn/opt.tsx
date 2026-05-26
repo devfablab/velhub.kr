@@ -276,7 +276,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -291,7 +291,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="탈퇴 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <div className={`paper ${styles.paper}`}>
@@ -313,7 +313,7 @@ export default function Opt() {
             <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
               <button
                 type="button"
-                className="button medium action"
+                className="button small action"
                 onClick={() => handleOpenActionDialog('unkick')}
                 disabled={isActionSubmitting}
               >
@@ -322,7 +322,7 @@ export default function Opt() {
               <Stack direction="row" spacing={1.5} justifyContent="space-between">
                 <button
                   type="button"
-                  className="button medium warning"
+                  className="button small warning"
                   onClick={() => handleOpenActionDialog('ban')}
                   disabled={isActionSubmitting}
                 >

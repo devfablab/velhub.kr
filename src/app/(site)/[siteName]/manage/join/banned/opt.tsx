@@ -261,8 +261,8 @@ export default function Opt() {
           </div>
 
           <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
-              <button type="button" className="button medium action" onClick={handleOpenDialog} disabled={isSubmitting}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2, pb: 0 }}>
+              <button type="button" className="button small action" onClick={handleOpenDialog} disabled={isSubmitting}>
                 가입불가 해제
               </button>
             </Stack>

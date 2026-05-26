@@ -455,7 +455,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -470,8 +470,8 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="멤버 등급 관리" pageBack={`/${siteName}/manage`} menu="members">
-      <div className="container">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
@@ -489,8 +489,8 @@ export default function Opt() {
             </div>
           ) : (
             <>
-              <Stack direction="row" justifyContent="flex-end">
-                <button type="button" className="button medium action" onClick={handleOpenIconDialog}>
+              <Stack direction="row" justifyContent="flex-end" sx={{ p: 2, pb: 0 }}>
+                <button type="button" className="button small action" onClick={handleOpenIconDialog}>
                   아이콘 변경
                 </button>
               </Stack>

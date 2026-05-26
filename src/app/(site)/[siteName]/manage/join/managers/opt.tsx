@@ -1013,13 +1013,13 @@ export default function Opt() {
           <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end" sx={{ p: 1 }}>
             <button
               type="button"
-              className="button medium action"
+              className="button small action"
               onClick={() => void openIconDialog()}
               disabled={isLoadingIcons}
             >
               아이콘 변경
             </button>
-            <button type="button" className="button medium action" onClick={openSearchDialog}>
+            <button type="button" className="button small action" onClick={openSearchDialog}>
               위임
             </button>
           </Stack>

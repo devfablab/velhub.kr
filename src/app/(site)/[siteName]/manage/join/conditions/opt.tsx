@@ -4,9 +4,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Alert,
-  Box,
-  Button,
   FormControlLabel,
   MenuItem,
   Radio,
@@ -31,9 +28,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];

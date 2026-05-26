@@ -315,7 +315,7 @@ export default function Opt() {
 
   return (
     <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-      <div className="container">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
@@ -340,10 +340,16 @@ export default function Opt() {
           </div>
 
           <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ p: 2, pb: 0 }}
+            >
               <button
                 type="button"
-                className="button medium action"
+                className="button small action"
                 onClick={() => handleOpenConfirmAction('approve')}
                 disabled={isSubmitting}
               >
@@ -351,7 +357,7 @@ export default function Opt() {
               </button>
               <button
                 type="button"
-                className="button medium warning"
+                className="button small warning"
                 onClick={() => handleOpenConfirmAction('reject')}
                 disabled={isSubmitting}
               >
@@ -423,7 +429,7 @@ export default function Opt() {
               <button
                 type="button"
                 className="close-button"
-                onClick={handleCloseConfirmAction}
+                onClick={() => setSelectedUser(null)}
                 aria-label="가입 신청 답변 닫기"
                 disabled={isSubmitting}
               >
@@ -503,7 +509,7 @@ export default function Opt() {
               <button
                 type="button"
                 className="close-button"
-                onClick={handleCloseConfirmAction}
+                onClick={() => setSelectedUser(null)}
                 aria-label="가입 신청 답변 닫기"
                 disabled={isSubmitting}
               >

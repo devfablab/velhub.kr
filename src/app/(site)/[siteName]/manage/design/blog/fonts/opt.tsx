@@ -19,6 +19,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
@@ -314,6 +315,11 @@ export default function Opt() {
                   >
                     {SUBJECT_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {subjectFontFamily === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -331,6 +337,11 @@ export default function Opt() {
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {subjectLetterSpacing === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -348,6 +359,11 @@ export default function Opt() {
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {subjectLineHeight === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -373,6 +389,11 @@ export default function Opt() {
                   >
                     {DESCRIPTION_FONT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {descriptionFontFamily === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -390,6 +411,11 @@ export default function Opt() {
                   >
                     {FONT_SIZE_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {descriptionFontSize === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -407,6 +433,11 @@ export default function Opt() {
                   >
                     {LETTER_SPACING_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {descriptionLetterSpacing === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -424,6 +455,11 @@ export default function Opt() {
                   >
                     {LINE_HEIGHT_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {descriptionLineHeight === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -441,6 +477,11 @@ export default function Opt() {
                   >
                     {MARGIN_OPTIONS.map((option) => (
                       <MenuItem key={option.label} value={option.value}>
+                        {descriptionMargin === option.value ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
                         {option.label}
                       </MenuItem>
                     ))}
@@ -451,7 +492,12 @@ export default function Opt() {
 
             {isMobile ? (
               <div className={styles['button-top']}>
-                <button type="submit" className={`button ${styles.button}`}>
+                <button
+                  type="button"
+                  className={`button ${styles.button}`}
+                  onClick={() => void handleSubmit()}
+                  disabled={isSubmitting}
+                >
                   저장
                 </button>
               </div>

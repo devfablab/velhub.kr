@@ -19,6 +19,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
@@ -336,8 +337,22 @@ export default function Opt() {
                       size="small"
                       required
                     >
-                      <MenuItem value="top">top</MenuItem>
-                      <MenuItem value="bottom">bottom</MenuItem>
+                      <MenuItem value="top">
+                        {giscusSettings.inputPosition === 'top' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        top
+                      </MenuItem>
+                      <MenuItem value="bottom">
+                        {giscusSettings.inputPosition === 'bottom' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        bottom
+                      </MenuItem>
                     </TextField>
                   </Stack>
 
@@ -352,8 +367,22 @@ export default function Opt() {
                       fullWidth
                       size="small"
                     >
-                      <MenuItem value="0">0</MenuItem>
-                      <MenuItem value="1">1</MenuItem>
+                      <MenuItem value="0">
+                        {giscusSettings.strict === '0' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        0
+                      </MenuItem>
+                      <MenuItem value="1">
+                        {giscusSettings.strict === '1' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        1
+                      </MenuItem>
                     </TextField>
                   </Stack>
 
@@ -368,8 +397,22 @@ export default function Opt() {
                       fullWidth
                       size="small"
                     >
-                      <MenuItem value="0">0</MenuItem>
-                      <MenuItem value="1">1</MenuItem>
+                      <MenuItem value="0">
+                        {giscusSettings.reactionsEnabled === '0' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        0
+                      </MenuItem>
+                      <MenuItem value="1">
+                        {giscusSettings.reactionsEnabled === '1' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        1
+                      </MenuItem>
                     </TextField>
                   </Stack>
 
@@ -384,8 +427,22 @@ export default function Opt() {
                       fullWidth
                       size="small"
                     >
-                      <MenuItem value="0">0</MenuItem>
-                      <MenuItem value="1">1</MenuItem>
+                      <MenuItem value="0">
+                        {giscusSettings.emitMetadata === '0' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        0
+                      </MenuItem>
+                      <MenuItem value="1">
+                        {giscusSettings.emitMetadata === '1' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        1
+                      </MenuItem>
                     </TextField>
                   </Stack>
                 </Stack>
@@ -395,7 +452,12 @@ export default function Opt() {
 
           {isMobile ? (
             <div className={styles['button-top']}>
-              <button type="button" className={`button ${styles.button}`} onClick={() => void handleSubmit()}>
+              <button
+                type="button"
+                className={`button ${styles.button}`}
+                onClick={() => void handleSubmit()}
+                disabled={isSubmitDisabled}
+              >
                 저장
               </button>
             </div>

@@ -8,6 +8,7 @@ import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlin
 import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
+import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
 import Anchor from '@/components/Anchor';
 
 type SiteType = 'blog' | 'community';
@@ -34,6 +35,15 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
           <span>{siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보'}</span>
         </Anchor>
       </MenuItem>
+
+      {siteType === 'community' ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/join`}>
+            <ContactsOutlinedIcon fontSize="small" />
+            <span>가입 관리</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       <MenuItem onClick={onClose}>
         <Anchor href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}>

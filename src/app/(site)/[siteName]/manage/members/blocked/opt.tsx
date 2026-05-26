@@ -273,7 +273,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="활동 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -288,7 +288,7 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="활동정지 멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
+    <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
@@ -312,7 +312,7 @@ export default function Opt() {
             <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
               <button
                 type="button"
-                className="button medium action"
+                className="button small action"
                 onClick={() => handleOpenActionDialog('unblock')}
                 disabled={isActionSubmitting}
               >
@@ -321,7 +321,7 @@ export default function Opt() {
               <Stack direction="row" spacing={1.5} justifyContent="space-between">
                 <button
                   type="button"
-                  className="button medium warning"
+                  className="button small warning"
                   onClick={() => handleOpenActionDialog('kick')}
                   disabled={isActionSubmitting}
                 >
@@ -329,7 +329,7 @@ export default function Opt() {
                 </button>
                 <button
                   type="button"
-                  className="button medium warning"
+                  className="button small warning"
                   onClick={() => handleOpenActionDialog('ban')}
                   disabled={isActionSubmitting}
                 >
