@@ -575,7 +575,7 @@ export default function Opt() {
                   <FormControlLabel value="period" control={<Radio />} label="가입불가 기간설정" />
                 </RadioGroup>
                 {joinAcceptStatus === 'period' ? (
-                  <Stack direction={isNotMobile ? 'row' : 'column'} spacing={2}>
+                  <Stack direction={isMobile ? 'row' : 'column'} spacing={2}>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">시작일</Typography>
                       <DatePicker

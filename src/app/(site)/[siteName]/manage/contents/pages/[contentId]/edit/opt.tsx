@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -173,7 +174,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-
+  const isMobile = !isNotMobile;
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
@@ -583,13 +584,31 @@ export default function Opt() {
   }, []);
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="페이지 수정" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+              페이지 수정
+            </Typography>
+          ) : null}
+
           <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
             <Stack spacing={1}>
               <TextField

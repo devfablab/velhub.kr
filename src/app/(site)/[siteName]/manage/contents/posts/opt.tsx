@@ -831,7 +831,7 @@ export default function Opt() {
         <Stack
           direction={isMobile ? 'column' : 'row'}
           gap={1}
-          justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
+          justifyContent={isMobile ? 'space-between' : 'flex-end'}
           alignItems={isMobile ? 'flex-end' : 'center'}
           sx={{ pr: 2, pl: 2 }}
         >

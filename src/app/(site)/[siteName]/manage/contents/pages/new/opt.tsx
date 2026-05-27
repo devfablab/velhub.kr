@@ -2,22 +2,15 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from '@mui/material/Link';
-import {
-  Alert,
-  Box,
-  Button,
-  InputAdornment,
-  Paper,
-  Stack,
-  styled,
-  TextField,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ToastEditor from '@/components/editor/ToastEditor';
+import Anchor from '@/components/Anchor';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -150,6 +143,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
@@ -159,7 +153,8 @@ export default function Opt() {
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
-  const [, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
+  const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [ogImage, setOgImage] = useState('');
   const [ogImageUrl, setOgImageUrl] = useState('');
   const [slugMessage, setSlugMessage] = useState('');
@@ -524,123 +519,137 @@ export default function Opt() {
   }, []);
 
   return (
-    <Container pageTitle="페이지 추가" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/pages`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-            <Stack spacing={1}>
-              <TextField
-                label="페이지 식별자 (필수)"
-                value={slug}
-                onChange={handleSlugChange}
-                fullWidth
-                size="medium"
-                helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        {baseUrl}/{siteName}/p/
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          onClick={() => void handleCheckSlug()}
-                          disabled={isCheckingSlug}
-                          size="small"
-                        >
-                          중복 확인
-                        </Button>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-              {slugMessage ? (
-                <Alert
-                  severity={isSlugAvailable ? 'success' : 'error'}
-                  variant={isSlugAvailable ? 'outlined' : 'filled'}
-                >
-                  {slugMessage}
-                </Alert>
-              ) : null}
-            </Stack>
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+              페이지 생성
+            </Typography>
+          ) : null}
 
-            <TextField
-              label="페이지 제목 (필수)"
-              value={subject}
-              onChange={handleSubjectChange}
-              fullWidth
-              size="small"
-            />
-            <TextField label="페이지 부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-
-            <Box>
-              <Typography sx={{ mb: 1 }}>오픈그래프 이미지</Typography>
-
-              {ogImageUrl ? (
-                <Box
-                  component="img"
-                  src={ogImageUrl}
-                  alt="오픈그래프 이미지"
-                  sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+          <div className={`paper ${styles.paper}`}>
+            <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">페이지 식별자 *</Typography>
+                <TextField
+                  placeholder="페이지 식별자 (필수)"
+                  value={slug}
+                  onChange={handleSlugChange}
+                  fullWidth
+                  size="medium"
+                  helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {baseUrl}/{siteName}/p/
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => void handleCheckSlug()}
+                            disabled={isCheckingSlug}
+                          >
+                            중복 확인
+                          </button>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
-              ) : null}
+                {slugMessage ? (
+                  <p className={`alert ${isSlugAvailable ? 'info' : 'error'}`}>
+                    {isSlugAvailable ? <InfoOutlineRoundedIcon /> : <ErrorOutlineRoundedIcon />}
+                    {slugMessage}
+                  </p>
+                ) : null}
+              </Stack>
 
-              <VisuallyHiddenInput
-                ref={fileInputReference}
-                type="file"
-                accept="image/*"
-                onChange={handleOgImageFileChange}
-              />
+              <Stack gap={1}>
+                <Typography variant="subtitle2">페이지 제목 *</Typography>
+                <TextField
+                  placeholder="페이지 제목 (필수)"
+                  value={subject}
+                  onChange={handleSubjectChange}
+                  fullWidth
+                  size="small"
+                />
+              </Stack>
 
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={handleClickOgImageUpload}
-                disabled={isUploadingOgImage}
-                size="small"
-              >
-                {ogImageUrl ? '이미지 교체' : '이미지 추가'}
-              </Button>
-            </Box>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">페이지 부제목</Typography>
+                <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+              </Stack>
 
-            <Box>
-              <Typography sx={{ mb: 1 }}>페이지 내용 (필수)</Typography>
-              <ToastEditor
-                initialValue={contentHtml}
-                initialMarkdown={contentMarkdown}
-                initialEditType="markdown"
-                onHtmlChange={setContentHtml}
-                onMarkdownChange={setContentMarkdown}
-                onUploadImage={handleUploadEditorImage}
-              />
-            </Box>
+              <Stack direction="column">
+                <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle2">오픈그래프 이미지</Typography>
 
-            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-              <Button
-                component={Link}
-                href={`/${siteName}/manage/contents/pages`}
-                underline="none"
-                variant="outlined"
-                size="large"
-              >
-                취소
-              </Button>
-              <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-                저장
-              </Button>
+                  <VisuallyHiddenInput
+                    ref={fileInputReference}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleOgImageFileChange}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleClickOgImageUpload}
+                    disabled={isUploadingOgImage}
+                    className="button small action"
+                  >
+                    {ogImageUrl ? '이미지 교체' : '이미지 추가'}
+                  </button>
+                </Stack>
+                {ogImageUrl ? (
+                  <Box
+                    component="img"
+                    src={ogImageUrl}
+                    alt="오픈그래프 이미지"
+                    sx={{ maxWidth: '100%', height: 'auto', display: 'block', mb: 1.5 }}
+                  />
+                ) : null}
+              </Stack>
+
+              <Stack gap={2}>
+                <Typography variant="subtitle2">페이지 내용 *</Typography>
+                <ToastEditor
+                  initialValue={contentHtml}
+                  initialMarkdown={contentMarkdown}
+                  initialEditType="wysiwyg"
+                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                  markdownStatus={markdownStatus}
+                  hideModeSwitch
+                  onHtmlChange={setContentHtml}
+                  onMarkdownChange={setContentMarkdown}
+                  onUploadImage={handleUploadEditorImage}
+                />
+              </Stack>
+
+              <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/pages`}>
+                  취소
+                </Anchor>
+                {isMobile ? (
+                  <div className={styles['button-top']}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                      저장
+                    </button>
+                  </div>
+                ) : (
+                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
+                    저장
+                  </button>
+                )}
+              </Stack>
+
+              {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             </Stack>
-
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
+          </div>
         </div>
       </div>
     </Container>

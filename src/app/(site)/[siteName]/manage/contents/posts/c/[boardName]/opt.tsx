@@ -16,6 +16,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Link,
   MenuItem,
   Pagination,
@@ -33,10 +34,16 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
+import Anchor from '@/components/Anchor';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -126,6 +133,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
   const [contents, setContents] = useState<ContentRow[]>([]);
@@ -466,58 +474,103 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="글 목록" pageBack={`/${siteName}/manage/contents/posts/c`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Stack direction="row" spacing={1}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
+            <Stack direction="row" gap={1}>
               {board?.post_type === 'prefix' ? (
-                <Button type="button" variant="outlined" onClick={handleMoveToPrefixManage}>
+                <button type="button" className="button small cancel" onClick={handleMoveToPrefixManage}>
                   말머리 관리
-                </Button>
+                </button>
+              ) : null}
+              {board?.post_type === 'series' ? (
+                <button type="button" className="button small cancels" onClick={handleMoveToPrefixManage}>
+                  말머리 관리
+                </button>
               ) : null}
 
-              {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-                <Button type="button" color="error" variant="outlined" onClick={handleOpenBulkDeleteDialog}>
-                  삭제
-                </Button>
-              ) : null}
+              {isMobile ? null : (
+                <>
+                  {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                    <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                      삭제
+                    </button>
+                  ) : null}
+                </>
+              )}
             </Stack>
 
-            <Button type="button" variant="contained" onClick={handleMoveToNew}>
-              새 글 쓰기
-            </Button>
+            <Stack direction="row" justifyContent="flex-end">
+              <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}/new`} className="button small submit">
+                글쓰기
+              </Anchor>
+            </Stack>
           </Stack>
 
           <Stack
-            direction="row"
-            spacing={1}
-            justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
-            alignItems="center"
+            direction={isMobile ? 'column' : 'row'}
+            gap={1}
+            justifyContent={isMobile ? 'space-between' : 'flex-end'}
+            alignItems={isMobile ? 'flex-end' : 'center'}
+            sx={{ pr: 2, pl: 2 }}
           >
-            <ButtonGroup size="medium">
-              <Button
-                LinkComponent={NextLink}
-                type="button"
-                variant={currentFilter === 'all' ? 'contained' : 'outlined'}
-                href={getListHref({ page: 1, filter: 'all' })}
-              >
-                전체글
-              </Button>
+            <Stack
+              direction="row"
+              gap={1}
+              justifyContent={isMobile ? 'space-between' : 'flex-end'}
+              sx={{ width: '100%' }}
+            >
+              {isMobile ? (
+                <>
+                  {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                    <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                      삭제
+                    </button>
+                  ) : (
+                    <i />
+                  )}
+                </>
+              ) : null}
 
-              <Button
-                LinkComponent={NextLink}
-                type="button"
-                variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
-                href={getListHref({ page: 1, filter: 'deleted' })}
-              >
-                삭제글
-              </Button>
-            </ButtonGroup>
+              <ButtonGroup size={isMobile ? 'small' : 'medium'}>
+                <Button
+                  LinkComponent={NextLink}
+                  type="button"
+                  variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'all' ? 'submit' : 'action'}`}
+                  href={getListHref({ page: 1, filter: 'all' })}
+                >
+                  전체글
+                </Button>
+                <Button
+                  LinkComponent={NextLink}
+                  type="button"
+                  size={isMobile ? 'small' : 'medium'}
+                  variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'deleted' ? 'submit' : 'action'}`}
+                  href={getListHref({ page: 1, filter: 'deleted' })}
+                >
+                  삭제글
+                </Button>
+              </ButtonGroup>
+            </Stack>
 
             <TextField
               select
@@ -530,6 +583,11 @@ export default function Opt() {
             >
               {SIZE_OPTIONS.map((sizeOption) => (
                 <MenuItem key={sizeOption} value={sizeOption}>
+                  {currentSize === sizeOption ? (
+                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                  ) : (
+                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                  )}
                   {sizeOption}개씩
                   {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
                 </MenuItem>
@@ -537,14 +595,10 @@ export default function Opt() {
             </TextField>
           </Stack>
 
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <Box sx={{ position: 'relative' }}>
-            <TableContainer variant="outlined" component={Paper}>
+            <div className={`paper paper-p0 ${styles.paper}`}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -590,18 +644,12 @@ export default function Opt() {
                             <Chip label={content.prefix_label} size="small" variant="outlined" />
                           ) : null}
 
-                          <Link
+                          <Anchor
                             href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              width: 270,
-                              display: 'inline-block',
-                            }}
+                            className="link-normal"
                           >
                             {content.subject}
-                          </Link>
+                          </Anchor>
                         </Stack>
                       </TableCell>
 
@@ -618,23 +666,21 @@ export default function Opt() {
 
                       <TableCell align="right">
                         {content.is_closed ? (
-                          <Button
+                          <button
                             type="button"
-                            variant="outlined"
-                            color="warning"
+                            className="button small action"
                             onClick={() => handleOpenRestoreDialog(content)}
                           >
                             복구
-                          </Button>
+                          </button>
                         ) : (
-                          <Button
+                          <button
                             type="button"
-                            color="error"
-                            variant="outlined"
+                            className="button small danger"
                             onClick={() => handleOpenSingleDeleteDialog(content)}
                           >
                             삭제
-                          </Button>
+                          </button>
                         )}
                       </TableCell>
                     </TableRow>
@@ -664,7 +710,7 @@ export default function Opt() {
                   </Stack>
                 </Stack>
               </Backdrop>
-            </TableContainer>
+            </div>
           </Box>
 
           {totalPage > 1 ? (
@@ -682,69 +728,213 @@ export default function Opt() {
             </Stack>
           ) : null}
 
-          <Dialog open={dialogMode === 'delete'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
-            <DialogTitle>게시물 삭제</DialogTitle>
-            <DialogContent>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={dialogMode === 'delete'}
+              onClose={handleCloseDeleteDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>게시물 삭제</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <Alert severity="info" variant="filled">
-                  삭제시 언제든 복구가 가능합니다.
-                  <br />
-                  삭제사유를 입력해 주세요. (필수)
-                </Alert>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      삭제시 언제든 복구가 가능합니다.
+                      <br />
+                      삭제사유를 입력해 주세요. (필수)
+                    </span>
+                  </p>
 
-                <TextField
-                  label="삭제 사유"
-                  value={closedMessage}
-                  onChange={handleClosedMessageChange}
-                  fullWidth
-                  multiline
-                  minRows={3}
-                  size="small"
-                />
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="outlined">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+                  {dialogErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{dialogErrorMessage}</div>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDeleteDialog}
+                    disabled={isDeleting}
+                  >
+                    취소
+                  </button>
+                  <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
+                    삭제
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-                삭제
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={dialogMode === 'delete'}
+              onClose={handleCloseDeleteDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>게시물 삭제</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      삭제시 언제든 복구가 가능합니다.
+                      <br />
+                      삭제사유를 입력해 주세요. (필수)
+                    </span>
+                  </p>
 
-          <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-            <DialogTitle>게시물 복구</DialogTitle>
-            <DialogContent>
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{dialogErrorMessage}</div>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
+                  삭제
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={dialogMode === 'restore'}
+              onClose={handleCloseDeleteDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>게시물 복구</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                aria-label="닫기"
+                disabled={isDeleting}
+              >
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <Typography>
-                  해당 게시물을 복구하시겠습니까?
-                  <br />
-                  복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-                </Typography>
-
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      해당 게시물을 복구하시겠습니까?
+                      <br />
+                      복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                    </span>
+                  </p>
+                  {dialogErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{dialogErrorMessage}</div>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDeleteDialog}
+                    disabled={isDeleting}
+                  >
+                    취소
+                  </button>
+                  <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
+                    확인
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={dialogMode === 'restore'}
+              onClose={handleCloseDeleteDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>게시물 복구</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                aria-label="닫기"
+                disabled={isDeleting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      해당 게시물을 복구하시겠습니까?
+                      <br />
+                      복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                    </span>
+                  </p>
+                  {dialogErrorMessage ? (
+                    <div className={`paper paper-error ${styles.paper}`}>{dialogErrorMessage}</div>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
       </div>
     </Container>

@@ -1,13 +1,18 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Button, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Anchor from '@/components/Anchor';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -34,11 +39,10 @@ function SortableItem({ page, onClick }: SortableItemProps) {
   });
 
   return (
-    <Paper
+    <div
       ref={setNodeRef}
-      variant="outlined"
-      sx={{
-        p: 2,
+      className={`paper ${styles.paper}`}
+      style={{
         cursor: 'grab',
         transform: CSS.Transform.toString(transform),
         transition,
@@ -48,7 +52,7 @@ function SortableItem({ page, onClick }: SortableItemProps) {
       onClick={() => onClick(page.slug)}
     >
       <Typography>{page.subject}</Typography>
-    </Paper>
+    </div>
   );
 }
 
@@ -189,34 +193,41 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="페이지 관리" pageBack={`/${siteName}/manage`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack direction="row" justifyContent="flex-end">
-            <Button
-              LinkComponent={Link}
-              type="button"
-              variant="contained"
-              href={`/${siteName}/manage/contents/pages/new`}
-            >
+          <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
+            <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button medium submit">
               페이지 추가
-            </Button>
+            </Anchor>
           </Stack>
 
           {pages.length === 0 ? (
-            <Typography variant="subtitle2">페이지가 없습니다</Typography>
+            <div className={`paper paper-error ${styles.paper}`}>페이지가 아직 없습니다</div>
           ) : pages.length === 1 ? (
-            <>
+            <div className={`paper ${styles.paper}`}>
               {pages.map((page: PageRow) => (
-                <Link href={`/${siteName}/manage/contents/pages/${page.slug}`} variant="subtitle2" key={page.id}>
+                <Anchor href={`/${siteName}/manage/contents/pages/${page.slug}`} className="link-normal" key={page.id}>
                   {page.subject}
-                </Link>
+                </Anchor>
               ))}
-            </>
+            </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={items} strategy={verticalListSortingStrategy}>
@@ -227,11 +238,7 @@ export default function Opt() {
             </DndContext>
           )}
 
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
         </div>
       </div>
     </Container>

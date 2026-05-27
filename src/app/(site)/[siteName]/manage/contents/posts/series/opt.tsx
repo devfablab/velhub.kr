@@ -917,6 +917,11 @@ export default function Opt() {
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+              연재 관리
+            </Typography>
+          ) : null}
           <Stack direction="row" justifyContent="flex-end" sx={{ p: 2, pb: 0 }}>
             <button type="button" className="button small action" onClick={handleOpenNewDialog}>
               연재 추가

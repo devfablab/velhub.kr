@@ -104,6 +104,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const viewTimerReference = useRef<number | null>(null);
   const hasRequestedViewReference = useRef(false);
@@ -228,12 +229,6 @@ export default function Opt() {
   if (board.board_type === 'page') {
     return (
       <Stack spacing={2.5}>
-        {isNotMobile ? (
-          <Typography variant="h5" component="h1">
-            페이지 상세
-          </Typography>
-        ) : null}
-
         {errorMessage ? (
           <Alert severity="error" variant="filled">
             {errorMessage}

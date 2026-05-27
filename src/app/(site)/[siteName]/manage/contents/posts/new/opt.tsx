@@ -210,7 +210,6 @@ export default function Opt() {
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
@@ -268,7 +267,6 @@ export default function Opt() {
         setHasBoard(statusResult.hasBoard);
         setBoardName(statusResult.boardName);
         setCommentProvider(statusResult.commentProvider);
-        setMarkdownStatus(statusResult.markdown_status || 'markdown_default');
         setIsComment(statusResult.commentProvider !== 'none');
 
         if (statusResult.hasBoard && statusResult.boardName) {
@@ -631,8 +629,8 @@ export default function Opt() {
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {isNotMobile ? (
-            <Typography variant="h5" component="h1">
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
               글쓰기
             </Typography>
           ) : null}
@@ -732,7 +730,7 @@ export default function Opt() {
                   initialMarkdown={contentMarkdown}
                   initialEditType="wysiwyg"
                   themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                  markdownStatus={markdownStatus}
+                  markdownStatus="markdown_default"
                   hideModeSwitch
                   onHtmlChange={setContentHtml}
                   onMarkdownChange={setContentMarkdown}

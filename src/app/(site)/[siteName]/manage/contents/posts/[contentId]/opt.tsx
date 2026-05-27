@@ -519,11 +519,6 @@ export default function Opt() {
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {isNotMobile ? (
-            <Typography variant="h5" component="h1">
-              글 읽기
-            </Typography>
-          ) : null}
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {post ? (

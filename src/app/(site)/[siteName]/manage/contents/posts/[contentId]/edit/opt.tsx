@@ -225,7 +225,6 @@ export default function Opt() {
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
@@ -328,7 +327,6 @@ export default function Opt() {
         setSummary(contentResult.content.summary || '');
         setContentHtml(contentResult.content.content_html);
         setContentMarkdown(contentResult.content.content_markdown || '');
-        setMarkdownStatus(contentResult.content.markdown_status || 'markdown_default');
         setThumbnailImage(contentResult.content.thumbnail_image || '');
         setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
         setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
@@ -688,8 +686,8 @@ export default function Opt() {
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/${contentId}`} menu="contents">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {isNotMobile ? (
-            <Typography variant="h5" component="h1">
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
               글 수정
             </Typography>
           ) : null}
@@ -789,7 +787,7 @@ export default function Opt() {
                   initialMarkdown={contentMarkdown}
                   initialEditType="wysiwyg"
                   themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                  markdownStatus={markdownStatus}
+                  markdownStatus="markdown_default"
                   hideModeSwitch
                   onHtmlChange={setContentHtml}
                   onMarkdownChange={setContentMarkdown}
