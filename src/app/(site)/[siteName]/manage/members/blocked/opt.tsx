@@ -294,7 +294,7 @@ export default function Opt() {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
                 placeholder="별명 검색"
                 value={nicknameKeyword}
@@ -308,7 +308,7 @@ export default function Opt() {
             </Stack>
           </div>
 
-          <Stack spacing={1.5}>
+          <Stack gap={1.5}>
             <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
               <button
                 type="button"
@@ -318,7 +318,7 @@ export default function Opt() {
               >
                 활동 정지 해제
               </button>
-              <Stack direction="row" spacing={1.5} justifyContent="space-between">
+              <Stack direction="row" gap={1.5} justifyContent="space-between">
                 <button
                   type="button"
                   className="button small warning"
@@ -392,8 +392,8 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseActionDialog}>
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
                     <TextField
                       label={getActionReasonLabel()}
@@ -414,7 +414,7 @@ export default function Opt() {
                   ) : null}
                 </Stack>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -447,7 +447,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
                     <TextField
                       label={getActionReasonLabel()}

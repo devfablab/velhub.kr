@@ -320,7 +320,7 @@ export default function Opt() {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack direction="row" gap={1.5} alignItems="center">
               <TextField
                 placeholder="이메일 또는 별명"
                 value={searchKeyword}
@@ -339,14 +339,8 @@ export default function Opt() {
             </Stack>
           </div>
 
-          <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              spacing={1.5}
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ p: 2, pb: 0 }}
-            >
+          <Stack gap={1.5}>
+            <Stack direction="row" gap={1.5} alignItems="center" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
               <button
                 type="button"
                 className="button small action"
@@ -391,7 +385,7 @@ export default function Opt() {
                         {user.isReApproval ? ' (재신청)' : ''}
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" gap={1} alignItems="center">
                           <Typography sx={{ whiteSpace: 'nowrap' }}>{formatDateKorean(user.createdAt)}</Typography>
                           <IconButton size="small" onClick={() => setSelectedUser(user)}>
                             <SearchIcon fontSize="small" />
@@ -447,7 +441,7 @@ export default function Opt() {
                           {item.type === 'objective' ? (
                             <Typography variant="body2">{item.answers.join(', ')}</Typography>
                           ) : item.imageUrls.length > 0 || item.imageUrl ? (
-                            <Stack spacing={1}>
+                            <Stack gap={1}>
                               {item.imageUrls.length > 0 ? (
                                 item.imageUrls.map((imageUrl, imageIndex) => (
                                   <Box
@@ -490,7 +484,7 @@ export default function Opt() {
                   )}
                 </div>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button type="button" className="button medium cancel" onClick={() => setSelectedUser(null)}>
                     닫기
                   </button>
@@ -526,7 +520,7 @@ export default function Opt() {
                           {item.type === 'objective' ? (
                             <Typography variant="body2">{item.answers.join(', ')}</Typography>
                           ) : item.imageUrls.length > 0 || item.imageUrl ? (
-                            <Stack spacing={1}>
+                            <Stack gap={1}>
                               {item.imageUrls.length > 0 ? (
                                 item.imageUrls.map((imageUrl, imageIndex) => (
                                   <Box
@@ -596,7 +590,7 @@ export default function Opt() {
 
               <Stack gap={3}>
                 <Typography variant="body2">{getConfirmActionMessage()}</Typography>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

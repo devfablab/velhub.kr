@@ -295,7 +295,7 @@ export default function Opt() {
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-                <Stack spacing={2}>
+                <Stack gap={2}>
                   <div className={`paper ${styles.paper}`}>
                     <Typography>홈</Typography>
                   </div>
@@ -361,7 +361,7 @@ export default function Opt() {
                   sx={{ mt: 1 }}
                 />
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

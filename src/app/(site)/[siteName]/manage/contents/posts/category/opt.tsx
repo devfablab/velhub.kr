@@ -236,7 +236,7 @@ function SortableCategoryRow({
       </TableCell>
 
       <TableCell align="right">
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
+        <Stack direction="row" gap={1} justifyContent="flex-end">
           <button type="button" className="button small action" onClick={() => onEdit(category)}>
             수정
           </button>
@@ -1130,7 +1130,7 @@ export default function Opt() {
                     <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
                       <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
 
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" gap={1}>
                         <Button component="label" className="button small action" disabled={isUploadingImage}>
                           이미지 선택
                           <VisuallyHiddenInput
@@ -1181,7 +1181,7 @@ export default function Opt() {
                     autoHideDuration={3000}
                   />
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1295,7 +1295,7 @@ export default function Opt() {
                     <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
                       <Typography variant="subtitle2">카테고리 썸네일 이미지</Typography>
 
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" gap={1}>
                         <Button component="label" className="button small action" disabled={isUploadingImage}>
                           이미지 선택
                           <VisuallyHiddenInput
@@ -1379,8 +1379,8 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
@@ -1390,7 +1390,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1417,7 +1417,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (

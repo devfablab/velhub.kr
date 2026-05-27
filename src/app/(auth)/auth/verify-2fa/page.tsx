@@ -135,7 +135,7 @@ export default function Page() {
     return (
       <Container maxWidth="sm">
         <Box sx={{ py: 8 }}>
-          <Stack spacing={4}>
+          <Stack gap={4}>
             <Typography variant="h5" component="h1">
               2단계 인증 확인
             </Typography>
@@ -152,14 +152,14 @@ export default function Page() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
-        <Stack spacing={4}>
+        <Stack gap={4}>
           <Typography variant="h5" component="h1">
             2단계 인증 확인
           </Typography>
 
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Box component="form" onSubmit={handleSubmit}>
-              <Stack spacing={2.5}>
+              <Stack gap={2.5}>
                 <TextField
                   label="인증 코드"
                   type="text"

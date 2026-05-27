@@ -341,8 +341,8 @@ export default function UserInfo() {
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={3}>
-            <Stack spacing={1.5} alignItems="flex-start">
+          <Stack gap={3}>
+            <Stack gap={1.5} alignItems="flex-start">
               <Avatar src={getAvatarDisplayUrl()} alt={userName || ''} sx={{ width: 80, height: 80 }} />
 
               <VisuallyHiddenInput
@@ -357,7 +357,7 @@ export default function UserInfo() {
               </Button>
             </Stack>
 
-            <Stack spacing={1.5}>
+            <Stack gap={1.5}>
               <Typography variant="subtitle2">활동명</Typography>
               {!isEditingUserName ? (
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -370,7 +370,7 @@ export default function UserInfo() {
                 </Stack>
               ) : (
                 <Box component="form" onSubmit={handleSubmitUserName}>
-                  <Stack spacing={1} direction="row">
+                  <Stack gap={1} direction="row">
                     <TextField size="small" value={userNameDraft} onChange={handleUserNameChange} fullWidth />
 
                     <Button
@@ -389,10 +389,10 @@ export default function UserInfo() {
               )}
             </Stack>
 
-            <Stack spacing={1.5}>
+            <Stack gap={1.5}>
               <Typography variant="subtitle2">자기소개</Typography>
               {!isEditingBio ? (
-                <Stack spacing={1.5}>
+                <Stack gap={1.5}>
                   {bio ? (
                     <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
                       {bio}
@@ -400,7 +400,7 @@ export default function UserInfo() {
                   ) : (
                     <Typography variant="body1">자기소개 등록이 필요합니다</Typography>
                   )}
-                  <Stack spacing={1.5} alignItems="flex-end">
+                  <Stack gap={1.5} alignItems="flex-end">
                     <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
                       자기소개 수정
                     </Button>
@@ -408,7 +408,7 @@ export default function UserInfo() {
                 </Stack>
               ) : (
                 <Box component="form" onSubmit={handleSubmitBio}>
-                  <Stack spacing={1.5}>
+                  <Stack gap={1.5}>
                     <TextField
                       value={bioDraft}
                       onChange={handleBioChange}
@@ -418,7 +418,7 @@ export default function UserInfo() {
                       minRows={4}
                     />
 
-                    <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+                    <Stack direction="row" gap={1.5} justifyContent="flex-end">
                       <Button type="button" variant="outlined" onClick={handleCancelBio} disabled={isSubmittingBio}>
                         취소
                       </Button>

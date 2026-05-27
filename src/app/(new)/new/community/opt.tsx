@@ -453,11 +453,11 @@ export default function Opt() {
   return (
     <Paper sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5}>
+        <Stack gap={3}>
+          <Stack gap={1.5}>
             <Stack
               direction="row"
-              spacing={2}
+              gap={2}
               sx={{
                 alignItems: 'flex-start',
               }}
@@ -506,7 +506,7 @@ export default function Opt() {
             helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
           />
 
-          <Stack spacing={1.5} alignItems="flex-start">
+          <Stack gap={1.5} alignItems="flex-start">
             {profilePictureUrl ? (
               <Box
                 component="img"
@@ -548,7 +548,7 @@ export default function Opt() {
             size="small"
           />
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <TextField select label="테마" value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
               {THEME_TYPES.map((themeValue) => (
                 <MenuItem key={themeValue} value={themeValue}>
@@ -558,7 +558,7 @@ export default function Opt() {
             </TextField>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <FormLabel>요금제</FormLabel>
             <RadioGroup value={planType} onChange={handlePlanTypeChange}>
               {plans.map((planRow) => (
@@ -572,7 +572,7 @@ export default function Opt() {
             </RadioGroup>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <FormLabel>가입 방식</FormLabel>
             <RadioGroup value={joinType} onChange={handleJoinTypeChange}>
               <FormControlLabel value="open" control={<Radio />} label="오픈가입" />
@@ -608,7 +608,7 @@ export default function Opt() {
             <MenuItem value="estimate_5">가입 24시간 이후 댓글쓰기 가능</MenuItem>
           </TextField>
 
-          <Stack direction="row" spacing={3}>
+          <Stack direction="row" gap={3}>
             <FormControlLabel
               control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
               label={visibilityType === 'public' ? '공개' : '비공개'}

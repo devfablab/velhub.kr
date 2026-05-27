@@ -290,9 +290,9 @@ export default function TotpSetup() {
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={2.5}>
+          <Stack gap={2.5}>
             {pendingSetup ? (
-              <Stack spacing={2.5}>
+              <Stack gap={2.5}>
                 <Typography variant="subtitle2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
 
                 {qrCodeImageSource ? (
@@ -326,7 +326,7 @@ export default function TotpSetup() {
                 </Alert>
 
                 <Box component="form" onSubmit={handleVerify}>
-                  <Stack spacing={2.5}>
+                  <Stack gap={2.5}>
                     <TextField
                       id="verifyCode"
                       label="인증 코드"

@@ -88,7 +88,7 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
 
   return (
     <div ref={setNodeRef} className={`paper ${styles.paper}`}>
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack direction="row" gap={2} alignItems="center">
         <Box
           component="button"
           type="button"
@@ -108,7 +108,7 @@ function SortableHomeOrderItem({ item, onChangeShow }: SortableHomeOrderItemProp
           <DragIndicatorIcon />
         </Box>
 
-        <Stack spacing={0.5} sx={{ flex: '1 1 auto', minWidth: 0 }}>
+        <Stack gap={0.5} sx={{ flex: '1 1 auto', minWidth: 0 }}>
           <Typography variant="subtitle2">{item.boardLabel}</Typography>
           <Typography variant="body2">{`${item.boardKey} / ${getBoardTypeLabel(item.boardType)}`}</Typography>
           {!item.isActive ? (
@@ -359,7 +359,7 @@ export default function Opt() {
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                    <Stack spacing={1.5}>
+                    <Stack gap={1.5}>
                       {items.map((item) => (
                         <SortableHomeOrderItem key={item.id} item={item} onChangeShow={handleChangeShow} />
                       ))}
@@ -368,7 +368,7 @@ export default function Opt() {
                 </DndContext>
               )}
 
-              <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
+              <Stack direction="row" gap={1} justifyContent="flex-end" sx={{ p: isMobile ? 2 : 0 }}>
                 <button
                   type="button"
                   className="button medium action"

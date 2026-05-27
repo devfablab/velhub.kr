@@ -23,18 +23,28 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type BoardRow = {
+type BoardData = {
   id: string;
   board_key: string;
   board_label: string | null;
   board_type: string;
   post_type: 'none' | 'prefix' | 'series';
+};
+
+type BoardRow = {
+  data: BoardData;
 };
 
 type PrefixRow = {
@@ -72,6 +82,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [board, setBoard] = useState<BoardRow | null>(null);
   const [prefixes, setPrefixes] = useState<PrefixRow[]>([]);
@@ -304,17 +315,34 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="말머리 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          {isMobile ? (
+            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+              말머리 관리
+            </Typography>
+          ) : null}
           {board ? (
-            <Stack spacing={0.5}>
+            <Stack gap={0.5}>
               <Typography variant="subtitle2">게시판</Typography>
-              <Typography variant="body2">{board.board_label ?? ''}</Typography>
+              <Typography variant="body2">{board.data.board_label}</Typography>
             </Stack>
           ) : null}
 
@@ -357,7 +385,7 @@ export default function Opt() {
                       <TableCell>{prefix.prefix_label}</TableCell>
                       <TableCell>{formatDateTimeDetail(prefix.created_at)}</TableCell>
                       <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Stack direction="row" gap={1} justifyContent="flex-end">
                           <Button
                             type="button"
                             variant="outlined"
@@ -391,7 +419,7 @@ export default function Opt() {
           >
             <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <TextField
                   label="말머리명"
                   value={prefixLabel}
@@ -420,7 +448,7 @@ export default function Opt() {
           <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
             <DialogTitle>말머리 삭제</DialogTitle>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
                 {dialogErrorMessage ? (

@@ -471,8 +471,8 @@ export default function Opt() {
   return (
     <Paper sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={3}>
-          <Stack spacing={1.5}>
+        <Stack gap={3}>
+          <Stack gap={1.5}>
             <TextField
               label="사이트 식별자"
               value={siteKey}
@@ -507,7 +507,7 @@ export default function Opt() {
             ) : null}
           </Stack>
 
-          <Stack spacing={1.5}>
+          <Stack gap={1.5}>
             <TextField
               label="사이트명"
               value={siteLabel}
@@ -541,7 +541,7 @@ export default function Opt() {
             ) : null}
           </Stack>
 
-          <Stack spacing={1.5} alignItems="flex-start">
+          <Stack gap={1.5} alignItems="flex-start">
             {profilePictureUrl ? (
               <Box
                 component="img"
@@ -583,7 +583,7 @@ export default function Opt() {
             minRows={4}
           />
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <TextField select label="테마" value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
               {THEME_TYPES.map((themeValue) => (
                 <MenuItem key={themeValue} value={themeValue}>
@@ -593,7 +593,7 @@ export default function Opt() {
             </TextField>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <FormLabel>요금제</FormLabel>
             <RadioGroup value={planType} onChange={handlePlanTypeChange}>
               {plans.map((planRow) => (
@@ -607,7 +607,7 @@ export default function Opt() {
             </RadioGroup>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <FormLabel>댓글 방식 (댓글 서비스 제공자)</FormLabel>
             <RadioGroup value={commentProvider} onChange={handleCommentProviderChange}>
               <FormControlLabel value="velhub" control={<Radio />} label="velhub (데브허브 유저 전용)" />
@@ -617,7 +617,7 @@ export default function Opt() {
             </RadioGroup>
           </Stack>
 
-          <Stack direction="row" spacing={3}>
+          <Stack direction="row" gap={3}>
             <FormControlLabel
               control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
               label={visibilityType === 'public' ? '공개' : '비공개'}

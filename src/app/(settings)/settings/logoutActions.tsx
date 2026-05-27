@@ -126,7 +126,7 @@ export default function LogoutActions() {
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={1} direction="row">
+          <Stack gap={1} direction="row">
             <Button
               type="button"
               variant="contained"

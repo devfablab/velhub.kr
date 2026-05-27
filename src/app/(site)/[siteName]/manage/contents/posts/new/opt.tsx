@@ -636,7 +636,7 @@ export default function Opt() {
           ) : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
               <Stack gap={1}>
                 <Typography variant="subtitle2">제목 *</Typography>
                 <TextField

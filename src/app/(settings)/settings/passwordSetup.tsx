@@ -136,7 +136,7 @@ export default function PasswordSetup() {
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={2.5}>
+          <Stack gap={2.5}>
             <Alert severity="info" variant="filled">
               비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.
             </Alert>

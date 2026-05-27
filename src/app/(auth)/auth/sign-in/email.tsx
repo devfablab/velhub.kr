@@ -341,7 +341,7 @@ export default function EmailSignIn() {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2.5}>
+        <Stack gap={2.5}>
           <TextField
             label="이메일"
             type="email"
@@ -366,7 +366,7 @@ export default function EmailSignIn() {
           </Box>
 
           {isCaptchaRequired ? (
-            <Stack spacing={1}>
+            <Stack gap={1}>
               <Typography variant="body2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
               <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
             </Stack>

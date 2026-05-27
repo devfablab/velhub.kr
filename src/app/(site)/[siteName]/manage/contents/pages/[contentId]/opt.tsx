@@ -265,7 +265,7 @@ export default function Opt() {
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack spacing={2.5}>
+            <Stack gap={2.5}>
               <Typography variant="h5" component="h2">
                 {content.subject}
               </Typography>
@@ -312,7 +312,7 @@ export default function Opt() {
               ) : null}
 
               {profileImageUrl ? (
-                <Stack spacing={1}>
+                <Stack gap={1}>
                   <Typography variant="subtitle2">오픈그래프 이미지</Typography>
                   <Box
                     component="img"
@@ -327,12 +327,12 @@ export default function Opt() {
             </Stack>
           </Paper>
 
-          <Stack direction="row" spacing={1.5} justifyContent="space-between">
+          <Stack direction="row" gap={1.5} justifyContent="space-between">
             <Button component={Link} href={`/${siteName}/manage/contents/pages`} underline="none" variant="outlined">
               목록으로 이동
             </Button>
 
-            <Stack direction="row" spacing={1.5}>
+            <Stack direction="row" gap={1.5}>
               {content.is_closed ? (
                 <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog} disabled={!boardName}>
                   복구
@@ -371,7 +371,7 @@ export default function Opt() {
           <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
             <DialogTitle>페이지 삭제</DialogTitle>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
 
                 {dialogErrorMessage ? (
@@ -394,7 +394,7 @@ export default function Opt() {
           <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
             <DialogTitle>페이지 복구</DialogTitle>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>해당 페이지를 복구하시겠습니까?</Typography>
 
                 {dialogErrorMessage ? (

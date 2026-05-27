@@ -529,7 +529,7 @@ export default function Opt() {
           ) : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
               <Stack gap={1}>
                 <Typography variant="subtitle2">페이지 식별자 *</Typography>
                 <TextField
@@ -630,7 +630,7 @@ export default function Opt() {
                 />
               </Stack>
 
-              <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+              <Stack direction="row" gap={1.5} justifyContent="flex-end">
                 <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/pages`}>
                   취소
                 </Anchor>

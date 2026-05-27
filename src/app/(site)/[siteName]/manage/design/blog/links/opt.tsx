@@ -101,7 +101,7 @@ function SortableItem({
   return (
     <Box ref={setNodeRef} style={style}>
       <div className={`paper ${styles.paper}`}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
+        <Stack direction="row" gap={1.5} alignItems="center">
           <Box
             {...attributes}
             {...listeners}
@@ -379,7 +379,7 @@ export default function Opt() {
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-              <Stack spacing={1.5}>
+              <Stack gap={1.5}>
                 {items.map((item) => (
                   <SortableItem
                     key={item.localId}

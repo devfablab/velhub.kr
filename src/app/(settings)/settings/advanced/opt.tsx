@@ -157,8 +157,8 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={3} sx={{ marginTop: 3 }}>
-      <Stack spacing={1}>
+    <Stack gap={3} sx={{ marginTop: 3 }}>
+      <Stack gap={1}>
         <FormLabel>테마 모드</FormLabel>
 
         <Box sx={{ width: '100%' }}>
@@ -170,21 +170,21 @@ export default function Opt() {
             aria-label="테마 모드"
           >
             <ToggleButton value="light" aria-label="라이트모드">
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" gap={1} alignItems="center">
                 <LightModeIcon fontSize="small" />
                 <Typography>Light</Typography>
               </Stack>
             </ToggleButton>
 
             <ToggleButton value="system" aria-label="시스템설정">
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" gap={1} alignItems="center">
                 <SettingsBrightnessIcon fontSize="small" />
                 <Typography>System</Typography>
               </Stack>
             </ToggleButton>
 
             <ToggleButton value="dark" aria-label="다크모드">
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" gap={1} alignItems="center">
                 <DarkModeIcon fontSize="small" />
                 <Typography>Dark</Typography>
               </Stack>
@@ -193,7 +193,7 @@ export default function Opt() {
         </Box>
       </Stack>
 
-      <Stack spacing={1}>
+      <Stack gap={1}>
         <FormLabel>자동 로그인</FormLabel>
         <FormControlLabel
           control={<Switch checked={autoLogin} onChange={handleAutoLoginChange} />}

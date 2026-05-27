@@ -175,7 +175,7 @@ export default function Opt() {
     <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack component="form" spacing={3} onSubmit={handleSubmit}>
+          <Stack component="form" gap={3} onSubmit={handleSubmit}>
             <div className={`paper ${styles.paper}`}>
               <Typography variant="subtitle2">멤버 목록 공개여부</Typography>
               <RadioGroup value={visibilityMember} onChange={handleVisibilityMemberChange} row>

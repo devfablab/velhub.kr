@@ -210,7 +210,7 @@ export default function PasswordChange() {
 
         <AccordionDetails>
           <Box component="form" onSubmit={handleSubmit}>
-            <Stack spacing={2.5}>
+            <Stack gap={2.5}>
               <TextField
                 id="currentPassword"
                 label="현재 비밀번호"

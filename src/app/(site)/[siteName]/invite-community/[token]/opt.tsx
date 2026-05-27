@@ -135,7 +135,7 @@ export default function Opt() {
 
   if (isAlreadyMember) {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Alert severity="info" variant="outlined">
           이미 가입된 멤버입니다.
         </Alert>
@@ -157,7 +157,7 @@ export default function Opt() {
 
   if (!isLoggedIn) {
     return (
-      <Stack spacing={2.5}>
+      <Stack gap={2.5}>
         {joinNotice ? (
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -170,14 +170,14 @@ export default function Opt() {
         ) : null}
 
         <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
+          <Stack gap={2}>
             <Typography variant="body2">초대받은 이메일: {inviteEmail}</Typography>
 
             <Alert severity="info" variant="outlined">
               초대받은 이메일 계정으로 로그인 또는 회원가입 후 가입을 완료해주세요.
             </Alert>
 
-            <Stack direction="row" spacing={1.5}>
+            <Stack direction="row" gap={1.5}>
               <Anchor href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}&inviteType=community`}>
                 로그인
               </Anchor>
@@ -199,7 +199,7 @@ export default function Opt() {
 
   if (!isInvitedUser) {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         {joinNotice ? (
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -225,7 +225,7 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2.5}>
+    <Stack gap={2.5}>
       {joinNotice ? (
         <Paper variant="outlined" sx={{ p: 3 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
@@ -239,7 +239,7 @@ export default function Opt() {
 
       <Paper variant="outlined" sx={{ p: 3 }}>
         <Box component="form" onSubmit={handleSubmit}>
-          <Stack spacing={2.5}>
+          <Stack gap={2.5}>
             <Typography variant="body2">
               닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.
             </Typography>

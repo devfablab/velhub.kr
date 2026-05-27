@@ -264,7 +264,7 @@ export default function EmailSignUp() {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={2.5}>
+        <Stack gap={2.5}>
           <TextField
             label="이메일"
             type="email"

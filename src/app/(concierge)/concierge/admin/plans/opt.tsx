@@ -144,7 +144,7 @@ export default function Opt() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Stack direction="row" justifyContent="flex-end">
         <Button type="button" variant="contained" onClick={handleMoveToNew}>
           요금제 추가

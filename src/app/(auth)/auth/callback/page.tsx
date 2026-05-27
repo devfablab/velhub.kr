@@ -434,14 +434,14 @@ export default function Page() {
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
-        <Stack spacing={4}>
+        <Stack gap={4}>
           <Typography variant="h5" component="h1">
             소셜 로그인 처리
           </Typography>
 
           <Paper variant="outlined" sx={{ p: 3 }}>
             {processingState === 'idle' || processingState === 'processing' ? (
-              <Stack spacing={5} alignItems="center">
+              <Stack gap={5} alignItems="center">
                 <Alert variant="outlined" severity="info">
                   로그인 정보를 확인하고 있습니다.
                 </Alert>

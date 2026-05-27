@@ -454,7 +454,7 @@ export default function Opt({ siteName }: Props) {
   }
 
   return (
-    <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+    <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
       {joinNotice ? (
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
@@ -501,12 +501,12 @@ export default function Opt({ siteName }: Props) {
       />
 
       {joinQuestionStatus === 'enabled' ? (
-        <Stack spacing={2}>
+        <Stack gap={2}>
           <Alert variant="outlined" severity="warning">
             다음 지문에 답해 주세요. (필수입력)
           </Alert>
           {joinQuestions.map((question, index) => (
-            <Stack key={question.id} spacing={1.5}>
+            <Stack key={question.id} gap={1.5}>
               <Typography variant="subtitle2">{`질문 ${index + 1}`}</Typography>
               <Typography variant="body2">{question.question}</Typography>
 
@@ -539,7 +539,7 @@ export default function Opt({ siteName }: Props) {
               ) : null}
 
               {question.type === 'subjective' && question.allow_image ? (
-                <Stack spacing={1.5}>
+                <Stack gap={1.5}>
                   {answers[question.id]?.answer_image_url ? (
                     <Box
                       component="img"
@@ -554,7 +554,7 @@ export default function Opt({ siteName }: Props) {
                     />
                   ) : null}
 
-                  <Stack direction="row" spacing={1}>
+                  <Stack direction="row" gap={1}>
                     <Button component="label" variant="outlined" disabled={Boolean(uploadingQuestionId)}>
                       {answers[question.id]?.answer_image ? '이미지 교체' : '이미지 업로드'}
                       <input

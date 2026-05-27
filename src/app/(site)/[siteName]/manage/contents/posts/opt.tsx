@@ -982,7 +982,7 @@ export default function Opt() {
                 color: '#fff',
               }}
             >
-              <Stack spacing={2} alignItems="center">
+              <Stack gap={2} alignItems="center">
                 <Stack justifyContent="center" alignItems="center">
                   <LoadingIndicator />
                 </Stack>
@@ -1023,8 +1023,8 @@ export default function Opt() {
             <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
-            <Stack spacing={2} sx={{ pt: 1 }}>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack gap={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <p className="alert info">
                   <InfoOutlineRoundedIcon />
                   <span>
@@ -1057,7 +1057,7 @@ export default function Opt() {
                   </p>
                 ) : null}
               </Stack>
-              <Stack direction="column" spacing={1.5}>
+              <Stack direction="column" gap={1.5}>
                 <button
                   type="button"
                   className="button medium cancel"
@@ -1085,7 +1085,7 @@ export default function Opt() {
               <CloseRoundedIcon />
             </button>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <p className="alert info">
                   <InfoOutlineRoundedIcon />
                   <span>
@@ -1146,8 +1146,8 @@ export default function Opt() {
             <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
               <CloseRoundedIcon />
             </button>
-            <Stack spacing={2} sx={{ pt: 1 }}>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack gap={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>
                   해당 게시물을 복구하시겠습니까?
                   <br />
@@ -1161,7 +1161,7 @@ export default function Opt() {
                   </p>
                 ) : null}
               </Stack>
-              <Stack direction="column" spacing={1.5}>
+              <Stack direction="column" gap={1.5}>
                 <button
                   type="button"
                   className="button medium cancel"
@@ -1183,7 +1183,7 @@ export default function Opt() {
               <CloseRoundedIcon />
             </button>
             <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>
                   해당 게시물을 복구하시겠습니까?
                   <br />

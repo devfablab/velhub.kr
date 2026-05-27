@@ -13,7 +13,7 @@ export default async function Page(context: RouteContext) {
   return (
     <Container maxWidth="sm">
       <Box sx={{ py: 8 }}>
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Typography variant="h5" component="h1">
             요금제 기능 추가
           </Typography>

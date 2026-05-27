@@ -735,8 +735,8 @@ export default function Opt() {
   }
 
   const searchContent = (
-    <Stack spacing={2}>
-      <Stack spacing={1}>
+    <Stack gap={2}>
+      <Stack gap={1}>
         <Typography variant="subtitle2">검색 방법</Typography>
         <RadioGroup row value={searchMethod} onChange={handleSearchMethodChange}>
           <FormControlLabel value="nickname" control={<Radio />} label="별명 검색" />
@@ -745,8 +745,8 @@ export default function Opt() {
       </Stack>
 
       {searchMethod === 'nickname' ? (
-        <Stack direction="column" spacing={3}>
-          <Stack direction="column" spacing={1.5} sx={{ flex: '1 0 0%' }}>
+        <Stack direction="column" gap={3}>
+          <Stack direction="column" gap={1.5} sx={{ flex: '1 0 0%' }}>
             <Typography variant="subtitle2">별명 검색</Typography>
             <TextField
               placeholder="별명 검색"
@@ -763,8 +763,8 @@ export default function Opt() {
       ) : null}
 
       {searchMethod === 'detail' ? (
-        <Stack spacing={1}>
-          <Stack spacing={1}>
+        <Stack gap={1}>
+          <Stack gap={1}>
             <Typography variant="subtitle2">상세 검색</Typography>
             <RadioGroup row value={detailSearchType} onChange={handleDetailSearchTypeChange}>
               <FormControlLabel value="post_count" control={<Radio />} label="게시글 수" />
@@ -777,10 +777,10 @@ export default function Opt() {
           {detailSearchType === 'post_count' ||
           detailSearchType === 'comment_count' ||
           detailSearchType === 'checkin_count' ? (
-            <Stack spacing={3} direction="column">
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Stack direction="column" spacing={1.5} sx={{ width: '100%' }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+            <Stack gap={3} direction="column">
+              <Stack direction="row" gap={1.5} alignItems="center">
+                <Stack direction="column" gap={1.5} sx={{ width: '100%' }}>
+                  <Stack direction="row" gap={1.5} alignItems="center">
                     <Select value={countPeriod} onChange={handleCountPeriodChange} size="small" fullWidth>
                       <MenuItem value="all">
                         {countPeriod === 'all' ? (
@@ -810,7 +810,7 @@ export default function Opt() {
                     <Typography variant="body2">동안</Typography>
                   </Stack>
 
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack direction="row" gap={1.5} alignItems="center">
                     <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                       {detailSearchType === 'post_count'
                         ? '게시글 수'
@@ -847,7 +847,7 @@ export default function Opt() {
                 </Stack>
 
                 {countPeriod === 'custom' ? (
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Stack direction="row" gap={1.5} alignItems="center">
                     <DatePicker
                       value={countStartDate}
                       onChange={setCountStartDate}
@@ -878,15 +878,15 @@ export default function Opt() {
           ) : null}
 
           {detailSearchType === 'date' ? (
-            <Stack spacing={3} direction="column" sx={{ marginTop: '0!important' }}>
-              <Stack spacing={1.5}>
+            <Stack gap={3} direction="column" sx={{ marginTop: '0!important' }}>
+              <Stack gap={1.5}>
                 <RadioGroup row value={dateSearchType} onChange={handleDateSearchTypeChange}>
                   <FormControlLabel value="approval_at" control={<Radio />} label="가입일" />
                   <FormControlLabel value="last_checkin_at" control={<Radio />} label="최종방문일" />
                 </RadioGroup>
 
-                <Stack direction="column" spacing={1.5}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="column" gap={1.5}>
+                  <Stack direction="row" gap={1.5} alignItems="center">
                     <DatePicker
                       value={dateStartDate}
                       onChange={setDateStartDate}
@@ -972,8 +972,8 @@ export default function Opt() {
             </Stack>
 
             <div className={`paper ${styles.paper}`}>
-              <Stack direction="column" spacing={1.5}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
+              <Stack direction="column" gap={1.5}>
+                <Stack direction="row" gap={1.5} alignItems="center">
                   <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     선택 멤버를
                   </Typography>
@@ -1029,7 +1029,7 @@ export default function Opt() {
                   </Typography>
                 </Stack>
 
-                <Stack direction="row" spacing={1.5} alignItems="center">
+                <Stack direction="row" gap={1.5} alignItems="center">
                   <Typography variant="body2" sx={{ whiteSpace: 'nowrap' }}>
                     또는
                   </Typography>
@@ -1091,9 +1091,9 @@ export default function Opt() {
                         <CloseRoundedIcon />
                       </button>
 
-                      <Stack spacing={3}>
+                      <Stack gap={3}>
                         <Typography variant="body2">정말로 등급을 변경하시겠어요?</Typography>
-                        <Stack direction="column" spacing={1.5}>
+                        <Stack direction="column" gap={1.5}>
                           <button
                             type="button"
                             className="button medium cancel"
@@ -1188,7 +1188,7 @@ export default function Opt() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Stack direction="row" gap={1.5} alignItems="center">
                           <Avatar src={user.avatar ?? '/default-avatar.png'} alt={getDisplayNickname(user)} />
                           <Typography>{getDisplayNickname(user)}</Typography>
                         </Stack>
@@ -1197,7 +1197,7 @@ export default function Opt() {
                         {user.membership.role !== '멤버' ? (
                           <Typography variant="body2">{user.membership.role}</Typography>
                         ) : user.level ? (
-                          <Stack direction="row" spacing={1} alignItems="center">
+                          <Stack direction="row" gap={1} alignItems="center">
                             {user.level.iconUrl ? (
                               <Box
                                 component="img"
@@ -1250,8 +1250,8 @@ export default function Opt() {
                   <CloseRoundedIcon />
                 </button>
 
-                <Stack spacing={3}>
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={3}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder={getActionReasonLabel()}
                       value={actionReason}
@@ -1269,7 +1269,7 @@ export default function Opt() {
                       </p>
                     ) : null}
                   </Stack>
-                  <Stack direction="column" spacing={1.5}>
+                  <Stack direction="column" gap={1.5}>
                     <button
                       type="button"
                       className="button medium cancel"
@@ -1308,7 +1308,7 @@ export default function Opt() {
                 </button>
 
                 <DialogContent>
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder={getActionReasonLabel()}
                       value={actionReason}

@@ -352,7 +352,7 @@ export default function Opt() {
 
               <Stack gap={3}>
                 <Box component="form" onSubmit={handleSubmitInvite}>
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder="이메일"
                       value={inviteEmail}
@@ -363,7 +363,7 @@ export default function Opt() {
                   </Stack>
                 </Box>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -403,7 +403,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Box component="form" onSubmit={handleSubmitInvite}>
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <TextField
                       placeholder="이메일"
                       value={inviteEmail}
@@ -460,7 +460,7 @@ export default function Opt() {
                   취소된 초대장은 더이상 사용할 수 없습니다.
                 </Typography>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

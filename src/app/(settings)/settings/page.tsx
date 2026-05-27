@@ -19,7 +19,7 @@ export default async function Page() {
           </Link>
         </Stack>
 
-        <Grid container spacing={2} sx={{ marginTop: 3 }}>
+        <Grid container gap={2} sx={{ marginTop: 3 }}>
           <UserInfo />
           <PasswordChange />
           <PasswordSetup />

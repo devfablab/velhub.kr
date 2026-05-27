@@ -286,14 +286,14 @@ export default function Opt() {
     <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack spacing={3}>
+          <Stack gap={3}>
             <p className="alert info" style={{ paddingTop: 23 }}>
               <InfoOutlineRoundedIcon />
               <span>메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.</span>
             </p>
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-                <Stack direction="column" spacing={2}>
+                <Stack direction="column" gap={2}>
                   <div className={`paper ${styles.paper}`}>
                     <Typography>홈</Typography>
                   </div>
@@ -367,7 +367,7 @@ export default function Opt() {
                   sx={{ mt: 1 }}
                 />
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

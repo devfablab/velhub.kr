@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 8 }}>
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Typography variant="h5" component="h1">
             요금제
           </Typography>

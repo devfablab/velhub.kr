@@ -457,7 +457,7 @@ export default function Opt() {
     <Container pageTitle="게시판 수정" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
       <div className="container">
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+          <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
             {errorMessage ? (
               <Alert severity="error" variant="filled">
                 {errorMessage}
@@ -622,7 +622,7 @@ export default function Opt() {
               </>
             ) : null}
 
-            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+            <Stack direction="row" gap={1.5} justifyContent="flex-end">
               <Button
                 component={Link}
                 href={`/${siteName}/manage/contents/posts/c/${boardName}`}

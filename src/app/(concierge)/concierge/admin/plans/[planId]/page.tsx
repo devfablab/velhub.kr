@@ -72,12 +72,12 @@ export default async function Page(context: RouteContext) {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 8 }}>
-        <Stack spacing={3}>
+        <Stack gap={3}>
           <Typography variant="h5" component="h1">
             요금제 보기
           </Typography>
 
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" gap={1.5}>
             <Button
               component={Link}
               href={`/concierge/admin/plans/${plan.id}/edit`}
@@ -109,33 +109,33 @@ export default async function Page(context: RouteContext) {
           </Stack>
 
           <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack spacing={2}>
-              <Stack spacing={0.5}>
+            <Stack gap={2}>
+              <Stack gap={0.5}>
                 <Typography>요금제 카테고리 영문명</Typography>
                 <Typography>{plan.category_key}</Typography>
               </Stack>
 
-              <Stack spacing={0.5}>
+              <Stack gap={0.5}>
                 <Typography>요금제 카테고리 한글명</Typography>
                 <Typography>{plan.category_label}</Typography>
               </Stack>
 
-              <Stack spacing={0.5}>
+              <Stack gap={0.5}>
                 <Typography>요금제 영문명</Typography>
                 <Typography>{plan.plan_key}</Typography>
               </Stack>
 
-              <Stack spacing={0.5}>
+              <Stack gap={0.5}>
                 <Typography>요금제 한글명</Typography>
                 <Typography>{plan.plan_label}</Typography>
               </Stack>
 
-              <Stack spacing={0.5}>
+              <Stack gap={0.5}>
                 <Typography>가격</Typography>
                 <Typography>{formatPrice(plan.price)}</Typography>
               </Stack>
 
-              <Stack spacing={0.5}>
+              <Stack gap={0.5}>
                 <Typography>상품 종류</Typography>
                 <Typography>{formatProductType(plan.product_type)}</Typography>
               </Stack>
@@ -144,33 +144,33 @@ export default async function Page(context: RouteContext) {
 
           <Paper variant="outlined" sx={{ p: 3 }}>
             {feature ? (
-              <Stack spacing={2}>
-                <Stack spacing={0.5}>
+              <Stack gap={2}>
+                <Stack gap={0.5}>
                   <Typography>에디터에 이미지 삽입 가능</Typography>
                   <Typography>{formatBoolean(feature.is_editor_image)}</Typography>
                 </Stack>
 
-                <Stack spacing={0.5}>
+                <Stack gap={0.5}>
                   <Typography>멤버 추가 가능</Typography>
                   <Typography>{formatBoolean(feature.is_member)}</Typography>
                 </Stack>
 
-                <Stack spacing={0.5}>
+                <Stack gap={0.5}>
                   <Typography>게시판에 파일첨부 가능</Typography>
                   <Typography>{formatBoolean(feature.is_board_attachment)}</Typography>
                 </Stack>
 
-                <Stack spacing={0.5}>
+                <Stack gap={0.5}>
                   <Typography>추가 가능한 페이지수</Typography>
                   <Typography>{String(feature.count_subpage)}</Typography>
                 </Stack>
 
-                <Stack spacing={0.5}>
+                <Stack gap={0.5}>
                   <Typography>추가 가능한 게시판수</Typography>
                   <Typography>{String(feature.count_board)}</Typography>
                 </Stack>
 
-                <Stack spacing={0.5}>
+                <Stack gap={0.5}>
                   <Typography>추가 가능한 회원수</Typography>
                   <Typography>{String(feature.count_user)}</Typography>
                 </Stack>

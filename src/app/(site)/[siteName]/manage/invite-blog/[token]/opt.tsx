@@ -181,7 +181,7 @@ export default function Opt({ siteName, token }: Props) {
   if (isLoading) {
     return (
       <Box sx={{ py: 8 }}>
-        <Stack spacing={2} alignItems="center">
+        <Stack gap={2} alignItems="center">
           <CircularProgress />
           <Typography>초대 정보를 확인하고 있습니다.</Typography>
         </Stack>
@@ -195,7 +195,7 @@ export default function Opt({ siteName, token }: Props) {
 
   return (
     <Paper sx={{ p: 3 }}>
-      <Stack spacing={3}>
+      <Stack gap={3}>
         {errorMessage ? (
           <Alert severity="error" variant="filled">
             {errorMessage}
@@ -225,7 +225,7 @@ export default function Opt({ siteName, token }: Props) {
             </Box>
 
             {isMatchedUser ? (
-              <Stack spacing={1.5}>
+              <Stack gap={1.5}>
                 <Alert severity="success" variant="outlined">
                   현재 로그인한 계정으로 초대를 수락할 수 있습니다.
                 </Alert>
@@ -238,7 +238,7 @@ export default function Opt({ siteName, token }: Props) {
             ) : null}
 
             {!isLoggedIn && isRegisteredEmail ? (
-              <Stack spacing={1.5}>
+              <Stack gap={1.5}>
                 <Alert severity="info">이미 데브허브에 가입된 이메일입니다. 로그인 후 초대를 수락해주세요.</Alert>
                 <Box>
                   <Button
@@ -254,7 +254,7 @@ export default function Opt({ siteName, token }: Props) {
             ) : null}
 
             {!isLoggedIn && !isRegisteredEmail ? (
-              <Stack spacing={1.5}>
+              <Stack gap={1.5}>
                 <Alert severity="info">초대받은 이메일로 회원가입 후 초대를 수락해주세요.</Alert>
                 <Box>
                   <Button
@@ -270,7 +270,7 @@ export default function Opt({ siteName, token }: Props) {
             ) : null}
 
             {isMismatchedUser ? (
-              <Stack spacing={1.5}>
+              <Stack gap={1.5}>
                 <Alert severity="warning">현재 로그인한 계정 이메일과 초대받은 이메일이 일치하지 않습니다.</Alert>
                 <Box>
                   <Button

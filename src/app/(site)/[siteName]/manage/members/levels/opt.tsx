@@ -517,9 +517,9 @@ export default function Opt() {
                         )}
                       </div>
 
-                      <Stack spacing={1.5} sx={{ flex: 1 }}>
-                        <Stack direction="row" spacing={1.5} justifyContent="space-between">
-                          <Stack direction="row" spacing={1.5}>
+                      <Stack gap={1.5} sx={{ flex: 1 }}>
+                        <Stack direction="row" gap={1.5} justifyContent="space-between">
+                          <Stack direction="row" gap={1.5}>
                             <TextField
                               value={level.name ?? ''}
                               onChange={(event) => handleNameChange(level.id, event)}
@@ -555,7 +555,7 @@ export default function Opt() {
                             <DeleteForeverRoundedIcon />
                           </button>
                         </Stack>
-                        <Stack direction="row" spacing={1.5}>
+                        <Stack direction="row" gap={1.5}>
                           <TextField
                             value={level.description ?? ''}
                             onChange={(event) => handleDescriptionChange(level.id, event)}
@@ -567,7 +567,7 @@ export default function Opt() {
 
                         {level.lv !== 1 && level.requirement_type === 'automatic' ? (
                           <div className={styles['requirement-settings']}>
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack direction="row" gap={1} alignItems="center">
                               <Typography variant="body2" className={styles['requirement-type']}>
                                 게시글
                               </Typography>
@@ -582,7 +582,7 @@ export default function Opt() {
                               <Typography variant="body2">개,</Typography>
                             </Stack>
 
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack direction="row" gap={1} alignItems="center">
                               <Typography variant="body2" className={styles['requirement-type']}>
                                 댓글
                               </Typography>
@@ -597,7 +597,7 @@ export default function Opt() {
                               <Typography variant="body2">개,</Typography>
                             </Stack>
 
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack direction="row" gap={1} alignItems="center">
                               <Typography variant="body2" className={styles['requirement-type']}>
                                 방문
                               </Typography>
@@ -612,7 +612,7 @@ export default function Opt() {
                               <Typography variant="body2">회,</Typography>
                             </Stack>
 
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack direction="row" gap={1} alignItems="center">
                               <Typography variant="body2" className={styles['requirement-type']}>
                                 좋아요
                               </Typography>
@@ -627,7 +627,7 @@ export default function Opt() {
                               <Typography variant="body2">회,</Typography>
                             </Stack>
 
-                            <Stack direction="row" spacing={1} alignItems="center">
+                            <Stack direction="row" gap={1} alignItems="center">
                               <Typography variant="body2" className={styles['requirement-type']}>
                                 가입
                               </Typography>
@@ -675,12 +675,12 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseIconDialog}>
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <div className={styles['popup-level-rows']}>
                     {levels.map((level) => (
                       <div key={level.id} className={styles['popup-level-row']}>
-                        <Stack direction="row" spacing={2} alignItems="center">
+                        <Stack direction="row" gap={2} alignItems="center">
                           <Typography variant="subtitle2">lv {level.lv}</Typography>
 
                           <Box
@@ -710,7 +710,7 @@ export default function Opt() {
                           </Box>
                         </Stack>
 
-                        <Stack direction="row" spacing={1}>
+                        <Stack direction="row" gap={1}>
                           <button
                             type="button"
                             className="button small action"
@@ -744,7 +744,7 @@ export default function Opt() {
                   </div>
                 </Stack>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -772,7 +772,7 @@ export default function Opt() {
                 <div className={styles['popup-level-rows']}>
                   {levels.map((level) => (
                     <div key={level.id} className={styles['popup-level-row']}>
-                      <Stack direction="row" spacing={2} alignItems="center">
+                      <Stack direction="row" gap={2} alignItems="center">
                         <Typography variant="subtitle2">lv {level.lv}</Typography>
 
                         <Box
@@ -802,7 +802,7 @@ export default function Opt() {
                         </Box>
                       </Stack>
 
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" gap={1}>
                         <button
                           type="button"
                           className="button small action"

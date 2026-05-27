@@ -434,7 +434,7 @@ export default function Opt() {
               게시판 생성
             </Typography>
           ) : null}
-          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
+          <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
             {!canCreateBoard ? (
               <div className={`paper paper-error ${styles.paper}`}>더 이상 게시판을 생성할 수 없습니다.</div>
             ) : (
@@ -646,7 +646,7 @@ export default function Opt() {
                   </Stack>
                 ) : null}
 
-                <Stack direction="row" spacing={1.5} justifyContent="space-between">
+                <Stack direction="row" gap={1.5} justifyContent="space-between">
                   <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/posts`}>
                     취소
                   </Anchor>

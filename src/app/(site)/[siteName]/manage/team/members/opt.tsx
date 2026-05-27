@@ -605,7 +605,7 @@ export default function Opt() {
                     </TableCell>
                     <TableCell onClick={(event) => event.stopPropagation()}>
                       {!team.is_self ? (
-                        <Stack direction="row" spacing={1}>
+                        <Stack direction="row" gap={1}>
                           {team.role !== 'owner' ? (
                             <button
                               type="button"
@@ -642,9 +642,9 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseDetail} aria-label="팀블로그 정보 창 닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 {selectedTeam ? (
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <Box>
                       <Typography variant="subtitle2">이메일</Typography>
                       <Typography variant="body2">{selectedTeam.email}</Typography>
@@ -684,7 +684,7 @@ export default function Opt() {
                     ) : null}
                   </Stack>
                 ) : null}
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button type="button" className="button medium cancel" onClick={handleCloseDetail}>
                     닫기
                   </button>
@@ -705,7 +705,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 {selectedTeam ? (
-                  <Stack spacing={2} sx={{ pt: 1 }}>
+                  <Stack gap={2} sx={{ pt: 1 }}>
                     <Box>
                       <Typography variant="subtitle2">이메일</Typography>
                       <Typography variant="body2">{selectedTeam.email}</Typography>
@@ -770,10 +770,10 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -851,7 +851,7 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>
                   {nextBlockState ? (
                     <>
@@ -875,7 +875,7 @@ export default function Opt() {
                     </>
                   )}
                 </Typography>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -974,7 +974,7 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={1}>
                   <Stack>
                     <Typography variant="subtitle2">이메일</Typography>
@@ -1001,7 +1001,7 @@ export default function Opt() {
                     </TextField>
                   </Stack>
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1098,7 +1098,7 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseInviteListDialog} aria-label="초대 현황 창 닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <div className={`paper ${styles.paper}`}>
                   <Table size="small">
                     <TableHead>
@@ -1133,7 +1133,7 @@ export default function Opt() {
                     </TableBody>
                   </Table>
                 </div>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button type="button" className="button medium cancel" onClick={handleCloseInviteListDialog}>
                     닫기
                   </button>
@@ -1213,13 +1213,13 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography>
                   정말로 초대를 취소하시겠습니까?
                   <br />
                   취소된 초대장은 상대방이 더이상 이용이 불가합니다.
                 </Typography>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

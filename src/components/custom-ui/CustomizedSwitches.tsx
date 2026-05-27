@@ -207,7 +207,7 @@ export default function CustomizedSwitches() {
       <FormControlLabel control={<MaterialUISwitch sx={{ m: 1 }} defaultChecked />} label="MUI switch" />
       <FormControlLabel control={<Android12Switch defaultChecked />} label="Android 12" />
       <FormControlLabel control={<IOSSwitch sx={{ m: 1 }} defaultChecked />} label="iOS style" />
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+      <Stack direction="row" gap={1} sx={{ alignItems: 'center' }}>
         <Typography>Off</Typography>
         <AntSwitch defaultChecked slotProps={{ input: { 'aria-label': 'ant design' } }} />
         <Typography>On</Typography>

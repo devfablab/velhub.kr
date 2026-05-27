@@ -609,8 +609,8 @@ export default function Opt() {
             </Typography>
           ) : null}
 
-          <Stack component="form" spacing={2.5} onSubmit={handleSubmit}>
-            <Stack spacing={1}>
+          <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+            <Stack gap={1}>
               <TextField
                 label="페이지 식별자 (필수)"
                 value={slug}
@@ -705,7 +705,7 @@ export default function Opt() {
               />
             </Box>
 
-            <Stack direction="row" spacing={1.5} justifyContent="flex-end">
+            <Stack direction="row" gap={1.5} justifyContent="flex-end">
               <Button
                 component={Link}
                 href={`/${siteName}/manage/contents/pages/${contentId}`}

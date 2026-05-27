@@ -744,7 +744,7 @@ export default function Opt() {
       <Container pageTitle="새 글 쓰기" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
         <div className="container">
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <Stack component="form" spacing={2.5} onSubmit={(event) => void handleSubmit('publish', event)}>
+            <Stack component="form" gap={2.5} onSubmit={(event) => void handleSubmit('publish', event)}>
               {!isFeedBoard ? (
                 <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
               ) : null}
@@ -907,9 +907,9 @@ export default function Opt() {
                   </Button>
 
                   {images.length > 0 ? (
-                    <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                    <Stack gap={1.5} sx={{ mt: 1.5 }}>
                       {images.map((image, index) => (
-                        <Stack key={image.path} spacing={1}>
+                        <Stack key={image.path} gap={1}>
                           <Typography variant="body2">{`이미지 ${index + 1}`}</Typography>
                           <Box
                             component="img"
@@ -974,8 +974,8 @@ export default function Opt() {
               />
 
               {isBasicBoard ? (
-                <Stack spacing={1.5}>
-                  <Stack direction="row" spacing={1}>
+                <Stack gap={1.5}>
+                  <Stack direction="row" gap={1}>
                     <Button
                       type="button"
                       variant="outlined"
@@ -1014,7 +1014,7 @@ export default function Opt() {
                 </Stack>
               ) : null}
 
-              <Stack direction="row" spacing={1.5}>
+              <Stack direction="row" gap={1.5}>
                 <Button
                   component={Link}
                   href={`/${siteName}/manage/contents/posts/c/${boardName}`}

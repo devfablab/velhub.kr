@@ -104,7 +104,7 @@ export default function SocialLoginButtons() {
 
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
-      <Stack spacing={1.5}>
+      <Stack gap={1.5}>
         <Button
           type="button"
           variant="outlined"

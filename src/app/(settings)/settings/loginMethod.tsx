@@ -154,7 +154,7 @@ export default function LoginMethod() {
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack spacing={2.5}>
+          <Stack gap={2.5}>
             {email ? <Typography variant="body2">계정 이메일: {email}</Typography> : null}
 
             <RadioGroup name="defaultLoginMethod" value={selectedLoginMethod}>

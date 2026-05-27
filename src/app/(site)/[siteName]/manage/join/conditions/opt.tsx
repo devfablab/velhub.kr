@@ -477,7 +477,7 @@ export default function Opt() {
       <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <Stack component="form" spacing={3} onSubmit={handleSubmit}>
+            <Stack component="form" gap={3} onSubmit={handleSubmit}>
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">가입 안내 문구</Typography>
@@ -575,7 +575,7 @@ export default function Opt() {
                   <FormControlLabel value="period" control={<Radio />} label="가입불가 기간설정" />
                 </RadioGroup>
                 {joinAcceptStatus === 'period' ? (
-                  <Stack direction={isMobile ? 'row' : 'column'} spacing={2}>
+                  <Stack direction={isMobile ? 'row' : 'column'} gap={2}>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">시작일</Typography>
                       <DatePicker
@@ -621,7 +621,7 @@ export default function Opt() {
                   <FormControlLabel value="disabled" control={<Radio />} label="사용안함" />
                 </RadioGroup>
                 {joinQuestionStatus === 'enabled' ? (
-                  <Stack spacing={2}>
+                  <Stack gap={2}>
                     <p className="alert warning">
                       <WarningAmberRoundedIcon />
                       <span>답변 데이터 보호를 위해 저장된 가입 질문의 순서 변경은 제한됩니다.</span>

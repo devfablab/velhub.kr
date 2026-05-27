@@ -960,7 +960,7 @@ export default function Opt() {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(series.created_at)}</TableCell>
                       <TableCell align="right">
-                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <Stack direction="row" gap={1} justifyContent="flex-end">
                           <button
                             type="button"
                             className="button small cancel"
@@ -1000,8 +1000,8 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack gap={1}>
                     <Typography variant="subtitle2">연재 식별자 *</Typography>
                     <TextField
@@ -1071,7 +1071,7 @@ export default function Opt() {
                     <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
                       <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
 
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" gap={1}>
                         <Button component="label" className="button small action" disabled={isUploadingImage}>
                           이미지 선택
                           <VisuallyHiddenInput
@@ -1106,9 +1106,9 @@ export default function Opt() {
                   </Stack>
 
                   <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
-                    <Stack spacing={1}>
+                    <Stack gap={1}>
                       {selectedUser ? (
-                        <Stack spacing={0.5}>
+                        <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
                             <Typography variant="body2">{selectedUser.email || selectedUser.particleId}</Typography>
@@ -1132,7 +1132,7 @@ export default function Opt() {
                           <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
                         </p>
                       )}
-                      <Stack direction="column" spacing={1}>
+                      <Stack direction="column" gap={1}>
                         {selectedUser ? (
                           <>
                             <Typography variant="subtitle2">연재가능 멤버 취소</Typography>
@@ -1152,7 +1152,7 @@ export default function Opt() {
                     </Stack>
 
                     {dialogMode !== 'new' && (
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" gap={1} alignItems="center">
                         <FormControlLabel
                           control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
                           label="완결"
@@ -1181,7 +1181,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1219,7 +1219,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack gap={1}>
                     <Typography variant="subtitle2">연재 식별자 *</Typography>
                     <TextField
@@ -1289,7 +1289,7 @@ export default function Opt() {
                     <Stack gap={1} direction="row" justifyContent="space-between" sx={{ width: '100%' }}>
                       <Typography variant="subtitle2">연재 썸네일 이미지</Typography>
 
-                      <Stack direction="row" spacing={1}>
+                      <Stack direction="row" gap={1}>
                         <Button component="label" className="button small action" disabled={isUploadingImage}>
                           이미지 선택
                           <VisuallyHiddenInput
@@ -1324,9 +1324,9 @@ export default function Opt() {
                   </Stack>
 
                   <div className={`paper ${styles['paper-sub']}`} style={{ marginTop: 12 }}>
-                    <Stack spacing={1}>
+                    <Stack gap={1}>
                       {selectedUser ? (
-                        <Stack spacing={0.5}>
+                        <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
                             <Typography variant="body2">{selectedUser.email || selectedUser.particleId}</Typography>
@@ -1350,7 +1350,7 @@ export default function Opt() {
                           <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
                         </p>
                       )}
-                      <Stack direction="column" spacing={1}>
+                      <Stack direction="column" gap={1}>
                         {selectedUser ? (
                           <>
                             <Typography variant="subtitle2">연재가능 멤버 취소</Typography>
@@ -1370,7 +1370,7 @@ export default function Opt() {
                     </Stack>
 
                     {dialogMode !== 'new' && (
-                      <Stack direction="row" spacing={1} alignItems="center">
+                      <Stack direction="row" gap={1} alignItems="center">
                         <FormControlLabel
                           control={<Checkbox checked={isCompleted} onChange={handleIsCompletedChange} />}
                           label="완결"
@@ -1432,8 +1432,8 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
@@ -1444,7 +1444,7 @@ export default function Opt() {
                   ) : null}
                 </Stack>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1477,7 +1477,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 연재를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
@@ -1520,8 +1520,8 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
                       placeholder="이메일, 활동명, 닉네임 검색"
@@ -1579,7 +1579,7 @@ export default function Opt() {
                     </Table>
                   </div>
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1610,7 +1610,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" gap={1} alignItems="center">
                     <TextField
                       placeholder="이메일, 활동명, 닉네임 검색"
                       value={userSearchKeyword}

@@ -684,7 +684,7 @@ export default function Opt() {
             {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
             {formatDate(siteInfo.created_at)}에 개설
           </Typography>
-          <Stack spacing={1.5} alignItems="center">
+          <Stack gap={1.5} alignItems="center">
             <Avatar
               src={profilePictureUrl || '/broken-image.jpg'}
               alt={siteInfo.site_label ?? ''}
@@ -710,7 +710,7 @@ export default function Opt() {
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">사이트 로고</Typography>
 
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
               {profileLogoUrl ? (
                 <Box
                   component="img"
@@ -801,7 +801,7 @@ export default function Opt() {
                 ) : null}
               </>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography>{siteInfo.site_key}</Typography>
                 <button
                   type="button"
@@ -866,7 +866,7 @@ export default function Opt() {
                 ) : null}
               </>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography>{siteInfo.site_label ?? ''}</Typography>
                 <button
                   type="button"
@@ -892,7 +892,7 @@ export default function Opt() {
                 />
                 <Stack
                   direction="row"
-                  spacing={2}
+                  gap={2}
                   sx={{
                     justifyContent: 'flex-end',
                     alignItems: 'center',
@@ -912,7 +912,7 @@ export default function Opt() {
                 </Stack>
               </>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography>{siteInfo.summary ?? ''}</Typography>
                 <button
                   type="button"
@@ -942,7 +942,7 @@ export default function Opt() {
                 </Select>
                 <Stack
                   direction="row"
-                  spacing={2}
+                  gap={2}
                   sx={{
                     justifyContent: 'flex-end',
                     alignItems: 'center',
@@ -962,7 +962,7 @@ export default function Opt() {
                 </Stack>
               </>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography>{siteInfo.theme_type}</Typography>
                 <button
                   type="button"
@@ -979,7 +979,7 @@ export default function Opt() {
             {editingField === 'visibility_type' ? (
               <Stack
                 direction="row"
-                spacing={2}
+                gap={2}
                 sx={{
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -997,7 +997,7 @@ export default function Opt() {
                 />
                 <Stack
                   direction="row"
-                  spacing={2}
+                  gap={2}
                   sx={{
                     alignItems: 'center',
                   }}
@@ -1016,7 +1016,7 @@ export default function Opt() {
                 </Stack>
               </Stack>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography variant="subtitle2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
                 <button
                   type="button"
@@ -1033,7 +1033,7 @@ export default function Opt() {
             {editingField === 'is_shutdown' ? (
               <Stack
                 direction="row"
-                spacing={2}
+                gap={2}
                 sx={{
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -1046,7 +1046,7 @@ export default function Opt() {
 
                 <Stack
                   direction="row"
-                  spacing={2}
+                  gap={2}
                   sx={{
                     justifyContent: 'flex-end',
                     alignItems: 'center',
@@ -1066,7 +1066,7 @@ export default function Opt() {
                 </Stack>
               </Stack>
             ) : (
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
                 <button
                   type="button"

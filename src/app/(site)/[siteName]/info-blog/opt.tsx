@@ -1444,7 +1444,7 @@ export default function Opt({
         <DialogTitle>팀원 기본 정보</DialogTitle>
         <DialogContent>
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack gap={2} sx={{ pt: 1 }}>
               <TextField
                 label="국문명"
                 value={generalFormValue.nameKo}
@@ -1527,7 +1527,7 @@ export default function Opt({
       <Dialog open={isNicknameDialogOpen} onClose={handleCloseNicknameDialog} fullWidth maxWidth="xs">
         <DialogTitle>별명 수정</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <TextField label="별명" value={nicknameValue} onChange={handleChangeNickname} fullWidth size="small" />
 
             {nicknameErrorMessage ? (
@@ -1555,7 +1555,7 @@ export default function Opt({
       <Dialog open={Boolean(itemManageDialogType)} onClose={handleCloseItemManageDialog} fullWidth maxWidth="sm">
         <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             {itemManageDialogType ? (
               <>
                 <Button type="button" variant="outlined" onClick={() => handleOpenItemFormDialog(itemManageDialogType)}>
@@ -1572,7 +1572,7 @@ export default function Opt({
                       items={itemManageItems.map((item) => item.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <Stack spacing={1.5}>
+                      <Stack gap={1.5}>
                         {itemManageItems.map((item) => (
                           <SortableItem key={item.id} id={item.id}>
                             {renderManageDialogItem(itemManageDialogType, item)}
@@ -1605,7 +1605,7 @@ export default function Opt({
         </DialogTitle>
         <DialogContent>
           <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack gap={2} sx={{ pt: 1 }}>
               {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
 
               {itemErrorMessage ? (

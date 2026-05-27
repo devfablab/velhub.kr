@@ -228,17 +228,17 @@ export default function Opt() {
 
   if (board.board_type === 'page') {
     return (
-      <Stack spacing={2.5}>
+      <Stack gap={2.5}>
         {errorMessage ? (
           <Alert severity="error" variant="filled">
             {errorMessage}
           </Alert>
         ) : null}
 
-        <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-          <Stack direction="row" spacing={1} flexWrap="wrap" />
+        <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
+          <Stack direction="row" gap={1} flexWrap="wrap" />
 
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" gap={1}>
             {isAuthor || isStaff ? (
               <Button
                 component={Link}
@@ -262,31 +262,31 @@ export default function Opt() {
         </Stack>
 
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack spacing={2}>
+          <Stack gap={2}>
             {content.subject ? <Typography variant="h5">{content.subject}</Typography> : null}
             {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
 
-            <Stack spacing={0.75}>
+            <Stack gap={0.75}>
               <Typography variant="subtitle2">작성일</Typography>
               <Typography variant="body2">{formatDateTimeDetail(content.created_at)}</Typography>
             </Stack>
 
             {content.edited_at ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">수정일</Typography>
                 <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
               </Stack>
             ) : null}
 
             {content.author_name ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">작성자</Typography>
                 <Typography variant="body2">{content.author_name}</Typography>
               </Stack>
             ) : null}
 
             {content.og_image_url ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">오픈 그래프 이미지</Typography>
                 <Box
                   component="img"
@@ -298,7 +298,7 @@ export default function Opt() {
             ) : null}
 
             {content.content_html ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">내용</Typography>
                 <Box
                   sx={{
@@ -313,28 +313,28 @@ export default function Opt() {
             ) : null}
 
             {typeof content.sort_order === 'number' ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">정렬 순서</Typography>
                 <Typography variant="body2">{content.sort_order}</Typography>
               </Stack>
             ) : null}
 
             {content.attachment_slug ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">첨부 식별자</Typography>
                 <Typography variant="body2">{content.attachment_slug}</Typography>
               </Stack>
             ) : null}
 
             {content.attachment_origin ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">첨부 원본명</Typography>
                 <Typography variant="body2">{content.attachment_origin}</Typography>
               </Stack>
             ) : null}
 
             {typeof content.is_comment === 'boolean' ? (
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">댓글 허용</Typography>
                 <Typography variant="body2">{content.is_comment ? '허용' : '비허용'}</Typography>
               </Stack>
@@ -361,8 +361,8 @@ export default function Opt() {
             </Alert>
           ) : null}
 
-          <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-            <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
+            <Stack direction="row" gap={1} flexWrap="wrap">
               {content.published_status === 'draft' ? <Chip label="임시저장글" color="warning" size="small" /> : null}
               {content.prefix_label ? <Chip label={content.prefix_label} variant="outlined" size="small" /> : null}
               {categories.map((category) => (
@@ -370,7 +370,7 @@ export default function Opt() {
               ))}
             </Stack>
 
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" gap={1}>
               {isAuthor || isStaff ? (
                 <Button
                   component={Link}
@@ -394,94 +394,94 @@ export default function Opt() {
           </Stack>
 
           <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={2}>
+            <Stack gap={2}>
               {content.subject && board.board_type !== 'feed' ? (
                 <Typography variant="h5">{content.subject}</Typography>
               ) : null}
               {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
 
               {typeof content.series_idx === 'number' ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">연재 번호</Typography>
                   <Typography variant="body2">{content.series_idx}</Typography>
                 </Stack>
               ) : typeof content.idx === 'number' ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">번호</Typography>
                   <Typography variant="body2">{content.idx}</Typography>
                 </Stack>
               ) : null}
 
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">조회수</Typography>
                 <Typography variant="body2">
                   {typeof content.post_count === 'number' ? content.post_count : 0}
                 </Typography>
               </Stack>
 
-              <Stack spacing={0.75}>
+              <Stack gap={0.75}>
                 <Typography variant="subtitle2">작성일</Typography>
                 <Typography variant="body2">{formatDateTimeDetail(content.created_at)}</Typography>
               </Stack>
 
               {content.published_at ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">게시일</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.published_at)}</Typography>
                 </Stack>
               ) : null}
 
               {content.edited_at ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">수정일</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
                 </Stack>
               ) : null}
 
               {content.author_name ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">작성자</Typography>
                   <Typography variant="body2">{content.author_name}</Typography>
                 </Stack>
               ) : null}
 
               {series?.series_label ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">연재</Typography>
                   <Typography variant="body2">{series.series_label}</Typography>
                 </Stack>
               ) : null}
 
               {board.board_type === 'youtube' && content.youtube_url ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">유튜브 영상 주소</Typography>
                   <Typography variant="body2">{content.youtube_url}</Typography>
                 </Stack>
               ) : null}
 
               {board.board_type === 'youtube' && content.youtube_id ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">유튜브 영상 ID</Typography>
                   <Typography variant="body2">{content.youtube_id}</Typography>
                 </Stack>
               ) : null}
 
               {board.board_type === 'youtube' && content.youtube_created_at ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">유튜브 업로드 기준 날짜</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.youtube_created_at)}</Typography>
                 </Stack>
               ) : null}
 
               {typeof content.is_comment === 'boolean' ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">댓글 허용</Typography>
                   <Typography variant="body2">{content.is_comment ? '허용' : '비허용'}</Typography>
                 </Stack>
               ) : null}
 
               {board.board_type !== 'feed' && content.thumbnail_image_url ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">
                     {board.board_type === 'basic' ? '썸네일 이미지' : '오픈 그래프 이미지'}
                   </Typography>
@@ -495,9 +495,9 @@ export default function Opt() {
               ) : null}
 
               {Array.isArray(content.images) && content.images.length > 0 ? (
-                <Stack spacing={1}>
+                <Stack gap={1}>
                   <Typography variant="subtitle2">이미지</Typography>
-                  <Stack spacing={1.5}>
+                  <Stack gap={1.5}>
                     {content.images.map((image, index) => (
                       <Box
                         key={`${image.path}-${index}`}
@@ -512,7 +512,7 @@ export default function Opt() {
               ) : null}
 
               {board.board_type === 'feed' && content.content_simple ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">내용</Typography>
                   <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                     {content.content_simple}
@@ -521,7 +521,7 @@ export default function Opt() {
               ) : null}
 
               {(board.board_type === 'basic' || board.board_type === 'gallery') && content.content_html ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">내용</Typography>
                   <Box
                     sx={{
@@ -536,10 +536,10 @@ export default function Opt() {
               ) : null}
 
               {content.poll ? (
-                <Stack spacing={1}>
+                <Stack gap={1}>
                   <Typography variant="subtitle2">투표</Typography>
                   <Typography variant="body2">{content.poll.question}</Typography>
-                  <Stack spacing={0.75}>
+                  <Stack gap={0.75}>
                     {content.poll.options.map((option) => (
                       <Typography key={option.id} variant="body2">
                         {`${option.id}. ${option.label}`}
@@ -550,9 +550,9 @@ export default function Opt() {
               ) : null}
 
               {Array.isArray(content.hashtags) && content.hashtags.length > 0 ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">해시태그</Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Stack direction="row" gap={1} flexWrap="wrap">
                     {content.hashtags.map((hashtag) => (
                       <Chip key={hashtag} label={`#${hashtag}`} size="small" variant="outlined" />
                     ))}
@@ -561,21 +561,21 @@ export default function Opt() {
               ) : null}
 
               {content.is_closed && content.closed_at ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">삭제일</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.closed_at)}</Typography>
                 </Stack>
               ) : null}
 
               {content.is_closed && content.closed_by_name ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">삭제자</Typography>
                   <Typography variant="body2">{content.closed_by_name}</Typography>
                 </Stack>
               ) : null}
 
               {content.is_closed && content.closed_message ? (
-                <Stack spacing={0.75}>
+                <Stack gap={0.75}>
                   <Typography variant="subtitle2">삭제 사유</Typography>
                   <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                     {content.closed_message}

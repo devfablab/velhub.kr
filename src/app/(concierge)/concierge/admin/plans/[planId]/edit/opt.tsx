@@ -153,7 +153,7 @@ export default function Opt({ planId }: Props) {
 
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
-      <Stack component="form" spacing={2} onSubmit={handleSubmit}>
+      <Stack component="form" gap={2} onSubmit={handleSubmit}>
         <TextField label="요금제 카테고리 영문명" value={categoryKey} onChange={handleCategoryKeyChange} fullWidth />
 
         <TextField
@@ -169,7 +169,7 @@ export default function Opt({ planId }: Props) {
 
         <TextField label="가격" value={price} onChange={handlePriceChange} fullWidth />
 
-        <Stack spacing={1}>
+        <Stack gap={1}>
           <Typography>상품 종류</Typography>
           <RadioGroup value={productType} onChange={handleProductTypeChange}>
             <FormControlLabel value="service" control={<Radio />} label="서비스" />

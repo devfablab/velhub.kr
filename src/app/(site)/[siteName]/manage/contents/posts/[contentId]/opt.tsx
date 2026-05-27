@@ -652,8 +652,8 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
                     <span>
@@ -681,7 +681,7 @@ export default function Opt() {
                   ) : null}
                 </Stack>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -714,7 +714,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
                     <span>
@@ -775,7 +775,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
 
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Typography variant="body2">
                   해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                 </Typography>
@@ -785,7 +785,7 @@ export default function Opt() {
                     <span>{dialogErrorMessage}</span>
                   </p>
                 ) : null}
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -861,8 +861,8 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
                       labelId="detail-post-category-select-label"
@@ -892,7 +892,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -930,7 +930,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
                       labelId="detail-post-category-select-label"
@@ -998,8 +998,8 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
                       labelId="detail-post-series-select-label"
@@ -1035,7 +1035,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -1073,7 +1073,7 @@ export default function Opt() {
                 <CloseRoundedIcon />
               </button>
               <DialogContent>
-                <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
                   <FormControl fullWidth size="small">
                     <Select
                       labelId="detail-post-series-select-label"

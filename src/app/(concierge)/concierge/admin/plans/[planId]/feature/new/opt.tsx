@@ -153,10 +153,10 @@ export default function Opt({ planId }: Props) {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack gap={3}>
       {plan ? (
         <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={1.5}>
+          <Stack gap={1.5}>
             <Typography>{plan.category_label}</Typography>
             <Typography>{plan.plan_label}</Typography>
             <Typography>{formatPrice(plan.price)}</Typography>
@@ -166,8 +166,8 @@ export default function Opt({ planId }: Props) {
       ) : null}
 
       <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack component="form" spacing={2} onSubmit={handleSubmit}>
-          <Stack spacing={1}>
+        <Stack component="form" gap={2} onSubmit={handleSubmit}>
+          <Stack gap={1}>
             <Typography>에디터에 이미지 삽입 가능</Typography>
             <RadioGroup value={String(isEditorImage)} onChange={handleIsEditorImageChange}>
               <FormControlLabel value="true" control={<Radio />} label="가능" />
@@ -175,7 +175,7 @@ export default function Opt({ planId }: Props) {
             </RadioGroup>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <Typography>멤버 추가 가능</Typography>
             <RadioGroup value={String(isMember)} onChange={handleIsMemberChange}>
               <FormControlLabel value="true" control={<Radio />} label="가능" />
@@ -183,7 +183,7 @@ export default function Opt({ planId }: Props) {
             </RadioGroup>
           </Stack>
 
-          <Stack spacing={1}>
+          <Stack gap={1}>
             <Typography>게시판에 파일첨부 가능</Typography>
             <RadioGroup value={String(isBoardAttachment)} onChange={handleIsBoardAttachmentChange}>
               <FormControlLabel value="true" control={<Radio />} label="가능" />
