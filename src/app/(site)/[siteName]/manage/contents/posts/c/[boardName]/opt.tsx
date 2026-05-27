@@ -270,10 +270,6 @@ export default function Opt() {
     return nextQuery ? `${pathname}?${nextQuery}` : pathname;
   }
 
-  function handleMoveToNew() {
-    router.push(`/${siteName}/manage/contents/posts/c/${boardName}/new`);
-  }
-
   function handleMoveToPrefixManage() {
     router.push(`/${siteName}/manage/contents/posts/c/${boardName}/prefix`);
   }
@@ -496,14 +492,20 @@ export default function Opt() {
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
             <Stack direction="row" gap={1}>
               {board?.post_type === 'prefix' ? (
-                <button type="button" className="button small cancel" onClick={handleMoveToPrefixManage}>
+                <Anchor
+                  className="button small action"
+                  href={`/${siteName}/manage/contents/posts/c/${boardName}/prefix`}
+                >
                   말머리 관리
-                </button>
+                </Anchor>
               ) : null}
               {board?.post_type === 'series' ? (
-                <button type="button" className="button small cancels" onClick={handleMoveToPrefixManage}>
-                  말머리 관리
-                </button>
+                <Anchor
+                  className="button small action"
+                  href={`/${siteName}/manage/contents/posts/c/${boardName}/series`}
+                >
+                  연재 관리
+                </Anchor>
               ) : null}
 
               {isMobile ? null : (
