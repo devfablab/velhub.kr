@@ -18,6 +18,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   MenuItem,
   Pagination,
   PaginationItem,
@@ -152,15 +153,7 @@ function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
 }
 
-function SortableBoardRow({
-  board,
-  onMoveToCommunityBoard,
-  onMoveToCommunityBoardEdit,
-}: {
-  board: BoardRow;
-  onMoveToCommunityBoard: (boardKey: string) => void;
-  onMoveToCommunityBoardEdit: (boardKey: string) => void;
-}) {
+function SortableBoardRow({ board, siteName }: { board: BoardRow; siteName: string }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: board.id,
   });
@@ -193,21 +186,17 @@ function SortableBoardRow({
       </TableCell>
 
       <TableCell>
-        <button type="button" className="button medium cancel" onClick={() => onMoveToCommunityBoard(board.board_key)}>
+        <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/c/${board.board_key}`}>
           {board.board_label}
-        </button>
+        </Anchor>
       </TableCell>
 
       <TableCell>{formatDate(board.created_at ?? '')}</TableCell>
 
       <TableCell align="right">
-        <button
-          type="button"
-          className="button medium action"
-          onClick={() => onMoveToCommunityBoardEdit(board.board_key)}
-        >
+        <Anchor className="button medium action" href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}>
           수정
-        </button>
+        </Anchor>
       </TableCell>
     </TableRow>
   );
@@ -221,7 +210,9 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isNotTablet = useMediaQuery(theme.breakpoints.up('lg'));
+  const isTablet = !isNotTablet;
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
   const isMobile = !isNotMobile;
 
   const [siteType, setSiteType] = useState<SiteType | null>(null);
@@ -473,18 +464,6 @@ export default function Opt() {
 
     const nextQuery = nextSearchParams.toString();
     return nextQuery ? `${pathname}?${nextQuery}` : pathname;
-  }
-
-  function handleMoveToCommunityBoard(nextBoardName: string) {
-    router.push(`/${siteName}/manage/contents/posts/c/${nextBoardName}`);
-  }
-
-  function handleMoveToCommunityBoardEdit(nextBoardName: string) {
-    router.push(`/${siteName}/manage/contents/posts/c/${nextBoardName}/edit`);
-  }
-
-  function handleMoveToCommunityBoardNew() {
-    router.push(`/${siteName}/manage/contents/posts/c/new`);
   }
 
   function handleToggleAllCurrentPage() {
@@ -748,88 +727,98 @@ export default function Opt() {
 
   if (siteType === 'community') {
     return (
-      <Stack spacing={2}>
-        {isNotMobile && (
-          <Typography variant="h5" component="h1">
-            게시판 목록
-          </Typography>
-        )}
+      <div className={`container ${styles.container}`}>
+        <div className={`${styles.content} content`}>
+          {isNotMobile && (
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
+              게시판 목록
+            </Typography>
+          )}
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%' }}>
-            <button type="button" className="button medium cancel" onClick={handleMoveToCommunityBoardNew}>
-              게시판 만들기
-            </button>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pt: 0, pb: 0 }}>
+            <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%', p: 1, pt: 0, pb: 2 }}>
+              <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/new`}>
+                게시판 만들기
+              </Anchor>
+            </Stack>
+
+            {isBoardOrderChanged ? (
+              <button
+                type="button"
+                className="button small submit"
+                onClick={handleSaveBoardOrder}
+                disabled={isOrderingBoards}
+              >
+                순서 저장
+              </button>
+            ) : (
+              <span />
+            )}
           </Stack>
 
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+
           {isBoardOrderChanged ? (
-            <button type="button" className="outlined" onClick={handleSaveBoardOrder} disabled={isOrderingBoards}>
-              순서 저장
-            </button>
+            <p className="alert warning" style={{ marginBottom: 16, paddingLeft: 17 }}>
+              <WarningAmberRoundedIcon />
+              <span>순서를 변경하시면 반드시 저장을 눌러주세요</span>
+            </p>
+          ) : null}
+
+          {boards.length === 0 ? (
+            <div className={`paper ${styles.paper}`}>
+              <Typography>게시판이 없습니다.</Typography>
+            </div>
           ) : (
-            <span />
+            <div className={`paper paper-p0 ${styles.paper}`}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
+                <SortableContext items={boards.map((board) => board.id)} strategy={verticalListSortingStrategy}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell width={64} />
+                        <TableCell>게시판</TableCell>
+                        <TableCell sx={{ width: 150 }}>생성날짜</TableCell>
+                        <TableCell sx={{ width: 100 }} />
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {boards.map((board) => (
+                        <SortableBoardRow key={board.id} board={board} siteName={siteName} />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </SortableContext>
+              </DndContext>
+            </div>
           )}
-        </Stack>
-
-        {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-
-        {isBoardOrderChanged ? (
-          <p className="alert warning">
-            <WarningAmberRoundedIcon />
-            <span>{dialogErrorMessage}</span>
-          </p>
-        ) : null}
-
-        {boards.length === 0 ? (
-          <div className={`paper ${styles.paper}`}>
-            <Typography>게시판이 없습니다.</Typography>
-          </div>
-        ) : (
-          <div className={`paper paper-p0 ${styles.paper}`}>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
-              <SortableContext items={boards.map((board) => board.id)} strategy={verticalListSortingStrategy}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell width={64}></TableCell>
-                      <TableCell>게시판</TableCell>
-                      <TableCell>날짜</TableCell>
-                      <TableCell />
-                    </TableRow>
-                  </TableHead>
-
-                  <TableBody>
-                    {boards.map((board) => (
-                      <SortableBoardRow
-                        key={board.id}
-                        board={board}
-                        onMoveToCommunityBoard={handleMoveToCommunityBoard}
-                        onMoveToCommunityBoardEdit={handleMoveToCommunityBoardEdit}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
-      </Stack>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="container">
+    <div className={`container ${styles.container}`}>
       <div className={`content ${styles.content} ${styles['content-manage']}`}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
           <Stack direction="row" gap={1}>
-            <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/category`}>
+            <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/category`}>
               카테고리 관리
             </Anchor>
-            {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-              <button type="button" className="button small wanring" onClick={handleOpenBulkDeleteDialog}>
-                삭제
-              </button>
-            ) : null}
+            <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/series`}>
+              연재 관리
+            </Anchor>
+
+            {isMobile ? null : (
+              <>
+                {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                  <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                    삭제
+                  </button>
+                ) : null}
+              </>
+            )}
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">
@@ -840,32 +829,54 @@ export default function Opt() {
         </Stack>
 
         <Stack
-          direction="row"
-          spacing={1}
+          direction={isMobile ? 'column' : 'row'}
+          gap={1}
           justifyContent={isNotMobile ? 'space-between' : 'flex-end'}
-          alignItems="center"
+          alignItems={isMobile ? 'flex-end' : 'center'}
+          sx={{ pr: 2, pl: 2 }}
         >
-          {isStaff ? (
-            <ButtonGroup size="medium" className={styles['button-group']}>
-              <Button
-                LinkComponent={NextLink}
-                type="button"
-                variant={currentFilter === 'all' ? 'contained' : 'outlined'}
-                href={getListHref({ page: 1, filter: 'all' })}
-              >
-                전체글
-              </Button>
+          <Stack
+            direction="row"
+            gap={1}
+            justifyContent={isMobile ? 'space-between' : 'flex-end'}
+            sx={{ width: '100%' }}
+          >
+            {isMobile ? (
+              <>
+                {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                  <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                    삭제
+                  </button>
+                ) : (
+                  <i />
+                )}
+              </>
+            ) : null}
 
-              <Button
-                LinkComponent={NextLink}
-                type="button"
-                variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
-                href={getListHref({ page: 1, filter: 'deleted' })}
-              >
-                삭제글
-              </Button>
-            </ButtonGroup>
-          ) : null}
+            {isStaff ? (
+              <ButtonGroup size={isMobile ? 'small' : 'medium'}>
+                <Button
+                  LinkComponent={NextLink}
+                  type="button"
+                  variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'all' ? 'submit' : 'action'}`}
+                  href={getListHref({ page: 1, filter: 'all' })}
+                >
+                  전체글
+                </Button>
+                <Button
+                  LinkComponent={NextLink}
+                  type="button"
+                  size={isMobile ? 'small' : 'medium'}
+                  variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'deleted' ? 'submit' : 'action'}`}
+                  href={getListHref({ page: 1, filter: 'deleted' })}
+                >
+                  삭제글
+                </Button>
+              </ButtonGroup>
+            ) : null}
+          </Stack>
 
           <TextField
             select
@@ -926,10 +937,7 @@ export default function Opt() {
                       </TableCell>
 
                       <TableCell>
-                        <Anchor
-                          className="button medium action"
-                          href={`/${siteName}/manage/contents/posts/${post.slug}`}
-                        >
+                        <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}`}>
                           {post.subject}
                         </Anchor>
                       </TableCell>
@@ -941,13 +949,11 @@ export default function Opt() {
                         {post.closed_at ? formatDateTimeDetail(post.closed_at) : ''}
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{post.closed_message || ''}</TableCell>
-
                       <TableCell align="right">
                         {post.is_closed ? (
                           <button
                             type="button"
-                            color="warning"
-                            variant="outlined"
+                            className="button small action"
                             onClick={() => handleOpenRestoreDialog(post)}
                           >
                             복구
@@ -955,8 +961,7 @@ export default function Opt() {
                         ) : (
                           <button
                             type="button"
-                            color="error"
-                            variant="outlined"
+                            className="button small warning"
                             onClick={() => handleOpenSingleDeleteDialog(post)}
                           >
                             삭제
@@ -1007,86 +1012,207 @@ export default function Opt() {
           </Stack>
         ) : null}
 
-        <Dialog
-          open={dialogMode === 'delete'}
-          onClose={handleCloseDeleteDialog}
-          fullWidth
-          maxWidth="sm"
-          className="VhiDialog"
-        >
-          <DialogTitle>게시물 삭제</DialogTitle>
-          <DialogContent>
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={dialogMode === 'delete'}
+            onClose={handleCloseDeleteDialog}
+            className="VhiDrawer-bottom"
+          >
+            <h2>게시물 삭제</h2>
+            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
             <Stack spacing={2} sx={{ pt: 1 }}>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>
-                  삭제시 언제든 복구가 가능합니다.
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>
+                    삭제시 언제든 복구가 가능합니다.
+                    <br />
+                    삭제사유를 입력해 주세요. (필수)
+                  </span>
+                </p>
+
+                {isStaff ? (
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+                ) : (
+                  <Typography variant="subtitle2">
+                    {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+                  </Typography>
+                )}
+
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+              <Stack direction="column" spacing={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
+                  삭제
+                </button>
+              </Stack>
+            </Stack>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={dialogMode === 'delete'}
+            onClose={handleCloseDeleteDialog}
+            fullWidth
+            maxWidth="sm"
+            className="VhiDialog"
+          >
+            <DialogTitle>게시물 삭제</DialogTitle>
+            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>
+                    삭제시 언제든 복구가 가능합니다.
+                    <br />
+                    삭제사유를 입력해 주세요. (필수)
+                  </span>
+                </p>
+
+                {isStaff ? (
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+                ) : (
+                  <Typography variant="subtitle2">
+                    {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+                  </Typography>
+                )}
+
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <button
+                type="button"
+                className="button medium close"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+              >
+                취소
+              </button>
+              <button type="button" className="button medium danger" onClick={handleDelete} disabled={isDeleting}>
+                삭제
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
+
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={dialogMode === 'restore'}
+            onClose={handleCloseDeleteDialog}
+            className="VhiDrawer-bottom"
+          >
+            <h2>게시물 복구</h2>
+            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+              <CloseRoundedIcon />
+            </button>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>
+                  해당 게시물을 복구하시겠습니까?
                   <br />
-                  삭제사유를 입력해 주세요. (필수)
-                </span>
-              </p>
-
-              {isStaff ? (
-                <TextField
-                  label="삭제 사유"
-                  value={closedMessage}
-                  onChange={handleClosedMessageChange}
-                  fullWidth
-                  multiline
-                  minRows={3}
-                  size="small"
-                />
-              ) : (
-                <Typography variant="subtitle2">
-                  {deleteMode === 'single' ? '이 게시물을 삭제하시겠습니까?' : '선택한 게시물을 삭제하시겠습니까?'}
+                  복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
                 </Typography>
-              )}
 
-              {dialogErrorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{dialogErrorMessage}</span>
-                </p>
-              ) : null}
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+              <Stack direction="column" spacing={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
+                  확인
+                </button>
+              </Stack>
             </Stack>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-              취소
+          </Drawer>
+        ) : (
+          <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+            <DialogTitle>게시물 복구</DialogTitle>
+            <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
+              <CloseRoundedIcon />
             </button>
-            <button type="button" variant="contained" color="error" onClick={handleDelete} disabled={isDeleting}>
-              삭제
-            </button>
-          </DialogActions>
-        </Dialog>
+            <DialogContent>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Typography>
+                  해당 게시물을 복구하시겠습니까?
+                  <br />
+                  복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                </Typography>
 
-        <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-          <DialogTitle>게시물 복구</DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
-              <Typography>
-                해당 게시물을 복구하시겠습니까?
-                <br />
-                복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-              </Typography>
-
-              {dialogErrorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{dialogErrorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-              취소
-            </button>
-            <button type="button" variant="contained" color="warning" onClick={handleDelete} disabled={isDeleting}>
-              확인
-            </button>
-          </DialogActions>
-        </Dialog>
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <button
+                type="button"
+                className="button medium close"
+                onClick={handleCloseDeleteDialog}
+                disabled={isDeleting}
+              >
+                취소
+              </button>
+              <button type="button" className="button medium submit" onClick={handleDelete} disabled={isDeleting}>
+                확인
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
       </div>
     </div>
   );

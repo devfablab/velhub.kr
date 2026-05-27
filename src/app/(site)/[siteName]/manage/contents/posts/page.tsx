@@ -1,10 +1,7 @@
 import { redirect } from 'next/navigation';
-import { Box, Stack } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import StaffTabs from '../../tabs';
 import Opt from './opt';
-import SiteContentsBreadcrumb from '../breadcrumb';
 import Container from '../../menu';
 
 type RouteContext = {

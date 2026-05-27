@@ -408,7 +408,8 @@ export default function Opt() {
 
           <Snackbar
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2500}
+            autoHideDuration={2700}
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
           />
