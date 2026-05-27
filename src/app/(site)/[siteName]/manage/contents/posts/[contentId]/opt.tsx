@@ -3,29 +3,31 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Alert,
   Box,
-  Button,
   Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
-  InputLabel,
   ListItemText,
-  OutlinedInput,
   MenuItem,
-  Paper,
   Select,
   Stack,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
+  Drawer,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -113,6 +115,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [boardName, setBoardName] = useState('');
   const [post, setPost] = useState<PostResponse['content'] | null>(null);
@@ -229,14 +232,6 @@ export default function Opt() {
 
     void loadContent();
   }, [contentId, siteName]);
-
-  function handleMoveToEdit() {
-    router.push(`/${siteName}/manage/contents/posts/${contentId}/edit`);
-  }
-
-  function handleMoveToList() {
-    router.push(`/${siteName}/manage/contents/posts`);
-  }
 
   function handleOpenDeleteDialog() {
     setClosedMessage('');
@@ -505,285 +500,641 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
-    <Container pageTitle="글 보기" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
+          {isNotMobile ? (
+            <Typography variant="h5" component="h1">
+              글 읽기
+            </Typography>
           ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {post ? (
-            <Paper sx={{ p: 3 }}>
-              <Stack spacing={2.5}>
-                <Box>
-                  <Typography variant="subtitle2">제목</Typography>
-                  <Typography variant="body2">{post.subject}</Typography>
-                </Box>
-
-                {post.summary ? (
-                  <Box>
-                    <Typography variant="subtitle2">부제목</Typography>
-                    <Typography variant="body2">{post.summary}</Typography>
-                  </Box>
-                ) : null}
-
-                <Box>
-                  <Typography variant="subtitle2">작성일</Typography>
-                  <Typography variant="body2">{formatDate(post.created_at)}</Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="subtitle2">수정일</Typography>
-                  <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
-                </Box>
-
-                <Box>
-                  <Typography variant="subtitle2">작성자</Typography>
-                  <Typography variant="body2">{post.author_name}</Typography>
-                </Box>
-
-                {series ? (
-                  <Box>
-                    <Typography variant="subtitle2">연재</Typography>
-                    <Typography variant="body2">{series.series_label}</Typography>
-                  </Box>
-                ) : null}
-
-                {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
-                  <Box>
-                    <Typography variant="subtitle2">카테고리</Typography>
-                    <Typography variant="body2">
-                      {categories
-                        .filter((category) => selectedCategories.includes(category.category_key))
-                        .map((category) => category.category_label)
-                        .join(', ')}
-                    </Typography>
-                  </Box>
-                ) : null}
-
-                {post.thumbnail_image ? (
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      오픈그래프 이미지
-                    </Typography>
-                    <Box
-                      component="img"
-                      src={getOgImageUrl(post.thumbnail_image)}
-                      alt="오픈그래프 이미지"
-                      sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-                    />
-                  </Box>
-                ) : null}
-
-                <Box>
-                  <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                    내용
-                  </Typography>
-                  <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
-                </Box>
-
-                <Stack direction="row" spacing={1.5}>
-                  <Button type="button" variant="outlined" onClick={handleMoveToList}>
-                    목록
-                  </Button>
-
-                  {!post.is_closed && isAuthor ? (
-                    <Button type="button" variant="contained" onClick={handleMoveToEdit}>
-                      수정
-                    </Button>
-                  ) : null}
-
+            <>
+              <Stack direction="row" justifyContent="space-between" sx={{ p: 1 }}>
+                <Stack direction="row" gap={1}>
                   {isAuthor || isStaff ? (
-                    <Button type="button" variant="outlined" onClick={handleOpenCategoryDialog}>
+                    <button type="button" className="button small cancel" onClick={handleOpenCategoryDialog}>
                       카테고리 설정
-                    </Button>
+                    </button>
                   ) : null}
 
                   {isAuthor || isStaff ? (
-                    <Button type="button" variant="outlined" onClick={handleOpenSeriesDialog}>
+                    <button type="button" className="button small cancel" onClick={handleOpenSeriesDialog}>
                       연재 설정
-                    </Button>
+                    </button>
+                  ) : null}
+                </Stack>
+
+                {post.is_closed ? (
+                  <button type="button" className="button small action" onClick={handleOpenRestoreDialog}>
+                    복구
+                  </button>
+                ) : (
+                  <button type="button" className="button small danger" onClick={handleOpenDeleteDialog}>
+                    삭제
+                  </button>
+                )}
+              </Stack>
+
+              <div className={`paper ${styles.paper}`}>
+                <Stack gap={1}>
+                  <Typography variant="h6" component="h3">
+                    {series ? `[${series.series_label}] ` : null}
+                    {post.subject}
+                  </Typography>
+
+                  {post.summary ? <Typography variant="subtitle2">{post.summary}</Typography> : null}
+
+                  <Typography variant="subtitle2">{post.author_name}</Typography>
+
+                  <Stack direction="row" gap={3}>
+                    <Stack direction="row" gap={1}>
+                      <Typography variant="subtitle2">작성</Typography>
+                      <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+                    </Stack>
+
+                    {post.edited_at ? (
+                      <Stack direction="row" gap={1}>
+                        <Typography variant="subtitle2">수정</Typography>
+                        <Typography variant="body2">{formatDate(post.edited_at)}</Typography>
+                      </Stack>
+                    ) : null}
+                  </Stack>
+
+                  {categories.filter((category) => selectedCategories.includes(category.category_key)).length > 0 ? (
+                    <Stack direction="row" gap={1}>
+                      <Typography variant="subtitle2">카테고리</Typography>
+                      <Typography variant="body2">
+                        {categories
+                          .filter((category) => selectedCategories.includes(category.category_key))
+                          .map((category) => category.category_label)
+                          .join(', ')}
+                      </Typography>
+                    </Stack>
                   ) : null}
 
-                  {post.is_closed ? (
-                    <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog}>
-                      복구
-                    </Button>
-                  ) : (
-                    <Button type="button" color="error" variant="outlined" onClick={handleOpenDeleteDialog}>
-                      삭제
-                    </Button>
-                  )}
+                  {post.thumbnail_image ? (
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                        오픈그래프 이미지
+                      </Typography>
+                      <Box
+                        component="img"
+                        src={getOgImageUrl(post.thumbnail_image)}
+                        alt="오픈그래프 이미지"
+                        sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                      />
+                    </Box>
+                  ) : null}
+
+                  <Box sx={{ p: 3, pr: 0, pl: 0 }}>
+                    <Box dangerouslySetInnerHTML={{ __html: post.content_html }} />
+                  </Box>
+
+                  <Stack direction="row" justifyContent="space-between">
+                    <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium cancel">
+                      목록
+                    </Anchor>
+
+                    {!post.is_closed && isAuthor ? (
+                      <>
+                        {isMobile ? (
+                          <div className={styles['button-top']}>
+                            <Anchor
+                              href={`/${siteName}/manage/contents/posts/${contentId}/edit`}
+                              className={`button ${styles.button}`}
+                            >
+                              수정
+                            </Anchor>
+                          </div>
+                        ) : (
+                          <Anchor
+                            href={`/${siteName}/manage/contents/posts/${contentId}/edit`}
+                            className="button medium action"
+                          >
+                            수정
+                          </Anchor>
+                        )}
+                      </>
+                    ) : null}
+                  </Stack>
                 </Stack>
-              </Stack>
-            </Paper>
+              </div>
+            </>
           ) : null}
 
-          <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
-            <DialogTitle>게시물 삭제</DialogTitle>
-            <DialogContent>
-              <Stack spacing={2} sx={{ pt: 1 }}>
-                <Alert severity="info" variant="outlined">
-                  삭제시 언제든 복구가 가능합니다.
-                  <br />
-                  삭제사유를 입력해 주세요. (필수)
-                </Alert>
-
-                <TextField
-                  label="삭제 사유"
-                  value={closedMessage}
-                  onChange={handleClosedMessageChange}
-                  fullWidth
-                  multiline
-                  minRows={3}
-                  size="small"
-                />
-
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
-              </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button
-                type="button"
-                variant="outlined"
-                color="inherit"
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isDeleteDialogOpen}
+              onClose={handleCloseDeleteDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>게시물 삭제</h2>
+              <button
+                className="close-button"
                 onClick={handleCloseDeleteDialog}
+                aria-label="닫기"
                 disabled={isDeleting}
               >
-                취소
-              </Button>
-              <Button type="button" variant="contained" color="primary" onClick={handleDelete} disabled={isDeleting}>
-                삭제
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
-            <DialogTitle>게시물 복구</DialogTitle>
-            <DialogContent>
-              <Typography variant="body2">
-                해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
-              </Typography>
-              {dialogErrorMessage ? (
-                <Alert severity="error" variant="filled" sx={{ mt: 2 }}>
-                  {dialogErrorMessage}
-                </Alert>
-              ) : null}
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseRestoreDialog} disabled={isRestoring}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleRestore} disabled={isRestoring}>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={isCategoryDialogOpen} onClose={handleCloseCategoryDialog} fullWidth maxWidth="sm">
-            <DialogTitle>카테고리 설정</DialogTitle>
-            <DialogContent>
+                <CloseRoundedIcon />
+              </button>
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="detail-post-category-select-label">카테고리</InputLabel>
-                  <Select
-                    labelId="detail-post-category-select-label"
-                    multiple
-                    value={selectedCategories}
-                    onChange={handleCategoryChange}
-                    input={<OutlinedInput label="카테고리" />}
-                    renderValue={(selected) =>
-                      categories
-                        .filter((category) => selected.includes(category.category_key))
-                        .map((category) => category.category_label)
-                        .join(', ')
-                    }
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.category_key}>
-                        <Checkbox checked={selectedCategories.includes(category.category_key)} />
-                        <ListItemText primary={category.category_label} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      삭제시 언제든 복구가 가능합니다.
+                      <br />
+                      삭제사유를 입력해 주세요. (필수)
+                    </span>
+                  </p>
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDeleteDialog}
+                    disabled={isDeleting}
+                  >
+                    취소
+                  </button>
+                  <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
+                    삭제
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseCategoryDialog} disabled={isCategorySubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSaveCategories} disabled={isCategorySubmitting}>
-                저장
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isDeleteDialogOpen}
+              onClose={handleCloseDeleteDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>게시물 삭제</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                aria-label="닫기"
+                disabled={isDeleting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      삭제시 언제든 복구가 가능합니다.
+                      <br />
+                      삭제사유를 입력해 주세요. (필수)
+                    </span>
+                  </p>
 
-          <Dialog open={isSeriesDialogOpen} onClose={handleCloseSeriesDialog} fullWidth maxWidth="sm">
-            <DialogTitle>연재 설정</DialogTitle>
-            <DialogContent>
+                  <TextField
+                    placeholder="삭제 사유"
+                    value={closedMessage}
+                    onChange={handleClosedMessageChange}
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isDeleting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isDeleting}>
+                  삭제
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isRestoreDialogOpen}
+              onClose={handleCloseRestoreDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>게시물 복구</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseRestoreDialog}
+                aria-label="닫기"
+                disabled={isRestoring}
+              >
+                <CloseRoundedIcon />
+              </button>
+
               <Stack spacing={2} sx={{ pt: 1 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="detail-post-series-select-label">연재</InputLabel>
-                  <Select
-                    labelId="detail-post-series-select-label"
-                    value={selectedSeriesKey}
-                    onChange={handleSeriesChange}
-                    input={<OutlinedInput label="연재" />}
-                    disabled={isSeriesLocked}
+                <Typography variant="body2">
+                  해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                </Typography>
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseRestoreDialog}
+                    disabled={isRestoring}
                   >
-                    <MenuItem value="">
-                      <ListItemText primary="선택 안함" />
-                    </MenuItem>
+                    취소
+                  </button>
+                  <button type="button" className="button medium submit" onClick={handleRestore} disabled={isRestoring}>
+                    확인
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isRestoreDialogOpen}
+              onClose={handleCloseRestoreDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>게시물 복구</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseRestoreDialog}
+                aria-label="닫기"
+                disabled={isRestoring}
+              >
+                <CloseRoundedIcon />
+              </button>
 
-                    {seriesList
-                      .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
-                      .map((seriesItem) => (
-                        <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
-                          <ListItemText primary={seriesItem.series_label} />
+              <DialogContent>
+                <Typography variant="body2">
+                  해당 게시물을 복구하시겠습니까? 복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
+                </Typography>
+                {dialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{dialogErrorMessage}</span>
+                  </p>
+                ) : null}
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isRestoring}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isRestoring}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isCategoryDialogOpen}
+              onClose={handleCloseCategoryDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>카테고리 설정</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseCategoryDialog}
+                aria-label="닫기"
+                disabled={isCategorySubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      labelId="detail-post-category-select-label"
+                      multiple
+                      value={selectedCategories}
+                      onChange={handleCategoryChange}
+                      renderValue={(selected) =>
+                        categories
+                          .filter((category) => selected.includes(category.category_key))
+                          .map((category) => category.category_label)
+                          .join(', ')
+                      }
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.category_key}>
+                          <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                          <ListItemText primary={category.category_label} />
                         </MenuItem>
                       ))}
-                  </Select>
-                </FormControl>
+                    </Select>
+                  </FormControl>
 
-                {isSeriesLocked ? (
-                  <Alert severity="info" variant="outlined">
-                    연재가 설정된 글은 연재를 변경할 수 없습니다.
-                  </Alert>
-                ) : null}
-
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseCategoryDialog}
+                    disabled={isCategorySubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSaveCategories}
+                    disabled={isCategorySubmitting}
+                  >
+                    저장
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseSeriesDialog} disabled={isSeriesSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSaveSeries} disabled={isSeriesSubmitting}>
-                저장
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isCategoryDialogOpen}
+              onClose={handleCloseCategoryDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>카테고리 설정</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseCategoryDialog}
+                aria-label="닫기"
+                disabled={isCategorySubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      labelId="detail-post-category-select-label"
+                      multiple
+                      value={selectedCategories}
+                      onChange={handleCategoryChange}
+                      renderValue={(selected) =>
+                        categories
+                          .filter((category) => selected.includes(category.category_key))
+                          .map((category) => category.category_label)
+                          .join(', ')
+                      }
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.category_key}>
+                          <Checkbox checked={selectedCategories.includes(category.category_key)} />
+                          <ListItemText primary={category.category_label} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseCategoryDialog}
+                  disabled={isCategorySubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSaveCategories}
+                  disabled={isCategorySubmitting}
+                >
+                  저장
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isSeriesDialogOpen}
+              onClose={handleCloseSeriesDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>연재 설정</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseSeriesDialog}
+                aria-label="닫기"
+                disabled={isSeriesSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      labelId="detail-post-series-select-label"
+                      value={selectedSeriesKey}
+                      onChange={handleSeriesChange}
+                      disabled={isSeriesLocked}
+                    >
+                      <MenuItem value="">
+                        <ListItemText primary="선택 안함" />
+                      </MenuItem>
+
+                      {seriesList
+                        .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
+                        .map((seriesItem) => (
+                          <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                            <ListItemText primary={seriesItem.series_label} />
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+
+                  {isSeriesLocked ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
+                    </p>
+                  ) : null}
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseSeriesDialog}
+                    disabled={isSeriesSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSaveSeries}
+                    disabled={isSeriesSubmitting}
+                  >
+                    저장
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isSeriesDialogOpen}
+              onClose={handleCloseSeriesDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>연재 설정</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseSeriesDialog}
+                aria-label="닫기"
+                disabled={isSeriesSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack spacing={2} sx={{ pt: 1 }}>
+                  <FormControl fullWidth size="small">
+                    <Select
+                      labelId="detail-post-series-select-label"
+                      value={selectedSeriesKey}
+                      onChange={handleSeriesChange}
+                      disabled={isSeriesLocked}
+                    >
+                      <MenuItem value="">
+                        <ListItemText primary="선택 안함" />
+                      </MenuItem>
+
+                      {seriesList
+                        .filter((seriesItem) => !seriesItem.is_completed || seriesItem.series_key === selectedSeriesKey)
+                        .map((seriesItem) => (
+                          <MenuItem key={seriesItem.id} value={seriesItem.series_key}>
+                            <ListItemText primary={seriesItem.series_label} />
+                          </MenuItem>
+                        ))}
+                    </Select>
+                  </FormControl>
+
+                  {isSeriesLocked ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>연재가 설정된 글은 연재를 변경할 수 없습니다.</span>
+                    </p>
+                  ) : null}
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseSeriesDialog}
+                  disabled={isSeriesSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSaveSeries}
+                  disabled={isSeriesSubmitting}
+                >
+                  저장
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
       </div>
     </Container>

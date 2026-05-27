@@ -117,15 +117,16 @@
     html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
 
-    button.button
-      background-color: transparent!important
-      padding: ds.rem(8)
-      @include ds.fw(pre, 700)
-      font-size: ds.rem(16)
-      color: ds.$hex-action
+    a, button
+      &.button
+        background-color: transparent!important
+        padding: ds.rem(8)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(16)
+        color: ds.$hex-action
 
-      &:disabled
-        color: rgba(ds.$rgb-primary, .2)!important
+        &:disabled
+          color: rgba(ds.$rgb-primary, .2)!important
 
   .levels
     gap: 0
