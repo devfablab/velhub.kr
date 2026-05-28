@@ -1494,7 +1494,7 @@ export default function Opt({
           anchor="bottom"
           open={isGeneralDialogOpen}
           onClose={handleCloseGeneralDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>팀원 기본 정보</h2>
           <button
@@ -1717,7 +1717,7 @@ export default function Opt({
           anchor="bottom"
           open={isNicknameDialogOpen}
           onClose={handleCloseNicknameDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>별명 수정</h2>
           <button
@@ -1820,7 +1820,7 @@ export default function Opt({
           anchor="bottom"
           open={Boolean(itemManageDialogType)}
           onClose={handleCloseItemManageDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</h2>
           <button
@@ -1941,7 +1941,7 @@ export default function Opt({
           anchor="bottom"
           open={Boolean(itemFormDialogType)}
           onClose={handleCloseItemFormDialog}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>
             {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
@@ -2042,7 +2042,7 @@ export default function Opt({
           anchor="bottom"
           open={isFavoriteErrorDialogOpen}
           onClose={() => setIsFavoriteErrorDialogOpen(false)}
-          className="VhiDrawer-bottom"
+          className="VhiDrawer-bottom VhiDrawer-bottom-service"
         >
           <h2>즐겨찾기 오류</h2>
           <button
