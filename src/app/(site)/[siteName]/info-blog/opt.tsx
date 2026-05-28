@@ -29,6 +29,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { formatDate } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/blogInfo.module.sass';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type SiteInfo = {
   created_at: string;
@@ -1362,130 +1363,129 @@ export default function Opt({
   }
 
   return (
-    <main>
-      <div className="container">
-        <div className={`content ${styles.content}`}>
-          <div className={`${styles['site-info']} paper`}>
-            <div className={styles['site-info-header']}>
-              <div className={styles['info-site-name']}>
-                <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>
-              </div>
-              <div className={styles['info-site-favorite']}>
-                {isFavoriteLoaded ? (
-                  isFavoriteLoggedIn ? (
-                    <button
-                      type="button"
-                      className={`${styles.button} ${isFavorited ? styles.active : ''}`}
-                      onClick={() => void handleToggleFavorite()}
-                      disabled={isFavoriteSubmitting}
-                      aria-label={isFavorited ? '즐겨찾기 해제' : '즐겨찾기'}
-                    >
-                      {isFavoriteSubmitting ? (
-                        <CircularProgress color="inherit" aria-label="즐겨찾기 등록상태 저장중" size={24} />
-                      ) : (
-                        <StarBorderRoundedIcon />
-                      )}
-                      <strong>즐겨찾기</strong>
-                      {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
-                    </button>
-                  ) : (
-                    <Anchor href="/auth/sign-in" className={styles.button}>
-                      <strong>즐겨찾기</strong>
-                      {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
-                    </Anchor>
-                  )
-                ) : null}
+    <div className="container">
+      <div className={`content ${styles.content}`}>
+        <SiteProfile />
+        <div className={`${styles['site-info']} paper`}>
+          <div className={styles['site-info-header']}>
+            <div className={styles['info-site-name']}>
+              <em>{getSiteTypeLabel(siteInfo.site_type)}</em> <strong>{siteLabel}</strong>
+            </div>
+            <div className={styles['info-site-favorite']}>
+              {isFavoriteLoaded ? (
+                isFavoriteLoggedIn ? (
+                  <button
+                    type="button"
+                    className={`${styles.button} ${isFavorited ? styles.active : ''}`}
+                    onClick={() => void handleToggleFavorite()}
+                    disabled={isFavoriteSubmitting}
+                    aria-label={isFavorited ? '즐겨찾기 해제' : '즐겨찾기'}
+                  >
+                    {isFavoriteSubmitting ? (
+                      <CircularProgress color="inherit" aria-label="즐겨찾기 등록상태 저장중" size={24} />
+                    ) : (
+                      <StarBorderRoundedIcon />
+                    )}
+                    <strong>즐겨찾기</strong>
+                    {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
+                  </button>
+                ) : (
+                  <Anchor href="/auth/sign-in" className={styles.button}>
+                    <strong>즐겨찾기</strong>
+                    {favoriteCount > 0 ? <em aria-label="즐겨찾기 등록한 수">{favoriteCount}</em> : null}
+                  </Anchor>
+                )
+              ) : null}
+            </div>
+          </div>
+          <p className={styles['info-date']}>({formatDate(siteInfo.created_at)} 개설)</p>
+          {siteInfo.summary ? <p className={styles['info-summary']}>{siteInfo.summary}</p> : null}
+
+          {members.length > 0 ? (
+            <div className={styles['members']}>
+              <strong>작가 소개</strong>
+
+              <div className={styles['member-items']}>
+                {members.map((member) => {
+                  const memberEducationsByMember = educations.filter(
+                    (education) => education.member_id === member.member_id,
+                  );
+                  const memberAwardsByMember = awards.filter((award) => award.member_id === member.member_id);
+                  const memberProjectsByMember = projects.filter((project) => project.member_id === member.member_id);
+                  const memberCareersByMember = careers.filter((career) => career.member_id === member.member_id);
+
+                  return (
+                    <div key={member.id} className={`paper ${styles['member-item']}`}>
+                      <div className={styles['general-items']}>
+                        {renderMemberName(member)}
+                        {member.job ? <p className={styles.job}>{member.job}</p> : null}
+                        {member.start_work_date ? (
+                          <p className={styles.date}>{formatDate(member.start_work_date)}부터 생산활동 시작 💃</p>
+                        ) : null}
+                        {member.description_ko || member.description_en ? (
+                          <div className={styles.descriptions}>
+                            {member.description_ko ? (
+                              <p className={styles.description}>{member.description_ko}</p>
+                            ) : null}
+                            {member.description_en ? (
+                              <p className={styles.description}>{member.description_en}</p>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                      {renderItemList('학력', 'educations', memberEducationsByMember)}
+                      {renderItemList('수상', 'awards', memberAwardsByMember)}
+                      {renderItemList('프로젝트', 'projects', memberProjectsByMember)}
+                      {renderItemList('경력', 'careers', memberCareersByMember)}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <p className={styles['info-date']}>({formatDate(siteInfo.created_at)} 개설)</p>
-            {siteInfo.summary ? <p className={styles['info-summary']}>{siteInfo.summary}</p> : null}
+          ) : null}
 
-            {members.length > 0 ? (
-              <div className={styles['members']}>
-                <strong>작가 소개</strong>
-
-                <div className={styles['member-items']}>
-                  {members.map((member) => {
-                    const memberEducationsByMember = educations.filter(
-                      (education) => education.member_id === member.member_id,
-                    );
-                    const memberAwardsByMember = awards.filter((award) => award.member_id === member.member_id);
-                    const memberProjectsByMember = projects.filter((project) => project.member_id === member.member_id);
-                    const memberCareersByMember = careers.filter((career) => career.member_id === member.member_id);
-
-                    return (
-                      <div key={member.id} className={`paper ${styles['member-item']}`}>
-                        <div className={styles['general-items']}>
-                          {renderMemberName(member)}
-                          {member.job ? <p className={styles.job}>{member.job}</p> : null}
-                          {member.start_work_date ? (
-                            <p className={styles.date}>{formatDate(member.start_work_date)}부터 생산활동 시작 💃</p>
-                          ) : null}
-                          {member.description_ko || member.description_en ? (
-                            <div className={styles.descriptions}>
-                              {member.description_ko ? (
-                                <p className={styles.description}>{member.description_ko}</p>
-                              ) : null}
-                              {member.description_en ? (
-                                <p className={styles.description}>{member.description_en}</p>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                        {renderItemList('학력', 'educations', memberEducationsByMember)}
-                        {renderItemList('수상', 'awards', memberAwardsByMember)}
-                        {renderItemList('프로젝트', 'projects', memberProjectsByMember)}
-                        {renderItemList('경력', 'careers', memberCareersByMember)}
-                      </div>
-                    );
-                  })}
+          {canEditMyMemberGeneral ? (
+            <div className={styles.buttons}>
+              <button type="button" className="button small submit" onClick={handleOpenNicknameDialog}>
+                별명 수정
+              </button>
+              <button type="button" className="button small submit" onClick={handleOpenGeneralDialog}>
+                기본정보 수정
+              </button>
+              {getMyMemberGeneral() ? (
+                <div className={styles['manage-advanced-buttons']}>
+                  <button
+                    type="button"
+                    className="button action small"
+                    onClick={() => handleOpenItemManageDialog('educations')}
+                  >
+                    학력 입력
+                  </button>
+                  <button
+                    type="button"
+                    className="button action small"
+                    onClick={() => handleOpenItemManageDialog('awards')}
+                  >
+                    수상 입력
+                  </button>
+                  <button
+                    type="button"
+                    className="button action small"
+                    onClick={() => handleOpenItemManageDialog('projects')}
+                  >
+                    프로젝트 입력
+                  </button>
+                  <button
+                    type="button"
+                    className="button action small"
+                    onClick={() => handleOpenItemManageDialog('careers')}
+                  >
+                    경력 입력
+                  </button>
                 </div>
-              </div>
-            ) : null}
-
-            {canEditMyMemberGeneral ? (
-              <div className={styles.buttons}>
-                <button type="button" className="button small submit" onClick={handleOpenNicknameDialog}>
-                  별명 수정
-                </button>
-                <button type="button" className="button small submit" onClick={handleOpenGeneralDialog}>
-                  기본정보 수정
-                </button>
-                {getMyMemberGeneral() ? (
-                  <div className={styles['manage-advanced-buttons']}>
-                    <button
-                      type="button"
-                      className="button action small"
-                      onClick={() => handleOpenItemManageDialog('educations')}
-                    >
-                      학력 입력
-                    </button>
-                    <button
-                      type="button"
-                      className="button action small"
-                      onClick={() => handleOpenItemManageDialog('awards')}
-                    >
-                      수상 입력
-                    </button>
-                    <button
-                      type="button"
-                      className="button action small"
-                      onClick={() => handleOpenItemManageDialog('projects')}
-                    >
-                      프로젝트 입력
-                    </button>
-                    <button
-                      type="button"
-                      className="button action small"
-                      onClick={() => handleOpenItemManageDialog('careers')}
-                    >
-                      경력 입력
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -2098,6 +2098,6 @@ export default function Opt({
           </DialogActions>
         </Dialog>
       )}
-    </main>
+    </div>
   );
 }

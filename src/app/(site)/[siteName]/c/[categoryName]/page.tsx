@@ -6,6 +6,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/board.module.sass';
 import Container from '../../menu';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type RouteContext = {
   params: Promise<{
@@ -122,6 +123,7 @@ export default async function Page(context: RouteContext) {
     <Container pageBack={`/${siteName}/c`} pageTitle={categoryData.category_label}>
       <div className="container">
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
+          <SiteProfile />
           <div className={styles.headline}>
             <h2>{categoryData.category_label}</h2>
             {categoryData.summary ? <p>{categoryData.summary}</p> : null}

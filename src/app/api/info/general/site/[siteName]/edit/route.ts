@@ -1,7 +1,6 @@
 import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -82,31 +81,6 @@ function formatLogMessage(
   }
 
   return `중단 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
-}
-
-async function getUpdatedByName(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
-  siteId: string,
-  particleId: string,
-) {
-  const nickname = await supabaseAdmin
-    .from('rhizome_stigmas')
-    .select('nickname')
-    .eq('site_id', siteId)
-    .eq('user_id', particleId)
-    .maybeSingle();
-
-  if (nickname.data?.nickname) {
-    return nickname.data.nickname;
-  }
-
-  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('user_id', particleId).maybeSingle();
-
-  if (stigmaUser.data?.user_name) {
-    return decrypt(stigmaUser.data.user_name);
-  }
-
-  return '';
 }
 
 async function getCommunityUpdatedByParticleId(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, stigmaId: string) {
@@ -218,71 +192,6 @@ async function checkAccess(siteName: string) {
     updatedByParticleId: membership.data.user_id as string,
     supabaseAdmin,
   } as const;
-}
-
-export async function GET(_request: Request, context: RouteContext) {
-  try {
-    const { siteName } = await context.params;
-    const normalizedSiteName = normalizeText(siteName).toLowerCase();
-
-    if (!normalizedSiteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    const access = await checkAccess(normalizedSiteName);
-
-    if (!access.ok) {
-      return Response.json({ error: access.error }, { status: access.status });
-    }
-
-    const sites = await access.supabaseAdmin
-      .from('sites')
-      .select('updated_at, updated_by, log')
-      .eq('site_id', access.rhizome.id)
-      .maybeSingle();
-
-    if (sites.error || !sites.data) {
-      return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const updatedByName = sites.data.updated_by
-      ? await getUpdatedByName(access.supabaseAdmin, access.rhizome.id, sites.data.updated_by)
-      : '';
-
-    const rawProfilePicture = normalizeText(access.rhizome.profile_picture);
-    let profilePictureUrl = '';
-
-    if (rawProfilePicture) {
-      const publicUrl = access.supabaseAdmin.storage.from('avatar').getPublicUrl(rawProfilePicture);
-      profilePictureUrl = publicUrl.data.publicUrl ?? '';
-    }
-
-    const rawProfileLogo = normalizeText(access.rhizome.profile_logo);
-    let profileLogoUrl = '';
-
-    if (rawProfileLogo) {
-      const publicUrl = access.supabaseAdmin.storage.from('site-logo').getPublicUrl(rawProfileLogo);
-      profileLogoUrl = publicUrl.data.publicUrl ?? '';
-    }
-
-    return Response.json({
-      siteInfo: access.rhizome,
-      profilePictureUrl,
-      profileLogoUrl,
-      sites: {
-        updated_at: sites.data.updated_at,
-        updated_by: sites.data.updated_by,
-        updated_by_name: updatedByName,
-        log: sites.data.log ?? '사이트 개설',
-      },
-    });
-  } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
-  }
 }
 
 export async function POST(request: Request, context: RouteContext) {

@@ -5,6 +5,7 @@ import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type RouteContext = {
   params: Promise<{
@@ -103,6 +104,7 @@ export default async function Page(context: RouteContext) {
     <Container pageBack={`/${siteName}`} pageTitle="연재물">
       <div className="container">
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
+          <SiteProfile />
           <div className="paper">
             {rows.length > 0 ? (
               <div className={`${styles['series-items']} ${styles['blog-items']}`}>

@@ -5,6 +5,7 @@ import type { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
 import Container from './menu';
 import styles from '@/app/board.module.sass';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type RowValue = string | number | boolean | null;
 
@@ -61,6 +62,7 @@ export default function Blog(props: Props) {
     <Container>
       <div className="container">
         <div className={`content ${styles.content} ${styles['blog-content']} `}>
+          <SiteProfile />
           {props.blogContents.length === 0 ? (
             <div className="paper">
               <p>출간된 글이 없습니다. 😭</p>

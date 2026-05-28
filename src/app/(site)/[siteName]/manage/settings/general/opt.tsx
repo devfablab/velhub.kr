@@ -152,7 +152,7 @@ export default function Opt() {
   useEffect(() => {
     async function loadInfo() {
       try {
-        const response = await fetch(`/api/info/general/site/${siteName}/edit`, {
+        const response = await fetch(`/api/info/general/site/${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });

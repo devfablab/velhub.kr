@@ -29,6 +29,7 @@ import FabNew from '@/components/service/common/FabNew';
 import styles from '@/app/board.module.sass';
 import Container from '../menu';
 import TableListMobile from '@/components/service/community/TableListMobile';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type Props = {
   isCommunity: boolean;
@@ -493,7 +494,9 @@ export default function Opt({ isCommunity }: Props) {
                 </h2>
               )}
             </>
-          ) : null}
+          ) : (
+            <SiteProfile />
+          )}
 
           <div className={styles['board-search-container']}>
             <form onSubmit={handleSearchSubmit} className="form">

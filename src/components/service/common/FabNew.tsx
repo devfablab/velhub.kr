@@ -17,7 +17,7 @@ export default function FabNew({ isBlog }: Props) {
 
   if (!isMobile) return null;
   const href = isBlog
-    ? `/${siteName}/manage/contents/posts/new`
+    ? `/${siteName}/manage/contents/posts/new?t=i`
     : boardName
       ? `/${siteName}/${boardName}/new`
       : `/${siteName}/board/new`;
