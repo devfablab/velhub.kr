@@ -1505,7 +1505,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
               <Stack direction="column" gap={1}>
                 <Stack>
@@ -1579,7 +1579,7 @@ export default function Opt({
                 {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
               </Stack>
             </LocalizationProvider>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
               <button
                 type="button"
                 className="button medium cancel"
@@ -1728,7 +1728,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Stack gap={2}>
               <TextField
                 placeholder="별명"
@@ -1742,7 +1742,7 @@ export default function Opt({
                 <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
               ) : null}
             </Stack>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
               <button
                 type="button"
                 className="button medium cancel"
@@ -1830,7 +1830,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Stack direction="column" gap={1} sx={{ p: 1 }}>
               {itemManageDialogType ? (
                 <>
@@ -1867,7 +1867,7 @@ export default function Opt({
 
               {itemErrorMessage ? <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div> : null}
             </Stack>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
               <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
                 닫기
               </button>
@@ -1956,7 +1956,7 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
               <Stack direction="column" gap={1}>
                 {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
@@ -1965,7 +1965,7 @@ export default function Opt({
                 ) : null}
               </Stack>
             </LocalizationProvider>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
               <button
                 type="button"
                 className="button medium cancel"
@@ -2053,12 +2053,12 @@ export default function Opt({
           >
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <div className={`paper paper-error ${styles.paper}`}>
               {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
             </div>
 
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5} sx={{ mt: 2 }}>
               <button
                 type="button"
                 className="button medium cancel"
