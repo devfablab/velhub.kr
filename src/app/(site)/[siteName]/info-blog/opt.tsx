@@ -10,11 +10,16 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Stack,
   TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import StarBorderRoundedIcon from '@mui/icons-material/StarBorderRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
@@ -369,6 +374,10 @@ export default function Opt({
   const [isFavoriteSubmitting, setIsFavoriteSubmitting] = useState(false);
   const [favoriteErrorMessage, setFavoriteErrorMessage] = useState('');
   const [isFavoriteErrorDialogOpen, setIsFavoriteErrorDialogOpen] = useState(false);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   async function loadFavoriteStatus() {
     try {
@@ -1059,43 +1068,51 @@ export default function Opt({
     if (itemType === 'educations') {
       return (
         <>
-          <TextField
-            label="학교명"
-            required
-            value={itemFormValue.school}
-            onChange={(event) => handleChangeItemTextField('school', event)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="전공"
-            value={itemFormValue.major}
-            onChange={(event) => handleChangeItemTextField('major', event)}
-            fullWidth
-            size="small"
-          />
-          <DatePicker
-            label="입학"
-            value={toDateValue(itemFormValue.startDate)}
-            onChange={(value) => handleChangeItemDate('startDate', value)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                size: 'small',
-              },
-            }}
-          />
-          <DatePicker
-            label="졸업"
-            value={toDateValue(itemFormValue.endDate)}
-            onChange={(value) => handleChangeItemDate('endDate', value)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                size: 'small',
-              },
-            }}
-          />
+          <Stack>
+            <Typography variant="subtitle2">학교명</Typography>
+            <TextField
+              required
+              value={itemFormValue.school}
+              onChange={(event) => handleChangeItemTextField('school', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">전공</Typography>
+            <TextField
+              value={itemFormValue.major}
+              onChange={(event) => handleChangeItemTextField('major', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">입학일</Typography>
+            <DatePicker
+              value={toDateValue(itemFormValue.startDate)}
+              onChange={(value) => handleChangeItemDate('startDate', value)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                },
+              }}
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">졸업</Typography>
+            <DatePicker
+              value={toDateValue(itemFormValue.endDate)}
+              onChange={(value) => handleChangeItemDate('endDate', value)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                },
+              }}
+            />
+          </Stack>
         </>
       );
     }
@@ -1103,33 +1120,39 @@ export default function Opt({
     if (itemType === 'awards') {
       return (
         <>
-          <TextField
-            label="수상명"
-            required
-            value={itemFormValue.subject}
-            onChange={(event) => handleChangeItemTextField('subject', event)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="수여기관"
-            required
-            value={itemFormValue.institution}
-            onChange={(event) => handleChangeItemTextField('institution', event)}
-            fullWidth
-            size="small"
-          />
-          <DatePicker
-            label="수상일"
-            value={toDateValue(itemFormValue.dateTime)}
-            onChange={(value) => handleChangeItemDate('dateTime', value)}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                size: 'small',
-              },
-            }}
-          />
+          <Stack>
+            <Typography variant="subtitle2">수상명</Typography>
+            <TextField
+              required
+              value={itemFormValue.subject}
+              onChange={(event) => handleChangeItemTextField('subject', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">수여기관</Typography>
+            <TextField
+              required
+              value={itemFormValue.institution}
+              onChange={(event) => handleChangeItemTextField('institution', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">수상일</Typography>
+            <DatePicker
+              value={toDateValue(itemFormValue.dateTime)}
+              onChange={(value) => handleChangeItemDate('dateTime', value)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                },
+              }}
+            />
+          </Stack>
         </>
       );
     }
@@ -1137,17 +1160,129 @@ export default function Opt({
     if (itemType === 'projects') {
       return (
         <>
+          <Stack>
+            <Typography variant="subtitle2">프로젝트명</Typography>
+            <TextField
+              required
+              value={itemFormValue.subject}
+              onChange={(event) => handleChangeItemTextField('subject', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">시작일</Typography>
+            <DatePicker
+              value={toDateValue(itemFormValue.workStartDate)}
+              onChange={(value) => handleChangeItemDate('workStartDate', value)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                },
+              }}
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">종료일</Typography>
+            <DatePicker
+              value={toDateValue(itemFormValue.workEndDate)}
+              onChange={(value) => handleChangeItemDate('workEndDate', value)}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  size: 'small',
+                },
+              }}
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">설명</Typography>
+            <TextField
+              value={itemFormValue.description}
+              onChange={(event) => handleChangeItemTextField('description', event)}
+              fullWidth
+              size="small"
+              multiline
+              minRows={3}
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">수주사/원청</Typography>
+            <TextField
+              value={itemFormValue.client}
+              onChange={(event) => handleChangeItemTextField('client', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">소속 단체/회사/팀</Typography>
+            <TextField
+              value={itemFormValue.agency}
+              onChange={(event) => handleChangeItemTextField('agency', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">사이트명</Typography>
+            <TextField
+              value={itemFormValue.siteNameValue}
+              onChange={(event) => handleChangeItemTextField('siteNameValue', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">사이트 URL</Typography>
+            <TextField
+              type="url"
+              value={itemFormValue.siteUrl}
+              onChange={(event) => handleChangeItemTextField('siteUrl', event)}
+              fullWidth
+              size="small"
+            />
+          </Stack>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Stack>
+          <Typography variant="subtitle2">소속 단체</Typography>
           <TextField
-            label="프로젝트명"
             required
-            value={itemFormValue.subject}
-            onChange={(event) => handleChangeItemTextField('subject', event)}
+            value={itemFormValue.organization}
+            onChange={(event) => handleChangeItemTextField('organization', event)}
             fullWidth
             size="small"
           />
+        </Stack>
+        <Stack>
+          <Typography variant="subtitle2">팀명 또는 위치</Typography>
+          <TextField
+            required
+            value={itemFormValue.teamPosition}
+            onChange={(event) => handleChangeItemTextField('teamPosition', event)}
+            fullWidth
+            size="small"
+          />
+        </Stack>
+        <Stack>
+          <Typography variant="subtitle2">역할 또는 직무</Typography>
+          <TextField
+            required
+            value={itemFormValue.roleJob}
+            onChange={(event) => handleChangeItemTextField('roleJob', event)}
+            fullWidth
+            size="small"
+          />
+        </Stack>
+        <Stack>
+          <Typography variant="subtitle2">입사일</Typography>
           <DatePicker
-            label="시작일"
-            value={toDateValue(itemFormValue.workStartDate)}
             onChange={(value) => handleChangeItemDate('workStartDate', value)}
             slotProps={{
               textField: {
@@ -1156,8 +1291,10 @@ export default function Opt({
               },
             }}
           />
+        </Stack>
+        <Stack>
+          <Typography variant="subtitle2">퇴사일</Typography>
           <DatePicker
-            label="종료일"
             value={toDateValue(itemFormValue.workEndDate)}
             onChange={(value) => handleChangeItemDate('workEndDate', value)}
             slotProps={{
@@ -1167,95 +1304,7 @@ export default function Opt({
               },
             }}
           />
-          <TextField
-            label="설명"
-            value={itemFormValue.description}
-            onChange={(event) => handleChangeItemTextField('description', event)}
-            fullWidth
-            size="small"
-            multiline
-            minRows={3}
-          />
-          <TextField
-            label="수주사/원청"
-            value={itemFormValue.client}
-            onChange={(event) => handleChangeItemTextField('client', event)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="소속 단체/회사/팀"
-            value={itemFormValue.agency}
-            onChange={(event) => handleChangeItemTextField('agency', event)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="사이트명"
-            value={itemFormValue.siteNameValue}
-            onChange={(event) => handleChangeItemTextField('siteNameValue', event)}
-            fullWidth
-            size="small"
-          />
-          <TextField
-            label="사이트 URL"
-            value={itemFormValue.siteUrl}
-            onChange={(event) => handleChangeItemTextField('siteUrl', event)}
-            fullWidth
-            size="small"
-          />
-        </>
-      );
-    }
-
-    return (
-      <>
-        <TextField
-          label="소속 단체"
-          required
-          value={itemFormValue.organization}
-          onChange={(event) => handleChangeItemTextField('organization', event)}
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label="팀명 또는 위치"
-          required
-          value={itemFormValue.teamPosition}
-          onChange={(event) => handleChangeItemTextField('teamPosition', event)}
-          fullWidth
-          size="small"
-        />
-        <TextField
-          label="역할 또는 직무"
-          required
-          value={itemFormValue.roleJob}
-          onChange={(event) => handleChangeItemTextField('roleJob', event)}
-          fullWidth
-          size="small"
-        />
-        <DatePicker
-          label="입사일"
-          value={toDateValue(itemFormValue.workStartDate)}
-          onChange={(value) => handleChangeItemDate('workStartDate', value)}
-          slotProps={{
-            textField: {
-              fullWidth: true,
-              size: 'small',
-            },
-          }}
-        />
-        <DatePicker
-          label="퇴사일"
-          value={toDateValue(itemFormValue.workEndDate)}
-          onChange={(value) => handleChangeItemDate('workEndDate', value)}
-          slotProps={{
-            textField: {
-              fullWidth: true,
-              size: 'small',
-            },
-          }}
-        />
+        </Stack>
       </>
     );
   }
@@ -1264,7 +1313,7 @@ export default function Opt({
     return (
       <div className={`${styles['dnd-items']} ${styles[`${itemType}-items`]}`}>
         <div className={styles['dnd-item']}>{renderItem(item)}</div>
-        <button type="button" className="button" onClick={() => handleOpenItemFormDialog(itemType, item)}>
+        <button type="button" className="button small action" onClick={() => handleOpenItemFormDialog(itemType, item)}>
           수정
         </button>
       </div>
@@ -1440,215 +1489,615 @@ export default function Opt({
         </div>
       </div>
 
-      <Dialog open={isGeneralDialogOpen} onClose={handleCloseGeneralDialog} fullWidth maxWidth="sm">
-        <DialogTitle>팀원 기본 정보</DialogTitle>
-        <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-            <Stack gap={2} sx={{ pt: 1 }}>
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isGeneralDialogOpen}
+          onClose={handleCloseGeneralDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>팀원 기본 정보</h2>
+          <button
+            className="close-button"
+            onClick={handleCloseGeneralDialog}
+            aria-label="팀원 기본 정보 닫기"
+            disabled={isSubmitting}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+              <Stack direction="column" gap={1}>
+                <Stack>
+                  <Typography variant="subtitle2">국문명</Typography>
+                  <TextField
+                    value={generalFormValue.nameKo}
+                    onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">영문명</Typography>
+                  <TextField
+                    value={generalFormValue.nameEn}
+                    onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">본인소개 국문</Typography>
+                  <TextField
+                    value={generalFormValue.descriptionKo}
+                    onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={3}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">본인소개 영문</Typography>
+                  <TextField
+                    value={generalFormValue.descriptionEn}
+                    onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={3}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">경력시작일</Typography>
+                  <DatePicker
+                    value={toDateValue(generalFormValue.startWorkDate)}
+                    onChange={handleChangeGeneralStartWorkDate}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                      },
+                    }}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">직업</Typography>
+                  <TextField
+                    value={generalFormValue.job}
+                    onChange={(event) => handleChangeGeneralTextField('job', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              </Stack>
+            </LocalizationProvider>
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseGeneralDialog}
+                disabled={isSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleSubmitGeneral()}
+                disabled={isGeneralSubmitDisabled}
+              >
+                저장
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isGeneralDialogOpen}
+          onClose={handleCloseGeneralDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>팀원 기본 정보</DialogTitle>
+          <button
+            className="close-button"
+            onClick={handleCloseGeneralDialog}
+            disabled={isSubmitting}
+            aria-label="팀원 기본 정보 닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+              <Stack direction="column" gap={1}>
+                <Stack>
+                  <Typography variant="subtitle2">국문명</Typography>
+                  <TextField
+                    value={generalFormValue.nameKo}
+                    onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">영문명</Typography>
+                  <TextField
+                    value={generalFormValue.nameEn}
+                    onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">본인소개 국문</Typography>
+                  <TextField
+                    value={generalFormValue.descriptionKo}
+                    onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={3}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">본인소개 영문</Typography>
+                  <TextField
+                    value={generalFormValue.descriptionEn}
+                    onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
+                    fullWidth
+                    size="small"
+                    multiline
+                    minRows={3}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">경력시작일</Typography>
+                  <DatePicker
+                    value={toDateValue(generalFormValue.startWorkDate)}
+                    onChange={handleChangeGeneralStartWorkDate}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                      },
+                    }}
+                  />
+                </Stack>
+
+                <Stack>
+                  <Typography variant="subtitle2">직업</Typography>
+                  <TextField
+                    value={generalFormValue.job}
+                    onChange={(event) => handleChangeGeneralTextField('job', event)}
+                    fullWidth
+                    size="small"
+                  />
+                </Stack>
+
+                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              </Stack>
+            </LocalizationProvider>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseGeneralDialog}
+              disabled={isSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleSubmitGeneral()}
+              disabled={isGeneralSubmitDisabled}
+            >
+              저장
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isNicknameDialogOpen}
+          onClose={handleCloseNicknameDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>별명 수정</h2>
+          <button
+            className="close-button"
+            onClick={handleCloseNicknameDialog}
+            disabled={isNicknameSubmitting}
+            aria-label="별명 수정 닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack gap={2}>
               <TextField
-                label="국문명"
-                value={generalFormValue.nameKo}
-                onChange={(event) => handleChangeGeneralTextField('nameKo', event)}
+                placeholder="별명"
+                value={nicknameValue}
+                onChange={handleChangeNickname}
                 fullWidth
                 size="small"
               />
 
-              <TextField
-                label="영문명"
-                value={generalFormValue.nameEn}
-                onChange={(event) => handleChangeGeneralTextField('nameEn', event)}
-                fullWidth
-                size="small"
-              />
-
-              <TextField
-                label="본인소개 국문"
-                value={generalFormValue.descriptionKo}
-                onChange={(event) => handleChangeGeneralTextField('descriptionKo', event)}
-                fullWidth
-                size="small"
-                multiline
-                minRows={3}
-              />
-
-              <TextField
-                label="본인소개 영문"
-                value={generalFormValue.descriptionEn}
-                onChange={(event) => handleChangeGeneralTextField('descriptionEn', event)}
-                fullWidth
-                size="small"
-                multiline
-                minRows={3}
-              />
-
-              <DatePicker
-                label="경력시작일"
-                value={toDateValue(generalFormValue.startWorkDate)}
-                onChange={handleChangeGeneralStartWorkDate}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    size: 'small',
-                  },
-                }}
-              />
-
-              <TextField
-                label="직업"
-                value={generalFormValue.job}
-                onChange={(event) => handleChangeGeneralTextField('job', event)}
-                fullWidth
-                size="small"
-              />
-
-              {errorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {errorMessage}
-                </Alert>
+              {nicknameErrorMessage ? (
+                <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
               ) : null}
             </Stack>
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseGeneralDialog} disabled={isSubmitting}>
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => void handleSubmitGeneral()}
-            disabled={isGeneralSubmitDisabled}
-          >
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={isNicknameDialogOpen} onClose={handleCloseNicknameDialog} fullWidth maxWidth="xs">
-        <DialogTitle>별명 수정</DialogTitle>
-        <DialogContent>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            <TextField label="별명" value={nicknameValue} onChange={handleChangeNickname} fullWidth size="small" />
-
-            {nicknameErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {nicknameErrorMessage}
-              </Alert>
-            ) : null}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseNicknameDialog}
+                disabled={isNicknameSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleSubmitNickname()}
+                disabled={isNicknameSubmitDisabled}
+              >
+                저장
+              </button>
+            </Stack>
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseNicknameDialog} disabled={isNicknameSubmitting}>
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => void handleSubmitNickname()}
-            disabled={isNicknameSubmitDisabled}
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isNicknameDialogOpen}
+          onClose={handleCloseNicknameDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>별명 수정</DialogTitle>
+          <button
+            className="close-button"
+            onClick={handleCloseNicknameDialog}
+            disabled={isNicknameSubmitting}
+            aria-label="별명 수정 닫기"
           >
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Stack gap={2}>
+              <TextField
+                placeholder="별명"
+                value={nicknameValue}
+                onChange={handleChangeNickname}
+                fullWidth
+                size="small"
+              />
 
-      <Dialog open={Boolean(itemManageDialogType)} onClose={handleCloseItemManageDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
-        <DialogContent>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            {itemManageDialogType ? (
-              <>
-                <Button type="button" variant="outlined" onClick={() => handleOpenItemFormDialog(itemManageDialogType)}>
-                  {getItemTypeLabel(itemManageDialogType)} 추가
-                </Button>
+              {nicknameErrorMessage ? (
+                <div className={`paper paper-error ${styles.paper}`}>{nicknameErrorMessage}</div>
+              ) : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseNicknameDialog}
+              disabled={isNicknameSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleSubmitNickname()}
+              disabled={isNicknameSubmitDisabled}
+            >
+              저장
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
 
-                {itemManageItems.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={(event) => handleDragEnd(itemManageDialogType, event)}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(itemManageDialogType)}
+          onClose={handleCloseItemManageDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</h2>
+          <button
+            className="close-button"
+            onClick={handleCloseItemManageDialog}
+            aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack direction="column" gap={1} sx={{ p: 1 }}>
+              {itemManageDialogType ? (
+                <>
+                  <button
+                    type="button"
+                    className="button medium action"
+                    onClick={() => handleOpenItemFormDialog(itemManageDialogType)}
                   >
-                    <SortableContext
-                      items={itemManageItems.map((item) => item.id)}
-                      strategy={verticalListSortingStrategy}
+                    {getItemTypeLabel(itemManageDialogType)} 추가
+                  </button>
+
+                  {itemManageItems.length > 0 ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => handleDragEnd(itemManageDialogType, event)}
                     >
-                      <Stack gap={1.5}>
-                        {itemManageItems.map((item) => (
-                          <SortableItem key={item.id} id={item.id}>
-                            {renderManageDialogItem(itemManageDialogType, item)}
-                          </SortableItem>
-                        ))}
-                      </Stack>
-                    </SortableContext>
-                  </DndContext>
-                ) : null}
-              </>
-            ) : null}
-
-            {itemErrorMessage ? (
-              <Alert severity="error" variant="filled">
-                {itemErrorMessage}
-              </Alert>
-            ) : null}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseItemManageDialog}>
-            닫기
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={Boolean(itemFormDialogType)} onClose={handleCloseItemFormDialog} fullWidth maxWidth="sm">
-        <DialogTitle>
-          {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
-        </DialogTitle>
-        <DialogContent>
-          <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-            <Stack gap={2} sx={{ pt: 1 }}>
-              {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
-
-              {itemErrorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {itemErrorMessage}
-                </Alert>
+                      <SortableContext
+                        items={itemManageItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <Stack direction="column" gap={1} sx={{ p: 1 }}>
+                          {itemManageItems.map((item) => (
+                            <SortableItem key={item.id} id={item.id}>
+                              {renderManageDialogItem(itemManageDialogType, item)}
+                            </SortableItem>
+                          ))}
+                        </Stack>
+                      </SortableContext>
+                    </DndContext>
+                  ) : null}
+                </>
               ) : null}
-            </Stack>
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseItemFormDialog} disabled={isItemSubmitting}>
-            취소
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => void handleSubmitItem()}
-            disabled={isItemSubmitDisabled}
-          >
-            저장
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      <Dialog
-        open={isFavoriteErrorDialogOpen}
-        onClose={() => setIsFavoriteErrorDialogOpen(false)}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle>즐겨찾기 오류</DialogTitle>
-        <DialogContent>
-          <Alert severity="error" variant="filled">
-            {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
-          </Alert>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="contained" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
+              {itemErrorMessage ? <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div> : null}
+            </Stack>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={handleCloseItemManageDialog}>
+                닫기
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(itemManageDialogType)}
+          onClose={handleCloseItemManageDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>{itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리` : ''}</DialogTitle>
+          <button
+            className="close-button"
+            onClick={handleCloseItemManageDialog}
+            aria-label={itemManageDialogType ? `${getItemTypeLabel(itemManageDialogType)} 관리 닫기` : ''}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Stack direction="column" gap={1} sx={{ p: 1 }}>
+              {itemManageDialogType ? (
+                <>
+                  <button
+                    type="button"
+                    className="button medium action"
+                    onClick={() => handleOpenItemFormDialog(itemManageDialogType)}
+                  >
+                    {getItemTypeLabel(itemManageDialogType)} 추가
+                  </button>
+
+                  {itemManageItems.length > 0 ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(event) => handleDragEnd(itemManageDialogType, event)}
+                    >
+                      <SortableContext
+                        items={itemManageItems.map((item) => item.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <Stack direction="column" gap={1} sx={{ p: 1 }}>
+                          {itemManageItems.map((item) => (
+                            <SortableItem key={item.id} id={item.id}>
+                              {renderManageDialogItem(itemManageDialogType, item)}
+                            </SortableItem>
+                          ))}
+                        </Stack>
+                      </SortableContext>
+                    </DndContext>
+                  ) : null}
+                </>
+              ) : null}
+
+              {itemErrorMessage ? <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div> : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseItemManageDialog}>
+              닫기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(itemFormDialogType)}
+          onClose={handleCloseItemFormDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>
+            {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
+          </h2>
+          <button
+            className="close-button"
+            onClick={handleCloseItemFormDialog}
+            disabled={isItemSubmitting}
+            aria-label={
+              itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'} 닫기` : ''
+            }
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+              <Stack direction="column" gap={1}>
+                {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
+                {itemErrorMessage ? (
+                  <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
+                ) : null}
+              </Stack>
+            </LocalizationProvider>
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseItemFormDialog}
+                disabled={isItemSubmitting}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleSubmitItem()}
+                disabled={isItemSubmitDisabled}
+              >
+                저장
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(itemFormDialogType)}
+          onClose={handleCloseItemFormDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>
+            {itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'}` : ''}
+          </DialogTitle>
+          <button
+            className="close-button"
+            onClick={handleCloseItemFormDialog}
+            disabled={isItemSubmitting}
+            aria-label={
+              itemFormDialogType ? `${getItemTypeLabel(itemFormDialogType)} ${editingItem ? '수정' : '추가'} 닫기` : ''
+            }
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+              <Stack direction="column" gap={1}>
+                {itemFormDialogType ? renderItemForm(itemFormDialogType) : null}
+                {itemErrorMessage ? (
+                  <div className={`paper paper-error ${styles.paper}`}>{itemErrorMessage}</div>
+                ) : null}
+              </Stack>
+            </LocalizationProvider>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseItemFormDialog}
+              disabled={isItemSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleSubmitItem()}
+              disabled={isItemSubmitDisabled}
+            >
+              저장
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isFavoriteErrorDialogOpen}
+          onClose={() => setIsFavoriteErrorDialogOpen(false)}
+          className="VhiDrawer-bottom"
+        >
+          <h2>즐겨찾기 오류</h2>
+          <button
+            className="close-button"
+            onClick={() => setIsFavoriteErrorDialogOpen(false)}
+            disabled={isSubmitting}
+            aria-label="즐겨찾기 오류 닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <div className={`paper paper-error ${styles.paper}`}>
+              {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
+            </div>
+
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={() => setIsFavoriteErrorDialogOpen(false)}
+              >
+                확인
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isFavoriteErrorDialogOpen}
+          onClose={() => setIsFavoriteErrorDialogOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>즐겨찾기 오류</DialogTitle>
+          <button
+            className="close-button"
+            onClick={() => setIsFavoriteErrorDialogOpen(false)}
+            disabled={isSubmitting}
+            aria-label="즐겨찾기 오류 닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <div className={`paper paper-error ${styles.paper}`}>
+              {favoriteErrorMessage || '즐겨찾기를 처리하지 못했습니다.'}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium submit" onClick={() => setIsFavoriteErrorDialogOpen(false)}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </main>
   );
 }
