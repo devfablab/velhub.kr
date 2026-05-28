@@ -9,6 +9,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Paper,
   Snackbar,
   Stack,
@@ -340,35 +341,32 @@ export default function Opt() {
             </Typography>
           ) : null}
           {board ? (
-            <Stack gap={0.5}>
+            <Stack gap={1.5} direction="row" sx={{ p: 2 }}>
               <Typography variant="subtitle2">게시판</Typography>
               <Typography variant="body2">{board.data.board_label}</Typography>
             </Stack>
           ) : null}
 
-          <Alert severity="warning" variant="outlined">
-            포스팅에 1번 이상 사용한 말머리는 삭제할 수 없습니다.
-          </Alert>
+          <p className="alert warning" style={{ paddingLeft: 16 }}>
+            <WarningAmberRoundedIcon />
+            <span>포스팅에 1번 이상 사용한 말머리는 삭제할 수 없습니다.</span>
+          </p>
 
-          <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Button type="button" variant="contained" onClick={handleOpenNewDialog}>
+          <Stack direction="row" justifyContent="flex-end" sx={{ p: 2, pb: 0 }}>
+            <button type="button" className="button small action" onClick={handleOpenNewDialog}>
               말머리 추가
-            </Button>
+            </button>
             <span />
           </Stack>
 
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {sortedPrefixes.length === 0 ? (
-            <Paper sx={{ p: 3 }}>
+            <div className={`paper ${styles.paper}`}>
               <Typography>등록된 말머리가 없습니다.</Typography>
-            </Paper>
+            </div>
           ) : (
-            <TableContainer component={Paper} variant="outlined">
+            <div className={`paper paper-p0 ${styles.paper}`}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -386,87 +384,199 @@ export default function Opt() {
                       <TableCell>{formatDateTimeDetail(prefix.created_at)}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" gap={1} justifyContent="flex-end">
-                          <Button
+                          <button
                             type="button"
-                            variant="outlined"
-                            size="small"
+                            className="button small cancel"
                             onClick={() => handleOpenEditDialog(prefix)}
                           >
                             수정
-                          </Button>
-                          <Button
+                          </button>
+                          <button
                             type="button"
-                            variant="outlined"
-                            color="error"
-                            size="small"
+                            className="button small danger"
                             onClick={() => handleOpenDeleteDialog(prefix)}
                           >
                             삭제
-                          </Button>
+                          </button>
                         </Stack>
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </div>
           )}
-          <Dialog
-            open={dialogMode === 'new' || dialogMode === 'edit'}
-            onClose={handleCloseDialog}
-            fullWidth
-            maxWidth="sm"
-          >
-            <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
-            <DialogContent>
-              <Stack gap={2} sx={{ pt: 1 }}>
-                <TextField
-                  label="말머리명"
-                  value={prefixLabel}
-                  onChange={handlePrefixLabelChange}
-                  fullWidth
-                  size="small"
-                />
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={dialogMode === 'new' || dialogMode === 'edit'}
+              onClose={handleCloseDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</h2>
+              <button className="close-button" onClick={handleCloseDialog}>
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <TextField
+                    placeholder="말머리명"
+                    value={prefixLabel}
+                    onChange={handlePrefixLabelChange}
+                    fullWidth
+                    size="small"
+                  />
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                    저장
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-                저장
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={dialogMode === 'new' || dialogMode === 'edit'}
+              onClose={handleCloseDialog}
+              fullWidth
+              maxWidth="sm"
+              className="VhiDialog"
+            >
+              <DialogTitle>{dialogMode === 'new' ? '말머리 추가' : '말머리 수정'}</DialogTitle>
+              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <TextField
+                    placeholder="말머리명"
+                    value={prefixLabel}
+                    onChange={handlePrefixLabelChange}
+                    fullWidth
+                    size="small"
+                  />
 
-          <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-            <DialogTitle>말머리 삭제</DialogTitle>
-            <DialogContent>
-              <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleSubmit} disabled={isSubmitting}>
+                  저장
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={dialogMode === 'delete'}
+              onClose={handleCloseDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>말머리 삭제</h2>
+              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium warning"
+                    onClick={handleDelete}
+                    disabled={isSubmitting}
+                  >
+                    삭제
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDialog} disabled={isSubmitting}>
-                취소
-              </Button>
-              <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
-                삭제
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={dialogMode === 'delete'}
+              onClose={handleCloseDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>말머리 삭제</DialogTitle>
+              <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}

@@ -74,6 +74,7 @@ type PostResponse = {
     content_markdown: string | null;
     edited_at: string;
     created_at: string;
+    published_at: string | null;
     idx: number;
     series_idx: number | null;
     board_id: string;
@@ -565,6 +566,13 @@ export default function Opt() {
                       <Typography variant="subtitle2">작성</Typography>
                       <Typography variant="body2">{formatDate(post.created_at)}</Typography>
                     </Stack>
+
+                    {post.published_at ? (
+                      <Stack direction="row" gap={1}>
+                        <Typography variant="subtitle2">게시</Typography>
+                        <Typography variant="body2">{formatDate(post.published_at)}</Typography>
+                      </Stack>
+                    ) : null}
 
                     {post.edited_at ? (
                       <Stack direction="row" gap={1}>

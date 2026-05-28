@@ -2,26 +2,26 @@
 
 import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from '@mui/material/Link';
 import {
-  Alert,
   Box,
   Button,
   FormControl,
   FormControlLabel,
-  InputLabel,
   ListItemText,
   MenuItem,
-  OutlinedInput,
   Select,
   Stack,
   styled,
-  Switch,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -29,6 +29,9 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import Anchor from '@/components/Anchor';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -243,6 +246,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const thumbnailInputReference = useRef<HTMLInputElement | null>(null);
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
@@ -714,7 +718,7 @@ export default function Opt() {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.contentId}/edit`);
+        router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.slug}/edit`);
         return;
       }
 
@@ -736,319 +740,318 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-      <Container pageTitle="새 글 쓰기" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-        <div className="container">
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+        <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <Stack component="form" gap={2.5} onSubmit={(event) => void handleSubmit('publish', event)}>
-              {!isFeedBoard ? (
-                <TextField label="제목 (필수)" value={subject} onChange={handleSubjectChange} fullWidth size="small" />
-              ) : null}
+            {isMobile ? (
+              <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+                글쓰기
+              </Typography>
+            ) : null}
 
-              {isGalleryBoard ? (
-                <TextField label="부제목" value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-              ) : null}
-
-              {isYoutubeBoard ? (
-                <>
-                  <TextField
-                    label="간단 설명 (필수)"
-                    value={summary}
-                    onChange={handleSummaryChange}
-                    fullWidth
-                    multiline
-                    rows={5}
-                    size="small"
-                  />
-                  <TextField
-                    label="유튜브 영상 주소 (필수)"
-                    value={youtubeUrl}
-                    onChange={handleYoutubeUrlChange}
-                    fullWidth
-                    size="small"
-                  />
-                  <TextField
-                    label="유튜브 영상 ID"
-                    value={youtubeId}
-                    fullWidth
-                    size="small"
-                    slotProps={{ input: { readOnly: true, disabled: true } }}
-                  />
-                  <DatePicker
-                    label="유튜브 업로드 날짜 (필수)"
-                    value={youtubeCreatedAt}
-                    onChange={(value) => setYoutubeCreatedAt(value)}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </>
-              ) : null}
-
-              {postType === 'prefix' ? (
-                <FormControl fullWidth size="small">
-                  <InputLabel id="community-post-prefix-select-label">말머리</InputLabel>
-                  <Select
-                    labelId="community-post-prefix-select-label"
-                    value={selectedPrefixId}
-                    onChange={handlePrefixChange}
-                    input={<OutlinedInput label="말머리" />}
-                  >
-                    <MenuItem value="">
-                      <ListItemText primary="선택 안함" />
-                    </MenuItem>
-                    {prefixList.map((prefix) => (
-                      <MenuItem key={prefix.id} value={prefix.id}>
-                        <ListItemText primary={prefix.prefix_label} />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              ) : null}
-
-              {postType === 'series' ? (
-                <>
-                  <FormControl fullWidth size="small">
-                    <InputLabel id="community-post-series-select-label">연재</InputLabel>
-                    <Select
-                      labelId="community-post-series-select-label"
-                      value={selectedSeriesKey}
-                      onChange={handleSeriesChange}
-                      input={<OutlinedInput label="연재" />}
-                    >
-                      {seriesList
-                        .filter((series) => !series.is_completed)
-                        .map((series) => (
-                          <MenuItem key={series.id} value={series.series_key}>
-                            <ListItemText primary={series.series_label} />
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
-                  <Alert variant="outlined" severity="warning">
-                    연재는 한번 설정되면 변경하실 수 없습니다. 주의하세요.
-                  </Alert>
-                </>
-              ) : null}
-
-              {!isFeedBoard ? (
-                <Box>
-                  <Typography sx={{ mb: 1 }}>{isBasicBoard ? '썸네일 이미지' : '오픈 그래프 이미지'}</Typography>
-
-                  {isGalleryBoard ? (
-                    <Alert severity="info" variant="outlined" sx={{ mb: 1.5 }}>
-                      검색엔진이나 소셜 미디어에 링크를 올릴 때 미리보기 이미지로 사용됩니다.
-                    </Alert>
-                  ) : null}
-
-                  {thumbnailImageUrl ? (
-                    <Box
-                      component="img"
-                      src={thumbnailImageUrl}
-                      alt="썸네일 이미지"
-                      sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
-                    />
-                  ) : null}
-
-                  <VisuallyHiddenInput
-                    ref={thumbnailInputReference}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    onChange={handleThumbnailFileChange}
-                  />
-
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleClickThumbnailUpload}
-                    disabled={isUploadingThumbnail}
-                  >
-                    {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-                  </Button>
-                </Box>
-              ) : null}
-
-              {isGalleryBoard || isFeedBoard ? (
-                <Box>
-                  <ul>
-                    <Typography variant="body2" component="li">
-                      이미지는 최대 6개까지 등록할 수 있습니다.
-                    </Typography>
-                    <Typography variant="body2" component="li">
-                      1개 이상 등록해야 하며, 순서 변경은 불가능합니다.
-                    </Typography>
-                    <Typography variant="body2" component="li">
-                      이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.
-                    </Typography>
-                  </ul>
-
-                  <VisuallyHiddenInput
-                    ref={galleryInputReference}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    multiple
-                    onChange={handleGalleryFileChange}
-                  />
-
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleClickGalleryUpload}
-                    disabled={isUploadingImages}
-                  >
-                    이미지 업로드
-                  </Button>
-
-                  {images.length > 0 ? (
-                    <Stack gap={1.5} sx={{ mt: 1.5 }}>
-                      {images.map((image, index) => (
-                        <Stack key={image.path} gap={1}>
-                          <Typography variant="body2">{`이미지 ${index + 1}`}</Typography>
-                          <Box
-                            component="img"
-                            src={image.url}
-                            alt={`업로드 이미지 ${index + 1}`}
-                            sx={{ width: '100%', maxWidth: 480, display: 'block' }}
-                          />
-                          <Stack direction="row">
-                            <Button
-                              type="button"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => void handleDeleteGalleryImage(image.path)}
-                            >
-                              삭제
-                            </Button>
-                          </Stack>
-                        </Stack>
-                      ))}
-                    </Stack>
-                  ) : null}
-                </Box>
-              ) : null}
-
-              {isFeedBoard ? (
-                <TextField
-                  label="내용 (필수)"
-                  value={contentSimple}
-                  onChange={handleContentSimpleChange}
-                  fullWidth
-                  multiline
-                  minRows={6}
-                  size="small"
-                />
-              ) : null}
-
-              {isBasicBoard || isGalleryBoard ? (
-                <Box>
-                  <Typography sx={{ mb: 1 }}>{isGalleryBoard ? '내용' : '내용 (필수)'}</Typography>
-                  <ToastEditor
-                    initialValue={contentHtml}
-                    initialMarkdown={contentMarkdown}
-                    initialEditType="wysiwyg"
-                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                    markdownStatus={markdownStatus}
-                    hideModeSwitch
-                    onHtmlChange={setContentHtml}
-                    onMarkdownChange={setContentMarkdown}
-                    onUploadImage={handleUploadEditorImage}
-                  />
-                </Box>
-              ) : null}
-
-              <FormControlLabel
-                control={<Switch checked={isComment} onChange={(event) => setIsComment(event.target.checked)} />}
-                label={isComment ? '댓글 허용' : '댓글 차단'}
-              />
-
-              <FormControlLabel
-                control={<Switch checked={isPin} onChange={(event) => setIsPin(event.target.checked)} />}
-                label={isPin ? '상단고정글 등록' : '상단고정글 미등록'}
-              />
-
-              {isBasicBoard ? (
-                <Stack gap={1.5}>
-                  <Stack direction="row" gap={1}>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={isPollEnabled ? handleDisablePoll : handleEnablePoll}
-                    >
-                      {isPollEnabled ? '투표 취소' : '투표 설정'}
-                    </Button>
+            <div className={`paper ${styles.paper}`}>
+              <Stack component="form" gap={2.5} onSubmit={(event) => void handleSubmit('publish', event)}>
+                {!isFeedBoard ? (
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">제목 *</Typography>
+                    <TextField value={subject} onChange={handleSubjectChange} fullWidth size="small" />
                   </Stack>
+                ) : null}
 
-                  {isPollEnabled ? (
-                    <>
+                {isGalleryBoard ? (
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">부제목</Typography>
+                    <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+                  </Stack>
+                ) : null}
+
+                {isYoutubeBoard ? (
+                  <>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">간단 설명 *</Typography>
                       <TextField
-                        label="투표 질문"
-                        value={poll.question}
-                        onChange={handlePollQuestionChange}
+                        value={summary}
+                        onChange={handleSummaryChange}
+                        fullWidth
+                        multiline
+                        rows={5}
+                        size="small"
+                      />
+                    </Stack>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">유튜브 영상 주소 *</Typography>
+                      <TextField
+                        label="유튜브 영상 주소 (필수)"
+                        value={youtubeUrl}
+                        onChange={handleYoutubeUrlChange}
                         fullWidth
                         size="small"
                       />
+                      <input type="hidden" value={youtubeId} />
+                    </Stack>
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">유튜브 업로드 날짜 *</Typography>
+                      <DatePicker
+                        value={youtubeCreatedAt}
+                        onChange={(value) => setYoutubeCreatedAt(value)}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </Stack>
+                  </>
+                ) : null}
 
-                      {poll.options.map((option, index) => (
-                        <TextField
-                          key={index}
-                          label={`선택지 ${index + 1}`}
-                          value={option}
-                          onChange={(event) => handlePollOptionChange(index, event)}
-                          fullWidth
-                          size="small"
-                        />
+                {postType === 'prefix' ? (
+                  <FormControl fullWidth size="small">
+                    <Typography variant="subtitle2" sx={{ pb: 1 }}>
+                      말머리
+                    </Typography>
+                    <Select
+                      labelId="community-post-prefix-select-label"
+                      value={selectedPrefixId}
+                      onChange={handlePrefixChange}
+                    >
+                      <MenuItem value="">
+                        <ListItemText primary="선택 안함" />
+                      </MenuItem>
+                      {prefixList.map((prefix) => (
+                        <MenuItem key={prefix.id} value={prefix.id}>
+                          <ListItemText primary={prefix.prefix_label} />
+                        </MenuItem>
                       ))}
+                    </Select>
+                  </FormControl>
+                ) : null}
 
-                      <Alert severity="warning" variant="outlined">
-                        글이 게시된 이후에는 투표를 수정하실 수 없습니다. 유의하세요.
-                      </Alert>
-                    </>
-                  ) : null}
+                {postType === 'series' ? (
+                  <>
+                    <FormControl fullWidth size="small">
+                      <Typography variant="subtitle2">연재</Typography>
+                      <Select
+                        labelId="community-post-series-select-label"
+                        value={selectedSeriesKey}
+                        onChange={handleSeriesChange}
+                      >
+                        {seriesList
+                          .filter((series) => !series.is_completed)
+                          .map((series) => (
+                            <MenuItem key={series.id} value={series.series_key}>
+                              <ListItemText primary={series.series_label} />
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+                    <p className="alert warning">
+                      <WarningAmberRoundedIcon />
+                      <span>연재는 한번 설정되면 변경하실 수 없습니다. 주의하세요.</span>
+                    </p>
+                  </>
+                ) : null}
+
+                {!isFeedBoard ? (
+                  <Stack direction="column">
+                    <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
+                      <Typography variant="subtitle2">
+                        {isBasicBoard ? '썸네일 이미지' : '오픈 그래프 이미지'}
+                      </Typography>
+
+                      <VisuallyHiddenInput
+                        ref={thumbnailInputReference}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleThumbnailFileChange}
+                      />
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={handleClickThumbnailUpload}
+                        disabled={isUploadingThumbnail}
+                      >
+                        {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+                      </button>
+                      {thumbnailImageUrl ? (
+                        <Box
+                          component="img"
+                          src={thumbnailImageUrl}
+                          alt="썸네일 이미지"
+                          sx={{ maxWidth: '100%', height: 'auto', display: 'block', mb: 1.5 }}
+                        />
+                      ) : null}
+                      {isGalleryBoard ? (
+                        <p className="alert info">
+                          <InfoOutlineRoundedIcon />
+                          <span>검색엔진이나 소셜 미디어에 링크를 올릴 때 미리보기 이미지로 사용됩니다.</span>
+                        </p>
+                      ) : null}
+                    </Stack>
+                  </Stack>
+                ) : null}
+
+                {isGalleryBoard || isFeedBoard ? (
+                  <Box>
+                    <ul>
+                      <Typography variant="body2" component="li">
+                        이미지는 최대 6개까지 등록할 수 있습니다.
+                      </Typography>
+                      <Typography variant="body2" component="li">
+                        1개 이상 등록해야 하며, 순서 변경은 불가능합니다.
+                      </Typography>
+                      <Typography variant="body2" component="li">
+                        이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.
+                      </Typography>
+                    </ul>
+
+                    <VisuallyHiddenInput
+                      ref={galleryInputReference}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      multiple
+                      onChange={handleGalleryFileChange}
+                    />
+
+                    <button
+                      type="button"
+                      className="button small action"
+                      onClick={handleClickGalleryUpload}
+                      disabled={isUploadingImages}
+                    >
+                      이미지 업로드
+                    </button>
+
+                    {images.length > 0 ? (
+                      <Stack gap={1.5} sx={{ mt: 1.5 }}>
+                        {images.map((image, index) => (
+                          <Stack key={image.path} gap={1}>
+                            <Typography variant="body2">{`이미지 ${index + 1}`}</Typography>
+                            <Box
+                              component="img"
+                              src={image.url}
+                              alt={`업로드 이미지 ${index + 1}`}
+                              sx={{ width: '100%', maxWidth: 480, display: 'block' }}
+                            />
+                            <Stack direction="row">
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => void handleDeleteGalleryImage(image.path)}
+                              >
+                                삭제
+                              </Button>
+                            </Stack>
+                          </Stack>
+                        ))}
+                      </Stack>
+                    ) : null}
+                  </Box>
+                ) : null}
+
+                {isFeedBoard ? (
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">내용 *</Typography>
+                    <TextField
+                      value={contentSimple}
+                      onChange={handleContentSimpleChange}
+                      fullWidth
+                      multiline
+                      minRows={6}
+                      size="small"
+                    />
+                  </Stack>
+                ) : null}
+
+                {isBasicBoard || isGalleryBoard ? (
+                  <Box>
+                    <Typography sx={{ mb: 1 }}>내용 *</Typography>
+                    <ToastEditor
+                      initialValue={contentHtml}
+                      initialMarkdown={contentMarkdown}
+                      initialEditType="wysiwyg"
+                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                      markdownStatus={markdownStatus}
+                      hideModeSwitch
+                      onHtmlChange={setContentHtml}
+                      onMarkdownChange={setContentMarkdown}
+                      onUploadImage={handleUploadEditorImage}
+                    />
+                  </Box>
+                ) : null}
+
+                <FormControlLabel
+                  control={
+                    <IOSSwitch
+                      sx={{ m: 1 }}
+                      checked={isComment}
+                      onChange={(event) => setIsComment(event.target.checked)}
+                    />
+                  }
+                  label={isComment ? '댓글 허용' : '댓글 차단'}
+                />
+
+                <FormControlLabel
+                  control={
+                    <IOSSwitch sx={{ m: 1 }} checked={isPin} onChange={(event) => setIsPin(event.target.checked)} />
+                  }
+                  label={isPin ? '상단고정글 등록' : '상단고정글 미등록'}
+                />
+
+                <Stack direction="row" gap={1.5}>
+                  <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
+                    취소
+                  </Anchor>
+                  <button
+                    type="button"
+                    className="button medium action"
+                    disabled={isSubmittingDraft || isSubmittingPublish}
+                    onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
+                  >
+                    임시 저장
+                  </button>
+                  {isMobile ? (
+                    <div className={styles['button-top']}>
+                      <button
+                        type="submit"
+                        className={`button ${styles.button}`}
+                        disabled={isSubmittingDraft || isSubmittingPublish}
+                      >
+                        저장
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="button medium submit"
+                      disabled={isSubmittingDraft || isSubmittingPublish}
+                    >
+                      저장
+                    </button>
+                  )}
                 </Stack>
-              ) : null}
 
-              <Stack direction="row" gap={1.5}>
-                <Button
-                  component={Link}
-                  href={`/${siteName}/manage/contents/posts/c/${boardName}`}
-                  underline="none"
-                  variant="outlined"
-                  size="large"
-                >
-                  취소
-                </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  disabled={isSubmittingDraft || isSubmittingPublish}
-                  size="large"
-                  onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
-                >
-                  임시 저장
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isSubmittingDraft || isSubmittingPublish}
-                  size="large"
-                >
-                  저장
-                </Button>
+                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
               </Stack>
-
-              {errorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {errorMessage}
-                </Alert>
-              ) : null}
-            </Stack>
+            </div>
           </div>
         </div>
       </Container>

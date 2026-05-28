@@ -818,14 +818,14 @@ a, button, select, input
 
       html[data-theme="yellow-light"] &
         border: 1px solid rgba(ds.$rgb-tertiary, .2)
-        color: rgba(ds.$rgb-secondary, .7)
+        color: rgba(ds.$rgb-secondary, .9)
 
       html[data-theme="yellow-dark"] &
         border: 1px solid rgba(ds.$rgb-tertiary, .5)
         color: rgba(ds.$rgb-light, .7)
 
       &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .1)
+        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .3)
 
     &.danger
       border: 1px solid ds.$hex-warning
@@ -843,10 +843,10 @@ a, button, select, input
       background-color: ds.$hex-warning
 
       html[data-theme="yellow-light"] &
-        color: rgba(ds.$rgb-secondary, .8)
+        color: ds.$hex-bright
 
       html[data-theme="yellow-dark"] &
-        color: ds.$rgb-light
+        color: rgba(ds.$rgb-secondary, .8)
 
     &.danger, &.warning
       &:hover, &:focus-visible

@@ -4,7 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from '@mui/material/Link';
 import { Alert, Box, Button, Chip, Paper, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -111,7 +119,6 @@ export default function Opt() {
 
   const [board, setBoard] = useState<ContentResponse['board'] | null>(null);
   const [content, setContent] = useState<ContentResponse['content'] | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [series, setSeries] = useState<SeriesRow | null>(null);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
@@ -141,7 +148,6 @@ export default function Opt() {
 
         setBoard(result.board);
         setContent(result.content);
-        setCategories(Array.isArray(result.categories) ? result.categories : []);
         setSeries(result.series ?? null);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
@@ -219,268 +225,106 @@ export default function Opt() {
   }, [board, boardName, content, contentId, isAuthor, siteName]);
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   if (!board || !content) {
-    return null;
-  }
-
-  if (board.board_type === 'page') {
     return (
-      <Stack gap={2.5}>
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-
-        <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
-          <Stack direction="row" gap={1} flexWrap="wrap" />
-
-          <Stack direction="row" gap={1}>
-            {isAuthor || isStaff ? (
-              <Button
-                component={Link}
-                href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.id}/edit`}
-                underline="none"
-                variant="contained"
-              >
-                수정
-              </Button>
-            ) : null}
-
-            <Button
-              component={Link}
-              href={`/${siteName}/manage/contents/posts/c/${boardName}`}
-              underline="none"
-              variant="outlined"
-            >
-              목록
-            </Button>
-          </Stack>
-        </Stack>
-
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack gap={2}>
-            {content.subject ? <Typography variant="h5">{content.subject}</Typography> : null}
-            {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
-
-            <Stack gap={0.75}>
-              <Typography variant="subtitle2">작성일</Typography>
-              <Typography variant="body2">{formatDateTimeDetail(content.created_at)}</Typography>
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper paper-error ${styles.paper}`}>콘텐츠를 찾을 수 없습니다.</div>
+            <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
+              <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
+                목록
+              </Anchor>
             </Stack>
-
-            {content.edited_at ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">수정일</Typography>
-                <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
-              </Stack>
-            ) : null}
-
-            {content.author_name ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">작성자</Typography>
-                <Typography variant="body2">{content.author_name}</Typography>
-              </Stack>
-            ) : null}
-
-            {content.og_image_url ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">오픈 그래프 이미지</Typography>
-                <Box
-                  component="img"
-                  src={content.og_image_url}
-                  alt="오픈 그래프 이미지"
-                  sx={{ width: '100%', maxWidth: 520, display: 'block' }}
-                />
-              </Stack>
-            ) : null}
-
-            {content.content_html ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">내용</Typography>
-                <Box
-                  sx={{
-                    '& img': {
-                      maxWidth: '100%',
-                      height: 'auto',
-                    },
-                  }}
-                  dangerouslySetInnerHTML={{ __html: content.content_html }}
-                />
-              </Stack>
-            ) : null}
-
-            {typeof content.sort_order === 'number' ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">정렬 순서</Typography>
-                <Typography variant="body2">{content.sort_order}</Typography>
-              </Stack>
-            ) : null}
-
-            {content.attachment_slug ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">첨부 식별자</Typography>
-                <Typography variant="body2">{content.attachment_slug}</Typography>
-              </Stack>
-            ) : null}
-
-            {content.attachment_origin ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">첨부 원본명</Typography>
-                <Typography variant="body2">{content.attachment_origin}</Typography>
-              </Stack>
-            ) : null}
-
-            {typeof content.is_comment === 'boolean' ? (
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">댓글 허용</Typography>
-                <Typography variant="body2">{content.is_comment ? '허용' : '비허용'}</Typography>
-              </Stack>
-            ) : null}
-          </Stack>
-        </Paper>
-      </Stack>
+          </div>
+        </div>
+      </Container>
     );
   }
 
   return (
-    <Container pageTitle="글 보기" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          {content.is_closed ? (
-            <Alert severity="error" variant="filled">
-              삭제된 글입니다.
-            </Alert>
-          ) : null}
+          {content.is_closed ? <div className={`paper paper-error ${styles.paper}`}>삭제된 글입니다.</div> : null}
 
-          <Stack direction="row" gap={1} justifyContent="space-between" alignItems="center">
-            <Stack direction="row" gap={1} flexWrap="wrap">
-              {content.published_status === 'draft' ? <Chip label="임시저장글" color="warning" size="small" /> : null}
-              {content.prefix_label ? <Chip label={content.prefix_label} variant="outlined" size="small" /> : null}
-              {categories.map((category) => (
-                <Chip key={category.id} label={category.category_label} variant="outlined" size="small" />
-              ))}
-            </Stack>
+          <div className={`paper ${styles.paper}`}>
+            <Stack gap={1}>
+              {board.board_type !== 'feed' ? (
+                <Stack direction="row" gap={2} alignItems="center">
+                  <Typography variant="h6" component="h3">
+                    {content.prefix_label ? `[${content.prefix_label}] ` : null}
+                    {typeof content.series_idx === 'number' ? `{content.series_idx}. ` : null}
 
-            <Stack direction="row" gap={1}>
-              {isAuthor || isStaff ? (
-                <Button
-                  component={Link}
-                  href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.id}/edit`}
-                  underline="none"
-                  variant="contained"
-                >
-                  수정
-                </Button>
-              ) : null}
-
-              <Button
-                component={Link}
-                href={`/${siteName}/manage/contents/posts/c/${boardName}`}
-                underline="none"
-                variant="outlined"
-              >
-                목록
-              </Button>
-            </Stack>
-          </Stack>
-
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Stack gap={2}>
-              {content.subject && board.board_type !== 'feed' ? (
-                <Typography variant="h5">{content.subject}</Typography>
-              ) : null}
-              {content.summary ? <Typography variant="body1">{content.summary}</Typography> : null}
-
-              {typeof content.series_idx === 'number' ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">연재 번호</Typography>
-                  <Typography variant="body2">{content.series_idx}</Typography>
-                </Stack>
-              ) : typeof content.idx === 'number' ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">번호</Typography>
-                  <Typography variant="body2">{content.idx}</Typography>
+                    {series?.series_label ? `[${series.series_label}] ` : null}
+                    {content.subject}
+                  </Typography>
+                  {content.published_status === 'draft' ? (
+                    <Chip label="임시저장글" color="warning" size="small" />
+                  ) : null}
                 </Stack>
               ) : null}
+              {content.summary ? <Typography variant="subtitle2">{content.summary}</Typography> : null}
 
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">조회수</Typography>
-                <Typography variant="body2">
-                  {typeof content.post_count === 'number' ? content.post_count : 0}
-                </Typography>
+              <Typography variant="subtitle2">{content.author_name}</Typography>
+
+              <Stack direction="row" gap={3}>
+                <Stack direction="row" gap={1}>
+                  <Typography variant="subtitle2">작성</Typography>
+                  <Typography variant="body2">{formatDateTimeDetail(content.created_at)}</Typography>
+                </Stack>
+
+                {content.published_at ? (
+                  <Stack direction="row" gap={1}>
+                    <Typography variant="subtitle2">게시</Typography>
+                    <Typography variant="body2">{formatDateTimeDetail(content.published_at)}</Typography>
+                  </Stack>
+                ) : null}
+
+                {content.edited_at ? (
+                  <Stack direction="row" gap={1}>
+                    <Typography variant="subtitle2">수정</Typography>
+                    <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
+                  </Stack>
+                ) : null}
               </Stack>
 
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">작성일</Typography>
-                <Typography variant="body2">{formatDateTimeDetail(content.created_at)}</Typography>
-              </Stack>
-
-              {content.published_at ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">게시일</Typography>
-                  <Typography variant="body2">{formatDateTimeDetail(content.published_at)}</Typography>
-                </Stack>
+              {board.board_type === 'youtube' ? (
+                <>
+                  {content.youtube_id ? (
+                    <YoutubeEmbed videoId={content.youtube_id} thumbnailImage={content.thumbnail_image_url} />
+                  ) : null}
+                </>
               ) : null}
-
-              {content.edited_at ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">수정일</Typography>
-                  <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
-                </Stack>
-              ) : null}
-
-              {content.author_name ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">작성자</Typography>
-                  <Typography variant="body2">{content.author_name}</Typography>
-                </Stack>
-              ) : null}
-
-              {series?.series_label ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">연재</Typography>
-                  <Typography variant="body2">{series.series_label}</Typography>
-                </Stack>
-              ) : null}
-
-              {board.board_type === 'youtube' && content.youtube_url ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">유튜브 영상 주소</Typography>
-                  <Typography variant="body2">{content.youtube_url}</Typography>
-                </Stack>
-              ) : null}
-
-              {board.board_type === 'youtube' && content.youtube_id ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">유튜브 영상 ID</Typography>
-                  <Typography variant="body2">{content.youtube_id}</Typography>
-                </Stack>
-              ) : null}
-
               {board.board_type === 'youtube' && content.youtube_created_at ? (
                 <Stack gap={0.75}>
-                  <Typography variant="subtitle2">유튜브 업로드 기준 날짜</Typography>
+                  <Typography variant="subtitle2">유튜브 공개</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.youtube_created_at)}</Typography>
                 </Stack>
               ) : null}
 
               {typeof content.is_comment === 'boolean' ? (
-                <Stack gap={0.75}>
-                  <Typography variant="subtitle2">댓글 허용</Typography>
-                  <Typography variant="body2">{content.is_comment ? '허용' : '비허용'}</Typography>
-                </Stack>
+                <Typography variant="body2">{content.is_comment ? '댓글 가능한 글' : '댓글 차단글'}</Typography>
               ) : null}
 
-              {board.board_type !== 'feed' && content.thumbnail_image_url ? (
+              {board.board_type !== 'feed' && board.board_type !== 'youtube' && content.thumbnail_image_url ? (
                 <Stack gap={0.75}>
                   <Typography variant="subtitle2">
                     {board.board_type === 'basic' ? '썸네일 이미지' : '오픈 그래프 이미지'}
@@ -535,20 +379,6 @@ export default function Opt() {
                 </Stack>
               ) : null}
 
-              {content.poll ? (
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">투표</Typography>
-                  <Typography variant="body2">{content.poll.question}</Typography>
-                  <Stack gap={0.75}>
-                    {content.poll.options.map((option) => (
-                      <Typography key={option.id} variant="body2">
-                        {`${option.id}. ${option.label}`}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </Stack>
-              ) : null}
-
               {Array.isArray(content.hashtags) && content.hashtags.length > 0 ? (
                 <Stack gap={0.75}>
                   <Typography variant="subtitle2">해시태그</Typography>
@@ -583,7 +413,24 @@ export default function Opt() {
                 </Stack>
               ) : null}
             </Stack>
-          </Paper>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>기본 기능만 제공됩니다. 실제 적용 화면과 다를 수 있습니다.</span>
+            </p>
+          </div>
+          <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
+            <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
+              목록
+            </Anchor>
+            {isAuthor || isStaff ? (
+              <Anchor
+                href={`/${siteName}/manage/contents/posts/c/${boardName}/${contentId}/edit`}
+                className="button medium action"
+              >
+                수정
+              </Anchor>
+            ) : null}
+          </Stack>
         </div>
       </div>
     </Container>

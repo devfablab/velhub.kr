@@ -695,36 +695,36 @@ export default function Opt() {
                 </FormControl>
               </Stack>
 
-              <Stack gap={1}>
-                <Typography variant="subtitle2">오픈그래프 이미지</Typography>
+              <Stack direction="column">
+                <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle2">오픈그래프 이미지</Typography>
 
-                {thumbnailImageUrl ? (
-                  <Box
-                    component="img"
-                    src={thumbnailImageUrl}
-                    alt="오픈그래프 이미지"
-                    sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+                  <VisuallyHiddenInput
+                    ref={fileInputReference}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailFileChange}
                   />
-                ) : null}
-
-                <VisuallyHiddenInput
-                  ref={fileInputReference}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailFileChange}
-                />
-
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={handleClickThumbnailUpload}
-                  disabled={isUploadingThumbnail}
-                >
-                  {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
-                </Button>
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={handleClickThumbnailUpload}
+                    disabled={isUploadingThumbnail}
+                  >
+                    {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
+                  </button>
+                  {thumbnailImageUrl ? (
+                    <Box
+                      component="img"
+                      src={thumbnailImageUrl}
+                      alt="오픈그래프 이미지"
+                      sx={{ width: '100%', maxWidth: 480, display: 'block', mb: 1.5 }}
+                    />
+                  ) : null}
+                </Stack>
               </Stack>
               <Stack gap={1}>
-                <Typography sx={{ mb: 1 }}>내용 (필수)</Typography>
+                <Typography sx={{ mb: 1 }}>내용 *</Typography>
                 <ToastEditor
                   initialValue={contentHtml}
                   initialMarkdown={contentMarkdown}
