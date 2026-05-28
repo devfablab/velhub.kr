@@ -870,7 +870,7 @@ export default function Opt() {
                 ) : null}
 
                 {!isFeedBoard ? (
-                  <Stack direction="column">
+                  <Stack direction="column" gap={1.5}>
                     <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
                       <Typography variant="subtitle2">
                         {isBasicBoard ? '썸네일 이미지' : '오픈 그래프 이미지'}
@@ -890,6 +890,14 @@ export default function Opt() {
                       >
                         {thumbnailImageUrl ? '이미지 교체' : '이미지 추가'}
                       </button>
+                    </Stack>
+                    {isGalleryBoard ? (
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>검색엔진이나 소셜 미디어에 링크를 올릴 때 미리보기 이미지로 사용됩니다.</span>
+                      </p>
+                    ) : null}
+                    <Stack direction="column" gap={2}>
                       {thumbnailImageUrl ? (
                         <Box
                           component="img"
@@ -898,29 +906,37 @@ export default function Opt() {
                           sx={{ maxWidth: '100%', height: 'auto', display: 'block', mb: 1.5 }}
                         />
                       ) : null}
-                      {isGalleryBoard ? (
-                        <p className="alert info">
-                          <InfoOutlineRoundedIcon />
-                          <span>검색엔진이나 소셜 미디어에 링크를 올릴 때 미리보기 이미지로 사용됩니다.</span>
-                        </p>
-                      ) : null}
                     </Stack>
                   </Stack>
                 ) : null}
 
                 {isGalleryBoard || isFeedBoard ? (
-                  <Box>
-                    <ul>
-                      <Typography variant="body2" component="li">
-                        이미지는 최대 6개까지 등록할 수 있습니다.
-                      </Typography>
-                      <Typography variant="body2" component="li">
-                        1개 이상 등록해야 하며, 순서 변경은 불가능합니다.
-                      </Typography>
-                      <Typography variant="body2" component="li">
-                        이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.
-                      </Typography>
-                    </ul>
+                  <Stack gap={2}>
+                    <Stack gap={2} direction="row" alignItems="center">
+                      <Typography variant="subtitle2">갤러리 이미지</Typography>
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={handleClickGalleryUpload}
+                        disabled={isUploadingImages}
+                      >
+                        갤러리 이미지 업로드
+                      </button>
+                    </Stack>
+                    <Stack gap={1}>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>이미지는 최대 6개까지 등록할 수 있습니다.</span>
+                      </p>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>1개 이상 등록해야 하며, 순서 변경은 불가능합니다.</span>
+                      </p>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>이미지는 업로드한 순서대로 정렬되고, 마지막에 등록한 이미지가 가장 앞에 표시됩니다.</span>
+                      </p>
+                    </Stack>
 
                     <VisuallyHiddenInput
                       ref={galleryInputReference}
@@ -929,15 +945,6 @@ export default function Opt() {
                       multiple
                       onChange={handleGalleryFileChange}
                     />
-
-                    <button
-                      type="button"
-                      className="button small action"
-                      onClick={handleClickGalleryUpload}
-                      disabled={isUploadingImages}
-                    >
-                      이미지 업로드
-                    </button>
 
                     {images.length > 0 ? (
                       <Stack gap={1.5} sx={{ mt: 1.5 }}>
@@ -951,20 +958,19 @@ export default function Opt() {
                               sx={{ width: '100%', maxWidth: 480, display: 'block' }}
                             />
                             <Stack direction="row">
-                              <Button
+                              <button
                                 type="button"
-                                variant="outlined"
-                                color="error"
+                                className="button small danger"
                                 onClick={() => void handleDeleteGalleryImage(image.path)}
                               >
                                 삭제
-                              </Button>
+                              </button>
                             </Stack>
                           </Stack>
                         ))}
                       </Stack>
                     ) : null}
-                  </Box>
+                  </Stack>
                 ) : null}
 
                 {isFeedBoard ? (
