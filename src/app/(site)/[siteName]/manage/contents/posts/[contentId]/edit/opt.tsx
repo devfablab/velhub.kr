@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
-  Button,
   Checkbox,
   FormControl,
   FormControlLabel,

@@ -1,18 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Alert,
   Box,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
-  Paper,
+  Drawer,
   Stack,
   Typography,
   useMediaQuery,
@@ -24,6 +21,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Anchor from '@/components/Anchor';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -70,6 +68,7 @@ export default function Opt() {
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [content, setContent] = useState<ContentRow | null>(null);
   const [boardName, setBoardName] = useState<string | null>(null);
@@ -249,47 +248,60 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
   }
 
   if (!content) {
     return errorMessage ? (
-      <Alert severity="error" variant="filled">
-        {errorMessage}
-      </Alert>
+      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div>
+            <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
+              <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
+                목록
+              </Anchor>
+            </Stack>
+          </div>
+        </div>
+      </Container>
     ) : null;
   }
 
   return (
-    <Container pageTitle="페이지 보기" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
-      <div className="container">
+    <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
+      <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Stack gap={2.5}>
-              <Typography variant="h5" component="h2">
+          <div className={`paper ${styles.paper}`}>
+            <Stack gap={1}>
+              <Typography variant="h6" component="h3">
                 {content.subject}
               </Typography>
 
-              {content.summary ? (
-                <Typography variant="h6" component="h3">
-                  {content.summary}
-                </Typography>
-              ) : null}
+              {content.summary ? <Typography variant="subtitle2">{content.summary}</Typography> : null}
 
               <Stack direction="row" gap={3} flexWrap="wrap">
-                <Stack direction="row" gap={1}>
-                  <Typography variant="subtitle2">작성</Typography>
-                  <Typography variant="body2">
-                    {content.author_name} / {formatDateTimeDetail(content.created_at)}
-                  </Typography>
-                </Stack>
+                <Typography variant="subtitle2">
+                  {content.author_name} / {formatDateTimeDetail(content.created_at)}
+                </Typography>
 
                 <Stack direction="row" gap={1}>
                   <Typography variant="subtitle2">수정</Typography>
                   <Typography variant="body2">{formatDateTimeDetail(content.edited_at)}</Typography>
                 </Stack>
               </Stack>
-              <Divider />
               {content.is_closed ? (
                 <>
                   <Stack gap={1}>
@@ -325,94 +337,232 @@ export default function Opt() {
 
               <div style={{ marginTop: 0 }} dangerouslySetInnerHTML={{ __html: content.content_html }} />
             </Stack>
-          </Paper>
+          </div>
 
-          <Stack direction="row" gap={1.5} justifyContent="space-between">
-            <Button component={Link} href={`/${siteName}/manage/contents/pages`} underline="none" variant="outlined">
+          <Stack direction="row" gap={1.5} justifyContent="space-between" sx={{ p: 2, pt: 0 }}>
+            <Anchor href={`/${siteName}/manage/contents/pages`} className="button medium cancel">
               목록으로 이동
-            </Button>
+            </Anchor>
 
             <Stack direction="row" gap={1.5}>
               {content.is_closed ? (
-                <Button type="button" variant="outlined" onClick={handleOpenRestoreDialog} disabled={!boardName}>
+                <button
+                  type="button"
+                  className="button medium action"
+                  onClick={handleOpenRestoreDialog}
+                  disabled={!boardName}
+                >
                   복구
-                </Button>
+                </button>
               ) : (
                 <>
-                  <Button
+                  <button
                     type="button"
-                    color="error"
-                    variant="outlined"
+                    className="button medium danger"
                     onClick={handleOpenDeleteDialog}
                     disabled={!boardName}
                   >
                     삭제하기
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="button"
-                    variant="contained"
-                    color="warning"
+                    className="button medium action"
                     onClick={handleMoveToEdit}
                     disabled={!boardName}
                   >
                     수정하기
-                  </Button>
+                  </button>
                 </>
               )}
             </Stack>
           </Stack>
 
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
+          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Dialog open={isDeleteDialogOpen} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
-            <DialogTitle>페이지 삭제</DialogTitle>
-            <DialogContent>
-              <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isDeleteDialogOpen}
+              onClose={handleCloseDeleteDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>페이지 삭제</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                aria-label="닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseDeleteDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium warning"
+                    onClick={handleDelete}
+                    disabled={isSubmitting}
+                  >
+                    삭제
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseDeleteDialog} disabled={isSubmitting}>
-                취소
-              </Button>
-              <Button type="button" color="error" variant="contained" onClick={handleDelete} disabled={isSubmitting}>
-                삭제
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isDeleteDialogOpen}
+              onClose={handleCloseDeleteDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>페이지 삭제</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseDeleteDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
 
-          <Dialog open={isRestoreDialogOpen} onClose={handleCloseRestoreDialog} fullWidth maxWidth="xs">
-            <DialogTitle>페이지 복구</DialogTitle>
-            <DialogContent>
-              <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography>해당 페이지를 복구하시겠습니까?</Typography>
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseDeleteDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium warning" onClick={handleDelete} disabled={isSubmitting}>
+                  삭제
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
-                {dialogErrorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {dialogErrorMessage}
-                  </Alert>
-                ) : null}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isRestoreDialogOpen}
+              onClose={handleCloseRestoreDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>페이지 복구</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseRestoreDialog}
+                aria-label="닫기"
+                disabled={isSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack spacing={2} sx={{ pt: 1 }}>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography>해당 페이지를 복구하시겠습니까?</Typography>
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+                <Stack direction="column" spacing={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseRestoreDialog}
+                    disabled={isSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleRestore}
+                    disabled={isSubmitting}
+                  >
+                    확인
+                  </button>
+                </Stack>
               </Stack>
-            </DialogContent>
-            <DialogActions>
-              <Button type="button" onClick={handleCloseRestoreDialog} disabled={isSubmitting}>
-                취소
-              </Button>
-              <Button type="button" variant="contained" color="warning" onClick={handleRestore} disabled={isSubmitting}>
-                확인
-              </Button>
-            </DialogActions>
-          </Dialog>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isRestoreDialogOpen}
+              onClose={handleCloseRestoreDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>페이지 복구</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseRestoreDialog}
+                disabled={isSubmitting}
+                aria-label="닫기"
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2} sx={{ pt: 1 }}>
+                  <Typography>해당 페이지를 복구하시겠습니까?</Typography>
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseRestoreDialog}
+                  disabled={isSubmitting}
+                >
+                  취소
+                </button>
+                <button type="button" className="button medium submit" onClick={handleRestore} disabled={isSubmitting}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
       </div>
     </Container>

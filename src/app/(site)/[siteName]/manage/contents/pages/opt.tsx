@@ -213,7 +213,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
-            <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button medium submit">
+            <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button small submit">
               페이지 추가
             </Anchor>
           </Stack>
