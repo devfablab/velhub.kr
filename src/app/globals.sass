@@ -1288,8 +1288,13 @@ html[data-site-type='blog']
     align-items: center
     gap: ds.rem(5)
     padding: ds.rem(7) ds.rem(17)
-    color: ds.$hex-secondary
     opacity: .8
+
+    html[data-theme="yellow-light"] &
+      color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
 
     svg, i
       width: ds.rem(16)
@@ -1300,7 +1305,7 @@ html[data-site-type='blog']
 
     &.current
       @include ds.fw(pre, 600)
-      color: ds.$hex-accent
+      color: ds.$hex-accent!important
       opacity: 1
 
 .MuiInputBase-root.MuiOutlinedInput-root,

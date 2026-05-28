@@ -356,6 +356,15 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   useEffect(() => {
+    if (boardName === 'p') {
+      if (isCommunity) {
+        router.replace(`/${siteName}/board`);
+        return;
+      } else {
+        router.replace(`/${siteName}`);
+        return;
+      }
+    }
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
     const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
