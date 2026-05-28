@@ -772,96 +772,85 @@ a, button, select, input
     @include ds.fw(pre, 500)
     transition: all .4s cubic-bezier(.4,0,.2,1)
 
-    &.submit
-      border: 1px solid ds.$hex-accent
-      background-color: ds.$hex-accent
+  &.submit
+    border: 1px solid ds.$hex-accent
+    background-color: ds.$hex-accent
 
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-white
+    html[data-theme="yellow-light"] &
+      color: ds.$hex-white
 
-      html[data-theme="yellow-dark"] &
-        color: ds.$hex-black
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-black
 
-      &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
 
-    &.close
-      border: 1px solid transparent
-      background-color: transparent
+  &.close
+    border: 1px solid transparent
+    background-color: transparent
 
-      html[data-theme="yellow-light"] &
-        color: rgba(ds.$rgb-secondary, .7)
+    html[data-theme="yellow-light"] &
+      color: rgba(ds.$rgb-secondary, .7)
 
-      html[data-theme="yellow-dark"] &
-        color: rgba(ds.$rgb-light, .7)
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$rgb-light, .7)
 
-      &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-action, .5)
-
-    &.action
-      border: 1px solid ds.$hex-accent!important
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-white
-        color: rgba(ds.$rgb-secondary, .8)
-
-      html[data-theme="yellow-dark"] &
-        background-color: ds.$hex-black
-        color: rgba(ds.$rgb-light, .8)
-
-    &.submit, &.action
-      &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgb(ds.$rgb-accent, .5)
-
-    &.cancel
-      background-color: transparent!important
-
-      html[data-theme="yellow-light"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .2)
-        color: rgba(ds.$rgb-secondary, .9)
-
-      html[data-theme="yellow-dark"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .5)
-        color: rgba(ds.$rgb-light, .7)
-
-      &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .3)
-
-    &.danger
-      border: 1px solid ds.$hex-warning
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-white
-        color: ds.$hex-primary
-
-      html[data-theme="yellow-dark"] &
-        background-color: ds.$hex-black
-        color: ds.$hex-bright
-
-    &.warning
-      border: 1px solid ds.$hex-warning
-      background-color: ds.$hex-warning
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-bright
-
-      html[data-theme="yellow-dark"] &
-        color: rgba(ds.$rgb-secondary, .8)
-
-    &.danger, &.warning
-      &:hover, &:focus-visible
-        box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-action, .5)
 
   &.action
+    border: 1px solid ds.$hex-accent!important
+
     html[data-theme="yellow-light"] &
-      border: 1px solid rgba(ds.$rgb-tertiary, .3)
       background-color: ds.$hex-white
-      color: rgba(ds.$rgb-primary, .7)
+      color: rgba(ds.$rgb-secondary, .8)
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+      color: rgba(ds.$rgb-light, .8)
+
+  &.submit, &.action
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgb(ds.$rgb-accent, .5)
+
+  &.cancel
+    background-color: transparent!important
+
+    html[data-theme="yellow-light"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+      color: rgba(ds.$rgb-secondary, .9)
 
     html[data-theme="yellow-dark"] &
       border: 1px solid rgba(ds.$rgb-tertiary, .5)
+      color: rgba(ds.$rgb-light, .7)
+
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-tertiary, .3)
+
+  &.danger
+    border: 1px solid ds.$hex-warning
+
+    html[data-theme="yellow-light"] &
+      background-color: ds.$hex-white
+      color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
-      color: rgba(ds.$rgb-bright, .7)
+      color: ds.$hex-bright
+
+  &.warning
+    border: 1px solid ds.$hex-warning
+    background-color: ds.$hex-warning
+
+    html[data-theme="yellow-light"] &
+      color: ds.$hex-bright
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$rgb-secondary, .8)
+
+  &.danger, &.warning
+    &:hover, &:focus-visible
+      box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-warning, .5)
 
   &:disabled
     html[data-theme="yellow-light"] &

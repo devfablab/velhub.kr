@@ -1396,38 +1396,38 @@ export default function Opt({
 
             {canEditMyMemberGeneral ? (
               <div className={styles.buttons}>
-                <button type="button" className="button" onClick={handleOpenNicknameDialog}>
+                <button type="button" className="button small submit" onClick={handleOpenNicknameDialog}>
                   별명 수정
                 </button>
-                <button type="button" className="button" onClick={handleOpenGeneralDialog}>
+                <button type="button" className="button small submit" onClick={handleOpenGeneralDialog}>
                   기본정보 수정
                 </button>
                 {getMyMemberGeneral() ? (
                   <>
                     <button
                       type="button"
-                      className="button action"
+                      className="button action small"
                       onClick={() => handleOpenItemManageDialog('educations')}
                     >
                       학력 입력
                     </button>
                     <button
                       type="button"
-                      className="button action"
+                      className="button action small"
                       onClick={() => handleOpenItemManageDialog('awards')}
                     >
                       수상 입력
                     </button>
                     <button
                       type="button"
-                      className="button action"
+                      className="button action small"
                       onClick={() => handleOpenItemManageDialog('projects')}
                     >
                       프로젝트 입력
                     </button>
                     <button
                       type="button"
-                      className="button action"
+                      className="button action small"
                       onClick={() => handleOpenItemManageDialog('careers')}
                     >
                       경력 입력

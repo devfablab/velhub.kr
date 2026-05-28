@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
+import Container from '../menu';
 
 type RouteContext = {
   params: Promise<{
@@ -145,15 +146,17 @@ export default async function Page(context: RouteContext) {
   }
 
   return (
-    <Opt
-      siteName={normalizedSiteName}
-      siteInfo={result.siteInfo}
-      memberGeneral={result.memberGeneral ?? []}
-      memberEducations={result.memberEducations ?? []}
-      memberAwards={result.memberAwards ?? []}
-      memberProjects={result.memberProjects ?? []}
-      memberCareers={result.memberCareers ?? []}
-      canEditMyMemberGeneral={result.canEditMyMemberGeneral === true}
-    />
+    <Container pageBack={`/${siteName}`} pageTitle="블로그 소개">
+      <Opt
+        siteName={normalizedSiteName}
+        siteInfo={result.siteInfo}
+        memberGeneral={result.memberGeneral ?? []}
+        memberEducations={result.memberEducations ?? []}
+        memberAwards={result.memberAwards ?? []}
+        memberProjects={result.memberProjects ?? []}
+        memberCareers={result.memberCareers ?? []}
+        canEditMyMemberGeneral={result.canEditMyMemberGeneral === true}
+      />
+    </Container>
   );
 }
