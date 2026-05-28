@@ -1452,7 +1452,7 @@ export default function Opt({
                   기본정보 수정
                 </button>
                 {getMyMemberGeneral() ? (
-                  <>
+                  <div className={styles['manage-advanced-buttons']}>
                     <button
                       type="button"
                       className="button action small"
@@ -1481,7 +1481,7 @@ export default function Opt({
                     >
                       경력 입력
                     </button>
-                  </>
+                  </div>
                 ) : null}
               </div>
             ) : null}

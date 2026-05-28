@@ -1172,6 +1172,9 @@
               font-size: ds.rem(20)
               line-height: 1.37
 
+              @include ds.mq(maxSmall)
+                font-size: ds.rem(16)
+
               html[data-site-type='blog'] &
                 font-family: var(--blog-subject-font-family)
                 font-weight: 700
