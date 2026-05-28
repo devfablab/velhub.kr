@@ -22,6 +22,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import {
   Checkbox,
   Divider,
+  Drawer,
   FormControl,
   FormControlLabel,
   FormGroup,
@@ -2118,471 +2119,984 @@ export default function Opt({ isCommunity }: Props) {
             </fieldset>
           </form>
 
-          <Dialog
-            open={thumbnailDialogOpen}
-            onClose={closeThumbnailDialog}
-            className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
-          >
-            <DialogTitle>썸네일 이미지 업로드</DialogTitle>
-            <DialogContent className={styles['thumbnail-dialog-content']}>
-              {thumbnailDialogMessage ? (
-                <DialogContentText className={styles['thumbnail-dialog-message']}>
-                  {thumbnailDialogMessage}
-                </DialogContentText>
-              ) : null}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={thumbnailDialogOpen}
+              onClose={closeThumbnailDialog}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            >
+              <h2>썸네일 이미지 업로드</h2>
+              <button className="close-button" onClick={closeThumbnailDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>
+                {thumbnailDialogMessage ? (
+                  <DialogContentText className={styles['thumbnail-dialog-message']}>
+                    {thumbnailDialogMessage}
+                  </DialogContentText>
+                ) : null}
 
-              <div className={styles['thumbnail-uploader']}>
-                <button
-                  type="button"
-                  onClick={() => thumbnailDialogInputReference.current?.click()}
-                  className={styles['thumbnail-upload-button']}
-                >
-                  <span>이미지를 선택해주세요</span>
-                  <CropOriginalOutlinedIcon />
-                </button>
+                <div className={styles['thumbnail-uploader']}>
+                  <button
+                    type="button"
+                    onClick={() => thumbnailDialogInputReference.current?.click()}
+                    className={styles['thumbnail-upload-button']}
+                  >
+                    <span>이미지를 선택해주세요</span>
+                    <CropOriginalOutlinedIcon />
+                  </button>
 
-                <input
-                  ref={thumbnailDialogInputReference}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className={styles['thumbnail-file-input']}
-                  onChange={handleThumbnailDialogFileChange}
-                />
-              </div>
-
-              {thumbnailDialogPreviewUrl ? (
-                <div className={styles['thumbnail-dialog-preview']}>
-                  <img src={thumbnailDialogPreviewUrl} alt="" />
+                  <input
+                    ref={thumbnailDialogInputReference}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className={styles['thumbnail-file-input']}
+                    onChange={handleThumbnailDialogFileChange}
+                  />
                 </div>
-              ) : null}
-            </DialogContent>
-            <DialogActions>
-              <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
-                취소
-              </button>
-              <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
-                이미지 업로드
-              </button>
-            </DialogActions>
-          </Dialog>
 
-          <Dialog
-            open={galleryDialogOpen}
-            onClose={closeGalleryDialog}
-            className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
-          >
-            <DialogTitle>갤러리 이미지 업로드</DialogTitle>
-            <DialogContent className={styles['thumbnail-dialog-content']}>
-              {galleryDialogMessage ? (
-                <DialogContentText className={styles['thumbnail-dialog-message']}>
-                  {galleryDialogMessage}
-                </DialogContentText>
-              ) : null}
-
-              <div className={styles['thumbnail-uploader']}>
+                {thumbnailDialogPreviewUrl ? (
+                  <div className={styles['thumbnail-dialog-preview']}>
+                    <img src={thumbnailDialogPreviewUrl} alt="" />
+                  </div>
+                ) : null}
+              </div>
+              <div className={styles['drawer-dialog-actions']}>
+                <button type="button" onClick={closeThumbnailDialog} className="button medium cancel">
+                  취소
+                </button>
                 <button
                   type="button"
-                  onClick={() => galleryDialogInputReference.current?.click()}
-                  className={styles['thumbnail-upload-button']}
+                  onClick={applyThumbnailDialogImage}
+                  disabled={!thumbnailDialogFile}
+                  className="button medium submit"
                 >
-                  <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
-                  <CollectionsOutlinedIcon />
+                  이미지 업로드
                 </button>
-
-                <input
-                  ref={galleryDialogInputReference}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  multiple
-                  className={styles['thumbnail-file-input']}
-                  onChange={handleGalleryDialogFileChange}
-                />
               </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={thumbnailDialogOpen}
+              onClose={closeThumbnailDialog}
+              className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+            >
+              <DialogTitle>썸네일 이미지 업로드</DialogTitle>
+              <DialogContent className={styles['thumbnail-dialog-content']}>
+                {thumbnailDialogMessage ? (
+                  <DialogContentText className={styles['thumbnail-dialog-message']}>
+                    {thumbnailDialogMessage}
+                  </DialogContentText>
+                ) : null}
 
-              {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
-                <div className={styles['gallery-dialog-preview']}>
-                  {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
-                    if ('file' in image) {
+                <div className={styles['thumbnail-uploader']}>
+                  <button
+                    type="button"
+                    onClick={() => thumbnailDialogInputReference.current?.click()}
+                    className={styles['thumbnail-upload-button']}
+                  >
+                    <span>이미지를 선택해주세요</span>
+                    <CropOriginalOutlinedIcon />
+                  </button>
+
+                  <input
+                    ref={thumbnailDialogInputReference}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className={styles['thumbnail-file-input']}
+                    onChange={handleThumbnailDialogFileChange}
+                  />
+                </div>
+
+                {thumbnailDialogPreviewUrl ? (
+                  <div className={styles['thumbnail-dialog-preview']}>
+                    <img src={thumbnailDialogPreviewUrl} alt="" />
+                  </div>
+                ) : null}
+              </DialogContent>
+              <DialogActions>
+                <button type="button" onClick={closeThumbnailDialog} className="cancel-button">
+                  취소
+                </button>
+                <button type="button" onClick={applyThumbnailDialogImage} disabled={!thumbnailDialogFile}>
+                  이미지 업로드
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={galleryDialogOpen}
+              onClose={closeGalleryDialog}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            >
+              <h2>갤러리 이미지 업로드</h2>
+              <button className="close-button" onClick={closeGalleryDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>
+                {galleryDialogMessage ? (
+                  <DialogContentText className={styles['thumbnail-dialog-message']}>
+                    {galleryDialogMessage}
+                  </DialogContentText>
+                ) : null}
+
+                <div className={styles['thumbnail-uploader']}>
+                  <button
+                    type="button"
+                    onClick={() => galleryDialogInputReference.current?.click()}
+                    className={styles['thumbnail-upload-button']}
+                  >
+                    <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
+                    <CollectionsOutlinedIcon />
+                  </button>
+
+                  <input
+                    ref={galleryDialogInputReference}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    className={styles['thumbnail-file-input']}
+                    onChange={handleGalleryDialogFileChange}
+                  />
+                </div>
+
+                {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
+                  <div className={styles['gallery-dialog-preview']}>
+                    {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
+                      if ('file' in image) {
+                        return (
+                          <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryDialogBlobImage(image.id)}
+                              aria-label="이미지 삭제"
+                              className={styles['gallery-dialog-remove-button']}
+                            >
+                              <CloseRoundedIcon />
+                            </button>
+                            <img src={image.previewUrl} alt="" />
+                          </div>
+                        );
+                      }
+
                       return (
-                        <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                        <div key={image.path} className={styles['gallery-dialog-preview-image']}>
                           <button
                             type="button"
-                            onClick={() => removeGalleryDialogBlobImage(image.id)}
+                            onClick={() => removeGalleryDialogServerImage(image.path)}
                             aria-label="이미지 삭제"
                             className={styles['gallery-dialog-remove-button']}
                           >
                             <CloseRoundedIcon />
                           </button>
-                          <img src={image.previewUrl} alt="" />
+                          <img src={image.url} alt="" />
                         </div>
                       );
-                    }
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              <div className={styles['drawer-dialog-actions']}>
+                <button type="button" onClick={closeGalleryDialog} className="button medium cancel">
+                  취소
+                </button>
+                <button
+                  type="button"
+                  onClick={applyGalleryDialogImages}
+                  disabled={galleryDialogImageCount === 0}
+                  className="button medium submit"
+                >
+                  이미지 업로드
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={galleryDialogOpen}
+              onClose={closeGalleryDialog}
+              className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}
+            >
+              <DialogTitle>갤러리 이미지 업로드</DialogTitle>
+              <DialogContent className={styles['thumbnail-dialog-content']}>
+                {galleryDialogMessage ? (
+                  <DialogContentText className={styles['thumbnail-dialog-message']}>
+                    {galleryDialogMessage}
+                  </DialogContentText>
+                ) : null}
 
-                    return (
-                      <div key={image.path}>
-                        <button
-                          type="button"
-                          onClick={() => removeGalleryDialogServerImage(image.path)}
-                          aria-label="이미지 삭제"
-                          className={styles['gallery-dialog-remove-button']}
-                        >
-                          <CloseRoundedIcon />
-                        </button>
-                        <img src={image.url} alt="" />
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </DialogContent>
-            <DialogActions>
-              <button type="button" onClick={closeGalleryDialog} className="cancel-button">
-                취소
-              </button>
-              <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
-                이미지 업로드
-              </button>
-            </DialogActions>
-          </Dialog>
+                <div className={styles['thumbnail-uploader']}>
+                  <button
+                    type="button"
+                    onClick={() => galleryDialogInputReference.current?.click()}
+                    className={styles['thumbnail-upload-button']}
+                  >
+                    <span>{`이미지 추가 ${galleryDialogImageCount}/${MAX_GALLERY_IMAGE_COUNT}`}</span>
+                    <CollectionsOutlinedIcon />
+                  </button>
 
-          <Dialog
-            open={pollDialogOpen}
-            onClose={closePollDialog}
-            fullWidth={true}
-            maxWidth="sm"
-            className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
-          >
-            <DialogTitle>투표 설정</DialogTitle>
-            <DialogContent className={styles['poll-dialog-content']}>
-              {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
-
-              <div className={styles['form-group']}>
-                <div className={styles['form-control']}>
                   <input
-                    type="text"
-                    value={pollDialog.question}
-                    placeholder="투표 질문을 입력해주세요"
-                    onChange={(event) => {
-                      const nextQuestion = event.currentTarget.value;
-
-                      setPollDialog((previousPoll) => ({
-                        ...previousPoll,
-                        question: nextQuestion,
-                      }));
-                    }}
+                    ref={galleryDialogInputReference}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    multiple
+                    className={styles['thumbnail-file-input']}
+                    onChange={handleGalleryDialogFileChange}
                   />
                 </div>
-                <FormControlLabel
-                  label="항목에 이미지 등록"
-                  className="vh-checkbox"
-                  control={
-                    <Checkbox
-                      checked={pollDialog.useOptionThumbnail}
-                      onChange={(event) =>
-                        setPollDialog((previousPoll) => ({
-                          ...previousPoll,
-                          useOptionThumbnail: event.target.checked,
-                        }))
-                      }
-                    />
-                  }
-                />
-              </div>
 
-              <div className={styles['poll-options']}>
-                {pollDialog.options.map((option, index) => (
-                  <div key={index} className={styles['poll-option']}>
-                    <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
-                    <div className={styles['form-control']}>
-                      <input
-                        id={`poll-option-${index}`}
-                        placeholder="항목을 입력해주세요"
-                        type="text"
-                        value={option.label}
-                        onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
-                      />
-                    </div>
-
-                    {pollDialog.useOptionThumbnail ? (
-                      <div className={styles['poll-option-image']}>
-                        {option.imagePreviewUrl || option.imageUrl ? (
-                          <div className={styles['poll-option-image-preview']}>
-                            <button type="button" onClick={() => removePollOptionImage(index)}>
+                {galleryDialogImages.length > 0 || galleryDialogBlobImages.length > 0 ? (
+                  <div className={styles['gallery-dialog-preview']}>
+                    {[...galleryDialogBlobImages, ...galleryDialogImages].map((image) => {
+                      if ('file' in image) {
+                        return (
+                          <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+                            <button
+                              type="button"
+                              onClick={() => removeGalleryDialogBlobImage(image.id)}
+                              aria-label="이미지 삭제"
+                              className={styles['gallery-dialog-remove-button']}
+                            >
                               <CloseRoundedIcon />
                             </button>
-                            <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                            <img src={image.previewUrl} alt="" />
                           </div>
-                        ) : (
-                          <div className={styles['poll-option-image-upload']}>
-                            <button type="button">
-                              <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
-                                <InsertPhotoOutlinedIcon />
-                              </label>
-                            </button>
-                            <input
-                              id={`poll-option-image-${index}`}
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp"
-                              onChange={(event) => handlePollOptionImageChange(index, event)}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
+                        );
+                      }
+
+                      return (
+                        <div key={image.path} className={styles['gallery-dialog-preview-image']}>
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryDialogServerImage(image.path)}
+                            aria-label="이미지 삭제"
+                            className={styles['gallery-dialog-remove-button']}
+                          >
+                            <CloseRoundedIcon />
+                          </button>
+                          <img src={image.url} alt="" />
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                ) : null}
+              </DialogContent>
+              <DialogActions>
+                <button type="button" onClick={closeGalleryDialog} className="cancel-button">
+                  취소
+                </button>
+                <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
+                  이미지 업로드
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
-              <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
-                <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
-                <RadioGroup
-                  row
-                  className="vh-radio"
-                  aria-labelledby="poll-anonymity-label"
-                  value={pollDialog.anonymity}
-                  onChange={(event) =>
-                    setPollDialog((previousPoll) => ({
-                      ...previousPoll,
-                      anonymity: event.target.value as PollAnonymity,
-                    }))
-                  }
-                >
-                  <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
-                  <FormControlLabel value="named" control={<Radio />} label="기명" />
-                </RadioGroup>
-              </FormControl>
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={pollDialogOpen}
+              onClose={closePollDialog}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
+            >
+              <h2>투표 설정</h2>
+              <button className="close-button" onClick={closePollDialog} aria-label="닫기">
+                <CloseRoundedIcon />
+              </button>
+              <div className={`VhiDrawer-bottom-content ${styles['poll-dialog-content']}`}>
+                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
 
-              <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
-                <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
-                <RadioGroup
-                  row
-                  className="vh-radio"
-                  aria-labelledby="poll-end-type-label"
-                  value={pollDialog.endType}
-                  onChange={(event) =>
-                    setPollDialog((previousPoll) => ({
-                      ...previousPoll,
-                      endType: event.target.value as PollEndType,
-                    }))
-                  }
-                >
-                  <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
-                  <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
-                </RadioGroup>
-              </FormControl>
+                <div className={styles['form-group']}>
+                  <div className={styles['form-control']}>
+                    <input
+                      type="text"
+                      value={pollDialog.question}
+                      placeholder="투표 질문을 입력해주세요"
+                      onChange={(event) => {
+                        const nextQuestion = event.currentTarget.value;
 
-              {pollDialog.endType === 'absolute' ? (
-                <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
-                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                    <DateTimePicker
-                      value={pollDialog.absoluteEndAt}
-                      onChange={(value) =>
                         setPollDialog((previousPoll) => ({
                           ...previousPoll,
-                          absoluteEndAt: value,
-                        }))
-                      }
-                      ampm={false}
-                      views={['year', 'month', 'day', 'hours', 'minutes']}
-                      format="yyyy년 MM월 dd일 hh시 m분"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                        },
+                          question: nextQuestion,
+                        }));
                       }}
                     />
-                  </LocalizationProvider>
-                  <span>에 종료</span>
+                  </div>
+                  <FormControlLabel
+                    label="항목에 이미지 등록"
+                    className="vh-checkbox"
+                    control={
+                      <Checkbox
+                        checked={pollDialog.useOptionThumbnail}
+                        onChange={(event) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            useOptionThumbnail: event.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                  />
                 </div>
-              ) : null}
 
-              {pollDialog.endType === 'relative' ? (
-                <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
-                  <Select
-                    value={String(pollDialog.relativeDays)}
-                    onChange={(event: SelectChangeEvent) =>
+                <div className={styles['poll-options']}>
+                  {pollDialog.options.map((option, index) => (
+                    <div key={index} className={styles['poll-option']}>
+                      <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                      <div className={styles['form-control']}>
+                        <input
+                          id={`poll-option-${index}`}
+                          placeholder="항목을 입력해주세요"
+                          type="text"
+                          value={option.label}
+                          onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                        />
+                      </div>
+
+                      {pollDialog.useOptionThumbnail ? (
+                        <div className={styles['poll-option-image']}>
+                          {option.imagePreviewUrl || option.imageUrl ? (
+                            <div className={styles['poll-option-image-preview']}>
+                              <button type="button" onClick={() => removePollOptionImage(index)}>
+                                <CloseRoundedIcon />
+                              </button>
+                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                            </div>
+                          ) : (
+                            <div className={styles['poll-option-image-upload']}>
+                              <button type="button">
+                                <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                                  <InsertPhotoOutlinedIcon />
+                                </label>
+                              </button>
+                              <input
+                                id={`poll-option-image-${index}`}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(event) => handlePollOptionImageChange(index, event)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+
+                <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                  <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="poll-anonymity-label"
+                    value={pollDialog.anonymity}
+                    onChange={(event) =>
                       setPollDialog((previousPoll) => ({
                         ...previousPoll,
-                        relativeDays: Number(event.target.value),
+                        anonymity: event.target.value as PollAnonymity,
                       }))
                     }
-                    size="small"
                   >
-                    {Array.from({ length: 8 }, (_, index) => (
-                      <MenuItem key={index} value={String(index)}>
-                        {index}일
-                      </MenuItem>
-                    ))}
-                  </Select>
+                    <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
+                    <FormControlLabel value="named" control={<Radio />} label="기명" />
+                  </RadioGroup>
+                </FormControl>
 
-                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                    <TimePicker
-                      value={pollDialog.relativeTime}
-                      className={styles['poll-relative-time-picker']}
-                      onChange={(value) =>
+                <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                  <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="poll-end-type-label"
+                    value={pollDialog.endType}
+                    onChange={(event) =>
+                      setPollDialog((previousPoll) => ({
+                        ...previousPoll,
+                        endType: event.target.value as PollEndType,
+                      }))
+                    }
+                  >
+                    <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
+                    <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
+                  </RadioGroup>
+                </FormControl>
+
+                {pollDialog.endType === 'absolute' ? (
+                  <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <DateTimePicker
+                        value={pollDialog.absoluteEndAt}
+                        onChange={(value) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            absoluteEndAt: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['year', 'month', 'day', 'hours', 'minutes']}
+                        format="yyyy년 MM월 dd일 hh시 m분"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>에 종료</span>
+                  </div>
+                ) : null}
+
+                {pollDialog.endType === 'relative' ? (
+                  <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
+                    <Select
+                      value={String(pollDialog.relativeDays)}
+                      onChange={(event: SelectChangeEvent) =>
                         setPollDialog((previousPoll) => ({
                           ...previousPoll,
-                          relativeTime: value,
+                          relativeDays: Number(event.target.value),
                         }))
                       }
-                      ampm={false}
-                      views={['hours', 'minutes']}
-                      format="H시간 mm분"
-                      slotProps={{
-                        textField: {
-                          size: 'small',
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                  <span>후에 종료</span>
-                </div>
-              ) : null}
-            </DialogContent>
-            <DialogActions>
-              {isPollEnabled ? (
-                <button type="button" onClick={removePoll} className="delete-button">
-                  투표 삭제
-                </button>
-              ) : null}
-              <button type="button" onClick={closePollDialog} className="cancel-button">
-                취소
-              </button>
-              <button type="button" onClick={applyPollDialog}>
-                투표 설정
-              </button>
-            </DialogActions>
-          </Dialog>
+                      size="small"
+                    >
+                      {Array.from({ length: 8 }, (_, index) => (
+                        <MenuItem key={index} value={String(index)}>
+                          {index}일
+                        </MenuItem>
+                      ))}
+                    </Select>
 
-          <Dialog
-            open={drawDialogOpen}
-            onClose={closeDrawDialog}
-            fullWidth={true}
-            maxWidth="sm"
-            className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
-          >
-            <DialogTitle>추첨 이벤트 설정</DialogTitle>
-            <DialogContent className={styles['draw-dialog-content']}>
-              {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
-
-              <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
-                <FormLabel id="draw-type-label">추첨 방식</FormLabel>
-                <RadioGroup
-                  row
-                  className="vh-radio"
-                  aria-labelledby="draw-type-label"
-                  value={drawDialog.type}
-                  onChange={(event) =>
-                    setDrawDialog((previousDraw) => ({
-                      ...previousDraw,
-                      type: event.target.value as DrawType,
-                      endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
-                    }))
-                  }
-                >
-                  <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
-                  <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
-                </RadioGroup>
-              </FormControl>
-
-              <div className={`${styles['form-group']} vh-form-control`}>
-                <NumberField
-                  label="당첨 인원수"
-                  min={1}
-                  value={drawDialog.limit}
-                  size="small"
-                  onValueChange={(value) =>
-                    setDrawDialog((previousDraw) => ({
-                      ...previousDraw,
-                      limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
-                    }))
-                  }
-                />
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <TimePicker
+                        value={pollDialog.relativeTime}
+                        className={styles['poll-relative-time-picker']}
+                        onChange={(value) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            relativeTime: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['hours', 'minutes']}
+                        format="H시간 mm분"
+                        slotProps={{
+                          textField: {
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>후에 종료</span>
+                  </div>
+                ) : null}
               </div>
+              <div className={styles['drawer-dialog-actions']}>
+                {isPollEnabled ? (
+                  <button type="button" onClick={removePoll} className="button medium danger">
+                    투표 삭제
+                  </button>
+                ) : null}
+                <button type="button" onClick={closePollDialog} className="button medium cancel">
+                  취소
+                </button>
+                <button type="button" onClick={applyPollDialog} className="button medium submit">
+                  이미지 업로드
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={pollDialogOpen}
+              onClose={closePollDialog}
+              fullWidth={true}
+              maxWidth="sm"
+              className={`vh-dialog vh-alert-dialog ${styles['poll-dialog']}`}
+            >
+              <DialogTitle>투표 설정</DialogTitle>
+              <DialogContent className={styles['poll-dialog-content']}>
+                {pollDialogMessage ? <DialogContentText>{pollDialogMessage}</DialogContentText> : null}
 
-              {drawDialog.type === 'random' ? (
-                <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
-                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                    <DateTimePicker
-                      value={drawDialog.endsAt}
-                      onChange={(value) =>
-                        setDrawDialog((previousDraw) => ({
-                          ...previousDraw,
-                          endsAt: value,
-                        }))
-                      }
-                      ampm={false}
-                      views={['year', 'month', 'day', 'hours', 'minutes']}
-                      format="yyyy년 MM월 dd일 hh시 m분"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                        },
+                <div className={styles['form-group']}>
+                  <div className={styles['form-control']}>
+                    <input
+                      type="text"
+                      value={pollDialog.question}
+                      placeholder="투표 질문을 입력해주세요"
+                      onChange={(event) => {
+                        const nextQuestion = event.currentTarget.value;
+
+                        setPollDialog((previousPoll) => ({
+                          ...previousPoll,
+                          question: nextQuestion,
+                        }));
                       }}
                     />
-                  </LocalizationProvider>
-                  <span>에 마감</span>
+                  </div>
+                  <FormControlLabel
+                    label="항목에 이미지 등록"
+                    className="vh-checkbox"
+                    control={
+                      <Checkbox
+                        checked={pollDialog.useOptionThumbnail}
+                        onChange={(event) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            useOptionThumbnail: event.target.checked,
+                          }))
+                        }
+                      />
+                    }
+                  />
                 </div>
-              ) : null}
-            </DialogContent>
-            <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
-              {isDrawEnabled ? (
-                <>
-                  <button type="button" onClick={removeDraw} className="delete-button">
-                    추첨 이벤트 삭제
+
+                <div className={styles['poll-options']}>
+                  {pollDialog.options.map((option, index) => (
+                    <div key={index} className={styles['poll-option']}>
+                      <label htmlFor={`poll-option-${index}`}>{index + 1}</label>
+                      <div className={styles['form-control']}>
+                        <input
+                          id={`poll-option-${index}`}
+                          placeholder="항목을 입력해주세요"
+                          type="text"
+                          value={option.label}
+                          onChange={(event) => updatePollDialogOptionLabel(index, event.currentTarget.value)}
+                        />
+                      </div>
+
+                      {pollDialog.useOptionThumbnail ? (
+                        <div className={styles['poll-option-image']}>
+                          {option.imagePreviewUrl || option.imageUrl ? (
+                            <div className={styles['poll-option-image-preview']}>
+                              <button type="button" onClick={() => removePollOptionImage(index)}>
+                                <CloseRoundedIcon />
+                              </button>
+                              <img src={option.imagePreviewUrl || option.imageUrl} alt="" />
+                            </div>
+                          ) : (
+                            <div className={styles['poll-option-image-upload']}>
+                              <button type="button">
+                                <label htmlFor={`poll-option-image-${index}`} aria-label="이미지 선택">
+                                  <InsertPhotoOutlinedIcon />
+                                </label>
+                              </button>
+                              <input
+                                id={`poll-option-image-${index}`}
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(event) => handlePollOptionImageChange(index, event)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+
+                <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                  <FormLabel id="poll-anonymity-label">투표 방식</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="poll-anonymity-label"
+                    value={pollDialog.anonymity}
+                    onChange={(event) =>
+                      setPollDialog((previousPoll) => ({
+                        ...previousPoll,
+                        anonymity: event.target.value as PollAnonymity,
+                      }))
+                    }
+                  >
+                    <FormControlLabel value="anonymous" control={<Radio />} label="무기명" />
+                    <FormControlLabel value="named" control={<Radio />} label="기명" />
+                  </RadioGroup>
+                </FormControl>
+
+                <FormControl className={`${styles['poll-end-type']} vh-form-control`}>
+                  <FormLabel id="poll-end-type-label">투표 마감 설정</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="poll-end-type-label"
+                    value={pollDialog.endType}
+                    onChange={(event) =>
+                      setPollDialog((previousPoll) => ({
+                        ...previousPoll,
+                        endType: event.target.value as PollEndType,
+                      }))
+                    }
+                  >
+                    <FormControlLabel value="absolute" control={<Radio />} label="절대 시간 설정" />
+                    <FormControlLabel value="relative" control={<Radio />} label="상대 시간 설정" />
+                  </RadioGroup>
+                </FormControl>
+
+                {pollDialog.endType === 'absolute' ? (
+                  <div className={`${styles['poll-setting-end']} ${styles['poll-absolute-end']}`}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <DateTimePicker
+                        value={pollDialog.absoluteEndAt}
+                        onChange={(value) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            absoluteEndAt: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['year', 'month', 'day', 'hours', 'minutes']}
+                        format="yyyy년 MM월 dd일 hh시 m분"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>에 종료</span>
+                  </div>
+                ) : null}
+
+                {pollDialog.endType === 'relative' ? (
+                  <div className={`${styles['poll-setting-end']} ${styles['poll-relative-end']} vh-form-control`}>
+                    <Select
+                      value={String(pollDialog.relativeDays)}
+                      onChange={(event: SelectChangeEvent) =>
+                        setPollDialog((previousPoll) => ({
+                          ...previousPoll,
+                          relativeDays: Number(event.target.value),
+                        }))
+                      }
+                      size="small"
+                    >
+                      {Array.from({ length: 8 }, (_, index) => (
+                        <MenuItem key={index} value={String(index)}>
+                          {index}일
+                        </MenuItem>
+                      ))}
+                    </Select>
+
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <TimePicker
+                        value={pollDialog.relativeTime}
+                        className={styles['poll-relative-time-picker']}
+                        onChange={(value) =>
+                          setPollDialog((previousPoll) => ({
+                            ...previousPoll,
+                            relativeTime: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['hours', 'minutes']}
+                        format="H시간 mm분"
+                        slotProps={{
+                          textField: {
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>후에 종료</span>
+                  </div>
+                ) : null}
+              </DialogContent>
+              <DialogActions>
+                {isPollEnabled ? (
+                  <button type="button" onClick={removePoll} className="delete-button">
+                    투표 삭제
                   </button>
-                  <div className="complex-button">
+                ) : null}
+                <button type="button" onClick={closePollDialog} className="cancel-button">
+                  취소
+                </button>
+                <button type="button" onClick={applyPollDialog}>
+                  투표 설정
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={drawDialogOpen}
+              onClose={closeDrawDialog}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+            >
+              <h2>추첨 이벤트 설정</h2>
+              <button className="close-button" onClick={closeDrawDialog} aria-label="추첨 이벤트 설정 닫기">
+                <CloseRoundedIcon />
+              </button>
+              <div className={`VhiDrawer-bottom-content ${styles['draw-dialog-content']}`}>
+                {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
+
+                <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
+                  <FormLabel id="draw-type-label">추첨 방식</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="draw-type-label"
+                    value={drawDialog.type}
+                    onChange={(event) =>
+                      setDrawDialog((previousDraw) => ({
+                        ...previousDraw,
+                        type: event.target.value as DrawType,
+                        endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
+                      }))
+                    }
+                  >
+                    <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
+                    <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
+                  </RadioGroup>
+                </FormControl>
+
+                <div className={`${styles['form-group']} vh-form-control`}>
+                  <NumberField
+                    label="당첨 인원수"
+                    min={1}
+                    value={drawDialog.limit}
+                    size="small"
+                    onValueChange={(value) =>
+                      setDrawDialog((previousDraw) => ({
+                        ...previousDraw,
+                        limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
+                      }))
+                    }
+                  />
+                </div>
+
+                {drawDialog.type === 'random' ? (
+                  <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <DateTimePicker
+                        value={drawDialog.endsAt}
+                        onChange={(value) =>
+                          setDrawDialog((previousDraw) => ({
+                            ...previousDraw,
+                            endsAt: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['year', 'month', 'day', 'hours', 'minutes']}
+                        format="yyyy년 MM월 dd일 hh시 m분"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>에 마감</span>
+                  </div>
+                ) : null}
+              </div>
+              <div className={styles['drawer-dialog-actions']}>
+                {isDrawEnabled ? (
+                  <>
+                    <button type="button" onClick={removeDraw} className="button medium danger">
+                      추첨 이벤트 삭제
+                    </button>
+                    <div className="complex-button">
+                      <button type="button" onClick={closeDrawDialog} className="button medium cancel">
+                        취소
+                      </button>
+                      <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                        추첨 이벤트 설정
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={closeDrawDialog} className="button medium cancel">
+                      취소
+                    </button>
+                    <button type="button" onClick={applyDrawDialog} className="button medium submit">
+                      추첨 이벤트 설정
+                    </button>
+                  </>
+                )}
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={drawDialogOpen}
+              onClose={closeDrawDialog}
+              fullWidth={true}
+              maxWidth="sm"
+              className={`vh-dialog vh-alert-dialog ${styles['draw-dialog']}`}
+            >
+              <DialogTitle>추첨 이벤트 설정</DialogTitle>
+              <DialogContent className={styles['draw-dialog-content']}>
+                {drawDialogMessage ? <DialogContentText>{drawDialogMessage}</DialogContentText> : null}
+
+                <FormControl className={`${styles['draw-end-at']} vh-form-control`}>
+                  <FormLabel id="draw-type-label">추첨 방식</FormLabel>
+                  <RadioGroup
+                    row
+                    className="vh-radio"
+                    aria-labelledby="draw-type-label"
+                    value={drawDialog.type}
+                    onChange={(event) =>
+                      setDrawDialog((previousDraw) => ({
+                        ...previousDraw,
+                        type: event.target.value as DrawType,
+                        endsAt: event.target.value === 'first_come' ? null : previousDraw.endsAt,
+                      }))
+                    }
+                  >
+                    <FormControlLabel value="first_come" control={<Radio />} label="선착순" />
+                    <FormControlLabel value="random" control={<Radio />} label="마감 후 무작위 추첨" />
+                  </RadioGroup>
+                </FormControl>
+
+                <div className={`${styles['form-group']} vh-form-control`}>
+                  <NumberField
+                    label="당첨 인원수"
+                    min={1}
+                    value={drawDialog.limit}
+                    size="small"
+                    onValueChange={(value) =>
+                      setDrawDialog((previousDraw) => ({
+                        ...previousDraw,
+                        limit: typeof value === 'number' && Number.isFinite(value) ? value : 1,
+                      }))
+                    }
+                  />
+                </div>
+
+                {drawDialog.type === 'random' ? (
+                  <div className={`${styles['draw-setting-end']} ${styles['draw-absolute-end']} vh-form-control`}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <DateTimePicker
+                        value={drawDialog.endsAt}
+                        onChange={(value) =>
+                          setDrawDialog((previousDraw) => ({
+                            ...previousDraw,
+                            endsAt: value,
+                          }))
+                        }
+                        ampm={false}
+                        views={['year', 'month', 'day', 'hours', 'minutes']}
+                        format="yyyy년 MM월 dd일 hh시 m분"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <span>에 마감</span>
+                  </div>
+                ) : null}
+              </DialogContent>
+              <DialogActions className={isDrawEnabled ? 'complex-buttons' : undefined}>
+                {isDrawEnabled ? (
+                  <>
+                    <button type="button" onClick={removeDraw} className="delete-button">
+                      추첨 이벤트 삭제
+                    </button>
+                    <div className="complex-button">
+                      <button type="button" onClick={closeDrawDialog} className="cancel-button">
+                        취소
+                      </button>
+                      <button type="button" onClick={applyDrawDialog}>
+                        추첨 이벤트 설정
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
                     <button type="button" onClick={closeDrawDialog} className="cancel-button">
                       취소
                     </button>
                     <button type="button" onClick={applyDrawDialog}>
                       추첨 이벤트 설정
                     </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button type="button" onClick={closeDrawDialog} className="cancel-button">
-                    취소
-                  </button>
-                  <button type="button" onClick={applyDrawDialog}>
-                    추첨 이벤트 설정
-                  </button>
-                </>
-              )}
-            </DialogActions>
-          </Dialog>
+                  </>
+                )}
+              </DialogActions>
+            </Dialog>
+          )}
 
-          <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
-            <DialogTitle>{accessDialog.title}</DialogTitle>
-            <DialogContent>
-              <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              {accessDialog.cancelLabel ? (
-                <button type="button" onClick={accessDialog.onCancel}>
-                  {accessDialog.cancelLabel}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={accessDialog.open}
+              onClose={accessDialog.onCancel}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
+            >
+              <h2>투표 설정</h2>
+              <button className="close-button" onClick={accessDialog.onCancel} aria-label="투표 설정 닫기">
+                <CloseRoundedIcon />
+              </button>
+              <p style={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</p>
+              <div className={styles['drawer-dialog-actions']}>
+                {accessDialog.cancelLabel ? (
+                  <button type="button" onClick={accessDialog.onCancel} className="button medium cancel">
+                    {accessDialog.cancelLabel}
+                  </button>
+                ) : null}
+
+                <button type="button" onClick={accessDialog.onConfirm} className="button medium submit">
+                  {accessDialog.confirmLabel}
                 </button>
-              ) : null}
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
+              <DialogTitle>{accessDialog.title}</DialogTitle>
+              <DialogContent>
+                <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                {accessDialog.cancelLabel ? (
+                  <button type="button" onClick={accessDialog.onCancel}>
+                    {accessDialog.cancelLabel}
+                  </button>
+                ) : null}
 
-              <button type="button" onClick={accessDialog.onConfirm}>
-                {accessDialog.confirmLabel}
-              </button>
-            </DialogActions>
-          </Dialog>
+                <button type="button" onClick={accessDialog.onConfirm}>
+                  {accessDialog.confirmLabel}
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
-          <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
-            <DialogContent>
-              <DialogContentText>{alertMessage}</DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <button type="button" onClick={() => setAlertMessage('')}>
-                확인
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(alertMessage)}
+              onClose={() => setAlertMessage('')}
+              className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+            >
+              <h2>{alertMessage}</h2>
+              <button className="close-button" onClick={() => setAlertMessage('')} aria-label={`${alertMessage} 닫기`}>
+                <CloseRoundedIcon />
               </button>
-            </DialogActions>
-          </Dialog>
+              <p>{alertMessage}</p>
+              <div className={styles['drawer-dialog-actions']}>
+                <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
+                  확인
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+              <DialogContent>
+                <DialogContentText>{alertMessage}</DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <button type="button" onClick={() => setAlertMessage('')}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
       </div>
     </Container>

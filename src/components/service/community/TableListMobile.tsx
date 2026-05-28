@@ -5,7 +5,8 @@ import { useParams, usePathname } from 'next/navigation';
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import { Menu, MenuItem } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Drawer, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -71,6 +72,10 @@ export default function TableListMobile() {
   const [writeBoards, setWriteBoards] = useState<BoardItem[]>([]);
   const [alertMessage, setAlertMessage] = useState('');
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const isMenuOpen = Boolean(menuAnchorEl);
 
@@ -201,16 +206,36 @@ export default function TableListMobile() {
         <i />
       )}
 
-      <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
-        <DialogContent>
-          <DialogContentText>{alertMessage}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAlertMessage('')} variant="contained">
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(alertMessage)}
+          onClose={() => setAlertMessage('')}
+          className={`VhiDrawer-bottom VhiDrawer-bottom-service `}
+        >
+          <h2>{alertMessage}</h2>
+          <button className="close-button" onClick={() => setAlertMessage('')} aria-label={`${alertMessage} 닫기`}>
+            <CloseRoundedIcon />
+          </button>
+          <p>{alertMessage}</p>
+          <div className={styles['drawer-dialog-actions']}>
+            <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog open={Boolean(alertMessage)} onClose={() => setAlertMessage('')} className="vh-dialog">
+          <DialogContent>
+            <DialogContentText>{alertMessage}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAlertMessage('')} variant="contained">
+              확인
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

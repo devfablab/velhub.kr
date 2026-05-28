@@ -7,8 +7,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CommentForm from '@/components/comments/CommentForm';
 import styles from '@/app/comments.module.sass';
+import { Drawer, useMediaQuery, useTheme } from '@mui/material';
 
 type AuthorRole =
   | 'owner'
@@ -156,6 +158,10 @@ export default function CommentItem({
 
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const confirmDialog = (() => {
     if (confirmAction === 'delete') {
@@ -358,25 +364,53 @@ export default function CommentItem({
         ) : null}
       </div>
 
-      <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
-        <DialogTitle>{confirmDialog.title}</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">
-            취소
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(confirmAction)}
+          onClose={() => setConfirmAction(null)}
+          className={`VhiDrawer-bottom VhiDrawer-bottom-service`}
+        >
+          <h2>추첨 이벤트 설정</h2>
+          <button className="close-button" onClick={() => setConfirmAction(null)} aria-label="추첨 이벤트 설정 닫기">
+            <CloseRoundedIcon />
           </button>
-          <button
-            type="button"
-            onClick={() => void confirmDialog.onConfirm()}
-            disabled={isSubmitting}
-            className={confirmDialog.confirmClassName}
-          >
-            {confirmDialog.confirmLabel}
-          </button>
-        </DialogActions>
-      </Dialog>
+          <p style={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</p>
+          <div className={styles['drawer-dialog-actions']}>
+            <button type="button" onClick={() => setConfirmAction(null)} className="button medium cancel">
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmDialog.onConfirm()}
+              disabled={isSubmitting}
+              className="button medium submit"
+            >
+              {confirmDialog.confirmLabel}
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
+          <DialogTitle>{confirmDialog.title}</DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmDialog.onConfirm()}
+              disabled={isSubmitting}
+              className={confirmDialog.confirmClassName}
+            >
+              {confirmDialog.confirmLabel}
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

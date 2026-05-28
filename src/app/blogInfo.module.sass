@@ -87,13 +87,14 @@
       letter-spacing: -.05em
 
     .member-items
-      display: flex
+      display: grid
+      grid-template-columns: repeat(1, 1fr)
       gap: ds.rem(12)
       width: 100%
       letter-spacing: -.025em
 
-      @include ds.mq(maxSmall)
-        flex-direction: column
+      @include ds.mq(minMedium)
+        grid-template-columns: repeat(2, 1fr)
 
     .member-item
       display: flex

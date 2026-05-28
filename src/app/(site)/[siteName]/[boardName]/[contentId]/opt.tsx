@@ -937,9 +937,9 @@ export default function Opt({ isCommunity }: Props) {
                       fullScreen
                       className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
                     >
-                      <DialogTitle
-                        className={styles['dialog-title']}
-                      >{`${galleryViewerIndex + 1}번째 이미지`}</DialogTitle>
+                      <DialogTitle className={styles['dialog-title']}>
+                        {`${galleryViewerIndex + 1}번째 이미지`}
+                      </DialogTitle>
                       <DialogContent className={styles['dialog-content']}>
                         <img src={content.images[galleryViewerIndex].url} alt="" />
                       </DialogContent>

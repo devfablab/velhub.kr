@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
-import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/aside.module.sass';
@@ -52,6 +53,10 @@ export default function UserInfo() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [nickname, setNickname] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const trimmedNickname = useMemo(() => normalizeText(nickname), [nickname]);
 
@@ -247,57 +252,118 @@ export default function UserInfo() {
         </div>
       </div>
 
-      <Dialog
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        fullWidth
-        maxWidth="xs"
-        className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
-      >
-        <DialogTitle>프로필 설정</DialogTitle>
-        <DialogContent className={styles['info-content']}>
-          {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
-          <div className={styles['form-group']}>
-            <cite>
-              {userInfo.activityName} <span>(데브허브 활동명)</span>
-            </cite>
-            <div className={styles['form-control']}>
-              <input type="text" value={nickname} onChange={handleNicknameChange} placeholder="별명을 입력하세요" />
-            </div>
-            <div className={styles.misc}>
-              <div className={styles.role}>
-                <span>{roleLabel}</span>
-                {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+        >
+          <h2>프로필 설정</h2>
+          <button className="close-button" onClick={handleCloseDialog} aria-label="프로필 설정 닫기">
+            <CloseRoundedIcon />
+          </button>
+          <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
+            {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
+            <div className={styles['form-group']}>
+              <cite>
+                {userInfo.activityName} <span>(데브허브 활동명)</span>
+              </cite>
+              <div className={styles['form-control']}>
+                <input type="text" value={nickname} onChange={handleNicknameChange} placeholder="별명을 입력하세요" />
               </div>
-              <time>({formatDate(userInfo.joinedAt)} 가입)</time>
+              <div className={styles.misc}>
+                <div className={styles.role}>
+                  <span>{roleLabel}</span>
+                  {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                </div>
+                <time>({formatDate(userInfo.joinedAt)} 가입)</time>
+              </div>
             </div>
+            <dl className={styles['info-user-detail']}>
+              <div>
+                <dt>방문</dt>
+                <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
+              </div>
+
+              <div>
+                <dt>작성글</dt>
+                <dd>{userInfo.postCount.toLocaleString()} 개</dd>
+              </div>
+
+              <div>
+                <dt>작성댓글</dt>
+                <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
+              </div>
+            </dl>
           </div>
-          <dl className={styles['info-user-detail']}>
-            <div>
-              <dt>방문</dt>
-              <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
+          <div className={styles['drawer-dialog-actions']}>
+            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button medium cancel">
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit || isSubmitting}
+              className="button medium submit"
+            >
+              확인
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          fullWidth
+          maxWidth="xs"
+          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
+        >
+          <DialogTitle>프로필 설정</DialogTitle>
+          <DialogContent className={styles['info-content']}>
+            {dialogErrorMessage ? <p>{dialogErrorMessage}</p> : null}
+            <div className={styles['form-group']}>
+              <cite>
+                {userInfo.activityName} <span>(데브허브 활동명)</span>
+              </cite>
+              <div className={styles['form-control']}>
+                <input type="text" value={nickname} onChange={handleNicknameChange} placeholder="별명을 입력하세요" />
+              </div>
+              <div className={styles.misc}>
+                <div className={styles.role}>
+                  <span>{roleLabel}</span>
+                  {roleIconUrl ? <img src={roleIconUrl} alt={roleLabel} /> : null}
+                </div>
+                <time>({formatDate(userInfo.joinedAt)} 가입)</time>
+              </div>
             </div>
+            <dl className={styles['info-user-detail']}>
+              <div>
+                <dt>방문</dt>
+                <dd>{userInfo.checkinCount.toLocaleString()} 회</dd>
+              </div>
 
-            <div>
-              <dt>작성글</dt>
-              <dd>{userInfo.postCount.toLocaleString()} 개</dd>
-            </div>
+              <div>
+                <dt>작성글</dt>
+                <dd>{userInfo.postCount.toLocaleString()} 개</dd>
+              </div>
 
-            <div>
-              <dt>작성댓글</dt>
-              <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
-            </div>
-          </dl>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="cancel-button">
-            취소
-          </button>
-          <button type="button" onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
-            확인
-          </button>
-        </DialogActions>
-      </Dialog>
+              <div>
+                <dt>작성댓글</dt>
+                <dd>{userInfo.commentCount.toLocaleString()} 개</dd>
+              </div>
+            </dl>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="cancel-button">
+              취소
+            </button>
+            <button type="button" onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }
