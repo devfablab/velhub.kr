@@ -686,13 +686,19 @@ export default function HeaderSite() {
                       ? [
                           <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
                             <Anchor href="/">
-                              <HomeIcon fontSize="small" />
+                              <HomeOutlinedIcon fontSize="small" />
                               <span>라운지 이동</span>
+                            </Anchor>
+                          </MenuItem>,
+                          <MenuItem key="hub" onClick={handleCloseProfileMenu}>
+                            <Anchor href="/hub">
+                              <HubOutlinedIcon fontSize="small" />
+                              <span>마이허브</span>
                             </Anchor>
                           </MenuItem>,
                           <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                             <Anchor href="/settings">
-                              <SettingsIcon fontSize="small" />
+                              <SettingsOutlinedIcon fontSize="small" />
                               <span>개인 설정</span>
                             </Anchor>
                           </MenuItem>,
