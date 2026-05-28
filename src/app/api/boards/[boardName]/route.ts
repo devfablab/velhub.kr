@@ -23,6 +23,13 @@ type BoardRow = {
   post_per_page: number | null;
 };
 
+type PageRow = {
+  id: string;
+  slug: string;
+  subject: string;
+  sort_order: number;
+};
+
 type PostImageRow = {
   path?: string | null;
   width?: number | null;
@@ -447,6 +454,28 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardData = board.data as BoardRow;
     const canWritePost = canWriteBlogPost(rhizome.data.site_type, session.case);
+
+    if (boardData.board_key === 'p' && boardData.board_type === 'page') {
+      const pageResult = await supabaseAdmin
+        .from('pages')
+        .select('id, slug, subject, sort_order')
+        .eq('site_id', rhizome.data.id)
+        .order('sort_order', { ascending: true });
+
+      if (pageResult.error) {
+        return Response.json({ error: '페이지 목록을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        board: boardData,
+        pages: (pageResult.data ?? []) as PageRow[],
+        actions: {
+          canPinPost: false,
+          canWritePost,
+        },
+        selectedSeries: null,
+      });
+    }
 
     let selectedSeries: SeriesRow | null = null;
 

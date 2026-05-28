@@ -598,9 +598,9 @@ export default function Opt() {
 
                   <button
                     type="button"
+                    className="button small action"
                     onClick={handleClickOgImageUpload}
                     disabled={isUploadingOgImage}
-                    className="button small action"
                   >
                     {ogImageUrl ? '이미지 교체' : '이미지 추가'}
                   </button>

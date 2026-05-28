@@ -104,7 +104,7 @@ export default function Opt() {
 
         setBoardName(statusResult.boardName);
 
-        const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}`, {
+        const boardResponse = await fetch(`/api/boards/${statusResult.boardName}?siteName=${siteName}&page=1`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -115,7 +115,7 @@ export default function Opt() {
           throw new Error(boardResult.error ?? '페이지 목록을 불러오지 못했습니다.');
         }
 
-        setPages(Array.isArray(boardResult.contents) ? (boardResult.contents as PageRow[]) : []);
+        setPages(Array.isArray(boardResult.pages) ? (boardResult.pages as PageRow[]) : []);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '페이지 목록을 불러오지 못했습니다.');
