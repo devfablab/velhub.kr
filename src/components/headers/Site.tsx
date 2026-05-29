@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
 import {
   Avatar,
   Box,
@@ -243,6 +243,7 @@ export default function HeaderSite() {
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const isManagePage = pathname === `/${siteName}/manage` || pathname.startsWith(`/${siteName}/manage/`);
 
@@ -272,6 +273,12 @@ export default function HeaderSite() {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
+
+  useEffect(() => {
+    const search = searchParams.toString();
+    const currentPath = search ? `${pathname}?${search}` : pathname;
+    sessionStorage.setItem('route:returnPath', currentPath);
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     async function loadHeader() {

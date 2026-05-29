@@ -35,6 +35,22 @@ header.header
       display: inline-flex
       align-items: center
 
+    .backlink
+      display: inline-flex
+      align-items: center
+      gap: ds.rem(7)
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      span
+        @include ds.fw(neo, 700)
+        font-size: ds.rem(16)
+        line-height: 1
+
   .iconbuttons
     display: flex
 

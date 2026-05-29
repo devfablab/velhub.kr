@@ -35,6 +35,7 @@ import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import styles from '@/app/header.module.sass';
+import { usePathname, useSearchParams } from 'next/navigation';
 
 type SiteType = 'blog' | 'community';
 
@@ -109,6 +110,15 @@ export default function HeaderHub() {
     email: null,
     avatarUrl: null,
   });
+
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const search = searchParams.toString();
+    const currentPath = search ? `${pathname}?${search}` : pathname;
+    sessionStorage.setItem('route:returnPath', currentPath);
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
