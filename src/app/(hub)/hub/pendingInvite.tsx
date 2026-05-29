@@ -89,7 +89,7 @@ export default function PendingInvite() {
                   <img src={invite.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    <AppIconAvatar src={invite.profilePictureUrl} alt="" size={52} />
+                    <AppIconAvatar src={invite.profilePictureUrl || null} alt="" size={52} />
                     <strong>{invite.siteLabel}</strong>
                   </>
                 )}

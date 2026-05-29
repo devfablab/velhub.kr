@@ -88,7 +88,7 @@ export default function FavoriteBlogs() {
                   <img src={blog.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    <AppIconAvatar src={blog.profilePictureUrl} alt={blog.siteLabel} size={58} />
+                    <AppIconAvatar src={blog.profilePictureUrl || null} alt={blog.siteLabel} size={58} />
                     <strong>{blog.siteLabel}</strong>
                   </>
                 )}

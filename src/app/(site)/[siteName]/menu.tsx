@@ -414,7 +414,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                     <img src={profileLogoUrl} alt={siteLabel} aria-hidden="true" />
                   ) : (
                     <>
-                      {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl} alt="" size={52} /> : null}
+                      {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl || null} alt="" size={52} /> : null}
                       {siteLabel}
                     </>
                   )}

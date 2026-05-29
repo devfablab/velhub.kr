@@ -69,7 +69,7 @@ export default function JoinSites({ siteType, joinSites }: Props) {
                   <img src={site.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    <AppIconAvatar src={site.profilePictureUrl} alt={site.site_label || ''} size={52} />
+                    <AppIconAvatar src={site.profilePictureUrl || null} alt={site.site_label || ''} size={52} />
                     <strong>{site.site_label}</strong>
                   </>
                 )}

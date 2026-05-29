@@ -89,7 +89,9 @@ export default function PendingJoin() {
                   <img src={join.profileLogoUrl} alt="" />
                 ) : (
                   <>
-                    {join.profilePictureUrl ? <AppIconAvatar src={join.profilePictureUrl} alt="" size={52} /> : null}
+                    {join.profilePictureUrl ? (
+                      <AppIconAvatar src={join.profilePictureUrl || null} alt="" size={52} />
+                    ) : null}
                     <strong>{join.siteLabel}</strong>
                   </>
                 )}
