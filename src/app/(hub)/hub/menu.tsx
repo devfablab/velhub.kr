@@ -210,144 +210,147 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
 
   return (
     <>
-      <header className={`${styles.appbar} ${isMobile ? '' : styles.hidden}`} aria-hidden={isMobile ? undefined : true}>
-        {isMobile ? (
-          <>
-            <IconButton href={pageBack} aria-label="이전화면으로 이동" sx={{ width: 24, height: 24 }}>
-              <ArrowBackIosNewRoundedIcon />
+      {isMobile ? (
+        <header
+          className={`${styles.appbar} ${isMobile ? '' : styles.hidden}`}
+          aria-hidden={isMobile ? undefined : true}
+        >
+          <IconButton href={pageBack} aria-label="이전화면으로 이동" sx={{ width: 24, height: 24 }}>
+            <ArrowBackIosNewRoundedIcon />
+          </IconButton>
+          <h1>
+            <span>데브공방 {pageTitle !== '마이허브' ? '- 마이허브 ' : null}</span>
+            <strong>{pageTitle}</strong>
+          </h1>
+          <div className={styles.iconbuttons}>
+            <IconButton
+              onClick={handleOpenProfileDrawer}
+              className={styles['theme-mode-button']}
+              sx={{ width: 24, height: 24 }}
+            >
+              <MoreHorizRoundedIcon />
             </IconButton>
-            <h1>
-              <span>데브공방 {pageTitle !== '마이허브' ? '- 마이허브 ' : null}</span>
-              <strong>{pageTitle}</strong>
-            </h1>
-            <div className={styles.iconbuttons}>
-              <IconButton
-                onClick={handleOpenProfileDrawer}
-                className={styles['theme-mode-button']}
-                sx={{ width: 24, height: 24 }}
-              >
-                <MoreHorizRoundedIcon />
-              </IconButton>
 
-              <Drawer
-                anchor="right"
-                open={isProfileDrawerOpen}
-                onClose={handleCloseProfileDrawer}
-                className={styles.VhiDrawer}
-              >
-                <li className={styles['VhiDrawer-header']}>
-                  <strong>마이 메뉴</strong>
-                  <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
-                    <CloseRoundedIcon />
-                  </IconButton>
-                </li>
+            <Drawer
+              anchor="right"
+              open={isProfileDrawerOpen}
+              onClose={handleCloseProfileDrawer}
+              className={styles.VhiDrawer}
+            >
+              <li className={styles['VhiDrawer-header']}>
+                <strong>마이 메뉴</strong>
+                <IconButton type="button" onClick={handleCloseProfileDrawer} aria-label="메뉴 닫기">
+                  <CloseRoundedIcon />
+                </IconButton>
+              </li>
 
-                <li className={styles['VhiMenu-profile']}>
-                  <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                  <div className={styles['VhiMenu-profile-info']}>
-                    <em>{userProfile.name}</em>
-                    <span>{userProfile.email}</span>
-                  </div>
-                </li>
-
-                <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
-                <div className={styles['theme-buttons']}>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('light')}
-                    className={themeMode === 'light' ? styles.active : undefined}
-                  >
-                    {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
-                    <span>라이트 모드</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('system')}
-                    className={themeMode === 'system' ? styles.active : undefined}
-                  >
-                    {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
-                    <span>시스템</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSelectThemeMode('dark')}
-                    className={themeMode === 'dark' ? styles.active : undefined}
-                  >
-                    {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
-                    <span>다크 모드</span>
-                  </button>
+              <li className={styles['VhiMenu-profile']}>
+                <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>{userProfile.name}</em>
+                  <span>{userProfile.email}</span>
                 </div>
+              </li>
 
-                <ListSubheader className={styles['VhiDrawer-subheader']}>마이허브</ListSubheader>
-                <MenuItem key="hub" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/hub">
-                    <HubOutlinedIcon fontSize="small" />
-                    <span>마이허브 홈</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="blogs" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/hub/blogs">
-                    <MenuBookRoundedIcon fontSize="small" />
-                    <span>블로그 허브</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="communities" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/hub/communities">
-                    <InterestsOutlinedIcon fontSize="small" />
-                    <span>커뮤니티 허브</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="purchase" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/hub/purchase">
-                    <SellOutlinedIcon fontSize="small" />
-                    <span>구입내역</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="notifications" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/hub/notifications">
-                    <NotificationsOutlinedIcon fontSize="small" />
-                    <span>알림내역</span>
-                  </Anchor>
-                </MenuItem>
+              <ListSubheader className={styles['VhiDrawer-subheader']}>화면모드 설정</ListSubheader>
+              <div className={styles['theme-buttons']}>
+                <button
+                  type="button"
+                  onClick={() => handleSelectThemeMode('light')}
+                  className={themeMode === 'light' ? styles.active : undefined}
+                >
+                  {themeMode === 'light' ? <LightModeIcon /> : <LightModeOutlinedIcon />}
+                  <span>라이트 모드</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectThemeMode('system')}
+                  className={themeMode === 'system' ? styles.active : undefined}
+                >
+                  {themeMode === 'system' ? <SettingsBrightnessIcon /> : <SettingsBrightnessOutlinedIcon />}
+                  <span>시스템</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectThemeMode('dark')}
+                  className={themeMode === 'dark' ? styles.active : undefined}
+                >
+                  {themeMode === 'dark' ? <DarkModeIcon /> : <DarkModeOutlinedIcon />}
+                  <span>다크 모드</span>
+                </button>
+              </div>
 
-                <ListSubheader className={styles['VhiDrawer-subheader']}>라운지</ListSubheader>
-                <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/">
-                    <HomeOutlinedIcon fontSize="small" />
-                    <span>라운지 홈</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="concierge" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge">
-                    <HearingOutlinedIcon fontSize="small" />
-                    <span>컨시어지</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="help" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/help">
-                    <LightbulbOutlinedIcon fontSize="small" />
-                    <span>이용안내</span>
-                  </Anchor>
-                </MenuItem>
+              <ListSubheader className={styles['VhiDrawer-subheader']}>마이허브</ListSubheader>
+              <MenuItem key="hub" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub">
+                  <HubOutlinedIcon fontSize="small" />
+                  <span>마이허브 홈</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="blogs" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/blogs">
+                  <MenuBookRoundedIcon fontSize="small" />
+                  <span>블로그 허브</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="communities" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/communities">
+                  <InterestsOutlinedIcon fontSize="small" />
+                  <span>커뮤니티 허브</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="purchase" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/purchase">
+                  <SellOutlinedIcon fontSize="small" />
+                  <span>구입내역</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="notifications" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/notifications">
+                  <NotificationsOutlinedIcon fontSize="small" />
+                  <span>알림내역</span>
+                </Anchor>
+              </MenuItem>
 
-                <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                <MenuItem key="settings" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/settings">
-                    <SettingsOutlinedIcon fontSize="small" />
-                    <span>개인 설정</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                  <ListItemIcon className={styles['MenuItem-icon']}>
-                    <LogoutOutlinedIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                </MenuItem>
-              </Drawer>
-            </div>
-          </>
-        ) : null}
-      </header>
+              <ListSubheader className={styles['VhiDrawer-subheader']}>라운지</ListSubheader>
+              <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/">
+                  <HomeOutlinedIcon fontSize="small" />
+                  <span>라운지 홈</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="concierge" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/concierge">
+                  <HearingOutlinedIcon fontSize="small" />
+                  <span>컨시어지</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="help" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/help">
+                  <LightbulbOutlinedIcon fontSize="small" />
+                  <span>이용안내</span>
+                </Anchor>
+              </MenuItem>
+
+              <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
+              <MenuItem key="settings" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/settings">
+                  <SettingsOutlinedIcon fontSize="small" />
+                  <span>개인 설정</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                <ListItemIcon className={styles['MenuItem-icon']}>
+                  <LogoutOutlinedIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+              </MenuItem>
+            </Drawer>
+          </div>
+        </header>
+      ) : (
+        <header hidden aria-hidden />
+      )}
       <main style={{ marginTop: isMobile ? 64 : undefined }}>{children}</main>
     </>
   );
