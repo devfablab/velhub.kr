@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderSite from '@/components/headers/Site';
+import Footer from '@/components/Footer';
 // import '../globals.sass';
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
     <>
       <HeaderSite />
       {children}
+      <Footer />
     </>
   );
 }

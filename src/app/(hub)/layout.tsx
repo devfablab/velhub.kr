@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderHub from '@/components/headers/Hub';
+import Footer from '@/components/Footer';
 // import '../globals.sass';
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
     <>
       <HeaderHub />
       {children}
+      <Footer />
     </>
   );
 }
