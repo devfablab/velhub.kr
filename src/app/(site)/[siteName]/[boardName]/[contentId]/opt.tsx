@@ -14,6 +14,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   Accordion,
   AccordionDetails,
@@ -681,7 +682,10 @@ export default function Opt({ isCommunity }: Props) {
       <main>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
+            </div>
           </div>
         </div>
       </main>

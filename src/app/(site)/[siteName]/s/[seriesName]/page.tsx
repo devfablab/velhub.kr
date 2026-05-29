@@ -3,9 +3,9 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/board.module.sass';
-import Container from '../../menu';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import Container from '../../menu';
+import styles from '@/app/board.module.sass';
 
 type RouteContext = {
   params: Promise<{

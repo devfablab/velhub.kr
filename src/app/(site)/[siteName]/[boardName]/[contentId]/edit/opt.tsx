@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
@@ -14,6 +14,7 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -237,6 +238,8 @@ type DrawPayload = {
 };
 
 type AccessDialogType = 'login' | 'join' | 'pending' | null;
+
+type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
 const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
@@ -1729,7 +1732,7 @@ export default function Opt({ isCommunity }: Props) {
     return buildDrawPayload(draw);
   }
 
-  async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormSubmitEvent) {
     event.preventDefault();
 
     if (
@@ -1800,7 +1803,7 @@ export default function Opt({ isCommunity }: Props) {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/${boardName}/${result.contentId}/edit`);
+        router.replace(`/${siteName}/${boardName}/${result.slug}/edit`);
         return;
       }
 
@@ -1823,7 +1826,7 @@ export default function Opt({ isCommunity }: Props) {
 
   if (isLoadingContent) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper">
@@ -1833,31 +1836,37 @@ export default function Opt({ isCommunity }: Props) {
             </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   if (errorMessage && !board) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper paper-error">{errorMessage}</div>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{errorMessage}</p>
+            </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   if (!isCommunity) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>페이지를 찾을 수 없어요! 🥹</p>
+            </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
@@ -2149,7 +2158,7 @@ export default function Opt({ isCommunity }: Props) {
                     type="button"
                     className={`${styles.button} button`}
                     disabled={isSubmittingDraft || isSubmittingPublish}
-                    onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+                    onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
                   >
                     임시 저장
                   </button>
@@ -3080,7 +3089,7 @@ export default function Opt({ isCommunity }: Props) {
               <button className="close-button" onClick={accessDialog.onCancel} aria-label="투표 설정 닫기">
                 <CloseRoundedIcon />
               </button>
-              <p style={{ wwhiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
+              <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
               <div className={styles['drawer-dialog-actions']}>
                 {accessDialog.cancelLabel ? (
                   <button type="button" onClick={accessDialog.onCancel} className="button medium cancel">

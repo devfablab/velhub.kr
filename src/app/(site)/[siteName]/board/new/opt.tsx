@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
@@ -10,6 +10,7 @@ import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -203,6 +204,8 @@ type DrawPayload = {
   drawLimit: number | null;
   drawEndsAt: string | null;
 };
+
+type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 const MAX_THUMBNAIL_FILE_SIZE = 1024 * 1024;
 const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
@@ -1652,7 +1655,7 @@ export default function Opt({ isCommunity }: Props) {
     return buildDrawPayload(draw);
   }
 
-  async function handleSubmit(action: 'draft' | 'publish', event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(action: 'draft' | 'publish', event: FormSubmitEvent) {
     event.preventDefault();
 
     if (!selectedBoardKey) {
@@ -1728,7 +1731,7 @@ export default function Opt({ isCommunity }: Props) {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/board/content/edit?boardName=${selectedBoardKey}&contentId=${result.contentId}`);
+        router.replace(`/${siteName}/board/content/edit?boardName=${selectedBoardKey}&contentId=${result.slug}`);
         return;
       }
 
@@ -1775,7 +1778,10 @@ export default function Opt({ isCommunity }: Props) {
             <ListAltOutlinedIcon />
             <span>글쓰기</span>
           </h2>
-          <div className="paper paper-error">글을 작성할 수 있는 게시판이 없습니다.</div>
+          <div className="paper pape-error">
+            <NearbyErrorRoundedIcon />
+            <p>글을 작성할 수 있는 게시판이 없습니다.</p>
+          </div>
         </div>
       </div>
     );
@@ -2069,7 +2075,7 @@ export default function Opt({ isCommunity }: Props) {
                 type="button"
                 className={`${styles.button} button`}
                 disabled={isSubmittingDraft || isSubmittingPublish}
-                onClick={(event) => void handleSubmit('draft', event as unknown as FormEvent<HTMLFormElement>)}
+                onClick={(event) => void handleSubmit('draft', event as unknown as FormSubmitEvent)}
               >
                 임시 저장
               </button>

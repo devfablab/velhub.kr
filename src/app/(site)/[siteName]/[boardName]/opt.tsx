@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode, type JSX } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useMediaQuery, useTheme } from '@mui/material';
@@ -18,6 +18,7 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -26,10 +27,10 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import FabNew from '@/components/service/common/FabNew';
-import styles from '@/app/board.module.sass';
-import Container from '../menu';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import Container from '../menu';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
@@ -104,6 +105,8 @@ type BoardListResponse = {
 };
 
 type BoardViewType = 'default' | 'list';
+
+type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 const DEFAULT_PAGE_SIZE = 20;
 const BOARD_B_PAGE_SIZE = 9;
@@ -380,7 +383,7 @@ export default function Opt({ isCommunity }: Props) {
     setBoardViewType('default');
   }, [boardName]);
 
-  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSearchSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
     const nextKeyword = normalizeText(keywordInput);
@@ -419,7 +422,12 @@ export default function Opt({ isCommunity }: Props) {
 
   if (isLoading) {
     return (
-      <main>
+      <Container
+        pageBack={`/${siteName}`}
+        pageTitle={
+          isSearchMode ? searchKeyword : selectedSeries ? selectedSeries.series_label : board ? board.board_label : ''
+        }
+      >
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper">
@@ -429,19 +437,27 @@ export default function Opt({ isCommunity }: Props) {
             </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   if (errorMessage) {
     return (
-      <main>
+      <Container
+        pageBack={`/${siteName}`}
+        pageTitle={
+          isSearchMode ? searchKeyword : selectedSeries ? selectedSeries.series_label : board ? board.board_label : ''
+        }
+      >
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper paper-error">{errorMessage}</div>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{errorMessage}</p>
+            </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 

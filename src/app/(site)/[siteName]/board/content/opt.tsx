@@ -14,6 +14,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   CircularProgress,
   Dialog,
@@ -35,8 +36,8 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
-import styles from '@/app/board.module.sass';
 import Container from '../../menu';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
@@ -607,7 +608,7 @@ export default function Opt({ isCommunity }: Props) {
 
   if (isLoading) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}/board`} pageTitle="글 보기" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
             <h2>
@@ -621,23 +622,26 @@ export default function Opt({ isCommunity }: Props) {
             </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   if (errorMessage || !board || !content) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}/board`} pageTitle="글 보기" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
             <h2>
               <ListAltOutlinedIcon />
               <span>글 보기</span>
             </h2>
-            <div className="paper paper-error">{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</div>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
+            </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 

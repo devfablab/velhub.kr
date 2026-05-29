@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type JSX, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
@@ -11,6 +11,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -18,9 +19,9 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
-import styles from '@/app/board.module.sass';
 import FabNew from '@/components/service/common/FabNew';
 import TableListMobile from '@/components/service/community/TableListMobile';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
@@ -58,6 +59,8 @@ type BoardListResponse = {
   keyword?: string;
   error?: string;
 };
+
+type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 const PAGE_SIZE = 20;
 const PAGER_SIZE = 10;
@@ -205,7 +208,7 @@ export default function Opt({ isCommunity }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, searchParams]);
 
-  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSearchSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
     const nextKeyword = normalizeText(keywordInput);
@@ -252,7 +255,10 @@ export default function Opt({ isCommunity }: Props) {
             <ListAltOutlinedIcon />
             <span>최신글 보기</span>
           </h2>
-          <div className="paper paper-error">{errorMessage}</div>
+          <div className="paper pape-error">
+            <NearbyErrorRoundedIcon />
+            <p>{errorMessage}</p>
+          </div>
         </div>
       </div>
     );
@@ -262,7 +268,10 @@ export default function Opt({ isCommunity }: Props) {
     return (
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper paper-error">지원하지 않는 경로입니다.</div>
+          <div className="paper pape-error">
+            <NearbyErrorRoundedIcon />
+            <p>페이지를 찾을 수 없어요! 🥹</p>
+          </div>
         </div>
       </div>
     );

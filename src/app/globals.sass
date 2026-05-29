@@ -327,6 +327,31 @@ a, button, select, input
       font-weight: 700
       font-variation-settings: "wght" 700
 
+  &.pape-error
+    align-items: center
+    padding-top: ds.rem(27)
+    padding-bottom: ds.rem(27)
+    color: ds.$hex-warning
+
+    @include ds.mq(minSmall)
+      padding-top: ds.rem(53)
+      padding-bottom: ds.rem(53)
+
+    svg
+      width: 50%
+      height: auto
+      max-width: ds.rem(170)
+
+      @include ds.mq(minSmall)
+        max-width: ds.rem(270)
+
+    p
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(14)
+
+      @include ds.mq(minSmall)
+        font-size: ds.rem(16)
+
   caption
     @include ds.screen-reader-only
 
