@@ -3,11 +3,11 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import Container from './menu';
 import Personal from './personal';
 import PendingInvite from './pendingInvite';
 import PendingJoin from './pendingJoin';
 import styles from '@/app/hub.module.sass';
-import Container from './menu';
 
 type AccountRow = {
   email: string | null;

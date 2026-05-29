@@ -25,10 +25,6 @@ type Props = {
   siteType: SiteType;
 };
 
-function getSiteTypeLabel(siteType: SiteType) {
-  return siteType === 'blog' ? '블로그' : '커뮤니티';
-}
-
 export default function ReadsItems({ siteType }: Props) {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -66,7 +66,7 @@ export default function PendingJoin() {
 
   if (errorMessage) {
     return (
-      <section className={`paper ${styles.invite}`}>
+      <section className={`paper ${styles.paper} ${styles.pending}`}>
         <p>{errorMessage}</p>
       </section>
     );

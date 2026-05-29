@@ -1,11 +1,11 @@
 import { cookies, headers } from 'next/headers';
+import Content from './tab';
+import Container from '../menu';
+import FavoriteBlogs from './favoriteBlogs';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
-import FavoriteBlogs from './favoriteBlogs';
-import Content from './tab';
 import styles from '@/app/hub.module.sass';
-import Container from '../menu';
 
 type UserResponse = {
   isLoggedIn: boolean;
@@ -55,13 +55,13 @@ export default async function SectionJoinSites() {
         : '사용자 정보를 불러오지 못했습니다.';
 
     return (
-      <main>
+      <Container pageTitle="블로그 허브" pageBack="/hub">
         <div className="container">
-          <div className={`content ${styles['hub-content']}`}>
+          <div className={`content ${styles.content} ${styles['hub-content']}`}>
             <p>{errorMessage}</p>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
@@ -70,7 +70,6 @@ export default async function SectionJoinSites() {
   }
 
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
-
   const hasBlog = joinSites.some((site) => site.site_type === 'blog');
 
   return (
