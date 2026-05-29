@@ -1,7 +1,7 @@
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
-import Anchor from './Anchor';
-import VhiStudios from './icons/VhiStudios';
-import VhiHub from './icons/VhiHub';
+import Anchor from '../Anchor';
+import VhiStudios from '../icons/VhiStudios';
+import VhiHub from '../icons/VhiHub';
 import styles from '@/app/footer.module.sass';
 
 export default function Footer() {

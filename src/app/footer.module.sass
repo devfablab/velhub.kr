@@ -96,12 +96,22 @@
       gap: ds.rem(5)
       color: ds.$hex-light
 
+      &.loves-site
+        flex-direction: row
+        align-items: center
+        gap: ds.rem(17)
+
       .love
         display: flex
         align-items: center
         gap: ds.rem(5)
         @include ds.fw(pre, 800)
         font-size: ds.rem(14)
+
+        a
+          display: flex
+          align-items: center
+          gap: ds.rem(5)
 
         svg
           width: ds.rem(14)
@@ -113,6 +123,10 @@
         @include ds.fw(pre, 300)
         font-size: ds.rem(12)
         opacity: 0.7
+
+        strong
+          @include ds.fw(pre, 800)
+          opacity: 1
 
         svg
           position: relative

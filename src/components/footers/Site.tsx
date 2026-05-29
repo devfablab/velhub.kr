@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
-import styles from '@/app/aside.module.sass';
+import Anchor from '../Anchor';
+import styles from '@/app/footer.module.sass';
 
 type SiteInfo = {
   site_label: string | null;
@@ -21,13 +22,11 @@ type SiteProfileResponse = {
   error?: string;
 };
 
-export default function SiteProfile() {
+export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState('');
-  const [profileLogoUrl, setProfileLogoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -54,8 +53,6 @@ export default function SiteProfile() {
         console.log(result);
 
         setSiteInfo(result.siteInfo);
-        setProfilePictureUrl(normalizeText(result.profilePictureUrl));
-        setProfileLogoUrl(normalizeText(result.profileLogoUrl));
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -76,34 +73,26 @@ export default function SiteProfile() {
     void loadSiteProfile();
   }, [siteName]);
 
-  if (isLoading) {
-    return (
-      <div className="paper">
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
-    );
-  }
-
-  if (errorMessage) {
-    return <div className="paper paper-error">{errorMessage}</div>;
-  }
-
-  if (!siteInfo) {
+  if (isLoading || errorMessage || !siteInfo) {
     return null;
   }
 
   return (
-    <div className={styles['site-profile']}>
-      <div className={styles['site-profile-avatar']}>
-        <AppIconAvatar src={profilePictureUrl || null} alt={siteInfo.site_label || ''} size={72} />
+    <footer className={styles.footer}>
+      <div className="container">
+        <div className={`content ${styles.content}`}>
+          <div className={`${styles.loves} ${styles['loves-site']}`}>
+            <p className={styles.copyright}>
+              <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
+            </p>
+            <p className={styles.love}>
+              <Anchor href="/" style={{ color: 'hotpink' }}>
+                <FavoriteRoundedIcon /> <span>velhub</span>
+              </Anchor>
+            </p>
+          </div>
+        </div>
       </div>
-      <div className={styles['site-profile-info']}>
-        {profileLogoUrl ? <img src={profileLogoUrl} alt="" /> : null}
-        <strong>{siteInfo.site_label}</strong>
-        {siteInfo.summary ? <p>{siteInfo.summary}</p> : null}
-      </div>
-    </div>
+    </footer>
   );
 }
