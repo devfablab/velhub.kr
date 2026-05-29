@@ -397,11 +397,11 @@ export default function HeaderHub() {
                         <span>개인 설정</span>
                       </Anchor>
                     </MenuItem>
-                    <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
-                      <ListItemIcon className={styles['logout-icon']}>
+                    <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                      <ListItemIcon className={styles['MenuItem-icon']}>
                         <LogoutOutlinedIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                      <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
                     </MenuItem>
                   </Drawer>
                 ) : (
@@ -430,11 +430,11 @@ export default function HeaderHub() {
                         <span>개인 설정</span>
                       </Anchor>
                     </MenuItem>
-                    <MenuItem key="logout" onClick={handleLogout} className={styles.logout}>
-                      <ListItemIcon className={styles['logout-icon']}>
+                    <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                      <ListItemIcon className={styles['MenuItem-icon']}>
                         <LogoutOutlinedIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText className={styles['logout-text']}>로그아웃</ListItemText>
+                      <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
                     </MenuItem>
                   </Menu>
                 )}

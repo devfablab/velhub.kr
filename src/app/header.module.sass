@@ -390,8 +390,16 @@ header.header
     .VhiDrawer-header
       display: flex
       justify-content: flex-end
-      position: relative
+      position: sticky
+      top: 0
       padding: ds.rem(7)
+      z-index: 1090
+
+      html[data-theme="yellow-light"] &
+        background-color: ds.$hex-white
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-black
 
       &:hover
         background: none!important
