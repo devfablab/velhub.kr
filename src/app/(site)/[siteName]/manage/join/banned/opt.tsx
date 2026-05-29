@@ -290,7 +290,7 @@ export default function Opt() {
                         />
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.displayName}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{user.reason}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{user.reason}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
                       </TableCell>

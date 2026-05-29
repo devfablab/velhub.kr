@@ -394,7 +394,7 @@ export default function UserInfo() {
               {!isEditingBio ? (
                 <Stack gap={1.5}>
                   {bio ? (
-                    <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                    <Typography component="p" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                       {bio}
                     </Typography>
                   ) : (

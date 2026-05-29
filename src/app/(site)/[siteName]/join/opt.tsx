@@ -457,7 +457,7 @@ export default function Opt({ siteName }: Props) {
     <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
       {joinNotice ? (
         <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {joinNotice}
           </Typography>
         </Paper>

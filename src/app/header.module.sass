@@ -330,6 +330,10 @@ header.header
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
 
+  > i
+    @include ds.mq(maxExtraSmall)
+      display: none!important
+
   .location
     width: ds.rem(40)
     height: ds.rem(40)

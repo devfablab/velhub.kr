@@ -358,7 +358,7 @@ export default function Opt() {
               {board.board_type === 'feed' && content.content_simple ? (
                 <Stack gap={0.75}>
                   <Typography variant="subtitle2">내용</Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                     {content.content_simple}
                   </Typography>
                 </Stack>
@@ -407,7 +407,7 @@ export default function Opt() {
               {content.is_closed && content.closed_message ? (
                 <Stack gap={0.75}>
                   <Typography variant="subtitle2">삭제 사유</Typography>
-                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                     {content.closed_message}
                   </Typography>
                 </Stack>

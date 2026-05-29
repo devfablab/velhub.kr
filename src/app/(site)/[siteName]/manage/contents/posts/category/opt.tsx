@@ -216,7 +216,7 @@ function SortableCategoryRow({
 
       <TableCell sx={{ whiteSpace: 'nowrap' }}>{category.category_key}</TableCell>
       <TableCell sx={{ whiteSpace: 'nowrap' }}>{category.category_label}</TableCell>
-      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{category.summary || ''}</TableCell>
+      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{category.summary || ''}</TableCell>
 
       <TableCell>
         {category.thumbnail_image ? (

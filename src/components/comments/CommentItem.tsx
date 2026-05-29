@@ -375,7 +375,7 @@ export default function CommentItem({
           <button className="close-button" onClick={() => setConfirmAction(null)} aria-label="추첨 이벤트 설정 닫기">
             <CloseRoundedIcon />
           </button>
-          <p style={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</p>
+          <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
           <div className={styles['drawer-dialog-actions']}>
             <button type="button" onClick={() => setConfirmAction(null)} className="button medium cancel">
               취소
@@ -394,7 +394,9 @@ export default function CommentItem({
         <Dialog open={Boolean(confirmAction)} onClose={() => setConfirmAction(null)} className="vh-dialog">
           <DialogTitle>{confirmDialog.title}</DialogTitle>
           <DialogContent>
-            <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{confirmDialog.content}</DialogContentText>
+            <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              {confirmDialog.content}
+            </DialogContentText>
           </DialogContent>
           <DialogActions>
             <button type="button" onClick={() => setConfirmAction(null)} className="cancel-button">

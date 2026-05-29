@@ -948,7 +948,9 @@ export default function Opt() {
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {post.closed_at ? formatDateTimeDetail(post.closed_at) : ''}
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{post.closed_message || ''}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                        {post.closed_message || ''}
+                      </TableCell>
                       <TableCell align="right">
                         {post.is_closed ? (
                           <button

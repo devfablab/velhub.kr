@@ -163,7 +163,7 @@ export default function Opt() {
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               가입 안내
             </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {joinNotice}
             </Typography>
           </Paper>
@@ -205,7 +205,7 @@ export default function Opt() {
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               가입 안내
             </Typography>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
               {joinNotice}
             </Typography>
           </Paper>
@@ -231,7 +231,7 @@ export default function Opt() {
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             가입 안내
           </Typography>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {joinNotice}
           </Typography>
         </Paper>

@@ -314,7 +314,7 @@ export default function Opt() {
                     </Stack>
                     <Stack>
                       <Typography variant="subtitle2">삭제 사유</Typography>
-                      <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
+                      <Typography component="p" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                         {content.closed_message || ''}
                       </Typography>
                     </Stack>

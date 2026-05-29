@@ -2999,7 +2999,7 @@ export default function Opt({ isCommunity }: Props) {
             <button className="close-button" onClick={accessDialog.onCancel} aria-label="투표 설정 닫기">
               <CloseRoundedIcon />
             </button>
-            <p style={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</p>
+            <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
             <div className={styles['drawer-dialog-actions']}>
               {accessDialog.cancelLabel ? (
                 <button type="button" onClick={accessDialog.onCancel} className="button medium cancel">
@@ -3016,7 +3016,9 @@ export default function Opt({ isCommunity }: Props) {
           <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
             <DialogTitle>{accessDialog.title}</DialogTitle>
             <DialogContent>
-              <DialogContentText sx={{ whiteSpace: 'pre-line' }}>{accessDialog.content}</DialogContentText>
+              <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                {accessDialog.content}
+              </DialogContentText>
             </DialogContent>
             <DialogActions>
               {accessDialog.cancelLabel ? (

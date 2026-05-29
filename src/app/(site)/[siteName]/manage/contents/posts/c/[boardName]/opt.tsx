@@ -664,7 +664,9 @@ export default function Opt() {
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{content.closed_message}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                        {content.closed_message}
+                      </TableCell>
 
                       <TableCell align="right">
                         {content.is_closed ? (

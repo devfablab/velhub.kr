@@ -361,7 +361,9 @@ export default function Opt() {
                         />
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.nickname}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap' }}>{user.blockReason}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                        {user.blockReason}
+                      </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.blockedAt ? formatDate(user.blockedAt) : ''}
                       </TableCell>
