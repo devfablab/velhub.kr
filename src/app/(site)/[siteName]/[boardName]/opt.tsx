@@ -886,6 +886,7 @@ export default function Opt({ isCommunity }: Props) {
                           {content.series_label && !seriesNameParam ? `[${content.series_label}] ` : null}
                           {content.subject}
                         </strong>
+                        <span>{content.summary}</span>
                       </div>
                       <div className={styles.author}>
                         <cite>{content.author_name}</cite>

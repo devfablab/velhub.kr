@@ -2,10 +2,11 @@ import Image from 'next/image';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import type { PostListItem } from '@/lib/board/getPostList';
+import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 import Container from './menu';
 import styles from '@/app/board.module.sass';
-import SiteProfile from '@/components/service/blog/SiteProfile';
 
 type RowValue = string | number | boolean | null;
 
@@ -88,7 +89,13 @@ export default function Blog(props: Props) {
                             <MenuBookRoundedIcon />
                           </div>
                         )}
-                        <span>{content.subject}</span>
+                        <div className={styles.info}>
+                          <strong>{content.subject}</strong>
+                          {content.summary ? <span>{content.summary}</span> : null}
+                          {content.published_at ? (
+                            <time dateTime={content.published_at}>{formatTimeAgo(content.published_at)}</time>
+                          ) : null}
+                        </div>
                       </Anchor>
                     </li>
                   );
