@@ -136,6 +136,7 @@ export default function Opt() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -463,6 +464,14 @@ export default function Opt() {
     fileInputReference.current?.click();
   }
 
+  const openCancelDialog = () => setIsCancelDialogOpen(true);
+  const closeCancelDialog = () => setIsCancelDialogOpen(false);
+
+  const handleConfirmCancel = () => {
+    setIsCancelDialogOpen(false);
+    router.push('/');
+  };
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -696,7 +705,7 @@ export default function Opt() {
         </Stack>
       </div>
       <div className={styles.actions}>
-        <button type="button" className="button medium close">
+        <button type="button" className="button medium close" onClick={openCancelDialog}>
           개설 취소
         </button>
         <button
@@ -718,6 +727,44 @@ export default function Opt() {
         autoHideDuration={3000}
         onClose={() => setSuccessMessage('')}
       />
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isCancelDialogOpen} onClose={closeCancelDialog} className="VhiDrawer-bottom">
+          <h2>개설 취소</h2>
+          <button className="close-button" onClick={closeCancelDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>정말로 개설을 취소하시겠어요?</Typography>
+            <Stack direction="row" spacing={1.5}>
+              <button type="button" className="button medium" onClick={closeCancelDialog}>
+                닫기
+              </button>
+              <button type="button" className="button medium close" onClick={handleConfirmCancel}>
+                개설 취소
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isCancelDialogOpen} onClose={closeCancelDialog} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>개설 취소</DialogTitle>
+          <button className="close-button" onClick={closeCancelDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography>정말로 개설을 취소하시겠어요?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={closeCancelDialog}>
+              닫기
+            </button>
+            <button type="button" className="button medium warning" onClick={handleConfirmCancel}>
+              개설 취소
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isErrorDialogOpen} onClose={closeErrorDialog} className="VhiDrawer-bottom">
