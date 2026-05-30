@@ -769,6 +769,7 @@ a, button, select, input
   font-size: ds.rem(16)
   white-space: nowrap
   background-color: ds.$hex-accent
+  color: ds.$hex-primary
 
   html[data-site-type='blog'] &
     font-family: var(--blog-description-font-family)
@@ -800,6 +801,7 @@ a, button, select, input
   &.submit
     border: 1px solid ds.$hex-accent
     background-color: ds.$hex-accent
+    color: ds.$hex-white
 
     html[data-theme="yellow-light"] &
       color: ds.$hex-white
@@ -813,6 +815,7 @@ a, button, select, input
   &.close
     border: 1px solid transparent
     background-color: transparent
+    color: rgba(ds.$rgb-secondary, .7)
 
     html[data-theme="yellow-light"] &
       color: rgba(ds.$rgb-secondary, .7)
@@ -825,6 +828,8 @@ a, button, select, input
 
   &.action
     border: 1px solid ds.$hex-accent!important
+    background-color: ds.$hex-white
+    color: rgba(ds.$rgb-secondary, .8)
 
     html[data-theme="yellow-light"] &
       background-color: ds.$hex-white
@@ -840,6 +845,8 @@ a, button, select, input
 
   &.cancel
     background-color: transparent!important
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    color: rgba(ds.$rgb-secondary, .9)
 
     html[data-theme="yellow-light"] &
       border: 1px solid rgba(ds.$rgb-tertiary, .2)
@@ -854,6 +861,8 @@ a, button, select, input
 
   &.danger
     border: 1px solid ds.$hex-warning
+    background-color: ds.$hex-white
+    color: ds.$hex-primary
 
     html[data-theme="yellow-light"] &
       background-color: ds.$hex-white
@@ -866,6 +875,7 @@ a, button, select, input
   &.warning
     border: 1px solid ds.$hex-warning
     background-color: ds.$hex-warning
+    color: ds.$hex-bright
 
     html[data-theme="yellow-light"] &
       color: ds.$hex-bright

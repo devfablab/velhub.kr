@@ -4,7 +4,10 @@ import localFont from 'next/font/local';
 import { Noto_Sans_KR, Noto_Serif_KR, Hahmlet } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
+import { getSessionClaims } from '@/lib/session';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
+import Verify2fa from '@/components/auth/Verify2fa';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import './globals.sass';
 
 export const metadata: Metadata = {
@@ -39,14 +42,34 @@ const Neo = localFont({
   variable: '--neo',
 });
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const sessionClaims = await getSessionClaims();
+  const needsTotp = sessionClaims?.userId && sessionClaims?.authenticationLevel === 'aal1';
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable} ${Sans.variable} ${Serif.variable} ${Ham.variable}`}>
       <body>
         <div id="__app">
           <AuthStateProvider>
             <AppRouterCacheProvider>
-              <ThemeProviderClient>{children}</ThemeProviderClient>
+              <ThemeProviderClient>
+                {needsTotp ? (
+                  <>
+                    <Verify2fa />
+                    <main>
+                      <div className="container">
+                        <div
+                          className="content"
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          <LoadingIndicator />
+                        </div>
+                      </div>
+                    </main>
+                  </>
+                ) : (
+                  children
+                )}
+              </ThemeProviderClient>
             </AppRouterCacheProvider>
           </AuthStateProvider>
         </div>

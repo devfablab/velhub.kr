@@ -155,12 +155,22 @@ export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
   const isLoggedIn = Boolean(sessionClaims?.userId);
+  const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
 
   if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up') {
     if (isLoggedIn) {
       return redirectWithPath(request, '/');
     }
+    return response;
+  }
 
+  if (isLoggedIn && isAal1) {
+    if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth')) {
+      return new NextResponse(JSON.stringify({ error: '2FA verification required' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return response;
   }
 
@@ -168,7 +178,6 @@ export async function proxy(request: NextRequest) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     return response;
   }
 
@@ -176,17 +185,13 @@ export async function proxy(request: NextRequest) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     const admin = await fetchSessionRoute(request, '/api/session/admin', {});
-
     if (admin.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     if (!admin.response.ok) {
       return redirectWithPath(request, '/');
     }
-
     return response;
   }
 
@@ -194,77 +199,54 @@ export async function proxy(request: NextRequest) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-
     if (!siteName) {
       return redirectWithPath(request, '/');
     }
-
-    const staff = await fetchSessionRoute(request, '/api/session/staff', {
-      siteName,
-    });
-
+    const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
     if (staff.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     if (!staff.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
-
     return response;
   }
 
   if (isJoinPath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-
     if (!siteName) {
       return redirectWithPath(request, '/');
     }
-
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     const rhizomeState = await fetchRhizomeState(request, siteName);
-
     if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
       return redirectWithPath(request, '/');
     }
-
     if (rhizomeState.result.rhizomes.site_type !== 'community') {
       return redirectWithPath(request, `/${siteName}`);
     }
-
-    const member = await fetchSessionRoute(request, '/api/session/member', {
-      siteName,
-    });
-
+    const member = await fetchSessionRoute(request, '/api/session/member', { siteName });
     if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
-
     if (member.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
-
     return response;
   }
 
   if (isSitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-
     if (!siteName) {
       return response;
     }
-
     if (isInviteBlogPath(pathname)) {
       return response;
     }
-
     const rhizomeState = await fetchRhizomeState(request, siteName);
-
     if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
       return response;
     }

@@ -146,7 +146,7 @@ export default function EmailSignIn() {
     const nextLevel = assuranceLevelResult.data.nextLevel;
 
     if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
-      router.replace('/auth/verify-2fa');
+      router.replace('/');
       return;
     }
 
