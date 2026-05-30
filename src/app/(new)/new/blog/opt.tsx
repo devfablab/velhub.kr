@@ -734,9 +734,9 @@ export default function Opt() {
           <button className="close-button" onClick={closeCancelDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Typography>정말로 개설을 취소하시겠어요?</Typography>
-            <Stack direction="row" spacing={1.5}>
+            <Stack direction="row" gap={1.5}>
               <button type="button" className="button medium" onClick={closeCancelDialog}>
                 닫기
               </button>
@@ -772,9 +772,9 @@ export default function Opt() {
           <button className="close-button" onClick={closeErrorDialog} aria-label="닫기">
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Typography>하단 에러 메시지를 확인해 주세요</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" onClick={closeErrorDialog}>
                 확인
               </button>

@@ -418,7 +418,7 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseDialog}>
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <TextField
                     placeholder="말머리명"
@@ -435,7 +435,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -507,7 +507,7 @@ export default function Opt() {
               <button className="close-button" onClick={handleCloseDialog} disabled={isSubmitting} aria-label="닫기">
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">해당 말머리를 삭제하시겠습니까?</Typography>
 
@@ -518,7 +518,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"

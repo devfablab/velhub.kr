@@ -395,7 +395,7 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
 
@@ -407,7 +407,7 @@ export default function Opt() {
                   ) : null}
                 </Stack>
 
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
@@ -488,7 +488,7 @@ export default function Opt() {
               >
                 <CloseRoundedIcon />
               </button>
-              <Stack spacing={2} sx={{ pt: 1 }}>
+              <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Typography>해당 페이지를 복구하시겠습니까?</Typography>
 
@@ -499,7 +499,7 @@ export default function Opt() {
                     </p>
                   ) : null}
                 </Stack>
-                <Stack direction="column" spacing={1.5}>
+                <Stack direction="column" gap={1.5}>
                   <button
                     type="button"
                     className="button medium cancel"
