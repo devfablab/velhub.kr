@@ -1,10 +1,7 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
-type ThemeMode = 'light' | 'system' | 'dark';
-
 type ProfileRow = {
-  theme_mode: ThemeMode | null;
   auto_login: boolean | null;
 };
 
@@ -20,7 +17,7 @@ export async function GET() {
 
     const profileResult = await supabaseAdmin
       .from('profiles')
-      .select('theme_mode, auto_login')
+      .select('auto_login')
       .eq('user_id', sessionClaims.userId)
       .maybeSingle();
 
@@ -32,7 +29,6 @@ export async function GET() {
 
     return Response.json({
       profile: {
-        theme_mode: profile?.theme_mode ?? 'system',
         auto_login: typeof profile?.auto_login === 'boolean' ? profile.auto_login : true,
       },
     });

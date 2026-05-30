@@ -5,21 +5,25 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/settings.module.sass';
 
-export default function Headline() {
+type Props = {
+  page: string;
+};
+
+export default function Headline({ page }: Props) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
+    <Stack direction="row" justifyContent="space-between">
       {isMobile ? (
         <i />
       ) : (
         <Typography variant="h6" component="h1">
-          개인 설정
+          {page === 'general' ? '일반 설정' : '추가 설정'}
         </Typography>
       )}
-      <Anchor href="/settings/advanced" className={styles['headline-link']}>
-        <span>추가설정</span>
+      <Anchor href={`/settings/${page === 'general' ? 'advanced' : ''}`} className={styles['headline-link']}>
+        <span>{page === 'general' ? '추가 설정' : '일반 설정'}</span>
         <ArrowForwardRoundedIcon />
       </Anchor>
     </Stack>

@@ -1,20 +1,16 @@
-import { Box, Container, Link, Stack, Typography } from '@mui/material';
+import Headline from '../headline';
 import Opt from './opt';
+import styles from '@/app/settings.module.sass';
 
 export default function Page() {
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-          <Typography variant="h5" component="h1">
-            추가 설정
-          </Typography>
-          <Link href="/settings" color="primary" variant="subtitle2" underline="always">
-            뒤로가기
-          </Link>
-        </Stack>
-        <Opt />
-      </Box>
-    </Container>
+    <main>
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content}`}>
+          <Headline page="advanced" />
+          <Opt />
+        </div>
+      </div>
+    </main>
   );
 }

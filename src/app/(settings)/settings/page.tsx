@@ -13,7 +13,7 @@ export default async function Page() {
     <main>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <Headline />
+          <Headline page="general" />
 
           <Grid container gap={2}>
             <UserInfo />

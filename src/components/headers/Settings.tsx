@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
@@ -51,6 +52,7 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function HeaderSettings() {
   const { isReady } = useAuthState();
+  const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
   const [returnPath, setReturnPath] = useState<string | null>(null);
   const { themeMode, setThemeMode } = useThemeMode();
@@ -137,7 +139,7 @@ export default function HeaderSettings() {
                 <span>홈</span>
               </Anchor>
             )}
-            {isMobile ? <h1>개인 설정</h1> : null}
+            {isMobile ? <h1>{pathname === '/settings' ? '개인 설정' : '추가 설정'}</h1> : null}
             <i />
           </div>
         </div>
