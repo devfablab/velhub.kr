@@ -1,0 +1,167 @@
+header.header
+  display: flex
+  align-items: center
+  justify-content: center
+
+  &.new-header
+    html[data-theme="yellow-light"] &
+      background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
+  .container
+    display: flex
+    flex-direction: column
+    max-width: ds.rem(1347)
+    width: 100%
+    padding: 0 ds.rem(17)
+
+    .top
+      display: flex
+      flex-direction: row
+      align-items: center
+      gap: ds.rem(23)
+      justify-content: space-between
+      height: ds.rem(64)
+
+  .new
+    display: flex
+    justify-content: space-between
+    width: 100%
+
+    .backlink
+      display: inline-flex
+      gap: ds.rem(7)
+      padding: ds.rem(8)
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+      span
+        display: inline-flex
+        align-items: center
+        @include ds.fw(pre, 600)
+        font-size: ds.rem(16)
+        line-height: 1
+
+        @include ds.mq(maxMedium)
+          @include ds.screen-reader-only
+
+    h1
+      display: inline-flex
+      align-items: center
+      @include ds.fw(neo, 800)
+      font-size: ds.rem(18)
+
+    i
+      width: ds.rem(40)
+      height: 1px
+
+.new-generation
+  .container
+    display: flex
+    flex-direction: column
+    justify-content: center
+    max-width: ds.rem(575)
+
+  .content
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+    padding: ds.rem(53) 0
+
+    h1
+      font-size: ds.rem(28)
+      @include ds.fw(neo, 700)
+
+  .service-select
+    display: flex
+    flex-direction: row
+    gap: ds.rem(12)
+
+    .item
+      display: flex
+      @include ds.col
+
+      a
+        display: flex
+        flex-direction: column
+        align-items: center
+        flex: 1
+        gap: ds.rem(12)
+        border-radius: ds.rem(12)
+        padding: ds.rem(17)
+        transition: all .4s cubic-bezier(.4,0,.2,1)
+
+        &:hover, &:focus-visible
+          border: 1px solid ds.$hex-accent
+          box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+
+        html[data-theme="yellow-light"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+        html[data-theme="yellow-dark"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        i
+          display: block
+          width: 50%
+          color: ds.$hex-accent
+
+          svg
+            width: 100%
+            height: auto
+            aspect-ratio: 1 / 1
+
+        div
+          display: flex
+          flex: 1
+          flex-direction: column
+          gap: ds.rem(12)
+          align-items: center
+          text-align: center
+          letter-spacing: -.05em
+
+          strong
+            display: flex
+            flex-direction: column
+            @include ds.fw(neo, 800)
+            font-size: ds.rem(20)
+            line-height: 1.35
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-primary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-bright
+
+          p
+            display: flex
+            flex-direction: column
+            @include ds.fw(pre, 500)
+            font-size: ds.rem(16)
+            line-height: 1.35
+            opacity: .7
+
+            html[data-theme="yellow-light"] &
+              color: ds.$hex-secondary
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-light
+
+        em
+          display: inline-flex
+          align-items: center
+          gap: ds.rem(3)
+          @include ds.fw(pre, 800)
+          font-style: normal
+          font-size: ds.rem(14)
+          color: ds.$hex-accent
+
+          svg
+            width: ds.rem(14)
+            height: ds.rem(14)
