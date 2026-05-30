@@ -156,6 +156,7 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isLoggedIn = Boolean(sessionClaims?.userId);
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
+  const hasTotp = sessionClaims?.hasTotp === true;
 
   if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up') {
     if (isLoggedIn) {
@@ -164,7 +165,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isLoggedIn && isAal1) {
+  if (isLoggedIn && isAal1 && hasTotp) {
     if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth')) {
       return new NextResponse(JSON.stringify({ error: '2FA verification required' }), {
         status: 403,

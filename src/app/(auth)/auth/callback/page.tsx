@@ -176,7 +176,7 @@ export default function Page() {
       const nextLevel = assuranceLevelResult.data.nextLevel;
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
-        router.replace('/');
+        router.replace('/auth/verify-2fa');
         return;
       }
 
@@ -381,7 +381,7 @@ export default function Page() {
       const nextLevel = assuranceLevelResult.data.nextLevel;
 
       if (currentLevel !== 'aal2' && nextLevel === 'aal2') {
-        router.replace('/');
+        router.replace('/auth/verify-2fa');
         return;
       }
 

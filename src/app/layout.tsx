@@ -44,7 +44,8 @@ const Neo = localFont({
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const sessionClaims = await getSessionClaims();
-  const needsTotp = sessionClaims?.userId && sessionClaims?.authenticationLevel === 'aal1';
+  const needsTotp =
+    sessionClaims?.userId && sessionClaims?.authenticationLevel === 'aal1' && sessionClaims?.hasTotp === true;
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable} ${Sans.variable} ${Serif.variable} ${Ham.variable}`}>
       <body>

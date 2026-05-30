@@ -15,6 +15,7 @@ type SessionClaims = {
   expiresAt: number | null;
   autoLogin: boolean;
   lastActiveAt: number;
+  hasTotp: boolean;
 };
 
 type CookieStore = Awaited<ReturnType<typeof cookies>>;
@@ -143,6 +144,13 @@ async function buildSessionClaimsFromAuthClaims(
   const autoLogin = await getUserAutoLogin(claims.sub);
   const lastActiveAt = Date.now();
 
+  const supabaseAdmin = getSupabaseAdmin();
+  const factorsResult = await supabaseAdmin.auth.admin.mfa.listFactors({
+    userId: claims.sub,
+  });
+
+  const hasTotp = !!factorsResult.data?.factors?.some((factor) => factor.status === 'verified');
+
   const sessionClaims: SessionClaims = {
     userId: claims.sub,
     email: claims.email ?? null,
@@ -152,6 +160,7 @@ async function buildSessionClaimsFromAuthClaims(
     expiresAt: claims.exp ?? null,
     autoLogin,
     lastActiveAt,
+    hasTotp,
   };
 
   await setCachedSessionClaims(cookieFingerprint, sessionClaims);
