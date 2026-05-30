@@ -1,33 +1,30 @@
-import { Box, Container, Grid, Link, Stack, Typography } from '@mui/material';
+import { Grid } from '@mui/material';
+import Headline from './headline';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';
 import PasswordSetup from './passwordSetup';
 import LoginMethod from './loginMethod';
 import UserInfo from './info';
+import styles from '@/app/settings.module.sass';
 
 export default async function Page() {
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
-          <Typography variant="h5" component="h1">
-            개인정보 설정
-          </Typography>
-          <Link href="/settings/advanced" color="primary" variant="subtitle2" underline="always">
-            추가설정
-          </Link>
-        </Stack>
+    <main>
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content}`}>
+          <Headline />
 
-        <Grid container gap={2} sx={{ marginTop: 3 }}>
-          <UserInfo />
-          <PasswordChange />
-          <PasswordSetup />
-          <LoginMethod />
-          <TotpSetup />
-          <LogoutActions />
-        </Grid>
-      </Box>
-    </Container>
+          <Grid container gap={2}>
+            <UserInfo />
+            <PasswordChange />
+            <PasswordSetup />
+            <LoginMethod />
+            <TotpSetup />
+            <LogoutActions />
+          </Grid>
+        </div>
+      </div>
+    </main>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import styles from '@/app/settings.module.sass';
 
 export default function LogoutActions() {
   const router = useRouter();
@@ -109,8 +110,14 @@ export default function LogoutActions() {
   }
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -119,35 +126,31 @@ export default function LogoutActions() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               로그아웃
             </Typography>
           </Stack>
         </AccordionSummary>
 
         <AccordionDetails>
-          <Stack gap={1} direction="row">
-            <Button
+          <Stack gap={1} direction="row" justifyContent="space-between">
+            <button
               type="button"
-              variant="contained"
-              color="warning"
+              className="button small action"
               onClick={handleLogoutCurrentDevice}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
-              fullWidth
             >
               이 디바이스에서 로그아웃
-            </Button>
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outlined"
-              color="error"
+              className="button small danger"
               onClick={handleOpenConfirm}
               disabled={isLoggingOutCurrentDevice || isLoggingOutAllDevices}
-              fullWidth
             >
               모든 디바이스 로그아웃
-            </Button>
+            </button>
 
             {errorMessage ? (
               <Alert severity="error" variant="filled">

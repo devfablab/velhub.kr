@@ -1,20 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Alert,
-  Button,
-  Chip,
-  Grid,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Chip, Grid, Snackbar, Stack, Typography } from '@mui/material';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/settings.module.sass';
 
 export default function PasswordSetup() {
   const supabase = getSupabaseBrowser();
@@ -117,8 +110,14 @@ export default function PasswordSetup() {
   }
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -127,44 +126,46 @@ export default function PasswordSetup() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               비밀번호 설정
             </Typography>
 
-            <Chip label="미설정" size="small" color="warning" />
+            <Chip label="미설정" size="small" className="chip warning" />
           </Stack>
         </AccordionSummary>
 
         <AccordionDetails>
           <Stack gap={2.5}>
-            <Alert severity="info" variant="filled">
-              비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.
-            </Alert>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>비밀번호를 설정하시면 이메일 방식으로도 로그인 가능합니다.</span>
+            </p>
 
-            <Alert severity="warning" variant="outlined">
-              설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.
-            </Alert>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>설정 이후에는 이메일 로그인 기능을 끌 수 없습니다.</span>
+            </p>
 
-            <Button
+            <button
               type="button"
-              variant="contained"
+              className="button medium submit"
               onClick={handleSendPasswordSetupEmail}
               disabled={isSubmitting}
-              fullWidth
             >
               비밀번호 설정 메일 보내기
-            </Button>
+            </button>
 
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            <Snackbar
+              open={Boolean(successMessage)}
+              message={successMessage}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              autoHideDuration={2700}
+              onClose={() => setSuccessMessage('')}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>

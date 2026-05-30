@@ -6,17 +6,18 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Box,
-  Button,
   Grid,
+  Snackbar,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/settings.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -192,8 +193,14 @@ export default function PasswordChange() {
   }
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -202,7 +209,7 @@ export default function PasswordChange() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               비밀번호 변경
             </Typography>
           </Stack>
@@ -211,57 +218,65 @@ export default function PasswordChange() {
         <AccordionDetails>
           <Box component="form" onSubmit={handleSubmit}>
             <Stack gap={2.5}>
-              <TextField
-                id="currentPassword"
-                label="현재 비밀번호"
-                type="password"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={handleCurrentPasswordChange}
-                size="small"
-                fullWidth
-              />
+              <Stack gap={1}>
+                <Typography variant="subtitle2">현재 비밀번호</Typography>
+                <TextField
+                  id="currentPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={handleCurrentPasswordChange}
+                  size="small"
+                  fullWidth
+                />
+              </Stack>
 
-              <TextField
-                id="nextPassword"
-                label="새 비밀번호"
-                type="password"
-                autoComplete="new-password"
-                value={nextPassword}
-                onChange={handleNextPasswordChange}
-                size="small"
-                fullWidth
-              />
+              <Stack gap={1}>
+                <Typography variant="subtitle2">새 비밀번호</Typography>
+                <TextField
+                  id="nextPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  value={nextPassword}
+                  onChange={handleNextPasswordChange}
+                  size="small"
+                  fullWidth
+                />
+              </Stack>
 
-              <TextField
-                id="nextPasswordConfirm"
-                label="새 비밀번호 확인"
-                type="password"
-                autoComplete="new-password"
-                value={nextPasswordConfirm}
-                onChange={handleNextPasswordConfirmChange}
-                size="small"
-                fullWidth
-              />
+              <Stack gap={1}>
+                <Typography variant="subtitle2">새 비밀번호 확인</Typography>
+                <TextField
+                  id="nextPasswordConfirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={nextPasswordConfirm}
+                  onChange={handleNextPasswordConfirmChange}
+                  size="small"
+                  fullWidth
+                />
+              </Stack>
 
-              <Alert severity="error" variant="filled">
-                비밀번호 변경시 자동으로 로그아웃됩니다.
-              </Alert>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>비밀번호 변경시 자동으로 로그아웃됩니다.</span>
+              </p>
 
-              <Button type="submit" variant="contained" disabled={isSubmitting} fullWidth size="large">
+              <button type="submit" className="button medium submit" disabled={isSubmitting}>
                 비밀번호 변경
-              </Button>
+              </button>
 
-              {errorMessage ? (
-                <Alert severity="error" variant="filled">
-                  {errorMessage}
-                </Alert>
-              ) : null}
-              {successMessage ? (
-                <Alert severity="success" variant="outlined">
-                  {successMessage}
-                </Alert>
-              ) : null}
+              {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+              <Snackbar
+                open={Boolean(successMessage)}
+                message={successMessage}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'center',
+                }}
+                autoHideDuration={2700}
+                onClose={() => setSuccessMessage('')}
+              />
             </Stack>
           </Box>
         </AccordionDetails>

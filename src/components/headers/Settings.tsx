@@ -122,7 +122,7 @@ export default function HeaderSettings() {
   }
 
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${styles['settings-header']}`}>
       <div className={styles.container}>
         <div className={styles.top}>
           <div className={styles.settings}>

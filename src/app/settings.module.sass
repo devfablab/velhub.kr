@@ -1,0 +1,42 @@
+.container
+  max-width: ds.rem(575)
+
+  .content
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+
+  .headline-link
+    display: inline-flex
+    align-items: center
+    gap: ds.rem(2)
+    color: ds.$hex-warning
+    font-size: ds.rem(16)
+
+    svg
+      width: ds.rem(16)
+
+    span
+      @include ds.fw(pre, 700)
+
+    &:hover, &:focus-visible
+      span
+        text-decoration: underline
+
+  .grid
+    opacity: 1
+
+    .paper
+      gap: 0
+      padding: 0
+      border-radius: ds.rem(17)
+
+  code
+    display: block
+    font-family: 'SF Mono', 'Monaco', 'DejaVu Sans Mono', 'Ubuntu Mono', 'Roboto Mono', 'Cascadia Code', 'Consolas', 'Lucida Console', 'Courier', 'D2Coding', monospace
+    font-weight: bold
+    color: ds.$hex-warning
+    letter-spacing: -.05em
+    background-color: rgba(ds.$rgb-warning, .17)
+    border-radius: ds.rem(3)
+    padding: ds.rem(2) ds.rem(3)

@@ -5,20 +5,21 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Avatar,
   Box,
-  Button,
   Chip,
   Grid,
+  Snackbar,
   Stack,
   styled,
   TextField,
   Typography,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -318,8 +319,14 @@ export default function UserInfo() {
   const hasUnsetField = !userName || !avatar || !bio;
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -328,7 +335,7 @@ export default function UserInfo() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               기본정보
             </Typography>
 
@@ -336,6 +343,7 @@ export default function UserInfo() {
               label={hasUnsetField ? '미설정 항목 있음' : '설정됨'}
               size="small"
               color={hasUnsetField ? 'warning' : 'success'}
+              className={hasUnsetField ? 'chip warning' : 'chip success'}
             />
           </Stack>
         </AccordionSummary>
@@ -343,7 +351,7 @@ export default function UserInfo() {
         <AccordionDetails>
           <Stack gap={3}>
             <Stack gap={1.5} alignItems="flex-start">
-              <Avatar src={getAvatarDisplayUrl()} alt={userName || ''} sx={{ width: 80, height: 80 }} />
+              <Avatar src={getAvatarDisplayUrl() || 'broken-image.png'} alt={userName} sx={{ width: 80, height: 80 }} />
 
               <VisuallyHiddenInput
                 ref={fileInputReference}
@@ -352,38 +360,45 @@ export default function UserInfo() {
                 onChange={handleAvatarFileChange}
               />
 
-              <Button type="button" variant="outlined" onClick={handleClickAvatarUpload} disabled={isSubmittingAvatar}>
+              <button
+                type="button"
+                className="button small action"
+                onClick={handleClickAvatarUpload}
+                disabled={isSubmittingAvatar}
+              >
                 아바타 수정
-              </Button>
+              </button>
             </Stack>
 
             <Stack gap={1.5}>
-              <Typography variant="subtitle2">활동명</Typography>
+              <Typography variant="subtitle2" component="strong">
+                활동명
+              </Typography>
               {!isEditingUserName ? (
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2" component="span">
                     {userName}
                   </Typography>
-                  <Button type="button" variant="outlined" onClick={() => setIsEditingUserName(true)}>
+                  <button type="button" className="button medium action" onClick={() => setIsEditingUserName(true)}>
                     활동명 수정
-                  </Button>
+                  </button>
                 </Stack>
               ) : (
                 <Box component="form" onSubmit={handleSubmitUserName}>
                   <Stack gap={1} direction="row">
                     <TextField size="small" value={userNameDraft} onChange={handleUserNameChange} fullWidth />
 
-                    <Button
+                    <button
                       type="button"
-                      variant="outlined"
+                      className="button medium cancel"
                       onClick={handleCancelUserName}
                       disabled={isSubmittingUserName}
                     >
                       취소
-                    </Button>
-                    <Button type="submit" variant="contained" disabled={isSubmittingUserName}>
+                    </button>
+                    <button type="submit" className="button medium submit" disabled={isSubmittingUserName}>
                       저장
-                    </Button>
+                    </button>
                   </Stack>
                 </Box>
               )}
@@ -401,9 +416,9 @@ export default function UserInfo() {
                     <Typography variant="body1">자기소개 등록이 필요합니다</Typography>
                   )}
                   <Stack gap={1.5} alignItems="flex-end">
-                    <Button type="button" variant="outlined" onClick={() => setIsEditingBio(true)}>
+                    <button type="button" className="button medium action" onClick={() => setIsEditingBio(true)}>
                       자기소개 수정
-                    </Button>
+                    </button>
                   </Stack>
                 </Stack>
               ) : (
@@ -419,12 +434,17 @@ export default function UserInfo() {
                     />
 
                     <Stack direction="row" gap={1.5} justifyContent="flex-end">
-                      <Button type="button" variant="outlined" onClick={handleCancelBio} disabled={isSubmittingBio}>
+                      <button
+                        type="button"
+                        className="button medium cancel"
+                        onClick={handleCancelBio}
+                        disabled={isSubmittingBio}
+                      >
                         취소
-                      </Button>
-                      <Button type="submit" variant="contained" disabled={isSubmittingBio}>
+                      </button>
+                      <button type="submit" className="button medium submit" disabled={isSubmittingBio}>
                         저장
-                      </Button>
+                      </button>
                     </Stack>
                   </Stack>
                 </Box>
@@ -432,15 +452,21 @@ export default function UserInfo() {
             </Stack>
 
             {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            <Snackbar
+              open={Boolean(successMessage)}
+              message={successMessage}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              autoHideDuration={2700}
+              onClose={() => setSuccessMessage('')}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>

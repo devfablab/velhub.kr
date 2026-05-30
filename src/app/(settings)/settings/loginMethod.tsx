@@ -5,18 +5,19 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
-  Button,
   Chip,
   FormControlLabel,
   Grid,
   Radio,
   RadioGroup,
+  Snackbar,
   Stack,
   Typography,
 } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
@@ -135,8 +136,14 @@ export default function LoginMethod() {
   }
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -145,17 +152,21 @@ export default function LoginMethod() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               기본 로그인 방식
             </Typography>
 
-            <Chip label={savedLoginMethod === 'email' ? '이메일 우선' : '소셜 우선'} size="small" color="primary" />
+            <Chip
+              label={savedLoginMethod === 'email' ? '이메일 우선' : '소셜 우선'}
+              size="small"
+              className="chip successs"
+            />
           </Stack>
         </AccordionSummary>
 
         <AccordionDetails>
           <Stack gap={2.5}>
-            {email ? <Typography variant="body2">계정 이메일: {email}</Typography> : null}
+            {email ? <Typography variant="body2">이메일 {email}</Typography> : null}
 
             <RadioGroup name="defaultLoginMethod" value={selectedLoginMethod}>
               <FormControlLabel
@@ -171,26 +182,31 @@ export default function LoginMethod() {
               />
             </RadioGroup>
 
-            <Button
+            <button
               type="button"
-              variant="contained"
+              className="button medium submit"
               onClick={handleSave}
               disabled={isSubmitting || selectedLoginMethod === savedLoginMethod}
-              fullWidth
             >
               기본 로그인 방식 변경
-            </Button>
+            </button>
 
             {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            <Snackbar
+              open={Boolean(successMessage)}
+              message={successMessage}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              autoHideDuration={2700}
+              onClose={() => setSuccessMessage('')}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>

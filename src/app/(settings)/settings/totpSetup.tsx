@@ -11,13 +11,20 @@ import {
   Button,
   Chip,
   Grid,
+  Snackbar,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -260,19 +267,25 @@ export default function TotpSetup() {
   }
 
   let statusLabel = '미설정';
-  let statusColor: 'default' | 'success' | 'warning' = 'default';
+  let statusName: 'chip default' | 'chip success' | 'chip warning' = 'chip default';
 
   if (verifiedFactor) {
     statusLabel = '설정 완료';
-    statusColor = 'success';
+    statusName = 'chip success';
   } else if (pendingSetup || pendingFactor) {
     statusLabel = '설정 진행 중';
-    statusColor = 'warning';
+    statusName = 'chip warning';
   }
 
   return (
-    <Grid size={12}>
-      <Accordion expanded={isExpanded} onChange={handleAccordionChange} disableGutters variant="outlined">
+    <Grid size={12} className={styles.grid}>
+      <Accordion
+        expanded={isExpanded}
+        onChange={handleAccordionChange}
+        disableGutters
+        variant="outlined"
+        className={`paper ${styles.paper}`}
+      >
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Stack
             alignContent="center"
@@ -281,11 +294,11 @@ export default function TotpSetup() {
             direction="row"
             sx={{ width: '100%', pr: 1 }}
           >
-            <Typography variant="subtitle2" component="span">
+            <Typography variant="subtitle2" component="strong">
               앱 기반 2단계 인증
             </Typography>
 
-            <Chip label={statusLabel} size="small" color={statusColor} />
+            <Chip label={statusLabel} size="small" className={statusName} />
           </Stack>
         </AccordionSummary>
 
@@ -293,7 +306,10 @@ export default function TotpSetup() {
           <Stack gap={2.5}>
             {pendingSetup ? (
               <Stack gap={2.5}>
-                <Typography variant="subtitle2">QR 코드를 인증 앱으로 스캔해주세요.</Typography>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>아래 QR 코드를 인증 앱으로 스캔해주세요.</span>
+                </p>
 
                 {qrCodeImageSource ? (
                   <Box
@@ -308,64 +324,63 @@ export default function TotpSetup() {
                   />
                 ) : null}
 
-                <Typography variant="subtitle2">QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</Typography>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>QR 스캔이 어려우면 아래 키를 직접 입력해주세요.</span>
+                </p>
 
-                <Typography
-                  variant="body1"
-                  sx={{
-                    wordBreak: 'break-all',
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  {pendingSetup.secret}
-                </Typography>
+                <code>{pendingSetup.secret}</code>
 
-                <Alert severity="warning" variant="filled">
-                  앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
-                </Alert>
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>
+                    앱 등록 이후 반드시 하단의 입력폼에 인증코드를 입력하셔야 데브허브 서버에 등록이 완료됩니다.
+                  </span>
+                </p>
 
                 <Box component="form" onSubmit={handleVerify}>
                   <Stack gap={2.5}>
-                    <TextField
-                      id="verifyCode"
-                      label="인증 코드"
-                      placeholder="XXXXXX"
-                      type="text"
-                      value={verifyCode}
-                      onChange={handleVerifyCodeChange}
-                      size="small"
-                      fullWidth
-                    />
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">인증코드 입력</Typography>
+                      <TextField
+                        id="verifyCode"
+                        placeholder="XXXXXX"
+                        type="text"
+                        value={verifyCode}
+                        onChange={handleVerifyCodeChange}
+                        size="small"
+                        fullWidth
+                      />
+                    </Stack>
 
-                    <Button type="submit" variant="outlined" disabled={isVerifying} fullWidth>
+                    <button type="button" className="button medium submit" disabled={isVerifying}>
                       인증 코드 확인
-                    </Button>
+                    </button>
                   </Stack>
                 </Box>
               </Stack>
             ) : (
-              <Button
+              <button
                 type="button"
-                variant="contained"
+                className="button medium action"
                 onClick={() => void handleSetOrReset()}
                 disabled={isSetting}
-                fullWidth
               >
                 {verifiedFactor ? '2단계 인증 재설정' : '2단계 인증 설정'}
-              </Button>
+              </button>
             )}
 
-            {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            {successMessage ? (
-              <Alert severity="success" variant="outlined">
-                {successMessage}
-              </Alert>
-            ) : null}
+            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            <Snackbar
+              open={Boolean(successMessage)}
+              message={successMessage}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              autoHideDuration={2700}
+              onClose={() => setSuccessMessage('')}
+            />
           </Stack>
         </AccordionDetails>
       </Accordion>

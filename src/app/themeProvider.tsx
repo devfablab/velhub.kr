@@ -89,23 +89,6 @@ export default function ThemeProviderClient({
     if (!isAuthenticated) {
       return;
     }
-
-    void (async () => {
-      try {
-        await fetch('/api/theme-mode', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            themeMode: nextThemeMode,
-          }),
-        });
-      } catch {
-        return;
-      }
-    })();
   }
 
   const theme = useMemo(() => {

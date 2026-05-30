@@ -3,6 +3,13 @@ header.header
   align-items: center
   justify-content: center
 
+  &.settings-header
+    html[data-theme="yellow-light"] &
+      background-color: ds.$hex-white
+
+    html[data-theme="yellow-dark"] &
+      background-color: ds.$hex-black
+
   .container
     display: flex
     flex-direction: column
