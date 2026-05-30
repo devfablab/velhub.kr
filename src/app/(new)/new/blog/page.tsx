@@ -1,18 +1,15 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
 import Opt from './opt';
+import styles from '@/app/new.module.sass';
 
 export default async function Page() {
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={4}>
-          <Typography variant="h5" component="h1">
-            블로그 개설
-          </Typography>
-
+    <main className={styles['new-generation']}>
+      <div className={styles.container}>
+        <div className={`content ${styles.content}`}>
+          <h1>블로그 개설</h1>
           <Opt />
-        </Stack>
-      </Box>
-    </Container>
+        </div>
+      </div>
+    </main>
   );
 }

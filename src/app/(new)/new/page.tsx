@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
@@ -47,7 +46,6 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 export default function Page() {
   const { isReady } = useAuthState();
-  const pathname = usePathname();
   const [isMounted, setIsMounted] = useState(false);
   const [returnPath, setReturnPath] = useState<string | null>(null);
   const { themeMode, setThemeMode } = useThemeMode();

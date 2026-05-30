@@ -10,6 +10,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   FormControlLabel,
   FormLabel,
   InputAdornment,
@@ -17,12 +18,23 @@ import {
   Paper,
   Radio,
   RadioGroup,
+  Snackbar,
   Stack,
   styled,
   Switch,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import styles from '@/app/new.module.sass';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -77,6 +89,38 @@ function isThemeType(value: string): value is ThemeType {
   return THEME_TYPES.includes(value as ThemeType);
 }
 
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
+}
+
 export default function Opt() {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
@@ -84,6 +128,7 @@ export default function Opt() {
   const [siteKey, setSiteKey] = useState('');
   const [siteKeyStatusMessage, setSiteKeyStatusMessage] = useState('');
   const [siteLabel, setSiteLabel] = useState('');
+  const [siteLabelStatusMessage, setSiteLabelStatusMessage] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [summary, setSummary] = useState('');
@@ -97,6 +142,7 @@ export default function Opt() {
   const [plans, setPlans] = useState<PlanRow[]>([]);
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
+  const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
@@ -104,8 +150,42 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isErrorDialogOpen, setIsErrorDialogOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const [baseUrl, setBaseUrl] = useState('');
+
+  const { themeMode, setThemeMode } = useThemeMode();
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
+
+  useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    setIsMounted(true);
+  }, [setThemeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
+    }
+
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
 
   useEffect(() => {
     async function loadPlans() {
@@ -298,6 +378,54 @@ export default function Opt() {
     }
   }
 
+  async function handleCheckSiteLabel() {
+    if (isCheckingSiteLabel) {
+      return;
+    }
+
+    const trimmedSiteLabel = siteLabel.trim();
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setSiteLabelStatusMessage('');
+
+    if (!trimmedSiteLabel) {
+      openErrorDialog('사이트명을 입력해주세요.');
+      return;
+    }
+
+    setIsCheckingSiteLabel(true);
+
+    try {
+      const response = await fetch('/api/site/check-label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteLabel: trimmedSiteLabel,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '사이트명 확인에 실패했습니다.');
+      }
+
+      setSiteLabelStatusMessage('사용 가능한 사이트명입니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        openErrorDialog(unknownError.message || '사이트명 확인에 실패했습니다.');
+      } else {
+        openErrorDialog('사이트명 확인에 실패했습니다.');
+      }
+    } finally {
+      setIsCheckingSiteLabel(false);
+    }
+  }
+
   async function handleProfilePictureFileChange(event: InputChangeEvent) {
     const inputElement = event.currentTarget;
     const selectedFile = inputElement.files?.[0];
@@ -450,76 +578,95 @@ export default function Opt() {
     }
   }
 
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+  }, [isMounted]);
+
   return (
-    <Paper sx={{ p: 3 }}>
-      <Box component="form" onSubmit={handleSubmit}>
+    <Box component="form" onSubmit={handleSubmit}>
+      <div className={`paper ${styles.paper}`}>
         <Stack gap={3}>
-          <Stack gap={1.5}>
-            <Stack
-              direction="row"
-              gap={2}
-              sx={{
-                alignItems: 'flex-start',
+          <Stack gap={1}>
+            <Typography variant="subtitle2">커뮤니티 주소</Typography>
+            <TextField
+              value={siteKey}
+              onChange={handleSiteKeyChange}
+              fullWidth
+              helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+              size="small"
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={handleCheckSiteKey}
+                        disabled={isCheckingSiteKey}
+                      >
+                        중복 확인
+                      </button>
+                    </InputAdornment>
+                  ),
+                },
               }}
-            >
-              <TextField
-                label="사이트 식별자"
-                value={siteKey}
-                onChange={handleSiteKeyChange}
-                fullWidth
-                helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
-                size="medium"
-                slotProps={{
-                  input: {
-                    startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Button
-                          type="button"
-                          variant="outlined"
-                          onClick={handleCheckSiteKey}
-                          disabled={isCheckingSiteKey}
-                          size="small"
-                        >
-                          중복 확인
-                        </Button>
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </Stack>
+            />
 
             {siteKeyStatusMessage ? (
-              <Alert severity="success" variant="outlined">
-                {siteKeyStatusMessage}
-              </Alert>
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>{siteKeyStatusMessage}</span>
+              </p>
             ) : null}
           </Stack>
 
-          <TextField
-            label="사이트명"
-            value={siteLabel}
-            onChange={handleSiteLabelChange}
-            fullWidth
-            size="small"
-            helperText="입력하지 않으면 사이트 식별자가 사이트명으로 사용됩니다."
-          />
+          <Stack gap={1}>
+            <Typography variant="subtitle2">커뮤니티 이름</Typography>
+            <TextField
+              label="커뮤니티 이름"
+              value={siteLabel}
+              onChange={handleSiteLabelChange}
+              fullWidth
+              size="small"
+              helperText="입력하지 않으면 커뮤니티 주소 기준으로 자동 생성됩니다."
+              slotProps={{
+                input: {
+                  endAdornment: siteLabel.trim() ? (
+                    <InputAdornment position="end">
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={handleCheckSiteLabel}
+                        disabled={isCheckingSiteLabel}
+                      >
+                        중복 확인
+                      </button>
+                    </InputAdornment>
+                  ) : undefined,
+                },
+              }}
+            />
 
-          <Stack gap={1.5} alignItems="flex-start">
-            {profilePictureUrl ? (
-              <Box
-                component="img"
-                src={profilePictureUrl}
-                alt="사이트 프로필 이미지"
-                sx={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                }}
-              />
+            {siteLabelStatusMessage ? (
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>{siteLabelStatusMessage}</span>
+              </p>
             ) : null}
+          </Stack>
+
+          <Stack gap={1} direction="column">
+            <Stack justifyContent="space-between" alignItems="center" direction="row">
+              <Typography variant="subtitle2">커뮤니티 프로필 이미지</Typography>
+              <button type="button" className="button small action" onClick={handleClickProfilePictureUpload}>
+                프로필 이미지 업로드
+              </button>
+            </Stack>
+
+            <AppIconAvatar src={profilePictureUrl || null} alt="" size={80} />
 
             <VisuallyHiddenInput
               ref={fileInputReference}
@@ -527,31 +674,23 @@ export default function Opt() {
               accept="image/*"
               onChange={handleProfilePictureFileChange}
             />
-
-            <Button
-              type="button"
-              variant="outlined"
-              onClick={handleClickProfilePictureUpload}
-              disabled={isUploadingAvatar}
-            >
-              프로필 이미지 업로드
-            </Button>
           </Stack>
 
-          <TextField
-            label="요약"
-            value={summary}
-            onChange={handleSummaryChange}
-            fullWidth
-            multiline
-            minRows={4}
-            size="small"
-          />
+          <Stack gap={1}>
+            <Typography variant="subtitle2">커뮤니티 간단설명</Typography>
+            <TextField size="small" value={summary} onChange={handleSummaryChange} fullWidth multiline minRows={4} />
+          </Stack>
 
           <Stack gap={1}>
-            <TextField select label="테마" value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
+            <Typography variant="subtitle2">테마</Typography>
+            <TextField select value={themeType} onChange={handleThemeTypeChange} fullWidth size="small">
               {THEME_TYPES.map((themeValue) => (
                 <MenuItem key={themeValue} value={themeValue}>
+                  {themeType === themeValue ? (
+                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                  ) : (
+                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                  )}
                   {themeValue}
                 </MenuItem>
               ))}
@@ -559,7 +698,7 @@ export default function Opt() {
           </Stack>
 
           <Stack gap={1}>
-            <FormLabel>요금제</FormLabel>
+            <Typography variant="subtitle2">요금제</Typography>
             <RadioGroup value={planType} onChange={handlePlanTypeChange}>
               {plans.map((planRow) => (
                 <FormControlLabel
@@ -573,90 +712,161 @@ export default function Opt() {
           </Stack>
 
           <Stack gap={1}>
-            <FormLabel>가입 방식</FormLabel>
+            <Typography variant="subtitle2">가입 방식</Typography>
             <RadioGroup value={joinType} onChange={handleJoinTypeChange}>
               <FormControlLabel value="open" control={<Radio />} label="오픈가입" />
               <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
             </RadioGroup>
           </Stack>
 
-          <TextField
-            select
-            label="글 작성 정책"
-            value={policyPost}
-            onChange={handlePolicyPostChange}
-            fullWidth
-            size="small"
-          >
-            <MenuItem value="comment_0">가입 후 바로 글쓰기 가능</MenuItem>
-            <MenuItem value="comment_1">댓글 1개 등록 후 글쓰기 가능</MenuItem>
-            <MenuItem value="comment_3">댓글 3개 등록 후 글쓰기 가능</MenuItem>
-            <MenuItem value="comment_5">댓글 5개 등록 후 글쓰기 가능</MenuItem>
-          </TextField>
-
-          <TextField
-            select
-            label="댓글 작성 정책"
-            value={policyComment}
-            onChange={handlePolicyCommentChange}
-            fullWidth
-            size="small"
-          >
-            <MenuItem value="estimate_0">가입 후 바로 댓글쓰기 가능</MenuItem>
-            <MenuItem value="estimate_1">가입 6시간 이후 댓글쓰기 가능</MenuItem>
-            <MenuItem value="estimate_3">가입 12시간 이후 댓글쓰기 가능</MenuItem>
-            <MenuItem value="estimate_5">가입 24시간 이후 댓글쓰기 가능</MenuItem>
-          </TextField>
-
-          <Stack direction="row" gap={3}>
-            <FormControlLabel
-              control={<Switch checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />}
-              label={visibilityType === 'public' ? '공개' : '비공개'}
-            />
-
-            <FormControlLabel
-              control={<Switch checked={isShutdown} onChange={handleIsShutdownChange} />}
-              label={isShutdown ? '중단' : '운영'}
-            />
+          <Stack gap={1}>
+            <Typography variant="subtitle2">글 작성 정책</Typography>
+            <TextField select value={policyPost} onChange={handlePolicyPostChange} fullWidth size="small">
+              <MenuItem value="comment_0">
+                {policyPost === 'comment_0' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                가입 후 바로 글쓰기 가능
+              </MenuItem>
+              <MenuItem value="comment_1">
+                {policyPost === 'comment_1' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                댓글 1개 등록 후 글쓰기 가능
+              </MenuItem>
+              <MenuItem value="comment_3">
+                {policyPost === 'comment_3' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                댓글 3개 등록 후 글쓰기 가능
+              </MenuItem>
+              <MenuItem value="comment_5">
+                {policyPost === 'comment_5' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                댓글 5개 등록 후 글쓰기 가능
+              </MenuItem>
+            </TextField>
           </Stack>
 
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
-            fullWidth
-            size="large"
-          >
-            커뮤니티 개설
-          </Button>
+          <Stack gap={1}>
+            <Typography variant="subtitle2">댓글 작성 정책</Typography>
+            <TextField select value={policyComment} onChange={handlePolicyCommentChange} fullWidth size="small">
+              <MenuItem value="estimate_0">
+                {policyComment === 'estimate_0' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                가입 후 바로 댓글쓰기 가능
+              </MenuItem>
+              <MenuItem value="estimate_1">
+                {policyComment === 'estimate_1' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                가입 6시간 이후 댓글쓰기 가능
+              </MenuItem>
+              <MenuItem value="estimate_3">
+                {policyComment === 'estimate_3' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                가입 12시간 이후 댓글쓰기 가능
+              </MenuItem>
+              <MenuItem value="estimate_5">
+                {policyComment === 'estimate_5' ? (
+                  <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                ) : (
+                  <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                )}
+                가입 24시간 이후 댓글쓰기 가능
+              </MenuItem>
+            </TextField>
+          </Stack>
 
+          <Stack direction="column" gap={1}>
+            <Typography variant="subtitle2">커뮤니티 공개여부</Typography>
+            <FormControlLabel
+              control={
+                <IOSSwitch sx={{ m: 1 }} checked={visibilityType === 'public'} onChange={handleVisibilityTypeChange} />
+              }
+              label={visibilityType === 'public' ? '공개' : '비공개'}
+            />
+          </Stack>
           {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
           ) : null}
-          {successMessage ? (
-            <Alert severity="success" variant="outlined">
-              {successMessage}
-            </Alert>
-          ) : null}
-
-          <Alert variant="filled" severity="info">
-            개설이 완료되면 사이트 운영자 권한이 부여됩니다.
-          </Alert>
         </Stack>
-      </Box>
-      <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs">
-        <DialogTitle>개설할 수 없습니다</DialogTitle>
-        <DialogContent>
-          <Typography>하단 에러 메시지를 확인해 주세요</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="contained" onClick={closeErrorDialog}>
-            확인
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Paper>
+      </div>
+      <div className={styles.actions}>
+        <button type="button" className="button medium close">
+          개설 취소
+        </button>
+        <button
+          type="submit"
+          className="button medium submit"
+          disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
+        >
+          커뮤니티 개설
+        </button>
+      </div>
+
+      <Snackbar
+        open={Boolean(successMessage)}
+        message={successMessage}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage('')}
+      />
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isErrorDialogOpen} onClose={closeErrorDialog} className="VhiDrawer-bottom">
+          <h2>개설 불가</h2>
+          <button className="close-button" onClick={closeErrorDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>하단 에러 메시지를 확인해 주세요</Typography>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={closeErrorDialog}>
+                확인
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isErrorDialogOpen} onClose={closeErrorDialog} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>개설 불가</DialogTitle>
+          <button className="close-button" onClick={closeErrorDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography>하단 에러 메시지를 확인해 주세요</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={closeErrorDialog}>
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </Box>
   );
 }
