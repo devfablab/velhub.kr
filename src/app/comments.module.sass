@@ -12,11 +12,6 @@
       @include ds.fw(neo, 800)
       font-size: ds.rem(16)
 
-      html[data-site-type='blog'] &
-        font-family: var(--blog-subject-font-family)
-        font-weight: 800
-        font-variation-settings: "wght" 800
-
     button
       display: flex
       justify-content: center
@@ -56,11 +51,6 @@
         padding: 0 ds.rem(12)
         @include ds.fw(pre, 700)
         font-size: ds.rem(14)
-
-        html[data-site-type='blog'] &
-          font-family: var(--blog-description-font-family)
-          font-weight: 700
-          font-variation-settings: "wght" 700
 
       .submit
         cursor: default
@@ -132,11 +122,6 @@
       top: ds.rem(12)
       left: ds.rem(52)
 
-      html[data-site-type='blog'] &
-        font-family: var(--blog-description-font-family)
-        font-weight: 700
-        font-variation-settings: "wght" 700
-
   .comment-items
     display: flex
     flex-direction: column
@@ -176,22 +161,12 @@
           cite
             @include ds.fw(pre, 700)
 
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 700
-              font-variation-settings: "wght" 700
-
           .author-manager
             display: inline-flex
             gap: ds.rem(3)
             align-items: center
             @include ds.fw(pre, 700)
             color: ds.$hex-action
-
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 700
-              font-variation-settings: "wght" 700
 
             span
               display: inline-flex
@@ -219,11 +194,6 @@
             @include ds.fw(pre, 700)
             color: ds.$hex-warning
 
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 700
-              font-variation-settings: "wght" 700
-
         .comment-content
           font-size: ds.rem(14)
           line-height: 1.25
@@ -235,11 +205,6 @@
             font-size: ds.rem(12)
             color: ds.$hex-warning
 
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 500
-              font-variation-settings: "wght" 500
-
           p
             white-space: break-spaces
 
@@ -247,11 +212,6 @@
             margin-right: ds.rem(7)
             @include ds.fw(pre, 700)
             color: ds.$hex-accent
-
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 700
-              font-variation-settings: "wght" 700
 
         .options
           display: flex
@@ -261,11 +221,6 @@
           time
             @include ds.fw(pre, 700)
             opacity: .7
-
-            html[data-site-type='blog'] &
-              font-family: var(--blog-description-font-family)
-              font-weight: 700
-              font-variation-settings: "wght" 700
 
           button
             font-size: ds.rem(12)
@@ -284,11 +239,6 @@
   @include ds.fw(pre, 700)
   font-size: ds.rem(12)
   color: ds.$hex-accent
-
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 700
-    font-variation-settings: "wght" 700
 
   html[data-theme="yellow-light"] &
     background-color: rgba(ds.$rgb-accent, .08)

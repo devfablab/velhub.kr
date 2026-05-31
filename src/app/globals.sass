@@ -170,11 +170,6 @@ body, pre, input, button, textarea, select
   color: ds.$hex-bright
   -webkit-font-smoothing: antialiased
 
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 400
-    font-variation-settings: "wght" 400
-
 body
   .MuiAppBar-root
     background-color: transparent
@@ -271,11 +266,6 @@ a, button, select, input
   color: ds.$hex-white
   @include ds.fw(pre, 700)
 
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 700
-    font-variation-settings: "wght" 700
-
 .seo
   @include ds.screen-reader-only
 
@@ -321,11 +311,6 @@ a, button, select, input
     color: ds.$hex-bright!important
     @include ds.fw(neo, 700)
     text-align: center
-
-    html[data-site-type='blog'] &
-      font-family: var(--blog-subject-font-family)
-      font-weight: 700
-      font-variation-settings: "wght" 700
 
   &.pape-error
     align-items: center
@@ -666,11 +651,6 @@ a, button, select, input
         background-color: ds.$hex-accent
         color: ds.$hex-bright
 
-        html[data-site-type='blog'] &
-          font-family: var(--blog-description-font-family)
-          font-weight: 700
-          font-variation-settings: "wght" 700
-
         &:disabled
           background-color: ds.$hex-tertiary
           color: rgba(ds.$rgb-bright, .7)
@@ -710,11 +690,6 @@ a, button, select, input
           background-color: rgba(ds.$rgb-accent, .1)
           color: ds.$hex-accent
 
-          html[data-site-type='blog'] &
-            font-family: var(--blog-description-font-family)
-            font-weight: 700
-            font-variation-settings: "wght" 700
-
           &.delete-button
             background-color: transparent!important
             border: 1px solid ds.$hex-warning!important
@@ -744,11 +719,6 @@ a, button, select, input
   .Mui-focused, .MuiFormLabel-root
     @include ds.fw(neo, 400)
 
-    html[data-site-type='blog'] &
-      font-family: var(--blog-subject-font-family)
-      font-weight: 400
-      font-variation-settings: "wght" 400
-
     html[data-theme="yellow-light"] &
       color: ds.$hex-primary!important
 
@@ -770,11 +740,6 @@ a, button, select, input
   white-space: nowrap
   background-color: ds.$hex-accent
   color: ds.$hex-primary
-
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 700
-    font-variation-settings: "wght" 700
 
   html[data-theme="yellow-light"] &
     color: ds.$hex-primary
@@ -900,11 +865,6 @@ a, button, select, input
   font-size: ds.rem(14)
   color: ds.$hex-accent
 
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 700
-    font-variation-settings: "wght" 700
-
 .link-normal
   display: inline-flex
   flex-direction: row
@@ -915,11 +875,6 @@ a, button, select, input
   font-size: ds.rem(14)
   @include ds.ellipsis
   text-decoration: underline
-
-  html[data-site-type='blog'] &
-    font-family: var(--blog-description-font-family)
-    font-weight: 700
-    font-variation-settings: "wght" 700
 
   html[data-theme="yellow-light"] &
     color: ds.$hex-primary
@@ -948,11 +903,6 @@ main
   h2
     @include ds.fw(neo, 700)
     font-size: ds.rem(24)
-
-    html[data-site-type='blog'] &
-      font-family: var(--blog-subject-font-family)
-      font-weight: 700
-      font-variation-settings: "wght" 700
 
 .container
   display: flex
