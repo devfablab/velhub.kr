@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, type JSX } from 'react';
-import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Stack, TextField } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Anchor from '@/components/Anchor';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import Container from '../container';
+import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -64,46 +67,37 @@ export default function Page() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={4}>
-          <Typography variant="h5" component="h1">
-            비밀번호 재설정
-          </Typography>
+    <Container>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack gap={1}>
+          <TextField
+            placeholder="이메일"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            fullWidth
+            size="small"
+          />
 
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Box component="form" onSubmit={handleSubmit}>
-              <Stack gap={2.5}>
-                <TextField
-                  label="이메일"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={handleEmailChange}
-                  fullWidth
-                />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Anchor href="/auth/sign-in" className={`button small action ${styles.action}`}>
+              로그인으로 돌아가기
+            </Anchor>
+          </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Anchor href="/auth/sign-in">로그인으로 돌아가기</Anchor>
-                </Box>
+          <div className={styles.actions}>
+            <button type="submit" className={`button medium submit ${styles.submit}`} disabled={isSubmitting}>
+              재설정 메일 보내기
+            </button>
+          </div>
 
-                <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-                  <Button type="submit" variant="contained" disabled={isSubmitting} size="large">
-                    재설정 메일 보내기
-                  </Button>
-                  <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
-                    라운지로 이동
-                  </Link>
-                </Box>
-
-                {errorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {errorMessage}
-                  </Alert>
-                ) : null}
-              </Stack>
-            </Box>
-          </Paper>
+          {errorMessage ? (
+            <p className={`alert error ${styles.alert}`}>
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
         </Stack>
       </Box>
     </Container>

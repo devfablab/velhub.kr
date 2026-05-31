@@ -67,15 +67,27 @@ export default function Container({ children }: ContainerProps) {
               )}
               <div className={styles['auth-form']}>
                 <div className={styles.headline}>
-                  <h1>{pathname === '/auth/sign-in' ? '이어서 시작하기' : '새로운 공간을 만들어보세요'}</h1>
-                  <p>
+                  <h1>
                     {pathname === '/auth/sign-in'
-                      ? `이미 계정이 있다면 \n 로그인하고 바로 시작하세요.`
-                      : `지금 바로 \n 나만의 서비스를 시작해 보세요.`}
-                  </p>
+                      ? '이어서 시작하기'
+                      : pathname === '/auth/sign-up'
+                        ? '새로운 공간을 만들어보세요'
+                        : pathname === '/auth/find-password'
+                          ? '비밀번호 재설정'
+                          : pathname === '/auth/reset-password'
+                            ? '새 비밀번호 설정'
+                            : ''}
+                  </h1>
+                  {pathname === '/auth/sign-in' || pathname === '/auth/sign-up' ? (
+                    <p>
+                      {pathname === '/auth/sign-in'
+                        ? `이미 계정이 있다면 \n 로그인하고 바로 시작하세요.`
+                        : `지금 바로 \n 나만의 서비스를 시작해 보세요.`}
+                    </p>
+                  ) : null}
                 </div>
                 {children}
-                <SocialLoginButtons />
+                {pathname === '/auth/sign-in' || pathname === '/auth/sign-up' ? <SocialLoginButtons /> : null}
               </div>
             </div>
           </div>

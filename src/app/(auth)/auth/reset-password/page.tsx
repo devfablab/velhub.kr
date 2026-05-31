@@ -2,8 +2,11 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, Button, Container, Link, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Stack, TextField } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import Container from '../container';
+import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -118,51 +121,45 @@ export default function Page() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={4}>
-          <Typography variant="h5" component="h1">
-            새 비밀번호 설정
-          </Typography>
+    <Container>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack gap={1}>
+          <TextField
+            placeholder="새 비밀번호"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={handlePasswordChange}
+            fullWidth
+            size="small"
+          />
 
-          <Paper variant="outlined" sx={{ p: 3 }}>
-            <Box component="form" onSubmit={handleSubmit}>
-              <Stack gap={2.5}>
-                <TextField
-                  label="새 비밀번호"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  fullWidth
-                />
+          <TextField
+            placeholder="새 비밀번호 확인"
+            type="password"
+            autoComplete="new-password"
+            value={passwordConfirm}
+            onChange={handlePasswordConfirmChange}
+            fullWidth
+            size="small"
+          />
 
-                <TextField
-                  label="새 비밀번호 확인"
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwordConfirm}
-                  onChange={handlePasswordConfirmChange}
-                  fullWidth
-                />
+          <div className={styles.actions}>
+            <button
+              type="submit"
+              className={`button medium submit ${styles.submit}`}
+              disabled={isSubmitting || !isRecoveryReady}
+            >
+              비밀번호 재설정
+            </button>
+          </div>
 
-                <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-                  <Button type="submit" variant="contained" disabled={isSubmitting || !isRecoveryReady} size="large">
-                    비밀번호 재설정
-                  </Button>
-                  <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
-                    라운지로 이동
-                  </Link>
-                </Box>
-
-                {errorMessage ? (
-                  <Alert severity="error" variant="filled">
-                    {errorMessage}
-                  </Alert>
-                ) : null}
-              </Stack>
-            </Box>
-          </Paper>
+          {errorMessage ? (
+            <p className={`alert error ${styles.alert}`}>
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
         </Stack>
       </Box>
     </Container>

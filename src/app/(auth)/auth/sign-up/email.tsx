@@ -2,21 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Alert,
-  Box,
-  Button,
-  FormControlLabel,
-  Link,
-  Paper,
-  Stack,
-  Switch,
-  TextField,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import { Box, FormControlLabel, Stack, Switch, TextField, useMediaQuery, useTheme } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
