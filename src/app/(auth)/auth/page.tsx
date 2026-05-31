@@ -47,15 +47,10 @@ function applyThemeMode(themeMode: ThemeMode) {
 export default function Page() {
   const { isReady } = useAuthState();
   const [isMounted, setIsMounted] = useState(false);
-  const [returnPath, setReturnPath] = useState<string | null>(null);
   const { themeMode, setThemeMode } = useThemeMode();
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-
-  useEffect(() => {
-    setReturnPath(sessionStorage.getItem('route:returnPath'));
-  }, []);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -109,13 +104,13 @@ export default function Page() {
         </div>
       </header>
 
-      <main className={styles.main}>
+      <main className={`${styles.main} ${styles.auth}`}>
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content}`}>
             {isMobile ? null : <h1>회원가입/로그인하기 🥰</h1>}
             <div className={styles['auth-select']}>
               <div className={styles.item}>
-                <Anchor href="/new/sign-up">
+                <Anchor href="/auth/sign-up">
                   <i>
                     <CheckOutlinedIcon />
                   </i>

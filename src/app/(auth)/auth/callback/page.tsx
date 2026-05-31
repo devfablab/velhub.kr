@@ -3,20 +3,22 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  Alert,
-  Box,
-  Button,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
+  Drawer,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import styles from '@/app/auth.module.sass';
 
 type ProcessingState = 'idle' | 'processing' | 'confirm' | 'failed';
 
@@ -57,6 +59,10 @@ export default function Page() {
   const [pendingSocialSave, setPendingSocialSave] = useState<PendingSocialSave | null>(null);
 
   const [returnPath, setReturnPath] = useState<string | null>(null);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     let isCancelled = false;
@@ -432,45 +438,76 @@ export default function Page() {
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={4}>
-          <Typography variant="h5" component="h1">
-            소셜 로그인 처리
-          </Typography>
-
-          <Paper variant="outlined" sx={{ p: 3 }}>
+    <main className={styles.callback}>
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content}`}>
+          <h1>소셜 로그인 진행 중</h1>
+          <div className={styles.processing}>
             {processingState === 'idle' || processingState === 'processing' ? (
               <Stack gap={5} alignItems="center">
-                <Alert variant="outlined" severity="info">
-                  로그인 정보를 확인하고 있습니다.
-                </Alert>
+                <p className={`alert info ${styles.alert}`}>
+                  <InfoOutlineRoundedIcon />
+                  <span>로그인 정보를 확인하고 있습니다.</span>
+                </p>
                 <LoadingIndicator />
               </Stack>
             ) : null}
 
             {processingState === 'failed' ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
+              <Stack gap={5} alignItems="center">
+                <p className={`alert error ${styles.alert}`}>
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+                <SocialLoginButtons />
+              </Stack>
             ) : null}
-          </Paper>
-        </Stack>
-      </Box>
-      <Dialog open={processingState === 'confirm'} onClose={handleCancelSocialLogin} fullWidth maxWidth="xs">
-        <DialogTitle>소셜 로그인 확인</DialogTitle>
-        <DialogContent>
-          <Typography>{confirmMessage}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCancelSocialLogin}>
-            이메일 로그인
-          </Button>
-          <Button type="button" variant="contained" onClick={handleConfirmSocialLogin}>
-            소셜 로그인
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+          </div>
+        </div>
+      </div>
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={processingState === 'confirm'}
+          onClose={handleCancelSocialLogin}
+          className="VhiDrawer-bottom"
+        >
+          <h2>소셜 로그인 확인</h2>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <Typography>{confirmMessage}</Typography>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
+                이메일 로그인
+              </button>
+              <button type="button" className="button medium submit" onClick={handleConfirmSocialLogin}>
+                소셜 로그인
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={processingState === 'confirm'}
+          onClose={handleCancelSocialLogin}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>소셜 로그인 확인</DialogTitle>
+          <DialogContent>
+            <Typography>{confirmMessage}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
+              이메일 로그인
+            </button>
+            <button type="button" className="button medium submit" onClick={handleConfirmSocialLogin}>
+              소셜 로그인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </main>
   );
 }

@@ -99,14 +99,6 @@ header.header
           background-color: black
           border-radius: ds.rem(5)
 
-        .alert
-          background-color: ds.$hex-white
-          padding: ds.rem(17)
-          border-radius: ds.rem(17)
-
-          span
-            @include ds.fw(pre, 700)
-
         .headline
           display: flex
           flex-direction: column
@@ -157,30 +149,6 @@ header.header
               width: 100%
               @include ds.fw(neo, 700)
               color: ds.$hex-black
-
-        .socials
-          display: flex
-          flex-direction: column
-          gap: ds.rem(12)
-
-          .button
-            gap: ds.rem(12)
-            color: ds.$hex-white
-            @include ds.fw(neo, 700)
-
-            &.google
-              border-color: #4285f4
-              background-color: #4285f4
-
-              &:hover, &:focus-visible
-                box-shadow: 0 0 0 .1875rem rgb(#4285f4, .5)
-
-            &.github
-              border-color: #000
-              background-color: #000
-
-              &:hover, &:focus-visible
-                box-shadow: 0 0 0 .1875rem rgb(#000, .5)
 
       .auth-select
         display: flex
@@ -281,3 +249,171 @@ header.header
               svg
                 width: ds.rem(14)
                 height: ds.rem(14)
+
+  &.auth
+    .content
+      flex-direction: column
+      gap: ds.rem(27)
+
+      h1
+        text-align: center
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(28)
+        color: ds.$hex-bright
+
+        @include ds.mq(maxSmall)
+          font-size: ds.rem(18)
+
+        @include ds.mq(maxMedium)
+          font-size: ds.rem(24)
+
+.socials
+  display: flex
+  flex-direction: column
+  gap: ds.rem(12)
+
+  .button
+    gap: ds.rem(12)
+    color: ds.$hex-white!important
+    @include ds.fw(neo, 700)
+
+    &.google
+      border-color: #4285f4
+      background-color: #4285f4
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 .1875rem rgb(#4285f4, .5)
+
+    &.github
+      border-color: #000
+      background-color: #000
+
+      &:hover, &:focus-visible
+        box-shadow: 0 0 0 .1875rem rgb(#000, .5)
+
+.callback
+  .container
+    display: flex
+    flex-direction: column
+    justify-content: center
+    max-width: ds.rem(575)
+    width: 100%
+
+    .content
+      display: flex
+      flex-direction: column
+      gap: ds.rem(27)
+      width: 100%
+      justify-content: center
+
+      .alert
+        width: 100%
+
+    .processing
+      width: 100%
+
+  h1
+    text-align: center
+    @include ds.fw(neo, 800)
+    font-size: ds.rem(28)
+    color: ds.$hex-bright
+
+    @include ds.mq(maxSmall)
+      font-size: ds.rem(18)
+
+    @include ds.mq(maxMedium)
+      font-size: ds.rem(24)
+
+.alert
+  background-color: ds.$hex-white
+  padding: ds.rem(17)
+  border-radius: ds.rem(17)
+
+  span
+    @include ds.fw(pre, 700)
+
+.callback
+  background: radial-gradient( 100% 100% at var(--g4-1-x-position) var(--g4-1-y-position), #6c3c97 -100%, transparent ), radial-gradient( 100% 100% at var(--g4-2-x-position) var(--g4-2-y-position), #c13b84 -100%, transparent ), radial-gradient( 100% 100% at var(--g4-3-x-position) var(--g4-3-y-position), #e93e3a -100%, transparent ), radial-gradient( 100% 100% at var(--g4-4-x-position) var(--g4-4-y-position), #f8b34b -100%, transparent ), #6c3c97
+  animation-name: g-4
+  animation-iteration-count: infinite
+  animation-duration: 5s
+  transition-timing-function: ease-in-out
+  --g4-1-x-position: 87.23379629629622%
+  --g4-1-y-position: 83.08008213552361%
+  --g4-2-x-position: 18.900462962962923%
+  --g4-2-y-position: 78.15195071868584%
+  --g4-3-x-position: 88.62268518518512%
+  --g4-3-y-position: 15.071868583162217%
+  --g4-4-x-position: 11.712962962962967%
+  --g4-4-y-position: 16.550308008213555%
+
+@property --g4-1-x-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 87.23379629629622%
+
+@property --g4-1-y-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 83.08008213552361%
+
+@property --g4-2-x-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 18.900462962962923%
+
+@property --g4-2-y-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 78.15195071868584%
+
+@property --g4-3-x-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 88.62268518518512%
+
+@property --g4-3-y-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 15.071868583162217%
+
+@property --g4-4-x-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 11.712962962962967%
+
+@property --g4-4-y-position
+  syntax: "<percentage>"
+  inherits: false
+  initial-value: 16.550308008213555%
+
+@keyframes g-4
+  25%
+    --g4-1-x-position: 88.11342592592592%
+    --g4-1-y-position: 17.74127310061603%
+    --g4-2-x-position: 86.99074074074056%
+    --g4-2-y-position: 80.29774127310063%
+    --g4-3-x-position: 11.157407407407389%
+    --g4-3-y-position: 18.80903490759754%
+    --g4-4-x-position: 15.543981481481403%
+    --g4-4-y-position: 78.31622176591377%
+
+  50%
+    --g4-1-x-position: 13.888888888888834%
+    --g4-1-y-position: 18.891170431211524%
+    --g4-2-x-position: 85.20833333333329%
+    --g4-2-y-position: 17.874743326488705%
+    --g4-3-x-position: 15%
+    --g4-3-y-position: 85%
+    --g4-4-x-position: 100%
+    --g4-4-y-position: 100%
+
+  75%
+    --g4-1-x-position: 17.071759259259224%
+    --g4-1-y-position: 75.56468172484597%
+    --g4-2-x-position: 13.136574074074%
+    --g4-2-y-position: 20.739219712525706%
+    --g4-3-x-position: 84.25925925925932%
+    --g4-3-y-position: 74.94866529774129%
+    --g4-4-x-position: 81.82870370370377%
+    --g4-4-y-position: 16.837782340862468%
