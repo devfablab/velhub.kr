@@ -1,20 +1,10 @@
-import { Box, Container, Stack, Typography } from '@mui/material';
-import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import Container from '../container';
 import EmailSignIn from './email';
 
 export default function Page() {
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={4}>
-          <Typography variant="h5" component="h1">
-            로그인
-          </Typography>
-
-          <EmailSignIn />
-          <SocialLoginButtons />
-        </Stack>
-      </Box>
+    <Container>
+      <EmailSignIn />
     </Container>
   );
 }

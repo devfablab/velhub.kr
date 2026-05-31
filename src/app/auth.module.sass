@@ -1,0 +1,281 @@
+header.header
+  display: flex
+  align-items: center
+  justify-content: center
+  background-color: transparent
+  position: fixed
+  top: 0
+  left: 0
+  width: 100%
+
+  .container
+    display: flex
+    flex-direction: column
+    max-width: ds.rem(1347)
+    width: 100%
+    padding: 0 ds.rem(17)
+
+    .top
+      display: flex
+      flex-direction: row
+      align-items: center
+      gap: ds.rem(23)
+      justify-content: space-between
+      height: ds.rem(64)
+
+  .backlinks
+    display: flex
+    justify-content: flex-start
+    width: 100%
+
+    .backlink
+      display: inline-flex
+      gap: ds.rem(7)
+      padding: ds.rem(8)
+      color: ds.$hex-white
+
+      span
+        display: inline-flex
+        align-items: center
+        @include ds.fw(pre, 600)
+        font-size: ds.rem(16)
+        line-height: 1
+
+        @include ds.mq(maxMedium)
+          @include ds.screen-reader-only
+
+.main
+  background: url('/together.webp') no-repeat 50% 50%/cover
+
+  .container
+    background: rgba(0,0,0,.5)
+    max-width: none
+
+    .content
+      display: flex
+      align-items: center
+      padding-top: ds.rem(64)
+      max-width: ds.rem(1347)
+      justify-content: center
+
+      .connect
+        display: flex
+        padding: ds.rem(57)
+        width: 100%
+
+        @include ds.mq(maxSmall)
+          padding: ds.rem(27) ds.rem(17)
+          justify-content: center
+
+        @include ds.mq(maxMedium)
+          justify-content: center
+
+      .dummy
+        @include ds.col
+
+        blockquote
+          margin: 0
+
+          p
+            @include ds.fw(pre, 700)
+            color: ds.$hex-bright
+
+          cite
+            font-size: ds.rem(14)
+            color: ds.$hex-light
+            opacity: .7
+
+            &::before
+              content: '— '
+
+      .auth-form
+        display: flex
+        flex-direction: column
+        gap: ds.rem(27)
+        max-width: ds.rem(575)
+        width: 100%
+
+        input
+          background-color: black
+          border-radius: ds.rem(5)
+
+        .alert
+          background-color: ds.$hex-white
+          padding: ds.rem(17)
+          border-radius: ds.rem(17)
+
+          span
+            @include ds.fw(pre, 700)
+
+        .headline
+          display: flex
+          flex-direction: column
+          gap: ds.rem(12)
+          letter-spacing: -.05em
+
+          @include ds.mq(maxSmall)
+            letter-spacing: -.07em
+
+          h1
+            @include ds.fw(neo, 800)
+            font-size: ds.rem(28)
+            color: ds.$hex-bright
+
+            @include ds.mq(maxSmall)
+              font-size: ds.rem(18)
+
+            @include ds.mq(maxMedium)
+              font-size: ds.rem(24)
+
+          p
+            opacity: .7
+            @include ds.fw(pre, 600)
+            font-size: ds.rem(20)
+            color: ds.$hex-light
+            white-space: pre-line
+            line-height: 1.35
+
+            @include ds.mq(maxSmall)
+              font-size: ds.rem(16)
+
+            @include ds.mq(maxMedium)
+              font-size: ds.rem(18)
+
+        form
+          .action
+            color: ds.$hex-white
+            background-color: transparent
+
+          .actions
+            display: flex
+            position: relative
+            justify-content: center
+
+            .submit
+              width: 100%
+              @include ds.fw(neo, 700)
+              color: ds.$hex-black
+
+        .socials
+          display: flex
+          flex-direction: column
+          gap: ds.rem(12)
+
+          .button
+            gap: ds.rem(12)
+            color: ds.$hex-white
+            @include ds.fw(neo, 700)
+
+            &.google
+              border-color: #4285f4
+              background-color: #4285f4
+
+              &:hover, &:focus-visible
+                box-shadow: 0 0 0 .1875rem rgb(#4285f4, .5)
+
+            &.github
+              border-color: #000
+              background-color: #000
+
+              &:hover, &:focus-visible
+                box-shadow: 0 0 0 .1875rem rgb(#000, .5)
+
+      .auth-select
+        display: flex
+        flex-direction: column
+        gap: ds.rem(12)
+
+        @include ds.mq(maxSmall)
+          align-items: center
+
+        @include ds.mq(minMedium)
+          flex-direction: row
+
+        .item
+          display: flex
+
+          @include ds.mq(maxSmall)
+            width: 100%
+
+          @include ds.mq(minMedium)
+            @include ds.col
+
+          a
+            display: flex
+            flex-direction: column
+            align-items: center
+            flex: 1
+            gap: ds.rem(12)
+            border-radius: ds.rem(12)
+            padding: ds.rem(17)
+            transition: all .4s cubic-bezier(.4,0,.2,1)
+            background-color: ds.$hex-white
+
+            &:hover, &:focus-visible
+              border: 1px solid ds.$hex-accent
+              box-shadow: 0 0 0 ds.rem(3) rgba(ds.$rgb-accent, .5)
+
+            html[data-theme="yellow-light"] &
+              border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+            html[data-theme="yellow-dark"] &
+              border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+            i
+              display: block
+              width: 50%
+              color: ds.$hex-accent
+
+              svg
+                width: 100%
+                height: auto
+                aspect-ratio: 1 / 1
+
+            div
+              display: flex
+              flex: 1
+              flex-direction: column
+              gap: ds.rem(12)
+              align-items: center
+              text-align: center
+              letter-spacing: -.05em
+
+              strong
+                display: flex
+                flex-direction: column
+                @include ds.fw(neo, 800)
+                font-size: ds.rem(20)
+                line-height: 1.35
+
+                html[data-theme="yellow-light"] &
+                  color: ds.$hex-primary
+
+                html[data-theme="yellow-dark"] &
+                  color: ds.$hex-bright
+
+              p
+                display: flex
+                flex-direction: column
+                @include ds.fw(pre, 500)
+                font-size: ds.rem(16)
+                line-height: 1.35
+                opacity: .7
+
+                html[data-theme="yellow-light"] &
+                  color: ds.$hex-secondary
+
+                html[data-theme="yellow-dark"] &
+                  color: ds.$hex-light
+
+            em
+              display: inline-flex
+              align-items: center
+              gap: ds.rem(3)
+              @include ds.fw(pre, 800)
+              font-style: normal
+              font-size: ds.rem(14)
+              color: ds.$hex-accent
+
+              svg
+                width: ds.rem(14)
+                height: ds.rem(14)

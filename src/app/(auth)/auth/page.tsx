@@ -4,13 +4,13 @@
 import { useEffect, useState } from 'react';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
+import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/new.module.sass';
+import styles from '@/app/auth.module.sass';
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
@@ -96,64 +96,55 @@ export default function Page() {
 
   return (
     <>
-      <header className={`${styles.header} ${styles['new-header']}`}>
+      <header className={`${styles.header} ${styles['auth-header']}`}>
         <div className={styles.container}>
           <div className={styles.top}>
-            <div className={styles.new}>
-              {returnPath ? (
-                <Anchor href={returnPath} className={styles.backlink} aria-label="이전 페이지로 돌아가기">
-                  <ArrowBackRoundedIcon />
-                  <span>이전화면</span>
-                </Anchor>
-              ) : (
-                <Anchor href="/" className={styles.backlink} aria-label="라운지로 돌아가기">
-                  <ArrowBackRoundedIcon />
-                  <span>라운지</span>
-                </Anchor>
-              )}
-              {isMobile ? <h1>사이트 개설하기 😎</h1> : null}
-              <i />
+            <div className={styles.backlinks}>
+              <Anchor href="/" className={styles.backlink} aria-label="라운지로 돌아가기">
+                <ArrowBackRoundedIcon />
+                <span>라운지</span>
+              </Anchor>
             </div>
           </div>
         </div>
       </header>
-      <main className={styles['new-generation']}>
-        <div className={styles.container}>
+
+      <main className={styles.main}>
+        <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content}`}>
-            {isMobile ? null : <h1>사이트 개설하기 😎</h1>}
-            <div className={styles['service-select']}>
+            {isMobile ? null : <h1>회원가입/로그인하기 🥰</h1>}
+            <div className={styles['auth-select']}>
               <div className={styles.item}>
-                <Anchor href="/new/blog">
+                <Anchor href="/new/sign-up">
                   <i>
-                    <ArticleOutlinedIcon />
+                    <CheckOutlinedIcon />
                   </i>
                   <div>
-                    <strong>
-                      <span>콘텐츠를 발행하고</span> 공유하는 공간
-                    </strong>
-                    <p>프로젝트 진행 과정, 전문 지식, 노하우, 칼럼까지 다양한 경험을 글로 발행해 보세요.</p>
+                    <strong>새로운 공간을 만들어보세요</strong>
+                    <p>
+                      <span>회원가입 후 블로그 또는 커뮤니티를 개설할 수 있습니다.</span> 지금 바로 나만의 서비스를
+                      시작해 보세요.
+                    </p>
                   </div>
                   <em>
-                    블로그 개설하기 <EastRoundedIcon />
+                    회원가입하기 <EastRoundedIcon />
                   </em>
                 </Anchor>
               </div>
               <div className={styles.item}>
-                <Anchor href="/new/community">
+                <Anchor href="/auth/sign-in">
                   <i>
-                    <InterestsRoundedIcon />
+                    <LoginOutlinedIcon />
                   </i>
                   <div>
-                    <strong>
-                      <span>함께 이야기할</span> 사람이 모이는 공간
-                    </strong>
+                    <strong>이어서 시작하기</strong>
                     <p>
-                      <span>관심사가 같은 사람들과 함께 이야기를 나누고 정보를 공유해 보세요.</span> 작은 모임부터 큰
-                      커뮤니티까지 직접 운영할 수 있습니다.
+                      <span>이미 계정이 있다면 로그인하고 바로 시작하세요.</span> 내가 운영하는 블로그와 커뮤니티를
+                      관리하고, 다양한 서비스를 이용할 수 있습니다.
                     </p>
                   </div>
                   <em>
-                    커뮤니티 개설하기 <EastRoundedIcon />
+                    로그인하기 <EastRoundedIcon />
                   </em>
                 </Anchor>
               </div>

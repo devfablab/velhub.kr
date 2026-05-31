@@ -158,7 +158,7 @@ export async function proxy(request: NextRequest) {
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
   const hasTotp = sessionClaims?.hasTotp === true;
 
-  if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up') {
+  if (pathname === '/auth/sign-in' || pathname === '/auth/sign-up' || pathname === '/auth') {
     if (isLoggedIn) {
       return redirectWithPath(request, '/');
     }

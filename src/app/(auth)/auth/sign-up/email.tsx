@@ -2,9 +2,25 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Alert, Box, Button, FormControlLabel, Link, Paper, Stack, Switch, TextField } from '@mui/material';
-import Anchor from '@/components/Anchor';
+import {
+  Alert,
+  Box,
+  Button,
+  FormControlLabel,
+  Link,
+  Paper,
+  Stack,
+  Switch,
+  TextField,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import Anchor from '@/components/Anchor';
+import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -30,6 +46,9 @@ export default function EmailSignUp() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
@@ -262,81 +281,80 @@ export default function EmailSignUp() {
   const signInHref = inviteParams.toString() ? `/auth/sign-in?${inviteParams.toString()}` : '/auth/sign-in';
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack gap={2.5}>
-          <TextField
-            label="이메일"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={handleEmailChange}
-            fullWidth
-            InputProps={{
-              readOnly: isInviteEmailLocked,
-            }}
+    <Box component="form" onSubmit={handleSubmit}>
+      <Stack gap={1}>
+        <TextField
+          placeholder="이메일"
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={handleEmailChange}
+          fullWidth
+          size="small"
+        />
+
+        <TextField
+          placeholder="활동명"
+          type="text"
+          autoComplete="nickname"
+          value={userName}
+          onChange={handleUserNameChange}
+          fullWidth
+          size="small"
+        />
+
+        <TextField
+          placeholder="비밀번호"
+          type="password"
+          autoComplete="new-password"
+          value={password}
+          onChange={handlePasswordChange}
+          fullWidth
+          size="small"
+        />
+
+        <TextField
+          placeholder="비밀번호 확인"
+          type="password"
+          autoComplete="new-password"
+          value={passwordConfirm}
+          onChange={handlePasswordConfirmChange}
+          fullWidth
+          size="small"
+        />
+
+        {isDevelopment ? (
+          <FormControlLabel
+            control={
+              <Switch checked={bypassEmailConfirm} onChange={(event) => setBypassEmailConfirm(event.target.checked)} />
+            }
+            label="이메일 인증 바이패스"
           />
+        ) : null}
 
-          <TextField
-            label="활동명"
-            type="text"
-            autoComplete="nickname"
-            value={userName}
-            onChange={handleUserNameChange}
-            fullWidth
-          />
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Anchor href={signInHref} className={`button small action ${styles.action}`}>
+            로그인 하기
+          </Anchor>
+        </Box>
 
-          <TextField
-            label="비밀번호"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={handlePasswordChange}
-            fullWidth
-          />
+        <div className={styles.actions}>
+          <button
+            type="submit"
+            className={`button medium submit ${styles.submit}`}
+            disabled={isSubmitting || isInviteLoading}
+          >
+            이메일로 시작하기
+          </button>
+        </div>
 
-          <TextField
-            label="비밀번호 확인"
-            type="password"
-            autoComplete="new-password"
-            value={passwordConfirm}
-            onChange={handlePasswordConfirmChange}
-            fullWidth
-          />
-
-          {isDevelopment ? (
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={bypassEmailConfirm}
-                  onChange={(event) => setBypassEmailConfirm(event.target.checked)}
-                />
-              }
-              label="이메일 인증 바이패스"
-            />
-          ) : null}
-
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Anchor href={signInHref}>로그인 하기</Anchor>
-          </Box>
-
-          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-            <Button type="submit" variant="contained" disabled={isSubmitting || isInviteLoading} size="large">
-              시작하기
-            </Button>
-
-            <Link href="/" sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>
-              라운지로 이동
-            </Link>
-          </Box>
-
-          {errorMessage ? (
-            <Alert severity="error" variant="filled">
-              {errorMessage}
-            </Alert>
-          ) : null}
-        </Stack>
-      </Box>
-    </Paper>
+        {errorMessage ? (
+          <p className={`alert error ${styles.alert}`}>
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
+      </Stack>
+    </Box>
   );
 }

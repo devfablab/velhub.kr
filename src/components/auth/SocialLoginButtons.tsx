@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Alert, Button, Paper, Stack } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import styles from '@/app/auth.module.sass';
 
 export default function SocialLoginButtons() {
   const pathname = usePathname();
@@ -18,7 +19,7 @@ export default function SocialLoginButtons() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const actionText = pathname === '/auth/sign-up' ? '시작하기' : '로그인';
+  const actionText = pathname === '/auth/sign-up' ? '시작하기' : '계속하기';
 
   async function handleGoogleLogin() {
     if (isSubmitting) {
@@ -103,36 +104,33 @@ export default function SocialLoginButtons() {
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      <Stack gap={1.5}>
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={handleGoogleLogin}
-          disabled={isSubmitting}
-          fullWidth
-          startIcon={<GoogleIcon />}
-        >
-          Google 아이디로 {actionText}
-        </Button>
+    <div className={styles.socials}>
+      <button
+        type="button"
+        className={`button medium submit ${styles.button} ${styles.google}`}
+        onClick={handleGoogleLogin}
+        disabled={isSubmitting}
+      >
+        <GoogleIcon />
+        <span>Google 아이디로 {actionText}</span>
+      </button>
 
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={handleGithubLogin}
-          disabled={isSubmitting}
-          fullWidth
-          startIcon={<GitHubIcon />}
-        >
-          GitHub 아이디로 {actionText}
-        </Button>
+      <button
+        type="button"
+        className={`button medium submit ${styles.button} ${styles.github}`}
+        onClick={handleGithubLogin}
+        disabled={isSubmitting}
+      >
+        <GitHubIcon />
+        <span>GitHub 아이디로 {actionText}</span>
+      </button>
 
-        {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
-        ) : null}
-      </Stack>
-    </Paper>
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
+    </div>
   );
 }

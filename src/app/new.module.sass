@@ -71,6 +71,7 @@ header.header
   .content
     display: flex
     flex-direction: column
+    justify-content: center
     gap: ds.rem(12)
     padding: ds.rem(53) 0
 
@@ -83,9 +84,20 @@ header.header
     flex-direction: row
     gap: ds.rem(12)
 
+    @include ds.mq(maxSmall)
+      align-items: center
+
+    @include ds.mq(minMedium)
+      flex-direction: row
+
     .item
       display: flex
-      @include ds.col
+
+      @include ds.mq(maxSmall)
+        width: 100%
+
+      @include ds.mq(minMedium)
+        @include ds.col
 
       a
         display: flex
