@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderLounge from '@/components/headers/Lounge';
+import Footer from '@/components/footers/Footer';
 // import '../globals.sass';
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
     <>
       <HeaderLounge />
       {children}
+      <Footer />
     </>
   );
 }
