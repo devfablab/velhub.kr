@@ -3,6 +3,37 @@ header.header
   align-items: center
   justify-content: center
 
+  &.header-mini
+    position: fixed
+    top: 0
+    left: 0
+    width: 100%
+    height: 0
+    opacity: 0
+    transition: all .4s cubic-bezier(.4,0,.2,1)
+    overflow: hidden
+
+    &.header-mini-visible
+      height: ds.rem(47)
+      opacity: 1
+      overflow: visible
+      z-index: 1020
+
+      html[data-theme="yellow-light"] &
+        background-color: ds.$hex-white
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-black
+
+    .container
+      .top
+        height: ds.rem(47)
+
+        h1
+          a
+            img, svg
+              height: ds.rem(20)
+
   &.settings-header
     html[data-theme="yellow-light"] &
       background-color: ds.$hex-white
