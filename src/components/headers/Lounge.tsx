@@ -1,19 +1,8 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  Avatar,
-  Drawer,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  ListSubheader,
-  Menu,
-  MenuItem,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
@@ -22,9 +11,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import Anchor from '@/components/Anchor';
@@ -85,6 +72,8 @@ export default function HeaderLounge() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const lastScrollY = useRef(0);
+  const [isUpScroll, setIsUpScroll] = useState(false);
 
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
@@ -100,6 +89,22 @@ export default function HeaderLounge() {
     avatarUrl: null,
     isLoggedIn: false,
   });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY < 100) {
+        setIsUpScroll(false);
+      } else {
+        setIsUpScroll(currentY < lastScrollY.current);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -241,229 +246,161 @@ export default function HeaderLounge() {
       {isMobile ? (
         <header hidden aria-hidden />
       ) : (
-        <header className={styles.header}>
-          <div className={styles.container}>
-            <div className={styles.top}>
-              <div className={styles.gnb}>
-                <h1>
-                  <Anchor href="/" aria-label="데브허브 velhub">
-                    <ServiceLogo />
-                  </Anchor>
-                </h1>
-                {!isMobile ? <PrimaryMenu /> : null}
+        <>
+          <header className={styles.header} inert={isUpScroll ? true : undefined}>
+            <div className={styles.container}>
+              <div className={styles.top}>
+                <div className={styles.gnb}>
+                  <h1>
+                    <Anchor href="/" aria-label="데브허브 velhub">
+                      <ServiceLogo />
+                    </Anchor>
+                  </h1>
+                  <PrimaryMenu />
+                </div>
+
+                <div className={styles.iconbuttons}>
+                  <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
+                    {renderThemeModeIcon()}
+                  </IconButton>
+
+                  <IconButton onClick={handleOpenProfileMenu}>
+                    <Avatar
+                      src={userProfile.avatarUrl || '/broken-image.jpg'}
+                      alt={userProfile.name || ''}
+                      sx={{ width: 24, height: 24 }}
+                    />
+                  </IconButton>
+                </div>
               </div>
-
-              <div className={styles.iconbuttons}>
-                <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
-                  {renderThemeModeIcon()}
-                </IconButton>
-
-                {isMobile ? (
-                  <Drawer
-                    anchor="right"
-                    open={isThemeModeDrawerOpen}
-                    onClose={handleCloseThemeModeDrawer}
-                    className={styles.VhiDrawer}
-                  >
-                    <li className={styles['VhiMenu-theme']}>
-                      <strong>다크모드 설정</strong>
-                    </li>
-                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
-                        <LightModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>라이트모드</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
-                        <SettingsBrightnessIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>시스템</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.theme}>
-                      <ListItemIcon className={styles['theme-icon']}>
-                        <DarkModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['theme-text']}>다크모드</ListItemText>
-                    </MenuItem>
-                  </Drawer>
-                ) : (
-                  <Menu
-                    anchorEl={themeModeAnchorElement}
-                    open={Boolean(themeModeAnchorElement)}
-                    onClose={handleCloseThemeModeMenu}
-                    className={styles.VhiMenu}
-                  >
-                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <LightModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <SettingsBrightnessIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <DarkModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
-                    </MenuItem>
-                  </Menu>
-                )}
-
-                <IconButton onClick={handleOpenProfileMenu}>
-                  <Avatar
-                    src={userProfile.avatarUrl || '/broken-image.jpg'}
-                    alt={userProfile.name || ''}
-                    sx={{ width: 24, height: 24 }}
-                  />
-                </IconButton>
-
-                {isMobile ? (
-                  <Drawer
-                    anchor="right"
-                    open={isProfileDrawerOpen}
-                    onClose={handleCloseProfileDrawer}
-                    className={styles.VhiDrawer}
-                  >
-                    {userProfile.isLoggedIn ? (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
-                        </div>
-                      </li>
-                    ) : (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>로그인이 필요합니다</em>
-                        </div>
-                      </li>
-                    )}
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>데브허브</ListSubheader>
-                    <MenuItem key="home" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/">
-                        <HomeOutlinedIcon fontSize="small" />
-                        <span>데브허브 홈</span>
-                      </Anchor>
-                    </MenuItem>
-                    <MenuItem key="blogs" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/home/blogs">
-                        <MenuBookRoundedIcon fontSize="small" />
-                        <span>블로그 허브</span>
-                      </Anchor>
-                    </MenuItem>
-                    <MenuItem key="communities" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/home/communities">
-                        <InterestsOutlinedIcon fontSize="small" />
-                        <span>커뮤니티 허브</span>
-                      </Anchor>
-                    </MenuItem>
-                    <MenuItem key="moments" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/home/moments">
-                        <SellOutlinedIcon fontSize="small" />
-                        <span>모먼트</span>
-                      </Anchor>
-                    </MenuItem>
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
-                    <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                      <Anchor href="/settings">
-                        <SettingsOutlinedIcon fontSize="small" />
-                        <span>개인 설정</span>
-                      </Anchor>
-                    </MenuItem>
-                    <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <LogoutOutlinedIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                    </MenuItem>
-                  </Drawer>
-                ) : (
-                  <Menu
-                    anchorEl={profileAnchorElement}
-                    open={Boolean(profileAnchorElement)}
-                    onClose={handleCloseProfileMenu}
-                    className={styles.VhiMenu}
-                  >
-                    {userProfile.isLoggedIn ? (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
-                        </div>
-                      </li>
-                    ) : (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>로그인이 필요합니다</em>
-                        </div>
-                      </li>
-                    )}
-                    {userProfile.isLoggedIn
-                      ? [
-                          <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/">
-                              <HomeOutlinedIcon fontSize="small" />
-                              <span>라운지 이동</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="hub" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/hub">
-                              <HubOutlinedIcon fontSize="small" />
-                              <span>마이허브</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/settings">
-                              <SettingsOutlinedIcon fontSize="small" />
-                              <span>개인 설정</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                            <ListItemIcon className={styles['MenuItem-icon']}>
-                              <LogoutOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                          </MenuItem>,
-                        ]
-                      : [
-                          <MenuItem key="signin" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-in">
-                              <LoginOutlinedIcon fontSize="small" />
-                              <span>로그인</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="signup" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-up">
-                              <InterestsOutlinedIcon fontSize="small" />
-                              <span>회원가입</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]}
-                  </Menu>
-                )}
-              </div>
-            </div>
-            {!isMobile ? (
               <div className={styles.bottom}>
                 <SecondaryMenu />
               </div>
-            ) : null}
-          </div>
-        </header>
+            </div>
+          </header>
+          <header
+            className={`${styles.header} ${styles['header-mini']} ${isUpScroll ? styles['header-mini-visible'] : ''}`}
+            inert={isUpScroll ? undefined : true}
+          >
+            <div className={styles.container}>
+              <div className={styles.top}>
+                <div className={styles.gnb}>
+                  <h1>
+                    <Anchor href="/" aria-label="데브허브 velhub">
+                      <ServiceLogo />
+                    </Anchor>
+                  </h1>
+                  <SecondaryMenu />
+                </div>
+
+                <div className={styles.iconbuttons}>
+                  <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
+                    {renderThemeModeIcon()}
+                  </IconButton>
+
+                  <IconButton onClick={handleOpenProfileMenu}>
+                    <Avatar
+                      src={userProfile.avatarUrl || '/broken-image.jpg'}
+                      alt={userProfile.name || ''}
+                      sx={{ width: 24, height: 24 }}
+                    />
+                  </IconButton>
+                </div>
+              </div>
+            </div>
+          </header>
+          <Menu
+            anchorEl={themeModeAnchorElement}
+            open={Boolean(themeModeAnchorElement)}
+            onClose={handleCloseThemeModeMenu}
+            className={styles.VhiMenu}
+          >
+            <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <LightModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <SettingsBrightnessIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <DarkModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
+            </MenuItem>
+          </Menu>
+          <Menu
+            anchorEl={profileAnchorElement}
+            open={Boolean(profileAnchorElement)}
+            onClose={handleCloseProfileMenu}
+            className={styles.VhiMenu}
+          >
+            {userProfile.isLoggedIn ? (
+              <li className={styles['VhiMenu-profile']}>
+                <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>{userProfile.name}</em>
+                  <span>{userProfile.email}</span>
+                </div>
+              </li>
+            ) : (
+              <li className={styles['VhiMenu-profile']}>
+                <Avatar src="" alt="" />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>로그인이 필요합니다</em>
+                </div>
+              </li>
+            )}
+            {userProfile.isLoggedIn
+              ? [
+                  <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/">
+                      <HomeOutlinedIcon fontSize="small" />
+                      <span>라운지 이동</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="hub" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/hub">
+                      <HubOutlinedIcon fontSize="small" />
+                      <span>마이허브</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/settings">
+                      <SettingsOutlinedIcon fontSize="small" />
+                      <span>개인 설정</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                    <ListItemIcon className={styles['MenuItem-icon']}>
+                      <LogoutOutlinedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                  </MenuItem>,
+                ]
+              : [
+                  <MenuItem key="signin" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/auth/sign-in">
+                      <LoginOutlinedIcon fontSize="small" />
+                      <span>로그인</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="signup" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/auth/sign-up">
+                      <InterestsOutlinedIcon fontSize="small" />
+                      <span>회원가입</span>
+                    </Anchor>
+                  </MenuItem>,
+                ]}
+          </Menu>
+        </>
       )}
     </>
   );
