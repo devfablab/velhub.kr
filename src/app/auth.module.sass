@@ -144,7 +144,8 @@ header.header
 
             .submit
               width: 100%
-              @include ds.fw(neo, 700)
+              height: ds.rem(52)
+              @include ds.fw(neo, 600)
               color: ds.$hex-black
 
       .auth-select
@@ -270,9 +271,15 @@ header.header
   gap: ds.rem(12)
 
   .button
-    gap: ds.rem(12)
+    gap: ds.rem(7)
+    height: ds.rem(52)
     color: ds.$hex-white!important
-    @include ds.fw(neo, 700)
+    @include ds.fw(neo, 600)
+    font-size: ds.rem(16)
+
+    svg
+      width: ds.rem(20)
+      height: ds.rem(20)
 
     &.google
       border-color: #4285f4
