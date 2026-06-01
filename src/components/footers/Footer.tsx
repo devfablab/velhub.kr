@@ -15,7 +15,7 @@ export default function Footer() {
                 <VhiHub />
               </i>
               <span>All-out-all-day-all-night</span>
-              <em>by BoA</em>
+              <em>m-flo loves BoA</em>
             </p>
             <ul className={styles['parents-items']}>
               <li className={styles['parents-item']}>
