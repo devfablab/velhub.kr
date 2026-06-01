@@ -1,10 +1,11 @@
-import styles from '../page.module.sass';
+import Container from './menu';
 import AuthActions from '@/components/auth/AuthActions';
+import styles from '../page.module.sass';
 
 export default function Home() {
   return (
-    <main className={styles.main}>
+    <Container>
       <AuthActions />
-    </main>
+    </Container>
   );
 }

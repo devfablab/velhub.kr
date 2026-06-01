@@ -11,10 +11,6 @@ type AccountRow = {
   avatar: string | null;
 };
 
-type ProfileRow = {
-  theme_mode: string | null;
-};
-
 function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
@@ -29,8 +25,29 @@ function decryptValue(value: string | null | undefined) {
   }
 }
 
-function isThemeMode(value: string | null | undefined): value is ThemeMode {
-  return value === 'light' || value === 'system' || value === 'dark';
+function getPublicUrl(bucket: string, path: string | null | undefined) {
+  const normalizedPath = normalizeText(path);
+
+  if (!normalizedPath) {
+    return null;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const publicUrl = supabaseAdmin.storage.from(bucket).getPublicUrl(normalizedPath);
+
+  return publicUrl.data.publicUrl ?? null;
+}
+
+function processAvatar(avatar: string | null) {
+  if (!avatar) {
+    return null;
+  }
+
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    return avatar;
+  }
+
+  return getPublicUrl('avatar', avatar);
 }
 
 export async function GET() {
@@ -43,7 +60,6 @@ export async function GET() {
         email: null,
         userName: null,
         avatar: null,
-        themeMode: null,
       });
     }
 
@@ -70,14 +86,12 @@ export async function GET() {
     }
 
     const account = accountResult.data as AccountRow;
-    const profile = (profileResult.data ?? null) as ProfileRow | null;
 
     return Response.json({
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
-      avatar: account.avatar ?? null,
-      themeMode: isThemeMode(profile?.theme_mode ?? null) ? profile?.theme_mode : null,
+      avatar: processAvatar(account.avatar),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

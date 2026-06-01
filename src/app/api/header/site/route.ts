@@ -57,6 +57,18 @@ function getPublicUrl(bucket: string, path: string | null | undefined) {
   return publicUrl.data.publicUrl ?? null;
 }
 
+function processAvatar(avatar: string | null) {
+  if (!avatar) {
+    return null;
+  }
+
+  if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+    return avatar;
+  }
+
+  return getPublicUrl('avatar', avatar);
+}
+
 function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
@@ -234,7 +246,7 @@ export async function GET(request: Request) {
       isLoggedIn: true,
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
-      avatar: account.avatar ?? null,
+      avatar: processAvatar(account.avatar),
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole: normalizeText(membership?.role).toLowerCase() || null,
       sessionCase: session.case ?? null,

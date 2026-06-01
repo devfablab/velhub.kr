@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Avatar,
   Drawer,
@@ -35,7 +36,6 @@ import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import styles from '@/app/header.module.sass';
-import { usePathname, useSearchParams } from 'next/navigation';
 
 type SiteType = 'blog' | 'community';
 

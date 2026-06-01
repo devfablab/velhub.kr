@@ -68,16 +68,18 @@ async function checkAccess(siteName: string) {
     try {
       const access = await getCommunityManagerAccess(siteName);
 
+      console.log('access.actor.permissions.site_edit: ', access.actor.permissions.site_edit);
       if (!access.actor.permissions.site_edit) {
         return {
           ok: false,
           status: 403,
-          error: '접근 권한이 없습니다.',
+          error: '접근 권한이 없습니다1.',
         } as const;
       }
 
       const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
 
+      console.log('updatedByParticleId: ', updatedByParticleId);
       if (!updatedByParticleId) {
         return {
           ok: false,
@@ -98,14 +100,16 @@ async function checkAccess(siteName: string) {
         return {
           ok: false,
           status: 403,
-          error: unknownError.message || '접근 권한이 없습니다.',
+          error: unknownError.message || '접근 권한이 없습니다2.',
         } as const;
       }
+
+      console.log('adfasdfsafs');
 
       return {
         ok: false,
         status: 403,
-        error: '접근 권한이 없습니다.',
+        error: '접근 권한이 없습니다3.',
       } as const;
     }
   }
@@ -113,14 +117,6 @@ async function checkAccess(siteName: string) {
   const session = await verifySession({
     siteId: rhizome.data.id,
   });
-
-  if (session.case !== 'staff' || !session.stigmaId || !session.rhizomeStigmaId) {
-    return {
-      ok: false,
-      status: 403,
-      error: '접근 권한이 없습니다.',
-    } as const;
-  }
 
   const membership = await supabaseAdmin
     .from('rhizome_stigmas')
@@ -133,9 +129,11 @@ async function checkAccess(siteName: string) {
     return {
       ok: false,
       status: 403,
-      error: '접근 권한이 없습니다.',
+      error: '접근 권한이 없습니다5.',
     } as const;
   }
+
+  console.log('3345555');
 
   return {
     ok: true,

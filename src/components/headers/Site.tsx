@@ -22,10 +22,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LoginIcon from '@mui/icons-material/Login';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import HomeIcon from '@mui/icons-material/Home';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -719,13 +716,13 @@ export default function HeaderSite() {
                       : [
                           <MenuItem key="signin" onClick={handleCloseProfileMenu}>
                             <Anchor href="/auth/sign-in">
-                              <LoginIcon fontSize="small" />
+                              <LoginOutlinedIcon fontSize="small" />
                               <span>로그인</span>
                             </Anchor>
                           </MenuItem>,
                           <MenuItem key="signup" onClick={handleCloseProfileMenu}>
                             <Anchor href="/auth/sign-up">
-                              <PersonAddIcon fontSize="small" />
+                              <InterestsOutlinedIcon fontSize="small" />
                               <span>회원가입</span>
                             </Anchor>
                           </MenuItem>,
