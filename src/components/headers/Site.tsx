@@ -461,33 +461,6 @@ export default function HeaderSite() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
-                  <Menu
-                    anchorEl={themeModeAnchorElement}
-                    open={Boolean(themeModeAnchorElement)}
-                    onClose={handleCloseThemeModeMenu}
-                    className={styles.VhiMenu}
-                  >
-                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <LightModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <SettingsBrightnessIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <DarkModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
-                    </MenuItem>
-                  </Menu>
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}
@@ -495,93 +468,6 @@ export default function HeaderSite() {
                       sx={{ width: 24, height: 24 }}
                     />
                   </IconButton>
-                  <Menu
-                    anchorEl={profileAnchorElement}
-                    open={Boolean(profileAnchorElement)}
-                    onClose={handleCloseProfileMenu}
-                    className={styles.VhiMenu}
-                  >
-                    {userProfile.isLoggedIn ? (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
-                        </div>
-                      </li>
-                    ) : (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>로그인이 필요합니다</em>
-                        </div>
-                      </li>
-                    )}
-
-                    {isSiteStaff && !isManagePage
-                      ? [
-                          <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
-                            <Anchor href={`/${siteName}/manage`}>
-                              <DashboardOutlinedIcon fontSize="small" />
-                              <span>사이트 설정</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]
-                      : [
-                          <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
-                            <Anchor href={`/${siteName}`}>
-                              {isBlog ? (
-                                <MenuBookRoundedIcon fontSize="small" />
-                              ) : (
-                                <InterestsRoundedIcon fontSize="small" />
-                              )}
-                              <span>{isBlog ? '블로그' : '커뮤니티'} 홈</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]}
-
-                    {userProfile.isLoggedIn
-                      ? [
-                          <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/">
-                              <HomeOutlinedIcon fontSize="small" />
-                              <span>라운지 이동</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="hub" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/hub">
-                              <HubOutlinedIcon fontSize="small" />
-                              <span>마이허브</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/settings">
-                              <SettingsOutlinedIcon fontSize="small" />
-                              <span>개인 설정</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                            <ListItemIcon className={styles['MenuItem-icon']}>
-                              <LogoutOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                          </MenuItem>,
-                        ]
-                      : [
-                          <MenuItem key="signin" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-in">
-                              <LoginOutlinedIcon fontSize="small" />
-                              <span>로그인</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="signup" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-up">
-                              <InterestsOutlinedIcon fontSize="small" />
-                              <span>회원가입</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]}
-                  </Menu>
                 </div>
               </div>
               <div className={styles.bottom}>
@@ -615,33 +501,6 @@ export default function HeaderSite() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
-                  <Menu
-                    anchorEl={themeModeAnchorElement}
-                    open={Boolean(themeModeAnchorElement)}
-                    onClose={handleCloseThemeModeMenu}
-                    className={styles.VhiMenu}
-                  >
-                    <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <LightModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <SettingsBrightnessIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
-                    </MenuItem>
-
-                    <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
-                      <ListItemIcon className={styles['MenuItem-icon']}>
-                        <DarkModeIcon fontSize="small" />
-                      </ListItemIcon>
-                      <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
-                    </MenuItem>
-                  </Menu>
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}
@@ -649,97 +508,120 @@ export default function HeaderSite() {
                       sx={{ width: 24, height: 24 }}
                     />
                   </IconButton>
-                  <Menu
-                    anchorEl={profileAnchorElement}
-                    open={Boolean(profileAnchorElement)}
-                    onClose={handleCloseProfileMenu}
-                    className={styles.VhiMenu}
-                  >
-                    {userProfile.isLoggedIn ? (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>{userProfile.name}</em>
-                          <span>{userProfile.email}</span>
-                        </div>
-                      </li>
-                    ) : (
-                      <li className={styles['VhiMenu-profile']}>
-                        <Avatar src="" alt="" />
-                        <div className={styles['VhiMenu-profile-info']}>
-                          <em>로그인이 필요합니다</em>
-                        </div>
-                      </li>
-                    )}
-
-                    {isSiteStaff && !isManagePage
-                      ? [
-                          <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
-                            <Anchor href={`/${siteName}/manage`}>
-                              <DashboardOutlinedIcon fontSize="small" />
-                              <span>사이트 설정</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]
-                      : [
-                          <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
-                            <Anchor href={`/${siteName}`}>
-                              {isBlog ? (
-                                <MenuBookRoundedIcon fontSize="small" />
-                              ) : (
-                                <InterestsRoundedIcon fontSize="small" />
-                              )}
-                              <span>{isBlog ? '블로그' : '커뮤니티'} 홈</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]}
-
-                    {userProfile.isLoggedIn
-                      ? [
-                          <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/">
-                              <HomeOutlinedIcon fontSize="small" />
-                              <span>라운지 이동</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="hub" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/hub">
-                              <HubOutlinedIcon fontSize="small" />
-                              <span>마이허브</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="settings" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/settings">
-                              <SettingsOutlinedIcon fontSize="small" />
-                              <span>개인 설정</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
-                            <ListItemIcon className={styles['MenuItem-icon']}>
-                              <LogoutOutlinedIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
-                          </MenuItem>,
-                        ]
-                      : [
-                          <MenuItem key="signin" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-in">
-                              <LoginOutlinedIcon fontSize="small" />
-                              <span>로그인</span>
-                            </Anchor>
-                          </MenuItem>,
-                          <MenuItem key="signup" onClick={handleCloseProfileMenu}>
-                            <Anchor href="/auth/sign-up">
-                              <InterestsOutlinedIcon fontSize="small" />
-                              <span>회원가입</span>
-                            </Anchor>
-                          </MenuItem>,
-                        ]}
-                  </Menu>
                 </div>
               </div>
             </div>
           </header>
+          <Menu
+            anchorEl={themeModeAnchorElement}
+            open={Boolean(themeModeAnchorElement)}
+            onClose={handleCloseThemeModeMenu}
+            className={styles.VhiMenu}
+          >
+            <MenuItem onClick={() => handleSelectThemeMode('light')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <LightModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>라이트모드</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('system')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <SettingsBrightnessIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>시스템</ListItemText>
+            </MenuItem>
+
+            <MenuItem onClick={() => handleSelectThemeMode('dark')} className={styles.MenuItem}>
+              <ListItemIcon className={styles['MenuItem-icon']}>
+                <DarkModeIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText className={styles['MenuItem-text']}>다크모드</ListItemText>
+            </MenuItem>
+          </Menu>
+          <Menu
+            anchorEl={profileAnchorElement}
+            open={Boolean(profileAnchorElement)}
+            onClose={handleCloseProfileMenu}
+            className={styles.VhiMenu}
+          >
+            {userProfile.isLoggedIn ? (
+              <li className={styles['VhiMenu-profile']}>
+                <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>{userProfile.name}</em>
+                  <span>{userProfile.email}</span>
+                </div>
+              </li>
+            ) : (
+              <li className={styles['VhiMenu-profile']}>
+                <Avatar src="" alt="" />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>로그인이 필요합니다</em>
+                </div>
+              </li>
+            )}
+
+            {isSiteStaff && !isManagePage
+              ? [
+                  <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
+                    <Anchor href={`/${siteName}/manage`}>
+                      <DashboardOutlinedIcon fontSize="small" />
+                      <span>사이트 설정</span>
+                    </Anchor>
+                  </MenuItem>,
+                ]
+              : [
+                  <MenuItem key="staff-home" onClick={handleCloseProfileMenu}>
+                    <Anchor href={`/${siteName}`}>
+                      {isBlog ? <MenuBookRoundedIcon fontSize="small" /> : <InterestsRoundedIcon fontSize="small" />}
+                      <span>{isBlog ? '블로그' : '커뮤니티'} 홈</span>
+                    </Anchor>
+                  </MenuItem>,
+                ]}
+
+            {userProfile.isLoggedIn
+              ? [
+                  <MenuItem key="lounge" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/">
+                      <HomeOutlinedIcon fontSize="small" />
+                      <span>라운지 이동</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="hub" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/hub">
+                      <HubOutlinedIcon fontSize="small" />
+                      <span>마이허브</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="settings" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/settings">
+                      <SettingsOutlinedIcon fontSize="small" />
+                      <span>개인 설정</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="logout" onClick={handleLogout} className={styles.MenuItem}>
+                    <ListItemIcon className={styles['MenuItem-icon']}>
+                      <LogoutOutlinedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                  </MenuItem>,
+                ]
+              : [
+                  <MenuItem key="signin" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/auth/sign-in">
+                      <LoginOutlinedIcon fontSize="small" />
+                      <span>로그인</span>
+                    </Anchor>
+                  </MenuItem>,
+                  <MenuItem key="signup" onClick={handleCloseProfileMenu}>
+                    <Anchor href="/auth/sign-up">
+                      <InterestsOutlinedIcon fontSize="small" />
+                      <span>회원가입</span>
+                    </Anchor>
+                  </MenuItem>,
+                ]}
+          </Menu>
         </>
       )}
     </>
