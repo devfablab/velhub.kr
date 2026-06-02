@@ -9,6 +9,8 @@ import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import Verify2fa from '@/components/auth/Verify2fa';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import './globals.sass';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 export const metadata: Metadata = {
   title: 'Create Next App',

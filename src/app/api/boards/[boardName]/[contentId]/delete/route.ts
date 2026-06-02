@@ -265,6 +265,26 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
     }
 
+    const postCountResult = await supabaseAdmin
+      .from('posts')
+      .select('*', { count: 'exact', head: true })
+      .eq('site_id', rhizome.data.id)
+      .eq('is_closed', false);
+
+    if (postCountResult.error) {
+      return Response.json({ error: '통계 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const siteResult = await supabaseAdmin
+      .from('rhizomes')
+      .update({ post_count: postCountResult.count })
+      .eq('id', rhizome.data.id)
+      .maybeSingle();
+
+    if (siteResult.error) {
+      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
+    }
+
     return Response.json({
       ok: true,
       content: restoreResult.data,

@@ -649,7 +649,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
           </>
         ) : null}
       </header>
-      <main style={{ marginTop: isMobile ? 64 : undefined }}>{children}</main>
+      <main style={{ marginTop: isMobile ? 47 : undefined }}>{children}</main>
     </>
   );
 }

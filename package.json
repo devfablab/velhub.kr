@@ -37,11 +37,13 @@
     "prismjs": "^1.30.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-slick": "^0.31.0",
     "react-social-media-embed": "^2.5.18",
     "react-twitter-widgets": "^1.11.0",
     "react-youtube": "^10.1.0",
     "resend": "^6.11.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
@@ -49,6 +51,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-slick": "^0.23.13",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "prettier": "^3.8.1",

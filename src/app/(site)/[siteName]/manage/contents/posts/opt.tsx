@@ -14,6 +14,7 @@ import {
   Button,
   ButtonGroup,
   Checkbox,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -62,6 +63,7 @@ type BoardRow = {
 type PostRow = {
   id: string;
   slug: string;
+  published_status: string;
   subject: string;
   summary: string | null;
   edited_at: string;
@@ -906,7 +908,7 @@ export default function Opt() {
         ) : (
           <Box sx={{ position: 'relative' }}>
             <div className={`paper paper-p0 ${styles.paper}`}>
-              <Table>
+              <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
@@ -937,6 +939,9 @@ export default function Opt() {
                       </TableCell>
 
                       <TableCell>
+                        {post.published_status === 'draft' ? (
+                          <Chip label="임시저장글" color="warning" size="small" />
+                        ) : null}
                         <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}`}>
                           {post.subject}
                         </Anchor>

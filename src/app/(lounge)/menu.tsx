@@ -374,7 +374,7 @@ export default function Container({ children }: ContainerProps) {
       ) : (
         <header hidden aria-hidden />
       )}
-      <main style={{ marginTop: isMobile ? 64 : undefined }}>{children}</main>
+      <main style={{ marginTop: isMobile ? 47 : undefined }}>{children}</main>
     </>
   );
 }

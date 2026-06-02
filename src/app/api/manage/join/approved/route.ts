@@ -332,6 +332,16 @@ export async function PATCH(request: Request) {
 
       const levelOne = (levelOneResult.data ?? null) as LevelRow | null;
 
+      const memberCountResult = await access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', true);
+
+      if (memberCountResult.error) {
+        return Response.json({ error: '통계 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
       const updateResult = await access.supabaseAdmin
         .from('rhizome_stigmas')
         .update({
@@ -349,9 +359,29 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '가입 승인 처리에 실패했습니다.' }, { status: 500 });
       }
 
+      const siteResult = await access.supabaseAdmin
+        .from('rhizomes')
+        .update({ member_count: memberCountResult.count })
+        .eq('id', access.rhizome.id)
+        .maybeSingle();
+
+      if (siteResult.error) {
+        return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
+      }
+
       return Response.json({
         ok: true,
       });
+    }
+
+    const memberCountResult = await access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('*', { count: 'exact', head: true })
+      .eq('site_id', access.rhizome.id)
+      .eq('is_approval', true);
+
+    if (memberCountResult.error) {
+      return Response.json({ error: '통계 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     const rejectResult = await access.supabaseAdmin
@@ -368,6 +398,16 @@ export async function PATCH(request: Request) {
 
     if (rejectResult.error) {
       return Response.json({ error: '가입 거절 처리에 실패했습니다.' }, { status: 500 });
+    }
+
+    const siteResult = await access.supabaseAdmin
+      .from('rhizomes')
+      .update({ member_count: memberCountResult.count })
+      .eq('id', access.rhizome.id)
+      .maybeSingle();
+
+    if (siteResult.error) {
+      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
     }
 
     return Response.json({

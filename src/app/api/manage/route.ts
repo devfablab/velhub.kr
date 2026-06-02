@@ -107,7 +107,8 @@ export async function GET(request: Request) {
     const memberCountResult = await supabaseAdmin
       .from('rhizome_stigmas')
       .select('*', { count: 'exact', head: true })
-      .eq('site_id', site.id);
+      .eq('site_id', site.id)
+      .eq('is_approval', true);
 
     if (memberCountResult.error) {
       return Response.json({ error: '통계 정보를 불러오지 못했습니다.' }, { status: 500 });

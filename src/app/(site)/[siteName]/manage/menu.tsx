@@ -801,7 +801,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
           </>
         ) : null}
       </header>
-      <main style={{ marginTop: isMobile ? 64 : undefined }} className={styles.manage}>
+      <main style={{ marginTop: isMobile ? 47 : undefined }} className={styles.manage}>
         {tabMenuItems.length > 0 ? (
           <div className={`container ${styles.tabs}`}>
             <ul className="content">
