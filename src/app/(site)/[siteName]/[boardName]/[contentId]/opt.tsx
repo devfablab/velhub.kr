@@ -842,7 +842,7 @@ export default function Opt({ isCommunity }: Props) {
                       <Anchor
                         href={
                           board.board_type === 'blog'
-                            ? `/${siteName}/manage/contents/posts/${content.slug}/edit?t=i`
+                            ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
                             : `/${siteName}/${boardName}/${content.slug}/edit`
                         }
                         className={styles['edit-link']}
