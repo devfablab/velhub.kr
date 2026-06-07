@@ -1,7 +1,8 @@
 import { headers } from 'next/headers';
 import Container from './menu';
-import Slick from './home/slick';
 import Aside from './home/aside';
+import Slick from './home/slick';
+import List from './home/list';
 import styles from '../page.module.sass';
 
 type SiteItem = {
@@ -109,6 +110,11 @@ export type SlickProps = {
   postsData?: PostsResponse;
 };
 
+export type ListProps = {
+  postsData?: PostsResponse;
+  orderType?: 'newest' | 'hit';
+};
+
 export default async function Home() {
   const headerList = await headers();
   const host = headerList.get('host');
@@ -151,6 +157,10 @@ export default async function Home() {
           <section>
             <h2>새로운 글 알리미! 🥰</h2>
             <Slick postsData={postsPublishedData} />
+          </section>
+          <section>
+            <h2>여러분의 관심이 필요해요 🥹</h2>
+            <List postsData={postsPublishedData} orderType="newest" />
           </section>
         </div>
         <Aside />
