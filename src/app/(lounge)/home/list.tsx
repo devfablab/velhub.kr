@@ -75,7 +75,7 @@ export default function List({ postsData, orderType }: ListProps) {
                         <time>{formatTimeAgo(post.published_at)}</time>
                       </div>
                       <div className={styles['tail-site']}>
-                        <AppIconAvatar src={post.profile_picture || null} alt="" size={24} />
+                        <AppIconAvatar site={post.site_type} src={post.profile_picture || null} alt="" size={24} />
                         <strong>{post.site_label}</strong>
                       </div>
                     </div>

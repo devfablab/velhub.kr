@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const rhizomesResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, profile_picture')
+      .select('id, site_key, site_label, site_type, profile_picture')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false);
 
@@ -138,8 +138,9 @@ export async function GET(request: NextRequest) {
       const avatar = stigma ? getPublicImageUrl('avatar', stigma.avatar) : null;
 
       const base = {
-        site_key: rhizome?.site_key ?? null,
-        site_label: rhizome?.site_label ?? null,
+        site_key: rhizome?.site_key,
+        site_label: rhizome?.site_label,
+        site_type: rhizome?.site_type,
         profile_picture: getPublicImageUrl('avatar', rhizome?.profile_picture),
         slug: post.slug,
         board_key: boardKey,

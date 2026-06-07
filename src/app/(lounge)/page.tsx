@@ -26,6 +26,7 @@ type SitesCreatedData = {
 type GalleryPost = {
   site_key: string;
   site_label: string;
+  site_type: string;
   profile_picture: string | null;
   slug: string;
   board_key: string;
@@ -43,6 +44,7 @@ type GalleryPost = {
 type YoutubePost = {
   site_key: string;
   site_label: string;
+  site_type: string;
   profile_picture: string | null;
   slug: string;
   board_key: string;
@@ -63,6 +65,7 @@ type YoutubePost = {
 type FeedPost = {
   site_key: string;
   site_label: string;
+  site_type: string;
   profile_picture: string | null;
   slug: string;
   board_key: string;
@@ -78,6 +81,7 @@ type FeedPost = {
 type BasicOrBlogPost = {
   site_key: string;
   site_label: string;
+  site_type: string;
   profile_picture: string | null;
   slug: string;
   board_key: string;
