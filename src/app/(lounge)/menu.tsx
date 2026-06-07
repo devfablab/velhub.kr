@@ -33,9 +33,9 @@ import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/header.module.sass';
 import { ServiceLogo } from '@/components/Svgs';
 import SecondaryMenu from '@/components/header-groups/lounge/SecondaryMenu';
+import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
   children: React.ReactNode;
@@ -374,7 +374,7 @@ export default function Container({ children }: ContainerProps) {
       ) : (
         <header hidden aria-hidden />
       )}
-      <main style={{ marginTop: isMobile ? 47 : undefined }}>{children}</main>
+      <main style={{ marginTop: isMobile ? 84 : undefined }}>{children}</main>
     </>
   );
 }

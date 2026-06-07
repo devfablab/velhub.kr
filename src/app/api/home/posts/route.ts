@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 
-function getPublicUrl(bucket: string, path: string | null | undefined) {
+function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
 
   if (!normalizedPath) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     const rhizomesResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key')
+      .select('id, site_key, site_label, profile_picture')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false);
 
@@ -40,11 +40,13 @@ export async function GET(request: NextRequest) {
     }
 
     const rhizomes = rhizomesResult.data;
+    const rhizomeMap = new Map(rhizomes.map((rhizome) => [rhizome.id, rhizome]));
+
     const siteIds = rhizomes.map((rhizome) => rhizome.id);
 
     const boardsResult = await supabaseAdmin
       .from('boards')
-      .select('id, board_type, site_id')
+      .select('id, board_type, board_key, site_id')
       .neq('board_type', 'page')
       .in('site_id', siteIds);
 
@@ -112,7 +114,9 @@ export async function GET(request: NextRequest) {
     const posts = postsData.map((post) => {
       const board = boardMap.get(post.board_id);
       const boardType = board?.board_type;
+      const boardKey = board?.board_key;
       const siteId = board?.site_id;
+      const rhizome = siteId ? rhizomeMap.get(siteId) : null;
       const stigma = stigmasMap.get(post.user_id);
 
       let authorName = '';
@@ -131,13 +135,18 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      const avatar = stigma ? getPublicUrl('avatar', stigma.avatar) : null;
+      const avatar = stigma ? getPublicImageUrl('avatar', stigma.avatar) : null;
 
       const base = {
+        site_key: rhizome?.site_key ?? null,
+        site_label: rhizome?.site_label ?? null,
+        profile_picture: getPublicImageUrl('avatar', rhizome?.profile_picture),
         slug: post.slug,
+        board_key: boardKey,
         board_type: boardType,
         author_name: authorName,
         author_avatar: avatar,
+        published_at: post.published_at,
       };
 
       if (boardType === 'gallery') {
@@ -146,7 +155,10 @@ export async function GET(request: NextRequest) {
           subject: post.subject,
           summary: post.summary,
           content_html: post.content_html,
-          image: Array.isArray(post.images) && post.images.length > 0 ? post.images[0] : null,
+          image:
+            Array.isArray(getPublicImageUrl('post', post.images)) && post.images.length > 0
+              ? getPublicImageUrl('post', post.images[0])
+              : null,
         };
       }
 
@@ -155,7 +167,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           summary: post.summary,
-          thumbnail_image: post.thumbnail_image,
+          thumbnail_image: getPublicImageUrl('post', post.thumbnail_image),
           thumbnail_width: post.thumbnail_width,
           thumbnail_height: post.thumbnail_height,
           youtube_id: post.youtube_id,
@@ -167,11 +179,14 @@ export async function GET(request: NextRequest) {
         return {
           ...base,
           content_simple: post.content_simple,
-          images: post.images,
+          image:
+            Array.isArray(getPublicImageUrl('post', post.images)) && post.images.length > 0
+              ? getPublicImageUrl('post', post.images[0])
+              : null,
         };
       }
 
-      if (boardType === 'basic') {
+      if (boardType === 'basic' || boardType === 'blog') {
         return {
           ...base,
           subject: post.subject,
