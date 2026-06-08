@@ -5,6 +5,7 @@ import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { formatDate, formatTimeAgo } from '@/lib/utils';
 import { SlickProps } from '../page';
 import Anchor from '@/components/Anchor';
@@ -165,8 +166,18 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
                 )}
                 <div className={styles.tail}>
                   <span>{post.site_label}</span> <PersonRoundedIcon />
-                  <em>{post.author_name}</em> <ScheduleRoundedIcon />
-                  <time>{formatTimeAgo(post.published_at)}</time>
+                  <em>{post.author_name}</em>{' '}
+                  {isHub ? (
+                    <>
+                      <VisibilityOutlinedIcon />
+                      <span>{post.post_count}</span>
+                    </>
+                  ) : (
+                    <>
+                      <ScheduleRoundedIcon />
+                      <time>{formatTimeAgo(post.published_at)}</time>
+                    </>
+                  )}
                 </div>
               </Anchor>
             </div>
