@@ -11,11 +11,11 @@ const secondaryMenus = [
     exact: true,
   },
   {
-    href: '/home/blogs',
+    href: '/lounge/blog',
     label: '블로그 허브',
   },
   {
-    href: '/home/communities',
+    href: '/lounge/community',
     label: '커뮤니티 허브',
   },
   {

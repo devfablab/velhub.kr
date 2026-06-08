@@ -1,8 +1,8 @@
 import { headers } from 'next/headers';
 import Container from './menu';
-import Aside from './home/aside';
-import Slick from './home/slick';
-import List from './home/list';
+import Aside from './lounge/aside';
+import Slick from './lounge/slick';
+import List from './lounge/list';
 import styles from '../page.module.sass';
 
 type SiteItem = {
@@ -23,6 +23,16 @@ type SitesCreatedData = {
   created_at: string;
 };
 
+type SitesHitsData = {
+  site_key: string;
+  site_label: string;
+  profile_picture: string | null;
+  summary: string | null;
+  site_type: string;
+  profile_logo: string | null;
+  post_count: number | null;
+};
+
 type GalleryPost = {
   site_key: string;
   site_label: string;
@@ -39,6 +49,7 @@ type GalleryPost = {
   summary: string | null;
   content_html: string;
   image: string;
+  post_count: number | null;
 };
 
 type YoutubePost = {
@@ -60,6 +71,7 @@ type YoutubePost = {
   thumbnail_height: number | null;
   youtube_id: string;
   youtube_created_at: string | null;
+  post_count: number | null;
 };
 
 type FeedPost = {
@@ -76,6 +88,7 @@ type FeedPost = {
 
   content_simple: string;
   image: string | null;
+  post_count: number | null;
 };
 
 type BasicOrBlogPost = {
@@ -89,9 +102,10 @@ type BasicOrBlogPost = {
   author_name: string;
   author_avatar: string | null;
   published_at: string;
-
+  thumbnail_image: string | null;
   subject: string;
   content_html: string;
+  post_count: number | null;
 };
 
 type PostItem = GalleryPost | YoutubePost | FeedPost | BasicOrBlogPost;
@@ -104,6 +118,10 @@ type sitesCreatedResponse = {
   sites: SitesCreatedData[];
 };
 
+type sitesHitsResponse = {
+  sites: SitesHitsData[];
+};
+
 type PostsResponse = {
   posts: PostItem[];
 };
@@ -111,12 +129,14 @@ type PostsResponse = {
 export type SlickProps = {
   sitesData?: SitesResponse;
   sitesCreatedData?: sitesCreatedResponse;
+  sitesHitsData?: sitesHitsResponse;
   postsData?: PostsResponse;
+  isHub?: boolean;
 };
 
 export type ListProps = {
   postsData?: PostsResponse;
-  orderType?: 'newest' | 'hit';
+  orderType?: 'newest' | 'hits';
 };
 
 export default async function Home() {

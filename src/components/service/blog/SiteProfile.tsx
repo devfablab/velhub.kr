@@ -51,8 +51,6 @@ export default function SiteProfile() {
           throw new Error('사이트 정보를 불러오지 못했습니다.');
         }
 
-        console.log(result);
-
         setSiteInfo(result.siteInfo);
         setProfilePictureUrl(normalizeText(result.profilePictureUrl));
         setProfileLogoUrl(normalizeText(result.profileLogoUrl));

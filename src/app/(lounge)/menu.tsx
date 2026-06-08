@@ -305,13 +305,13 @@ export default function Container({ children }: ContainerProps) {
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="blogs" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/home/blogs">
+                  <Anchor href="/lounge/blog">
                     <MenuBookRoundedIcon fontSize="small" />
                     <span>블로그 허브</span>
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="communities" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/home/communities">
+                  <Anchor href="/lounge/community">
                     <InterestsOutlinedIcon fontSize="small" />
                     <span>커뮤니티 허브</span>
                   </Anchor>

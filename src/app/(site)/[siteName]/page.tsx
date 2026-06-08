@@ -121,7 +121,6 @@ export default async function Page(context: RouteContext) {
     });
 
     const blogContents: PostListItem[] = blogPostList.contents;
-    console.log('blogContents', blogContents);
 
     return (
       <Blog

@@ -44,7 +44,8 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'settings' ||
     firstSegment === 'new' ||
     firstSegment === 'concierge' ||
-    firstSegment === 'hub'
+    firstSegment === 'hub' ||
+    firstSegment === 'dummy.webp'
   );
 }
 

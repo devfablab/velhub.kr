@@ -38,7 +38,7 @@ function PrevArrow(props: ArrowProps) {
   );
 }
 
-export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
+export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHub }: SlickProps) {
   const settings = {
     className: styles.slider,
     dots: false,
@@ -74,12 +74,30 @@ export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
       <div className={`${styles.slider} ${styles['slider-created-sites']}`}>
         <Slider {...settings}>
           {sitesCreatedData.sites.map((site) => (
-            <Anchor key={site.site_key} href={site.site_key}>
+            <Anchor key={site.site_key} href={`/${site.site_key}`}>
               <em>{site.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
               <strong>{site.site_label}</strong>
               <p>{site.summary}</p>
               <time>{formatDate(site.created_at)} 개설</time>
             </Anchor>
+          ))}
+        </Slider>
+      </div>
+    );
+  }
+
+  if (sitesHitsData) {
+    return (
+      <div className={`${styles.slider} ${styles['slider-hits-sites']}`}>
+        <Slider {...settings}>
+          {sitesHitsData.sites.map((site) => (
+            <div key={site.site_key}>
+              <Anchor href={`/${site.site_key}`} style={{ background: 'url(/dummy.webp) no-repeat center / cover' }}>
+                <strong>{site.site_label}</strong>
+                <p>{site.summary}</p>
+                {site.post_count ? <time>{site.post_count}개 포스팅</time> : null}
+              </Anchor>
+            </div>
           ))}
         </Slider>
       </div>
@@ -115,7 +133,7 @@ export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
                         : 'url(/dummy.webp) no-repeat center / cover',
                 }}
               >
-                <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
+                {isHub ? null : <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>}
                 {post.board_type === 'gallery' && (
                   <>
                     <strong>{post.subject}</strong>

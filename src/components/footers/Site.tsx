@@ -50,8 +50,6 @@ export default function FooterSite() {
           throw new Error('사이트 정보를 불러오지 못했습니다.');
         }
 
-        console.log(result);
-
         setSiteInfo(result.siteInfo);
       } catch (unknownError) {
         if (unknownError instanceof Error) {

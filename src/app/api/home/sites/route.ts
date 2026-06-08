@@ -10,6 +10,8 @@ type RhizomeRow = {
   site_type: string;
   created_at: string;
   profile_logo: string | null;
+  member_count: number | null;
+  post_count: number | null;
 };
 
 function getPublicUrl(bucket: string, path: string | null | undefined) {
@@ -45,7 +47,9 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('rhizomes')
-      .select('site_key, site_label, profile_picture, summary, site_type, profile_logo, created_at')
+      .select(
+        'site_key, site_label, profile_picture, summary, site_type, profile_logo, member_count, post_count, created_at',
+      )
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false);
 
@@ -67,6 +71,8 @@ export async function GET(request: NextRequest) {
       site_type: site.site_type,
       profile_logo: getPublicUrl('profile_logo', site.profile_logo),
       created_at: site.created_at,
+      member_count: site.member_count,
+      post_count: site.post_count,
     }));
 
     return Response.json({ sites });

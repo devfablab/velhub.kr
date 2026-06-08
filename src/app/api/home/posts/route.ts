@@ -26,14 +26,21 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') === 'post_count' ? 'post_count' : 'published_at';
     const limitParam = searchParams.get('limit') ?? '10';
     const limit = parseInt(limitParam, 10);
+    const siteType = searchParams.get('siteType');
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizomesResult = await supabaseAdmin
+    let rhizomesQuery = supabaseAdmin
       .from('rhizomes')
       .select('id, site_key, site_label, site_type, profile_picture')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false);
+
+    if (siteType) {
+      rhizomesQuery = rhizomesQuery.eq('site_type', siteType);
+    }
+
+    const rhizomesResult = await rhizomesQuery;
 
     if (rhizomesResult.error || !rhizomesResult.data || rhizomesResult.data.length === 0) {
       return Response.json({ posts: [] });
@@ -148,6 +155,7 @@ export async function GET(request: NextRequest) {
         author_name: authorName,
         author_avatar: avatar,
         published_at: post.published_at,
+        post_count: post.post_count,
       };
 
       if (boardType === 'gallery') {
@@ -192,6 +200,7 @@ export async function GET(request: NextRequest) {
           ...base,
           subject: post.subject,
           content_html: post.content_html,
+          thumbnail_image: getPublicImageUrl('og-image', post.thumbnail_image),
         };
       }
 
