@@ -105,7 +105,6 @@ export default function ThemeProviderClient({
           md: 768,
           lg: 992,
           xl: 1200,
-          xxl: 1348,
         },
       },
       typography: {
