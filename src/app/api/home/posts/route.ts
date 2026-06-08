@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
       const siteId = board?.site_id;
       const rhizome = siteId ? rhizomeMap.get(siteId) : null;
       const stigma = stigmasMap.get(post.user_id);
+      console.log(post);
 
       let authorName = '';
 
@@ -165,8 +166,8 @@ export async function GET(request: NextRequest) {
           summary: post.summary,
           content_html: post.content_html,
           image:
-            Array.isArray(getPublicImageUrl('post', post.images)) && post.images.length > 0
-              ? getPublicImageUrl('post', post.images[0])
+            Array.isArray(post.images) && post.images.length > 0
+              ? getPublicImageUrl('post', post.images[0].path)
               : null,
         };
       }
@@ -189,8 +190,8 @@ export async function GET(request: NextRequest) {
           ...base,
           content_simple: post.content_simple,
           image:
-            Array.isArray(getPublicImageUrl('post', post.images)) && post.images.length > 0
-              ? getPublicImageUrl('post', post.images[0])
+            Array.isArray(post.images) && post.images.length > 0
+              ? getPublicImageUrl('post', post.images[0].path)
               : null,
         };
       }
