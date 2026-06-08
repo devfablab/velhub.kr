@@ -29,6 +29,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
@@ -336,6 +337,12 @@ export default function Container({ children }: ContainerProps) {
                           <LogoutOutlinedIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText className={styles['MenuItem-text']}>로그아웃</ListItemText>
+                      </MenuItem>,
+                      <MenuItem key="hub" onClick={handleCloseProfileDrawer}>
+                        <Anchor href="/hub">
+                          <HubOutlinedIcon fontSize="small" />
+                          <span>마이허브</span>
+                        </Anchor>
                       </MenuItem>,
                     ]
                   : [
