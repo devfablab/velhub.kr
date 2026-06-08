@@ -50,9 +50,6 @@
         @include ds.mq(maxExtraSmall)
           width: calc(100vw - ds.rem(57))
 
-          em
-            @include ds.screen-reader-only
-
     a
       display: flex
       flex-direction: column
@@ -96,6 +93,9 @@
               html[data-theme="yellow-dark"] &
                 color: rgba(ds.$rgb-light, .9)
 
+              @include ds.mq(maxExtraSmall)
+                @include ds.screen-reader-only
+
             strong
               @include ds.fw(neo, 800)
               font-size: ds.rem(16)
@@ -106,14 +106,14 @@
               -webkit-line-clamp: 1
               padding-right: ds.rem(70)
 
-              @include ds.mq(maxExtraSmall)
-                padding-right: 0
-
               html[data-theme="yellow-light"] &
                 color: ds.$hex-primary
 
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-bright
+
+              @include ds.mq(maxExtraSmall)
+                padding-right: 0
 
             p, time
               html[data-theme="yellow-light"] &
