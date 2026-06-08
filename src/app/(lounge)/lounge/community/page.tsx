@@ -13,7 +13,7 @@ export default async function BlogHub() {
   let sitesHitsData = null;
   let postsHitsData = null;
   try {
-    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=post_count&siteType=community`, {
+    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=member_count&siteType=community`, {
       cache: 'no-store',
     });
 

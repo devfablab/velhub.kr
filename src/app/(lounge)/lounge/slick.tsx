@@ -95,7 +95,13 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
               <Anchor href={`/${site.site_key}`} style={{ background: 'url(/dummy.webp) no-repeat center / cover' }}>
                 <strong>{site.site_label}</strong>
                 <p>{site.summary}</p>
-                {site.post_count ? <time>{site.post_count}개 포스팅</time> : null}
+                {site.site_type === 'blog' ? (
+                  site.post_count ? (
+                    <span>{site.post_count.toLocaleString()}개 포스팅</span>
+                  ) : null
+                ) : site.member_count ? (
+                  <span>{site.member_count.toLocaleString()}명 가입</span>
+                ) : null}
               </Anchor>
             </div>
           ))}

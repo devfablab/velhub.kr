@@ -31,6 +31,7 @@ type SitesHitsData = {
   site_type: string;
   profile_logo: string | null;
   post_count: number | null;
+  member_count: number | null;
 };
 
 type GalleryPost = {
