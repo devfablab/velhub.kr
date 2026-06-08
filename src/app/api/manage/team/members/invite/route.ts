@@ -1,3 +1,4 @@
+import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
 import verifySession from '@/lib/session/verifySession';
@@ -39,16 +40,6 @@ function getRoleLabel(role: string) {
   return role;
 }
 
-function getAppUrl() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
-
-  if (!appUrl) {
-    throw new Error('초대 링크용 사이트 주소가 설정되지 않았습니다.');
-  }
-
-  return appUrl.replace(/\/+$/, '');
-}
-
 function getInviteMailFrom() {
   const inviteMailFrom = process.env.RESEND_FROM_EMAIL!;
 
@@ -75,10 +66,11 @@ async function sendInviteEmail(params: {
   siteLabel: string | null;
   role: string;
   token: string;
+  appUrl: string;
 }) {
   const resend = getResendClient();
   const from = getInviteMailFrom();
-  const appUrl = getAppUrl();
+  const appUrl = params.appUrl;
   const inviteUrl = `${appUrl}/${params.siteName}/invite-blog/${params.token}`;
   const siteLabel = params.siteLabel?.trim() || params.siteName;
   const roleLabel = getRoleLabel(params.role);
@@ -215,7 +207,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const requestBody = (await request.json()) as RequestBody;
 
@@ -287,6 +279,8 @@ export async function POST(request: Request) {
       return Response.json({ error: invite.error?.message || '초대를 실패했습니다.' }, { status: 500 });
     }
 
+    const appUrl = request.nextUrl.origin;
+
     try {
       await sendInviteEmail({
         email,
@@ -294,6 +288,7 @@ export async function POST(request: Request) {
         siteLabel: access.siteLabel,
         role,
         token,
+        appUrl,
       });
     } catch (unknownError) {
       await access.supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
