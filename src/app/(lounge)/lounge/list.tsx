@@ -98,12 +98,14 @@ export default function List({ postsData, orderType }: ListProps) {
                       />
                     </div>
                   )}
-                  {post.board_type === 'feed' && (
-                    <div className={styles.thumbnail}>{post.image ? <img src={post.image} alt="" /> : null}</div>
+                  {post.board_type === 'feed' && post.image && (
+                    <div className={styles.thumbnail}>
+                      <img src={post.image} alt="" />
+                    </div>
                   )}
                   {(post.board_type === 'basic' || post.board_type === 'blog') && post.thumbnail_image && (
                     <div className={styles.thumbnail}>
-                      {post.thumbnail_image ? <img src={post.thumbnail_image} alt="" /> : null}
+                      <img src={post.thumbnail_image} alt="" />
                     </div>
                   )}
                 </div>
@@ -152,12 +154,14 @@ export default function List({ postsData, orderType }: ListProps) {
                         />
                       </div>
                     )}
-                    {post.board_type === 'feed' && (
-                      <div className={styles.thumbnail}>{post.image ? <img src={post.image} alt="" /> : null}</div>
+                    {post.board_type === 'feed' && post.image && (
+                      <div className={styles.thumbnail}>
+                        <img src={post.image} alt="" />
+                      </div>
                     )}
                     {(post.board_type === 'basic' || post.board_type === 'blog') && post.thumbnail_image && (
                       <div className={styles.thumbnail}>
-                        {post.thumbnail_image ? <img src={post.thumbnail_image} alt="" /> : null}
+                        <img src={post.thumbnail_image} alt="" />
                       </div>
                     )}
                   </div>
@@ -209,7 +213,9 @@ export default function List({ postsData, orderType }: ListProps) {
                 </div>
               )}
               {post.board_type === 'feed' && (
-                <div className={styles.thumbnail}>{post.image ? <img src={post.image} alt="" /> : null}</div>
+                <div className={styles.thumbnail}>
+                  {post.image ? <img src={post.image} alt="" /> : <div className={styles.dummy} />}
+                </div>
               )}
               {(post.board_type === 'basic' || post.board_type === 'blog') && (
                 <div className={styles.thumbnail}>
