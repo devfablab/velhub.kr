@@ -16,7 +16,7 @@ type ArrowProps = {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
 };
 
-function SampleNextArrow(props: ArrowProps) {
+function NextArrow(props: ArrowProps) {
   const { onClick } = props;
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-next']}`}>
@@ -27,7 +27,7 @@ function SampleNextArrow(props: ArrowProps) {
   );
 }
 
-function SamplePrevArrow(props: ArrowProps) {
+function PrevArrow(props: ArrowProps) {
   const { onClick } = props;
   return (
     <div className={`${styles['slick-arrow']} ${styles['slick-prev']}`}>
@@ -47,8 +47,8 @@ export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
     slidesToShow: 1,
     slidesToScroll: 1,
     variableWidth: true,
-    nextArrow: <SampleNextArrow />,
-    prevArrow: <SamplePrevArrow />,
+    nextArrow: <NextArrow />,
+    prevArrow: <PrevArrow />,
   };
 
   const YOUTUBE_THUMBNAIL_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default'];
@@ -75,6 +75,7 @@ export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
         <Slider {...settings}>
           {sitesCreatedData.sites.map((site) => (
             <Anchor key={site.site_key} href={site.site_key}>
+              <em>{site.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
               <strong>{site.site_label}</strong>
               <p>{site.summary}</p>
               <time>{formatDate(site.created_at)} 개설</time>
@@ -114,6 +115,7 @@ export default function Slick({ sitesCreatedData, postsData }: SlickProps) {
                         : 'url(/dummy.webp) no-repeat center / cover',
                 }}
               >
+                <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
                 {post.board_type === 'gallery' && (
                   <>
                     <strong>{post.subject}</strong>

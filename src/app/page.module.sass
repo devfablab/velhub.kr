@@ -61,12 +61,33 @@
             border: 1px solid ds.$hex-secondary
             border-radius: ds.rem(12)
             padding: ds.rem(17)
+            position: relative
 
             html[data-theme="yellow-light"] &
               background-color: ds.$hex-white
 
             html[data-theme="yellow-dark"] &
               background-color: ds.$hex-black
+
+            em
+              @include ds.fw(pre, 700)
+              font-size: ds.rem(12)
+              font-style: normal
+              position: absolute
+              top: ds.rem(17)
+              right: ds.rem(17)
+              height: ds.rem(23)
+              display: flex
+              align-items: center
+              padding: 0 ds.rem(7)
+              border-radius: ds.rem(23)
+              border: 1px solid ds.$hex-accent
+
+              html[data-theme="yellow-light"] &
+                color: rgba(ds.$rgb-secondary, .9)
+
+              html[data-theme="yellow-dark"] &
+                color: rgba(ds.$rgb-light, .9)
 
             strong
               @include ds.fw(neo, 800)
@@ -108,6 +129,21 @@
             height: ds.rem(170)!important
             position: relative
             overflow: hidden
+
+            > em
+              @include ds.fw(pre, 700)
+              font-size: ds.rem(12)
+              font-style: normal
+              position: absolute
+              top: ds.rem(17)
+              right: ds.rem(17)
+              height: ds.rem(23)
+              display: flex
+              align-items: center
+              padding: 0 ds.rem(7)
+              border-radius: ds.rem(23)
+              border: 1px solid ds.$hex-accent
+              color: rgba(ds.$rgb-light, .9)
 
             strong, p, div
               z-index: 1
