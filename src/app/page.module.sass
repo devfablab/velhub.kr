@@ -47,6 +47,12 @@
         padding-right: ds.rem(12)
         width: ds.rem(370)
 
+        @include ds.mq(maxExtraSmall)
+          width: calc(100vw - ds.rem(57))
+
+          em
+            @include ds.screen-reader-only
+
     a
       display: flex
       flex-direction: column
@@ -98,6 +104,10 @@
               display: -webkit-box
               -webkit-box-orient: vertical
               -webkit-line-clamp: 1
+              padding-right: ds.rem(70)
+
+              @include ds.mq(maxExtraSmall)
+                padding-right: 0
 
               html[data-theme="yellow-light"] &
                 color: ds.$hex-primary
@@ -148,6 +158,9 @@
               border-radius: ds.rem(23)
               border: 1px solid ds.$hex-accent
 
+              @include ds.mq(maxExtraSmall)
+                padding-right: 0
+
               html[data-theme="yellow-light"] &
                 color: rgba(ds.$rgb-light, .9)
 
@@ -162,6 +175,7 @@
               display: -webkit-box
               -webkit-box-orient: vertical
               -webkit-line-clamp: 1
+              padding-right: ds.rem(70)
 
               html[data-theme="yellow-light"] &
                 color: ds.$hex-bright
@@ -234,6 +248,10 @@
               display: -webkit-box
               -webkit-box-orient: vertical
               -webkit-line-clamp: 1
+              padding-right: ds.rem(70)
+
+              @include ds.mq(maxExtraSmall)
+                padding-right: 0
 
             p
               font-size: ds.rem(14)
@@ -458,10 +476,14 @@
           .tail-author
             margin-top: ds.rem(12)
 
-            svg
+            > svg
               margin: 0 ds.rem(3) 0 ds.rem(12)
               width: ds.rem(12)
               height: ds.rem(12)
+
+            @include ds.mq(maxExtraSmall)
+              > svg, time
+                @include ds.screen-reader-only
 
           em
             font-style: normal
