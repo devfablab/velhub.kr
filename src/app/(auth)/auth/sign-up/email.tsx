@@ -161,6 +161,9 @@ export default function EmailSignUp() {
       const signUpResult = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        },
       });
 
       if (signUpResult.error) {
