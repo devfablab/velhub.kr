@@ -7,6 +7,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import styles from '@/app/auth.module.sass';
+import VhiNaver from '../icons/VhiNaver';
 
 export default function SocialLoginButtons() {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export default function SocialLoginButtons() {
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const siteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
+  const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,6 +41,10 @@ export default function SocialLoginButtons() {
 
       if (siteName) {
         redirectUrl.searchParams.set('siteName', siteName);
+      }
+
+      if (inviteType) {
+        redirectUrl.searchParams.set('inviteType', inviteType);
       }
 
       const { error } = await supabase.auth.signInWithOAuth({
@@ -82,6 +88,10 @@ export default function SocialLoginButtons() {
         redirectUrl.searchParams.set('siteName', siteName);
       }
 
+      if (inviteType) {
+        redirectUrl.searchParams.set('inviteType', inviteType);
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
@@ -101,6 +111,31 @@ export default function SocialLoginButtons() {
 
       setIsSubmitting(false);
     }
+  }
+
+  function handleNaverLogin() {
+    if (isSubmitting) {
+      return;
+    }
+
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    const naverLoginUrl = new URL('/api/auth/naver/start', window.location.origin);
+
+    if (inviteToken) {
+      naverLoginUrl.searchParams.set('inviteToken', inviteToken);
+    }
+
+    if (siteName) {
+      naverLoginUrl.searchParams.set('siteName', siteName);
+    }
+
+    if (inviteType) {
+      naverLoginUrl.searchParams.set('inviteType', inviteType);
+    }
+
+    window.location.href = naverLoginUrl.toString();
   }
 
   return (
@@ -123,6 +158,16 @@ export default function SocialLoginButtons() {
       >
         <GitHubIcon />
         <span>GitHub 아이디로 {actionText}</span>
+      </button>
+
+      <button
+        type="button"
+        className={`button medium submit ${styles.button} ${styles.naver}`}
+        onClick={handleNaverLogin}
+        disabled={isSubmitting}
+      >
+        <VhiNaver />
+        <span>네이버 아이디로 {actionText}</span>
       </button>
 
       {errorMessage ? (

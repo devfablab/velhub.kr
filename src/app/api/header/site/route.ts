@@ -77,7 +77,13 @@ function decryptValue(value: string | null | undefined) {
   }
 
   try {
-    return decrypt(normalizedValue);
+    const decryptedValue = decrypt(normalizedValue);
+
+    if (decryptedValue.startsWith('naver_')) {
+      return null;
+    }
+
+    return decryptedValue;
   } catch {
     return null;
   }

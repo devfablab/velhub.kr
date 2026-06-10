@@ -20,13 +20,19 @@ function decryptValue(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
 
   if (!normalizedValue) {
-    return '';
+    return null;
   }
 
   try {
-    return decrypt(normalizedValue);
+    const decryptedValue = decrypt(normalizedValue);
+
+    if (decryptedValue.startsWith('naver_')) {
+      return null;
+    }
+
+    return decryptedValue;
   } catch {
-    return '';
+    return null;
   }
 }
 

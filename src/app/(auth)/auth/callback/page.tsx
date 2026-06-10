@@ -210,7 +210,21 @@ export default function Page() {
 
       try {
         const supabase = getSupabaseBrowser();
-        const authSession = await waitForSession();
+        const code = searchParams.get('code');
+
+        const authSession = code
+          ? await supabase.auth.exchangeCodeForSession(code).then((sessionResult) => {
+              if (sessionResult.error) {
+                throw new Error(sessionResult.error.message);
+              }
+
+              if (!sessionResult.data.session) {
+                throw new Error('세션을 가져오지 못했습니다.');
+              }
+
+              return sessionResult.data.session;
+            })
+          : await waitForSession();
 
         if (isCancelled) {
           return;
@@ -309,7 +323,7 @@ export default function Page() {
     return () => {
       isCancelled = true;
     };
-  }, [router, inviteToken, inviteSiteName, inviteType]);
+  }, [router, searchParams, inviteToken, inviteSiteName, inviteType]);
 
   useEffect(() => {
     setReturnPath(sessionStorage.getItem('route:returnPath'));

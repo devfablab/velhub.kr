@@ -3,8 +3,6 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type ThemeMode = 'light' | 'system' | 'dark';
-
 type AccountRow = {
   email: string | null;
   user_name: string | null;
@@ -19,7 +17,13 @@ function decryptValue(value: string | null | undefined) {
   }
 
   try {
-    return decrypt(normalizedValue);
+    const decryptedValue = decrypt(normalizedValue);
+
+    if (decryptedValue.startsWith('naver_')) {
+      return null;
+    }
+
+    return decryptedValue;
   } catch {
     return null;
   }
@@ -72,16 +76,6 @@ export async function GET() {
       .maybeSingle();
 
     if (accountResult.error || !accountResult.data) {
-      return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const profileResult = await supabaseAdmin
-      .from('profiles')
-      .select('theme_mode')
-      .eq('user_id', session.authUserId)
-      .maybeSingle();
-
-    if (profileResult.error) {
       return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
