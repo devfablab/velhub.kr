@@ -6,8 +6,9 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import styles from '@/app/auth.module.sass';
 import VhiNaver from '../icons/VhiNaver';
+import VhiKakao from '../icons/VhiKakao';
+import styles from '@/app/auth.module.sass';
 
 export default function SocialLoginButtons() {
   const pathname = usePathname();
@@ -113,6 +114,51 @@ export default function SocialLoginButtons() {
     }
   }
 
+  async function handleKakaoLogin() {
+    if (isSubmitting) {
+      return;
+    }
+
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const currentOrigin = window.location.origin;
+      const redirectUrl = new URL('/auth/callback', currentOrigin);
+
+      if (inviteToken) {
+        redirectUrl.searchParams.set('inviteToken', inviteToken);
+      }
+
+      if (siteName) {
+        redirectUrl.searchParams.set('siteName', siteName);
+      }
+
+      if (inviteType) {
+        redirectUrl.searchParams.set('inviteType', inviteType);
+      }
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: redirectUrl.toString(),
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '카카오 로그인 중 오류가 발생했습니다.');
+      } else {
+        setErrorMessage('카카오 로그인 중 오류가 발생했습니다.');
+      }
+
+      setIsSubmitting(false);
+    }
+  }
+
   function handleNaverLogin() {
     if (isSubmitting) {
       return;
@@ -142,6 +188,26 @@ export default function SocialLoginButtons() {
     <div className={styles.socials}>
       <button
         type="button"
+        className={`button medium submit ${styles.button} ${styles.naver}`}
+        onClick={handleNaverLogin}
+        disabled={isSubmitting}
+      >
+        <VhiNaver />
+        <span>네이버 아이디로 {actionText}</span>
+      </button>
+
+      <button
+        type="button"
+        className={`button medium submit ${styles.button} ${styles.kakao}`}
+        onClick={handleKakaoLogin}
+        disabled={isSubmitting}
+      >
+        <VhiKakao />
+        <span>카카오 아이디로 {actionText}</span>
+      </button>
+
+      <button
+        type="button"
         className={`button medium submit ${styles.button} ${styles.google}`}
         onClick={handleGoogleLogin}
         disabled={isSubmitting}
@@ -158,16 +224,6 @@ export default function SocialLoginButtons() {
       >
         <GitHubIcon />
         <span>GitHub 아이디로 {actionText}</span>
-      </button>
-
-      <button
-        type="button"
-        className={`button medium submit ${styles.button} ${styles.naver}`}
-        onClick={handleNaverLogin}
-        disabled={isSubmitting}
-      >
-        <VhiNaver />
-        <span>네이버 아이디로 {actionText}</span>
       </button>
 
       {errorMessage ? (

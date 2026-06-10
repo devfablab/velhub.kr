@@ -210,21 +210,7 @@ export default function Page() {
 
       try {
         const supabase = getSupabaseBrowser();
-        const code = searchParams.get('code');
-
-        const authSession = code
-          ? await supabase.auth.exchangeCodeForSession(code).then((sessionResult) => {
-              if (sessionResult.error) {
-                throw new Error(sessionResult.error.message);
-              }
-
-              if (!sessionResult.data.session) {
-                throw new Error('세션을 가져오지 못했습니다.');
-              }
-
-              return sessionResult.data.session;
-            })
-          : await waitForSession();
+        const authSession = await waitForSession();
 
         if (isCancelled) {
           return;
