@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Avatar } from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';
@@ -69,23 +70,37 @@ export default function AuthActions() {
 
   if (isAuthenticated) {
     return (
-      <div className={`${styles['user-info']} paper`}>
-        <div className={styles.avatar}>
-          <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name} />
-        </div>
-
-        <div className={styles.info}>
-          <div className={styles['info-detail']}>
-            <em>{userProfile.name}</em>
-            <cite>{userProfile.email}</cite>
+      <>
+        <div className={`${styles['user-info']} paper`}>
+          <div className={styles.avatar}>
+            <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name} />
           </div>
-          <div className={styles.button}>
-            <Anchor href="/settings" className="button small cancel">
-              프로필 설정
+
+          <div className={styles.info}>
+            <div className={styles['info-detail']}>
+              <em>{userProfile.name}</em>
+              <cite>{userProfile.email}</cite>
+            </div>
+            <div className={styles.button}>
+              <Anchor href="/settings" className="button small cancel">
+                프로필 설정
+              </Anchor>
+            </div>
+          </div>
+        </div>
+        <div className={`${styles['new-sites']} paper`}>
+          <div className={styles.buttons}>
+            <Anchor href="/new/blog" className="button medium submit">
+              <span>블로그 개설하기</span>
+              <AddRoundedIcon />
+            </Anchor>
+            <Anchor href="/new/community" className="button medium submit">
+              <span>커뮤니티 개설하기</span>
+              <AddRoundedIcon />
             </Anchor>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
