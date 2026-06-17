@@ -74,6 +74,10 @@ function normalizeSiteKey(rawValue: string) {
     .replace(/-+$/g, '');
 }
 
+function normalizeSiteKeyInput(rawValue: string) {
+  return rawValue.toLowerCase().replace(/_/g, '-').replace(/\s+/g, '-').replace(/-+/g, '-');
+}
+
 function hasInvalidCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
@@ -233,7 +237,7 @@ export default function Opt() {
   }
 
   function handleSiteKeyChange(event: InputChangeEvent) {
-    const normalizedValue = normalizeSiteKey(event.currentTarget.value);
+    const normalizedValue = normalizeSiteKeyInput(event.currentTarget.value);
 
     setSiteKey(normalizedValue);
     setSiteKeyStatusMessage('');
