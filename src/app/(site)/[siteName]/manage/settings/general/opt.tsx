@@ -629,7 +629,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -645,7 +645,7 @@ export default function Opt() {
 
   if (!siteInfo) {
     return (
-      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <div className={`paper paper-error ${styles.paper}`}>사이트 정보를 불러오지 못했습니다</div>
@@ -654,9 +654,14 @@ export default function Opt() {
       </Container>
     );
   }
+
   if (!sites) {
     return (
-      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <Container
+        pageTitle={siteInfo.site_type === 'blog' ? '블로그 정보' : '커뮤니티 정보'}
+        pageBack={`/${siteName}/manage`}
+        menu="settings"
+      >
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <div className={`paper paper-error ${styles.paper}`}>업데이트 정보를 불러오지 못했습니다</div>
@@ -667,7 +672,11 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+    <Container
+      pageTitle={siteInfo.site_type === 'blog' ? '블로그 정보' : '커뮤니티 정보'}
+      pageBack={`/${siteName}/manage`}
+      menu="settings"
+    >
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}

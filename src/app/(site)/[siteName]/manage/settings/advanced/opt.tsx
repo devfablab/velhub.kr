@@ -21,6 +21,19 @@ import styles from '@/app/manage.module.sass';
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
+type SiteInfoInfo = {
+  created_at: string;
+  site_key: string;
+  site_label: string | null;
+  profile_picture: string | null;
+  profile_logo: string | null;
+  summary: string | null;
+  site_type: string;
+  visibility_type: string;
+  theme_type: string;
+  is_shutdown: boolean;
+};
+
 type SitesRow = {
   owner_id: string;
   updated_at: string;
@@ -55,11 +68,38 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(null);
+
   const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>('public');
   const [searchKeywords, setSearchKeywords] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  async function loadInfo() {
+    try {
+      const response = await fetch(`/api/info/general/site/${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
+      }
+
+      setSiteInfo(result.siteInfo);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('사이트 정보를 불러오지 못했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function loadSites() {
     const response = await fetch(`/api/info/advanced/site/${siteName}`, {
@@ -85,7 +125,7 @@ export default function Opt() {
     async function init() {
       try {
         setErrorMessage('');
-        await loadSites();
+        await Promise.all([loadSites(), loadInfo()]);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || 'sites 정보를 불러오지 못했습니다.');
@@ -157,7 +197,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
             <div className={`paper ${styles.paper}`}>
@@ -171,8 +211,24 @@ export default function Opt() {
     );
   }
 
+  if (!siteInfo) {
+    return (
+      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
+        <div className={`container ${styles.container}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+            <div className={`paper paper-error ${styles.paper}`}>사이트 정보를 불러오지 못했습니다</div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
   return (
-    <Container pageTitle="블로그 정보" pageBack={`/${siteName}/manage`} menu="settings">
+    <Container
+      pageTitle={siteInfo.site_type === 'community' ? '커뮤니티 정보' : '블로그 정보'}
+      pageBack={`/${siteName}/manage`}
+      menu="settings"
+    >
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" gap={3} onSubmit={handleSubmit}>
