@@ -30,10 +30,10 @@ export type TossApiError = {
 };
 
 function getTossSecretKey() {
-  const tossSecretKey = process.env.TOSS_SECRET_KEY;
+  const tossSecretKey = process.env.NEXT_PUBLIC_TOSS_SECRET_KEY;
 
   if (!tossSecretKey) {
-    throw new Error('TOSS_SECRET_KEY가 설정되지 않았습니다.');
+    throw new Error('NEXT_PUBLIC_TOSS_SECRET_KEY가 설정되지 않았습니다.');
   }
 
   return tossSecretKey;
