@@ -480,10 +480,24 @@
 .site-profile
   display: flex
   gap: ds.rem(12)
-  flex-direction: row
-  justify-content: center
+  flex-direction: column
   align-items: center
   padding: ds.rem(27) 0
+
+  .site-profile-container, .action
+    width: ds.rem(370)
+
+  .action
+    display: flex
+    gap: ds.rem(12)
+    justify-content: center
+
+  .site-profile-container
+    display: flex
+    gap: ds.rem(12)
+    flex-direction: row
+    justify-content: center
+    align-items: center
 
   .site-profile-avatar
     width: ds.rem(72)
@@ -494,6 +508,7 @@
     flex-direction: column
     justify-content: center
     gap: ds.rem(3)
+    @include ds.col
 
     strong
       @include ds.fw(neo, 800)

@@ -21,6 +21,7 @@ type BoardRow = {
   is_active: boolean;
   write_permission: 'member' | 'manager' | 'community-manager' | 'owner' | null;
   post_per_page: number | null;
+  is_subscription: boolean | null;
 };
 
 type PageRow = {
@@ -442,7 +443,7 @@ export async function GET(request: Request, context: RouteContext) {
     const board = await supabaseAdmin
       .from('boards')
       .select(
-        'id, board_key, board_label, board_type, markdown_status, site_id, post_type, is_active, write_permission, post_per_page',
+        'id, board_key, board_label, board_type, markdown_status, site_id, post_type, is_active, write_permission, post_per_page, is_subscription',
       )
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
@@ -482,7 +483,7 @@ export async function GET(request: Request, context: RouteContext) {
     if (seriesName) {
       const seriesResult = await supabaseAdmin
         .from('board_series')
-        .select('id, series_key, series_label')
+        .select('id, series_key, series_label, is_subscription')
         .eq('site_id', rhizome.data.id)
         .eq('board_id', boardData.id)
         .eq('series_key', seriesName)

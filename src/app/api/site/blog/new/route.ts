@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     const visibilityType = isVisibilityType(requestBody.visibilityType) ? requestBody.visibilityType : 'public';
     const themeType = isThemeType(requestBody.themeType) ? requestBody.themeType : 'default';
-    const isShutdown = typeof requestBody.isShutdown === 'boolean' ? requestBody.isShutdown : false;
+    const isShutdown = typeof requestBody.isShutdown === 'boolean' ? requestBody.isShutdown : true;
     const commentProvider = isCommentProvider(requestBody.commentProvider) ? requestBody.commentProvider : 'disqus';
 
     if (!normalizedSiteKey) {

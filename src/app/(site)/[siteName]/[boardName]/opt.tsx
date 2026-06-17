@@ -30,6 +30,7 @@ import FabNew from '@/components/service/common/FabNew';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import Container from '../menu';
+import SubscriptionButton from './subscriptionButton';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -509,6 +510,12 @@ export default function Opt({ isCommunity }: Props) {
                   ) : null}
                 </h2>
               )}
+              <SubscriptionButton
+                siteName={siteName}
+                boardName={boardName}
+                board={board}
+                selectedSeries={selectedSeries}
+              />
             </>
           ) : (
             <SiteProfile />

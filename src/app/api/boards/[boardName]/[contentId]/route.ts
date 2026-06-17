@@ -829,7 +829,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type')
+      .select('id, board_key, board_label, board_type, markdown_status, site_id, post_type, is_subscription')
       .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();

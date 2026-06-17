@@ -125,7 +125,6 @@ export async function GET(request: NextRequest) {
       const siteId = board?.site_id;
       const rhizome = siteId ? rhizomeMap.get(siteId) : null;
       const stigma = stigmasMap.get(post.user_id);
-      console.log(post);
 
       let authorName = '';
 

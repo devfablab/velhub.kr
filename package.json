@@ -27,6 +27,7 @@
     "@toast-ui/editor": "^3.2.2",
     "@toast-ui/editor-plugin-code-syntax-highlight": "^3.1.0",
     "@toast-ui/react-editor": "^3.2.3",
+    "@tosspayments/payment-sdk": "^1.9.2",
     "@u-wave/react-vimeo": "^0.9.12",
     "@upstash/redis": "^1.37.0",
     "cheerio": "^1.2.0",

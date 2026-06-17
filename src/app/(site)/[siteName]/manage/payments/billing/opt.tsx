@@ -1,0 +1,508 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+import { loadTossPayments } from '@tosspayments/payment-sdk';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
+import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from '../../menu';
+
+type PlanBillingResponse = {
+  site?: {
+    id: string;
+    siteKey: string;
+    siteLabel: string | null;
+  };
+  plan?: {
+    id: string;
+    name: string | null;
+    price: number;
+  } | null;
+  subscription?: {
+    id: string;
+    status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+    price: number;
+    trial_started_at: string | null;
+    trial_ends_at: string | null;
+    current_period_start: string;
+    current_period_end: string;
+    next_billing_at: string | null;
+    past_due_started_at: string | null;
+    canceled_at: string | null;
+    expired_at: string | null;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  payments?: {
+    id: string;
+    order_no: string;
+    amount: number;
+    currency: string;
+    status: 'paid' | 'failed' | 'partially_refunded' | 'refunded';
+    failure_message: string | null;
+    approved_at: string | null;
+    refunded_at: string | null;
+    created_at: string;
+  }[];
+  error?: string;
+};
+
+type PlanBillingStartResponse =
+  | {
+      mode: 'billing_auth';
+      clientKey: string;
+      customerKey: string;
+      orderNo: string;
+      orderName: string;
+      successUrl: string;
+      failUrl: string;
+    }
+  | {
+      mode: 'direct_billing';
+      ok: true;
+      subscriptionId: string;
+    }
+  | {
+      error: string;
+    };
+
+type PlanBillingCancelResponse =
+  | {
+      ok: true;
+      mode: 'canceled_without_payment' | 'cancel_scheduled' | 'full_refund' | 'partial_refund';
+      refundAmount: number;
+      retainedAmount: number;
+      usedDays?: number;
+    }
+  | {
+      error: string;
+    };
+
+type PlanBillingResumeResponse =
+  | {
+      ok: true;
+      mode: 'resume_scheduled_cancel';
+      nextBillingAt: string;
+    }
+  | {
+      error: string;
+    };
+
+function formatPrice(price: number | null | undefined) {
+  if (typeof price !== 'number') {
+    return '-';
+  }
+
+  return `${price.toLocaleString('ko-KR')}원`;
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return '-';
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(value));
+}
+
+function getSubscriptionStatusText(
+  status: PlanBillingResponse['subscription'] extends infer Subscription
+    ? Subscription extends { status: infer Status }
+      ? Status
+      : never
+    : never,
+) {
+  switch (status) {
+    case 'trialing':
+      return '무료체험 적용 중';
+    case 'active':
+      return '정상 구독 중';
+    case 'past_due':
+      return '결제 실패 유예기간 중';
+    case 'canceled':
+      return '구독 취소됨';
+    case 'expired':
+      return '구독 만료';
+    default:
+      return '상태 확인 필요';
+  }
+}
+
+function getPaymentStatusText(status: string) {
+  switch (status) {
+    case 'paid':
+      return '결제 완료';
+    case 'failed':
+      return '결제 실패';
+    case 'partially_refunded':
+      return '부분 환불';
+    case 'refunded':
+      return '환불 완료';
+    default:
+      return status;
+  }
+}
+
+function getCancelSuccessMessage(result: Exclude<PlanBillingCancelResponse, { error: string }>) {
+  switch (result.mode) {
+    case 'canceled_without_payment':
+      return '요금제 구독이 취소되었습니다.';
+    case 'cancel_scheduled':
+      return '요금제 구독 취소가 예약되었습니다. 현재 이용 기간은 유지됩니다.';
+    case 'full_refund':
+      return '요금제 구독이 취소되고 전액 환불되었습니다.';
+    case 'partial_refund':
+      return `요금제 구독이 취소되고 ${formatPrice(result.refundAmount)} 환불되었습니다.`;
+    default:
+      return '요금제 구독 취소가 처리되었습니다.';
+  }
+}
+
+export default function Opt() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [billingData, setBillingData] = useState<PlanBillingResponse | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      setErrorMessage('');
+
+      const response = await fetch(`/api/manage/payments/plan-billing?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as PlanBillingResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '결제 정보를 불러오지 못했습니다.');
+      }
+
+      setBillingData(result);
+
+      return true;
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '결제 정보를 불러오지 못했습니다.');
+      } else {
+        setErrorMessage('결제 정보를 불러오지 못했습니다.');
+      }
+
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [siteName]);
+
+  useEffect(() => {
+    if (!siteName) {
+      setErrorMessage('siteName이 유효하지 않습니다.');
+      setIsLoading(false);
+      return;
+    }
+
+    void loadData();
+  }, [loadData, siteName]);
+
+  async function handleBillingAuth() {
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      if (!billingData?.site?.id) {
+        throw new Error('사이트 정보가 없습니다.');
+      }
+
+      const response = await fetch('/api/payments/toss/plan-billing/start', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteId: billingData.site.id,
+          orderName: '데브허브 사이트 요금제 결제수단 등록',
+          successUrl: `/${siteName}/manage/payments/billing/success`,
+          failUrl: `/${siteName}/manage/payments/billing/fail`,
+        }),
+      });
+
+      const result = (await response.json()) as PlanBillingStartResponse;
+
+      if (!response.ok) {
+        throw new Error('error' in result ? result.error : '결제수단 등록을 시작하지 못했습니다.');
+      }
+
+      if ('error' in result) {
+        throw new Error(result.error || '결제수단 등록을 시작하지 못했습니다.');
+      }
+
+      if (result.mode === 'direct_billing') {
+        const isLoaded = await loadData();
+
+        if (isLoaded) {
+          setSuccessMessage('결제수단 등록이 완료되었습니다.');
+        }
+
+        setIsProcessing(false);
+        return;
+      }
+
+      if (!result.clientKey || !result.customerKey || !result.successUrl || !result.failUrl) {
+        throw new Error('결제수단 등록 정보가 올바르지 않습니다.');
+      }
+
+      const tossPayments = await loadTossPayments(result.clientKey);
+
+      await tossPayments.requestBillingAuth('카드', {
+        customerKey: result.customerKey,
+        successUrl: result.successUrl,
+        failUrl: result.failUrl,
+      });
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '결제수단 등록을 시작하지 못했습니다.');
+      } else {
+        setErrorMessage('결제수단 등록을 시작하지 못했습니다.');
+      }
+
+      setIsProcessing(false);
+    }
+  }
+
+  async function handleCancelPlanBilling() {
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      if (!billingData?.site?.id) {
+        throw new Error('사이트 정보가 없습니다.');
+      }
+
+      const response = await fetch('/api/payments/toss/plan-billing/cancel', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteId: billingData.site.id,
+        }),
+      });
+
+      const result = (await response.json()) as PlanBillingCancelResponse;
+
+      if (!response.ok) {
+        throw new Error('error' in result ? result.error : '요금제 구독을 취소하지 못했습니다.');
+      }
+
+      if ('error' in result) {
+        throw new Error(result.error || '요금제 구독을 취소하지 못했습니다.');
+      }
+
+      const isLoaded = await loadData();
+
+      if (isLoaded) {
+        setSuccessMessage(getCancelSuccessMessage(result));
+      }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '요금제 구독을 취소하지 못했습니다.');
+      } else {
+        setErrorMessage('요금제 구독을 취소하지 못했습니다.');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  async function handleResumePlanBilling() {
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      if (!billingData?.site?.id) {
+        throw new Error('사이트 정보가 없습니다.');
+      }
+
+      const response = await fetch('/api/payments/toss/plan-billing/resume', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteId: billingData.site.id,
+        }),
+      });
+
+      const result = (await response.json()) as PlanBillingResumeResponse;
+
+      if (!response.ok) {
+        throw new Error('error' in result ? result.error : '요금제 구독 취소를 철회하지 못했습니다.');
+      }
+
+      if ('error' in result) {
+        throw new Error(result.error || '요금제 구독 취소를 철회하지 못했습니다.');
+      }
+
+      const isLoaded = await loadData();
+
+      if (isLoaded) {
+        setSuccessMessage('요금제 구독 취소가 철회되었습니다.');
+      }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '요금제 구독 취소를 철회하지 못했습니다.');
+      } else {
+        setErrorMessage('요금제 구독 취소를 철회하지 못했습니다.');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <Container pageTitle="결제/구독 관리">
+        <LoadingIndicator />
+      </Container>
+    );
+  }
+
+  const subscription = billingData?.subscription ?? null;
+  const isScheduledCancel = Boolean(subscription?.canceled_at && !subscription.expired_at);
+  const canCancelSubscription = Boolean(
+    subscription &&
+    !subscription.canceled_at &&
+    subscription.status !== 'canceled' &&
+    subscription.status !== 'expired',
+  );
+  const canResumeSubscription = Boolean(
+    subscription &&
+    subscription.canceled_at &&
+    !subscription.expired_at &&
+    subscription.status !== 'canceled' &&
+    subscription.status !== 'expired',
+  );
+  const shouldShowBillingAuthButton =
+    !subscription || subscription.status === 'canceled' || subscription.status === 'expired';
+
+  return (
+    <Container pageTitle="결제/구독 관리">
+      <Stack spacing={3}>
+        {errorMessage ? (
+          <Typography role="status" color="error">
+            {errorMessage}
+          </Typography>
+        ) : null}
+
+        {successMessage ? (
+          <Typography role="status" color="primary">
+            {successMessage}
+          </Typography>
+        ) : null}
+
+        <Paper variant="outlined">
+          <Stack spacing={2} sx={{ p: 3 }}>
+            <Typography variant="h6">사이트 요금제</Typography>
+
+            <Stack spacing={1}>
+              <Typography>요금제: {billingData?.plan?.name ?? '-'}</Typography>
+              <Typography>월 이용료: {formatPrice(billingData?.plan?.price)}</Typography>
+            </Stack>
+
+            <Divider />
+
+            {subscription ? (
+              <Stack spacing={1}>
+                <Typography>상태: {getSubscriptionStatusText(subscription.status)}</Typography>
+                {isScheduledCancel ? <Typography>취소 예약됨: 다음 결제부터 중단됩니다.</Typography> : null}
+                <Typography>
+                  현재 이용 기간: {formatDateTime(subscription.current_period_start)} ~{' '}
+                  {formatDateTime(subscription.current_period_end)}
+                </Typography>
+                <Typography>다음 결제 예정일: {formatDateTime(subscription.next_billing_at)}</Typography>
+              </Stack>
+            ) : (
+              <Stack spacing={1}>
+                <Typography>아직 결제수단이 등록되지 않았습니다.</Typography>
+                <Typography>결제수단을 등록하면 사이트가 오픈되고 무료체험이 적용됩니다.</Typography>
+              </Stack>
+            )}
+
+            <Stack direction="row" spacing={1}>
+              {shouldShowBillingAuthButton ? (
+                <Button type="button" variant="contained" onClick={handleBillingAuth} disabled={isProcessing}>
+                  {subscription ? '재구독하기' : '결제수단 등록하기'}
+                </Button>
+              ) : null}
+
+              {canCancelSubscription ? (
+                <Button
+                  type="button"
+                  variant="outlined"
+                  color="error"
+                  onClick={handleCancelPlanBilling}
+                  disabled={isProcessing}
+                >
+                  구독 취소하기
+                </Button>
+              ) : null}
+
+              {canResumeSubscription ? (
+                <Button type="button" variant="contained" onClick={handleResumePlanBilling} disabled={isProcessing}>
+                  재구독하기
+                </Button>
+              ) : null}
+            </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper variant="outlined">
+          <Stack spacing={2} sx={{ p: 3 }}>
+            <Typography variant="h6">결제 내역</Typography>
+
+            {billingData?.payments?.length ? (
+              <Stack spacing={2}>
+                {billingData.payments.map((payment) => (
+                  <Paper key={payment.id} variant="outlined">
+                    <Stack spacing={1} sx={{ p: 2 }}>
+                      <Typography>상태: {getPaymentStatusText(payment.status)}</Typography>
+                      <Typography>금액: {formatPrice(payment.amount)}</Typography>
+                      <Typography>주문번호: {payment.order_no}</Typography>
+                      <Typography>결제일: {formatDateTime(payment.approved_at ?? payment.created_at)}</Typography>
+                      {payment.failure_message ? (
+                        <Typography color="error">실패 사유: {payment.failure_message}</Typography>
+                      ) : null}
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              <Typography>아직 결제 내역이 없습니다.</Typography>
+            )}
+          </Stack>
+        </Paper>
+      </Stack>
+    </Container>
+  );
+}

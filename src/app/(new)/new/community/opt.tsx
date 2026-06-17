@@ -26,10 +26,10 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/new.module.sass';
-import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];

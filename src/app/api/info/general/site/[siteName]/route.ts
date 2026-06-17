@@ -68,7 +68,6 @@ async function checkAccess(siteName: string) {
     try {
       const access = await getCommunityManagerAccess(siteName);
 
-      console.log('access.actor.permissions.site_edit: ', access.actor.permissions.site_edit);
       if (!access.actor.permissions.site_edit) {
         return {
           ok: false,
@@ -79,7 +78,6 @@ async function checkAccess(siteName: string) {
 
       const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
 
-      console.log('updatedByParticleId: ', updatedByParticleId);
       if (!updatedByParticleId) {
         return {
           ok: false,
@@ -103,8 +101,6 @@ async function checkAccess(siteName: string) {
           error: unknownError.message || '접근 권한이 없습니다2.',
         } as const;
       }
-
-      console.log('adfasdfsafs');
 
       return {
         ok: false,
@@ -132,8 +128,6 @@ async function checkAccess(siteName: string) {
       error: '접근 권한이 없습니다5.',
     } as const;
   }
-
-  console.log('3345555');
 
   return {
     ok: true,
