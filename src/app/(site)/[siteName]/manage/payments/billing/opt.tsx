@@ -11,6 +11,7 @@ import Divider from '@mui/material/Divider';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
+import { Snackbar } from '@mui/material';
 
 type PlanBillingResponse = {
   site?: {
@@ -409,17 +410,25 @@ export default function Opt() {
   return (
     <Container pageTitle="결제/구독 관리">
       <Stack spacing={3}>
-        {errorMessage ? (
-          <Typography role="status" color="error">
-            {errorMessage}
-          </Typography>
-        ) : null}
+        <Snackbar
+          open={Boolean(errorMessage)}
+          message={errorMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+        />
 
-        {successMessage ? (
-          <Typography role="status" color="primary">
-            {successMessage}
-          </Typography>
-        ) : null}
+        <Snackbar
+          open={Boolean(successMessage)}
+          message={successMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+        />
 
         <Paper variant="outlined">
           <Stack spacing={2} sx={{ p: 3 }}>
