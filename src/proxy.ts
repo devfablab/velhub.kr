@@ -71,6 +71,12 @@ function isInviteBlogPath(pathname: string) {
   return segments.length >= 3 && segments[1] === 'invite-blog';
 }
 
+function isSiteStatusPath(pathname: string, siteName: string) {
+  return (
+    pathname === `/${siteName}/unpaid` || pathname === `/${siteName}/closed` || pathname === `/${siteName}/suspended`
+  );
+}
+
 async function fetchSessionRoute(request: NextRequest, pathname: string, query: Record<string, string>) {
   const targetUrl = new URL(pathname, request.url);
 
@@ -89,6 +95,7 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
     ok: boolean;
     allow?: boolean;
     redirectTo?: string | null;
+    role?: string | null;
   } | null = null;
 
   try {
@@ -96,6 +103,7 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
       ok: boolean;
       allow?: boolean;
       redirectTo?: string | null;
+      role?: string | null;
     };
   } catch {
     result = null;
@@ -122,6 +130,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
     rhizomes?: {
       visibility_type?: string | null;
       is_shutdown?: boolean | null;
+      is_blocked?: boolean | null;
       site_type?: string | null;
     };
   } | null = null;
@@ -131,6 +140,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
       rhizomes?: {
         visibility_type?: string | null;
         is_shutdown?: boolean | null;
+        is_blocked?: boolean | null;
         site_type?: string | null;
       };
     };
@@ -152,6 +162,26 @@ function redirectWithPath(request: NextRequest, pathname: string) {
   return NextResponse.redirect(redirectUrl);
 }
 
+function getShutdownRedirectPath({
+  siteName,
+  isSiteOwner,
+  isBlocked,
+}: {
+  siteName: string;
+  isSiteOwner: boolean;
+  isBlocked: boolean | null | undefined;
+}) {
+  if (!isSiteOwner) {
+    return `/${siteName}/suspended`;
+  }
+
+  if (isBlocked === true) {
+    return `/${siteName}/closed`;
+  }
+
+  return `/${siteName}/unpaid`;
+}
+
 export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
@@ -163,6 +193,7 @@ export async function proxy(request: NextRequest) {
     if (isLoggedIn) {
       return redirectWithPath(request, '/');
     }
+
     return response;
   }
 
@@ -173,6 +204,7 @@ export async function proxy(request: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
     return response;
   }
 
@@ -180,6 +212,7 @@ export async function proxy(request: NextRequest) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     return response;
   }
 
@@ -187,71 +220,121 @@ export async function proxy(request: NextRequest) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     const admin = await fetchSessionRoute(request, '/api/session/admin', {});
+
     if (admin.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     if (!admin.response.ok) {
       return redirectWithPath(request, '/');
     }
+
     return response;
+  }
+
+  if (isSitePath(pathname) && !isInviteBlogPath(pathname)) {
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
+    if (siteName) {
+      const rhizomeState = await fetchRhizomeState(request, siteName);
+
+      if (rhizomeState.response.ok && rhizomeState.result?.rhizomes) {
+        const isStatusPath = isSiteStatusPath(pathname, siteName);
+
+        if (rhizomeState.result.rhizomes.is_shutdown !== true) {
+          if (isStatusPath) {
+            return redirectWithPath(request, `/${siteName}`);
+          }
+        } else {
+          let isSiteOwner = false;
+
+          if (isLoggedIn) {
+            const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
+            isSiteOwner = staff.response.ok && staff.result?.role === 'owner';
+          }
+
+          if (
+            !(
+              isSiteOwner &&
+              (rhizomeState.result.rhizomes.is_blocked === null || rhizomeState.result.rhizomes.is_blocked === false) &&
+              isManagePath(pathname)
+            )
+          ) {
+            const redirectPath = getShutdownRedirectPath({
+              siteName,
+              isSiteOwner,
+              isBlocked: rhizomeState.result.rhizomes.is_blocked,
+            });
+
+            if (pathname !== redirectPath) {
+              return redirectWithPath(request, redirectPath);
+            }
+
+            return response;
+          }
+        }
+      }
+    }
   }
 
   if (isManagePath(pathname)) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
     if (!siteName) {
       return redirectWithPath(request, '/');
     }
+
     const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
+
     if (staff.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     if (!staff.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
+
     return response;
   }
 
   if (isJoinPath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
     if (!siteName) {
       return redirectWithPath(request, '/');
     }
+
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     const rhizomeState = await fetchRhizomeState(request, siteName);
+
     if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
       return redirectWithPath(request, '/');
     }
+
     if (rhizomeState.result.rhizomes.site_type !== 'community') {
       return redirectWithPath(request, `/${siteName}`);
     }
+
     const member = await fetchSessionRoute(request, '/api/session/member', { siteName });
+
     if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
+
     if (member.response.ok) {
       return redirectWithPath(request, `/${siteName}`);
     }
-    return response;
-  }
 
-  if (isSitePath(pathname)) {
-    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-    if (!siteName) {
-      return response;
-    }
-    if (isInviteBlogPath(pathname)) {
-      return response;
-    }
-    const rhizomeState = await fetchRhizomeState(request, siteName);
-    if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
-      return response;
-    }
+    return response;
   }
 
   return response;

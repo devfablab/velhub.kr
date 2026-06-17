@@ -134,7 +134,6 @@ export default function Opt() {
   const [visibilityType, setVisibilityType] = useState<VisibilityType>('public');
   const [themeType, setThemeType] = useState<ThemeType>('default');
   const [planType, setPlanType] = useState('');
-  const [isShutdown, setIsShutdown] = useState(false);
   const [joinType, setJoinType] = useState<JoinType>('open');
   const [policyPost, setPolicyPost] = useState<PolicyPost>('comment_1');
   const [policyComment, setPolicyComment] = useState<PolicyComment>('estimate_0');
@@ -548,7 +547,7 @@ export default function Opt() {
           visibilityType,
           themeType,
           planType,
-          isShutdown,
+          isShutdown: true,
           joinType,
           policyPost,
           policyComment,

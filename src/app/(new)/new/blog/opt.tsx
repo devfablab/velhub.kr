@@ -525,7 +525,7 @@ export default function Opt() {
           visibilityType,
           themeType,
           planType,
-          isShutdown: false,
+          isShutdown: true,
           commentProvider,
         }),
       });

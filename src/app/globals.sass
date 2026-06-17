@@ -322,7 +322,7 @@ a, button, select, input
       padding-top: ds.rem(53)
       padding-bottom: ds.rem(53)
 
-    svg
+    > svg
       width: 50%
       height: auto
       max-width: ds.rem(170)
@@ -330,7 +330,7 @@ a, button, select, input
       @include ds.mq(minSmall)
         max-width: ds.rem(270)
 
-    p
+    > p
       @include ds.fw(neo, 800)
       font-size: ds.rem(14)
 
@@ -1364,6 +1364,12 @@ html[data-site-type='blog']
       svg
         width: ds.rem(20)
         height: ds.rem(20)
+
+.alerts
+  margin-top: ds.rem(23)
+  display: flex
+  flex-direction: column
+  gap: ds.rem(12)
 
 .alert
   display: flex

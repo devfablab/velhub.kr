@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_type, visibility_type, is_shutdown')
+      .select('id, site_key, site_type, visibility_type, is_shutdown, is_blocked')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -38,7 +38,6 @@ export async function GET(request: Request) {
 
     const boardRows = boards.data ?? [];
     const pageBoardIds = boardRows.filter((board) => board.board_type === 'page').map((board) => board.id);
-
     const pageSubjectMap = new Map<string, string>();
     const pageSlugMap = new Map<string, string>();
 
@@ -57,6 +56,7 @@ export async function GET(request: Request) {
         if (!pageSubjectMap.has(page.board_id)) {
           pageSubjectMap.set(page.board_id, page.subject ?? '');
         }
+
         if (!pageSlugMap.has(page.board_id)) {
           pageSlugMap.set(page.board_id, page.slug ?? '');
         }
@@ -70,6 +70,7 @@ export async function GET(request: Request) {
         site_type: rhizome.data.site_type,
         visibility_type: rhizome.data.visibility_type,
         is_shutdown: rhizome.data.is_shutdown,
+        is_blocked: rhizome.data.is_blocked,
       },
       menus: boardRows.map((board) => ({
         id: board.id,
