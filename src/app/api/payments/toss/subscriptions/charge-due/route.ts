@@ -1,7 +1,13 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { requestTossBillingPayment } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import {
+  PAYMENT_METHOD,
+  PAYMENT_TARGET_TYPE,
+  PAYMENT_TYPE,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_TYPE,
+} from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
@@ -270,7 +276,7 @@ async function chargeDue(request: Request) {
           refunded_amount: 0,
           currency: 'KRW',
           status: 'paid',
-          payment_method: tossPaymentResult.method,
+          payment_method: PAYMENT_METHOD.CARD,
           payment_type: paymentType,
           target_type: subscription.target_type,
           target_id: subscription.target_id,

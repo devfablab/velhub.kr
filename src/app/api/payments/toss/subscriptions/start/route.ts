@@ -2,7 +2,13 @@ import crypto from 'crypto';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { getTossClientKey, requestTossBillingPayment } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import {
+  PAYMENT_METHOD,
+  PAYMENT_TARGET_TYPE,
+  PAYMENT_TYPE,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_TYPE,
+} from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -402,7 +408,7 @@ export async function POST(request: Request) {
         refunded_amount: 0,
         currency: 'KRW',
         status: 'paid',
-        payment_method: tossPaymentResult.method,
+        payment_method: PAYMENT_METHOD.CARD,
         payment_type: paymentType,
         target_type: paymentTargetType,
         target_id: subscriptionTarget.targetId,
