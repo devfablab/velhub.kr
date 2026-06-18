@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
@@ -27,6 +28,8 @@ type Subscriber = {
   status: string;
   activeMonths: number;
   lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
 };
 
 type SeriesSubscriptionItem = {
@@ -82,30 +85,26 @@ function formatPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
+function formatPaymentAmount(value: number | null | undefined) {
+  if (typeof value !== 'number') return '-';
+
+  return `${value.toLocaleString('ko-KR')}원`;
+}
+
 function getPriceNumber(value: string) {
   return Number(value.replace(/[^0-9]/g, ''));
 }
 
 function isValidPrice(price: number) {
-  if (!Number.isInteger(price)) {
-    return false;
-  }
-
-  if (price < 1000) {
-    return false;
-  }
-
-  if (price > 100000) {
-    return false;
-  }
+  if (!Number.isInteger(price)) return false;
+  if (price < 1000) return false;
+  if (price > 100000) return false;
 
   return price % 1000 === 0;
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return '-';
-  }
+  if (!value) return '-';
 
   return new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -122,10 +121,7 @@ function getEnabledSeriesRows(boards: BoardSeriesGroup[]) {
   for (const board of boards) {
     for (const series of board.series) {
       if (series.setting.isEnabled) {
-        rows.push({
-          board,
-          series,
-        });
+        rows.push({ board, series });
       }
     }
   }
@@ -139,10 +135,7 @@ function getAvailableSeriesRows(boards: BoardSeriesGroup[]) {
   for (const board of boards) {
     for (const series of board.series) {
       if (!series.setting.isEnabled) {
-        rows.push({
-          board,
-          series,
-        });
+        rows.push({ board, series });
       }
     }
   }
@@ -210,16 +203,6 @@ export default function SeriesSubscriptions() {
     return boards.find((board) => board.id === boardId) ?? null;
   }
 
-  function findSeries(boardId: string, seriesId: string) {
-    const board = findBoard(boardId);
-
-    if (!board) {
-      return null;
-    }
-
-    return board.series.find((series) => series.id === seriesId) ?? null;
-  }
-
   function getAvailableBoardsForNewRow() {
     return boards.filter((board) => board.series.some((series) => !series.setting.isEnabled));
   }
@@ -227,9 +210,7 @@ export default function SeriesSubscriptions() {
   function getAvailableSeriesForBoard(boardId: string) {
     const board = findBoard(boardId);
 
-    if (!board) {
-      return [];
-    }
+    if (!board) return [];
 
     if (editingRow?.mode === 'edit') {
       return board.series.filter((series) => series.id === editingRow.seriesId);
@@ -263,9 +244,7 @@ export default function SeriesSubscriptions() {
   }
 
   function handleEditingBoardChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     setEditingRow({
       ...editingRow,
@@ -277,9 +256,7 @@ export default function SeriesSubscriptions() {
   }
 
   function handleEditingSeriesChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     setEditingRow({
       ...editingRow,
@@ -290,15 +267,11 @@ export default function SeriesSubscriptions() {
   }
 
   function handleEditingPriceChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     const nextPrice = getPriceNumber(event.target.value);
 
-    if (!isValidPrice(nextPrice)) {
-      return;
-    }
+    if (!isValidPrice(nextPrice)) return;
 
     setEditingRow({
       ...editingRow,
@@ -340,9 +313,7 @@ export default function SeriesSubscriptions() {
   }
 
   async function handleSaveEditingRow() {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     try {
       setIsSaving(true);
@@ -386,7 +357,6 @@ export default function SeriesSubscriptions() {
           ),
         })),
       );
-
       setEditingRow(null);
       setSuccessMessage('연재 구독 설정을 저장했습니다.');
     } catch (unknownError) {
@@ -446,98 +416,102 @@ export default function SeriesSubscriptions() {
   }
 
   function renderEditingRow() {
-    if (!editingRow) {
-      return null;
-    }
+    if (!editingRow) return null;
 
     const availableBoards = getAvailableBoardsForNewRow();
     const selectedBoard = findBoard(editingRow.boardId);
     const availableSeries = getAvailableSeriesForBoard(editingRow.boardId);
 
     return (
-      <Stack direction="row" spacing={1} alignItems="center">
-        {siteType === 'community' ? (
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          {siteType === 'community' ? (
+            <TextField
+              select
+              label="게시판 선택"
+              value={editingRow.boardId}
+              onChange={handleEditingBoardChange}
+              disabled={editingRow.mode === 'edit' || isSaving}
+            >
+              {(editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards).map((board) => (
+                <MenuItem key={board.id} value={board.id}>
+                  {board.boardLabel}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : null}
+
           <TextField
             select
-            value={editingRow.boardId}
-            onChange={handleEditingBoardChange}
+            label="연재 선택"
+            value={editingRow.seriesId}
+            onChange={handleEditingSeriesChange}
             disabled={editingRow.mode === 'edit' || isSaving}
-            fullWidth
-            inputProps={{
-              'aria-label': '게시판 선택',
-            }}
           >
-            <MenuItem value="" disabled>
-              게시판 선택
-            </MenuItem>
-            {(editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards).map((board) => (
-              <MenuItem key={board.id} value={board.id}>
-                {board.boardLabel}
+            {availableSeries.map((series) => (
+              <MenuItem key={series.id} value={series.id}>
+                {series.seriesLabel}
               </MenuItem>
             ))}
           </TextField>
-        ) : null}
 
-        <TextField
-          select
-          value={editingRow.seriesId}
-          onChange={handleEditingSeriesChange}
-          disabled={editingRow.mode === 'edit' || !editingRow.boardId || isSaving}
-          fullWidth
-          inputProps={{
-            'aria-label': '연재 선택',
-          }}
-        >
-          <MenuItem value="" disabled>
-            연재 선택
-          </MenuItem>
-          {availableSeries.map((series) => (
-            <MenuItem key={series.id} value={series.id}>
-              {series.seriesLabel}
-            </MenuItem>
-          ))}
-        </TextField>
+          <TextField
+            label="구독 금액"
+            value={editingRow.price}
+            onChange={handleEditingPriceChange}
+            disabled={isSaving}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">원</InputAdornment>,
+            }}
+          />
 
-        <TextField
-          value={editingRow.price}
-          onChange={handleEditingPriceChange}
-          disabled={isSaving}
-          inputProps={{
-            inputMode: 'numeric',
-            'aria-label': '구독 금액',
-          }}
-          InputProps={{
-            endAdornment: <InputAdornment position="end">원</InputAdornment>,
-          }}
-        />
-
-        <IconButton
-          type="button"
-          aria-label="연재 구독 설정 저장"
-          onClick={handleSaveEditingRow}
-          disabled={!editingRow.seriesId || isSaving}
-        >
-          <EditRoundedIcon />
-        </IconButton>
-      </Stack>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Paper variant="outlined">
-        <Stack spacing={2} sx={{ p: 3 }}>
-          <Typography variant="h6">연재 구독</Typography>
-          <LoadingIndicator />
+          <Stack direction="row" spacing={1}>
+            <Button
+              type="button"
+              variant="contained"
+              onClick={() => {
+                void handleSaveEditingRow();
+              }}
+              disabled={isSaving}
+            >
+              저장
+            </Button>
+            <Button type="button" onClick={() => setEditingRow(null)} disabled={isSaving}>
+              취소
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
     );
   }
 
-  return (
-    <Paper variant="outlined">
-      <Stack spacing={2} sx={{ p: 3 }}>
+  if (isLoading) {
+    return (
+      <Paper variant="outlined" sx={{ p: 3 }}>
         <Typography variant="h6">연재 구독</Typography>
+        <LoadingIndicator />
+      </Paper>
+    );
+  }
+
+  return (
+    <Paper variant="outlined" sx={{ p: 3 }}>
+      <Stack spacing={2}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">연재 구독</Typography>
+
+          {boards.length > 0 ? (
+            <Button
+              type="button"
+              variant="outlined"
+              startIcon={<AddRoundedIcon />}
+              onClick={handleAddRow}
+              disabled={isSaving || Boolean(editingRow) || !availableSeriesRows.length}
+            >
+              연재 구독 추가
+            </Button>
+          ) : null}
+        </Stack>
 
         {errorMessage ? (
           <Typography role="status" color="error">
@@ -546,87 +520,73 @@ export default function SeriesSubscriptions() {
         ) : null}
 
         {successMessage ? (
-          <Typography role="status" color="primary">
+          <Typography role="status" color="success.main">
             {successMessage}
           </Typography>
         ) : null}
 
         {!boards.length ? <Typography>{emptyMessage || '연재가 설정되지 않았습니다'}</Typography> : null}
 
-        {boards.length && !enabledSeriesRows.length && !editingRow ? (
-          <Typography>설정된 연재 구독이 없습니다</Typography>
+        {boards.length > 0 && !enabledSeriesRows.length && !editingRow ? (
+          <Typography>설정된 연재 구독이 없습니다.</Typography>
         ) : null}
 
-        <Stack spacing={2}>
-          {enabledSeriesRows.map((row) => {
-            const isEditingThisSeries = editingRow?.mode === 'edit' && editingRow.seriesId === row.series.id;
+        {enabledSeriesRows.map((row) => {
+          const isEditingThisSeries = editingRow?.mode === 'edit' && editingRow.seriesId === row.series.id;
 
-            return (
-              <Stack key={row.series.id} spacing={1}>
+          return (
+            <Paper key={row.series.id} variant="outlined" sx={{ p: 2 }}>
+              <Stack spacing={2}>
                 {isEditingThisSeries ? (
                   renderEditingRow()
                 ) : (
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    {siteType === 'community' ? (
-                      <TextField
-                        value={row.board.boardLabel}
-                        disabled
-                        fullWidth
-                        inputProps={{
-                          'aria-label': '설정된 게시판',
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Stack spacing={0.5}>
+                      {siteType === 'community' ? (
+                        <Typography variant="body2" color="text.secondary">
+                          {row.board.boardLabel}
+                        </Typography>
+                      ) : null}
+                      <Typography variant="subtitle1">{row.series.seriesLabel}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        월 {formatPrice(row.series.setting.price)}원
+                      </Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1}>
+                      <IconButton
+                        type="button"
+                        aria-label="연재 구독 수정"
+                        onClick={() => handleEditRow(row)}
+                        disabled={isSaving || Boolean(editingRow)}
+                      >
+                        <EditRoundedIcon />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        aria-label="연재 구독 해제"
+                        onClick={() => {
+                          void handleDisableSeriesSubscription(row);
                         }}
-                      />
-                    ) : null}
-
-                    <TextField
-                      value={row.series.seriesLabel}
-                      disabled
-                      fullWidth
-                      inputProps={{
-                        'aria-label': '설정된 연재',
-                      }}
-                    />
-
-                    <TextField
-                      value={formatPrice(row.series.setting.price)}
-                      disabled
-                      inputProps={{
-                        'aria-label': '설정된 구독 금액',
-                      }}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end">원</InputAdornment>,
-                      }}
-                    />
-
-                    <IconButton
-                      type="button"
-                      aria-label="연재 구독 설정 수정"
-                      onClick={() => handleEditRow(row)}
-                      disabled={isSaving || Boolean(editingRow)}
-                    >
-                      <EditRoundedIcon />
-                    </IconButton>
-
-                    <IconButton
-                      type="button"
-                      aria-label="연재 구독 설정 해제"
-                      onClick={() => void handleDisableSeriesSubscription(row)}
-                      disabled={isSaving}
-                    >
-                      <RemoveRoundedIcon />
-                    </IconButton>
+                        disabled={isSaving}
+                      >
+                        <RemoveRoundedIcon />
+                      </IconButton>
+                    </Stack>
                   </Stack>
                 )}
 
                 {row.series.subscribers.length ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table>
+                  <TableContainer>
+                    <Table size="small">
                       <TableHead>
                         <TableRow>
                           <TableCell>구독자</TableCell>
                           <TableCell>상태</TableCell>
                           <TableCell>유지 기간</TableCell>
                           <TableCell>최근 결제일</TableCell>
+                          <TableCell>최근 결제금액</TableCell>
+                          <TableCell>총 결제금액</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -636,6 +596,8 @@ export default function SeriesSubscriptions() {
                             <TableCell>{subscriber.status}</TableCell>
                             <TableCell>{subscriber.activeMonths}개월째</TableCell>
                             <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
+                            <TableCell>{formatPaymentAmount(subscriber.lastPaidAmount)}</TableCell>
+                            <TableCell>{formatPaymentAmount(subscriber.totalPaidAmount)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -643,24 +605,11 @@ export default function SeriesSubscriptions() {
                   </TableContainer>
                 ) : null}
               </Stack>
-            );
-          })}
+            </Paper>
+          );
+        })}
 
-          {editingRow?.mode === 'new' ? renderEditingRow() : null}
-        </Stack>
-
-        {boards.length ? (
-          <div>
-            <IconButton
-              type="button"
-              aria-label="연재 구독 설정 추가"
-              onClick={handleAddRow}
-              disabled={Boolean(editingRow) || !availableSeriesRows.length || isSaving}
-            >
-              <AddRoundedIcon />
-            </IconButton>
-          </div>
-        ) : null}
+        {editingRow?.mode === 'new' ? renderEditingRow() : null}
       </Stack>
     </Paper>
   );

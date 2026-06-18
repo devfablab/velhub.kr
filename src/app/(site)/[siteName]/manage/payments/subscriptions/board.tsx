@@ -28,6 +28,8 @@ type Subscriber = {
   status: string;
   activeMonths: number;
   lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
 };
 
 type BoardSubscriptionItem = {
@@ -69,30 +71,26 @@ function formatPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
+function formatPaymentAmount(value: number | null | undefined) {
+  if (typeof value !== 'number') return '-';
+
+  return `${value.toLocaleString('ko-KR')}원`;
+}
+
 function getPriceNumber(value: string) {
   return Number(value.replace(/[^0-9]/g, ''));
 }
 
 function isValidPrice(price: number) {
-  if (!Number.isInteger(price)) {
-    return false;
-  }
-
-  if (price < 1000) {
-    return false;
-  }
-
-  if (price > 100000) {
-    return false;
-  }
+  if (!Number.isInteger(price)) return false;
+  if (price < 1000) return false;
+  if (price > 100000) return false;
 
   return price % 1000 === 0;
 }
 
 function formatDateTime(value: string | null) {
-  if (!value) {
-    return '-';
-  }
+  if (!value) return '-';
 
   return new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -182,9 +180,7 @@ export default function BoardSubscriptions() {
   }
 
   function handleEditingBoardChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     setEditingRow({
       ...editingRow,
@@ -195,15 +191,11 @@ export default function BoardSubscriptions() {
   }
 
   function handleEditingPriceChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     const nextPrice = getPriceNumber(event.target.value);
 
-    if (!isValidPrice(nextPrice)) {
-      return;
-    }
+    if (!isValidPrice(nextPrice)) return;
 
     setEditingRow({
       ...editingRow,
@@ -245,9 +237,7 @@ export default function BoardSubscriptions() {
   }
 
   async function handleSaveEditingRow() {
-    if (!editingRow) {
-      return;
-    }
+    if (!editingRow) return;
 
     try {
       setIsSaving(true);
@@ -284,7 +274,6 @@ export default function BoardSubscriptions() {
             : board,
         ),
       );
-
       setEditingRow(null);
       setSuccessMessage('게시판 구독 설정을 저장했습니다.');
     } catch (unknownError) {
@@ -341,57 +330,55 @@ export default function BoardSubscriptions() {
   }
 
   function renderEditingRow() {
-    if (!editingRow) {
-      return null;
-    }
+    if (!editingRow) return null;
 
     const selectableBoards =
       editingRow.mode === 'edit' ? boards.filter((board) => board.id === editingRow.boardId) : availableBoards;
 
     return (
-      <Stack direction="row" spacing={1} alignItems="center">
-        <TextField
-          select
-          value={editingRow.boardId}
-          onChange={handleEditingBoardChange}
-          disabled={editingRow.mode === 'edit' || isSaving}
-          fullWidth
-          inputProps={{
-            'aria-label': '게시판 선택',
-          }}
-        >
-          <MenuItem value="" disabled>
-            게시판 선택
-          </MenuItem>
-          {selectableBoards.map((board) => (
-            <MenuItem key={board.id} value={board.id}>
-              {board.boardLabel}
-            </MenuItem>
-          ))}
-        </TextField>
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          <TextField
+            select
+            label="게시판 선택"
+            value={editingRow.boardId}
+            onChange={handleEditingBoardChange}
+            disabled={editingRow.mode === 'edit' || isSaving}
+          >
+            {selectableBoards.map((board) => (
+              <MenuItem key={board.id} value={board.id}>
+                {board.boardLabel}
+              </MenuItem>
+            ))}
+          </TextField>
 
-        <TextField
-          value={editingRow.price}
-          onChange={handleEditingPriceChange}
-          disabled={isSaving}
-          inputProps={{
-            inputMode: 'numeric',
-            'aria-label': '구독 금액',
-          }}
-          InputProps={{
-            endAdornment: <InputAdornment position="end">원</InputAdornment>,
-          }}
-        />
+          <TextField
+            label="구독 금액"
+            value={editingRow.price}
+            onChange={handleEditingPriceChange}
+            disabled={isSaving}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">원</InputAdornment>,
+            }}
+          />
 
-        <IconButton
-          type="button"
-          aria-label="게시판 구독 설정 저장"
-          onClick={handleSaveEditingRow}
-          disabled={!editingRow.boardId || isSaving}
-        >
-          <EditRoundedIcon />
-        </IconButton>
-      </Stack>
+          <Stack direction="row" spacing={1}>
+            <Button
+              type="button"
+              variant="contained"
+              onClick={() => {
+                void handleSaveEditingRow();
+              }}
+              disabled={isSaving}
+            >
+              저장
+            </Button>
+            <Button type="button" onClick={() => setEditingRow(null)} disabled={isSaving}>
+              취소
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
     );
   }
 
@@ -401,19 +388,31 @@ export default function BoardSubscriptions() {
 
   if (isLoading) {
     return (
-      <Paper variant="outlined">
-        <Stack spacing={2} sx={{ p: 3 }}>
-          <Typography variant="h6">게시판 구독</Typography>
-          <LoadingIndicator />
-        </Stack>
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <Typography variant="h6">게시판 구독</Typography>
+        <LoadingIndicator />
       </Paper>
     );
   }
 
   return (
-    <Paper variant="outlined">
-      <Stack spacing={2} sx={{ p: 3 }}>
-        <Typography variant="h6">게시판 구독</Typography>
+    <Paper variant="outlined" sx={{ p: 3 }}>
+      <Stack spacing={2}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">게시판 구독</Typography>
+
+          {boards.length > 0 ? (
+            <Button
+              type="button"
+              variant="outlined"
+              startIcon={<AddRoundedIcon />}
+              onClick={handleAddRow}
+              disabled={isSaving || Boolean(editingRow) || !availableBoards.length}
+            >
+              게시판 구독 추가
+            </Button>
+          ) : null}
+        </Stack>
 
         {errorMessage ? (
           <Typography role="status" color="error">
@@ -422,76 +421,68 @@ export default function BoardSubscriptions() {
         ) : null}
 
         {successMessage ? (
-          <Typography role="status" color="primary">
+          <Typography role="status" color="success.main">
             {successMessage}
           </Typography>
         ) : null}
 
         {!boards.length ? <Typography>구독을 설정할 수 있는 게시판이 없습니다.</Typography> : null}
 
-        {boards.length && !enabledBoards.length && !editingRow ? (
-          <Typography>설정된 게시판 구독이 없습니다</Typography>
+        {boards.length > 0 && !enabledBoards.length && !editingRow ? (
+          <Typography>설정된 게시판 구독이 없습니다.</Typography>
         ) : null}
 
-        <Stack spacing={2}>
-          {enabledBoards.map((board) => {
-            const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
+        {enabledBoards.map((board) => {
+          const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
 
-            return (
-              <Stack key={board.id} spacing={1}>
+          return (
+            <Paper key={board.id} variant="outlined" sx={{ p: 2 }}>
+              <Stack spacing={2}>
                 {isEditingThisBoard ? (
                   renderEditingRow()
                 ) : (
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <TextField
-                      value={board.boardLabel}
-                      disabled
-                      fullWidth
-                      inputProps={{
-                        'aria-label': '설정된 게시판',
-                      }}
-                    />
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Stack spacing={0.5}>
+                      <Typography variant="subtitle1">{board.boardLabel}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        월 {formatPrice(board.setting.price)}원
+                      </Typography>
+                    </Stack>
 
-                    <TextField
-                      value={formatPrice(board.setting.price)}
-                      disabled
-                      inputProps={{
-                        'aria-label': '설정된 구독 금액',
-                      }}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end">원</InputAdornment>,
-                      }}
-                    />
-
-                    <IconButton
-                      type="button"
-                      aria-label="게시판 구독 설정 수정"
-                      onClick={() => handleEditRow(board)}
-                      disabled={isSaving || Boolean(editingRow)}
-                    >
-                      <EditRoundedIcon />
-                    </IconButton>
-
-                    <IconButton
-                      type="button"
-                      aria-label="게시판 구독 설정 해제"
-                      onClick={() => void handleDisableBoardSubscription(board)}
-                      disabled={isSaving}
-                    >
-                      <RemoveRoundedIcon />
-                    </IconButton>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton
+                        type="button"
+                        aria-label="게시판 구독 수정"
+                        onClick={() => handleEditRow(board)}
+                        disabled={isSaving || Boolean(editingRow)}
+                      >
+                        <EditRoundedIcon />
+                      </IconButton>
+                      <IconButton
+                        type="button"
+                        aria-label="게시판 구독 해제"
+                        onClick={() => {
+                          void handleDisableBoardSubscription(board);
+                        }}
+                        disabled={isSaving}
+                      >
+                        <RemoveRoundedIcon />
+                      </IconButton>
+                    </Stack>
                   </Stack>
                 )}
 
                 {board.subscribers.length ? (
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table>
+                  <TableContainer>
+                    <Table size="small">
                       <TableHead>
                         <TableRow>
                           <TableCell>구독자</TableCell>
                           <TableCell>상태</TableCell>
                           <TableCell>유지 기간</TableCell>
                           <TableCell>최근 결제일</TableCell>
+                          <TableCell>최근 결제금액</TableCell>
+                          <TableCell>총 결제금액</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -501,6 +492,8 @@ export default function BoardSubscriptions() {
                             <TableCell>{subscriber.status}</TableCell>
                             <TableCell>{subscriber.activeMonths}개월째</TableCell>
                             <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
+                            <TableCell>{formatPaymentAmount(subscriber.lastPaidAmount)}</TableCell>
+                            <TableCell>{formatPaymentAmount(subscriber.totalPaidAmount)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -508,24 +501,11 @@ export default function BoardSubscriptions() {
                   </TableContainer>
                 ) : null}
               </Stack>
-            );
-          })}
+            </Paper>
+          );
+        })}
 
-          {editingRow?.mode === 'new' ? renderEditingRow() : null}
-        </Stack>
-
-        {boards.length ? (
-          <div>
-            <IconButton
-              type="button"
-              aria-label="게시판 구독 설정 추가"
-              onClick={handleAddRow}
-              disabled={Boolean(editingRow) || !availableBoards.length || isSaving}
-            >
-              <AddRoundedIcon />
-            </IconButton>
-          </div>
-        ) : null}
+        {editingRow?.mode === 'new' ? renderEditingRow() : null}
       </Stack>
     </Paper>
   );

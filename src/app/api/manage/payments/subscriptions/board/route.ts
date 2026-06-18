@@ -43,8 +43,16 @@ type PaymentRow = {
   id: string;
   buyer_user_id: string;
   target_id: string;
+  amount: number;
   approved_at: string | null;
   created_at: string;
+};
+
+type PaymentStats = {
+  activeMonths: number;
+  lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
 };
 
 type StigmaRow = {
@@ -58,25 +66,16 @@ type RhizomeStigmaRow = {
 };
 
 function isValidSubscriptionPrice(price: number) {
-  if (!Number.isInteger(price)) {
-    return false;
-  }
-
-  if (price < 1000) {
-    return false;
-  }
-
-  if (price > 100000) {
-    return false;
-  }
+  if (!Number.isInteger(price)) return false;
+  if (price < 1000) return false;
+  if (price > 100000) return false;
 
   return price % 1000 === 0;
 }
 
 function getSubscriptionStatus(status: string) {
-  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
-    return '유지 중';
-  }
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
+  if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
 
   return '중단';
 }
@@ -189,9 +188,10 @@ export async function GET(request: Request) {
       ? await supabaseAdmin
           .from('subscriptions')
           .select('id, subscriber_user_id, target_id, status, price, created_at')
-          .eq('subscription_type', PAYMENT_TARGET_TYPE.BOARD)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
           .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
           .in('target_id', boardIds)
+          .order('created_at', { ascending: false })
       : { data: [], error: null };
 
     if (subscriptionsResult.error) {
@@ -201,11 +201,22 @@ export async function GET(request: Request) {
     }
 
     const subscriptions = (subscriptionsResult.data ?? []) as SubscriptionRow[];
+    const latestSubscriptionByKey = new Map<string, SubscriptionRow>();
+
+    for (const subscription of subscriptions) {
+      const subscriptionKey = `${subscription.target_id}:${subscription.subscriber_user_id}`;
+
+      if (!latestSubscriptionByKey.has(subscriptionKey)) {
+        latestSubscriptionByKey.set(subscriptionKey, subscription);
+      }
+    }
+
+    const latestSubscriptions = Array.from(latestSubscriptionByKey.values());
 
     const paymentsResult = boardIds.length
       ? await supabaseAdmin
           .from('payments')
-          .select('id, buyer_user_id, target_id, approved_at, created_at')
+          .select('id, buyer_user_id, target_id, amount, approved_at, created_at')
           .eq('payment_type', PAYMENT_TYPE.BOARD_SUBSCRIPTION)
           .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
           .eq('status', PAYMENT_STATUS.PAID)
@@ -219,7 +230,7 @@ export async function GET(request: Request) {
     }
 
     const payments = (paymentsResult.data ?? []) as PaymentRow[];
-    const paymentStatsByKey = new Map<string, { activeMonths: number; lastPaidAt: string | null }>();
+    const paymentStatsByKey = new Map<string, PaymentStats>();
 
     for (const payment of payments) {
       const paymentKey = `${payment.target_id}:${payment.buyer_user_id}`;
@@ -230,17 +241,26 @@ export async function GET(request: Request) {
         paymentStatsByKey.set(paymentKey, {
           activeMonths: 1,
           lastPaidAt: paidAt,
+          lastPaidAmount: payment.amount,
+          totalPaidAmount: payment.amount,
         });
+
         continue;
       }
 
+      const isLatestPayment = !currentStats.lastPaidAt || paidAt > currentStats.lastPaidAt;
+
       paymentStatsByKey.set(paymentKey, {
         activeMonths: currentStats.activeMonths + 1,
-        lastPaidAt: !currentStats.lastPaidAt || paidAt > currentStats.lastPaidAt ? paidAt : currentStats.lastPaidAt,
+        lastPaidAt: isLatestPayment ? paidAt : currentStats.lastPaidAt,
+        lastPaidAmount: isLatestPayment ? payment.amount : currentStats.lastPaidAmount,
+        totalPaidAmount: currentStats.totalPaidAmount + payment.amount,
       });
     }
 
-    const subscriberUserIds = Array.from(new Set(subscriptions.map((subscription) => subscription.subscriber_user_id)));
+    const subscriberUserIds = Array.from(
+      new Set(latestSubscriptions.map((subscription) => subscription.subscriber_user_id)),
+    );
 
     const stigmasResult = subscriberUserIds.length
       ? await supabaseAdmin.from('stigmas').select('id, user_id').in('user_id', subscriberUserIds)
@@ -274,11 +294,11 @@ export async function GET(request: Request) {
     const nicknameByStigmaId = new Map(
       rhizomeStigmas.map((rhizomeStigma) => [rhizomeStigma.user_id, rhizomeStigma.nickname]),
     );
-
     const subscriptionsByBoardId = new Map<string, SubscriptionRow[]>();
 
-    for (const subscription of subscriptions) {
+    for (const subscription of latestSubscriptions) {
       const currentSubscriptions = subscriptionsByBoardId.get(subscription.target_id) ?? [];
+
       currentSubscriptions.push(subscription);
       subscriptionsByBoardId.set(subscription.target_id, currentSubscriptions);
     }
@@ -319,6 +339,8 @@ export async function GET(request: Request) {
               status: getSubscriptionStatus(subscription.status),
               activeMonths: paymentStats?.activeMonths ?? 0,
               lastPaidAt: paymentStats?.lastPaidAt ?? null,
+              lastPaidAmount: paymentStats?.lastPaidAmount ?? null,
+              totalPaidAmount: paymentStats?.totalPaidAmount ?? 0,
             };
           }),
         };
@@ -438,9 +460,7 @@ export async function PATCH(request: Request) {
 
     const boardSubscriptionUpdateResult = await supabaseAdmin
       .from('boards')
-      .update({
-        is_subscription: body.isEnabled,
-      })
+      .update({ is_subscription: body.isEnabled })
       .eq('id', board.id)
       .eq('site_id', site.id);
 
