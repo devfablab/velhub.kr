@@ -202,7 +202,16 @@ export async function GET(request: Request) {
     }
 
     const subscriptions = (subscriptionsResult.data ?? []) as MembershipSubscriptionRow[];
-    const subscriberUserIds = Array.from(new Set(subscriptions.map((subscription) => subscription.subscriber_user_id)));
+    const latestSubscriptionByUserId = new Map<string, MembershipSubscriptionRow>();
+
+    for (const subscription of subscriptions) {
+      if (!latestSubscriptionByUserId.has(subscription.subscriber_user_id)) {
+        latestSubscriptionByUserId.set(subscription.subscriber_user_id, subscription);
+      }
+    }
+
+    const latestSubscriptions = Array.from(latestSubscriptionByUserId.values());
+    const subscriberUserIds = latestSubscriptions.map((subscription) => subscription.subscriber_user_id);
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
@@ -295,7 +304,7 @@ export async function GET(request: Request) {
             isEnabled: false,
             price: 1000,
           },
-      members: subscriptions.map((subscription) => {
+      members: latestSubscriptions.map((subscription) => {
         const paymentStats = paymentStatsByUserId.get(subscription.subscriber_user_id);
 
         return {

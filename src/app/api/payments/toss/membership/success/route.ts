@@ -1,5 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
-import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
+import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { issueTossBillingKey, requestTossBillingPayment } from '@/lib/payments/toss';
 import {
   PAYMENT_METHOD,
@@ -96,6 +96,13 @@ function getCardCompanyName(cardCompanyCode: string) {
   return CARD_COMPANY_BY_CODE[cardCompanyCode] ?? '알 수 없음';
 }
 
+function getRefundableUntil(startedAt: Date) {
+  const refundableUntil = new Date(startedAt);
+  refundableUntil.setDate(refundableUntil.getDate() + 7);
+
+  return refundableUntil;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as MembershipSuccessBody;
@@ -118,6 +125,10 @@ export async function POST(request: Request) {
 
     if (!orderNo) {
       return Response.json({ error: 'orderNo가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!orderNo.startsWith('VH-MBS-')) {
+      return Response.json({ error: '멤버십 주문번호가 올바르지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -150,7 +161,7 @@ export async function POST(request: Request) {
       .select('price, is_enabled')
       .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
       .eq('target_id', site.id)
-      .eq('subscription_type', 'blog_membership')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -209,10 +220,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미 멤버십 구독 중입니다.' }, { status: 400 });
     }
 
-    const billingKeyResult = (await issueTossBillingKey({
-      authKey,
-      customerKey,
-    })) as TossBillingKeyResult;
+    const billingKeyResult = (await issueTossBillingKey({ authKey, customerKey })) as TossBillingKeyResult;
 
     const cardCompanyCode = normalizeText(billingKeyResult.card?.issuerCode);
     const cardCompany = getCardCompanyName(cardCompanyCode);
@@ -308,9 +316,9 @@ export async function POST(request: Request) {
     })) as TossBillingPaymentResult;
 
     const now = new Date();
-    const billingPeriod = createMonthlyBillingPeriod({
-      startedAt: now,
-    });
+    const billingAnchorDay = getBillingAnchorDay(now);
+    const billingPeriod = createNextMonthlyBillingPeriod({ currentPeriodEnd: now, billingAnchorDay });
+    const refundableUntil = getRefundableUntil(now);
 
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
@@ -328,6 +336,7 @@ export async function POST(request: Request) {
         target_type: PAYMENT_TARGET_TYPE.BLOG,
         target_id: site.id,
         refund_policy: 'seven_days',
+        refundable_until: refundableUntil.toISOString(),
         raw_data: tossPaymentResult,
         approved_at: tossPaymentResult.approvedAt,
       })
@@ -358,7 +367,7 @@ export async function POST(request: Request) {
         current_period_start: billingPeriod.currentPeriodStart,
         current_period_end: billingPeriod.currentPeriodEnd,
         next_billing_at: billingPeriod.nextBillingAt,
-        billing_anchor_day: billingPeriod.billingAnchorDay,
+        billing_anchor_day: billingAnchorDay,
       })
       .select('id')
       .single();
@@ -367,6 +376,17 @@ export async function POST(request: Request) {
       console.error(subscriptionInsertResult.error);
 
       return Response.json({ error: '멤버십 정보를 저장하지 못했습니다.' }, { status: 500 });
+    }
+
+    const paymentUpdateResult = await supabaseAdmin
+      .from('payments')
+      .update({ subscription_id: subscriptionInsertResult.data.id })
+      .eq('id', paymentInsertResult.data.id);
+
+    if (paymentUpdateResult.error) {
+      console.error(paymentUpdateResult.error);
+
+      return Response.json({ error: '결제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({

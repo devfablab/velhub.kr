@@ -19,22 +19,36 @@ type SubscriptionSettingRow = {
 type SubscriptionRow = {
   id: string;
   status: string;
+  canceled_at: string | null;
+  expired_at: string | null;
 };
 
+type MembershipStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
+
 function isValidMembershipPrice(price: number) {
-  if (!Number.isInteger(price)) {
-    return false;
-  }
-
-  if (price < 1000) {
-    return false;
-  }
-
-  if (price > 100000) {
-    return false;
-  }
+  if (!Number.isInteger(price)) return false;
+  if (price < 1000) return false;
+  if (price > 100000) return false;
 
   return price % 1000 === 0;
+}
+
+function getMembershipStatus(subscription: SubscriptionRow | null): MembershipStatus {
+  if (!subscription) return 'none';
+  if (subscription.canceled_at && !subscription.expired_at) return 'scheduled_cancel';
+
+  switch (subscription.status) {
+    case SUBSCRIPTION_STATUS.ACTIVE:
+      return 'active';
+    case SUBSCRIPTION_STATUS.PAST_DUE:
+      return 'past_due';
+    case SUBSCRIPTION_STATUS.CANCELED:
+      return 'canceled';
+    case SUBSCRIPTION_STATUS.EXPIRED:
+      return 'expired';
+    default:
+      return 'none';
+  }
 }
 
 export async function GET(request: Request) {
@@ -67,11 +81,7 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
 
     if (site.site_type !== 'blog' || site.is_shutdown) {
-      return Response.json({
-        isEnabled: false,
-        price: null,
-        membershipStatus: 'none',
-      });
+      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
     }
 
     const settingResult = await supabaseAdmin
@@ -89,42 +99,30 @@ export async function GET(request: Request) {
     }
 
     if (!settingResult.data) {
-      return Response.json({
-        isEnabled: false,
-        price: null,
-        membershipStatus: 'none',
-      });
+      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
     }
 
     const setting = settingResult.data as SubscriptionSettingRow;
 
     if (!setting.is_enabled) {
-      return Response.json({
-        isEnabled: false,
-        price: null,
-        membershipStatus: 'none',
-      });
+      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
     }
 
     if (!isValidMembershipPrice(setting.price)) {
       return Response.json({ error: '멤버십 금액 설정이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const session = await verifySession({ siteId: null });
+    const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {
-      return Response.json({
-        isEnabled: true,
-        price: setting.price,
-        membershipStatus: 'none',
-      });
+      return Response.json({ isEnabled: true, price: setting.price, membershipStatus: 'none' });
     }
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
-      .select('id, status')
+      .select('id, status, canceled_at, expired_at')
       .eq('subscriber_user_id', session.authUserId)
-      .eq('subscription_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
       .eq('target_id', site.id)
       .order('created_at', { ascending: false })
@@ -142,7 +140,7 @@ export async function GET(request: Request) {
     return Response.json({
       isEnabled: true,
       price: setting.price,
-      membershipStatus: subscription?.status === SUBSCRIPTION_STATUS.ACTIVE ? 'active' : 'none',
+      membershipStatus: getMembershipStatus(subscription),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
