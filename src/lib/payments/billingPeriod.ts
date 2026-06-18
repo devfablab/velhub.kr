@@ -54,10 +54,13 @@ export function createMonthlyBillingPeriod({
   billingAnchorDay?: number;
 }) {
   const normalizedAnchorDay = clampBillingAnchorDay(billingAnchorDay);
-  const periodEnd = getNextMonthlyBillingDate({
-    fromDate: startedAt,
-    billingAnchorDay: normalizedAnchorDay,
-  });
+  const periodEnd = new Date(startedAt);
+
+  if (process.env.NEXT_PUBLIC_APP_ENV === 'true') {
+    periodEnd.setHours(periodEnd.getHours() + 1);
+  } else {
+    periodEnd.setDate(periodEnd.getDate() + 7);
+  }
 
   return {
     billingAnchorDay: normalizedAnchorDay,
