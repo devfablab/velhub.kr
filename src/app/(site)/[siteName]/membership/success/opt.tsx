@@ -29,10 +29,9 @@ export default function Opt() {
 
         const authKey = normalizeText(searchParams.get('authKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
-        const siteId = normalizeText(searchParams.get('siteId'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
 
-        if (!authKey || !customerKey || !siteId || !orderNo) {
+        if (!authKey || !customerKey || !siteName || !orderNo) {
           throw new Error('멤버십 가입 정보가 올바르지 않습니다.');
         }
 
@@ -42,12 +41,7 @@ export default function Opt() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            authKey,
-            customerKey,
-            siteId,
-            orderNo,
-          }),
+          body: JSON.stringify({ authKey, customerKey, siteName, orderNo }),
         });
 
         const result = (await response.json()) as MembershipSuccessResponse;

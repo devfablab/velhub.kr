@@ -37,6 +37,7 @@ type MembershipSubscriptionRow = {
 type MembershipPaymentRow = {
   id: string;
   buyer_user_id: string;
+  amount: number;
   approved_at: string | null;
   created_at: string;
 };
@@ -49,6 +50,13 @@ type StigmaRow = {
 type RhizomeStigmaRow = {
   user_id: string;
   nickname: string;
+};
+
+type MembershipPaymentStats = {
+  activeMonths: number;
+  lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
 };
 
 function isValidMembershipPrice(price: number) {
@@ -182,7 +190,7 @@ export async function GET(request: Request) {
     const subscriptionsResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, subscriber_user_id, status, created_at')
-      .eq('subscription_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
       .eq('target_id', site.id)
       .order('created_at', { ascending: false });
@@ -198,7 +206,7 @@ export async function GET(request: Request) {
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
-      .select('id, buyer_user_id, approved_at, created_at')
+      .select('id, buyer_user_id, amount, approved_at, created_at')
       .eq('payment_type', PAYMENT_TYPE.BLOG_MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
       .eq('target_id', site.id)
@@ -211,7 +219,7 @@ export async function GET(request: Request) {
     }
 
     const payments = (paymentsResult.data ?? []) as MembershipPaymentRow[];
-    const paymentStatsByUserId = new Map<string, { activeMonths: number; lastPaidAt: string | null }>();
+    const paymentStatsByUserId = new Map<string, MembershipPaymentStats>();
 
     for (const payment of payments) {
       const currentStats = paymentStatsByUserId.get(payment.buyer_user_id);
@@ -221,13 +229,19 @@ export async function GET(request: Request) {
         paymentStatsByUserId.set(payment.buyer_user_id, {
           activeMonths: 1,
           lastPaidAt: paidAt,
+          lastPaidAmount: payment.amount,
+          totalPaidAmount: payment.amount,
         });
         continue;
       }
 
+      const isLatestPayment = !currentStats.lastPaidAt || paidAt > currentStats.lastPaidAt;
+
       paymentStatsByUserId.set(payment.buyer_user_id, {
         activeMonths: currentStats.activeMonths + 1,
-        lastPaidAt: !currentStats.lastPaidAt || paidAt > currentStats.lastPaidAt ? paidAt : currentStats.lastPaidAt,
+        lastPaidAt: isLatestPayment ? paidAt : currentStats.lastPaidAt,
+        lastPaidAmount: isLatestPayment ? payment.amount : currentStats.lastPaidAmount,
+        totalPaidAmount: currentStats.totalPaidAmount + payment.amount,
       });
     }
 
@@ -294,6 +308,8 @@ export async function GET(request: Request) {
           status: getMembershipStatus(subscription.status),
           activeMonths: paymentStats?.activeMonths ?? 0,
           lastPaidAt: paymentStats?.lastPaidAt ?? null,
+          lastPaidAmount: paymentStats?.lastPaidAmount ?? null,
+          totalPaidAmount: paymentStats?.totalPaidAmount ?? 0,
         };
       }),
     });
@@ -338,7 +354,6 @@ export async function PATCH(request: Request) {
     }
 
     const { site, supabaseAdmin } = siteAndSession;
-    const nowIso = new Date().toISOString();
 
     const existingSettingResult = await supabaseAdmin
       .from('subscription_settings')

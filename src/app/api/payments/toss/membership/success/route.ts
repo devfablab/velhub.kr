@@ -118,7 +118,7 @@ export async function POST(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, owner_id')
+      .select('id, site_key, site_label, site_type, owner_id')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -132,7 +132,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '사이트 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const site = siteResult.data as SiteRow;
+    const site = siteResult.data as unknown as SiteRow;
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {

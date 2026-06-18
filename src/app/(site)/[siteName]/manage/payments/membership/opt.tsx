@@ -20,6 +20,8 @@ type MembershipMember = {
   status: '유지 중' | '중단';
   activeMonths: number;
   lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
 };
 
 type MembershipResponse = {
@@ -45,6 +47,12 @@ type MembershipSaveResponse = {
 
 function formatMembershipPrice(value: number) {
   return value.toLocaleString('ko-KR');
+}
+
+function formatPrice(value: number | null | undefined) {
+  if (typeof value !== 'number') return '-';
+
+  return `${value.toLocaleString('ko-KR')}원`;
 }
 
 function getMembershipPriceNumber(value: string) {
@@ -261,6 +269,8 @@ export default function Opt() {
                       <Typography>상태: {member.status}</Typography>
                       <Typography>유지 기간: {member.activeMonths}개월째</Typography>
                       <Typography>최근 결제일: {formatDateTime(member.lastPaidAt)}</Typography>
+                      <Typography>최근 결제금액: {formatPrice(member.lastPaidAmount)}</Typography>
+                      <Typography>총 결제금액: {formatPrice(member.totalPaidAmount)}</Typography>
                     </Stack>
                   </Paper>
                 ))}

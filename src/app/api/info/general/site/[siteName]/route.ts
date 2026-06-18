@@ -110,6 +110,16 @@ async function checkAccess(siteName: string) {
     }
   }
 
+  if (rhizome.data.site_type === 'blog' && rhizome.data.visibility_type === 'public' && !rhizome.data.is_shutdown) {
+    return {
+      ok: true,
+      status: 200,
+      rhizome: rhizome.data,
+      updatedByParticleId: '',
+      supabaseAdmin,
+    } as const;
+  }
+
   const session = await verifySession({
     siteId: rhizome.data.id,
   });
@@ -120,6 +130,11 @@ async function checkAccess(siteName: string) {
     .eq('id', session.rhizomeStigmaId)
     .eq('site_id', rhizome.data.id)
     .maybeSingle();
+
+  console.log('session: ', session);
+
+  console.log('membership.error: ', membership.error);
+  console.log('membership.data?.user_id: ', membership.data?.user_id);
 
   if (membership.error || normalizeText(membership.data?.role) !== 'owner' || !membership.data?.user_id) {
     return {

@@ -175,7 +175,7 @@ export async function POST(request: Request) {
     }
 
     const customerKey = createCustomerKey(session.authUserId);
-    const orderNo = createOrderNo();
+    const orderNo = createPaymentOrderNo('BLOG_MEMBERSHIP');
 
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
