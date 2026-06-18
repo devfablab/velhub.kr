@@ -16,6 +16,19 @@ type PlanRow = {
   price: number;
 };
 
+type BillingMethodRow = {
+  id: string;
+  provider: string;
+  card_company: string | null;
+  card_company_code: string | null;
+  card_number_masked: string | null;
+  owner_type: string | null;
+  card_type: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string | null;
+};
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -42,6 +55,10 @@ export async function GET(request: Request) {
 
     if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (!session.authUserId) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
     let plan: {
@@ -140,6 +157,31 @@ export async function GET(request: Request) {
       return Response.json({ error: paymentsResult.error.message }, { status: 500 });
     }
 
+    const billingMethodsResult = await supabaseAdmin
+      .from('subscription_billing_methods')
+      .select(
+        [
+          'id',
+          'provider',
+          'card_company',
+          'card_company_code',
+          'card_number_masked',
+          'owner_type',
+          'card_type',
+          'is_default',
+          'created_at',
+          'updated_at',
+        ].join(', '),
+      )
+      .eq('user_id', session.authUserId)
+      .eq('provider', 'toss')
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    if (billingMethodsResult.error) {
+      return Response.json({ error: '결제수단 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
     return Response.json({
       site: {
         id: site.id,
@@ -149,6 +191,7 @@ export async function GET(request: Request) {
       plan,
       subscription: subscriptionResult.data ?? null,
       payments: paymentsResult.data ?? [],
+      billingMethods: (billingMethodsResult.data ?? []) as unknown as BillingMethodRow[],
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

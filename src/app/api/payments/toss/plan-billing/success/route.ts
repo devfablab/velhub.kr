@@ -12,6 +12,7 @@ type PlanBillingSuccessBody = {
   customerKey?: string;
   siteId?: string;
   orderNo?: string;
+  purpose?: 'plan_subscription' | 'billing_method';
 };
 
 type SiteRow = {
@@ -84,6 +85,7 @@ export async function POST(request: NextRequest) {
     const customerKey = normalizeText(body.customerKey);
     const siteId = normalizeText(body.siteId);
     const orderNo = normalizeText(body.orderNo);
+    const purpose = body.purpose === 'billing_method' ? 'billing_method' : 'plan_subscription';
 
     if (!authKey) {
       return Response.json({ error: 'authKey가 유효하지 않습니다.' }, { status: 400 });
@@ -171,7 +173,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '기존 요금제 구독 상태를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (existingActiveSubscriptionResult.data) {
+    if (existingActiveSubscriptionResult.data && purpose !== 'billing_method') {
       return Response.json({ error: '이미 요금제 구독이 등록되어 있습니다.' }, { status: 400 });
     }
 
@@ -228,7 +230,7 @@ export async function POST(request: NextRequest) {
           card_company: cardCompany,
           card_company_code: cardCompanyCode,
           card_number_masked: cardNumberMasked,
-          card_owner_type: cardOwnerType,
+          owner_type: cardOwnerType,
           card_type: cardType,
           is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
           updated_at: new Date().toISOString(),
@@ -251,7 +253,7 @@ export async function POST(request: NextRequest) {
           card_company: cardCompany,
           card_company_code: cardCompanyCode,
           card_number_masked: cardNumberMasked,
-          card_owner_type: cardOwnerType,
+          owner_type: cardOwnerType,
           card_type: cardType,
           is_default: !existingDefaultBillingMethodResult.data,
         })
@@ -263,6 +265,10 @@ export async function POST(request: NextRequest) {
 
         return Response.json({ error: '결제수단을 저장하지 못했습니다.' }, { status: 500 });
       }
+    }
+
+    if (purpose === 'billing_method') {
+      return Response.json({ ok: true });
     }
 
     const now = new Date();

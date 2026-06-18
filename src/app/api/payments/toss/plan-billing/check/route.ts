@@ -21,6 +21,8 @@ type PlanBillingSubscriptionRow = {
   billing_key: string;
   customer_key: string;
   next_billing_at: string;
+  status: string;
+  past_due_started_at: string | null;
 };
 
 function createOrderNo() {
@@ -57,11 +59,21 @@ export async function GET(request: Request) {
     let subscriptionQuery = supabaseAdmin
       .from('subscriptions')
       .select(
-        ['id', 'subscriber_user_id', 'target_id', 'price', 'billing_key', 'customer_key', 'next_billing_at'].join(', '),
+        [
+          'id',
+          'subscriber_user_id',
+          'target_id',
+          'price',
+          'billing_key',
+          'customer_key',
+          'next_billing_at',
+          'status',
+          'past_due_started_at',
+        ].join(', '),
       )
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
-      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE])
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
       .lte('next_billing_at', nowIso)
       .order('next_billing_at', { ascending: true })
       .limit(20);
@@ -202,7 +214,7 @@ export async function GET(request: Request) {
           .from('subscriptions')
           .update({
             status: SUBSCRIPTION_STATUS.PAST_DUE,
-            past_due_started_at: nowIso,
+            past_due_started_at: subscription.past_due_started_at ?? nowIso,
             updated_at: nowIso,
           })
           .eq('id', subscription.id);

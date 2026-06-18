@@ -14,6 +14,7 @@ type PlanBillingStartBody = {
   orderName?: string;
   successUrl?: string;
   failUrl?: string;
+  purpose?: 'plan_subscription' | 'billing_method';
 };
 
 type SiteRow = {
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as PlanBillingStartBody;
     const siteId = normalizeText(body.siteId);
     const orderName = normalizeText(body.orderName) || '데브허브 사이트 요금제 결제수단 등록';
+    const purpose = body.purpose === 'billing_method' ? 'billing_method' : 'plan_subscription';
 
     if (!siteId) {
       return Response.json({ error: 'siteId가 유효하지 않습니다.' }, { status: 400 });
@@ -141,12 +143,33 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '기존 요금제 구독 상태를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (existingActiveSubscriptionResult.data) {
+    if (existingActiveSubscriptionResult.data && purpose !== 'billing_method') {
       return Response.json({ error: '이미 요금제 구독이 등록되어 있습니다.' }, { status: 400 });
     }
 
     const customerKey = createCustomerKey(session.authUserId);
     const orderNo = createOrderNo();
+
+    if (purpose === 'billing_method') {
+      successUrl.searchParams.set('siteId', site.id);
+      successUrl.searchParams.set('orderNo', orderNo);
+      successUrl.searchParams.set('customerKey', customerKey);
+      successUrl.searchParams.set('purpose', purpose);
+
+      failUrl.searchParams.set('siteId', site.id);
+      failUrl.searchParams.set('orderNo', orderNo);
+      failUrl.searchParams.set('purpose', purpose);
+
+      return Response.json({
+        mode: 'billing_auth',
+        clientKey: getTossClientKey(),
+        customerKey,
+        orderNo,
+        orderName,
+        successUrl: successUrl.toString(),
+        failUrl: failUrl.toString(),
+      });
+    }
 
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
@@ -169,10 +192,12 @@ export async function POST(request: NextRequest) {
       successUrl.searchParams.set('siteId', site.id);
       successUrl.searchParams.set('orderNo', orderNo);
       successUrl.searchParams.set('customerKey', customerKey);
+      successUrl.searchParams.set('purpose', purpose);
 
       failUrl.searchParams.set('siteId', site.id);
       failUrl.searchParams.set('orderNo', orderNo);
       failUrl.searchParams.set('paymentType', PAYMENT_TYPE.PLAN_BILLING);
+      failUrl.searchParams.set('purpose', purpose);
 
       return Response.json({
         mode: 'billing_auth',

@@ -46,9 +46,22 @@ type PlanBillingResponse = {
     currency: string;
     status: 'paid' | 'failed' | 'partially_refunded' | 'refunded';
     failure_message: string | null;
+    failure_stage: string | null;
     approved_at: string | null;
     refunded_at: string | null;
     created_at: string;
+  }[];
+  billingMethods?: {
+    id: string;
+    provider: string;
+    card_company: string | null;
+    card_company_code: string | null;
+    card_number_masked: string | null;
+    owner_type: string | null;
+    card_type: string | null;
+    is_default: boolean;
+    created_at: string;
+    updated_at: string | null;
   }[];
   error?: string;
 };
@@ -116,6 +129,16 @@ function formatDateTime(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+function formatCardNumber(cardNumberMasked: string | null | undefined) {
+  const normalizedCardNumber = normalizeText(cardNumberMasked).replace(/\D/g, '');
+
+  if (normalizedCardNumber.length < 4) {
+    return '카드번호 확인 필요';
+  }
+
+  return `${normalizedCardNumber.slice(0, 4)} ••••`;
+}
+
 function getSubscriptionStatusText(
   status: PlanBillingResponse['subscription'] extends infer Subscription
     ? Subscription extends { status: infer Status }
@@ -125,30 +148,40 @@ function getSubscriptionStatusText(
 ) {
   switch (status) {
     case 'trialing':
-      return '무료체험 적용 중';
+      return '무료 기간';
     case 'active':
-      return '정상 구독 중';
+      return '정상 이용 중';
     case 'past_due':
-      return '결제 실패 유예기간 중';
+      return '결제 유예 중';
     case 'canceled':
-      return '구독 취소됨';
+      return '구독 취소';
     case 'expired':
-      return '구독 만료';
+      return '이용 만료';
     default:
       return '상태 확인 필요';
   }
 }
 
-function getPaymentStatusText(status: string) {
+function getPaymentStatusText(status: string, failureStage?: string | null) {
+  if (status === 'failed') {
+    if (failureStage === 'billing_auth') {
+      return '결제수단 등록 실패';
+    }
+
+    if (failureStage === 'auto_billing') {
+      return '자동결제 실패';
+    }
+
+    return '결제 실패';
+  }
+
   switch (status) {
     case 'paid':
-      return '결제 완료';
-    case 'failed':
-      return '결제 실패';
+      return '결제 성공';
     case 'partially_refunded':
       return '부분 환불';
     case 'refunded':
-      return '환불 완료';
+      return '전액 환불';
     default:
       return status;
   }
@@ -220,7 +253,7 @@ export default function Opt() {
     void loadData();
   }, [loadData, siteName]);
 
-  async function handleBillingAuth() {
+  async function handleBillingAuth(purpose: 'plan_subscription' | 'billing_method') {
     try {
       setIsProcessing(true);
       setErrorMessage('');
@@ -238,9 +271,10 @@ export default function Opt() {
         },
         body: JSON.stringify({
           siteId: billingData.site.id,
-          orderName: '데브허브 사이트 요금제 결제수단 등록',
+          orderName: purpose === 'billing_method' ? '데브허브 결제수단 추가' : '데브허브 사이트 요금제 결제수단 등록',
           successUrl: `/${siteName}/manage/payments/billing/success`,
           failUrl: `/${siteName}/manage/payments/billing/fail`,
+          purpose,
         }),
       });
 
@@ -418,6 +452,7 @@ export default function Opt() {
             horizontal: 'center',
           }}
           autoHideDuration={2700}
+          onClose={() => setErrorMessage('')}
         />
 
         <Snackbar
@@ -428,6 +463,7 @@ export default function Opt() {
             horizontal: 'center',
           }}
           autoHideDuration={2700}
+          onClose={() => setSuccessMessage('')}
         />
 
         <Paper variant="outlined">
@@ -460,9 +496,16 @@ export default function Opt() {
 
             <Stack direction="row" spacing={1}>
               {shouldShowBillingAuthButton ? (
-                <Button type="button" variant="contained" onClick={handleBillingAuth} disabled={isProcessing}>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => {
+                    void handleBillingAuth('plan_subscription');
+                  }}
+                  disabled={isProcessing}
+                >
                   {subscription ? '재구독하기' : '결제수단 등록하기'}
-                </Button>
+                </button>
               ) : null}
 
               {canCancelSubscription ? (
@@ -483,6 +526,49 @@ export default function Opt() {
                 </Button>
               ) : null}
             </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack spacing={2}>
+            <Stack spacing={0.5}>
+              <Typography variant="h6">결제 수단</Typography>
+              <Typography variant="body2" color="text.secondary">
+                자동결제에 사용할 카드를 관리합니다.
+              </Typography>
+            </Stack>
+
+            {billingData?.billingMethods?.length ? (
+              <Stack spacing={1}>
+                {billingData.billingMethods.map((billingMethod) => (
+                  <Paper key={billingMethod.id} variant="outlined" sx={{ p: 2 }}>
+                    <Stack spacing={0.5}>
+                      <Typography variant="body1">
+                        {billingMethod.card_company ?? '카드'} {formatCardNumber(billingMethod.card_number_masked)}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {billingMethod.is_default ? '사용 중' : '등록됨'}
+                      </Typography>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                등록된 결제 수단이 없습니다.
+              </Typography>
+            )}
+
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={() => {
+                void handleBillingAuth('billing_method');
+              }}
+              disabled={isProcessing}
+            >
+              결제 수단 추가하기
+            </Button>
           </Stack>
         </Paper>
 

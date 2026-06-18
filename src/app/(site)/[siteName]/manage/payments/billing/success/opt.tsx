@@ -41,6 +41,7 @@ export default function Opt() {
         const customerKey = normalizeText(searchParams.get('customerKey'));
         const siteId = normalizeText(searchParams.get('siteId'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
+        const purpose = normalizeText(searchParams.get('purpose'));
 
         if (!authKey || !customerKey || !siteId || !orderNo) {
           throw new Error('결제수단 등록 승인 정보가 없습니다.');
@@ -57,6 +58,7 @@ export default function Opt() {
             customerKey,
             siteId,
             orderNo,
+            purpose,
           }),
         });
 
@@ -103,8 +105,11 @@ export default function Opt() {
         <Stack spacing={2} sx={{ p: 3 }}>
           {isSuccess ? (
             <>
-              <Typography variant="h6">결제수단 등록이 완료되었습니다.</Typography>
-              <Typography>무료체험이 적용되었고 사이트 운영이 가능합니다.</Typography>
+              {normalizeText(searchParams.get('purpose')) === 'billing_method' ? (
+                <>결제수단이 추가되었습니다.</>
+              ) : (
+                <>결제수단 등록이 완료되었습니다. 무료체험이 적용되었고 사이트 운영이 가능합니다.</>
+              )}
             </>
           ) : (
             <>

@@ -256,7 +256,7 @@ export async function POST(request: Request) {
           card_company: cardCompany,
           card_company_code: cardCompanyCode,
           card_number_masked: cardNumberMasked,
-          card_owner_type: cardOwnerType,
+          owner_type: cardOwnerType,
           card_type: cardType,
           is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
           updated_at: new Date().toISOString(),
@@ -279,7 +279,7 @@ export async function POST(request: Request) {
           card_company: cardCompany,
           card_company_code: cardCompanyCode,
           card_number_masked: cardNumberMasked,
-          card_owner_type: cardOwnerType,
+          owner_type: cardOwnerType,
           card_type: cardType,
           is_default: !existingDefaultBillingMethodResult.data,
         })
