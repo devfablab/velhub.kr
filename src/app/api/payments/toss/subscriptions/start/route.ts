@@ -6,6 +6,7 @@ import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TY
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 type SubscriptionTargetType = 'board' | 'series';
 
@@ -73,10 +74,7 @@ function createCustomerKey(authUserId: string) {
 }
 
 function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-SUB-${timestamp}-${randomText}`;
+  return createPaymentOrderNo('SITE_DONATION');
 }
 
 function getTargetType(value: string): SubscriptionTargetType | null {

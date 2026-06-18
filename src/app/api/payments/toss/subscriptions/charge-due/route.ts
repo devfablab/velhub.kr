@@ -4,6 +4,7 @@ import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { requestTossBillingPayment } from '@/lib/payments/toss';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 type SubscriptionRow = {
   id: string;
@@ -59,11 +60,16 @@ function verifyTaskRequest(request: Request) {
   return authorization === expectedAuthorization;
 }
 
-function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-RENEW-${timestamp}-${randomText}`;
+function createOrderNo(subscription_type: string) {
+  const prefix =
+    subscription_type === 'board'
+      ? 'BOARD_SUBSCRIPTION'
+      : subscription_type === 'series'
+        ? 'SERIES_SUBSCRIPTION'
+        : subscription_type === 'blog'
+          ? 'BLOG_MEMBERSHIP'
+          : 'PLAN';
+  return createPaymentOrderNo(prefix);
 }
 
 function getPaymentType(subscriptionType: string) {
@@ -241,7 +247,7 @@ async function chargeDue(request: Request) {
       continue;
     }
 
-    const orderNo = createOrderNo();
+    const orderNo = createOrderNo(subscription.subscription_type);
 
     try {
       const decryptedBillingKey = decrypt(subscription.billing_key);

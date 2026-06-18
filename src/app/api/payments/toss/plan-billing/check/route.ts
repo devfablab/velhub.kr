@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import {
@@ -12,6 +11,7 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import { requestTossBillingPayment, TossBillingPaymentError } from '@/lib/payments/toss';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 type PlanBillingSubscriptionRow = {
   id: string;
@@ -23,22 +23,8 @@ type PlanBillingSubscriptionRow = {
   next_billing_at: string;
 };
 
-function isValidCronRequest(request: Request) {
-  const authorization = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    throw new Error('자동결제 실행 키가 설정되지 않았습니다.');
-  }
-
-  return authorization === `Bearer ${cronSecret}`;
-}
-
 function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-PLAN-${timestamp}-${randomText}`;
+  return createPaymentOrderNo('PLAN');
 }
 
 function addOneMonth(date: Date) {

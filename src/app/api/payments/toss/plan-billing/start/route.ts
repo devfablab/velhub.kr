@@ -7,6 +7,7 @@ import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/l
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 type PlanBillingStartBody = {
   siteId?: string;
@@ -41,10 +42,7 @@ function createCustomerKey(authUserId: string) {
 }
 
 function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-PLAN-${timestamp}-${randomText}`;
+  return createPaymentOrderNo('PLAN');
 }
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {

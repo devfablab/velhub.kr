@@ -1,15 +1,12 @@
-import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getTossClientKey } from '@/lib/payments/toss';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-DONATION-${timestamp}-${randomText}`;
+  return createPaymentOrderNo('SITE_DONATION');
 }
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
