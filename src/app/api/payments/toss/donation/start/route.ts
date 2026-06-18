@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getTossClientKey } from '@/lib/payments/toss';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
+import { PAYMENT_TYPE } from '@/lib/payments/types';
 
 function createOrderNo() {
   return createPaymentOrderNo('SITE_DONATION');
@@ -99,6 +100,8 @@ export async function POST(request: NextRequest) {
 
     failUrl.searchParams.set('siteId', siteResult.data.id);
     failUrl.searchParams.set('orderNo', orderNo);
+    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION);
+    failUrl.searchParams.set('amount', String(amount));
 
     return Response.json({
       clientKey: getTossClientKey(),

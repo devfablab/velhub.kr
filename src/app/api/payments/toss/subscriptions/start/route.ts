@@ -359,6 +359,7 @@ export async function POST(request: Request) {
       failUrl.searchParams.set('boardName', boardName);
       failUrl.searchParams.set('targetType', targetType);
       failUrl.searchParams.set('orderNo', orderNo);
+      failUrl.searchParams.set('paymentType', paymentType);
 
       if (targetType === 'series') {
         successUrl.searchParams.set('seriesName', seriesName);

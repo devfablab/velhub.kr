@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { getTossClientKey } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -172,6 +172,7 @@ export async function POST(request: NextRequest) {
 
       failUrl.searchParams.set('siteId', site.id);
       failUrl.searchParams.set('orderNo', orderNo);
+      failUrl.searchParams.set('paymentType', PAYMENT_TYPE.PLAN_BILLING);
 
       return Response.json({
         mode: 'billing_auth',

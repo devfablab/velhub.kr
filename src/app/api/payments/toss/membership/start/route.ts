@@ -201,6 +201,7 @@ export async function POST(request: Request) {
 
       failUrl.searchParams.set('siteName', siteName);
       failUrl.searchParams.set('orderNo', orderNo);
+      failUrl.searchParams.set('paymentType', PAYMENT_TYPE.BLOG_MEMBERSHIP);
 
       return Response.json({
         mode: 'billing_auth',
