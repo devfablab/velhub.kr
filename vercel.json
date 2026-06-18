@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/payments/toss/membership/check",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/payments/toss/subscriptions/charge-due",
       "schedule": "*/5 * * * *"
     },
