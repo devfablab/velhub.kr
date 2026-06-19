@@ -1,5 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
-import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
+import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { issueTossBillingKey, requestTossBillingPayment } from '@/lib/payments/toss';
 import {
   PAYMENT_METHOD,
@@ -257,6 +257,14 @@ export async function POST(request: Request) {
       return Response.json({ error: 'targetType이 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (targetType === 'board' && !orderNo.startsWith('VH-SUBS-BOARD-')) {
+      return Response.json({ error: '게시판 구독 주문번호가 올바르지 않습니다.' }, { status: 400 });
+    }
+
+    if (targetType === 'series' && !orderNo.startsWith('VH-SUBS-SERIES-')) {
+      return Response.json({ error: '연재 구독 주문번호가 올바르지 않습니다.' }, { status: 400 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const siteResult = await supabaseAdmin
@@ -462,8 +470,10 @@ export async function POST(request: Request) {
     })) as TossBillingPaymentResult;
 
     const now = new Date();
-    const billingPeriod = createMonthlyBillingPeriod({
-      startedAt: now,
+    const billingAnchorDay = getBillingAnchorDay(now);
+    const billingPeriod = createNextMonthlyBillingPeriod({
+      currentPeriodEnd: now,
+      billingAnchorDay,
     });
 
     const paymentInsertResult = await supabaseAdmin
@@ -512,7 +522,7 @@ export async function POST(request: Request) {
         current_period_start: billingPeriod.currentPeriodStart,
         current_period_end: billingPeriod.currentPeriodEnd,
         next_billing_at: billingPeriod.nextBillingAt,
-        billing_anchor_day: billingPeriod.billingAnchorDay,
+        billing_anchor_day: billingAnchorDay,
       })
       .select('id')
       .single();

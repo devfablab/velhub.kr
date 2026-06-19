@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
+import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { getTossClientKey, requestTossBillingPayment } from '@/lib/payments/toss';
 import {
   PAYMENT_METHOD,
@@ -230,8 +230,10 @@ export async function POST(request: Request) {
     })) as TossBillingPaymentResult;
 
     const now = new Date();
-    const billingPeriod = createMonthlyBillingPeriod({
-      startedAt: now,
+    const billingAnchorDay = getBillingAnchorDay(now);
+    const billingPeriod = createNextMonthlyBillingPeriod({
+      currentPeriodEnd: now,
+      billingAnchorDay,
     });
 
     const paymentInsertResult = await supabaseAdmin
@@ -280,7 +282,7 @@ export async function POST(request: Request) {
         current_period_start: billingPeriod.currentPeriodStart,
         current_period_end: billingPeriod.currentPeriodEnd,
         next_billing_at: billingPeriod.nextBillingAt,
-        billing_anchor_day: billingPeriod.billingAnchorDay,
+        billing_anchor_day: billingAnchorDay,
       })
       .select('id')
       .single();
