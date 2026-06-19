@@ -2,27 +2,19 @@
 
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
+import Container from '../../menu';
 
-type Subscriber = {
+type BoardSubscriber = {
   id: string;
   nickname: string;
   status: string;
@@ -32,19 +24,23 @@ type Subscriber = {
   totalPaidAmount: number;
 };
 
+type BoardSubscriptionSetting = {
+  id: string | null;
+  isEnabled: boolean;
+  price: number;
+  requiredMinPrice: number;
+  maxSeriesPrice: number;
+};
+
 type BoardSubscriptionItem = {
   id: string;
   boardKey: string;
   boardLabel: string;
-  setting: {
-    id: string | null;
-    isEnabled: boolean;
-    price: number;
-  };
-  subscribers: Subscriber[];
+  setting: BoardSubscriptionSetting;
+  subscribers: BoardSubscriber[];
 };
 
-type BoardSubscriptionsResponse = {
+type BoardSubscriptionResponse = {
   site?: {
     id: string;
     siteKey: string;
@@ -55,42 +51,42 @@ type BoardSubscriptionsResponse = {
   error?: string;
 };
 
-type SaveBoardSubscriptionResponse = {
+type BoardSubscriptionSaveResponse = {
   ok?: boolean;
   settingId?: string;
+  requiredMinPrice?: number;
+  maxSeriesPrice?: number;
   error?: string;
 };
 
-type EditingRow = {
-  mode: 'new' | 'edit';
-  boardId: string;
-  price: string;
-} | null;
-
 function formatPrice(value: number) {
   return value.toLocaleString('ko-KR');
-}
-
-function formatPaymentAmount(value: number | null | undefined) {
-  if (typeof value !== 'number') return '-';
-
-  return `${value.toLocaleString('ko-KR')}원`;
 }
 
 function getPriceNumber(value: string) {
   return Number(value.replace(/[^0-9]/g, ''));
 }
 
-function isValidPrice(price: number) {
-  if (!Number.isInteger(price)) return false;
-  if (price < 1000) return false;
-  if (price > 100000) return false;
+function isValidBoardSubscriptionPrice(price: number, requiredMinPrice: number) {
+  if (!Number.isInteger(price)) {
+    return false;
+  }
+
+  if (price < requiredMinPrice) {
+    return false;
+  }
+
+  if (price > 100000) {
+    return false;
+  }
 
   return price % 1000 === 0;
 }
 
-function formatDateTime(value: string | null) {
-  if (!value) return '-';
+function formatDateTime(value: string | null | undefined) {
+  if (!value) {
+    return '-';
+  }
 
   return new Intl.DateTimeFormat('ko-KR', {
     year: 'numeric',
@@ -101,181 +97,148 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function formatAmount(value: number | null | undefined) {
+  if (typeof value !== 'number') {
+    return '-';
+  }
+
+  return `${value.toLocaleString('ko-KR')}원`;
+}
+
 export default function BoardSubscriptions() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(true);
+  const [savingBoardId, setSavingBoardId] = useState('');
   const [boards, setBoards] = useState<BoardSubscriptionItem[]>([]);
-  const [editingRow, setEditingRow] = useState<EditingRow>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const enabledBoards = boards.filter((board) => board.setting.isEnabled);
-  const availableBoards = boards.filter((board) => !board.setting.isEnabled);
+  useEffect(() => {
+    async function loadBoardSubscriptions() {
+      try {
+        setErrorMessage('');
+        setSuccessMessage('');
 
-  async function loadBoardSubscriptions() {
-    try {
-      setErrorMessage('');
-      setSuccessMessage('');
+        const response = await fetch(`/api/manage/payments/subscriptions/board?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
 
-      const response = await fetch(`/api/manage/payments/subscriptions/board?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+        const result = (await response.json()) as BoardSubscriptionResponse;
 
-      const result = (await response.json()) as BoardSubscriptionsResponse;
-
-      if (!response.ok) {
-        if (response.status === 400 && result.error === '게시판 구독은 커뮤니티에서만 사용할 수 있습니다.') {
-          setIsAvailable(false);
-          return;
+        if (!response.ok) {
+          throw new Error(result.error ?? '게시판 구독 정보를 불러오지 못했습니다.');
         }
 
-        throw new Error(result.error ?? '게시판 구독 정보를 불러오지 못했습니다.');
+        setBoards(result.boards ?? []);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '게시판 구독 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('게시판 구독 정보를 불러오지 못했습니다.');
+        }
+      } finally {
+        setIsLoading(false);
       }
-
-      setBoards(result.boards ?? []);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '게시판 구독 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('게시판 구독 정보를 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
     }
-  }
 
-  useEffect(() => {
     if (!siteName) {
       setErrorMessage('siteName이 유효하지 않습니다.');
       setIsLoading(false);
+
       return;
     }
 
     void loadBoardSubscriptions();
   }, [siteName]);
 
-  function handleAddRow() {
-    setEditingRow({
-      mode: 'new',
-      boardId: '',
-      price: '1,000',
+  function updateBoardSetting(boardId: string, nextSetting: Partial<BoardSubscriptionSetting>) {
+    setBoards((currentBoards) =>
+      currentBoards.map((board) => {
+        if (board.id !== boardId) {
+          return board;
+        }
+
+        return {
+          ...board,
+          setting: {
+            ...board.setting,
+            ...nextSetting,
+          },
+        };
+      }),
+    );
+  }
+
+  function handleBoardEnabledChange(boardId: string, event: ChangeEvent<HTMLInputElement>) {
+    updateBoardSetting(boardId, {
+      isEnabled: event.target.checked,
     });
     setErrorMessage('');
     setSuccessMessage('');
   }
 
-  function handleEditRow(board: BoardSubscriptionItem) {
-    setEditingRow({
-      mode: 'edit',
-      boardId: board.id,
-      price: formatPrice(board.setting.price),
-    });
-    setErrorMessage('');
-    setSuccessMessage('');
-  }
-
-  function handleEditingBoardChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) return;
-
-    setEditingRow({
-      ...editingRow,
-      boardId: event.target.value,
-    });
-    setErrorMessage('');
-    setSuccessMessage('');
-  }
-
-  function handleEditingPriceChange(event: ChangeEvent<HTMLInputElement>) {
-    if (!editingRow) return;
-
+  function handleBoardPriceChange(boardId: string, event: ChangeEvent<HTMLInputElement>) {
     const nextPrice = getPriceNumber(event.target.value);
 
-    if (!isValidPrice(nextPrice)) return;
+    if (nextPrice > 100000) {
+      return;
+    }
 
-    setEditingRow({
-      ...editingRow,
-      price: formatPrice(nextPrice),
+    if (nextPrice % 1000 !== 0) {
+      return;
+    }
+
+    updateBoardSetting(boardId, {
+      price: nextPrice,
     });
     setErrorMessage('');
     setSuccessMessage('');
   }
 
-  async function saveBoardSubscription({
-    boardId,
-    isEnabled,
-    price,
-  }: {
-    boardId: string;
-    isEnabled: boolean;
-    price: number;
-  }) {
-    const response = await fetch(`/api/manage/payments/subscriptions/board?siteName=${siteName}`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        boardId,
-        isEnabled,
-        price,
-      }),
-    });
-
-    const result = (await response.json()) as SaveBoardSubscriptionResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '게시판 구독 설정을 저장하지 못했습니다.');
-    }
-
-    return result;
-  }
-
-  async function handleSaveEditingRow() {
-    if (!editingRow) return;
-
+  async function handleSaveBoardSetting(board: BoardSubscriptionItem) {
     try {
-      setIsSaving(true);
+      setSavingBoardId(board.id);
       setErrorMessage('');
       setSuccessMessage('');
 
-      const nextPrice = getPriceNumber(editingRow.price);
-
-      if (!editingRow.boardId) {
-        throw new Error('게시판을 선택해 주세요.');
+      if (
+        board.setting.isEnabled &&
+        !isValidBoardSubscriptionPrice(board.setting.price, board.setting.requiredMinPrice)
+      ) {
+        throw new Error(
+          `${board.boardLabel} 구독 금액은 ${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`,
+        );
       }
 
-      if (!isValidPrice(nextPrice)) {
-        throw new Error('구독 금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.');
-      }
-
-      const result = await saveBoardSubscription({
-        boardId: editingRow.boardId,
-        isEnabled: true,
-        price: nextPrice,
+      const response = await fetch(`/api/manage/payments/subscriptions/board?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          boardId: board.id,
+          isEnabled: board.setting.isEnabled,
+          price: board.setting.price,
+        }),
       });
 
-      setBoards((currentBoards) =>
-        currentBoards.map((board) =>
-          board.id === editingRow.boardId
-            ? {
-                ...board,
-                setting: {
-                  id: result.settingId ?? board.setting.id,
-                  isEnabled: true,
-                  price: nextPrice,
-                },
-              }
-            : board,
-        ),
-      );
-      setEditingRow(null);
-      setSuccessMessage('게시판 구독 설정을 저장했습니다.');
+      const result = (await response.json()) as BoardSubscriptionSaveResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '게시판 구독 설정을 저장하지 못했습니다.');
+      }
+
+      updateBoardSetting(board.id, {
+        id: result.settingId ?? board.setting.id,
+        requiredMinPrice: result.requiredMinPrice ?? board.setting.requiredMinPrice,
+        maxSeriesPrice: result.maxSeriesPrice ?? board.setting.maxSeriesPrice,
+      });
+
+      setSuccessMessage(`${board.boardLabel} 구독 설정을 저장했습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '게시판 구독 설정을 저장하지 못했습니다.');
@@ -283,230 +246,126 @@ export default function BoardSubscriptions() {
         setErrorMessage('게시판 구독 설정을 저장하지 못했습니다.');
       }
     } finally {
-      setIsSaving(false);
+      setSavingBoardId('');
     }
-  }
-
-  async function handleDisableBoardSubscription(board: BoardSubscriptionItem) {
-    try {
-      setIsSaving(true);
-      setErrorMessage('');
-      setSuccessMessage('');
-
-      await saveBoardSubscription({
-        boardId: board.id,
-        isEnabled: false,
-        price: board.setting.price,
-      });
-
-      setBoards((currentBoards) =>
-        currentBoards.map((currentBoard) =>
-          currentBoard.id === board.id
-            ? {
-                ...currentBoard,
-                setting: {
-                  ...currentBoard.setting,
-                  isEnabled: false,
-                },
-              }
-            : currentBoard,
-        ),
-      );
-
-      if (editingRow?.boardId === board.id) {
-        setEditingRow(null);
-      }
-
-      setSuccessMessage('게시판 구독 설정을 해제했습니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '게시판 구독 설정을 해제하지 못했습니다.');
-      } else {
-        setErrorMessage('게시판 구독 설정을 해제하지 못했습니다.');
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  function renderEditingRow() {
-    if (!editingRow) return null;
-
-    const selectableBoards =
-      editingRow.mode === 'edit' ? boards.filter((board) => board.id === editingRow.boardId) : availableBoards;
-
-    return (
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={2}>
-          <TextField
-            select
-            label="게시판 선택"
-            value={editingRow.boardId}
-            onChange={handleEditingBoardChange}
-            disabled={editingRow.mode === 'edit' || isSaving}
-          >
-            {selectableBoards.map((board) => (
-              <MenuItem key={board.id} value={board.id}>
-                {board.boardLabel}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          <TextField
-            label="구독 금액"
-            value={editingRow.price}
-            onChange={handleEditingPriceChange}
-            disabled={isSaving}
-            InputProps={{
-              endAdornment: <InputAdornment position="end">원</InputAdornment>,
-            }}
-          />
-
-          <Stack direction="row" spacing={1}>
-            <Button
-              type="button"
-              variant="contained"
-              onClick={() => {
-                void handleSaveEditingRow();
-              }}
-              disabled={isSaving}
-            >
-              저장
-            </Button>
-            <Button type="button" onClick={() => setEditingRow(null)} disabled={isSaving}>
-              취소
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
-    );
-  }
-
-  if (!isAvailable) {
-    return null;
   }
 
   if (isLoading) {
     return (
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Typography variant="h6">게시판 구독</Typography>
+      <Container>
         <LoadingIndicator />
-      </Paper>
+      </Container>
     );
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 3 }}>
-      <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">게시판 구독</Typography>
-
-          {boards.length > 0 ? (
-            <Button
-              type="button"
-              variant="outlined"
-              startIcon={<AddRoundedIcon />}
-              onClick={handleAddRow}
-              disabled={isSaving || Boolean(editingRow) || !availableBoards.length}
-            >
-              게시판 구독 추가
-            </Button>
-          ) : null}
-        </Stack>
-
+    <Container>
+      <Stack spacing={3}>
         {errorMessage ? (
-          <Typography role="status" color="error">
+          <Typography color="error" role="alert">
             {errorMessage}
           </Typography>
         ) : null}
 
         {successMessage ? (
-          <Typography role="status" color="success.main">
+          <Typography color="success.main" role="status">
             {successMessage}
           </Typography>
         ) : null}
 
-        {!boards.length ? <Typography>구독을 설정할 수 있는 게시판이 없습니다.</Typography> : null}
+        <Paper sx={{ p: 3 }}>
+          <Stack spacing={1}>
+            <Typography variant="h6">게시판 구독 설정</Typography>
+            <Typography variant="body2" color="text.secondary">
+              게시판 구독 금액은 10,000원부터 100,000원까지 1,000원 단위로 설정할 수 있습니다. 해당 게시판의 연재 구독
+              최고가가 있으면 7:10 비율을 기준으로 최소 금액이 올라갑니다.
+            </Typography>
+          </Stack>
+        </Paper>
 
-        {boards.length > 0 && !enabledBoards.length && !editingRow ? (
-          <Typography>설정된 게시판 구독이 없습니다.</Typography>
-        ) : null}
-
-        {enabledBoards.map((board) => {
-          const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
-
-          return (
-            <Paper key={board.id} variant="outlined" sx={{ p: 2 }}>
-              <Stack spacing={2}>
-                {isEditingThisBoard ? (
-                  renderEditingRow()
-                ) : (
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Stack spacing={0.5}>
-                      <Typography variant="subtitle1">{board.boardLabel}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        월 {formatPrice(board.setting.price)}원
-                      </Typography>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1}>
-                      <IconButton
-                        type="button"
-                        aria-label="게시판 구독 수정"
-                        onClick={() => handleEditRow(board)}
-                        disabled={isSaving || Boolean(editingRow)}
-                      >
-                        <EditRoundedIcon />
-                      </IconButton>
-                      <IconButton
-                        type="button"
-                        aria-label="게시판 구독 해제"
-                        onClick={() => {
-                          void handleDisableBoardSubscription(board);
-                        }}
-                        disabled={isSaving}
-                      >
-                        <RemoveRoundedIcon />
-                      </IconButton>
-                    </Stack>
+        {boards.length ? (
+          <Stack spacing={3}>
+            {boards.map((board) => (
+              <Paper key={board.id} sx={{ p: 3 }}>
+                <Stack spacing={3}>
+                  <Stack spacing={1}>
+                    <Typography variant="h6">{board.boardLabel}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {board.setting.maxSeriesPrice > 0
+                        ? `현재 이 게시판의 연재 구독 최고가는 ${board.setting.maxSeriesPrice.toLocaleString('ko-KR')}원입니다. 게시판 구독 금액은 최소 ${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원 이상이어야 합니다.`
+                        : `게시판 구독 금액은 최소 ${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원 이상이어야 합니다.`}
+                    </Typography>
                   </Stack>
-                )}
 
-                {board.subscribers.length ? (
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>구독자</TableCell>
-                          <TableCell>상태</TableCell>
-                          <TableCell>유지 기간</TableCell>
-                          <TableCell>최근 결제일</TableCell>
-                          <TableCell>최근 결제금액</TableCell>
-                          <TableCell>총 결제금액</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
+                  <Divider />
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={board.setting.isEnabled}
+                        onChange={(event) => handleBoardEnabledChange(board.id, event)}
+                      />
+                    }
+                    label="게시판 구독 사용"
+                  />
+
+                  <TextField
+                    label="게시판 구독 금액"
+                    value={formatPrice(board.setting.price)}
+                    onChange={(event) => handleBoardPriceChange(board.id, event)}
+                    helperText={`${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
+                    inputProps={{
+                      inputMode: 'numeric',
+                      'aria-label': `${board.boardLabel} 게시판 구독 금액`,
+                    }}
+                    disabled={savingBoardId === board.id}
+                    fullWidth
+                  />
+
+                  <div>
+                    <Button
+                      variant="contained"
+                      onClick={() => handleSaveBoardSetting(board)}
+                      disabled={savingBoardId === board.id}
+                    >
+                      저장
+                    </Button>
+                  </div>
+
+                  <Divider />
+
+                  <Stack spacing={2}>
+                    <Typography variant="subtitle1">구독자</Typography>
+
+                    {board.subscribers.length ? (
+                      <Stack spacing={2}>
                         {board.subscribers.map((subscriber) => (
-                          <TableRow key={subscriber.id}>
-                            <TableCell>{subscriber.nickname}</TableCell>
-                            <TableCell>{subscriber.status}</TableCell>
-                            <TableCell>{subscriber.activeMonths}개월째</TableCell>
-                            <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
-                            <TableCell>{formatPaymentAmount(subscriber.lastPaidAmount)}</TableCell>
-                            <TableCell>{formatPaymentAmount(subscriber.totalPaidAmount)}</TableCell>
-                          </TableRow>
+                          <Paper key={subscriber.id} variant="outlined" sx={{ p: 2 }}>
+                            <Stack spacing={1}>
+                              <Typography>닉네임: {subscriber.nickname}</Typography>
+                              <Typography>상태: {subscriber.status}</Typography>
+                              <Typography>유지 기간: {subscriber.activeMonths}개월째</Typography>
+                              <Typography>최근 결제일: {formatDateTime(subscriber.lastPaidAt)}</Typography>
+                              <Typography>최근 결제금액: {formatAmount(subscriber.lastPaidAmount)}</Typography>
+                              <Typography>누적 결제금액: {formatAmount(subscriber.totalPaidAmount)}</Typography>
+                            </Stack>
+                          </Paper>
                         ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : null}
-              </Stack>
-            </Paper>
-          );
-        })}
-
-        {editingRow?.mode === 'new' ? renderEditingRow() : null}
+                      </Stack>
+                    ) : (
+                      <Typography color="text.secondary">아직 이 게시판의 구독자가 없습니다.</Typography>
+                    )}
+                  </Stack>
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        ) : (
+          <Paper sx={{ p: 3 }}>
+            <Typography color="text.secondary">구독을 설정할 수 있는 게시판이 없습니다.</Typography>
+          </Paper>
+        )}
       </Stack>
-    </Paper>
+    </Container>
   );
 }

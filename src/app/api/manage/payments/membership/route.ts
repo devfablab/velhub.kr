@@ -8,6 +8,11 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import {
+  PARENT_SUBSCRIPTION_MIN_PRICE,
+  validateParentSubscriptionPrice,
+  getRequiredParentSubscriptionPrice,
+} from '@/lib/payments/subscriptionPrice';
 
 type SiteRow = {
   id: string;
@@ -26,6 +31,16 @@ type SubscriptionSettingRow = {
   created_at: string;
 };
 
+type SeriesRow = {
+  id: string;
+};
+
+type SeriesSettingRow = {
+  target_id: string;
+  price: number;
+  is_enabled: boolean;
+};
+
 type MembershipSubscriptionRow = {
   id: string;
   subscriber_user_id: string;
@@ -42,6 +57,13 @@ type MembershipPaymentRow = {
   created_at: string;
 };
 
+type MembershipPaymentStats = {
+  activeMonths: number;
+  lastPaidAt: string | null;
+  lastPaidAmount: number | null;
+  totalPaidAmount: number;
+};
+
 type StigmaRow = {
   id: string;
   user_id: string;
@@ -52,33 +74,9 @@ type RhizomeStigmaRow = {
   nickname: string;
 };
 
-type MembershipPaymentStats = {
-  activeMonths: number;
-  lastPaidAt: string | null;
-  lastPaidAmount: number | null;
-  totalPaidAmount: number;
-};
-
-function isValidMembershipPrice(price: number) {
-  if (!Number.isInteger(price)) {
-    return false;
-  }
-
-  if (price < 1000) {
-    return false;
-  }
-
-  if (price > 100000) {
-    return false;
-  }
-
-  return price % 1000 === 0;
-}
-
 function getMembershipStatus(status: string) {
-  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
-    return '유지 중';
-  }
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
+  if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
 
   return '중단';
 }
@@ -154,6 +152,47 @@ async function getSiteAndSession(siteName: string) {
   };
 }
 
+async function getMaxEnabledSeriesPrice({
+  supabaseAdmin,
+  siteId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+}) {
+  const seriesResult = await supabaseAdmin.from('board_series').select('id').eq('site_id', siteId);
+
+  if (seriesResult.error) {
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  const seriesList = (seriesResult.data ?? []) as SeriesRow[];
+  const seriesIds = seriesList.map((series) => series.id);
+
+  if (!seriesIds.length) {
+    return 0;
+  }
+
+  const settingsResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('target_id, price, is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('is_enabled', true)
+    .in('target_id', seriesIds);
+
+  if (settingsResult.error) {
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  const settings = (settingsResult.data ?? []) as SeriesSettingRow[];
+
+  if (!settings.length) {
+    return 0;
+  }
+
+  return Math.max(...settings.map((setting) => setting.price));
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -171,13 +210,16 @@ export async function GET(request: Request) {
 
     const { site, supabaseAdmin } = siteAndSession;
 
-    const settingResult = await supabaseAdmin
-      .from('subscription_settings')
-      .select('id, target_type, target_id, subscription_type, is_enabled, price, created_at')
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
-      .eq('target_id', site.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-      .maybeSingle();
+    const [settingResult, maxSeriesPrice] = await Promise.all([
+      supabaseAdmin
+        .from('subscription_settings')
+        .select('id, target_type, target_id, subscription_type, is_enabled, price, created_at')
+        .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+        .eq('target_id', site.id)
+        .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+        .maybeSingle(),
+      getMaxEnabledSeriesPrice({ supabaseAdmin, siteId: site.id }),
+    ]);
 
     if (settingResult.error) {
       console.error(settingResult.error);
@@ -186,6 +228,7 @@ export async function GET(request: Request) {
     }
 
     const setting = settingResult.data as SubscriptionSettingRow | null;
+    const requiredMinPrice = getRequiredParentSubscriptionPrice(maxSeriesPrice);
 
     const subscriptionsResult = await supabaseAdmin
       .from('subscriptions')
@@ -241,6 +284,7 @@ export async function GET(request: Request) {
           lastPaidAmount: payment.amount,
           totalPaidAmount: payment.amount,
         });
+
         continue;
       }
 
@@ -298,11 +342,15 @@ export async function GET(request: Request) {
             id: setting.id,
             isEnabled: setting.is_enabled,
             price: setting.price,
+            requiredMinPrice,
+            maxSeriesPrice,
           }
         : {
             id: null,
             isEnabled: false,
-            price: 1000,
+            price: requiredMinPrice || PARENT_SUBSCRIPTION_MIN_PRICE,
+            requiredMinPrice,
+            maxSeriesPrice,
           },
       members: latestSubscriptions.map((subscription) => {
         const paymentStats = paymentStatsByUserId.get(subscription.subscriber_user_id);
@@ -349,11 +397,8 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '멤버십 사용 여부가 올바르지 않습니다.' }, { status: 400 });
     }
 
-    if (typeof body.price !== 'number' || !isValidMembershipPrice(body.price)) {
-      return Response.json(
-        { error: '멤버십 금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.' },
-        { status: 400 },
-      );
+    if (typeof body.price !== 'number') {
+      return Response.json({ error: '멤버십 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const siteAndSession = await getSiteAndSession(siteName);
@@ -363,6 +408,15 @@ export async function PATCH(request: Request) {
     }
 
     const { site, supabaseAdmin } = siteAndSession;
+    const maxSeriesPrice = await getMaxEnabledSeriesPrice({ supabaseAdmin, siteId: site.id });
+
+    if (body.isEnabled) {
+      const priceValidation = validateParentSubscriptionPrice(body.price, maxSeriesPrice);
+
+      if (!priceValidation.ok) {
+        return Response.json({ error: priceValidation.message }, { status: 400 });
+      }
+    }
 
     const existingSettingResult = await supabaseAdmin
       .from('subscription_settings')
@@ -404,6 +458,8 @@ export async function PATCH(request: Request) {
     return Response.json({
       ok: true,
       settingId: settingResult.data.id,
+      requiredMinPrice: getRequiredParentSubscriptionPrice(maxSeriesPrice),
+      maxSeriesPrice,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

@@ -5,6 +5,11 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import {
+  PARENT_SUBSCRIPTION_MIN_PRICE,
+  getRequiredParentSubscriptionPrice,
+  validateParentSubscriptionPrice,
+} from '@/lib/payments/subscriptionPrice';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -21,6 +26,16 @@ type BoardRow = {
   board_key: string;
   board_label: string;
   site_id: string;
+};
+
+type SeriesRow = {
+  id: string;
+};
+
+type SeriesSettingRow = {
+  target_id: string;
+  price: number;
+  is_enabled: boolean;
 };
 
 type SubscriptionSettingRow = {
@@ -64,14 +79,6 @@ type RhizomeStigmaRow = {
   user_id: string;
   nickname: string;
 };
-
-function isValidSubscriptionPrice(price: number) {
-  if (!Number.isInteger(price)) return false;
-  if (price < 1000) return false;
-  if (price > 100000) return false;
-
-  return price % 1000 === 0;
-}
 
 function getSubscriptionStatus(status: string) {
   if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
@@ -133,6 +140,76 @@ async function getSiteAndSession(siteName: string) {
   };
 }
 
+async function getMaxEnabledSeriesPrice({
+  supabaseAdmin,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  boardId: string;
+}) {
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId);
+
+  if (seriesResult.error) {
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  const seriesList = (seriesResult.data ?? []) as SeriesRow[];
+  const seriesIds = seriesList.map((series) => series.id);
+
+  if (!seriesIds.length) {
+    return 0;
+  }
+
+  const settingsResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('target_id, price, is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('is_enabled', true)
+    .in('target_id', seriesIds);
+
+  if (settingsResult.error) {
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  const settings = (settingsResult.data ?? []) as SeriesSettingRow[];
+
+  if (!settings.length) {
+    return 0;
+  }
+
+  return Math.max(...settings.map((setting) => setting.price));
+}
+
+async function getRequiredPriceByBoardId({
+  supabaseAdmin,
+  siteId,
+  boardIds,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  boardIds: string[];
+}) {
+  const result = new Map<string, { maxSeriesPrice: number; requiredMinPrice: number }>();
+
+  for (const boardId of boardIds) {
+    const maxSeriesPrice = await getMaxEnabledSeriesPrice({ supabaseAdmin, siteId, boardId });
+
+    result.set(boardId, {
+      maxSeriesPrice,
+      requiredMinPrice: getRequiredParentSubscriptionPrice(maxSeriesPrice),
+    });
+  }
+
+  return result;
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -165,6 +242,7 @@ export async function GET(request: Request) {
 
     const boards = (boardsResult.data ?? []) as BoardRow[];
     const boardIds = boards.map((board) => board.id);
+    const requiredPriceByBoardId = await getRequiredPriceByBoardId({ supabaseAdmin, siteId: site.id, boardIds });
 
     const settingsResult = boardIds.length
       ? await supabaseAdmin
@@ -313,6 +391,10 @@ export async function GET(request: Request) {
       boards: boards.map((board) => {
         const setting = settingByBoardId.get(board.id);
         const boardSubscriptions = subscriptionsByBoardId.get(board.id) ?? [];
+        const pricePolicy = requiredPriceByBoardId.get(board.id) ?? {
+          maxSeriesPrice: 0,
+          requiredMinPrice: PARENT_SUBSCRIPTION_MIN_PRICE,
+        };
 
         return {
           id: board.id,
@@ -323,11 +405,15 @@ export async function GET(request: Request) {
                 id: setting.id,
                 isEnabled: setting.is_enabled,
                 price: setting.price,
+                requiredMinPrice: pricePolicy.requiredMinPrice,
+                maxSeriesPrice: pricePolicy.maxSeriesPrice,
               }
             : {
                 id: null,
                 isEnabled: false,
-                price: 1000,
+                price: pricePolicy.requiredMinPrice,
+                requiredMinPrice: pricePolicy.requiredMinPrice,
+                maxSeriesPrice: pricePolicy.maxSeriesPrice,
               },
           subscribers: boardSubscriptions.map((subscription) => {
             const stigmaId = stigmaIdByParticleId.get(subscription.subscriber_user_id);
@@ -383,11 +469,8 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '게시판 구독 사용 여부가 올바르지 않습니다.' }, { status: 400 });
     }
 
-    if (typeof body.price !== 'number' || !isValidSubscriptionPrice(body.price)) {
-      return Response.json(
-        { error: '구독 금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.' },
-        { status: 400 },
-      );
+    if (typeof body.price !== 'number') {
+      return Response.json({ error: '게시판 구독 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const siteAndSession = await getSiteAndSession(siteName);
@@ -419,6 +502,20 @@ export async function PATCH(request: Request) {
 
     if (board.board_key === 'b' || board.board_key === 'p') {
       return Response.json({ error: '해당 게시판은 구독을 사용할 수 없습니다.' }, { status: 400 });
+    }
+
+    const maxSeriesPrice = await getMaxEnabledSeriesPrice({
+      supabaseAdmin,
+      siteId: site.id,
+      boardId: board.id,
+    });
+
+    if (body.isEnabled) {
+      const priceValidation = validateParentSubscriptionPrice(body.price, maxSeriesPrice);
+
+      if (!priceValidation.ok) {
+        return Response.json({ error: priceValidation.message }, { status: 400 });
+      }
     }
 
     const existingSettingResult = await supabaseAdmin
@@ -473,6 +570,8 @@ export async function PATCH(request: Request) {
     return Response.json({
       ok: true,
       settingId: settingResult.data.id,
+      requiredMinPrice: getRequiredParentSubscriptionPrice(maxSeriesPrice),
+      maxSeriesPrice,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
