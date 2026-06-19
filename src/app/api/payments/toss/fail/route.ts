@@ -1,6 +1,3 @@
-import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
 import {
   PAYMENT_METHOD,
   PAYMENT_PROVIDER,
@@ -8,7 +5,13 @@ import {
   PAYMENT_TARGET_TYPE,
   PAYMENT_TYPE,
   REFUND_POLICY,
+  SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
+
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 type PaymentFailBody = {
   paymentType?: string;
@@ -69,7 +72,7 @@ type PaymentFailInfo = {
 function getPaymentType(value: string) {
   if (
     value === PAYMENT_TYPE.PLAN_BILLING ||
-    value === PAYMENT_TYPE.DONATION ||
+    value === PAYMENT_TYPE.DONATION_SITE ||
     value === PAYMENT_TYPE.BLOG_MEMBERSHIP ||
     value === PAYMENT_TYPE.BOARD_SUBSCRIPTION ||
     value === PAYMENT_TYPE.SERIES_SUBSCRIPTION
@@ -96,7 +99,7 @@ function validateDonationAmount(amount: number) {
   return amount % 1000 === 0;
 }
 
-async function getSiteById(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, siteId: string) {
+async function getSiteById(supabaseAdmin: SupabaseAdminClient, siteId: string) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
     .select('id, site_key, site_label, plan_type')
@@ -114,7 +117,7 @@ async function getSiteById(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, s
   return siteResult.data as SiteRow;
 }
 
-async function getSiteByName(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, siteName: string) {
+async function getSiteByName(supabaseAdmin: SupabaseAdminClient, siteName: string) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
     .select('id, site_key, site_label, plan_type')
@@ -136,7 +139,7 @@ async function getPlanBillingFailInfo({
   supabaseAdmin,
   siteId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
 }): Promise<PaymentFailInfo> {
   const site = await getSiteById(supabaseAdmin, siteId);
@@ -172,7 +175,7 @@ async function getDonationFailInfo({
   siteId,
   amount,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
   amount: number | undefined;
 }): Promise<PaymentFailInfo> {
@@ -184,11 +187,11 @@ async function getDonationFailInfo({
 
   return {
     amount,
-    paymentType: PAYMENT_TYPE.DONATION,
-    targetType: PAYMENT_TARGET_TYPE.DONATION,
+    paymentType: PAYMENT_TYPE.DONATION_SITE,
+    targetType: PAYMENT_TARGET_TYPE.SITE,
     targetId: siteId,
-    refundPolicy: REFUND_POLICY.DONATION_RESTRICTED,
-    failureStage: 'donation_fail',
+    refundPolicy: REFUND_POLICY.SEVEN_DAYS,
+    failureStage: 'donation_site_fail',
   };
 }
 
@@ -196,7 +199,7 @@ async function getMembershipFailInfo({
   supabaseAdmin,
   siteName,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteName: string;
 }): Promise<PaymentFailInfo> {
   const site = await getSiteByName(supabaseAdmin, siteName);
@@ -206,7 +209,7 @@ async function getMembershipFailInfo({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
     .eq('target_id', site.id)
-    .eq('subscription_type', 'blog_membership')
+    .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
     .maybeSingle();
 
   if (settingResult.error) {
@@ -236,7 +239,7 @@ async function getSubscriptionFailInfo({
   targetType,
   seriesName,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteName: string;
   boardName: string;
   targetType: string;
@@ -261,13 +264,13 @@ async function getSubscriptionFailInfo({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     const settingResult = await supabaseAdmin
       .from('subscription_settings')
       .select('price, is_enabled')
       .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
       .eq('target_id', board.id)
-      .eq('subscription_type', 'board_subscription')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -290,7 +293,7 @@ async function getSubscriptionFailInfo({
     };
   }
 
-  if (targetType !== 'series') {
+  if (targetType !== PAYMENT_TARGET_TYPE.SERIES) {
     throw new Error('targetType이 유효하지 않습니다.');
   }
 
@@ -321,7 +324,7 @@ async function getSubscriptionFailInfo({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', series.id)
-    .eq('subscription_type', 'series_subscription')
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
     .maybeSingle();
 
   if (settingResult.error) {
@@ -348,7 +351,7 @@ async function getPaymentFailInfo({
   supabaseAdmin,
   body,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   body: PaymentFailBody;
 }) {
   const paymentType = getPaymentType(normalizeText(body.paymentType));
@@ -363,10 +366,13 @@ async function getPaymentFailInfo({
       throw new Error('siteId가 유효하지 않습니다.');
     }
 
-    return getPlanBillingFailInfo({ supabaseAdmin, siteId });
+    return getPlanBillingFailInfo({
+      supabaseAdmin,
+      siteId,
+    });
   }
 
-  if (paymentType === PAYMENT_TYPE.DONATION) {
+  if (paymentType === PAYMENT_TYPE.DONATION_SITE) {
     if (!siteId) {
       throw new Error('siteId가 유효하지 않습니다.');
     }
@@ -383,7 +389,10 @@ async function getPaymentFailInfo({
       throw new Error('siteName이 유효하지 않습니다.');
     }
 
-    return getMembershipFailInfo({ supabaseAdmin, siteName });
+    return getMembershipFailInfo({
+      supabaseAdmin,
+      siteName,
+    });
   }
 
   if (paymentType === PAYMENT_TYPE.BOARD_SUBSCRIPTION || paymentType === PAYMENT_TYPE.SERIES_SUBSCRIPTION) {
@@ -468,6 +477,7 @@ export async function POST(request: Request) {
         payment_type: failInfo.paymentType,
         target_type: failInfo.targetType,
         target_id: failInfo.targetId,
+        post_payment: null,
         subscription_id: null,
         failure_code: failureCode || null,
         failure_message: failureMessage || null,

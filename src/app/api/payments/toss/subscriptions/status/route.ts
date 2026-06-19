@@ -1,10 +1,11 @@
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type SubscriptionTargetType = 'board' | 'series';
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
+type SubscriptionTargetType = 'board' | 'series';
 type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type SiteRow = {
@@ -35,14 +36,20 @@ type SubscriptionSettingRow = {
 type SubscriptionRow = {
   id: string;
   status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
-  current_period_end: string;
+  current_period_end: string | null;
   next_billing_at: string | null;
   canceled_at: string | null;
   expired_at: string | null;
 };
 
+type TargetInfo = {
+  targetId: string;
+  targetLabel: string | null;
+  isSubscriptionTarget: boolean;
+};
+
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === PAYMENT_TARGET_TYPE.BOARD || value === PAYMENT_TARGET_TYPE.SERIES) {
     return value;
   }
 
@@ -50,7 +57,7 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
   }
 
@@ -58,19 +65,11 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return PAYMENT_TARGET_TYPE.BOARD;
   }
 
   return PAYMENT_TARGET_TYPE.SERIES;
-}
-
-function getSettingSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return 'board_subscription';
-  }
-
-  return 'series_subscription';
 }
 
 function getSubscriptionStatus(subscription: SubscriptionRow | null): SubscriptionStatus {
@@ -78,19 +77,23 @@ function getSubscriptionStatus(subscription: SubscriptionRow | null): Subscripti
     return 'none';
   }
 
-  if (subscription.status === 'expired') {
+  if (subscription.status === SUBSCRIPTION_STATUS.EXPIRED || subscription.expired_at) {
     return 'expired';
   }
 
-  if (subscription.status === 'canceled') {
+  if (subscription.status === SUBSCRIPTION_STATUS.CANCELED) {
     return 'canceled';
   }
 
-  if (subscription.status === 'past_due') {
+  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE) {
     return 'past_due';
   }
 
   if (subscription.canceled_at && !subscription.expired_at) {
+    if (!subscription.current_period_end) {
+      return 'canceled';
+    }
+
     const currentPeriodEndTime = new Date(subscription.current_period_end).getTime();
 
     if (currentPeriodEndTime > Date.now()) {
@@ -100,7 +103,7 @@ function getSubscriptionStatus(subscription: SubscriptionRow | null): Subscripti
     return 'expired';
   }
 
-  if (subscription.status === 'trialing' || subscription.status === 'active') {
+  if (subscription.status === SUBSCRIPTION_STATUS.TRIALING || subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
     return 'active';
   }
 
@@ -114,12 +117,12 @@ async function getTargetInfo({
   targetType,
   seriesName,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
   boardName: string;
   targetType: SubscriptionTargetType;
   seriesName: string;
-}) {
+}): Promise<TargetInfo> {
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label, is_subscription')
@@ -137,7 +140,7 @@ async function getTargetInfo({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return {
       targetId: board.id,
       targetLabel: board.board_label,
@@ -230,12 +233,15 @@ export async function GET(request: Request) {
       });
     }
 
+    const subscriptionType = getSubscriptionType(targetType);
+    const paymentTargetType = getPaymentTargetType(targetType);
+
     const settingResult = await supabaseAdmin
       .from('subscription_settings')
       .select('price, is_enabled')
-      .eq('target_type', targetType)
+      .eq('target_type', paymentTargetType)
       .eq('target_id', targetInfo.targetId)
-      .eq('subscription_type', getSettingSubscriptionType(targetType))
+      .eq('subscription_type', subscriptionType)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -268,8 +274,8 @@ export async function GET(request: Request) {
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('subscriber_user_id', session.authUserId)
-      .eq('subscription_type', getSubscriptionType(targetType))
-      .eq('target_type', getPaymentTargetType(targetType))
+      .eq('subscription_type', subscriptionType)
+      .eq('target_type', paymentTargetType)
       .eq('target_id', targetInfo.targetId)
       .order('created_at', { ascending: false })
       .limit(1)

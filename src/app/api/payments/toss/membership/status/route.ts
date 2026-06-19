@@ -3,6 +3,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type MembershipStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
+
 type SiteRow = {
   id: string;
   site_key: string;
@@ -18,37 +20,65 @@ type SubscriptionSettingRow = {
 
 type SubscriptionRow = {
   id: string;
-  status: string;
+  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+  current_period_end: string | null;
+  next_billing_at: string | null;
   canceled_at: string | null;
   expired_at: string | null;
 };
 
-type MembershipStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
-
 function isValidMembershipPrice(price: number) {
-  if (!Number.isInteger(price)) return false;
-  if (price < 1000) return false;
-  if (price > 100000) return false;
+  if (!Number.isInteger(price)) {
+    return false;
+  }
+
+  if (price < 1000) {
+    return false;
+  }
+
+  if (price > 100000) {
+    return false;
+  }
 
   return price % 1000 === 0;
 }
 
 function getMembershipStatus(subscription: SubscriptionRow | null): MembershipStatus {
-  if (!subscription) return 'none';
-  if (subscription.canceled_at && !subscription.expired_at) return 'scheduled_cancel';
-
-  switch (subscription.status) {
-    case SUBSCRIPTION_STATUS.ACTIVE:
-      return 'active';
-    case SUBSCRIPTION_STATUS.PAST_DUE:
-      return 'past_due';
-    case SUBSCRIPTION_STATUS.CANCELED:
-      return 'canceled';
-    case SUBSCRIPTION_STATUS.EXPIRED:
-      return 'expired';
-    default:
-      return 'none';
+  if (!subscription) {
+    return 'none';
   }
+
+  if (subscription.status === SUBSCRIPTION_STATUS.EXPIRED || subscription.expired_at) {
+    return 'expired';
+  }
+
+  if (subscription.status === SUBSCRIPTION_STATUS.CANCELED) {
+    return 'canceled';
+  }
+
+  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE) {
+    return 'past_due';
+  }
+
+  if (subscription.canceled_at && !subscription.expired_at) {
+    if (!subscription.current_period_end) {
+      return 'canceled';
+    }
+
+    const currentPeriodEndTime = new Date(subscription.current_period_end).getTime();
+
+    if (currentPeriodEndTime > Date.now()) {
+      return 'scheduled_cancel';
+    }
+
+    return 'expired';
+  }
+
+  if (subscription.status === SUBSCRIPTION_STATUS.TRIALING || subscription.status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return 'active';
+  }
+
+  return 'none';
 }
 
 export async function GET(request: Request) {
@@ -81,7 +111,11 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
 
     if (site.site_type !== 'blog' || site.is_shutdown) {
-      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
+      return Response.json({
+        isEnabled: false,
+        price: null,
+        membershipStatus: 'none',
+      });
     }
 
     const settingResult = await supabaseAdmin
@@ -99,28 +133,40 @@ export async function GET(request: Request) {
     }
 
     if (!settingResult.data) {
-      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
+      return Response.json({
+        isEnabled: false,
+        price: null,
+        membershipStatus: 'none',
+      });
     }
 
     const setting = settingResult.data as SubscriptionSettingRow;
 
     if (!setting.is_enabled) {
-      return Response.json({ isEnabled: false, price: null, membershipStatus: 'none' });
+      return Response.json({
+        isEnabled: false,
+        price: null,
+        membershipStatus: 'none',
+      });
     }
 
     if (!isValidMembershipPrice(setting.price)) {
       return Response.json({ error: '멤버십 금액 설정이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const session = await verifySession({ siteId: site.id });
+    const session = await verifySession({ siteId: null });
 
     if (!session.authUserId) {
-      return Response.json({ isEnabled: true, price: setting.price, membershipStatus: 'none' });
+      return Response.json({
+        isEnabled: true,
+        price: setting.price,
+        membershipStatus: 'none',
+      });
     }
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
-      .select('id, status, canceled_at, expired_at')
+      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('subscriber_user_id', session.authUserId)
       .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
@@ -135,7 +181,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '멤버십 가입 상태를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const subscription = subscriptionResult.data as SubscriptionRow | null;
+    const subscription = (subscriptionResult.data as SubscriptionRow | null) ?? null;
 
     return Response.json({
       isEnabled: true,

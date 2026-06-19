@@ -1,13 +1,27 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
-import { createMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
-import { getTossClientKey } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import {
+  createMonthlyBillingPeriod,
+  createNextMonthlyBillingPeriod,
+  getBillingAnchorDay,
+} from '@/lib/payments/billingPeriod';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
+import { getPaymentPolicyMs } from '@/lib/payments/refunds';
+import { getTossClientKey, requestTossBillingPayment } from '@/lib/payments/toss';
+import {
+  PAYMENT_METHOD,
+  PAYMENT_PROVIDER,
+  PAYMENT_STATUS,
+  PAYMENT_TARGET_TYPE,
+  PAYMENT_TYPE,
+  REFUND_POLICY,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_TYPE,
+} from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 
 type PlanBillingStartBody = {
   siteId?: string;
@@ -36,6 +50,25 @@ type BillingMethodRow = {
   billing_key: string;
 };
 
+type SubscriptionRow = {
+  id: string;
+  status: string;
+  current_period_end: string | null;
+  next_billing_at: string | null;
+  canceled_at: string | null;
+  expired_at: string | null;
+};
+
+type TossBillingPaymentResult = {
+  paymentKey: string;
+  orderId: string;
+  orderName: string;
+  method: string;
+  totalAmount: number;
+  status: string;
+  approvedAt: string;
+};
+
 function createCustomerKey(authUserId: string) {
   const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
 
@@ -60,6 +93,50 @@ function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
   return parsedUrl;
 }
 
+function isOpenSubscription(subscription: SubscriptionRow | null) {
+  if (!subscription) {
+    return false;
+  }
+
+  if (subscription.expired_at) {
+    return false;
+  }
+
+  if (subscription.canceled_at) {
+    return false;
+  }
+
+  return (
+    subscription.status === SUBSCRIPTION_STATUS.TRIALING ||
+    subscription.status === SUBSCRIPTION_STATUS.ACTIVE ||
+    subscription.status === SUBSCRIPTION_STATUS.PAST_DUE
+  );
+}
+
+function isScheduledCancelSubscription(subscription: SubscriptionRow | null, now: Date) {
+  if (!subscription) {
+    return false;
+  }
+
+  if (!subscription.canceled_at) {
+    return false;
+  }
+
+  if (subscription.expired_at) {
+    return false;
+  }
+
+  if (!subscription.current_period_end) {
+    return false;
+  }
+
+  return new Date(subscription.current_period_end).getTime() > now.getTime();
+}
+
+function createRefundableUntil(startedAt: Date) {
+  return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as PlanBillingStartBody;
@@ -73,6 +150,7 @@ export async function POST(request: NextRequest) {
 
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
+
     const session = await verifySession({ siteId });
 
     if (session.case !== 'staff') {
@@ -125,30 +203,67 @@ export async function POST(request: NextRequest) {
 
     const plan = planResult.data as PlanRow;
 
-    const existingActiveSubscriptionResult = await supabaseAdmin
+    const latestSubscriptionResult = await supabaseAdmin
       .from('subscriptions')
-      .select('id, status, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
+      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
       .eq('target_id', site.id)
-      .in('status', ['trialing', 'active', 'past_due'])
-      .is('canceled_at', null)
-      .is('expired_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (existingActiveSubscriptionResult.error) {
-      console.error(existingActiveSubscriptionResult.error);
+    if (latestSubscriptionResult.error) {
+      console.error(latestSubscriptionResult.error);
 
       return Response.json({ error: '기존 요금제 구독 상태를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (existingActiveSubscriptionResult.data && purpose !== 'billing_method') {
+    const latestSubscription = (latestSubscriptionResult.data as SubscriptionRow | null) ?? null;
+    const now = new Date();
+    const customerKey = createCustomerKey(session.authUserId);
+    const orderNo = createOrderNo();
+
+    if (purpose !== 'billing_method' && isOpenSubscription(latestSubscription)) {
       return Response.json({ error: '이미 요금제 구독이 등록되어 있습니다.' }, { status: 400 });
     }
 
-    const customerKey = createCustomerKey(session.authUserId);
-    const orderNo = createOrderNo();
+    if (purpose !== 'billing_method' && isScheduledCancelSubscription(latestSubscription, now)) {
+      const subscriptionUpdateResult = await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          canceled_at: null,
+          next_billing_at: latestSubscription.current_period_end,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', latestSubscription.id);
+
+      if (subscriptionUpdateResult.error) {
+        console.error(subscriptionUpdateResult.error);
+
+        return Response.json({ error: '요금제 구독 취소를 철회하지 못했습니다.' }, { status: 500 });
+      }
+
+      const siteOpenResult = await supabaseAdmin
+        .from('rhizomes')
+        .update({
+          is_shutdown: false,
+        })
+        .eq('id', site.id);
+
+      if (siteOpenResult.error) {
+        console.error(siteOpenResult.error);
+
+        return Response.json({ error: '사이트 상태를 갱신하지 못했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        mode: 'resume_scheduled_cancel',
+        ok: true,
+        subscriptionId: latestSubscription.id,
+        nextBillingAt: latestSubscription.current_period_end,
+      });
+    }
 
     if (purpose === 'billing_method') {
       successUrl.searchParams.set('siteId', site.id);
@@ -175,7 +290,7 @@ export async function POST(request: NextRequest) {
       .from('subscription_billing_methods')
       .select('id, customer_key, billing_key')
       .eq('user_id', session.authUserId)
-      .eq('provider', 'toss')
+      .eq('provider', PAYMENT_PROVIDER.TOSS)
       .eq('is_default', true)
       .limit(1);
 
@@ -187,6 +302,7 @@ export async function POST(request: NextRequest) {
 
     const billingMethods = (billingMethodResult.data ?? []) as unknown as BillingMethodRow[];
     const billingMethod = billingMethods[0] ?? null;
+    const shouldUseTrial = !latestSubscription;
 
     if (!billingMethod) {
       successUrl.searchParams.set('siteId', site.id);
@@ -210,10 +326,108 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const now = new Date();
-    const billingPeriod = createMonthlyBillingPeriod({
-      startedAt: now,
+    if (shouldUseTrial) {
+      const billingPeriod = createMonthlyBillingPeriod({
+        startedAt: now,
+      });
+
+      const subscriptionInsertResult = await supabaseAdmin
+        .from('subscriptions')
+        .insert({
+          subscriber_user_id: session.authUserId,
+          subscription_type: SUBSCRIPTION_TYPE.PLAN_BILLING,
+          target_type: PAYMENT_TARGET_TYPE.PLAN,
+          target_id: site.id,
+          owner_user_id: null,
+          price: plan.price,
+          status: SUBSCRIPTION_STATUS.TRIALING,
+          billing_key: encrypt(billingMethod.billing_key),
+          customer_key: billingMethod.customer_key,
+          last_payment_id: null,
+          trial_started_at: billingPeriod.currentPeriodStart,
+          trial_ends_at: billingPeriod.currentPeriodEnd,
+          current_period_start: billingPeriod.currentPeriodStart,
+          current_period_end: billingPeriod.currentPeriodEnd,
+          next_billing_at: billingPeriod.nextBillingAt,
+          billing_anchor_day: billingPeriod.billingAnchorDay,
+        })
+        .select('id')
+        .single();
+
+      if (subscriptionInsertResult.error) {
+        console.error(subscriptionInsertResult.error);
+
+        return Response.json({ error: '요금제 구독을 저장하지 못했습니다.' }, { status: 500 });
+      }
+
+      const siteOpenResult = await supabaseAdmin
+        .from('rhizomes')
+        .update({
+          is_shutdown: false,
+        })
+        .eq('id', site.id);
+
+      if (siteOpenResult.error) {
+        console.error(siteOpenResult.error);
+
+        return Response.json({ error: '사이트를 오픈하지 못했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        mode: 'trial_started',
+        ok: true,
+        subscriptionId: subscriptionInsertResult.data.id,
+      });
+    }
+
+    const tossPaymentResult = (await requestTossBillingPayment({
+      billingKey: billingMethod.billing_key,
+      customerKey: billingMethod.customer_key,
+      amount: plan.price,
+      orderId: orderNo,
+      orderName,
+    })) as TossBillingPaymentResult;
+
+    const billingAnchorDay = getBillingAnchorDay(now);
+    const billingPeriod = createNextMonthlyBillingPeriod({
+      currentPeriodEnd: now,
+      billingAnchorDay,
     });
+
+    const paymentInsertResult = await supabaseAdmin
+      .from('payments')
+      .insert({
+        provider: PAYMENT_PROVIDER.TOSS,
+        payment_key: tossPaymentResult.paymentKey,
+        order_no: orderNo,
+        buyer_user_id: session.authUserId,
+        amount: plan.price,
+        refunded_amount: 0,
+        currency: 'KRW',
+        status: PAYMENT_STATUS.PAID,
+        payment_method: PAYMENT_METHOD.CARD,
+        payment_type: PAYMENT_TYPE.PLAN_BILLING,
+        target_type: PAYMENT_TARGET_TYPE.PLAN,
+        target_id: site.id,
+        post_payment: null,
+        subscription_id: null,
+        failure_code: null,
+        failure_message: null,
+        failure_stage: null,
+        refund_policy: REFUND_POLICY.SEVEN_DAYS,
+        refundable_until: createRefundableUntil(now),
+        approved_at: tossPaymentResult.approvedAt,
+        refunded_at: null,
+        raw_data: tossPaymentResult,
+      })
+      .select('id')
+      .single();
+
+    if (paymentInsertResult.error) {
+      console.error(paymentInsertResult.error);
+
+      return Response.json({ error: '요금제 결제 내역을 저장하지 못했습니다.' }, { status: 500 });
+    }
 
     const subscriptionInsertResult = await supabaseAdmin
       .from('subscriptions')
@@ -224,16 +438,16 @@ export async function POST(request: NextRequest) {
         target_id: site.id,
         owner_user_id: null,
         price: plan.price,
-        status: SUBSCRIPTION_STATUS.TRIALING,
+        status: SUBSCRIPTION_STATUS.ACTIVE,
         billing_key: encrypt(billingMethod.billing_key),
         customer_key: billingMethod.customer_key,
-        last_payment_id: null,
-        trial_started_at: billingPeriod.currentPeriodStart,
-        trial_ends_at: billingPeriod.currentPeriodEnd,
+        last_payment_id: paymentInsertResult.data.id,
+        trial_started_at: null,
+        trial_ends_at: null,
         current_period_start: billingPeriod.currentPeriodStart,
         current_period_end: billingPeriod.currentPeriodEnd,
         next_billing_at: billingPeriod.nextBillingAt,
-        billing_anchor_day: billingPeriod.billingAnchorDay,
+        billing_anchor_day: billingAnchorDay,
       })
       .select('id')
       .single();
@@ -242,6 +456,17 @@ export async function POST(request: NextRequest) {
       console.error(subscriptionInsertResult.error);
 
       return Response.json({ error: '요금제 구독을 저장하지 못했습니다.' }, { status: 500 });
+    }
+
+    const paymentUpdateResult = await supabaseAdmin
+      .from('payments')
+      .update({ subscription_id: subscriptionInsertResult.data.id })
+      .eq('id', paymentInsertResult.data.id);
+
+    if (paymentUpdateResult.error) {
+      console.error(paymentUpdateResult.error);
+
+      return Response.json({ error: '결제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
     }
 
     const siteOpenResult = await supabaseAdmin
@@ -261,6 +486,7 @@ export async function POST(request: NextRequest) {
       mode: 'direct_billing',
       ok: true,
       subscriptionId: subscriptionInsertResult.data.id,
+      paymentId: paymentInsertResult.data.id,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

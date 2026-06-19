@@ -34,9 +34,21 @@ function verifyTaskRequest(request: Request) {
   }
 
   const authorization = request.headers.get('authorization');
-  const expectedAuthorization = `Bearer ${taskSecret}`;
 
-  return authorization === expectedAuthorization;
+  return authorization === `Bearer ${taskSecret}`;
+}
+
+function isSubscriptionApiTarget(subscription: PastDueSubscriptionRow) {
+  if (
+    subscription.subscription_type !== SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION &&
+    subscription.subscription_type !== SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION
+  ) {
+    return false;
+  }
+
+  return (
+    subscription.target_type === PAYMENT_TARGET_TYPE.BOARD || subscription.target_type === PAYMENT_TARGET_TYPE.SERIES
+  );
 }
 
 async function expirePastDue(request: Request) {
@@ -54,6 +66,8 @@ async function expirePastDue(request: Request) {
     .from('subscriptions')
     .select('id, subscription_type, target_type, target_id, past_due_started_at')
     .eq('status', SUBSCRIPTION_STATUS.PAST_DUE)
+    .in('subscription_type', [SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION, SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION])
+    .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
     .is('expired_at', null)
     .lte('past_due_started_at', expiredBefore);
 
@@ -67,6 +81,16 @@ async function expirePastDue(request: Request) {
   const results: ExpirePastDueResult[] = [];
 
   for (const subscription of subscriptions) {
+    if (!isSubscriptionApiTarget(subscription)) {
+      results.push({
+        subscriptionId: subscription.id,
+        status: 'skipped',
+        message: 'subscriptions API 처리 대상이 아닙니다.',
+      });
+
+      continue;
+    }
+
     if (!subscription.past_due_started_at) {
       results.push({
         subscriptionId: subscription.id,
@@ -98,30 +122,6 @@ async function expirePastDue(request: Request) {
       });
 
       continue;
-    }
-
-    if (
-      subscription.subscription_type === SUBSCRIPTION_TYPE.PLAN_BILLING &&
-      subscription.target_type === PAYMENT_TARGET_TYPE.PLAN
-    ) {
-      const siteCloseResult = await supabaseAdmin
-        .from('rhizomes')
-        .update({
-          is_shutdown: true,
-        })
-        .eq('id', subscription.target_id);
-
-      if (siteCloseResult.error) {
-        console.error(siteCloseResult.error);
-
-        results.push({
-          subscriptionId: subscription.id,
-          status: 'expired',
-          message: '구독은 만료 처리되었으나 사이트 폐쇄에 실패했습니다.',
-        });
-
-        continue;
-      }
     }
 
     results.push({

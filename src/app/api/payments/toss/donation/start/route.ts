@@ -1,10 +1,24 @@
 import { NextRequest } from 'next/server';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
+import { getTossClientKey } from '@/lib/payments/toss';
+import { PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getTossClientKey } from '@/lib/payments/toss';
-import { createPaymentOrderNo } from '@/lib/payments/orderNo';
-import { PAYMENT_TYPE } from '@/lib/payments/types';
+
+type DonationStartBody = {
+  siteName?: string;
+  amount?: number;
+  successUrl?: string;
+  failUrl?: string;
+};
+
+type SiteRow = {
+  id: string;
+  site_key: string;
+  site_label: string | null;
+  is_shutdown: boolean;
+};
 
 function createOrderNo() {
   return createPaymentOrderNo('SITE_DONATION');
@@ -48,13 +62,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const body = (await request.json()) as {
-      siteName?: string;
-      amount?: number;
-      successUrl?: string;
-      failUrl?: string;
-    };
-
+    const body = (await request.json()) as DonationStartBody;
     const siteName = normalizeText(body.siteName).toLowerCase();
     const amount = body.amount;
 
@@ -64,7 +72,9 @@ export async function POST(request: NextRequest) {
 
     if (typeof amount !== 'number' || !validateDonationAmount(amount)) {
       return Response.json(
-        { error: '후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.' },
+        {
+          error: '후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.',
+        },
         { status: 400 },
       );
     }
@@ -87,7 +97,9 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '사이트 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (siteResult.data.is_shutdown) {
+    const site = siteResult.data as SiteRow;
+
+    if (site.is_shutdown) {
       return Response.json({ error: '현재 후원할 수 없는 사이트입니다.' }, { status: 400 });
     }
 
@@ -95,18 +107,20 @@ export async function POST(request: NextRequest) {
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 
-    successUrl.searchParams.set('siteId', siteResult.data.id);
+    successUrl.searchParams.set('siteId', site.id);
     successUrl.searchParams.set('orderNo', orderNo);
+    successUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION_SITE);
+    successUrl.searchParams.set('amount', String(amount));
 
-    failUrl.searchParams.set('siteId', siteResult.data.id);
+    failUrl.searchParams.set('siteId', site.id);
     failUrl.searchParams.set('orderNo', orderNo);
-    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION);
+    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION_SITE);
     failUrl.searchParams.set('amount', String(amount));
 
     return Response.json({
       clientKey: getTossClientKey(),
       orderNo,
-      orderName: `${siteResult.data.site_label ?? siteResult.data.site_key} 후원`,
+      orderName: `${site.site_label ?? site.site_key} 후원`,
       amount,
       successUrl: successUrl.toString(),
       failUrl: failUrl.toString(),

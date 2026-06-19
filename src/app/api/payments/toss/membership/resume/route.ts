@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     }
 
     const site = siteResult.data as SiteRow;
+
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {
@@ -88,11 +89,21 @@ export async function POST(request: Request) {
     }
 
     if (subscription.expired_at) {
-      return Response.json({ error: '이미 종료된 멤버십입니다. 다시 결제해야 합니다.' }, { status: 400 });
+      return Response.json(
+        {
+          error: '이미 종료된 멤버십입니다. 다시 결제해야 합니다.',
+        },
+        { status: 400 },
+      );
     }
 
     if (new Date(subscription.current_period_end).getTime() <= now.getTime()) {
-      return Response.json({ error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.' }, { status: 400 });
+      return Response.json(
+        {
+          error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.',
+        },
+        { status: 400 },
+      );
     }
 
     const subscriptionUpdateResult = await supabaseAdmin

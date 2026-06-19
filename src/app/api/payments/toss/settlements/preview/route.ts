@@ -1,13 +1,7 @@
-import { getPaymentPolicyDays } from '@/lib/payments/refunds';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { getPaymentPolicyDays, getPaymentPolicyMs } from '@/lib/payments/refunds';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const PLATFORM_FEE_RATE = 0.17;
-const PAYMENT_FEE_RATE = 0.034;
-const VAT_RATE = 0.1;
 
 type SiteRow = {
   id: string;
@@ -15,12 +9,17 @@ type SiteRow = {
   site_label: string | null;
 };
 
-type BoardRow = {
+type PaymentSplitRow = {
   id: string;
-};
-
-type SeriesRow = {
-  id: string;
+  payment_id: string;
+  site_id: string;
+  board_id: string | null;
+  series_id: string | null;
+  post_id: string | null;
+  receiver_user_id: string | null;
+  receiver_type: string;
+  rate: number;
+  amount: number;
 };
 
 type PaymentRow = {
@@ -39,6 +38,7 @@ type PaymentRow = {
 };
 
 type SettlementPreviewItem = {
+  splitId: string;
   paymentId: string;
   orderNo: string;
   buyerUserId: string;
@@ -47,50 +47,69 @@ type SettlementPreviewItem = {
   targetType: string;
   targetId: string;
   paymentMethod: string | null;
-  grossAmount: number;
-  refundedAmount: number;
-  netAmount: number;
-  supplyAmount: number;
-  vatAmount: number;
-  platformFee: number;
-  paymentFee: number;
-  paymentFeeVat: number;
+  receiverUserId: string | null;
+  receiverType: string;
+  rate: number;
+  siteId: string;
+  boardId: string | null;
+  seriesId: string | null;
+  postId: string | null;
+  paymentAmount: number;
+  paymentRefundedAmount: number;
+  splitAmount: number;
+  refundedSplitAmount: number;
   settlementAmount: number;
 };
 
-function calculateVatIncludedAmount(amount: number) {
-  const supplyAmount = Math.round(amount / (1 + VAT_RATE));
-  const vatAmount = amount - supplyAmount;
+type SettlementPreviewTotals = {
+  splitAmount: number;
+  refundedSplitAmount: number;
+  settlementAmount: number;
+  platformAmount: number;
+  siteOwnerAmount: number;
+  postAuthorAmount: number;
+};
 
-  return {
-    supplyAmount,
-    vatAmount,
-  };
+function calculateRefundedSplitAmount({
+  paymentAmount,
+  paymentRefundedAmount,
+  splitAmount,
+}: {
+  paymentAmount: number;
+  paymentRefundedAmount: number;
+  splitAmount: number;
+}) {
+  if (paymentAmount <= 0) {
+    return 0;
+  }
+
+  if (paymentRefundedAmount <= 0) {
+    return 0;
+  }
+
+  if (paymentRefundedAmount >= paymentAmount) {
+    return splitAmount;
+  }
+
+  return Math.round((splitAmount * paymentRefundedAmount) / paymentAmount);
 }
 
-function calculateSettlementAmount(amount: number) {
-  const { supplyAmount, vatAmount } = calculateVatIncludedAmount(amount);
-  const platformFee = Math.round(supplyAmount * PLATFORM_FEE_RATE);
-  const paymentFee = Math.round(amount * PAYMENT_FEE_RATE);
-  const paymentFeeVat = Math.round(paymentFee * VAT_RATE);
-  const settlementAmount = Math.max(0, supplyAmount - platformFee - paymentFee - paymentFeeVat);
+function createSettlementPreviewItem({
+  split,
+  payment,
+}: {
+  split: PaymentSplitRow;
+  payment: PaymentRow;
+}): SettlementPreviewItem {
+  const paymentRefundedAmount = payment.refunded_amount ?? 0;
+  const refundedSplitAmount = calculateRefundedSplitAmount({
+    paymentAmount: payment.amount,
+    paymentRefundedAmount,
+    splitAmount: split.amount,
+  });
 
   return {
-    supplyAmount,
-    vatAmount,
-    platformFee,
-    paymentFee,
-    paymentFeeVat,
-    settlementAmount,
-  };
-}
-
-function createSettlementPreviewItem(payment: PaymentRow): SettlementPreviewItem {
-  const refundedAmount = payment.refunded_amount ?? 0;
-  const netAmount = Math.max(0, payment.amount - refundedAmount);
-  const settlement = calculateSettlementAmount(netAmount);
-
-  return {
+    splitId: split.id,
     paymentId: payment.id,
     orderNo: payment.order_no,
     buyerUserId: payment.buyer_user_id,
@@ -99,89 +118,59 @@ function createSettlementPreviewItem(payment: PaymentRow): SettlementPreviewItem
     targetType: payment.target_type,
     targetId: payment.target_id,
     paymentMethod: payment.payment_method,
-    grossAmount: payment.amount,
-    refundedAmount,
-    netAmount,
-    supplyAmount: settlement.supplyAmount,
-    vatAmount: settlement.vatAmount,
-    platformFee: settlement.platformFee,
-    paymentFee: settlement.paymentFee,
-    paymentFeeVat: settlement.paymentFeeVat,
-    settlementAmount: settlement.settlementAmount,
+    receiverUserId: split.receiver_user_id,
+    receiverType: split.receiver_type,
+    rate: split.rate,
+    siteId: split.site_id,
+    boardId: split.board_id,
+    seriesId: split.series_id,
+    postId: split.post_id,
+    paymentAmount: payment.amount,
+    paymentRefundedAmount,
+    splitAmount: split.amount,
+    refundedSplitAmount,
+    settlementAmount: Math.max(0, split.amount - refundedSplitAmount),
   };
 }
 
-function calculateTotals(items: SettlementPreviewItem[]) {
+function calculateTotals(items: SettlementPreviewItem[]): SettlementPreviewTotals {
   return items.reduce(
-    (totals, item) => ({
-      grossAmount: totals.grossAmount + item.grossAmount,
-      refundedAmount: totals.refundedAmount + item.refundedAmount,
-      netAmount: totals.netAmount + item.netAmount,
-      supplyAmount: totals.supplyAmount + item.supplyAmount,
-      vatAmount: totals.vatAmount + item.vatAmount,
-      platformFee: totals.platformFee + item.platformFee,
-      paymentFee: totals.paymentFee + item.paymentFee,
-      paymentFeeVat: totals.paymentFeeVat + item.paymentFeeVat,
-      settlementAmount: totals.settlementAmount + item.settlementAmount,
-    }),
+    (totals, item) => {
+      const platformAmount = item.receiverType === 'platform' ? item.settlementAmount : 0;
+      const siteOwnerAmount = item.receiverType === 'site_owner' ? item.settlementAmount : 0;
+      const postAuthorAmount = item.receiverType === 'post_author' ? item.settlementAmount : 0;
+
+      return {
+        splitAmount: totals.splitAmount + item.splitAmount,
+        refundedSplitAmount: totals.refundedSplitAmount + item.refundedSplitAmount,
+        settlementAmount: totals.settlementAmount + item.settlementAmount,
+        platformAmount: totals.platformAmount + platformAmount,
+        siteOwnerAmount: totals.siteOwnerAmount + siteOwnerAmount,
+        postAuthorAmount: totals.postAuthorAmount + postAuthorAmount,
+      };
+    },
     {
-      grossAmount: 0,
-      refundedAmount: 0,
-      netAmount: 0,
-      supplyAmount: 0,
-      vatAmount: 0,
-      platformFee: 0,
-      paymentFee: 0,
-      paymentFeeVat: 0,
+      splitAmount: 0,
+      refundedSplitAmount: 0,
       settlementAmount: 0,
+      platformAmount: 0,
+      siteOwnerAmount: 0,
+      postAuthorAmount: 0,
     },
   );
 }
 
-async function getPaymentsByTarget({
-  supabaseAdmin,
-  targetType,
-  targetIds,
-  approvedBefore,
-}: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
-  targetType: string;
-  targetIds: string[];
-  approvedBefore: string;
-}) {
-  if (targetIds.length === 0) {
-    return [];
-  }
+function createPaymentMap(payments: PaymentRow[]) {
+  return new Map(payments.map((payment) => [payment.id, payment]));
+}
 
-  const result = await supabaseAdmin
-    .from('payments')
-    .select(
-      [
-        'id',
-        'approved_at',
-        'payment_key',
-        'order_no',
-        'buyer_user_id',
-        'amount',
-        'refunded_amount',
-        'status',
-        'payment_method',
-        'payment_type',
-        'target_type',
-        'target_id',
-      ].join(', '),
-    )
-    .in('status', ['paid', 'partially_refunded'])
-    .eq('target_type', targetType)
-    .in('target_id', targetIds)
-    .lte('approved_at', approvedBefore)
-    .order('approved_at', { ascending: true });
+function sortItems(items: SettlementPreviewItem[]) {
+  return items.sort((a, b) => {
+    const aTime = a.approvedAt ? new Date(a.approvedAt).getTime() : 0;
+    const bTime = b.approvedAt ? new Date(b.approvedAt).getTime() : 0;
 
-  if (result.error) {
-    throw result.error;
-  }
-
-  return (result.data ?? []) as unknown as PaymentRow[];
+    return aTime - bTime;
+  });
 }
 
 export async function GET(request: Request) {
@@ -212,72 +201,109 @@ export async function GET(request: Request) {
     }
 
     const site = siteResult.data as SiteRow;
+
     const session = await verifySession({ siteId: site.id });
 
     if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const boardsResult = await supabaseAdmin.from('boards').select('id').eq('site_id', site.id);
-
-    if (boardsResult.error) {
-      console.error(boardsResult.error);
-
-      return Response.json({ error: '게시판 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const seriesResult = await supabaseAdmin.from('board_series').select('id').eq('site_id', site.id);
-
-    if (seriesResult.error) {
-      console.error(seriesResult.error);
-
-      return Response.json({ error: '연재 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const boardIds = ((boardsResult.data ?? []) as BoardRow[]).map((board) => board.id);
-    const seriesIds = ((seriesResult.data ?? []) as SeriesRow[]).map((series) => series.id);
-
     const refundWindowDays = getPaymentPolicyDays();
-    const approvedBefore = new Date(Date.now() - refundWindowDays * DAY_MS).toISOString();
+    const refundWindowMs = getPaymentPolicyMs();
+    const approvedBefore = new Date(Date.now() - refundWindowMs).toISOString();
 
-    const blogPayments = await getPaymentsByTarget({
-      supabaseAdmin,
-      targetType: PAYMENT_TARGET_TYPE.BLOG,
-      targetIds: [site.id],
-      approvedBefore,
-    });
+    const splitsResult = await supabaseAdmin
+      .from('payment_splits')
+      .select(
+        [
+          'id',
+          'payment_id',
+          'site_id',
+          'board_id',
+          'series_id',
+          'post_id',
+          'receiver_user_id',
+          'receiver_type',
+          'rate',
+          'amount',
+        ].join(', '),
+      )
+      .eq('site_id', site.id)
+      .order('created_at', { ascending: true });
 
-    const donationPayments = await getPaymentsByTarget({
-      supabaseAdmin,
-      targetType: PAYMENT_TARGET_TYPE.DONATION,
-      targetIds: [site.id],
-      approvedBefore,
-    });
+    if (splitsResult.error) {
+      console.error(splitsResult.error);
 
-    const boardPayments = await getPaymentsByTarget({
-      supabaseAdmin,
-      targetType: PAYMENT_TARGET_TYPE.BOARD,
-      targetIds: boardIds,
-      approvedBefore,
-    });
+      return Response.json({ error: '분배 내역을 확인하지 못했습니다.' }, { status: 500 });
+    }
 
-    const seriesPayments = await getPaymentsByTarget({
-      supabaseAdmin,
-      targetType: PAYMENT_TARGET_TYPE.SERIES,
-      targetIds: seriesIds,
-      approvedBefore,
-    });
+    const splits = (splitsResult.data ?? []) as PaymentSplitRow[];
+    const paymentIds = Array.from(new Set(splits.map((split) => split.payment_id)));
 
-    const ownerPaymentTypes = new Set<string>([
-      PAYMENT_TYPE.BLOG_MEMBERSHIP,
-      PAYMENT_TYPE.BOARD_SUBSCRIPTION,
-      PAYMENT_TYPE.SERIES_SUBSCRIPTION,
-      PAYMENT_TYPE.DONATION,
-    ]);
+    if (paymentIds.length === 0) {
+      return Response.json({
+        ok: true,
+        site: {
+          id: site.id,
+          siteName: site.site_key,
+          siteLabel: site.site_label,
+        },
+        refundWindowDays,
+        refundWindowMs,
+        approvedBefore,
+        items: [],
+        totals: calculateTotals([]),
+      });
+    }
 
-    const items = [...blogPayments, ...donationPayments, ...boardPayments, ...seriesPayments]
-      .filter((payment) => ownerPaymentTypes.has(payment.payment_type))
-      .map(createSettlementPreviewItem);
+    const paymentsResult = await supabaseAdmin
+      .from('payments')
+      .select(
+        [
+          'id',
+          'approved_at',
+          'payment_key',
+          'order_no',
+          'buyer_user_id',
+          'amount',
+          'refunded_amount',
+          'status',
+          'payment_method',
+          'payment_type',
+          'target_type',
+          'target_id',
+        ].join(', '),
+      )
+      .in('id', paymentIds)
+      .in('status', ['paid', 'partially_refunded'])
+      .lte('approved_at', approvedBefore)
+      .order('approved_at', { ascending: true });
+
+    if (paymentsResult.error) {
+      console.error(paymentsResult.error);
+
+      return Response.json({ error: '결제 내역을 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const payments = (paymentsResult.data ?? []) as PaymentRow[];
+    const paymentMap = createPaymentMap(payments);
+
+    const items = sortItems(
+      splits.flatMap((split) => {
+        const payment = paymentMap.get(split.payment_id);
+
+        if (!payment) {
+          return [];
+        }
+
+        return [
+          createSettlementPreviewItem({
+            split,
+            payment,
+          }),
+        ];
+      }),
+    );
 
     return Response.json({
       ok: true,
@@ -287,6 +313,7 @@ export async function GET(request: Request) {
         siteLabel: site.site_label,
       },
       refundWindowDays,
+      refundWindowMs,
       approvedBefore,
       items,
       totals: calculateTotals(items),

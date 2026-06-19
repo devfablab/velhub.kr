@@ -1,4 +1,4 @@
-import { PAYMENT_TYPE } from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TYPE } from '@/lib/payments/types';
 import { cancelTossPayment } from '@/lib/payments/toss';
 import { calculateDonationRefundAmount } from '@/lib/payments/refunds';
 import verifySession from '@/lib/session/verifySession';
@@ -14,7 +14,7 @@ type PaymentRow = {
   buyer_user_id: string;
   payment_key: string | null;
   amount: number;
-  refunded_amount: number;
+  refunded_amount: number | null;
   status: 'paid' | 'failed' | 'partially_refunded' | 'refunded';
   payment_type: string;
   approved_at: string | null;
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
         ].join(', '),
       )
       .eq('id', paymentId)
-      .eq('payment_type', PAYMENT_TYPE.DONATION)
+      .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_POST])
       .maybeSingle();
 
     if (paymentResult.error) {
@@ -72,18 +72,18 @@ export async function POST(request: Request) {
     const payment = paymentResult.data as unknown as PaymentRow;
 
     if (payment.buyer_user_id !== session.authUserId) {
-      return Response.json({ error: '본인의 후원 결제만 취소할 수 있습니다.' }, { status: 403 });
+      return Response.json({ error: '본인의 후원 결제만 환불할 수 있습니다.' }, { status: 403 });
     }
 
-    if (payment.status === 'refunded') {
+    if (payment.status === PAYMENT_STATUS.REFUNDED) {
       return Response.json({ error: '이미 환불된 후원입니다.' }, { status: 400 });
     }
 
-    if (payment.status !== 'paid') {
+    if (payment.status !== PAYMENT_STATUS.PAID) {
       return Response.json({ error: '환불할 수 없는 후원 상태입니다.' }, { status: 400 });
     }
 
-    if (payment.refunded_amount > 0) {
+    if ((payment.refunded_amount ?? 0) > 0) {
       return Response.json({ error: '이미 환불 처리가 진행된 후원입니다.' }, { status: 400 });
     }
 
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
     const paymentUpdateResult = await supabaseAdmin
       .from('payments')
       .update({
-        status: 'refunded',
+        status: PAYMENT_STATUS.REFUNDED,
         refunded_amount: payment.amount,
         refunded_at: nowText,
         raw_data: tossCancelResult,

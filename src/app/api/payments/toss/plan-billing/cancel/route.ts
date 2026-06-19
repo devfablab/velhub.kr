@@ -5,6 +5,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
+
 type CancelPlanBillingBody = {
   siteId?: string;
 };
@@ -40,7 +42,7 @@ async function getLastPayment({
   subscription,
   siteId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
   siteId: string;
 }) {
@@ -162,7 +164,12 @@ export async function POST(request: Request) {
         return Response.json({ error: '요금제 구독을 취소하지 못했습니다.' }, { status: 500 });
       }
 
-      const siteCloseResult = await supabaseAdmin.from('rhizomes').update({ is_shutdown: true }).eq('id', siteId);
+      const siteCloseResult = await supabaseAdmin
+        .from('rhizomes')
+        .update({
+          is_shutdown: true,
+        })
+        .eq('id', siteId);
 
       if (siteCloseResult.error) {
         console.error(siteCloseResult.error);
@@ -262,7 +269,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '요금제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
     }
 
-    const siteCloseResult = await supabaseAdmin.from('rhizomes').update({ is_shutdown: true }).eq('id', siteId);
+    const siteCloseResult = await supabaseAdmin
+      .from('rhizomes')
+      .update({
+        is_shutdown: true,
+      })
+      .eq('id', siteId);
 
     if (siteCloseResult.error) {
       console.error(siteCloseResult.error);

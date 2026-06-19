@@ -5,6 +5,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
+
 type CancelMembershipBody = {
   siteName?: string;
 };
@@ -47,7 +49,7 @@ async function getLastPayment({
   siteId,
   authUserId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
   siteId: string;
   authUserId: string;
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
     }
 
     const site = siteResult.data as SiteRow;
+
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {

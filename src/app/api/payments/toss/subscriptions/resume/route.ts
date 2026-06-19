@@ -3,6 +3,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
+
 type SubscriptionTargetType = 'board' | 'series';
 
 type ResumeSubscriptionBody = {
@@ -40,7 +42,7 @@ type SubscriptionRow = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === PAYMENT_TARGET_TYPE.BOARD || value === PAYMENT_TARGET_TYPE.SERIES) {
     return value;
   }
 
@@ -48,7 +50,7 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
   }
 
@@ -56,7 +58,7 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return PAYMENT_TARGET_TYPE.BOARD;
   }
 
@@ -70,7 +72,7 @@ async function getSubscriptionTarget({
   targetType,
   seriesName,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
   boardName: string;
   targetType: SubscriptionTargetType;
@@ -93,7 +95,7 @@ async function getSubscriptionTarget({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === 'board') {
+  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
     return {
       targetId: board.id,
       targetLabel: board.board_label,
@@ -167,6 +169,7 @@ export async function POST(request: Request) {
     }
 
     const site = siteResult.data as SiteRow;
+
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {
@@ -183,6 +186,7 @@ export async function POST(request: Request) {
 
     const subscriptionType = getSubscriptionType(targetType);
     const paymentTargetType = getPaymentTargetType(targetType);
+
     const now = new Date();
     const nowText = now.toISOString();
 
@@ -215,11 +219,21 @@ export async function POST(request: Request) {
     }
 
     if (subscription.expired_at) {
-      return Response.json({ error: '이미 종료된 구독입니다. 다시 결제해야 합니다.' }, { status: 400 });
+      return Response.json(
+        {
+          error: '이미 종료된 구독입니다. 다시 결제해야 합니다.',
+        },
+        { status: 400 },
+      );
     }
 
     if (new Date(subscription.current_period_end).getTime() <= now.getTime()) {
-      return Response.json({ error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.' }, { status: 400 });
+      return Response.json(
+        {
+          error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.',
+        },
+        { status: 400 },
+      );
     }
 
     const subscriptionUpdateResult = await supabaseAdmin
