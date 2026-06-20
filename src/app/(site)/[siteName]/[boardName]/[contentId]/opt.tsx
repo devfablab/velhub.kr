@@ -208,9 +208,12 @@ type PostContent = {
   prefix_label: string | null;
   is_purchase_required: boolean;
   post_purchase_price: number;
+  has_board_subscription: boolean;
   has_series_subscription: boolean;
   has_post_purchase: boolean;
   can_view_paid_content: boolean;
+  board_series_count: number;
+  is_post_donation_available: boolean;
 };
 
 type SeriesItem = {
@@ -773,11 +776,10 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const postDonationButton =
-    board.is_subscription !== true &&
     content.published_status === 'published' &&
     !isPage &&
-    series &&
-    series.is_subscription !== true ? (
+    content.is_post_donation_available &&
+    !content.is_purchase_required ? (
       <div className={styles.options}>
         <div className={styles.buttons}>
           <DonationButton
@@ -792,10 +794,7 @@ export default function Opt({ isCommunity }: Props) {
       </div>
     ) : null;
 
-  console.log('content: ', content);
-
   const postPurchaseButton =
-    board.is_subscription &&
     content.published_status === 'published' &&
     !isPage &&
     content.is_purchase_required &&
@@ -1190,9 +1189,7 @@ export default function Opt({ isCommunity }: Props) {
                                 return (
                                   <li key={option.id}>
                                     {shouldShowResult ? (
-                                      <div
-                                        className={`${styles.option} ${isSelected ? styles.selected : styles['un-selected']}`}
-                                      >
+                                      <div className={`${styles.option} ${isSelected ? styles.selected : ''}`}>
                                         <div
                                           className={`${styles.progress} ${option.image ? styles['stack-progress'] : ''}`}
                                         >

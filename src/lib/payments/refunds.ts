@@ -1,7 +1,5 @@
-const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BILLING_CYCLE_DAYS = 30;
-const PAYMENT_POLICY_DAYS = 7;
 
 export type RefundCalculationResult = {
   isRefundable: boolean;
@@ -10,27 +8,18 @@ export type RefundCalculationResult = {
   retainedAmount: number;
   usedDays: number;
   refundWindowDays: number;
-  refundWindowMs: number;
 };
 
-function isTestMode() {
-  return process.env.NEXT_PUBLIC_APP_ENV === 'test';
-}
-
 export function getPaymentPolicyDays() {
-  return PAYMENT_POLICY_DAYS;
+  return process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 1 : 7;
 }
 
 export function getPaymentPolicyMs() {
-  if (isTestMode()) {
-    return HOUR_MS;
-  }
-
-  return PAYMENT_POLICY_DAYS * DAY_MS;
+  return getPaymentPolicyDays() * DAY_MS;
 }
 
 export function getPastDueGraceDays() {
-  return isTestMode() ? 1 : 7;
+  return process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 1 : 7;
 }
 
 function getElapsedTime(startedAt: string | Date, now = new Date()) {
@@ -38,30 +27,6 @@ function getElapsedTime(startedAt: string | Date, now = new Date()) {
   const elapsedMs = now.getTime() - startedDate.getTime();
 
   return Math.max(0, elapsedMs);
-}
-
-function createFullRefundResult(amount: number, refundWindowMs: number): RefundCalculationResult {
-  return {
-    isRefundable: true,
-    isFullRefund: true,
-    refundAmount: amount,
-    retainedAmount: 0,
-    usedDays: 0,
-    refundWindowDays: PAYMENT_POLICY_DAYS,
-    refundWindowMs,
-  };
-}
-
-function createNonRefundableResult(amount: number, refundWindowMs: number): RefundCalculationResult {
-  return {
-    isRefundable: false,
-    isFullRefund: false,
-    refundAmount: 0,
-    retainedAmount: amount,
-    usedDays: BILLING_CYCLE_DAYS,
-    refundWindowDays: PAYMENT_POLICY_DAYS,
-    refundWindowMs,
-  };
 }
 
 export function calculateSubscriptionRefundAmount({
@@ -73,23 +38,29 @@ export function calculateSubscriptionRefundAmount({
   paidAt: string | Date;
   now?: Date;
 }): RefundCalculationResult {
-  const refundWindowMs = getPaymentPolicyMs();
+  const refundWindowDays = getPaymentPolicyDays();
   const elapsedMs = getElapsedTime(paidAt, now);
 
-  if (isTestMode()) {
-    if (elapsedMs <= refundWindowMs) {
-      return createFullRefundResult(amount, refundWindowMs);
-    }
-
-    return createNonRefundableResult(amount, refundWindowMs);
-  }
-
   if (elapsedMs <= DAY_MS) {
-    return createFullRefundResult(amount, refundWindowMs);
+    return {
+      isRefundable: true,
+      isFullRefund: true,
+      refundAmount: amount,
+      retainedAmount: 0,
+      usedDays: 0,
+      refundWindowDays,
+    };
   }
 
-  if (elapsedMs > refundWindowMs) {
-    return createNonRefundableResult(amount, refundWindowMs);
+  if (elapsedMs > refundWindowDays * DAY_MS) {
+    return {
+      isRefundable: false,
+      isFullRefund: false,
+      refundAmount: 0,
+      retainedAmount: amount,
+      usedDays: BILLING_CYCLE_DAYS,
+      refundWindowDays,
+    };
   }
 
   const usedDays = Math.min(BILLING_CYCLE_DAYS, Math.max(1, Math.ceil((elapsedMs - DAY_MS) / DAY_MS)));
@@ -102,8 +73,7 @@ export function calculateSubscriptionRefundAmount({
     refundAmount,
     retainedAmount,
     usedDays,
-    refundWindowDays: PAYMENT_POLICY_DAYS,
-    refundWindowMs,
+    refundWindowDays,
   };
 }
 
@@ -118,12 +88,26 @@ export function calculateDonationRefundAmount({
   now?: Date;
   isManualException?: boolean;
 }): RefundCalculationResult {
-  const refundWindowMs = getPaymentPolicyMs();
+  const refundWindowDays = getPaymentPolicyDays();
   const elapsedMs = getElapsedTime(paidAt, now);
 
-  if (isManualException || elapsedMs <= refundWindowMs) {
-    return createFullRefundResult(amount, refundWindowMs);
+  if (isManualException || elapsedMs <= refundWindowDays * DAY_MS) {
+    return {
+      isRefundable: true,
+      isFullRefund: true,
+      refundAmount: amount,
+      retainedAmount: 0,
+      usedDays: 0,
+      refundWindowDays,
+    };
   }
 
-  return createNonRefundableResult(amount, refundWindowMs);
+  return {
+    isRefundable: false,
+    isFullRefund: false,
+    refundAmount: 0,
+    retainedAmount: amount,
+    usedDays: 0,
+    refundWindowDays,
+  };
 }

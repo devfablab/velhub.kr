@@ -1,7 +1,7 @@
+import { PAYMENT_PROVIDER, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 
 type SiteRow = {
   id: string;
@@ -46,12 +46,21 @@ export async function GET(request: Request) {
       .eq('site_key', siteName)
       .maybeSingle();
 
-    if (siteResult.error || !siteResult.data) {
-      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
+    if (siteResult.error) {
+      console.error(siteResult.error);
+
+      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!siteResult.data) {
+      return Response.json({ error: '사이트 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const site = siteResult.data as SiteRow;
-    const session = await verifySession({ siteId: site.id });
+
+    const session = await verifySession({
+      siteId: site.id,
+    });
 
     if (session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
@@ -61,33 +70,24 @@ export async function GET(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    let plan: {
-      id: string;
-      name: string | null;
-      price: number;
-    } | null = null;
+    const planResult = site.plan_type
+      ? await supabaseAdmin.from('plans').select('id, plan_label, price').eq('id', site.plan_type).maybeSingle()
+      : { data: null, error: null };
 
-    if (site.plan_type) {
-      const planResult = await supabaseAdmin
-        .from('plans')
-        .select('id, plan_label, price')
-        .eq('id', site.plan_type)
-        .maybeSingle();
+    if (planResult.error) {
+      console.error(planResult.error);
 
-      if (planResult.error) {
-        return Response.json({ error: '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
+      return Response.json({ error: '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
 
-      const planData = planResult.data as PlanRow | null;
-
-      if (planData) {
-        plan = {
+    const planData = planResult.data as PlanRow | null;
+    const plan = planData
+      ? {
           id: planData.id,
           name: planData.plan_label,
           price: planData.price,
-        };
-      }
-    }
+        }
+      : null;
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
@@ -119,6 +119,8 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (subscriptionResult.error) {
+      console.error(subscriptionResult.error);
+
       return Response.json({ error: '구독 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -154,7 +156,9 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
 
     if (paymentsResult.error) {
-      return Response.json({ error: paymentsResult.error.message }, { status: 500 });
+      console.error(paymentsResult.error);
+
+      return Response.json({ error: '결제 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     const billingMethodsResult = await supabaseAdmin
@@ -174,11 +178,13 @@ export async function GET(request: Request) {
         ].join(', '),
       )
       .eq('user_id', session.authUserId)
-      .eq('provider', 'toss')
+      .eq('provider', PAYMENT_PROVIDER.TOSS)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: false });
 
     if (billingMethodsResult.error) {
+      console.error(billingMethodsResult.error);
+
       return Response.json({ error: '결제수단 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 

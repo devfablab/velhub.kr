@@ -1,6 +1,3 @@
-import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
 import {
   PAYMENT_STATUS,
   PAYMENT_TARGET_TYPE,
@@ -10,9 +7,14 @@ import {
 } from '@/lib/payments/types';
 import {
   PARENT_SUBSCRIPTION_MIN_PRICE,
-  validateParentSubscriptionPrice,
   getRequiredParentSubscriptionPrice,
+  validateParentSubscriptionPrice,
 } from '@/lib/payments/subscriptionPrice';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
+
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 type SiteRow = {
   id: string;
@@ -75,8 +77,17 @@ type RhizomeStigmaRow = {
 };
 
 function getMembershipStatus(status: string) {
-  if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
-  if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return '유지 중';
+  }
+
+  if (status === SUBSCRIPTION_STATUS.PAST_DUE) {
+    return '결제 유예 중';
+  }
+
+  if (status === SUBSCRIPTION_STATUS.SCHEDULED_CANCEL) {
+    return '취소 예정';
+  }
 
   return '중단';
 }
@@ -127,7 +138,10 @@ async function getSiteAndSession(siteName: string) {
   }
 
   const site = siteResult.data as SiteRow;
-  const session = await verifySession({ siteId: site.id });
+
+  const session = await verifySession({
+    siteId: site.id,
+  });
 
   if (session.case !== 'staff') {
     return {
@@ -156,7 +170,7 @@ async function getMaxEnabledSeriesPrice({
   supabaseAdmin,
   siteId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
 }) {
   const seriesResult = await supabaseAdmin.from('board_series').select('id').eq('site_id', siteId);
@@ -218,7 +232,10 @@ export async function GET(request: Request) {
         .eq('target_id', site.id)
         .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
         .maybeSingle(),
-      getMaxEnabledSeriesPrice({ supabaseAdmin, siteId: site.id }),
+      getMaxEnabledSeriesPrice({
+        supabaseAdmin,
+        siteId: site.id,
+      }),
     ]);
 
     if (settingResult.error) {
@@ -284,7 +301,6 @@ export async function GET(request: Request) {
           lastPaidAmount: payment.amount,
           totalPaidAmount: payment.amount,
         });
-
         continue;
       }
 
@@ -408,7 +424,11 @@ export async function PATCH(request: Request) {
     }
 
     const { site, supabaseAdmin } = siteAndSession;
-    const maxSeriesPrice = await getMaxEnabledSeriesPrice({ supabaseAdmin, siteId: site.id });
+
+    const maxSeriesPrice = await getMaxEnabledSeriesPrice({
+      supabaseAdmin,
+      siteId: site.id,
+    });
 
     if (body.isEnabled) {
       const priceValidation = validateParentSubscriptionPrice(body.price, maxSeriesPrice);

@@ -14,6 +14,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
+
 type SiteRow = {
   id: string;
   site_key: string;
@@ -85,8 +87,17 @@ type RhizomeStigmaRow = {
 };
 
 function getSubscriptionStatus(status: string) {
-  if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
-  if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
+    return '유지 중';
+  }
+
+  if (status === SUBSCRIPTION_STATUS.PAST_DUE) {
+    return '결제 유예 중';
+  }
+
+  if (status === SUBSCRIPTION_STATUS.SCHEDULED_CANCEL) {
+    return '취소 예정';
+  }
 
   return '중단';
 }
@@ -119,7 +130,10 @@ async function getSiteAndSession(siteName: string) {
   }
 
   const site = siteResult.data as SiteRow;
-  const session = await verifySession({ siteId: site.id });
+
+  const session = await verifySession({
+    siteId: site.id,
+  });
 
   if (session.case !== 'staff') {
     return {
@@ -140,7 +154,7 @@ async function getBlogMembershipPrice({
   supabaseAdmin,
   siteId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   siteId: string;
 }) {
   const settingResult = await supabaseAdmin
@@ -165,7 +179,7 @@ async function getBoardSubscriptionPrice({
   supabaseAdmin,
   boardId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   boardId: string;
 }) {
   const settingResult = await supabaseAdmin
@@ -191,7 +205,7 @@ async function getParentSubscriptionPrice({
   site,
   boardId,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   site: SiteRow;
   boardId: string;
 }) {
@@ -213,7 +227,7 @@ async function getParentPriceByBoardId({
   site,
   boardIds,
 }: {
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  supabaseAdmin: SupabaseAdminClient;
   site: SiteRow;
   boardIds: string[];
 }) {
@@ -257,6 +271,70 @@ async function getParentPriceByBoardId({
   return result;
 }
 
+async function getSubscriptionEnabledSeriesCount({
+  supabaseAdmin,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+}) {
+  const seriesCountResult = await supabaseAdmin
+    .from('board_series')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('is_subscription', true);
+
+  if (seriesCountResult.error) {
+    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
+  }
+
+  return seriesCountResult.count ?? 0;
+}
+
+async function disableBoardSubscriptionIfNeeded({
+  supabaseAdmin,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+}) {
+  const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
+    supabaseAdmin,
+    siteId,
+    boardId,
+  });
+
+  if (subscriptionEnabledSeriesCount >= 2) {
+    return {
+      boardSubscriptionDisabled: false,
+      subscriptionEnabledSeriesCount,
+    };
+  }
+
+  const settingUpdateResult = await supabaseAdmin
+    .from('subscription_settings')
+    .update({
+      is_enabled: false,
+    })
+    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
+    .eq('target_id', boardId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION);
+
+  if (settingUpdateResult.error) {
+    throw new Error('게시판 구독 설정을 자동 해제하지 못했습니다.');
+  }
+
+  return {
+    boardSubscriptionDisabled: true,
+    subscriptionEnabledSeriesCount,
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -297,7 +375,12 @@ export async function GET(request: Request) {
 
     const boards = (boardsResult.data ?? []) as BoardRow[];
     const boardIds = boards.map((board) => board.id);
-    const parentPriceByBoardId = await getParentPriceByBoardId({ supabaseAdmin, site, boardIds });
+
+    const parentPriceByBoardId = await getParentPriceByBoardId({
+      supabaseAdmin,
+      site,
+      boardIds,
+    });
 
     const seriesResult = boardIds.length
       ? await supabaseAdmin
@@ -395,7 +478,6 @@ export async function GET(request: Request) {
           lastPaidAmount: payment.amount,
           totalPaidAmount: payment.amount,
         });
-
         continue;
       }
 
@@ -450,7 +532,6 @@ export async function GET(request: Request) {
 
     for (const series of seriesList) {
       const currentSeriesList = seriesByBoardId.get(series.board_id) ?? [];
-
       currentSeriesList.push(series);
       seriesByBoardId.set(series.board_id, currentSeriesList);
     }
@@ -459,7 +540,6 @@ export async function GET(request: Request) {
 
     for (const subscription of latestSubscriptions) {
       const currentSubscriptions = subscriptionsBySeriesId.get(subscription.target_id) ?? [];
-
       currentSubscriptions.push(subscription);
       subscriptionsBySeriesId.set(subscription.target_id, currentSubscriptions);
     }
@@ -678,7 +758,9 @@ export async function PATCH(request: Request) {
 
     const seriesSubscriptionUpdateResult = await supabaseAdmin
       .from('board_series')
-      .update({ is_subscription: body.isEnabled })
+      .update({
+        is_subscription: body.isEnabled,
+      })
       .eq('id', series.id)
       .eq('site_id', site.id);
 
@@ -688,11 +770,29 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '연재 구독 상태를 저장하지 못했습니다.' }, { status: 500 });
     }
 
+    const boardSubscriptionResult =
+      site.site_type === 'community' && !body.isEnabled
+        ? await disableBoardSubscriptionIfNeeded({
+            supabaseAdmin,
+            siteId: site.id,
+            boardId: board.id,
+          })
+        : {
+            boardSubscriptionDisabled: false,
+            subscriptionEnabledSeriesCount: await getSubscriptionEnabledSeriesCount({
+              supabaseAdmin,
+              siteId: site.id,
+              boardId: board.id,
+            }),
+          };
+
     return Response.json({
       ok: true,
       settingId: settingResult.data.id,
       parentPrice,
       maxAllowedPrice: getMaxAllowedSeriesSubscriptionPrice(parentPrice),
+      boardSubscriptionDisabled: boardSubscriptionResult.boardSubscriptionDisabled,
+      subscriptionEnabledSeriesCount: boardSubscriptionResult.subscriptionEnabledSeriesCount,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

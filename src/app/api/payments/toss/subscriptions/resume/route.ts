@@ -1,4 +1,4 @@
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -34,7 +34,7 @@ type SeriesRow = {
 
 type SubscriptionRow = {
   id: string;
-  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+  status: 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
   current_period_end: string;
   next_billing_at: string | null;
   canceled_at: string | null;
@@ -42,7 +42,7 @@ type SubscriptionRow = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === PAYMENT_TARGET_TYPE.BOARD || value === PAYMENT_TARGET_TYPE.SERIES) {
+  if (value === 'board' || value === 'series') {
     return value;
   }
 
@@ -50,7 +50,7 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
   }
 
@@ -58,7 +58,7 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return PAYMENT_TARGET_TYPE.BOARD;
   }
 
@@ -95,7 +95,7 @@ async function getSubscriptionTarget({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return {
       targetId: board.id,
       targetLabel: board.board_label,
@@ -170,7 +170,9 @@ export async function POST(request: Request) {
 
     const site = siteResult.data as SiteRow;
 
-    const session = await verifySession({ siteId: site.id });
+    const session = await verifySession({
+      siteId: site.id,
+    });
 
     if (!session.authUserId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
@@ -186,21 +188,25 @@ export async function POST(request: Request) {
 
     const subscriptionType = getSubscriptionType(targetType);
     const paymentTargetType = getPaymentTargetType(targetType);
-
     const now = new Date();
     const nowText = now.toISOString();
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
+      .eq('site_id', site.id)
       .eq('subscriber_user_id', session.authUserId)
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)
-      .in('status', ['trialing', 'active', 'past_due'])
+      .in('status', [
+        SUBSCRIPTION_STATUS.TRIALING,
+        SUBSCRIPTION_STATUS.ACTIVE,
+        SUBSCRIPTION_STATUS.PAST_DUE,
+        SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
+      ])
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
 
     if (subscriptionResult.error) {
       console.error(subscriptionResult.error);
@@ -208,37 +214,28 @@ export async function POST(request: Request) {
       return Response.json({ error: '구독 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    if (!subscriptionResult.data) {
+    const subscription = ((subscriptionResult.data ?? [])[0] as SubscriptionRow | undefined) ?? null;
+
+    if (!subscription) {
       return Response.json({ error: '취소 철회할 구독을 찾을 수 없습니다.' }, { status: 404 });
     }
-
-    const subscription = subscriptionResult.data as SubscriptionRow;
 
     if (!subscription.canceled_at) {
       return Response.json({ error: '취소 예약된 구독이 아닙니다.' }, { status: 400 });
     }
 
     if (subscription.expired_at) {
-      return Response.json(
-        {
-          error: '이미 종료된 구독입니다. 다시 결제해야 합니다.',
-        },
-        { status: 400 },
-      );
+      return Response.json({ error: '이미 종료된 구독입니다. 다시 결제해야 합니다.' }, { status: 400 });
     }
 
     if (new Date(subscription.current_period_end).getTime() <= now.getTime()) {
-      return Response.json(
-        {
-          error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.',
-        },
-        { status: 400 },
-      );
+      return Response.json({ error: '이미 현재 이용 기간이 종료되었습니다. 다시 결제해야 합니다.' }, { status: 400 });
     }
 
     const subscriptionUpdateResult = await supabaseAdmin
       .from('subscriptions')
       .update({
+        status: SUBSCRIPTION_STATUS.ACTIVE,
         canceled_at: null,
         next_billing_at: subscription.current_period_end,
         updated_at: nowText,

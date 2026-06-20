@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
 
 type SubscriptionTargetType = 'board' | 'series';
@@ -31,6 +33,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const boardName = normalizeText(params.boardName).toLowerCase();
 
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState('구독을 처리하고 있습니다.');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -83,6 +86,8 @@ export default function Opt() {
         } else {
           setErrorMessage('구독을 완료하지 못했습니다.');
         }
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -91,25 +96,38 @@ export default function Opt() {
     }
 
     hasRequestedRef.current = true;
-
     void completeSubscription();
   }, [boardName, searchParams, siteName]);
 
   return (
-    <div className="paper">
-      <Typography variant="h1">구독</Typography>
-
-      {errorMessage ? (
-        <Typography role="status" color="error">
-          {errorMessage}
-        </Typography>
-      ) : (
-        <Typography role="status">{message}</Typography>
-      )}
-
-      <Button type="button" href={`/${siteName}/${boardName}`} variant="contained">
-        게시판으로 이동
-      </Button>
-    </div>
+    <main>
+      <div className="container">
+        <div className="content">
+          <div className="paper">
+            {isLoading ? (
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            ) : (
+              <Stack spacing={3} alignItems="center">
+                <Typography variant="h5" component="h1">
+                  구독
+                </Typography>
+                {errorMessage ? (
+                  <Typography color="error" role="alert">
+                    {errorMessage}
+                  </Typography>
+                ) : (
+                  <Typography>{message}</Typography>
+                )}
+                <Button type="button" variant="contained" href={`/${siteName}/${boardName}`}>
+                  게시판으로 이동
+                </Button>
+              </Stack>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

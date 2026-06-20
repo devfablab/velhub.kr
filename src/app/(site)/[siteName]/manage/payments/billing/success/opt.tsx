@@ -3,11 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
-import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { normalizeText } from '@/lib/utils';
 import Container from '../../../menu';
 
 type PlanBillingSuccessResponse = {
@@ -21,18 +21,13 @@ export default function Opt() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
+  const isRequestedRef = useRef(false);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const isRequestedRef = useRef(false);
 
   useEffect(() => {
-    if (isRequestedRef.current) {
-      return;
-    }
-
-    isRequestedRef.current = true;
-
     async function completeBillingAuth() {
       try {
         setErrorMessage('');
@@ -80,6 +75,11 @@ export default function Opt() {
       }
     }
 
+    if (isRequestedRef.current) {
+      return;
+    }
+
+    isRequestedRef.current = true;
     void completeBillingAuth();
   }, [searchParams]);
 
@@ -93,45 +93,48 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="결제수단 등록 완료">
+      <Container menu="payments">
         <LoadingIndicator />
       </Container>
     );
   }
 
   return (
-    <Container pageTitle="결제수단 등록 완료">
-      <Paper variant="outlined">
-        <Stack spacing={2} sx={{ p: 3 }}>
+    <Container menu="payments">
+      <Paper variant="outlined" sx={{ p: 3 }}>
+        <Stack spacing={3} alignItems="center">
           {isSuccess ? (
             <>
-              {normalizeText(searchParams.get('purpose')) === 'billing_method' ? (
-                <>결제수단이 추가되었습니다.</>
-              ) : (
-                <>결제수단 등록이 완료되었습니다. 무료체험이 적용되었고 사이트 운영이 가능합니다.</>
+              <Typography variant="h6" component="h1">
+                {normalizeText(searchParams.get('purpose')) === 'billing_method'
+                  ? '결제수단이 추가되었습니다.'
+                  : '결제수단 등록이 완료되었습니다.'}
+              </Typography>
+              {normalizeText(searchParams.get('purpose')) === 'billing_method' ? null : (
+                <Typography color="text.secondary">무료체험이 적용되었고 사이트 운영이 가능합니다.</Typography>
               )}
             </>
           ) : (
             <>
-              <Typography variant="h6">결제수단 등록을 완료하지 못했습니다.</Typography>
+              <Typography variant="h6" component="h1">
+                결제수단 등록을 완료하지 못했습니다.
+              </Typography>
               {errorMessage ? (
-                <Typography role="status" color="error">
+                <Typography color="error" role="alert">
                   {errorMessage}
                 </Typography>
               ) : null}
             </>
           )}
 
-          <Stack direction="row" spacing={1}>
-            <Button type="button" variant="contained" onClick={handleGoBilling}>
-              결제/구독 관리로 이동
+          <Button type="button" variant="contained" onClick={handleGoBilling}>
+            결제/구독 관리로 이동
+          </Button>
+          {isSuccess ? (
+            <Button type="button" onClick={handleGoManage}>
+              관리 홈으로 이동
             </Button>
-            {isSuccess ? (
-              <Button type="button" variant="outlined" onClick={handleGoManage}>
-                관리 홈으로 이동
-              </Button>
-            ) : null}
-          </Stack>
+          ) : null}
         </Stack>
       </Paper>
     </Container>

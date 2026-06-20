@@ -19,35 +19,26 @@ export default function Opt() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hasProcessedRef = useRef(false);
 
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const boardName = normalizeText(params.boardName).toLowerCase();
+  const contentId = normalizeText(params.contentId);
 
-  const isRequestedRef = useRef(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [message, setMessage] = useState('포스팅 구매가 취소되었거나 실패했습니다.');
+  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    if (isRequestedRef.current) {
-      return;
-    }
-
-    isRequestedRef.current = true;
-
-    async function saveFailLog() {
+    async function saveFailPayment() {
       try {
-        setErrorMessage('');
-
-        const orderNo = normalizeText(searchParams.get('orderNo')) || normalizeText(searchParams.get('orderId'));
+        const orderNo = normalizeText(searchParams.get('orderId')) || normalizeText(searchParams.get('orderNo'));
         const code = normalizeText(searchParams.get('code'));
-        const message = normalizeText(searchParams.get('message'));
-        const paymentType = normalizeText(searchParams.get('paymentType'));
-        const targetType = normalizeText(searchParams.get('targetType'));
+        const failMessage = normalizeText(searchParams.get('message'));
         const siteId = normalizeText(searchParams.get('siteId'));
-        const amountText = normalizeText(searchParams.get('amount'));
-        const amount = Number(amountText);
+        const postId = normalizeText(searchParams.get('postId'));
 
-        if (!orderNo || !paymentType || !siteId || !amountText || !Number.isInteger(amount)) {
-          throw new Error('후원 실패 정보를 저장하지 못했습니다.');
+        if (!orderNo || !siteId || !postId) {
+          throw new Error('포스팅 구매 실패 정보를 저장하지 못했습니다.');
         }
 
         const response = await fetch('/api/payments/toss/fail', {
@@ -57,42 +48,47 @@ export default function Opt() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            paymentType,
+            paymentType: 'post_purchase',
+            targetType: 'post',
             orderNo,
             code,
-            message,
+            message: failMessage,
             siteId,
-            targetType,
-            amount,
+            postId,
           }),
         });
 
         const result = (await response.json()) as PaymentFailResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '후원 실패 정보를 저장하지 못했습니다.');
+          throw new Error(result.error ?? '포스팅 구매 실패 정보를 저장하지 못했습니다.');
         }
 
-        setErrorMessage(message);
+        setMessage(failMessage || '포스팅 구매가 취소되었거나 실패했습니다.');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '후원 실패 정보를 저장하지 못했습니다.');
+          setMessage(unknownError.message || '포스팅 구매가 취소되었거나 실패했습니다.');
         } else {
-          setErrorMessage('후원 실패 정보를 저장하지 못했습니다.');
+          setMessage('포스팅 구매가 취소되었거나 실패했습니다.');
         }
       } finally {
-        setIsLoading(false);
+        setIsProcessing(false);
       }
     }
 
-    void saveFailLog();
+    if (hasProcessedRef.current) {
+      return;
+    }
+
+    hasProcessedRef.current = true;
+    void saveFailPayment();
   }, [searchParams]);
 
-  function handleGoSite() {
-    router.replace(`/${siteName}`);
+  function handleGoBack() {
+    router.replace(`/${siteName}/${boardName}/${contentId}`);
   }
 
-  if (isLoading) {
+  if (isProcessing) {
     return (
       <main>
         <div className="container">
@@ -114,17 +110,9 @@ export default function Opt() {
         <div className="content">
           <div className="paper">
             <Stack spacing={3} alignItems="center">
-              <Typography variant="h5" component="h1">
-                후원 결제에 실패했습니다.
-              </Typography>
-              <Typography>후원을 다시 시도해 주세요.</Typography>
-              {errorMessage ? (
-                <Typography color="error" role="alert">
-                  {errorMessage}
-                </Typography>
-              ) : null}
-              <Button type="button" variant="contained" onClick={handleGoSite}>
-                사이트로 이동
+              <Typography role="alert">{message}</Typography>
+              <Button type="button" variant="contained" onClick={handleGoBack}>
+                글로 돌아가기
               </Button>
             </Stack>
           </div>

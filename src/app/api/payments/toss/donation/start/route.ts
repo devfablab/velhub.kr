@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { getTossClientKey } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -9,8 +9,8 @@ import { normalizeText } from '@/lib/utils';
 type DonationTargetType = 'site' | 'post';
 
 type DonationStartBody = {
-  targetType?: DonationTargetType;
   siteName?: string;
+  targetType?: DonationTargetType;
   boardName?: string;
   contentId?: string;
   amount?: number;
@@ -21,41 +21,62 @@ type DonationStartBody = {
 type SiteRow = {
   id: string;
   site_key: string;
-  site_label: string | null;
-  site_type: string;
+  site_label: string;
   is_shutdown: boolean;
 };
 
 type BoardRow = {
   id: string;
   board_key: string;
-  board_label: string | null;
-  board_type: string;
+  board_label: string;
 };
 
 type PostRow = {
   id: string;
-  slug: number | string;
-  subject: string | null;
+  slug: number;
+  subject: string;
   site_id: string;
   board_id: string;
-  user_id: string;
-  series_id: string | null;
+  series_id: string;
   published_status: string;
   is_closed: boolean;
 };
 
-type SeriesSubscriptionSettingRow = {
+type SeriesRow = {
   id: string;
-  is_enabled: boolean;
+  is_subscription: boolean | null;
 };
 
-function createOrderNo(targetType: DonationTargetType) {
-  if (targetType === 'post') {
-    return createPaymentOrderNo('POST_DONATION');
-  }
+type DonationTarget =
+  | {
+      targetType: 'site';
+      paymentType: typeof PAYMENT_TYPE.DONATION_SITE;
+      paymentTargetType: typeof PAYMENT_TARGET_TYPE.SITE;
+      site: SiteRow;
+      board: null;
+      post: null;
+      orderName: string;
+    }
+  | {
+      targetType: 'post';
+      paymentType: typeof PAYMENT_TYPE.DONATION_POST;
+      paymentTargetType: typeof PAYMENT_TARGET_TYPE.POST;
+      site: SiteRow;
+      board: BoardRow;
+      post: PostRow;
+      orderName: string;
+    };
 
-  return createPaymentOrderNo('SITE_DONATION');
+function isDonationTargetType(value: string): value is DonationTargetType {
+  return value === 'site' || value === 'post';
+}
+
+function isNumericSlug(value: string) {
+  return /^\d+$/.test(value);
+}
+
+function createOrderNo(targetType: DonationTargetType) {
+  return createPaymentOrderNo(targetType === 'post' ? 'POST_DONATION' : 'SITE_DONATION');
 }
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
@@ -88,24 +109,18 @@ function validateDonationAmount(amount: number) {
   return amount % 1000 === 0;
 }
 
-function normalizeDonationTargetType(value: string | null | undefined): DonationTargetType {
-  return value === 'post' ? 'post' : 'site';
-}
-
-function isNumericSlug(value: string) {
-  return /^\d+$/.test(value);
-}
-
-async function getSite({ siteName }: { siteName: string }) {
+async function getSiteByName(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, site_type, is_shutdown')
+    .select('id, site_key, site_label, is_shutdown')
     .eq('site_key', siteName)
     .maybeSingle();
 
   if (siteResult.error) {
+    console.error(siteResult.error);
+
     throw new Error('사이트 정보를 불러오지 못했습니다.');
   }
 
@@ -122,33 +137,19 @@ async function getSite({ siteName }: { siteName: string }) {
   return site;
 }
 
-async function getPostDonationTarget({
-  siteId,
-  boardName,
-  contentId,
-}: {
-  siteId: string;
-  boardName: string;
-  contentId: string;
-}) {
+async function getBoardByName({ siteId, boardName }: { siteId: string; boardName: string }) {
   const supabaseAdmin = getSupabaseAdmin();
-
-  if (!boardName) {
-    throw new Error('boardName이 유효하지 않습니다.');
-  }
-
-  if (!contentId || !isNumericSlug(contentId)) {
-    throw new Error('contentId가 유효하지 않습니다.');
-  }
 
   const boardResult = await supabaseAdmin
     .from('boards')
-    .select('id, board_key, board_label, board_type')
+    .select('id, board_key, board_label')
     .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
 
   if (boardResult.error) {
+    console.error(boardResult.error);
+
     throw new Error('게시판 정보를 불러오지 못했습니다.');
   }
 
@@ -156,17 +157,27 @@ async function getPostDonationTarget({
     throw new Error('게시판 정보를 찾을 수 없습니다.');
   }
 
-  const board = boardResult.data as BoardRow;
+  return boardResult.data as BoardRow;
+}
+
+async function getPostBySlug({ siteId, boardId, contentId }: { siteId: string; boardId: string; contentId: string }) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  if (!contentId || !isNumericSlug(contentId)) {
+    throw new Error('contentId가 유효하지 않습니다.');
+  }
 
   const postResult = await supabaseAdmin
     .from('posts')
-    .select('id, slug, subject, site_id, board_id, user_id, series_id, published_status, is_closed')
+    .select('id, slug, subject, site_id, board_id, series_id, published_status, is_closed')
     .eq('site_id', siteId)
-    .eq('board_id', board.id)
+    .eq('board_id', boardId)
     .eq('slug', Number(contentId))
     .maybeSingle();
 
   if (postResult.error) {
+    console.error(postResult.error);
+
     throw new Error('글 정보를 불러오지 못했습니다.');
   }
 
@@ -188,27 +199,122 @@ async function getPostDonationTarget({
     throw new Error('연재 글만 후원할 수 있습니다.');
   }
 
-  const seriesSubscriptionSettingResult = await supabaseAdmin
-    .from('subscription_settings')
-    .select('id, is_enabled')
-    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .eq('target_id', post.series_id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+  return post;
+}
+
+async function getSeriesById({ siteId, boardId, seriesId }: { siteId: string; boardId: string; seriesId: string }) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id, is_subscription')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('id', seriesId)
     .maybeSingle();
 
-  if (seriesSubscriptionSettingResult.error) {
-    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  if (seriesResult.error) {
+    console.error(seriesResult.error);
+
+    throw new Error('연재 정보를 확인하지 못했습니다.');
   }
 
-  const seriesSubscriptionSetting = seriesSubscriptionSettingResult.data as SeriesSubscriptionSettingRow | null;
+  if (!seriesResult.data) {
+    throw new Error('연재 정보를 찾을 수 없습니다.');
+  }
 
-  if (seriesSubscriptionSetting?.is_enabled) {
-    throw new Error('구독이 켜진 연재 글은 후원할 수 없습니다.');
+  return seriesResult.data as SeriesRow;
+}
+
+async function getBoardSeriesCount({ siteId, boardId }: { siteId: string; boardId: string }) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const seriesCountResult = await supabaseAdmin
+    .from('board_series')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', siteId)
+    .eq('board_id', boardId);
+
+  if (seriesCountResult.error) {
+    console.error(seriesCountResult.error);
+
+    throw new Error('연재 개수를 확인하지 못했습니다.');
+  }
+
+  return seriesCountResult.count ?? 0;
+}
+
+async function getDonationTarget({
+  siteName,
+  targetType,
+  boardName,
+  contentId,
+}: {
+  siteName: string;
+  targetType: DonationTargetType;
+  boardName: string;
+  contentId: string;
+}): Promise<DonationTarget> {
+  const site = await getSiteByName(siteName);
+
+  if (targetType === 'site') {
+    return {
+      targetType: 'site',
+      paymentType: PAYMENT_TYPE.DONATION_SITE,
+      paymentTargetType: PAYMENT_TARGET_TYPE.SITE,
+      site,
+      board: null,
+      post: null,
+      orderName: `${site.site_label || site.site_key} 후원`,
+    };
+  }
+
+  if (!boardName) {
+    throw new Error('boardName이 유효하지 않습니다.');
+  }
+
+  if (!contentId) {
+    throw new Error('contentId가 유효하지 않습니다.');
+  }
+
+  const board = await getBoardByName({
+    siteId: site.id,
+    boardName,
+  });
+
+  const seriesCount = await getBoardSeriesCount({
+    siteId: site.id,
+    boardId: board.id,
+  });
+
+  if (seriesCount < 2) {
+    throw new Error('연재가 2개 이상 있는 게시판의 연재 글만 후원할 수 있습니다.');
+  }
+
+  const post = await getPostBySlug({
+    siteId: site.id,
+    boardId: board.id,
+    contentId,
+  });
+
+  const series = await getSeriesById({
+    siteId: site.id,
+    boardId: board.id,
+    seriesId: post.series_id,
+  });
+
+  if (series.is_subscription === true) {
+    throw new Error('구독 설정된 연재 글은 후원 대신 구매할 수 있습니다.');
   }
 
   return {
+    targetType: 'post',
+    paymentType: PAYMENT_TYPE.DONATION_POST,
+    paymentTargetType: PAYMENT_TARGET_TYPE.POST,
+    site,
     board,
     post,
+    orderName: `${post.subject} 후원`,
   };
 }
 
@@ -221,8 +327,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as DonationStartBody;
-    const targetType = normalizeDonationTargetType(body.targetType);
     const siteName = normalizeText(body.siteName).toLowerCase();
+    const targetTypeValue = normalizeText(body.targetType).toLowerCase();
+    const targetType = isDonationTargetType(targetTypeValue) ? targetTypeValue : 'site';
     const boardName = normalizeText(body.boardName).toLowerCase();
     const contentId = normalizeText(body.contentId);
     const amount = body.amount;
@@ -233,66 +340,54 @@ export async function POST(request: NextRequest) {
 
     if (typeof amount !== 'number' || !validateDonationAmount(amount)) {
       return Response.json(
-        { error: '후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.' },
+        {
+          error: '후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.',
+        },
         { status: 400 },
       );
     }
 
-    const site = await getSite({
+    const target = await getDonationTarget({
       siteName,
+      targetType,
+      boardName,
+      contentId,
     });
 
-    const orderNo = createOrderNo(targetType);
+    const orderNo = createOrderNo(target.targetType);
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 
-    successUrl.searchParams.set('targetType', targetType);
-    successUrl.searchParams.set('siteId', site.id);
+    successUrl.searchParams.set('siteId', target.site.id);
     successUrl.searchParams.set('orderNo', orderNo);
+    successUrl.searchParams.set('paymentType', target.paymentType);
+    successUrl.searchParams.set('targetType', target.paymentTargetType);
+    successUrl.searchParams.set('amount', String(amount));
 
-    failUrl.searchParams.set('targetType', targetType);
-    failUrl.searchParams.set('siteId', site.id);
+    failUrl.searchParams.set('siteId', target.site.id);
     failUrl.searchParams.set('orderNo', orderNo);
+    failUrl.searchParams.set('paymentType', target.paymentType);
+    failUrl.searchParams.set('targetType', target.paymentTargetType);
     failUrl.searchParams.set('amount', String(amount));
 
-    if (targetType === 'post') {
-      const { board, post } = await getPostDonationTarget({
-        siteId: site.id,
-        boardName,
-        contentId,
-      });
+    if (target.targetType === 'post') {
+      successUrl.searchParams.set('boardId', target.board.id);
+      successUrl.searchParams.set('seriesId', target.post.series_id);
+      successUrl.searchParams.set('postId', target.post.id);
+      successUrl.searchParams.set('boardName', target.board.board_key);
+      successUrl.searchParams.set('contentId', String(target.post.slug));
 
-      successUrl.searchParams.set('boardId', board.id);
-      successUrl.searchParams.set('postId', post.id);
-      successUrl.searchParams.set('boardName', board.board_key);
-      successUrl.searchParams.set('contentId', String(post.slug));
-
-      failUrl.searchParams.set('boardId', board.id);
-      failUrl.searchParams.set('postId', post.id);
-      failUrl.searchParams.set('boardName', board.board_key);
-      failUrl.searchParams.set('contentId', String(post.slug));
-      failUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION_POST);
-      failUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.POST);
-
-      return Response.json({
-        clientKey: getTossClientKey(),
-        orderNo,
-        orderName: `${post.subject ?? '글'} 후원`,
-        amount,
-        successUrl: successUrl.toString(),
-        failUrl: failUrl.toString(),
-      });
+      failUrl.searchParams.set('boardId', target.board.id);
+      failUrl.searchParams.set('seriesId', target.post.series_id);
+      failUrl.searchParams.set('postId', target.post.id);
+      failUrl.searchParams.set('boardName', target.board.board_key);
+      failUrl.searchParams.set('contentId', String(target.post.slug));
     }
-
-    successUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.SITE);
-
-    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.DONATION_SITE);
-    failUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.SITE);
 
     return Response.json({
       clientKey: getTossClientKey(),
       orderNo,
-      orderName: `${site.site_label ?? site.site_key} 후원`,
+      orderName: target.orderName,
       amount,
       successUrl: successUrl.toString(),
       failUrl: failUrl.toString(),

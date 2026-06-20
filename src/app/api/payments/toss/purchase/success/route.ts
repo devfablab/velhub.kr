@@ -8,6 +8,7 @@ import {
   PAYMENT_TARGET_TYPE,
   PAYMENT_TYPE,
   REFUND_POLICY,
+  SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import { confirmTossPayment, TossPaymentConfirmError } from '@/lib/payments/toss';
@@ -44,6 +45,11 @@ type PostRow = {
   is_closed: boolean;
 };
 
+type SeriesRow = {
+  id: string;
+  is_subscription: boolean | null;
+};
+
 type SubscriptionSettingRow = {
   id: string;
   price: number;
@@ -77,6 +83,46 @@ function getPostPurchasePrice(seriesSubscriptionPrice: number) {
 
 function createRefundableUntil(startedAt: Date) {
   return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
+}
+
+async function hasActiveSubscription({
+  supabaseAdmin,
+  authUserId,
+  siteId,
+  targetType,
+  targetId,
+  subscriptionType,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  authUserId: string;
+  siteId: string;
+  targetType: string;
+  targetId: string;
+  subscriptionType: string;
+}) {
+  const subscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('subscriber_user_id', authUserId)
+    .eq('target_type', targetType)
+    .eq('target_id', targetId)
+    .eq('subscription_type', subscriptionType)
+    .in('status', [
+      SUBSCRIPTION_STATUS.TRIALING,
+      SUBSCRIPTION_STATUS.ACTIVE,
+      SUBSCRIPTION_STATUS.PAST_DUE,
+      SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
+    ])
+    .is('expired_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (subscriptionResult.error) {
+    throw new Error('구독 상태를 확인하지 못했습니다.');
+  }
+
+  return (subscriptionResult.data ?? []).length > 0;
 }
 
 async function getSiteById({ supabaseAdmin, siteId }: { supabaseAdmin: SupabaseAdminClient; siteId: string }) {
@@ -137,16 +183,46 @@ async function getPostById({
     throw new Error('현재 구매할 수 없는 글입니다.');
   }
 
+  if (!post.series_id) {
+    throw new Error('연재 글만 구매할 수 있습니다.');
+  }
+
   return post;
 }
 
 async function getSeriesSubscriptionPrice({
   supabaseAdmin,
+  siteId,
+  boardId,
   seriesId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
   seriesId: string;
 }) {
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id, is_subscription')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('id', seriesId)
+    .maybeSingle();
+
+  if (seriesResult.error) {
+    throw new Error('연재 정보를 확인하지 못했습니다.');
+  }
+
+  if (!seriesResult.data) {
+    throw new Error('연재 정보를 찾을 수 없습니다.');
+  }
+
+  const series = seriesResult.data as SeriesRow;
+
+  if (series.is_subscription !== true) {
+    throw new Error('구독 설정된 연재 글만 구매할 수 있습니다.');
+  }
+
   const subscriptionSettingResult = await supabaseAdmin
     .from('subscription_settings')
     .select('id, price, is_enabled')
@@ -256,6 +332,8 @@ export async function POST(request: NextRequest) {
 
     const seriesSubscriptionPrice = await getSeriesSubscriptionPrice({
       supabaseAdmin,
+      siteId: site.id,
+      boardId: post.board_id,
       seriesId: post.series_id,
     });
 
@@ -269,11 +347,37 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '포스팅 구매 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
+    const hasBoardSubscription = await hasActiveSubscription({
+      supabaseAdmin,
+      authUserId: session.authUserId,
+      siteId: site.id,
+      targetType: PAYMENT_TARGET_TYPE.BOARD,
+      targetId: post.board_id,
+      subscriptionType: SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION,
+    });
+
+    if (hasBoardSubscription) {
+      return Response.json({ error: '이미 게시판 구독으로 볼 수 있는 글입니다.' }, { status: 400 });
+    }
+
+    const hasSeriesSubscription = await hasActiveSubscription({
+      supabaseAdmin,
+      authUserId: session.authUserId,
+      siteId: site.id,
+      targetType: PAYMENT_TARGET_TYPE.SERIES,
+      targetId: post.series_id,
+      subscriptionType: SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION,
+    });
+
+    if (hasSeriesSubscription) {
+      return Response.json({ error: '이미 연재 구독으로 볼 수 있는 글입니다.' }, { status: 400 });
+    }
+
     const existingPaymentResult = await supabaseAdmin
       .from('payments')
       .select('id, amount')
       .eq('payment_key', paymentKey)
-      .maybeSingle();
+      .limit(1);
 
     if (existingPaymentResult.error) {
       console.error(existingPaymentResult.error);
@@ -293,9 +397,9 @@ export async function POST(request: NextRequest) {
       errorMessage: '글 작성자 정보를 확인하지 못했습니다.',
     });
 
-    if (existingPaymentResult.data) {
-      const existingPayment = existingPaymentResult.data as ExistingPaymentRow;
+    const existingPayment = ((existingPaymentResult.data ?? [])[0] as ExistingPaymentRow | undefined) ?? null;
 
+    if (existingPayment) {
       await createPostPaymentSplits({
         supabaseAdmin,
         paymentId: existingPayment.id,
@@ -387,7 +491,9 @@ export async function POST(request: NextRequest) {
 
     if (unknownError instanceof Error) {
       return Response.json(
-        { error: unknownError.message || '포스팅 구매 결제를 완료하지 못했습니다.' },
+        {
+          error: unknownError.message || '포스팅 구매 결제를 완료하지 못했습니다.',
+        },
         { status: 500 },
       );
     }

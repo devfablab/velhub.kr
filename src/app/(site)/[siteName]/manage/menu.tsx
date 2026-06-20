@@ -48,7 +48,7 @@ type ContainerProps = {
   pageTitle?: string;
   pageBack?: string;
   pageEnterance?: boolean;
-  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team';
+  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments';
   children: React.ReactNode;
 };
 

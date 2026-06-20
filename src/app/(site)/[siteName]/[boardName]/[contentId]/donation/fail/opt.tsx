@@ -7,28 +7,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
 
-type SubscriptionTargetType = 'board' | 'series';
-
 type FailResponse = {
   ok?: boolean;
   error?: string;
 };
-
-function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
-    return value;
-  }
-
-  return null;
-}
-
-function getDefaultMessage(targetType: SubscriptionTargetType | null) {
-  if (targetType === 'series') {
-    return '연재 구독이 취소되었거나 실패했습니다.';
-  }
-
-  return '게시판 구독이 취소되었거나 실패했습니다.';
-}
 
 export default function Opt() {
   const params = useParams();
@@ -37,11 +19,9 @@ export default function Opt() {
 
   const siteName = normalizeText(params.siteName).toLowerCase();
   const boardName = normalizeText(params.boardName).toLowerCase();
+  const contentId = normalizeText(params.contentId);
 
-  const targetType = getTargetType(normalizeText(searchParams.get('targetType')));
-  const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
-  const message = normalizeText(searchParams.get('message')) || getDefaultMessage(targetType);
-
+  const message = normalizeText(searchParams.get('message')) || '후원이 취소되었거나 실패했습니다.';
   const [logErrorMessage, setLogErrorMessage] = useState('');
 
   useEffect(() => {
@@ -50,11 +30,13 @@ export default function Opt() {
       const amount = Number(normalizeText(searchParams.get('amount')));
       const code = normalizeText(searchParams.get('code'));
       const paymentType = normalizeText(searchParams.get('paymentType'));
+      const targetType = normalizeText(searchParams.get('targetType'));
       const siteId = normalizeText(searchParams.get('siteId'));
       const boardId = normalizeText(searchParams.get('boardId'));
       const seriesId = normalizeText(searchParams.get('seriesId'));
+      const postId = normalizeText(searchParams.get('postId'));
 
-      if (!orderNo || !paymentType || !targetType || !siteId) {
+      if (!orderNo || !paymentType || !targetType || !siteId || !postId) {
         return;
       }
 
@@ -75,8 +57,9 @@ export default function Opt() {
             siteId,
             boardId,
             seriesId,
+            postId,
             boardName,
-            seriesName: targetType === 'series' ? seriesName : null,
+            contentId,
           }),
         });
 
@@ -100,7 +83,7 @@ export default function Opt() {
 
     hasRequestedRef.current = true;
     void saveFailLog();
-  }, [boardName, message, searchParams, seriesName, siteName, targetType]);
+  }, [boardName, contentId, message, searchParams]);
 
   return (
     <main>
@@ -109,7 +92,7 @@ export default function Opt() {
           <div className="paper">
             <Stack spacing={3} alignItems="center">
               <Typography variant="h5" component="h1">
-                {targetType === 'series' ? '연재 구독 실패' : '게시판 구독 실패'}
+                글 후원 실패
               </Typography>
               <Typography role="alert">{message}</Typography>
               {logErrorMessage ? (
@@ -117,8 +100,8 @@ export default function Opt() {
                   {logErrorMessage}
                 </Typography>
               ) : null}
-              <Button type="button" variant="contained" href={`/${siteName}/${boardName}`}>
-                게시판으로 이동
+              <Button type="button" variant="contained" href={`/${siteName}/${boardName}/${contentId}`}>
+                글로 이동
               </Button>
             </Stack>
           </div>

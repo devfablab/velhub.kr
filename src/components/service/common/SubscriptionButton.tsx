@@ -7,13 +7,13 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 type BoardInfo = {
   id: string;
   board_key: string;
   board_label: string;
-  is_subscription?: boolean | null;
 };
 
 type SelectedSeries = {
@@ -22,7 +22,6 @@ type SelectedSeries = {
 };
 
 type SubscriptionTargetType = 'board' | 'series';
-
 type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type Props = {
@@ -155,10 +154,6 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
           return;
         }
 
-        if (targetType === 'board' && !board.is_subscription) {
-          return;
-        }
-
         const response = await fetch(`/api/payments/toss/subscriptions/status?${statusQueryString}`, {
           method: 'GET',
           credentials: 'include',
@@ -183,7 +178,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     }
 
     void loadSubscriptionStatus();
-  }, [board, targetType, statusQueryString]);
+  }, [board, statusQueryString]);
 
   function handleOpenDialog() {
     setErrorMessage('');
@@ -232,7 +227,6 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
       if (result.mode === 'direct_billing') {
         setSubscriptionStatus('active');
         setIsDialogOpen(false);
-        setIsProcessing(false);
         return;
       }
 
@@ -253,7 +247,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
       } else {
         setErrorMessage('구독을 시작하지 못했습니다.');
       }
-
+    } finally {
       setIsProcessing(false);
     }
   }
@@ -350,49 +344,40 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
 
   return (
     <>
-      {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
-        <button type="button" className="button small action" onClick={handleOpenDialog} disabled={isProcessing}>
-          {getSubscribeButtonText({ targetType, subscriptionStatus })}
-        </button>
-      ) : null}
+      <Stack spacing={1} alignItems="flex-start">
+        {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
+          <Button type="button" variant="contained" onClick={handleOpenDialog} disabled={isProcessing}>
+            {getSubscribeButtonText({ targetType, subscriptionStatus })}
+          </Button>
+        ) : null}
 
-      {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
-        <button
-          type="button"
-          className="button small action"
-          onClick={handleCancelSubscription}
-          disabled={isProcessing}
-        >
-          {targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}
-        </button>
-      ) : null}
+        {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
+          <Button type="button" variant="outlined" onClick={handleCancelSubscription} disabled={isProcessing}>
+            {targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}
+          </Button>
+        ) : null}
 
-      {subscriptionStatus === 'scheduled_cancel' ? (
-        <button
-          type="button"
-          className="button small action"
-          onClick={handleResumeSubscription}
-          disabled={isProcessing}
-        >
-          재구독하기
-        </button>
-      ) : null}
+        {subscriptionStatus === 'scheduled_cancel' ? (
+          <Button type="button" variant="contained" onClick={handleResumeSubscription} disabled={isProcessing}>
+            재구독하기
+          </Button>
+        ) : null}
 
-      {errorMessage ? (
-        <Typography role="status" color="error">
-          {errorMessage}
-        </Typography>
-      ) : null}
+        {errorMessage ? (
+          <Typography color="error" role="alert">
+            {errorMessage}
+          </Typography>
+        ) : null}
+      </Stack>
 
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-        <DialogTitle>{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
+      <Dialog open={isDialogOpen} onClose={handleCloseDialog} aria-labelledby="subscription-dialog-title">
+        <DialogTitle id="subscription-dialog-title">{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
         <DialogContent>
           <Typography>
             {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독합니다.
           </Typography>
-
           {errorMessage ? (
-            <Typography role="status" color="error">
+            <Typography color="error" role="alert">
               {errorMessage}
             </Typography>
           ) : null}

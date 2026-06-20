@@ -5,8 +5,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type PaymentFailResponse = {
   ok?: boolean;
@@ -21,6 +21,8 @@ export default function Opt() {
   const searchParams = useSearchParams();
 
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const boardName = normalizeText(params.boardName).toLowerCase();
+  const contentId = normalizeText(params.contentId);
 
   const isRequestedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,10 +45,13 @@ export default function Opt() {
         const paymentType = normalizeText(searchParams.get('paymentType'));
         const targetType = normalizeText(searchParams.get('targetType'));
         const siteId = normalizeText(searchParams.get('siteId'));
+        const boardId = normalizeText(searchParams.get('boardId'));
+        const seriesId = normalizeText(searchParams.get('seriesId'));
+        const postId = normalizeText(searchParams.get('postId'));
         const amountText = normalizeText(searchParams.get('amount'));
         const amount = Number(amountText);
 
-        if (!orderNo || !paymentType || !siteId || !amountText || !Number.isInteger(amount)) {
+        if (!orderNo || !paymentType || !siteId || !postId || !amountText || !Number.isInteger(amount)) {
           throw new Error('후원 실패 정보를 저장하지 못했습니다.');
         }
 
@@ -63,6 +68,11 @@ export default function Opt() {
             message,
             siteId,
             targetType,
+            boardId,
+            boardName,
+            seriesId,
+            postId,
+            contentId,
             amount,
           }),
         });
@@ -72,8 +82,6 @@ export default function Opt() {
         if (!response.ok) {
           throw new Error(result.error ?? '후원 실패 정보를 저장하지 못했습니다.');
         }
-
-        setErrorMessage(message);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '후원 실패 정보를 저장하지 못했습니다.');
@@ -86,10 +94,10 @@ export default function Opt() {
     }
 
     void saveFailLog();
-  }, [searchParams]);
+  }, [searchParams, boardName, contentId]);
 
-  function handleGoSite() {
-    router.replace(`/${siteName}`);
+  function handleGoPost() {
+    router.replace(`/${siteName}/${boardName}/${contentId}`);
   }
 
   if (isLoading) {
@@ -115,16 +123,17 @@ export default function Opt() {
           <div className="paper">
             <Stack spacing={3} alignItems="center">
               <Typography variant="h5" component="h1">
-                후원 결제에 실패했습니다.
+                글 후원이 완료되지 않았습니다.
               </Typography>
-              <Typography>후원을 다시 시도해 주세요.</Typography>
               {errorMessage ? (
                 <Typography color="error" role="alert">
                   {errorMessage}
                 </Typography>
-              ) : null}
-              <Button type="button" variant="contained" onClick={handleGoSite}>
-                사이트로 이동
+              ) : (
+                <Typography>결제가 취소되었거나 승인되지 않았습니다.</Typography>
+              )}
+              <Button type="button" variant="contained" onClick={handleGoPost}>
+                글로 이동
               </Button>
             </Stack>
           </div>

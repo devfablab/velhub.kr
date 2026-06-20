@@ -1,6 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
-import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import { createOwnerPaymentSplits } from '@/lib/payments/splits';
 import { issueTossBillingKey, requestTossBillingPayment } from '@/lib/payments/toss';
 import {
@@ -24,11 +23,11 @@ type SubscriptionTargetType = 'board' | 'series';
 type SubscriptionSuccessBody = {
   authKey?: string;
   customerKey?: string;
+  orderNo?: string;
   siteName?: string;
   boardName?: string;
   targetType?: string;
   seriesName?: string | null;
-  orderNo?: string;
 };
 
 type SiteRow = {
@@ -47,7 +46,6 @@ type BoardRow = {
   id: string;
   board_key: string;
   board_label: string | null;
-  is_subscription: boolean | null;
 };
 
 type SeriesRow = {
@@ -60,23 +58,6 @@ type SeriesRow = {
 type SubscriptionSettingRow = {
   price: number;
   is_enabled: boolean;
-};
-
-type SubscriptionRow = {
-  id: string;
-  status: string;
-  current_period_end: string | null;
-  next_billing_at: string | null;
-  canceled_at: string | null;
-  expired_at: string | null;
-};
-
-type SubscriptionTarget = {
-  targetId: string;
-  targetLabel: string | null;
-  boardId: string;
-  seriesId: string | null;
-  isSubscriptionTarget: boolean;
 };
 
 type TossBillingKeyResult = {
@@ -107,6 +88,14 @@ type TossBillingPaymentResult = {
 type BillingMethodRow = {
   id: string;
   is_default: boolean;
+};
+
+type SubscriptionTarget = {
+  targetId: string;
+  targetLabel: string | null;
+  boardId: string;
+  seriesId: string | null;
+  isSubscriptionTarget: boolean;
 };
 
 const CARD_COMPANY_BY_CODE: Record<string, string> = {
@@ -140,7 +129,7 @@ function getCardCompanyName(cardCompanyCode: string) {
 }
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === PAYMENT_TARGET_TYPE.BOARD || value === PAYMENT_TARGET_TYPE.SERIES) {
+  if (value === 'board' || value === 'series') {
     return value;
   }
 
@@ -148,7 +137,7 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
   }
 
@@ -156,7 +145,7 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
 }
 
 function getPaymentType(targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return PAYMENT_TYPE.BOARD_SUBSCRIPTION;
   }
 
@@ -164,79 +153,140 @@ function getPaymentType(targetType: SubscriptionTargetType) {
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     return PAYMENT_TARGET_TYPE.BOARD;
   }
 
   return PAYMENT_TARGET_TYPE.SERIES;
 }
 
-function isOpenSubscription(subscription: SubscriptionRow | null) {
-  if (!subscription) {
-    return false;
-  }
+function getRefundableUntil(startedAt: Date) {
+  const refundableUntil = new Date(startedAt);
 
-  if (subscription.expired_at) {
-    return false;
-  }
+  refundableUntil.setDate(refundableUntil.getDate() + 7);
 
-  if (subscription.canceled_at) {
-    return false;
-  }
-
-  return (
-    subscription.status === SUBSCRIPTION_STATUS.TRIALING ||
-    subscription.status === SUBSCRIPTION_STATUS.ACTIVE ||
-    subscription.status === SUBSCRIPTION_STATUS.PAST_DUE
-  );
+  return refundableUntil;
 }
 
-function isScheduledCancelSubscription(subscription: SubscriptionRow | null, now: Date) {
-  if (!subscription) {
-    return false;
+async function getSiteByName({ supabaseAdmin, siteName }: { supabaseAdmin: SupabaseAdminClient; siteName: string }) {
+  const siteResult = await supabaseAdmin
+    .from('rhizomes')
+    .select('id, site_key, site_label, owner_id')
+    .eq('site_key', siteName)
+    .maybeSingle();
+
+  if (siteResult.error) {
+    throw new Error('사이트 정보를 확인하지 못했습니다.');
   }
 
-  if (!subscription.canceled_at) {
-    return false;
+  if (!siteResult.data) {
+    throw new Error('사이트 정보를 찾을 수 없습니다.');
   }
 
-  if (subscription.expired_at) {
-    return false;
-  }
-
-  if (!subscription.current_period_end) {
-    return false;
-  }
-
-  return new Date(subscription.current_period_end).getTime() > now.getTime();
+  return siteResult.data as SiteRow;
 }
 
-function createRefundableUntil(startedAt: Date) {
-  return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
+async function getBoardByName({
+  supabaseAdmin,
+  siteId,
+  boardName,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardName: string;
+}) {
+  const boardResult = await supabaseAdmin
+    .from('boards')
+    .select('id, board_key, board_label')
+    .eq('site_id', siteId)
+    .eq('board_key', boardName)
+    .maybeSingle();
+
+  if (boardResult.error) {
+    throw new Error('게시판 정보를 확인하지 못했습니다.');
+  }
+
+  if (!boardResult.data) {
+    throw new Error('게시판 정보를 찾을 수 없습니다.');
+  }
+
+  return boardResult.data as BoardRow;
 }
 
-function isValidOrderNo(orderNo: string, targetType: SubscriptionTargetType) {
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
-    return orderNo.startsWith('VH-SUBS-BOARD-');
+async function getSubscriptionSeriesCount({
+  supabaseAdmin,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+}) {
+  const seriesCountResult = await supabaseAdmin
+    .from('board_series')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('is_subscription', true);
+
+  if (seriesCountResult.error) {
+    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
   }
 
-  return orderNo.startsWith('VH-SUBS-SERIES-');
+  return seriesCountResult.count ?? 0;
 }
 
-async function getSiteOwnerUserId({ supabaseAdmin, ownerId }: { supabaseAdmin: SupabaseAdminClient; ownerId: string }) {
-  const ownerStigmaResult = await supabaseAdmin.from('stigmas').select('id, user_id').eq('id', ownerId).maybeSingle();
+async function getSeriesByName({
+  supabaseAdmin,
+  siteId,
+  boardId,
+  seriesName,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+  seriesName: string;
+}) {
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id, series_key, series_label, is_subscription')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('series_key', seriesName)
+    .maybeSingle();
 
-  if (ownerStigmaResult.error) {
-    throw new Error('사이트 오너 정보를 확인하지 못했습니다.');
+  if (seriesResult.error) {
+    throw new Error('연재 정보를 확인하지 못했습니다.');
   }
 
-  if (!ownerStigmaResult.data) {
-    throw new Error('사이트 오너 정보를 찾을 수 없습니다.');
+  if (!seriesResult.data) {
+    throw new Error('연재 정보를 찾을 수 없습니다.');
   }
 
-  const ownerStigma = ownerStigmaResult.data as OwnerStigmaRow;
+  return seriesResult.data as SeriesRow;
+}
 
-  return ownerStigma.user_id;
+async function getSubscriptionEnabledSeriesCount({
+  supabaseAdmin,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+}) {
+  const seriesCountResult = await supabaseAdmin
+    .from('board_series')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('is_subscription', true);
+
+  if (seriesCountResult.error) {
+    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
+  }
+
+  return seriesCountResult.count ?? 0;
 }
 
 async function getSubscriptionTarget({
@@ -254,7 +304,7 @@ async function getSubscriptionTarget({
 }): Promise<SubscriptionTarget> {
   const boardResult = await supabaseAdmin
     .from('boards')
-    .select('id, board_key, board_label, is_subscription')
+    .select('id, board_key, board_label')
     .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
@@ -270,12 +320,18 @@ async function getSubscriptionTarget({
   const board = boardResult.data as BoardRow;
 
   if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+    const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
+      supabaseAdmin,
+      siteId,
+      boardId: board.id,
+    });
+
     return {
       targetId: board.id,
       targetLabel: board.board_label,
       boardId: board.id,
       seriesId: null,
-      isSubscriptionTarget: Boolean(board.is_subscription),
+      isSubscriptionTarget: subscriptionEnabledSeriesCount >= 2,
     };
   }
 
@@ -306,8 +362,142 @@ async function getSubscriptionTarget({
     targetLabel: series.series_label,
     boardId: board.id,
     seriesId: series.id,
-    isSubscriptionTarget: Boolean(series.is_subscription),
+    isSubscriptionTarget: series.is_subscription === true,
   };
+}
+
+async function getSubscriptionSetting({
+  supabaseAdmin,
+  paymentTargetType,
+  targetId,
+  subscriptionType,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  paymentTargetType: string;
+  targetId: string;
+  subscriptionType: string;
+}) {
+  const settingResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('price, is_enabled')
+    .eq('target_type', paymentTargetType)
+    .eq('target_id', targetId)
+    .eq('subscription_type', subscriptionType)
+    .maybeSingle();
+
+  if (settingResult.error) {
+    throw new Error('구독 설정을 확인하지 못했습니다.');
+  }
+
+  if (!settingResult.data) {
+    throw new Error('구독 설정을 찾을 수 없습니다.');
+  }
+
+  const setting = settingResult.data as SubscriptionSettingRow;
+
+  if (!setting.is_enabled) {
+    throw new Error('구독이 활성화되어 있지 않습니다.');
+  }
+
+  return setting;
+}
+
+async function getOwnerStigma({ supabaseAdmin, ownerId }: { supabaseAdmin: SupabaseAdminClient; ownerId: string }) {
+  const ownerStigmaResult = await supabaseAdmin.from('stigmas').select('id, user_id').eq('id', ownerId).maybeSingle();
+
+  if (ownerStigmaResult.error) {
+    throw new Error('사이트 오너 정보를 확인하지 못했습니다.');
+  }
+
+  if (!ownerStigmaResult.data) {
+    throw new Error('사이트 오너 정보를 찾을 수 없습니다.');
+  }
+
+  return ownerStigmaResult.data as OwnerStigmaRow;
+}
+
+async function hasActiveSubscription({
+  supabaseAdmin,
+  authUserId,
+  subscriptionType,
+  paymentTargetType,
+  targetId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  authUserId: string;
+  subscriptionType: string;
+  paymentTargetType: string;
+  targetId: string;
+}) {
+  const existingActiveSubscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('subscriber_user_id', authUserId)
+    .eq('subscription_type', subscriptionType)
+    .eq('target_type', paymentTargetType)
+    .eq('target_id', targetId)
+    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .is('canceled_at', null)
+    .is('expired_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (existingActiveSubscriptionResult.error) {
+    throw new Error('기존 구독 상태를 확인하지 못했습니다.');
+  }
+
+  return (existingActiveSubscriptionResult.data ?? []).length > 0;
+}
+
+async function cancelSeriesSubscriptionsInBoard({
+  supabaseAdmin,
+  authUserId,
+  siteId,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  authUserId: string;
+  siteId: string;
+  boardId: string;
+}) {
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('is_subscription', true);
+
+  if (seriesResult.error) {
+    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+  }
+
+  const seriesIds = (seriesResult.data ?? []).map((item) => normalizeText(item.id)).filter(Boolean);
+
+  if (seriesIds.length === 0) {
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  const cancelResult = await supabaseAdmin
+    .from('subscriptions')
+    .update({
+      status: SUBSCRIPTION_STATUS.CANCELED,
+      canceled_at: now,
+      cancel_reason: 'board_subscription_started',
+    })
+    .eq('subscriber_user_id', authUserId)
+    .eq('site_id', siteId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .in('target_id', seriesIds)
+    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .is('canceled_at', null)
+    .is('expired_at', null);
+
+  if (cancelResult.error) {
+    throw new Error('기존 연재 구독을 취소하지 못했습니다.');
+  }
 }
 
 export async function POST(request: Request) {
@@ -315,11 +505,11 @@ export async function POST(request: Request) {
     const body = (await request.json()) as SubscriptionSuccessBody;
     const authKey = normalizeText(body.authKey);
     const customerKey = normalizeText(body.customerKey);
+    const orderNo = normalizeText(body.orderNo);
     const siteName = normalizeText(body.siteName).toLowerCase();
     const boardName = normalizeText(body.boardName).toLowerCase();
     const targetType = getTargetType(normalizeText(body.targetType));
     const seriesName = normalizeText(body.seriesName).toLowerCase();
-    const orderNo = normalizeText(body.orderNo);
 
     if (!authKey) {
       return Response.json({ error: 'authKey가 유효하지 않습니다.' }, { status: 400 });
@@ -327,6 +517,10 @@ export async function POST(request: Request) {
 
     if (!customerKey) {
       return Response.json({ error: 'customerKey가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!orderNo) {
+      return Response.json({ error: 'orderNo가 유효하지 않습니다.' }, { status: 400 });
     }
 
     if (!siteName) {
@@ -341,35 +535,16 @@ export async function POST(request: Request) {
       return Response.json({ error: 'targetType이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!orderNo) {
-      return Response.json({ error: 'orderNo가 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (!isValidOrderNo(orderNo, targetType)) {
-      return Response.json({ error: '구독 주문번호가 올바르지 않습니다.' }, { status: 400 });
-    }
-
     const supabaseAdmin = getSupabaseAdmin();
 
-    const siteResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_key, site_label, owner_id')
-      .eq('site_key', siteName)
-      .maybeSingle();
+    const site = await getSiteByName({
+      supabaseAdmin,
+      siteName,
+    });
 
-    if (siteResult.error) {
-      console.error(siteResult.error);
-
-      return Response.json({ error: '사이트 정보를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    if (!siteResult.data) {
-      return Response.json({ error: '사이트 정보를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const site = siteResult.data as SiteRow;
-
-    const session = await verifySession({ siteId: site.id });
+    const session = await verifySession({
+      siteId: site.id,
+    });
 
     if (!session.authUserId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
@@ -383,65 +558,31 @@ export async function POST(request: Request) {
       seriesName,
     });
 
-    if (!subscriptionTarget.isSubscriptionTarget) {
-      return Response.json({ error: '구독 대상이 아닙니다.' }, { status: 400 });
-    }
-
     const subscriptionType = getSubscriptionType(targetType);
     const paymentType = getPaymentType(targetType);
     const paymentTargetType = getPaymentTargetType(targetType);
 
-    const settingResult = await supabaseAdmin
-      .from('subscription_settings')
-      .select('price, is_enabled')
-      .eq('target_type', paymentTargetType)
-      .eq('target_id', subscriptionTarget.targetId)
-      .eq('subscription_type', subscriptionType)
-      .maybeSingle();
+    const setting = await getSubscriptionSetting({
+      supabaseAdmin,
+      paymentTargetType,
+      targetId: subscriptionTarget.targetId,
+      subscriptionType,
+    });
 
-    if (settingResult.error) {
-      console.error(settingResult.error);
-
-      return Response.json({ error: '구독 설정을 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    if (!settingResult.data) {
-      return Response.json({ error: '구독 설정을 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const setting = settingResult.data as SubscriptionSettingRow;
-
-    if (!setting.is_enabled) {
-      return Response.json({ error: '구독이 활성화되어 있지 않습니다.' }, { status: 400 });
-    }
-
-    const siteOwnerUserId = await getSiteOwnerUserId({
+    const ownerStigma = await getOwnerStigma({
       supabaseAdmin,
       ownerId: site.owner_id,
     });
 
-    const latestSubscriptionResult = await supabaseAdmin
-      .from('subscriptions')
-      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
-      .eq('subscription_type', subscriptionType)
-      .eq('target_type', paymentTargetType)
-      .eq('target_id', subscriptionTarget.targetId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const hasSubscription = await hasActiveSubscription({
+      supabaseAdmin,
+      authUserId: session.authUserId,
+      subscriptionType,
+      paymentTargetType,
+      targetId: subscriptionTarget.targetId,
+    });
 
-    if (latestSubscriptionResult.error) {
-      console.error(latestSubscriptionResult.error);
-
-      return Response.json({ error: '기존 구독 상태를 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const latestSubscription = (latestSubscriptionResult.data as SubscriptionRow | null) ?? null;
-    const now = new Date();
-    const nowText = now.toISOString();
-
-    if (isOpenSubscription(latestSubscription)) {
+    if (hasSubscription) {
       return Response.json({ error: '이미 구독 중입니다.' }, { status: 400 });
     }
 
@@ -466,7 +607,7 @@ export async function POST(request: Request) {
       .eq('user_id', session.authUserId)
       .eq('provider', PAYMENT_PROVIDER.TOSS)
       .eq('is_default', true)
-      .maybeSingle();
+      .limit(1);
 
     if (existingDefaultBillingMethodResult.error) {
       console.error(existingDefaultBillingMethodResult.error);
@@ -480,7 +621,7 @@ export async function POST(request: Request) {
       .eq('user_id', session.authUserId)
       .eq('provider', PAYMENT_PROVIDER.TOSS)
       .eq('billing_key', billingKeyResult.billingKey)
-      .maybeSingle();
+      .limit(1);
 
     if (existingBillingMethodResult.error) {
       console.error(existingBillingMethodResult.error);
@@ -488,7 +629,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '등록된 결제수단을 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const existingBillingMethod = existingBillingMethodResult.data as BillingMethodRow | null;
+    const existingDefaultBillingMethod = (existingDefaultBillingMethodResult.data ?? [])[0] as
+      | BillingMethodRow
+      | undefined;
+    const existingBillingMethod = (existingBillingMethodResult.data ?? [])[0] as BillingMethodRow | undefined;
 
     if (existingBillingMethod) {
       const billingMethodUpdateResult = await supabaseAdmin
@@ -500,8 +644,8 @@ export async function POST(request: Request) {
           card_number_masked: cardNumberMasked,
           owner_type: cardOwnerType,
           card_type: cardType,
-          is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
-          updated_at: nowText,
+          is_default: existingDefaultBillingMethod ? existingBillingMethod.is_default : true,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', existingBillingMethod.id);
 
@@ -523,7 +667,7 @@ export async function POST(request: Request) {
           card_number_masked: cardNumberMasked,
           owner_type: cardOwnerType,
           card_type: cardType,
-          is_default: !existingDefaultBillingMethodResult.data,
+          is_default: !existingDefaultBillingMethod,
         })
         .select('id')
         .single();
@@ -535,37 +679,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (isScheduledCancelSubscription(latestSubscription, now)) {
-      const scheduledCancelSubscription = latestSubscription;
-
-      if (!scheduledCancelSubscription) {
-        return Response.json({ error: '취소 예약된 멤버십을 찾을 수 없습니다.' }, { status: 404 });
-      }
-
-      const subscriptionUpdateResult = await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          canceled_at: null,
-          next_billing_at: scheduledCancelSubscription.current_period_end,
-          updated_at: nowText,
-        })
-        .eq('id', scheduledCancelSubscription.id);
-
-      if (subscriptionUpdateResult.error) {
-        console.error(subscriptionUpdateResult.error);
-
-        return Response.json({ error: '구독 취소를 철회하지 못했습니다.' }, { status: 500 });
-      }
-
-      return Response.json({
-        ok: true,
-        mode: 'resume_scheduled_cancel',
-        subscriptionId: latestSubscription.id,
-        nextBillingAt: latestSubscription.current_period_end,
-      });
-    }
-
-    const orderName = `${subscriptionTarget.targetLabel ?? (targetType === PAYMENT_TARGET_TYPE.SERIES ? '연재' : '게시판')} 구독`;
+    const orderName = `${subscriptionTarget.targetLabel ?? (targetType === 'series' ? '연재' : '게시판')} 구독`;
 
     const tossPaymentResult = (await requestTossBillingPayment({
       billingKey: billingKeyResult.billingKey,
@@ -575,11 +689,13 @@ export async function POST(request: Request) {
       orderName,
     })) as TossBillingPaymentResult;
 
+    const now = new Date();
     const billingAnchorDay = getBillingAnchorDay(now);
     const billingPeriod = createNextMonthlyBillingPeriod({
       currentPeriodEnd: now,
       billingAnchorDay,
     });
+    const refundableUntil = getRefundableUntil(now);
 
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
@@ -602,7 +718,7 @@ export async function POST(request: Request) {
         failure_message: null,
         failure_stage: null,
         refund_policy: REFUND_POLICY.SEVEN_DAYS,
-        refundable_until: createRefundableUntil(now),
+        refundable_until: refundableUntil.toISOString(),
         approved_at: tossPaymentResult.approvedAt,
         refunded_at: null,
         raw_data: tossPaymentResult,
@@ -619,11 +735,12 @@ export async function POST(request: Request) {
     const subscriptionInsertResult = await supabaseAdmin
       .from('subscriptions')
       .insert({
+        site_id: site.id,
         subscriber_user_id: session.authUserId,
         subscription_type: subscriptionType,
         target_type: paymentTargetType,
         target_id: subscriptionTarget.targetId,
-        owner_user_id: siteOwnerUserId,
+        owner_user_id: ownerStigma.user_id,
         price: setting.price,
         status: SUBSCRIPTION_STATUS.ACTIVE,
         billing_key: encrypt(billingKeyResult.billingKey),
@@ -662,15 +779,21 @@ export async function POST(request: Request) {
       supabaseAdmin,
       paymentId: paymentInsertResult.data.id,
       siteId: site.id,
-      boardId: subscriptionTarget.boardId,
-      seriesId: subscriptionTarget.seriesId,
-      siteOwnerUserId,
+      siteOwnerUserId: ownerStigma.user_id,
       amount: setting.price,
     });
 
+    if (targetType === 'board') {
+      await cancelSeriesSubscriptionsInBoard({
+        supabaseAdmin,
+        authUserId: session.authUserId,
+        siteId: site.id,
+        boardId: subscriptionTarget.boardId,
+      });
+    }
+
     return Response.json({
       ok: true,
-      mode: 'direct_billing',
       subscriptionId: subscriptionInsertResult.data.id,
       paymentId: paymentInsertResult.data.id,
     });

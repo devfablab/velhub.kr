@@ -10,6 +10,7 @@ export const PAYMENT_STATUS = {
   PAID: 'paid',
   FAILED: 'failed',
   REFUNDED: 'refunded',
+  PARTIALLY_REFUNDED: 'partially_refunded',
 } as const;
 
 export const PAYMENT_TYPE = {
@@ -53,6 +54,7 @@ export const SUBSCRIPTION_STATUS = {
   TRIALING: 'trialing',
   ACTIVE: 'active',
   PAST_DUE: 'past_due',
+  SCHEDULED_CANCEL: 'scheduled_cancel',
   CANCELED: 'canceled',
   EXPIRED: 'expired',
 } as const;

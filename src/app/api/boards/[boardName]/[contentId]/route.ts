@@ -89,6 +89,7 @@ type SeriesSubscriptionSettingRow = {
 type PaidContentAccess = {
   is_purchase_required: boolean;
   post_purchase_price: number;
+  has_board_subscription: boolean;
   has_series_subscription: boolean;
   has_post_purchase: boolean;
   can_view_paid_content: boolean;
@@ -317,32 +318,45 @@ async function getPaidContentAccess({
   supabaseAdmin,
   authUserId,
   siteId,
-  boardIsSubscription,
+  boardId,
   seriesId,
   postId,
 }: {
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   authUserId: string | null;
   siteId: string;
-  boardIsSubscription: boolean | null;
+  boardId: string;
   seriesId: string | null;
   postId: string;
 }): Promise<PaidContentAccess> {
-  console.log('[paid-content-check]', {
-    boardIsSubscription,
-
-    seriesId,
-
-    postId,
-
-    authUserId,
-
-    isPurchaseTarget: boardIsSubscription === true && Boolean(seriesId),
-  });
-  if (boardIsSubscription !== true || !seriesId) {
+  if (!seriesId) {
     return {
       is_purchase_required: false,
       post_purchase_price: 0,
+      has_board_subscription: false,
+      has_series_subscription: false,
+      has_post_purchase: false,
+      can_view_paid_content: true,
+    };
+  }
+
+  const seriesResult = await supabaseAdmin
+    .from('board_series')
+    .select('id, is_subscription')
+    .eq('site_id', siteId)
+    .eq('board_id', boardId)
+    .eq('id', seriesId)
+    .maybeSingle();
+
+  if (seriesResult.error) {
+    throw new Error('연재 정보를 확인하지 못했습니다.');
+  }
+
+  if (seriesResult.data?.is_subscription !== true) {
+    return {
+      is_purchase_required: false,
+      post_purchase_price: 0,
+      has_board_subscription: false,
       has_series_subscription: false,
       has_post_purchase: false,
       can_view_paid_content: true,
@@ -358,8 +372,6 @@ async function getPaidContentAccess({
     .maybeSingle();
 
   if (subscriptionSettingResult.error) {
-    console.error(subscriptionSettingResult.error);
-
     throw new Error('연재 구독 설정을 확인하지 못했습니다.');
   }
 
@@ -367,6 +379,7 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: false,
       post_purchase_price: 0,
+      has_board_subscription: false,
       has_series_subscription: false,
       has_post_purchase: false,
       can_view_paid_content: true,
@@ -380,36 +393,67 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: true,
       post_purchase_price: postPurchasePrice,
+      has_board_subscription: false,
       has_series_subscription: false,
       has_post_purchase: false,
       can_view_paid_content: false,
     };
   }
 
-  const activeSubscriptionResult = await supabaseAdmin
+  const boardSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('user_id', authUserId)
     .eq('site_id', siteId)
-    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .eq('target_id', seriesId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
-    .in('status', ['active', 'past_due', 'scheduled_cancel'])
+    .eq('subscriber_user_id', authUserId)
+    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
+    .eq('target_id', boardId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .is('expired_at', null)
     .order('created_at', { ascending: false })
     .limit(1);
 
-  if (activeSubscriptionResult.error) {
-    console.error(activeSubscriptionResult.error);
-
-    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+  if (boardSubscriptionResult.error) {
+    throw new Error('게시판 구독 상태를 확인하지 못했습니다.');
   }
 
-  const hasActiveSubscription = (activeSubscriptionResult.data ?? []).length > 0;
+  const hasBoardSubscription = (boardSubscriptionResult.data ?? []).length > 0;
 
-  if (hasActiveSubscription) {
+  if (hasBoardSubscription) {
     return {
       is_purchase_required: true,
       post_purchase_price: postPurchasePrice,
+      has_board_subscription: true,
+      has_series_subscription: false,
+      has_post_purchase: false,
+      can_view_paid_content: true,
+    };
+  }
+
+  const seriesSubscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('site_id', siteId)
+    .eq('subscriber_user_id', authUserId)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', seriesId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .is('expired_at', null)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (seriesSubscriptionResult.error) {
+    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+  }
+
+  const hasSeriesSubscription = (seriesSubscriptionResult.data ?? []).length > 0;
+
+  if (hasSeriesSubscription) {
+    return {
+      is_purchase_required: true,
+      post_purchase_price: postPurchasePrice,
+      has_board_subscription: false,
       has_series_subscription: true,
       has_post_purchase: false,
       can_view_paid_content: true,
@@ -424,11 +468,10 @@ async function getPaidContentAccess({
     .eq('target_type', PAYMENT_TARGET_TYPE.POST)
     .eq('target_id', postId)
     .eq('status', PAYMENT_STATUS.PAID)
+    .order('created_at', { ascending: false })
     .limit(1);
 
   if (postPurchaseResult.error) {
-    console.error(postPurchaseResult.error);
-
     throw new Error('포스팅 구매 내역을 확인하지 못했습니다.');
   }
 
@@ -437,6 +480,7 @@ async function getPaidContentAccess({
   return {
     is_purchase_required: true,
     post_purchase_price: postPurchasePrice,
+    has_board_subscription: false,
     has_series_subscription: false,
     has_post_purchase: hasPostPurchase,
     can_view_paid_content: hasPostPurchase,
@@ -962,9 +1006,12 @@ export async function GET(request: Request, context: RouteContext) {
           author_manage_icon: author.manageIcon,
           is_purchase_required: false,
           post_purchase_price: 0,
+          has_board_subscription: false,
           has_series_subscription: false,
           has_post_purchase: false,
           can_view_paid_content: true,
+          board_series_count: 0,
+          is_post_donation_available: false,
         },
         previousPost: null,
         nextPost: null,
@@ -1004,11 +1051,23 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const boardSeriesCountResult = await supabaseAdmin
+      .from('board_series')
+      .select('id', { count: 'exact', head: true })
+      .eq('site_id', rhizomeData.id)
+      .eq('board_id', boardData.id);
+
+    if (boardSeriesCountResult.error) {
+      return NextResponse.json({ error: '연재 개수를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const boardSeriesCount = boardSeriesCountResult.count ?? 0;
+
     const paidContentAccess = await getPaidContentAccess({
       supabaseAdmin,
       authUserId: session.authUserId ?? null,
       siteId: rhizomeData.id,
-      boardIsSubscription: boardData.is_subscription ?? null,
+      boardId: boardData.id,
       seriesId: postData.series_id,
       postId: postData.id,
     });
@@ -1217,6 +1276,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
+    const isPostDonationAvailable = boardSeriesCount >= 2 && Boolean(postData.series_id);
 
     return NextResponse.json({
       board: boardData,
@@ -1244,9 +1304,12 @@ export async function GET(request: Request, context: RouteContext) {
         giscus_settings: giscusSettings,
         is_purchase_required: paidContentAccess.is_purchase_required,
         post_purchase_price: paidContentAccess.post_purchase_price,
+        has_board_subscription: paidContentAccess.has_board_subscription,
         has_series_subscription: paidContentAccess.has_series_subscription,
         has_post_purchase: paidContentAccess.has_post_purchase,
         can_view_paid_content: canViewPaidContent,
+        board_series_count: boardSeriesCount,
+        is_post_donation_available: isPostDonationAvailable,
       },
       categories,
       series,

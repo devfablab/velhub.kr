@@ -2,24 +2,35 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
-import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
+
+type DonationKind = 'site' | 'post';
 
 type DonationItem = {
   id: string;
   orderNo: string;
+  donationKind: DonationKind;
   nickname: string;
   amount: number;
   currency: string;
   status: string;
-  paymentMethod: string;
+  paymentMethod: string | null;
   approvedAt: string | null;
   createdAt: string;
+  post: {
+    id: string;
+    subject: string;
+    slug: number;
+    boardId: string;
+    boardKey: string | null;
+    boardLabel: string | null;
+  } | null;
 };
 
 type DonationManageResponse = {
@@ -31,6 +42,10 @@ type DonationManageResponse = {
   summary?: {
     count: number;
     totalAmount: number;
+    siteDonationCount: number;
+    siteDonationTotalAmount: number;
+    postDonationCount: number;
+    postDonationTotalAmount: number;
   };
   donations?: DonationItem[];
   error?: string;
@@ -56,6 +71,14 @@ function formatDateTime(value: string | null | undefined) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
+}
+
+function getDonationKindLabel(donationKind: DonationKind) {
+  if (donationKind === 'post') {
+    return '글 후원';
+  }
+
+  return '사이트 후원';
 }
 
 export default function Opt() {
@@ -105,54 +128,66 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="받은 후원">
+      <Container menu="payments">
         <LoadingIndicator />
       </Container>
     );
   }
 
   return (
-    <Container pageTitle="받은 후원">
+    <Container menu="payments">
       <Stack spacing={3}>
         {errorMessage ? (
-          <Typography role="status" color="error">
+          <Typography color="error" role="alert">
             {errorMessage}
           </Typography>
         ) : null}
 
-        <Paper variant="outlined">
-          <Stack spacing={2} sx={{ p: 3 }}>
-            <Typography variant="h6">후원 요약</Typography>
-
-            <Stack spacing={1}>
-              <Typography>받은 후원 수: {donationData?.summary?.count ?? 0}건</Typography>
-              <Typography>받은 후원 총액: {formatPrice(donationData?.summary?.totalAmount ?? 0)}</Typography>
-            </Stack>
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Stack spacing={1}>
+            <Typography variant="h6" component="h2">
+              후원 요약
+            </Typography>
+            <Typography>받은 후원 수: {donationData?.summary?.count ?? 0}건</Typography>
+            <Typography>받은 후원 총액: {formatPrice(donationData?.summary?.totalAmount ?? 0)}</Typography>
+            <Divider />
+            <Typography>
+              사이트 후원: {donationData?.summary?.siteDonationCount ?? 0}건 ·{' '}
+              {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)}
+            </Typography>
+            <Typography>
+              글 후원: {donationData?.summary?.postDonationCount ?? 0}건 ·{' '}
+              {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)}
+            </Typography>
           </Stack>
         </Paper>
 
-        <Paper variant="outlined">
-          <Stack spacing={2} sx={{ p: 3 }}>
-            <Typography variant="h6">후원 내역</Typography>
+        <Paper variant="outlined" sx={{ p: 3 }}>
+          <Stack spacing={2}>
+            <Typography variant="h6" component="h2">
+              후원 내역
+            </Typography>
 
             {donationData?.donations?.length ? (
-              <Stack spacing={2}>
+              <Stack spacing={2} divider={<Divider />}>
                 {donationData.donations.map((donation) => (
-                  <Paper key={donation.id} variant="outlined">
-                    <Stack spacing={1} sx={{ p: 2 }}>
-                      <Typography>후원자: {donation.nickname}</Typography>
-                      <Typography>후원금액: {formatPrice(donation.amount)}</Typography>
-                      <Typography>후원일: {formatDateTime(donation.approvedAt ?? donation.createdAt)}</Typography>
-                      <Typography>주문번호: {donation.orderNo}</Typography>
-                    </Stack>
-                  </Paper>
+                  <Stack key={donation.id} spacing={0.5}>
+                    <Typography fontWeight={700}>{getDonationKindLabel(donation.donationKind)}</Typography>
+                    <Typography>후원자: {donation.nickname}</Typography>
+                    <Typography>후원금액: {formatPrice(donation.amount)}</Typography>
+                    <Typography>후원일: {formatDateTime(donation.approvedAt ?? donation.createdAt)}</Typography>
+                    {donation.post ? (
+                      <Typography>
+                        후원 글: {donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} /{' '}
+                        {donation.post.subject}
+                      </Typography>
+                    ) : null}
+                    <Typography>주문번호: {donation.orderNo}</Typography>
+                  </Stack>
                 ))}
               </Stack>
             ) : (
-              <>
-                <Divider />
-                <Typography>아직 받은 후원이 없습니다.</Typography>
-              </>
+              <Typography color="text.secondary">아직 받은 후원이 없습니다.</Typography>
             )}
           </Stack>
         </Paper>
