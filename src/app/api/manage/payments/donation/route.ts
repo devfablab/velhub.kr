@@ -80,8 +80,8 @@ export async function GET(request: Request) {
           'created_at',
         ].join(', '),
       )
-      .eq('payment_type', PAYMENT_TYPE.DONATION)
-      .eq('target_type', PAYMENT_TARGET_TYPE.DONATION)
+      .eq('payment_type', PAYMENT_TYPE.DONATION_SITE)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
       .eq('status', PAYMENT_STATUS.PAID)
       .order('created_at', { ascending: false });

@@ -237,7 +237,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '분배 내역을 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const splits = (splitsResult.data ?? []) as PaymentSplitRow[];
+    const splits = (splitsResult.data ?? []) as unknown as PaymentSplitRow[];
     const paymentIds = Array.from(new Set(splits.map((split) => split.payment_id)));
 
     if (paymentIds.length === 0) {
@@ -285,7 +285,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '결제 내역을 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const payments = (paymentsResult.data ?? []) as PaymentRow[];
+    const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
     const paymentMap = createPaymentMap(payments);
 
     const items = sortItems(

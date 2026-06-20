@@ -8,9 +8,9 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import NumberField from '@/components/custom-ui/NumberField';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 
@@ -69,14 +69,6 @@ type SeriesSubscriptionSaveResponse = {
   maxAllowedPrice?: number;
   error?: string;
 };
-
-function formatPrice(value: number) {
-  return value.toLocaleString('ko-KR');
-}
-
-function getPriceNumber(value: string) {
-  return Number(value.replace(/[^0-9]/g, ''));
-}
 
 function isValidSeriesSubscriptionPrice(price: number, minPrice: number, maxAllowedPrice: number) {
   if (!Number.isInteger(price)) {
@@ -200,14 +192,14 @@ export default function SeriesSubscriptions() {
     setSuccessMessage('');
   }
 
-  function handleSeriesPriceChange(seriesId: string, event: ChangeEvent<HTMLInputElement>) {
-    const nextPrice = getPriceNumber(event.target.value);
+  function handleSeriesPriceChange(seriesId: string, value: number | null) {
+    const nextPrice = value ?? 0;
 
-    if (nextPrice > 100000) {
+    if (nextPrice < 0) {
       return;
     }
 
-    if (nextPrice % 1000 !== 0) {
+    if (nextPrice > 100000) {
       return;
     }
 
@@ -320,78 +312,94 @@ export default function SeriesSubscriptions() {
                   <Divider />
 
                   <Stack spacing={3}>
-                    {board.series.map((series) => (
-                      <Paper key={series.id} variant="outlined" sx={{ p: 2 }}>
-                        <Stack spacing={3}>
-                          <Stack spacing={1}>
-                            <Typography variant="subtitle1">{series.seriesLabel}</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {series.setting.parentPrice > 0
-                                ? `연재 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${series.setting.maxAllowedPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 설정할 수 있습니다.`
-                                : `연재 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할 수 있습니다.`}
-                            </Typography>
-                          </Stack>
+                    {board.series.map((series) => {
+                      const priceFieldId = `series-subscription-price-${series.id}`;
+                      const helperTextId = `${priceFieldId}-helper-text`;
+                      const maxPrice = Math.min(series.setting.maxAllowedPrice, 100000);
 
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={series.setting.isEnabled}
-                                onChange={(event) => handleSeriesEnabledChange(series.id, event)}
+                      return (
+                        <Paper key={series.id} variant="outlined" sx={{ p: 2 }}>
+                          <Stack spacing={3}>
+                            <Stack spacing={1}>
+                              <Typography variant="subtitle1">{series.seriesLabel}</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {series.setting.parentPrice > 0
+                                  ? `연재 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 설정할 수 있습니다.`
+                                  : `연재 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할 수 있습니다.`}
+                              </Typography>
+                            </Stack>
+
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={series.setting.isEnabled}
+                                  onChange={(event) => handleSeriesEnabledChange(series.id, event)}
+                                />
+                              }
+                              label="연재 구독 사용"
+                            />
+
+                            <Stack spacing={0.75}>
+                              <NumberField
+                                id={priceFieldId}
+                                label="연재 구독 금액"
+                                value={series.setting.price}
+                                onValueChange={(value) => handleSeriesPriceChange(series.id, value)}
+                                min={0}
+                                max={maxPrice}
+                                step={1000}
+                                locale="ko-KR"
+                                disabled={savingSeriesId === series.id}
+                                aria-describedby={helperTextId}
                               />
-                            }
-                            label="연재 구독 사용"
-                          />
+                              <Typography id={helperTextId} variant="body2" color="text.secondary">
+                                {series.setting.minPrice.toLocaleString('ko-KR')}원부터{' '}
+                                {maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.
+                              </Typography>
+                            </Stack>
 
-                          <TextField
-                            label="연재 구독 금액"
-                            value={formatPrice(series.setting.price)}
-                            onChange={(event) => handleSeriesPriceChange(series.id, event)}
-                            helperText={`${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${series.setting.maxAllowedPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`}
-                            inputProps={{
-                              inputMode: 'numeric',
-                              'aria-label': `${series.seriesLabel} 연재 구독 금액`,
-                            }}
-                            disabled={savingSeriesId === series.id}
-                            fullWidth
-                          />
+                            <div>
+                              <Button
+                                variant="contained"
+                                onClick={() => handleSaveSeriesSetting(series)}
+                                disabled={savingSeriesId === series.id}
+                              >
+                                저장
+                              </Button>
+                            </div>
 
-                          <div>
-                            <Button
-                              variant="contained"
-                              onClick={() => handleSaveSeriesSetting(series)}
-                              disabled={savingSeriesId === series.id}
-                            >
-                              저장
-                            </Button>
-                          </div>
+                            <Divider />
 
-                          <Divider />
+                            <Stack spacing={2}>
+                              <Typography variant="subtitle2">구독자</Typography>
 
-                          <Stack spacing={2}>
-                            <Typography variant="subtitle2">구독자</Typography>
-
-                            {series.subscribers.length ? (
-                              <Stack spacing={2}>
-                                {series.subscribers.map((subscriber) => (
-                                  <Paper key={subscriber.id} variant="outlined" sx={{ p: 2 }}>
-                                    <Stack spacing={1}>
-                                      <Typography>닉네임: {subscriber.nickname}</Typography>
-                                      <Typography>상태: {subscriber.status}</Typography>
-                                      <Typography>유지 기간: {subscriber.activeMonths}개월째</Typography>
-                                      <Typography>최근 결제일: {formatDateTime(subscriber.lastPaidAt)}</Typography>
-                                      <Typography>최근 결제금액: {formatAmount(subscriber.lastPaidAmount)}</Typography>
-                                      <Typography>누적 결제금액: {formatAmount(subscriber.totalPaidAmount)}</Typography>
-                                    </Stack>
-                                  </Paper>
-                                ))}
-                              </Stack>
-                            ) : (
-                              <Typography color="text.secondary">아직 이 연재의 구독자가 없습니다.</Typography>
-                            )}
+                              {series.subscribers.length ? (
+                                <Stack spacing={2}>
+                                  {series.subscribers.map((subscriber) => (
+                                    <Paper key={subscriber.id} variant="outlined" sx={{ p: 2 }}>
+                                      <Stack spacing={1}>
+                                        <Typography>닉네임: {subscriber.nickname}</Typography>
+                                        <Typography>상태: {subscriber.status}</Typography>
+                                        <Typography>유지 기간: {subscriber.activeMonths}개월째</Typography>
+                                        <Typography>최근 결제일: {formatDateTime(subscriber.lastPaidAt)}</Typography>
+                                        <Typography>
+                                          최근 결제금액: {formatAmount(subscriber.lastPaidAmount)}
+                                        </Typography>
+                                        <Typography>
+                                          누적 결제금액: {formatAmount(subscriber.totalPaidAmount)}
+                                        </Typography>
+                                      </Stack>
+                                    </Paper>
+                                  ))}
+                                </Stack>
+                              ) : (
+                                <Typography color="text.secondary">아직 이 연재의 구독자가 없습니다.</Typography>
+                              )}
+                            </Stack>
                           </Stack>
-                        </Stack>
-                      </Paper>
-                    ))}
+                        </Paper>
+                      );
+                    })}
                   </Stack>
                 </Stack>
               </Paper>

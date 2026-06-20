@@ -2,6 +2,8 @@ import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
+
 type PaymentRow = {
   id: string;
   target_id: string | null;
@@ -54,6 +56,25 @@ function getSummary(payments: PaymentRow[]) {
   };
 }
 
+async function getSitesByIds({ supabaseAdmin, siteIds }: { supabaseAdmin: SupabaseAdminClient; siteIds: string[] }) {
+  if (!siteIds.length) {
+    return [];
+  }
+
+  const sitesResult = await supabaseAdmin
+    .from('rhizomes')
+    .select('id, site_key, site_label, site_type')
+    .in('id', siteIds);
+
+  if (sitesResult.error) {
+    console.error(sitesResult.error);
+
+    throw new Error('후원 대상 정보를 불러오지 못했습니다.');
+  }
+
+  return (sitesResult.data ?? []) as SiteRow[];
+}
+
 export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
@@ -67,11 +88,24 @@ export async function GET() {
     const paymentsResult = await supabaseAdmin
       .from('payments')
       .select(
-        'id, target_id, order_no, amount, refunded_amount, currency, status, payment_method, approved_at, created_at, refundable_until, failure_message',
+        [
+          'id',
+          'target_id',
+          'order_no',
+          'amount',
+          'refunded_amount',
+          'currency',
+          'status',
+          'payment_method',
+          'approved_at',
+          'created_at',
+          'refundable_until',
+          'failure_message',
+        ].join(', '),
       )
       .eq('buyer_user_id', session.authUserId)
-      .eq('payment_type', PAYMENT_TYPE.DONATION)
-      .eq('target_type', PAYMENT_TARGET_TYPE.DONATION)
+      .eq('payment_type', PAYMENT_TYPE.DONATION_SITE)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .order('created_at', { ascending: false });
 
     if (paymentsResult.error) {
@@ -80,22 +114,16 @@ export async function GET() {
       return Response.json({ error: '후원 구입내역을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const payments = (paymentsResult.data ?? []) as PaymentRow[];
+    const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
     const siteIds = Array.from(
       new Set(payments.map((payment) => payment.target_id).filter((targetId): targetId is string => Boolean(targetId))),
     );
 
-    const sitesResult = siteIds.length
-      ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label, site_type').in('id', siteIds)
-      : { data: [], error: null };
+    const sites = await getSitesByIds({
+      supabaseAdmin,
+      siteIds,
+    });
 
-    if (sitesResult.error) {
-      console.error(sitesResult.error);
-
-      return Response.json({ error: '후원 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteById = new Map(sites.map((site) => [site.id, site]));
 
     return Response.json({

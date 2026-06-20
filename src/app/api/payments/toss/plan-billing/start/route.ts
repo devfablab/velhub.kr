@@ -228,15 +228,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '이미 요금제 구독이 등록되어 있습니다.' }, { status: 400 });
     }
 
-    if (purpose !== 'billing_method' && isScheduledCancelSubscription(latestSubscription, now)) {
+    const scheduledCancelSubscription =
+      purpose !== 'billing_method' && isScheduledCancelSubscription(latestSubscription, now)
+        ? latestSubscription
+        : null;
+
+    if (scheduledCancelSubscription) {
       const subscriptionUpdateResult = await supabaseAdmin
         .from('subscriptions')
         .update({
           canceled_at: null,
-          next_billing_at: latestSubscription.current_period_end,
+          next_billing_at: scheduledCancelSubscription.current_period_end,
           updated_at: now.toISOString(),
         })
-        .eq('id', latestSubscription.id);
+        .eq('id', scheduledCancelSubscription.id);
 
       if (subscriptionUpdateResult.error) {
         console.error(subscriptionUpdateResult.error);
@@ -260,8 +265,8 @@ export async function POST(request: NextRequest) {
       return Response.json({
         mode: 'resume_scheduled_cancel',
         ok: true,
-        subscriptionId: latestSubscription.id,
-        nextBillingAt: latestSubscription.current_period_end,
+        subscriptionId: scheduledCancelSubscription.id,
+        nextBillingAt: scheduledCancelSubscription.current_period_end,
       });
     }
 

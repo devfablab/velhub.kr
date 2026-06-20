@@ -245,14 +245,20 @@ export async function POST(request: Request) {
     }
 
     if (isScheduledCancelSubscription(latestSubscription, now)) {
+      const scheduledCancelSubscription = latestSubscription;
+
+      if (!scheduledCancelSubscription) {
+        return Response.json({ error: '취소 예약된 멤버십을 찾을 수 없습니다.' }, { status: 404 });
+      }
+
       const subscriptionUpdateResult = await supabaseAdmin
         .from('subscriptions')
         .update({
           canceled_at: null,
-          next_billing_at: latestSubscription.current_period_end,
+          next_billing_at: scheduledCancelSubscription.current_period_end,
           updated_at: nowText,
         })
-        .eq('id', latestSubscription.id);
+        .eq('id', scheduledCancelSubscription.id);
 
       if (subscriptionUpdateResult.error) {
         console.error(subscriptionUpdateResult.error);
@@ -263,8 +269,8 @@ export async function POST(request: Request) {
       return Response.json({
         mode: 'resume_scheduled_cancel',
         ok: true,
-        subscriptionId: latestSubscription.id,
-        nextBillingAt: latestSubscription.current_period_end,
+        subscriptionId: scheduledCancelSubscription.id,
+        nextBillingAt: scheduledCancelSubscription.current_period_end,
       });
     }
 
