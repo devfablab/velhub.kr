@@ -87,7 +87,7 @@ function getSubscriptionStatus(status: string) {
   return '중단';
 }
 
-async function getSiteAndSession(siteName: string) {
+async function getSiteAndSession(siteName: string, options: { requireCommunity?: boolean } = {}) {
   const supabaseAdmin = getSupabaseAdmin();
 
   const siteResult = await supabaseAdmin
@@ -125,7 +125,7 @@ async function getSiteAndSession(siteName: string) {
     };
   }
 
-  if (site.site_type !== 'community') {
+  if (options.requireCommunity && site.site_type !== 'community') {
     return {
       response: Response.json({ error: '게시판 구독은 커뮤니티에서만 사용할 수 있습니다.' }, { status: 400 }),
       site: null,
@@ -226,6 +226,19 @@ export async function GET(request: Request) {
     }
 
     const { site, supabaseAdmin } = siteAndSession;
+
+    if (site.site_type !== 'community') {
+      return Response.json({
+        site: {
+          id: site.id,
+          siteKey: site.site_key,
+          siteLabel: site.site_label,
+          siteType: site.site_type,
+        },
+        boards: [],
+        shouldShow: false,
+      });
+    }
 
     const boardsResult = await supabaseAdmin
       .from('boards')
@@ -473,7 +486,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '게시판 구독 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const siteAndSession = await getSiteAndSession(siteName);
+    const siteAndSession = await getSiteAndSession(siteName, { requireCommunity: true });
 
     if (siteAndSession.response || !siteAndSession.site) {
       return siteAndSession.response;

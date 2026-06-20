@@ -48,6 +48,7 @@ type BoardSubscriptionResponse = {
     siteType: string;
   };
   boards?: BoardSubscriptionItem[];
+  shouldShow?: boolean;
   error?: string;
 };
 
@@ -133,6 +134,7 @@ export default function BoardSubscriptions() {
   const [isLoading, setIsLoading] = useState(true);
   const [savingBoardId, setSavingBoardId] = useState('');
   const [boards, setBoards] = useState<BoardSubscriptionItem[]>([]);
+  const [shouldShow, setShouldShow] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -152,6 +154,15 @@ export default function BoardSubscriptions() {
         if (!response.ok) {
           throw new Error(result.error ?? '게시판 구독 정보를 불러오지 못했습니다.');
         }
+
+        if (result.shouldShow === false) {
+          setShouldShow(false);
+          setBoards([]);
+
+          return;
+        }
+
+        setShouldShow(true);
 
         setBoards(normalizeBoardSubscriptionItems(result.boards ?? []));
       } catch (unknownError) {
@@ -272,6 +283,10 @@ export default function BoardSubscriptions() {
     );
   }
 
+  if (!shouldShow) {
+    return null;
+  }
+
   return (
     <Container>
       <Stack spacing={3}>
@@ -323,19 +338,21 @@ export default function BoardSubscriptions() {
                     label="게시판 구독 사용"
                   />
 
-                  <TextField
-                    type="text"
-                    label="게시판 구독 금액"
-                    value={formatPrice(board.setting.price)}
-                    onChange={(event) => handleBoardPriceChange(board.id, event)}
-                    helperText={`${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
-                    inputProps={{
-                      inputMode: 'numeric',
-                      'aria-label': `${board.boardLabel} 게시판 구독 금액`,
-                    }}
-                    disabled={savingBoardId === board.id}
-                    fullWidth
-                  />
+                  <Stack spacing={0.75}>
+                    <Typography variant="subtitle2">게시판 구독 금액</Typography>
+                    <TextField
+                      type="text"
+                      value={formatPrice(board.setting.price)}
+                      onChange={(event) => handleBoardPriceChange(board.id, event)}
+                      helperText={`${board.setting.requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
+                      inputProps={{
+                        inputMode: 'numeric',
+                        'aria-label': `${board.boardLabel} 게시판 구독 금액`,
+                      }}
+                      disabled={savingBoardId === board.id}
+                      fullWidth
+                    />
+                  </Stack>
 
                   <div>
                     <Button

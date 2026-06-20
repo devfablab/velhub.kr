@@ -161,6 +161,7 @@ export default function SeriesSubscriptions() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [savingSeriesId, setSavingSeriesId] = useState('');
+  const [siteType, setSiteType] = useState('');
   const [boards, setBoards] = useState<SeriesBoardItem[]>([]);
   const [emptyMessage, setEmptyMessage] = useState('연재가 설정되지 않았습니다.');
   const [errorMessage, setErrorMessage] = useState('');
@@ -182,6 +183,8 @@ export default function SeriesSubscriptions() {
         if (!response.ok) {
           throw new Error(result.error ?? '연재 구독 정보를 불러오지 못했습니다.');
         }
+
+        setSiteType(result.site?.siteType ?? '');
 
         setBoards(normalizeSeriesSubscriptionItems(result.boards ?? []));
         setEmptyMessage(result.emptyMessage ?? '연재가 설정되지 않았습니다.');
@@ -343,16 +346,20 @@ export default function SeriesSubscriptions() {
             {boards.map((board) => (
               <Paper key={board.id} sx={{ p: 3 }}>
                 <Stack spacing={3}>
-                  <Stack spacing={1}>
-                    <Typography variant="h6">{board.boardLabel}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {board.parentPrice > 0
-                        ? `상위 구독 금액은 ${board.parentPrice.toLocaleString('ko-KR')}원입니다. 이 게시판의 연재 구독은 최대 ${board.maxAllowedSeriesPrice.toLocaleString('ko-KR')}원까지 설정할 수 있습니다.`
-                        : '상위 구독이 꺼져 있어 연재 구독은 100,000원까지 설정할 수 있습니다.'}
-                    </Typography>
-                  </Stack>
+                  {siteType === 'community' ? (
+                    <>
+                      <Stack spacing={1}>
+                        <Typography variant="h6">{board.boardLabel}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {board.parentPrice > 0
+                            ? `상위 구독 금액은 ${board.parentPrice.toLocaleString('ko-KR')}원입니다. 이 게시판의 연재 구독은 최대 ${board.maxAllowedSeriesPrice.toLocaleString('ko-KR')}원까지 설정할 수 있습니다.`
+                            : '상위 구독이 꺼져 있어 연재 구독은 100,000원까지 설정할 수 있습니다.'}
+                        </Typography>
+                      </Stack>
 
-                  <Divider />
+                      <Divider />
+                    </>
+                  ) : null}
 
                   <Stack spacing={3}>
                     {board.series.map((series) => {
@@ -380,19 +387,21 @@ export default function SeriesSubscriptions() {
                               label="연재 구독 사용"
                             />
 
-                            <TextField
-                              type="text"
-                              label="연재 구독 금액"
-                              value={formatPrice(series.setting.price)}
-                              onChange={(event) => handleSeriesPriceChange(series.id, event)}
-                              helperText={`${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`}
-                              inputProps={{
-                                inputMode: 'numeric',
-                                'aria-label': `${series.seriesLabel} 연재 구독 금액`,
-                              }}
-                              disabled={savingSeriesId === series.id}
-                              fullWidth
-                            />
+                            <Stack spacing={0.75}>
+                              <Typography variant="subtitle2">연재 구독 금액</Typography>
+                              <TextField
+                                type="text"
+                                value={formatPrice(series.setting.price)}
+                                onChange={(event) => handleSeriesPriceChange(series.id, event)}
+                                helperText={`${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`}
+                                inputProps={{
+                                  inputMode: 'numeric',
+                                  'aria-label': `${series.seriesLabel} 연재 구독 금액`,
+                                }}
+                                disabled={savingSeriesId === series.id}
+                                fullWidth
+                              />
+                            </Stack>
 
                             <div>
                               <Button
