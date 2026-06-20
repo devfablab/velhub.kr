@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import Button from '@mui/material/Button';
@@ -8,8 +8,8 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import DonationButton from '@/components/service/common/DonationButton';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
@@ -26,16 +26,6 @@ type SiteProfileResponse = {
   siteInfo?: SiteInfo;
   profilePictureUrl?: string;
   profileLogoUrl?: string;
-  error?: string;
-};
-
-type DonationStartResponse = {
-  clientKey?: string;
-  orderNo?: string;
-  orderName?: string;
-  amount?: number;
-  successUrl?: string;
-  failUrl?: string;
   error?: string;
 };
 
@@ -69,32 +59,8 @@ type MembershipActionResponse = {
   error?: string;
 };
 
-function formatDonationAmount(value: number) {
-  return value.toLocaleString('ko-KR');
-}
-
 function formatMembershipPrice(value: number) {
   return value.toLocaleString('ko-KR');
-}
-
-function getDonationAmountNumber(value: string) {
-  return Number(value.replace(/[^0-9]/g, ''));
-}
-
-function isValidDonationAmount(amount: number) {
-  if (!Number.isInteger(amount)) {
-    return false;
-  }
-
-  if (amount < 1000) {
-    return false;
-  }
-
-  if (amount > 100000) {
-    return false;
-  }
-
-  return amount % 1000 === 0;
 }
 
 function getMembershipButtonLabel(status: MembershipStatus) {
@@ -122,9 +88,6 @@ export default function SiteProfile() {
   const [profileLogoUrl, setProfileLogoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
-  const [isDonationDialogOpen, setIsDonationDialogOpen] = useState(false);
-  const [donationAmount, setDonationAmount] = useState('1,000');
-  const [donationErrorMessage, setDonationErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
   const [isMembershipEnabled, setIsMembershipEnabled] = useState(false);
   const [membershipPrice, setMembershipPrice] = useState<number | null>(null);
@@ -196,93 +159,7 @@ export default function SiteProfile() {
     void loadSiteProfile();
   }, [siteName]);
 
-  function handleOpenDonationDialog() {
-    setDonationAmount('1,000');
-    setDonationErrorMessage('');
-    setMembershipErrorMessage('');
-    setIsDonationDialogOpen(true);
-  }
-
-  function handleCloseDonationDialog() {
-    if (isDonationProcessing) {
-      return;
-    }
-
-    setIsDonationDialogOpen(false);
-  }
-
-  function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement>) {
-    const nextAmount = getDonationAmountNumber(event.target.value);
-
-    if (!isValidDonationAmount(nextAmount)) {
-      return;
-    }
-
-    setDonationAmount(formatDonationAmount(nextAmount));
-    setDonationErrorMessage('');
-  }
-
-  async function handleDonate() {
-    try {
-      setDonationErrorMessage('');
-      setMembershipErrorMessage('');
-      setIsDonationProcessing(true);
-
-      const amount = getDonationAmountNumber(donationAmount);
-
-      const response = await fetch('/api/payments/toss/donation/start', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          siteName,
-          amount,
-          successUrl: `/${siteName}/donation/success`,
-          failUrl: `/${siteName}/donation/fail`,
-        }),
-      });
-
-      const result = (await response.json()) as DonationStartResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '후원을 시작하지 못했습니다.');
-      }
-
-      if (
-        !result.clientKey ||
-        !result.orderNo ||
-        !result.orderName ||
-        !result.amount ||
-        !result.successUrl ||
-        !result.failUrl
-      ) {
-        throw new Error('후원 결제 정보가 올바르지 않습니다.');
-      }
-
-      const tossPayments = await loadTossPayments(result.clientKey);
-
-      await tossPayments.requestPayment('카드', {
-        amount: result.amount,
-        orderId: result.orderNo,
-        orderName: result.orderName,
-        successUrl: result.successUrl,
-        failUrl: result.failUrl,
-      });
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setDonationErrorMessage(unknownError.message || '후원을 시작하지 못했습니다.');
-      } else {
-        setDonationErrorMessage('후원을 시작하지 못했습니다.');
-      }
-
-      setIsDonationProcessing(false);
-    }
-  }
-
   function handleOpenMembershipDialog() {
-    setDonationErrorMessage('');
     setMembershipErrorMessage('');
     setIsMembershipDialogOpen(true);
   }
@@ -298,7 +175,6 @@ export default function SiteProfile() {
   async function handleJoinMembership() {
     try {
       setMembershipErrorMessage('');
-      setDonationErrorMessage('');
       setIsMembershipProcessing(true);
 
       const response = await fetch('/api/payments/toss/membership/start', {
@@ -352,7 +228,6 @@ export default function SiteProfile() {
   async function handleCancelMembership() {
     try {
       setMembershipErrorMessage('');
-      setDonationErrorMessage('');
       setIsMembershipProcessing(true);
 
       const response = await fetch('/api/payments/toss/membership/cancel', {
@@ -387,7 +262,6 @@ export default function SiteProfile() {
   async function handleResumeMembership() {
     try {
       setMembershipErrorMessage('');
-      setDonationErrorMessage('');
       setIsMembershipProcessing(true);
 
       const response = await fetch('/api/payments/toss/membership/resume', {
@@ -465,14 +339,12 @@ export default function SiteProfile() {
       </div>
 
       <div className={styles.action}>
-        <button
-          type="button"
+        <DonationButton
+          siteName={siteName}
           className="button small submit"
-          onClick={handleOpenDonationDialog}
-          disabled={isDonationProcessing || isMembershipProcessing}
-        >
-          후원하기
-        </button>
+          disabled={isMembershipProcessing}
+          onProcessingChange={setIsDonationProcessing}
+        />
 
         {isMembershipEnabled ? (
           <button
@@ -491,38 +363,6 @@ export default function SiteProfile() {
           {membershipErrorMessage}
         </Typography>
       ) : null}
-
-      <Dialog open={isDonationDialogOpen} onClose={handleCloseDonationDialog} fullWidth maxWidth="xs">
-        <DialogTitle>후원하기</DialogTitle>
-        <DialogContent>
-          <TextField
-            value={donationAmount}
-            onChange={handleDonationAmountChange}
-            fullWidth
-            margin="normal"
-            placeholder="후원금액"
-            inputProps={{
-              inputMode: 'numeric',
-            }}
-            helperText="최소 1,000원, 최대 100,000원까지 1,000원 단위로 입력할 수 있습니다."
-            disabled={isDonationProcessing}
-          />
-
-          {donationErrorMessage ? (
-            <Typography role="status" color="error">
-              {donationErrorMessage}
-            </Typography>
-          ) : null}
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDonationDialog} disabled={isDonationProcessing}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleDonate} disabled={isDonationProcessing}>
-            후원
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Dialog open={isMembershipDialogOpen} onClose={handleCloseMembershipDialog} fullWidth maxWidth="xs">
         <DialogTitle>

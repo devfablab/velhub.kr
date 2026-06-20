@@ -5,7 +5,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type CancelDonationBody = {
+type CancelPostPurchaseBody = {
   paymentId?: string;
   isManualException?: boolean;
 };
@@ -22,13 +22,9 @@ type PaymentRow = {
   created_at: string;
 };
 
-function isDonationPaymentType(paymentType: string) {
-  return paymentType === PAYMENT_TYPE.DONATION_SITE || paymentType === PAYMENT_TYPE.DONATION_POST;
-}
-
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as CancelDonationBody;
+    const body = (await request.json()) as CancelPostPurchaseBody;
     const paymentId = normalizeText(body.paymentId);
     const isManualException = body.isManualException === true;
 
@@ -62,39 +58,35 @@ export async function POST(request: Request) {
         ].join(', '),
       )
       .eq('id', paymentId)
-      .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_POST])
+      .eq('payment_type', PAYMENT_TYPE.POST_PURCHASE)
       .maybeSingle();
 
     if (paymentResult.error) {
       console.error(paymentResult.error);
 
-      return Response.json({ error: '후원 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '포스팅 구매 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     if (!paymentResult.data) {
-      return Response.json({ error: '후원 결제 정보를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ error: '포스팅 구매 결제 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const payment = paymentResult.data as unknown as PaymentRow;
 
-    if (!isDonationPaymentType(payment.payment_type)) {
-      return Response.json({ error: '후원 결제가 아닙니다.' }, { status: 400 });
-    }
-
     if (payment.buyer_user_id !== session.authUserId) {
-      return Response.json({ error: '본인의 후원 결제만 취소할 수 있습니다.' }, { status: 403 });
+      return Response.json({ error: '본인의 포스팅 구매 결제만 취소할 수 있습니다.' }, { status: 403 });
     }
 
     if (payment.status === PAYMENT_STATUS.REFUNDED) {
-      return Response.json({ error: '이미 환불된 후원입니다.' }, { status: 400 });
+      return Response.json({ error: '이미 환불된 포스팅 구매입니다.' }, { status: 400 });
     }
 
     if (payment.status !== PAYMENT_STATUS.PAID) {
-      return Response.json({ error: '환불할 수 없는 후원 상태입니다.' }, { status: 400 });
+      return Response.json({ error: '환불할 수 없는 포스팅 구매 상태입니다.' }, { status: 400 });
     }
 
     if ((payment.refunded_amount ?? 0) > 0) {
-      return Response.json({ error: '이미 환불 처리가 진행된 후원입니다.' }, { status: 400 });
+      return Response.json({ error: '이미 환불 처리가 진행된 포스팅 구매입니다.' }, { status: 400 });
     }
 
     const paidAt = payment.approved_at ?? payment.created_at;
@@ -106,7 +98,7 @@ export async function POST(request: Request) {
     });
 
     if (!refundCalculation.isRefundable) {
-      return Response.json({ error: '환불 가능 기간이 지난 후원입니다.' }, { status: 400 });
+      return Response.json({ error: '환불 가능 기간이 지난 포스팅 구매입니다.' }, { status: 400 });
     }
 
     if (!payment.payment_key) {
@@ -115,7 +107,7 @@ export async function POST(request: Request) {
 
     const tossCancelResult = await cancelTossPayment({
       paymentKey: payment.payment_key,
-      cancelReason: '후원 환불',
+      cancelReason: '포스팅 구매 환불',
     });
 
     const paymentUpdateResult = await supabaseAdmin
@@ -131,7 +123,7 @@ export async function POST(request: Request) {
     if (paymentUpdateResult.error) {
       console.error(paymentUpdateResult.error);
 
-      return Response.json({ error: '후원 환불 정보를 저장하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '포스팅 구매 환불 정보를 저장하지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -142,9 +134,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '후원 환불에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '포스팅 구매 환불에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '후원 환불에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '포스팅 구매 환불에 실패했습니다.' }, { status: 500 });
   }
 }

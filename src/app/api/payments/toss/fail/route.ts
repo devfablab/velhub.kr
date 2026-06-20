@@ -23,6 +23,7 @@ type PaymentFailBody = {
   targetType?: string;
   boardName?: string;
   seriesName?: string | null;
+  postId?: string | null;
   amount?: number;
 };
 
@@ -55,9 +56,25 @@ type SeriesRow = {
   series_label: string | null;
 };
 
+type PostRow = {
+  id: string;
+  site_id: string;
+  board_id: string;
+  series_id: string;
+  slug: number;
+  subject: string;
+};
+
 type ExistingPaymentRow = {
   id: string;
   status: string;
+};
+
+type PostPaymentInfo = {
+  site_id: string;
+  board_id: string;
+  series_id: string;
+  post_id: string;
 };
 
 type PaymentFailInfo = {
@@ -67,12 +84,15 @@ type PaymentFailInfo = {
   targetId: string;
   refundPolicy: string;
   failureStage: string;
+  postPayment: PostPaymentInfo | null;
 };
 
 function getPaymentType(value: string) {
   if (
     value === PAYMENT_TYPE.PLAN_BILLING ||
     value === PAYMENT_TYPE.DONATION_SITE ||
+    value === PAYMENT_TYPE.DONATION_POST ||
+    value === PAYMENT_TYPE.POST_PURCHASE ||
     value === PAYMENT_TYPE.BLOG_MEMBERSHIP ||
     value === PAYMENT_TYPE.BOARD_SUBSCRIPTION ||
     value === PAYMENT_TYPE.SERIES_SUBSCRIPTION
@@ -97,6 +117,10 @@ function validateDonationAmount(amount: number) {
   }
 
   return amount % 1000 === 0;
+}
+
+function getPostPurchasePrice(seriesSubscriptionPrice: number) {
+  return Math.floor((seriesSubscriptionPrice * 27) / 100 / 1000) * 1000;
 }
 
 async function getSiteById(supabaseAdmin: SupabaseAdminClient, siteId: string) {
@@ -167,10 +191,11 @@ async function getPlanBillingFailInfo({
     targetId: site.id,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
     failureStage: 'plan_billing_fail',
+    postPayment: null,
   };
 }
 
-async function getDonationFailInfo({
+async function getDonationSiteFailInfo({
   supabaseAdmin,
   siteId,
   amount,
@@ -192,6 +217,137 @@ async function getDonationFailInfo({
     targetId: siteId,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
     failureStage: 'donation_site_fail',
+    postPayment: null,
+  };
+}
+
+async function getDonationPostFailInfo({
+  supabaseAdmin,
+  siteId,
+  postId,
+  amount,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  postId: string;
+  amount: number | undefined;
+}): Promise<PaymentFailInfo> {
+  await getSiteById(supabaseAdmin, siteId);
+
+  if (!postId) {
+    throw new Error('postId가 유효하지 않습니다.');
+  }
+
+  if (typeof amount !== 'number' || !validateDonationAmount(amount)) {
+    throw new Error('후원금액이 올바르지 않습니다.');
+  }
+
+  const postResult = await supabaseAdmin
+    .from('posts')
+    .select('id, site_id, board_id, series_id, slug, subject')
+    .eq('site_id', siteId)
+    .eq('id', postId)
+    .maybeSingle();
+
+  if (postResult.error) {
+    throw new Error('글 정보를 확인하지 못했습니다.');
+  }
+
+  if (!postResult.data) {
+    throw new Error('글 정보를 찾을 수 없습니다.');
+  }
+
+  const post = postResult.data as PostRow;
+
+  return {
+    amount,
+    paymentType: PAYMENT_TYPE.DONATION_POST,
+    targetType: PAYMENT_TARGET_TYPE.POST,
+    targetId: post.id,
+    refundPolicy: REFUND_POLICY.SEVEN_DAYS,
+    failureStage: 'donation_post_fail',
+    postPayment: {
+      site_id: siteId,
+      board_id: post.board_id,
+      series_id: post.series_id,
+      post_id: post.id,
+    },
+  };
+}
+
+async function getPostPurchaseFailInfo({
+  supabaseAdmin,
+  siteId,
+  postId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  postId: string;
+}): Promise<PaymentFailInfo> {
+  await getSiteById(supabaseAdmin, siteId);
+
+  if (!postId) {
+    throw new Error('postId가 유효하지 않습니다.');
+  }
+
+  const postResult = await supabaseAdmin
+    .from('posts')
+    .select('id, site_id, board_id, series_id, slug, subject')
+    .eq('site_id', siteId)
+    .eq('id', postId)
+    .maybeSingle();
+
+  if (postResult.error) {
+    throw new Error('글 정보를 확인하지 못했습니다.');
+  }
+
+  if (!postResult.data) {
+    throw new Error('글 정보를 찾을 수 없습니다.');
+  }
+
+  const post = postResult.data as PostRow;
+
+  const subscriptionSettingResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('price, is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', post.series_id)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .maybeSingle();
+
+  if (subscriptionSettingResult.error) {
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  if (!subscriptionSettingResult.data) {
+    throw new Error('연재 구독 설정을 찾을 수 없습니다.');
+  }
+
+  const setting = subscriptionSettingResult.data as SubscriptionSettingRow;
+
+  if (!setting.is_enabled) {
+    throw new Error('구독이 켜진 연재 글만 구매할 수 있습니다.');
+  }
+
+  const postPurchasePrice = getPostPurchasePrice(setting.price);
+
+  if (postPurchasePrice < 1000) {
+    throw new Error('포스팅 구매 금액이 1,000원 미만입니다.');
+  }
+
+  return {
+    amount: postPurchasePrice,
+    paymentType: PAYMENT_TYPE.POST_PURCHASE,
+    targetType: PAYMENT_TARGET_TYPE.POST,
+    targetId: post.id,
+    refundPolicy: REFUND_POLICY.SEVEN_DAYS,
+    failureStage: 'post_purchase_fail',
+    postPayment: {
+      site_id: siteId,
+      board_id: post.board_id,
+      series_id: post.series_id,
+      post_id: post.id,
+    },
   };
 }
 
@@ -229,6 +385,7 @@ async function getMembershipFailInfo({
     targetId: site.id,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
     failureStage: 'membership_fail',
+    postPayment: null,
   };
 }
 
@@ -290,6 +447,7 @@ async function getSubscriptionFailInfo({
       targetId: board.id,
       refundPolicy: REFUND_POLICY.SEVEN_DAYS,
       failureStage: 'board_subscription_fail',
+      postPayment: null,
     };
   }
 
@@ -344,6 +502,7 @@ async function getSubscriptionFailInfo({
     targetId: series.id,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
     failureStage: 'series_subscription_fail',
+    postPayment: null,
   };
 }
 
@@ -360,6 +519,7 @@ async function getPaymentFailInfo({
   const boardName = normalizeText(body.boardName).toLowerCase();
   const targetType = normalizeText(body.targetType);
   const seriesName = normalizeText(body.seriesName).toLowerCase();
+  const postId = normalizeText(body.postId);
 
   if (paymentType === PAYMENT_TYPE.PLAN_BILLING) {
     if (!siteId) {
@@ -377,10 +537,35 @@ async function getPaymentFailInfo({
       throw new Error('siteId가 유효하지 않습니다.');
     }
 
-    return getDonationFailInfo({
+    return getDonationSiteFailInfo({
       supabaseAdmin,
       siteId,
       amount: body.amount,
+    });
+  }
+
+  if (paymentType === PAYMENT_TYPE.DONATION_POST) {
+    if (!siteId) {
+      throw new Error('siteId가 유효하지 않습니다.');
+    }
+
+    return getDonationPostFailInfo({
+      supabaseAdmin,
+      siteId,
+      postId,
+      amount: body.amount,
+    });
+  }
+
+  if (paymentType === PAYMENT_TYPE.POST_PURCHASE) {
+    if (!siteId) {
+      throw new Error('siteId가 유효하지 않습니다.');
+    }
+
+    return getPostPurchaseFailInfo({
+      supabaseAdmin,
+      siteId,
+      postId,
     });
   }
 
@@ -477,7 +662,7 @@ export async function POST(request: Request) {
         payment_type: failInfo.paymentType,
         target_type: failInfo.targetType,
         target_id: failInfo.targetId,
-        post_payment: null,
+        post_payment: failInfo.postPayment,
         subscription_id: null,
         failure_code: failureCode || null,
         failure_message: failureMessage || null,
@@ -492,6 +677,8 @@ export async function POST(request: Request) {
           paymentType: failInfo.paymentType,
           targetType: failInfo.targetType,
           targetId: failInfo.targetId,
+          amount: failInfo.amount,
+          postPayment: failInfo.postPayment,
         },
       })
       .select('id')

@@ -29,8 +29,8 @@ import BoardPostCountTableList from '@/components/service/community/BoardPostCou
 import FabNew from '@/components/service/common/FabNew';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../menu';
-import SubscriptionButton from './subscriptionButton';
 import styles from '@/app/board.module.sass';
 
 type Props = {

@@ -40,8 +40,10 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
 import BoardRecentTableList from '@/components/service/community/BoardRecentTableList';
-import styles from '@/app/board.module.sass';
+import DonationButton from '@/components/service/common/DonationButton';
+import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import Container from '../../menu';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
@@ -55,6 +57,7 @@ type BoardInfo = {
   markdown_status: string;
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
+  is_subscription: boolean | null;
 };
 
 type PostImage = {
@@ -203,6 +206,11 @@ type PostContent = {
   author_manage_icon: AuthorManageIcon | null;
   closed_by_name: string;
   prefix_label: string | null;
+  is_purchase_required: boolean;
+  post_purchase_price: number;
+  has_series_subscription: boolean;
+  has_post_purchase: boolean;
+  can_view_paid_content: boolean;
 };
 
 type SeriesItem = {
@@ -210,6 +218,7 @@ type SeriesItem = {
   series_key: string;
   series_label: string;
   is_completed: boolean;
+  is_subscription: boolean | null;
 };
 
 type SeriesContentItem = {
@@ -763,6 +772,47 @@ export default function Opt({ isCommunity }: Props) {
       </div>
     ) : null;
 
+  const postDonationButton =
+    board.is_subscription !== true &&
+    content.published_status === 'published' &&
+    !isPage &&
+    series &&
+    series.is_subscription !== true ? (
+      <div className={styles.options}>
+        <div className={styles.buttons}>
+          <DonationButton
+            targetType="post"
+            siteName={siteName}
+            boardName={boardName}
+            contentId={content.slug}
+            buttonText="글 후원"
+            className={styles.button}
+          />
+        </div>
+      </div>
+    ) : null;
+
+  console.log('content: ', content);
+
+  const postPurchaseButton =
+    board.is_subscription &&
+    content.published_status === 'published' &&
+    !isPage &&
+    content.is_purchase_required &&
+    !content.can_view_paid_content ? (
+      <div className={styles.options}>
+        <div className={styles.buttons}>
+          <PostPurchaseButton
+            siteName={siteName}
+            boardName={boardName}
+            contentId={content.slug}
+            buttonText="포스팅 구매"
+            className={styles.button}
+          />
+        </div>
+      </div>
+    ) : null;
+
   return (
     <Container pageBack={`/${siteName}/${boardName}`} pageTitle="글 보기" pageFin>
       <div className="container">
@@ -1235,6 +1285,8 @@ export default function Opt({ isCommunity }: Props) {
               </div>
             ) : null}
             {postActionButtons}
+            {postDonationButton}
+            {postPurchaseButton}
             {seriesList}
           </article>
           {content.published_status === 'published' ? (

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
@@ -44,8 +45,11 @@ type AuthorManageIcon = {
 };
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
+
 type GiscusInputPosition = 'top' | 'bottom';
+
 type GiscusFlag = '0' | '1';
+
 type DrawType = 'first_come' | 'random' | null;
 
 type GiscusSettings = {
@@ -77,10 +81,17 @@ type DrawWinner = {
   author_avatar_url: string;
 };
 
-type PostActions = {
-  isLiked: boolean;
-  isSaved: boolean;
-  likeCount: number;
+type SeriesSubscriptionSettingRow = {
+  price: number;
+  is_enabled: boolean;
+};
+
+type PaidContentAccess = {
+  is_purchase_required: boolean;
+  post_purchase_price: number;
+  has_series_subscription: boolean;
+  has_post_purchase: boolean;
+  can_view_paid_content: boolean;
 };
 
 const AVATAR_BUCKET = 'avatar';
@@ -250,7 +261,6 @@ function shuffleItems<T>(items: T[]) {
 
   for (let index = nextItems.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1));
-
     [nextItems[index], nextItems[randomIndex]] = [nextItems[randomIndex], nextItems[index]];
   }
 
@@ -287,6 +297,150 @@ function isPastDateTime(value: string | null) {
   }
 
   return date.getTime() <= Date.now();
+}
+
+function getPostPurchasePrice(seriesSubscriptionPrice: number) {
+  return Math.floor((seriesSubscriptionPrice * 27) / 100 / 1000) * 1000;
+}
+
+function getTextPreview(value: string | null | undefined, maxLength: number) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return Array.from(normalizedValue).slice(0, maxLength).join('');
+}
+
+async function getPaidContentAccess({
+  supabaseAdmin,
+  authUserId,
+  siteId,
+  boardIsSubscription,
+  seriesId,
+  postId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  authUserId: string | null;
+  siteId: string;
+  boardIsSubscription: boolean | null;
+  seriesId: string | null;
+  postId: string;
+}): Promise<PaidContentAccess> {
+  console.log('[paid-content-check]', {
+    boardIsSubscription,
+
+    seriesId,
+
+    postId,
+
+    authUserId,
+
+    isPurchaseTarget: boardIsSubscription === true && Boolean(seriesId),
+  });
+  if (boardIsSubscription !== true || !seriesId) {
+    return {
+      is_purchase_required: false,
+      post_purchase_price: 0,
+      has_series_subscription: false,
+      has_post_purchase: false,
+      can_view_paid_content: true,
+    };
+  }
+
+  const subscriptionSettingResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('price, is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', seriesId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .maybeSingle();
+
+  if (subscriptionSettingResult.error) {
+    console.error(subscriptionSettingResult.error);
+
+    throw new Error('연재 구독 설정을 확인하지 못했습니다.');
+  }
+
+  if (!subscriptionSettingResult.data?.is_enabled) {
+    return {
+      is_purchase_required: false,
+      post_purchase_price: 0,
+      has_series_subscription: false,
+      has_post_purchase: false,
+      can_view_paid_content: true,
+    };
+  }
+
+  const setting = subscriptionSettingResult.data as SeriesSubscriptionSettingRow;
+  const postPurchasePrice = getPostPurchasePrice(setting.price);
+
+  if (!authUserId) {
+    return {
+      is_purchase_required: true,
+      post_purchase_price: postPurchasePrice,
+      has_series_subscription: false,
+      has_post_purchase: false,
+      can_view_paid_content: false,
+    };
+  }
+
+  const activeSubscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', authUserId)
+    .eq('site_id', siteId)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', seriesId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .in('status', ['active', 'past_due', 'scheduled_cancel'])
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (activeSubscriptionResult.error) {
+    console.error(activeSubscriptionResult.error);
+
+    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+  }
+
+  const hasActiveSubscription = (activeSubscriptionResult.data ?? []).length > 0;
+
+  if (hasActiveSubscription) {
+    return {
+      is_purchase_required: true,
+      post_purchase_price: postPurchasePrice,
+      has_series_subscription: true,
+      has_post_purchase: false,
+      can_view_paid_content: true,
+    };
+  }
+
+  const postPurchaseResult = await supabaseAdmin
+    .from('payments')
+    .select('id')
+    .eq('buyer_user_id', authUserId)
+    .eq('payment_type', PAYMENT_TYPE.POST_PURCHASE)
+    .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+    .eq('target_id', postId)
+    .eq('status', PAYMENT_STATUS.PAID)
+    .limit(1);
+
+  if (postPurchaseResult.error) {
+    console.error(postPurchaseResult.error);
+
+    throw new Error('포스팅 구매 내역을 확인하지 못했습니다.');
+  }
+
+  const hasPostPurchase = (postPurchaseResult.data ?? []).length > 0;
+
+  return {
+    is_purchase_required: true,
+    post_purchase_price: postPurchasePrice,
+    has_series_subscription: false,
+    has_post_purchase: hasPostPurchase,
+    can_view_paid_content: hasPostPurchase,
+  };
 }
 
 async function getAdjacentPosts({
@@ -628,13 +782,7 @@ async function createRandomDrawIfNeeded({
     throw new Error('추첨 대상 댓글을 확인하지 못했습니다.');
   }
 
-  const candidateMap = new Map<
-    string,
-    {
-      comment_id: string;
-      user_id: string;
-    }
-  >();
+  const candidateMap = new Map<string, { comment_id: string; user_id: string }>();
 
   (commentsResult.data ?? []).forEach((comment) => {
     const userId = normalizeText(comment.user_id);
@@ -722,63 +870,6 @@ async function getDrawWinners({
   return winners;
 }
 
-async function getPostActions({
-  siteId,
-  boardId,
-  postId,
-  authUserId,
-}: {
-  siteId: string;
-  boardId: string;
-  postId: string;
-  authUserId: string | null;
-}): Promise<PostActions> {
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const [likeCountResult, likeResult, saveResult] = await Promise.all([
-    supabaseAdmin
-      .from('post_likes')
-      .select('id', { count: 'exact', head: true })
-      .eq('site_id', siteId)
-      .eq('board_id', boardId)
-      .eq('post_id', postId),
-    authUserId
-      ? supabaseAdmin
-          .from('post_likes')
-          .select('id')
-          .eq('user_id', authUserId)
-          .eq('site_id', siteId)
-          .eq('board_id', boardId)
-          .eq('post_id', postId)
-          .limit(1)
-      : Promise.resolve({ data: [], error: null }),
-    authUserId
-      ? supabaseAdmin
-          .from('post_saves')
-          .select('id')
-          .eq('user_id', authUserId)
-          .eq('site_id', siteId)
-          .eq('board_id', boardId)
-          .eq('post_id', postId)
-          .limit(1)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-  if (likeCountResult.error || likeResult.error || saveResult.error) {
-    return {
-      isLiked: false,
-      isSaved: false,
-      likeCount: 0,
-    };
-  }
-
-  return {
-    isLiked: (likeResult.data ?? []).length > 0,
-    isSaved: (saveResult.data ?? []).length > 0,
-    likeCount: likeCountResult.count ?? 0,
-  };
-}
-
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { boardName, contentId } = await context.params;
@@ -840,14 +931,14 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardData = board.data;
 
-    if (board.data.board_type === 'page') {
+    if (boardData.board_type === 'page') {
       const page = await supabaseAdmin
         .from('pages')
         .select(
-          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, attachment_slug, attachment_origin, is_comment',
+          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
         )
         .eq('site_id', rhizomeData.id)
-        .eq('board_id', board.data.id)
+        .eq('board_id', boardData.id)
         .eq('slug', normalizedContentId)
         .maybeSingle();
 
@@ -855,11 +946,11 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
 
-      const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, page.data.user_id);
+      const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, page.data.user_id);
       const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
 
       return NextResponse.json({
-        board: board.data,
+        board: boardData,
         content: {
           ...page.data,
           slug: String(page.data.slug),
@@ -869,6 +960,11 @@ export async function GET(request: Request, context: RouteContext) {
           author_role: author.role,
           author_manage_roles: author.manageRoles,
           author_manage_icon: author.manageIcon,
+          is_purchase_required: false,
+          post_purchase_price: 0,
+          has_series_subscription: false,
+          has_post_purchase: false,
+          can_view_paid_content: true,
         },
         previousPost: null,
         nextPost: null,
@@ -888,7 +984,7 @@ export async function GET(request: Request, context: RouteContext) {
         'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at',
       )
       .eq('site_id', rhizomeData.id)
-      .eq('board_id', board.data.id)
+      .eq('board_id', boardData.id)
       .eq('slug', Number(normalizedContentId))
       .maybeSingle();
 
@@ -898,26 +994,38 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postData = post.data;
 
-    const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
+    const isAuthor = Boolean(session.authUserId) && postData.user_id === session.authUserId;
 
-    if (post.data.published_status === 'draft' && !isAuthor) {
+    if (postData.published_status === 'draft' && !isAuthor) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (post.data.is_closed === true && !isStaff) {
+    if (postData.is_closed === true && !isStaff) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.user_id);
-    const closedBy = await getUserDisplayInfo(rhizomeData.id, board.data.id, post.data.closed_by);
-    const drawType = normalizeDrawType(post.data.draw_type);
-    const drawLimit = normalizeDrawLimit(post.data.draw_limit);
-    const drawEndsAt = typeof post.data.draw_ends_at === 'string' ? post.data.draw_ends_at : null;
+    const paidContentAccess = await getPaidContentAccess({
+      supabaseAdmin,
+      authUserId: session.authUserId ?? null,
+      siteId: rhizomeData.id,
+      boardIsSubscription: boardData.is_subscription ?? null,
+      seriesId: postData.series_id,
+      postId: postData.id,
+    });
+
+    const canViewPaidContent = isAuthor || isStaff || paidContentAccess.can_view_paid_content;
+
+    const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
+    const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);
+
+    const drawType = normalizeDrawType(postData.draw_type);
+    const drawLimit = normalizeDrawLimit(postData.draw_limit);
+    const drawEndsAt = typeof postData.draw_ends_at === 'string' ? postData.draw_ends_at : null;
 
     await createRandomDrawIfNeeded({
       siteId: rhizomeData.id,
-      boardId: board.data.id,
-      postId: post.data.id,
+      boardId: boardData.id,
+      postId: postData.id,
       drawType,
       drawLimit,
       drawEndsAt,
@@ -928,8 +1036,8 @@ export async function GET(request: Request, context: RouteContext) {
           .from('post_draws')
           .select('id', { count: 'exact', head: true })
           .eq('site_id', rhizomeData.id)
-          .eq('board_id', board.data.id)
-          .eq('post_id', post.data.id)
+          .eq('board_id', boardData.id)
+          .eq('post_id', postData.id)
       : { count: 0, error: null };
 
     if (drawCountResult.error) {
@@ -937,25 +1045,29 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const drawCount = drawCountResult.count ?? 0;
+
     const isDrawCompleted =
       drawType === 'first_come'
         ? Boolean(drawLimit && drawCount >= drawLimit)
         : drawType === 'random'
           ? Boolean(drawEndsAt && isPastDateTime(drawEndsAt) && drawCount > 0)
           : false;
+
     const canViewDraws = isAuthor || isStaff;
+
     const drawWinners = drawType
       ? await getDrawWinners({
           siteId: rhizomeData.id,
-          boardId: board.data.id,
-          postId: post.data.id,
+          boardId: boardData.id,
+          postId: postData.id,
           canViewDraws,
         })
       : [];
 
-    const categoryIds = Array.isArray(post.data.categories)
-      ? post.data.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
+    const categoryIds = Array.isArray(postData.categories)
+      ? postData.categories.filter((value: unknown): value is string => typeof value === 'string' && Boolean(value))
       : [];
+
     let categories: Array<{
       id: string;
       category_key: string;
@@ -973,7 +1085,7 @@ export async function GET(request: Request, context: RouteContext) {
         .from('board_categories')
         .select('id, category_key, category_label, summary, thumbnail_image, sort_order, board_id, site_id, created_at')
         .eq('site_id', rhizomeData.id)
-        .eq('board_id', board.data.id)
+        .eq('board_id', boardData.id)
         .in('id', categoryIds)
         .order('sort_order', { ascending: true });
 
@@ -995,8 +1107,10 @@ export async function GET(request: Request, context: RouteContext) {
       site_id: string;
       last_published_at: string | null;
       is_completed: boolean;
+      is_subscription: boolean | null;
       user_id: string | null;
     } | null = null;
+
     let seriesContents: Array<{
       id: string;
       slug: string;
@@ -1005,15 +1119,15 @@ export async function GET(request: Request, context: RouteContext) {
       href: string;
     }> = [];
 
-    if (post.data.series_id) {
+    if (postData.series_id) {
       const seriesResult = await supabaseAdmin
         .from('board_series')
         .select(
-          'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+          'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, is_subscription, user_id',
         )
         .eq('site_id', rhizomeData.id)
-        .eq('board_id', board.data.id)
-        .eq('id', post.data.series_id)
+        .eq('board_id', boardData.id)
+        .eq('id', postData.series_id)
         .maybeSingle();
 
       if (seriesResult.error) {
@@ -1027,7 +1141,7 @@ export async function GET(request: Request, context: RouteContext) {
           .from('posts')
           .select('id, slug, subject, series_idx')
           .eq('site_id', rhizomeData.id)
-          .eq('board_id', board.data.id)
+          .eq('board_id', boardData.id)
           .eq('series_id', series.id)
           .eq('is_closed', false)
           .eq('published_status', 'published')
@@ -1048,18 +1162,15 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
-    let prefixes: Array<{
-      id: string;
-      prefix_label: string;
-    }> = [];
+    let prefixes: Array<{ id: string; prefix_label: string }> = [];
     let prefixLabel: string | null = null;
 
-    if (board.data.post_type === 'prefix') {
+    if (boardData.post_type === 'prefix') {
       const prefixResult = await supabaseAdmin
         .from('board_prefixes')
         .select('id, prefix_label')
         .eq('site_id', rhizomeData.id)
-        .eq('board_id', board.data.id)
+        .eq('board_id', boardData.id)
         .order('prefix_key', { ascending: true });
 
       if (prefixResult.error) {
@@ -1097,26 +1208,27 @@ export async function GET(request: Request, context: RouteContext) {
     const adjacentPosts = await getAdjacentPosts({
       siteId: rhizomeData.id,
       siteName,
-      boardId: board.data.id,
-      boardKey: board.data.board_key,
-      currentIdx: post.data.idx,
+      boardId: boardData.id,
+      boardKey: boardData.board_key,
+      currentIdx: postData.idx,
       categoryName,
       isStaff,
     });
-    const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
-    const thumbnailImageUrl = getPublicPostImageUrl(post.data.thumbnail_image);
-    const postActions = await getPostActions({
-      siteId: rhizomeData.id,
-      boardId: board.data.id,
-      postId: post.data.id,
-      authUserId: session.authUserId,
-    });
+
+    const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
+    const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
 
     return NextResponse.json({
-      board: board.data,
+      board: boardData,
       content: {
-        ...post.data,
-        slug: String(post.data.slug),
+        ...postData,
+        summary: canViewPaidContent ? postData.summary : getTextPreview(postData.summary, 70),
+        content_html: canViewPaidContent ? postData.content_html : getTextPreview(postData.content_html, 120),
+        content_markdown: canViewPaidContent
+          ? postData.content_markdown
+          : getTextPreview(postData.content_markdown, 120),
+        content_simple: canViewPaidContent ? postData.content_simple : getTextPreview(postData.content_simple, 120),
+        slug: String(postData.slug),
         author_name: author.name,
         author_avatar_url: author.avatarUrl,
         author_level: author.level,
@@ -1126,10 +1238,15 @@ export async function GET(request: Request, context: RouteContext) {
         closed_by_name: closedBy.name,
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,
-        images: normalizeImages(post.data.images),
+        images: canViewPaidContent ? normalizeImages(postData.images) : [],
         post_count: postCount,
         comment_provider: commentProvider,
         giscus_settings: giscusSettings,
+        is_purchase_required: paidContentAccess.is_purchase_required,
+        post_purchase_price: paidContentAccess.post_purchase_price,
+        has_series_subscription: paidContentAccess.has_series_subscription,
+        has_post_purchase: paidContentAccess.has_post_purchase,
+        can_view_paid_content: canViewPaidContent,
       },
       categories,
       series,
@@ -1138,7 +1255,6 @@ export async function GET(request: Request, context: RouteContext) {
       previousPost: adjacentPosts.previousPost,
       nextPost: adjacentPosts.nextPost,
       selectedCategory: adjacentPosts.selectedCategory,
-      postActions,
       draw: drawType
         ? {
             draw_type: drawType,
@@ -1159,9 +1275,7 @@ export async function GET(request: Request, context: RouteContext) {
         {
           error: unknownError.message || '게시글 정보를 불러오지 못했습니다.',
         },
-        {
-          status: 500,
-        },
+        { status: 500 },
       );
     }
 
