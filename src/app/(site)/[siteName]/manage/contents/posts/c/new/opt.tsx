@@ -88,6 +88,16 @@ function normalizeBoardKey(rawValue: string) {
     .replace(/-+$/g, '');
 }
 
+function normalizeBoardKeyInput(rawValue: string) {
+  return rawValue
+    .trimStart()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+/g, '');
+}
+
 function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
@@ -142,7 +152,7 @@ export default function Opt() {
   }
 
   function handleBoardKeyChange(event: InputChangeEvent) {
-    const normalizedValue = normalizeBoardKey(event.currentTarget.value);
+    const normalizedValue = normalizeBoardKeyInput(event.currentTarget.value);
 
     setBoardKey(normalizedValue);
     setIsChecked(false);
