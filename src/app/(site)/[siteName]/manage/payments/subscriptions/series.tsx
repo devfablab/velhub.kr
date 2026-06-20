@@ -8,9 +8,9 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import NumberField from '@/components/custom-ui/NumberField';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 
@@ -69,6 +69,49 @@ type SeriesSubscriptionSaveResponse = {
   maxAllowedPrice?: number;
   error?: string;
 };
+
+function formatPrice(value: number) {
+  if (!value) {
+    return '';
+  }
+
+  return value.toLocaleString('ko-KR');
+}
+
+function getPriceNumber(value: string) {
+  const numberText = value.replace(/[^0-9]/g, '');
+
+  if (!numberText) {
+    return 0;
+  }
+
+  return Number(numberText);
+}
+
+function getMaxSeriesPrice(setting: SeriesSubscriptionSetting) {
+  return Math.min(setting.maxAllowedPrice, 100000);
+}
+
+function normalizeSeriesSubscriptionItems(boards: SeriesBoardItem[]) {
+  return boards.map((board) => ({
+    ...board,
+    series: board.series.map((series) => {
+      const maxPrice = getMaxSeriesPrice(series.setting);
+      const normalizedPrice =
+        series.setting.price >= series.setting.minPrice && series.setting.price <= maxPrice
+          ? series.setting.price
+          : series.setting.minPrice;
+
+      return {
+        ...series,
+        setting: {
+          ...series.setting,
+          price: normalizedPrice,
+        },
+      };
+    }),
+  }));
+}
 
 function isValidSeriesSubscriptionPrice(price: number, minPrice: number, maxAllowedPrice: number) {
   if (!Number.isInteger(price)) {
@@ -140,7 +183,7 @@ export default function SeriesSubscriptions() {
           throw new Error(result.error ?? '연재 구독 정보를 불러오지 못했습니다.');
         }
 
-        setBoards(result.boards ?? []);
+        setBoards(normalizeSeriesSubscriptionItems(result.boards ?? []));
         setEmptyMessage(result.emptyMessage ?? '연재가 설정되지 않았습니다.');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -192,14 +235,15 @@ export default function SeriesSubscriptions() {
     setSuccessMessage('');
   }
 
-  function handleSeriesPriceChange(seriesId: string, value: number | null) {
-    const nextPrice = value ?? 0;
+  function handleSeriesPriceChange(seriesId: string, event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const targetSeries = boards.flatMap((board) => board.series).find((series) => series.id === seriesId);
+    const nextPrice = getPriceNumber(event.target.value);
 
-    if (nextPrice < 0) {
+    if (!targetSeries) {
       return;
     }
 
-    if (nextPrice > 100000) {
+    if (nextPrice > getMaxSeriesPrice(targetSeries.setting)) {
       return;
     }
 
@@ -217,11 +261,10 @@ export default function SeriesSubscriptions() {
       setSuccessMessage('');
 
       if (
-        series.setting.isEnabled &&
         !isValidSeriesSubscriptionPrice(series.setting.price, series.setting.minPrice, series.setting.maxAllowedPrice)
       ) {
         throw new Error(
-          `${series.seriesLabel} 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${series.setting.maxAllowedPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`,
+          `${series.seriesLabel} 구독 금액은 ${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${getMaxSeriesPrice(series.setting).toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`,
         );
       }
 
@@ -313,9 +356,7 @@ export default function SeriesSubscriptions() {
 
                   <Stack spacing={3}>
                     {board.series.map((series) => {
-                      const priceFieldId = `series-subscription-price-${series.id}`;
-                      const helperTextId = `${priceFieldId}-helper-text`;
-                      const maxPrice = Math.min(series.setting.maxAllowedPrice, 100000);
+                      const maxPrice = getMaxSeriesPrice(series.setting);
 
                       return (
                         <Paper key={series.id} variant="outlined" sx={{ p: 2 }}>
@@ -339,24 +380,19 @@ export default function SeriesSubscriptions() {
                               label="연재 구독 사용"
                             />
 
-                            <Stack spacing={0.75}>
-                              <NumberField
-                                id={priceFieldId}
-                                label="연재 구독 금액"
-                                value={series.setting.price}
-                                onValueChange={(value) => handleSeriesPriceChange(series.id, value)}
-                                min={0}
-                                max={maxPrice}
-                                step={1000}
-                                locale="ko-KR"
-                                disabled={savingSeriesId === series.id}
-                                aria-describedby={helperTextId}
-                              />
-                              <Typography id={helperTextId} variant="body2" color="text.secondary">
-                                {series.setting.minPrice.toLocaleString('ko-KR')}원부터{' '}
-                                {maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.
-                              </Typography>
-                            </Stack>
+                            <TextField
+                              type="text"
+                              label="연재 구독 금액"
+                              value={formatPrice(series.setting.price)}
+                              onChange={(event) => handleSeriesPriceChange(series.id, event)}
+                              helperText={`${series.setting.minPrice.toLocaleString('ko-KR')}원부터 ${maxPrice.toLocaleString('ko-KR')}원까지 1,000원 단위로 입력해 주세요.`}
+                              inputProps={{
+                                inputMode: 'numeric',
+                                'aria-label': `${series.seriesLabel} 연재 구독 금액`,
+                              }}
+                              disabled={savingSeriesId === series.id}
+                              fullWidth
+                            />
 
                             <div>
                               <Button
