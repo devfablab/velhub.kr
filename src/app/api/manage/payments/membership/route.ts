@@ -143,7 +143,7 @@ async function getSiteAndSession(siteName: string) {
 
   if (site.site_type !== 'blog') {
     return {
-      response: Response.json({ error: '블로그 멤버십은 블로그에서만 사용할 수 있습니다.' }, { status: 400 }),
+      response: Response.json({ error: '멤버십은 블로그에서만 사용할 수 있습니다.' }, { status: 400 }),
       site: null,
       supabaseAdmin,
     };

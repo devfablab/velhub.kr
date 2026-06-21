@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   Divider,
   FormControlLabel,
@@ -247,6 +248,21 @@ export default function Opt() {
               <div className="loading-container">
                 <LoadingIndicator />
               </div>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (errorMessage === '멤버십은 블로그에서만 사용할 수 있습니다.') {
+    return (
+      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{errorMessage}</p>
             </div>
           </div>
         </div>
