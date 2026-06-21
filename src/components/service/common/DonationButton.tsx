@@ -2,14 +2,21 @@
 
 import { ChangeEvent, useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 
 type DonationTargetType = 'site' | 'post';
 
@@ -139,6 +146,10 @@ export default function DonationButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
+
   function updateProcessing(nextIsProcessing: boolean) {
     setIsProcessing(nextIsProcessing);
     onProcessingChange?.(nextIsProcessing);
@@ -232,44 +243,85 @@ export default function DonationButton(props: Props) {
         {buttonText}
       </button>
 
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs">
-        <DialogTitle>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</DialogTitle>
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+          <h2>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</h2>
+          <button className="close-button" onClick={handleCloseDialog}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <Typography variant="subtitle2">후원금액</Typography>
+            <TextField
+              type="text"
+              value={donationAmount}
+              onChange={handleDonationAmountChange}
+              helperText="1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요."
+              disabled={isProcessing}
+              fullWidth
+              size="small"
+            />
 
-        <DialogContent>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            <Stack gap={0.75}>
-              <Typography variant="subtitle2">후원금액</Typography>
-              <TextField
-                type="text"
-                value={donationAmount}
-                onChange={handleDonationAmountChange}
-                helperText="1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요."
-                inputProps={{
-                  inputMode: 'numeric',
-                  'aria-label': '후원금액',
-                }}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseDialog}
                 disabled={isProcessing}
-                fullWidth
-              />
+              >
+                취소
+              </button>
+              <button type="button" className="button medium submit" onClick={handleDonate} disabled={isProcessing}>
+                후원
+              </button>
             </Stack>
-
-            {errorMessage ? (
-              <Typography role="alert" color="error">
-                {errorMessage}
-              </Typography>
-            ) : null}
           </Stack>
-        </DialogContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</DialogTitle>
+          <button className="close-button" onClick={handleCloseDialog}>
+            <CloseRoundedIcon />
+          </button>
 
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDialog} disabled={isProcessing}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleDonate} disabled={isProcessing}>
-            후원
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <DialogContent>
+            <Stack gap={2} sx={{ pt: 1 }}>
+              <Stack gap={0.75}>
+                <Typography variant="subtitle2">후원금액</Typography>
+                <TextField
+                  type="text"
+                  value={donationAmount}
+                  onChange={handleDonationAmountChange}
+                  helperText="1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요."
+                  disabled={isProcessing}
+                  fullWidth
+                  size="small"
+                  slotProps={{
+                    input: {
+                      endAdornment: <InputAdornment position="end">원</InputAdornment>,
+                    },
+                  }}
+                />
+              </Stack>
+
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+              취소
+            </button>
+            <button type="button" className="button medium submit" onClick={handleDonate} disabled={isProcessing}>
+              후원
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }

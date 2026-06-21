@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import Typography from '@mui/material/Typography';
+import { Snackbar } from '@mui/material';
 
 type PostPurchaseStartResponse = {
   ok?: boolean;
@@ -132,11 +132,16 @@ export default function PostPurchaseButton(props: Props) {
         {buttonText}
       </button>
 
-      {errorMessage ? (
-        <Typography role="alert" color="error">
-          {errorMessage}
-        </Typography>
-      ) : null}
+      <Snackbar
+        open={Boolean(errorMessage)}
+        message={errorMessage}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        autoHideDuration={2700}
+        onClose={() => setErrorMessage('')}
+      />
     </>
   );
 }

@@ -3,14 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Typography from '@mui/material/Typography';
-import DonationButton from '@/components/service/common/DonationButton';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import DonationButton from '@/components/service/common/DonationButton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/aside.module.sass';
@@ -95,6 +102,10 @@ export default function SiteProfile() {
   const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
   const [membershipErrorMessage, setMembershipErrorMessage] = useState('');
   const [isMembershipProcessing, setIsMembershipProcessing] = useState(false);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadMembershipStatus() {
@@ -359,33 +370,100 @@ export default function SiteProfile() {
       </div>
 
       {membershipErrorMessage ? (
-        <Typography role="status" color="error">
-          {membershipErrorMessage}
-        </Typography>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{membershipErrorMessage}</span>
+        </p>
       ) : null}
 
-      <Dialog open={isMembershipDialogOpen} onClose={handleCloseMembershipDialog} fullWidth maxWidth="xs">
-        <DialogTitle>
-          {membershipStatus === 'canceled' || membershipStatus === 'expired' ? '멤버십 재가입' : '멤버십 가입'}
-        </DialogTitle>
-        <DialogContent>
-          <Typography>월 {formatMembershipPrice(membershipPrice ?? 0)}원 멤버십에 가입합니다.</Typography>
-
-          {membershipErrorMessage ? (
-            <Typography role="status" color="error">
-              {membershipErrorMessage}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isMembershipDialogOpen}
+          onClose={handleCloseMembershipDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>{membershipStatus === 'canceled' || membershipStatus === 'expired' ? '멤버십 재가입' : '멤버십 가입'}</h2>
+          <button className="close-button" onClick={handleCloseMembershipDialog}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <Typography variant="body2">
+              월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
             </Typography>
-          ) : null}
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseMembershipDialog} disabled={isMembershipProcessing}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleJoinMembership} disabled={isMembershipProcessing}>
-            가입하기
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+            {membershipErrorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{membershipErrorMessage}</span>
+              </p>
+            ) : null}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseMembershipDialog}
+                disabled={isMembershipProcessing}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handleJoinMembership}
+                disabled={isMembershipProcessing}
+              >
+                가입하기
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isMembershipDialogOpen}
+          onClose={handleCloseMembershipDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>
+            {membershipStatus === 'canceled' || membershipStatus === 'expired' ? '멤버십 재가입' : '멤버십 가입'}
+          </DialogTitle>
+          <button className="close-button" onClick={handleCloseMembershipDialog}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography variant="body2">
+              월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
+            </Typography>
+
+            {membershipErrorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{membershipErrorMessage}</span>
+              </p>
+            ) : null}
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseMembershipDialog}
+              disabled={isMembershipProcessing}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handleJoinMembership}
+              disabled={isMembershipProcessing}
+            >
+              가입하기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

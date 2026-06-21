@@ -2,13 +2,19 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 
 type BoardInfo = {
   id: string;
@@ -141,6 +147,10 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadSubscriptionStatus() {
@@ -346,51 +356,114 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     <>
       <Stack gap={1} alignItems="flex-start">
         {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
-          <Button type="button" variant="contained" onClick={handleOpenDialog} disabled={isProcessing}>
+          <button type="button" className="button medium submit" onClick={handleOpenDialog} disabled={isProcessing}>
             {getSubscribeButtonText({ targetType, subscriptionStatus })}
-          </Button>
+          </button>
         ) : null}
 
         {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
-          <Button type="button" variant="outlined" onClick={handleCancelSubscription} disabled={isProcessing}>
+          <button
+            type="button"
+            className="button medium cancel"
+            onClick={handleCancelSubscription}
+            disabled={isProcessing}
+          >
             {targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}
-          </Button>
+          </button>
         ) : null}
 
         {subscriptionStatus === 'scheduled_cancel' ? (
-          <Button type="button" variant="contained" onClick={handleResumeSubscription} disabled={isProcessing}>
+          <button
+            type="button"
+            className="button medium action"
+            onClick={handleResumeSubscription}
+            disabled={isProcessing}
+          >
             재구독하기
-          </Button>
+          </button>
         ) : null}
 
         {errorMessage ? (
-          <Typography color="error" role="alert">
-            {errorMessage}
-          </Typography>
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
         ) : null}
       </Stack>
 
-      <Dialog open={isDialogOpen} onClose={handleCloseDialog} aria-labelledby="subscription-dialog-title">
-        <DialogTitle id="subscription-dialog-title">{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
-        <DialogContent>
-          <Typography>
-            {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독합니다.
-          </Typography>
-          {errorMessage ? (
-            <Typography color="error" role="alert">
-              {errorMessage}
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
+          <h2>{getDialogTitle({ targetType, subscriptionStatus })}</h2>
+          <button className="close-button" onClick={handleCloseDialog}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <Typography variant="body2">
+              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시곘어요?
             </Typography>
-          ) : null}
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseDialog} disabled={isProcessing}>
-            취소
-          </Button>
-          <Button type="button" variant="contained" onClick={handleStartSubscription} disabled={isProcessing}>
-            {getDialogSubmitText(subscriptionStatus)}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseDialog}
+                disabled={isProcessing}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handleStartSubscription}
+                disabled={isProcessing}
+              >
+                {getDialogSubmitText(subscriptionStatus)}
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isDialogOpen}
+          onClose={handleCloseDialog}
+          aria-labelledby="subscription-dialog-title"
+          className="VhiDialog"
+        >
+          <DialogTitle id="subscription-dialog-title">{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
+          <button className="close-button" onClick={handleCloseDialog}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography variant="body2">
+              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시곘어요?
+            </Typography>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handleStartSubscription}
+              disabled={isProcessing}
+            >
+              {getDialogSubmitText(subscriptionStatus)}
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }
