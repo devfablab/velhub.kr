@@ -106,7 +106,7 @@ export default function Opt() {
 
   return (
     <div className="paper">
-      <Stack spacing={2}>
+      <Stack gap={2}>
         {isSuccess ? (
           <>
             <Typography variant="h6">후원이 완료되었습니다.</Typography>

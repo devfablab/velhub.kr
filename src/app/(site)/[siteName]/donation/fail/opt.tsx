@@ -113,7 +113,7 @@ export default function Opt() {
       <div className="container">
         <div className="content">
           <div className="paper">
-            <Stack spacing={3} alignItems="center">
+            <Stack gap={3} alignItems="center">
               <Typography variant="h5" component="h1">
                 후원 결제에 실패했습니다.
               </Typography>

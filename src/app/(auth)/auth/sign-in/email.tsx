@@ -412,9 +412,9 @@ export default function EmailSignIn() {
           <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Typography>{decisionMessage}</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"
@@ -481,9 +481,9 @@ export default function EmailSignIn() {
           <button className="close-button" onClick={handleCancelDecision} aria-label="닫기" disabled={isSubmitting}>
             <CloseRoundedIcon />
           </button>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Typography>{decisionMessage}</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

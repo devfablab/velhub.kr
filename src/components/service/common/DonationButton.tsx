@@ -236,8 +236,8 @@ export default function DonationButton(props: Props) {
         <DialogTitle>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</DialogTitle>
 
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <Stack spacing={0.75}>
+          <Stack gap={2} sx={{ pt: 1 }}>
+            <Stack gap={0.75}>
               <Typography variant="subtitle2">후원금액</Typography>
               <TextField
                 type="text"

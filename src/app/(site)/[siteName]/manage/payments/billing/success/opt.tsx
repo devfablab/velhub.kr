@@ -102,7 +102,7 @@ export default function Opt() {
   return (
     <Container menu="payments">
       <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack spacing={3} alignItems="center">
+        <Stack gap={3} alignItems="center">
           {isSuccess ? (
             <>
               <Typography variant="h6" component="h1">

@@ -101,6 +101,10 @@ export default function Opt() {
       label: '디자인',
       href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`,
     },
+    {
+      label: '결제',
+      href: `/${siteName}/manage/payments/billing`,
+    },
     { label: '통계', href: `/${siteName}/manage/stats` },
   ];
 

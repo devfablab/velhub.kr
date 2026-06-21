@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type MembershipMember = {
   id: string;
@@ -238,86 +239,90 @@ export default function Opt() {
   }
 
   return (
-    <Container>
-      <Stack spacing={3}>
-        {errorMessage ? (
-          <Typography color="error" role="alert">
-            {errorMessage}
-          </Typography>
-        ) : null}
-
-        {successMessage ? (
-          <Typography color="success.main" role="status">
-            {successMessage}
-          </Typography>
-        ) : null}
-
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={3}>
-            <Stack spacing={1}>
-              <Typography variant="h6">멤버십 설정</Typography>
-              <Typography variant="body2" color="text.secondary">
-                멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할 수
-                있습니다.
-                {maxSeriesPrice > 0
-                  ? ` 현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.`
-                  : ''}
+    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack gap={3}>
+            {errorMessage ? (
+              <Typography color="error" role="alert">
+                {errorMessage}
               </Typography>
-            </Stack>
+            ) : null}
 
-            <Divider />
+            {successMessage ? (
+              <Typography color="success.main" role="status">
+                {successMessage}
+              </Typography>
+            ) : null}
 
-            <FormControlLabel
-              control={<Switch checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />}
-              label="멤버십 사용"
-            />
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={3}>
+                <Stack gap={1}>
+                  <Typography variant="h6">멤버십 설정</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할
+                    수 있습니다.
+                    {maxSeriesPrice > 0
+                      ? ` 현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.`
+                      : ''}
+                  </Typography>
+                </Stack>
 
-            <TextField
-              label="멤버십 금액"
-              value={membershipPrice}
-              onChange={handleMembershipPriceChange}
-              helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
-              inputProps={{
-                inputMode: 'numeric',
-                'aria-label': '멤버십 금액',
-              }}
-              disabled={isSaving}
-              fullWidth
-            />
+                <Divider />
 
-            <div>
-              <Button variant="contained" onClick={handleSaveMembershipSetting} disabled={isSaving}>
-                저장
-              </Button>
+                <FormControlLabel
+                  control={<Switch checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />}
+                  label="멤버십 사용"
+                />
+
+                <TextField
+                  label="멤버십 금액"
+                  value={membershipPrice}
+                  onChange={handleMembershipPriceChange}
+                  helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
+                  inputProps={{
+                    inputMode: 'numeric',
+                    'aria-label': '멤버십 금액',
+                  }}
+                  disabled={isSaving}
+                  fullWidth
+                />
+
+                <div>
+                  <Button variant="contained" onClick={handleSaveMembershipSetting} disabled={isSaving}>
+                    저장
+                  </Button>
+                </div>
+              </Stack>
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={3}>
+                <Typography variant="h6">멤버십 구독자</Typography>
+
+                {members.length ? (
+                  <Stack gap={2}>
+                    {members.map((member) => (
+                      <Paper key={member.id} variant="outlined" sx={{ p: 2 }}>
+                        <Stack gap={1}>
+                          <Typography>닉네임: {member.nickname}</Typography>
+                          <Typography>상태: {member.status}</Typography>
+                          <Typography>유지 기간: {member.activeMonths}개월째</Typography>
+                          <Typography>최근 결제일: {formatDateTime(member.lastPaidAt)}</Typography>
+                          <Typography>최근 결제금액: {formatAmount(member.lastPaidAmount)}</Typography>
+                          <Typography>누적 결제금액: {formatAmount(member.totalPaidAmount)}</Typography>
+                        </Stack>
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography color="text.secondary">아직 멤버십 구독자가 없습니다.</Typography>
+                )}
+              </Stack>
             </div>
           </Stack>
-        </Paper>
-
-        <Paper sx={{ p: 3 }}>
-          <Stack spacing={3}>
-            <Typography variant="h6">멤버십 구독자</Typography>
-
-            {members.length ? (
-              <Stack spacing={2}>
-                {members.map((member) => (
-                  <Paper key={member.id} variant="outlined" sx={{ p: 2 }}>
-                    <Stack spacing={1}>
-                      <Typography>닉네임: {member.nickname}</Typography>
-                      <Typography>상태: {member.status}</Typography>
-                      <Typography>유지 기간: {member.activeMonths}개월째</Typography>
-                      <Typography>최근 결제일: {formatDateTime(member.lastPaidAt)}</Typography>
-                      <Typography>최근 결제금액: {formatAmount(member.lastPaidAmount)}</Typography>
-                      <Typography>누적 결제금액: {formatAmount(member.totalPaidAmount)}</Typography>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            ) : (
-              <Typography color="text.secondary">아직 멤버십 구독자가 없습니다.</Typography>
-            )}
-          </Stack>
-        </Paper>
-      </Stack>
+        </div>
+      </div>
     </Container>
   );
 }

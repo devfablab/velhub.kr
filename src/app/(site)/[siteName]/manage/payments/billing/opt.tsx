@@ -1,21 +1,35 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { type KeyboardEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import Divider from '@mui/material/Divider';
-import Paper from '@mui/material/Paper';
-import Snackbar from '@mui/material/Snackbar';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Drawer,
+  Snackbar,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { formatDate, formatDateSimple, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
 type PaymentStatus = 'paid' | 'failed' | 'partially_refunded' | 'refunded';
@@ -75,6 +89,8 @@ type PlanBillingResponse = {
   error?: string;
 };
 
+type PaymentItem = NonNullable<PlanBillingResponse['payments']>[number];
+
 type PlanBillingStartResponse =
   | {
       mode: 'billing_auth';
@@ -87,6 +103,11 @@ type PlanBillingStartResponse =
     }
   | {
       mode: 'direct_billing';
+      ok: true;
+      subscriptionId: string;
+    }
+  | {
+      mode: 'trial_started';
       ok: true;
       subscriptionId: string;
     }
@@ -246,9 +267,63 @@ function getBillingDialogConfirmText(dialogType: BillingDialogType) {
   }
 }
 
+function getPlanSubscriptionButtonText({
+  subscription,
+  hasBillingMethod,
+}: {
+  subscription: PlanBillingResponse['subscription'];
+  hasBillingMethod: boolean;
+}) {
+  if (subscription) {
+    return '다시 구독하기';
+  }
+
+  if (hasBillingMethod) {
+    return '무료체험 시작하기';
+  }
+
+  return '결제수단 등록하기';
+}
+
+function PaymentDetail({ payment }: { payment: PaymentItem }) {
+  return (
+    <Stack gap={2}>
+      <Stack gap={0.5}>
+        <Typography variant="subtitle2">주문번호</Typography>
+        <Typography variant="body2">{payment.order_no}</Typography>
+      </Stack>
+
+      <Stack gap={0.5}>
+        <Typography variant="subtitle2">금액</Typography>
+        <Typography variant="body2">{formatPrice(payment.amount)}</Typography>
+      </Stack>
+
+      <Stack gap={0.5}>
+        <Typography variant="subtitle2">결제일</Typography>
+        <Typography variant="body2">{formatDateTime(payment.approved_at ?? payment.created_at)}</Typography>
+      </Stack>
+
+      <Stack gap={0.5}>
+        <Typography variant="subtitle2">상태</Typography>
+        <Typography variant="body2">{getPaymentStatusText(payment.status, payment.failure_stage)}</Typography>
+      </Stack>
+
+      {payment.refunded_at ? (
+        <Stack gap={0.5}>
+          <Typography variant="subtitle2">환불일</Typography>
+          <Typography variant="body2">{formatDateTime(payment.refunded_at)}</Typography>
+        </Stack>
+      ) : null}
+    </Stack>
+  );
+}
+
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -256,6 +331,7 @@ export default function Opt() {
   const [successMessage, setSuccessMessage] = useState('');
   const [billingData, setBillingData] = useState<PlanBillingResponse | null>(null);
   const [billingDialogType, setBillingDialogType] = useState<BillingDialogType>(null);
+  const [selectedPayment, setSelectedPayment] = useState<PaymentItem | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -308,6 +384,14 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
+      const hadBillingMethod = Boolean(billingData.billingMethods?.length);
+      const orderName =
+        purpose === 'billing_method'
+          ? '데브허브 결제수단 추가'
+          : hadBillingMethod
+            ? '데브허브 사이트 요금제 무료체험 시작'
+            : '데브허브 사이트 요금제 결제수단 등록';
+
       const response = await fetch('/api/payments/toss/plan-billing/start', {
         method: 'POST',
         credentials: 'include',
@@ -316,7 +400,7 @@ export default function Opt() {
         },
         body: JSON.stringify({
           siteId: billingData.site.id,
-          orderName: purpose === 'billing_method' ? '데브허브 결제수단 추가' : '데브허브 사이트 요금제 결제수단 등록',
+          orderName,
           successUrl: `/${siteName}/manage/payments/billing/success`,
           failUrl: `/${siteName}/manage/payments/billing/fail`,
           purpose,
@@ -333,13 +417,21 @@ export default function Opt() {
         throw new Error(result.error || '결제수단 등록을 시작하지 못했습니다.');
       }
 
-      if (result.mode === 'direct_billing') {
+      if (result.mode === 'direct_billing' || result.mode === 'trial_started') {
         const isLoaded = await loadData();
 
         if (isLoaded) {
-          setSuccessMessage(
-            purpose === 'billing_method' ? '결제수단이 추가되었습니다.' : '결제수단 등록이 완료되었습니다.',
-          );
+          if (purpose === 'billing_method') {
+            setSuccessMessage('결제수단이 추가되었습니다.');
+          } else if (result.mode === 'trial_started') {
+            setSuccessMessage('무료체험이 시작되었습니다.');
+          } else {
+            setSuccessMessage(
+              hadBillingMethod
+                ? '요금제 구독이 시작되었습니다.'
+                : '결제수단 등록이 완료되고 요금제 구독이 시작되었습니다.',
+            );
+          }
         }
 
         setIsProcessing(false);
@@ -483,10 +575,35 @@ export default function Opt() {
     }
   }
 
+  function handleOpenPaymentDetail(payment: PaymentItem) {
+    setSelectedPayment(payment);
+  }
+
+  function handleClosePaymentDetail() {
+    setSelectedPayment(null);
+  }
+
+  function handlePaymentRowKeyDown(event: KeyboardEvent<HTMLTableRowElement>, payment: PaymentItem) {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return;
+    }
+
+    event.preventDefault();
+    setSelectedPayment(payment);
+  }
+
   if (isLoading) {
     return (
-      <Container menu="payments">
-        <LoadingIndicator />
+      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
       </Container>
     );
   }
@@ -501,6 +618,9 @@ export default function Opt() {
     subscription?.status === 'scheduled_cancel' || (subscription?.canceled_at && !subscription.expired_at),
   );
   const hasBillingMethod = billingMethods.length > 0;
+  const planSubscriptionGuideText = hasBillingMethod
+    ? '결제수단이 등록되어 있습니다. 무료체험을 시작하면 사이트가 오픈되고, 무료체험 종료 후 등록된 결제수단으로 자동결제됩니다.'
+    : '아직 결제수단이 등록되지 않았습니다. 결제수단을 등록하면 사이트가 오픈되고 무료체험이 적용됩니다.';
   const canRetryPayment = subscription?.status === 'past_due' && hasBillingMethod;
   const canAddBillingMethod = Boolean(
     subscription && subscription.status !== 'canceled' && subscription.status !== 'expired',
@@ -532,207 +652,313 @@ export default function Opt() {
     !subscription || subscription.status === 'canceled' || subscription.status === 'expired';
 
   return (
-    <Container menu="payments">
-      <Snackbar
-        open={Boolean(errorMessage)}
-        autoHideDuration={4000}
-        message={errorMessage}
-        onClose={() => setErrorMessage('')}
-      />
-      <Snackbar
-        open={Boolean(successMessage)}
-        autoHideDuration={4000}
-        message={successMessage}
-        onClose={() => setSuccessMessage('')}
-      />
-
-      <Stack spacing={3}>
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              사이트 요금제
-            </Typography>
-            <Typography>요금제: {billingData?.plan?.name ?? '-'}</Typography>
-            <Typography>월 이용료: {formatPrice(billingData?.plan?.price)}</Typography>
-
-            {subscription ? (
-              <Stack spacing={1}>
-                <Typography>상태: {getSubscriptionStatusText(subscription.status)}</Typography>
-                {isScheduledCancel ? (
-                  <Typography color="warning.main">취소 예약됨: 다음 결제부터 중단됩니다.</Typography>
-                ) : null}
-                <Typography>
-                  현재 이용 기간: {formatDateTime(subscription.current_period_start)} ~{' '}
-                  {formatDateTime(subscription.current_period_end)}
-                </Typography>
-                <Typography>다음 결제 예정일: {formatDateTime(subscription.next_billing_at)}</Typography>
-                {subscription.status === 'past_due' ? (
-                  <Typography color="error" role="alert">
-                    자동결제에 실패했습니다. 결제수단을 확인하거나 결제를 다시 시도해 주세요.
-                  </Typography>
-                ) : null}
-              </Stack>
-            ) : (
-              <Typography color="text.secondary">
-                아직 결제수단이 등록되지 않았습니다. 결제수단을 등록하면 사이트가 오픈되고 무료체험이 적용됩니다.
-              </Typography>
-            )}
-
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              {shouldShowBillingAuthButton ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => {
-                    void handleBillingAuth('plan_subscription');
-                  }}
-                  disabled={isProcessing}
-                >
-                  {subscription ? '다시 구독하기' : '결제수단 등록하기'}
-                </Button>
-              ) : null}
-
-              {canRetryPayment ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => setBillingDialogType('retry')}
-                  disabled={isProcessing}
-                >
-                  결제 다시 시도
-                </Button>
-              ) : null}
-
-              {canRefundSubscription ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setBillingDialogType('refund')}
-                  disabled={isProcessing}
-                >
-                  환불받기
-                </Button>
-              ) : null}
-
-              {canCancelSubscription ? (
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setBillingDialogType('cancel')}
-                  disabled={isProcessing}
-                >
-                  취소하기
-                </Button>
-              ) : null}
-
-              {canResumeSubscription ? (
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => {
-                    void handleResumePlanBilling();
-                  }}
-                  disabled={isProcessing}
-                >
-                  취소 철회하기
-                </Button>
-              ) : null}
-            </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              결제 수단
-            </Typography>
-            <Typography color="text.secondary">자동결제에 사용할 카드를 관리합니다.</Typography>
-
-            {billingMethods.length ? (
-              <Stack spacing={1}>
-                {billingMethods.map((billingMethod) => (
-                  <Paper key={billingMethod.id} variant="outlined" sx={{ p: 2 }}>
-                    <Stack spacing={0.5}>
-                      <Typography>{billingMethod.card_company ?? '카드'}</Typography>
-                      <Typography>{formatCardNumber(billingMethod.card_number_masked)}</Typography>
-                      <Typography color="text.secondary">{billingMethod.is_default ? '사용 중' : '등록됨'}</Typography>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            ) : (
-              <Typography color="text.secondary">등록된 결제 수단이 없습니다.</Typography>
-            )}
-
-            {canAddBillingMethod ? (
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={() => {
-                  void handleBillingAuth('billing_method');
-                }}
-                disabled={isProcessing}
-              >
-                결제 수단 추가하기
-              </Button>
-            ) : null}
-          </Stack>
-        </Paper>
-
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              결제 내역
-            </Typography>
-
-            {payments.length ? (
-              <Stack spacing={2} divider={<Divider />}>
-                {payments.map((payment) => (
-                  <Stack key={payment.id} spacing={0.5}>
-                    <Typography>상태: {getPaymentStatusText(payment.status, payment.failure_stage)}</Typography>
-                    <Typography>금액: {formatPrice(payment.amount)}</Typography>
-                    <Typography>주문번호: {payment.order_no}</Typography>
-                    <Typography>결제일: {formatDateTime(payment.approved_at ?? payment.created_at)}</Typography>
-                    {payment.status === 'paid' && payment.refundable_until ? (
-                      <Typography>환불 가능 기한: {formatDateTime(payment.refundable_until)}</Typography>
-                    ) : null}
-                    {payment.refunded_at ? (
-                      <Typography>환불일: {formatDateTime(payment.refunded_at)}</Typography>
-                    ) : null}
-                    {payment.failure_message ? (
-                      <Typography color="error">실패 사유: {payment.failure_message}</Typography>
-                    ) : null}
-                  </Stack>
-                ))}
-              </Stack>
-            ) : (
-              <Typography color="text.secondary">아직 결제 내역이 없습니다.</Typography>
-            )}
-          </Stack>
-        </Paper>
-      </Stack>
-
-      <Dialog open={Boolean(billingDialogType)} onClose={handleCloseBillingDialog}>
-        <DialogTitle>{getBillingDialogTitle(billingDialogType)}</DialogTitle>
-        <DialogContent>
-          <Typography>{getBillingDialogMessage(billingDialogType)}</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button type="button" onClick={handleCloseBillingDialog} disabled={isProcessing}>
-            닫기
-          </Button>
-          <Button
-            type="button"
-            variant="contained"
-            onClick={() => {
-              void handleConfirmBillingDialog();
+    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Snackbar
+            open={Boolean(errorMessage)}
+            autoHideDuration={4000}
+            message={errorMessage}
+            onClose={() => setErrorMessage('')}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
             }}
-            disabled={isProcessing}
-          >
-            {getBillingDialogConfirmText(billingDialogType)}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          />
+          <Snackbar
+            open={Boolean(successMessage)}
+            autoHideDuration={4000}
+            message={successMessage}
+            onClose={() => setSuccessMessage('')}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+          />
+
+          <Stack gap={3}>
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">요금제 이용 상태</Typography>
+                <Stack>
+                  <Typography variant="body2">
+                    {billingData?.plan?.name} (월 {formatPrice(billingData?.plan?.price)})
+                  </Typography>
+
+                  {subscription ? (
+                    <Stack>
+                      <Typography variant="body2">
+                        {getSubscriptionStatusText(subscription.status)} (
+                        {formatDateSimple(subscription.current_period_start)} ~{' '}
+                        {formatDateSimple(subscription.current_period_end)})
+                      </Typography>
+                      {isScheduledCancel ? (
+                        <p className="alert info">
+                          <InfoOutlineRoundedIcon />
+                          <span>다음 정기 결제일부턴 결제가 진행되지 않으며, 구독이 자동 종료됩니다.</span>
+                        </p>
+                      ) : null}
+                      {subscription.status === 'past_due' ? (
+                        <p className="alert error">
+                          <ErrorOutlineRoundedIcon />
+                          <span>자동결제에 실패했습니다. 결제수단을 확인하거나 결제를 다시 시도해 주세요.</span>
+                        </p>
+                      ) : null}
+                      <Typography variant="body2">{formatDate(subscription.next_billing_at)}에 결제됩니다.</Typography>
+                    </Stack>
+                  ) : (
+                    <Typography variant="body2">{planSubscriptionGuideText}</Typography>
+                  )}
+                </Stack>
+                <Stack direction="row" gap={1} flexWrap="wrap">
+                  {shouldShowBillingAuthButton ? (
+                    <button
+                      type="button"
+                      className="button small submit"
+                      onClick={() => {
+                        void handleBillingAuth('plan_subscription');
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
+                    </button>
+                  ) : null}
+
+                  {canRetryPayment ? (
+                    <button
+                      type="button"
+                      className="button small submit"
+                      onClick={() => setBillingDialogType('retry')}
+                      disabled={isProcessing}
+                    >
+                      결제 다시 시도
+                    </button>
+                  ) : null}
+
+                  {canRefundSubscription ? (
+                    <button
+                      type="button"
+                      className="button small cancel"
+                      onClick={() => setBillingDialogType('refund')}
+                      disabled={isProcessing}
+                    >
+                      환불받기
+                    </button>
+                  ) : null}
+
+                  {canCancelSubscription ? (
+                    <button
+                      type="button"
+                      className="button small cancel"
+                      onClick={() => setBillingDialogType('cancel')}
+                      disabled={isProcessing}
+                    >
+                      취소하기
+                    </button>
+                  ) : null}
+
+                  {canResumeSubscription ? (
+                    <button
+                      type="button"
+                      className="button small cancel"
+                      onClick={() => {
+                        void handleResumePlanBilling();
+                      }}
+                      disabled={isProcessing}
+                    >
+                      취소 철회하기
+                    </button>
+                  ) : null}
+                </Stack>
+              </Stack>
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">결제 수단</Typography>
+                <Stack gap={1}>
+                  <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
+
+                  {billingMethods.length ? (
+                    <Stack gap={1}>
+                      {billingMethods.map((billingMethod) => (
+                        <div className={`paper ${styles.paper}`} key={billingMethod.id}>
+                          <Stack gap={0.5} direction="row" justifyContent="space-between">
+                            <Typography variant="body2">
+                              {billingMethod.card_company ?? '카드'}{' '}
+                              {formatCardNumber(billingMethod.card_number_masked)}
+                            </Typography>
+                            {billingMethod.is_default ? (
+                              <Chip label="기본" size="small" className="chip success" />
+                            ) : null}
+                          </Stack>
+                        </div>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Typography>등록된 결제 수단이 없습니다.</Typography>
+                  )}
+                </Stack>
+
+                {canAddBillingMethod ? (
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={() => {
+                      void handleBillingAuth('billing_method');
+                    }}
+                    disabled={isProcessing}
+                  >
+                    결제 수단 추가하기
+                  </button>
+                ) : null}
+              </Stack>
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={2}>
+                <Typography variant="subtitle2">결제 내역</Typography>
+
+                {payments.length ? (
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>금액</TableCell>
+                          <TableCell>결제일</TableCell>
+                          <TableCell>상태</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {payments.map((payment) => (
+                          <TableRow
+                            key={payment.id}
+                            hover
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => handleOpenPaymentDetail(payment)}
+                            onKeyDown={(event) => handlePaymentRowKeyDown(event, payment)}
+                            sx={{ cursor: 'pointer' }}
+                          >
+                            <TableCell>{formatPrice(payment.amount)}</TableCell>
+                            <TableCell>{formatDateTime(payment.approved_at ?? payment.created_at)}</TableCell>
+                            <TableCell>{getPaymentStatusText(payment.status, payment.failure_stage)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>아직 결제 내역이 없습니다.</span>
+                  </p>
+                )}
+              </Stack>
+            </div>
+          </Stack>
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(billingDialogType)}
+              onClose={handleCloseBillingDialog}
+              className="VhiDrawer-bottom"
+            >
+              <h2>{getBillingDialogTitle(billingDialogType)}</h2>
+              <button type="button" className="close-button" onClick={handleCloseBillingDialog}>
+                <CloseRoundedIcon />
+              </button>
+              <Stack gap={3}>
+                <Typography>{getBillingDialogMessage(billingDialogType)}</Typography>
+                <Stack direction="column" gap={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseBillingDialog}
+                    disabled={isProcessing}
+                  >
+                    닫기
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={() => {
+                      void handleConfirmBillingDialog();
+                    }}
+                    disabled={isProcessing}
+                  >
+                    {getBillingDialogConfirmText(billingDialogType)}
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog open={Boolean(billingDialogType)} onClose={handleCloseBillingDialog} className="VhiDialog">
+              <DialogTitle>{getBillingDialogTitle(billingDialogType)}</DialogTitle>
+              <button type="button" className="close-button" onClick={handleCloseBillingDialog}>
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Typography>{getBillingDialogMessage(billingDialogType)}</Typography>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseBillingDialog}
+                  disabled={isProcessing}
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => {
+                    void handleConfirmBillingDialog();
+                  }}
+                  disabled={isProcessing}
+                >
+                  {getBillingDialogConfirmText(billingDialogType)}
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={Boolean(selectedPayment)}
+              onClose={handleClosePaymentDetail}
+              className="VhiDrawer-bottom"
+            >
+              <h2>결제 상세</h2>
+              <button type="button" className="close-button" onClick={handleClosePaymentDetail}>
+                <CloseRoundedIcon />
+              </button>
+              <Stack gap={3}>
+                {selectedPayment ? <PaymentDetail payment={selectedPayment} /> : null}
+                <button type="button" className="button medium submit" onClick={handleClosePaymentDetail}>
+                  확인
+                </button>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog open={Boolean(selectedPayment)} onClose={handleClosePaymentDetail} className="VhiDialog">
+              <DialogTitle>결제 상세</DialogTitle>
+              <button type="button" className="close-button" onClick={handleClosePaymentDetail}>
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>{selectedPayment ? <PaymentDetail payment={selectedPayment} /> : null}</DialogContent>
+              <DialogActions>
+                <button type="button" className="button medium submit" onClick={handleClosePaymentDetail}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+        </div>
+      </div>
     </Container>
   );
 }

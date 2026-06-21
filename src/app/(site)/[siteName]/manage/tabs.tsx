@@ -200,6 +200,10 @@ export default function StaffTabs({ pageTitle }: Props) {
       label: '디자인',
       href: `/${siteName}/manage/design`,
     },
+    {
+      label: '결제',
+      href: `/${siteName}/manage/payments/billing`,
+    },
     { label: '통계', href: `/${siteName}/manage/stats` },
   ];
 

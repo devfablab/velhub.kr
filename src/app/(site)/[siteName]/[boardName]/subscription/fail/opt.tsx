@@ -107,7 +107,7 @@ export default function Opt() {
       <div className="container">
         <div className="content">
           <div className="paper">
-            <Stack spacing={3} alignItems="center">
+            <Stack gap={3} alignItems="center">
               <Typography variant="h5" component="h1">
                 {targetType === 'series' ? '연재 구독 실패' : '게시판 구독 실패'}
               </Typography>

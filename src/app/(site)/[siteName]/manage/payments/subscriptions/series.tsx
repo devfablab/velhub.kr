@@ -19,8 +19,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/manage.module.sass';
 
 type Subscriber = {
   id: string;
@@ -509,8 +510,8 @@ export default function SeriesSubscriptions() {
     const selectedSeries = findSeries(editingRow.boardId, editingRow.seriesId);
 
     return (
-      <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={2}>
+      <div className={`paper ${styles.paper}`}>
+        <Stack gap={2}>
           {siteType === 'community' ? (
             <TextField
               select
@@ -560,7 +561,7 @@ export default function SeriesSubscriptions() {
             }}
           />
 
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" gap={1}>
             <Button type="button" variant="contained" onClick={handleSaveEditingRow} disabled={isSaving}>
               저장
             </Button>
@@ -569,13 +570,13 @@ export default function SeriesSubscriptions() {
             </Button>
           </Stack>
         </Stack>
-      </Paper>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Typography variant="h6" component="h2">
           연재 구독
         </Typography>
@@ -585,7 +586,7 @@ export default function SeriesSubscriptions() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Typography variant="h6" component="h2">
         연재 구독
       </Typography>
@@ -615,13 +616,13 @@ export default function SeriesSubscriptions() {
 
         return (
           <Paper key={row.series.id} variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={2}>
+            <Stack gap={2}>
               {isEditingThisSeries ? (
                 renderEditingRow()
               ) : (
-                <Stack spacing={1}>
-                  <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                    <Stack spacing={0.5}>
+                <Stack gap={1}>
+                  <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                    <Stack gap={0.5}>
                       {siteType === 'community' ? (
                         <Typography variant="body2" color="text.secondary">
                           {row.board.boardLabel}
@@ -636,7 +637,7 @@ export default function SeriesSubscriptions() {
                         {formatPrice(row.series.setting.maxAllowedPrice)}원
                       </Typography>
                     </Stack>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" gap={1}>
                       <IconButton
                         type="button"
                         aria-label="연재 구독 수정"

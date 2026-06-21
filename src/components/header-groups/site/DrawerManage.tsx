@@ -84,6 +84,13 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
       </MenuItem>
 
       <MenuItem onClick={onClose}>
+        <Anchor href={`/${siteName}/manage/payments/billing`}>
+          <DesignServicesOutlinedIcon fontSize="small" />
+          <span>결제</span>
+        </Anchor>
+      </MenuItem>
+
+      <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/stats`}>
           <QueryStatsOutlinedIcon fontSize="small" />
           <span>통계</span>

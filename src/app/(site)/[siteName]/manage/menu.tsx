@@ -469,6 +469,15 @@ function getTabMenuItems(menu: ContainerProps['menu'], siteName: string, isBlog:
     ];
   }
 
+  if (menu === 'payments') {
+    return [
+      { href: `/${siteName}/manage/payments/billing`, label: '요금제' },
+      { href: `/${siteName}/manage/payments/donation`, label: '후원' },
+      { href: `/${siteName}/manage/payments/membership`, label: '멤버십' },
+      { href: `/${siteName}/manage/payments/subscriptions`, label: '구독' },
+    ];
+  }
+
   if (menu === 'settings') {
     return [
       { href: `/${siteName}/manage/settings/general`, label: '기본설정' },

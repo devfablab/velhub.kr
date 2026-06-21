@@ -89,7 +89,7 @@ export default function Opt() {
         <div className="container">
           <div className="content">
             <div className="paper">
-              <Stack spacing={3} alignItems="center">
+              <Stack gap={3} alignItems="center">
                 <Typography color="error" role="alert">
                   {errorMessage}
                 </Typography>

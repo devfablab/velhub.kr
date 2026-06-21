@@ -19,8 +19,9 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import styles from '@/app/manage.module.sass';
 
 type Subscriber = {
   id: string;
@@ -391,7 +392,7 @@ export default function BoardSubscriptions() {
 
     return (
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Stack spacing={2}>
+        <Stack gap={2}>
           <TextField
             select
             label="게시판 선택"
@@ -424,7 +425,7 @@ export default function BoardSubscriptions() {
             }}
           />
 
-          <Stack direction="row" spacing={1}>
+          <Stack direction="row" gap={1}>
             <Button type="button" variant="contained" onClick={handleSaveEditingRow} disabled={isSaving}>
               저장
             </Button>
@@ -443,7 +444,7 @@ export default function BoardSubscriptions() {
 
   if (isLoading) {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <Typography variant="h6" component="h2">
           게시판 구독
         </Typography>
@@ -453,7 +454,7 @@ export default function BoardSubscriptions() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack gap={2}>
       <Typography variant="h6" component="h2">
         게시판 구독
       </Typography>
@@ -480,14 +481,14 @@ export default function BoardSubscriptions() {
         const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
 
         return (
-          <Paper key={board.id} variant="outlined" sx={{ p: 2 }}>
-            <Stack spacing={2}>
+          <div className={`paper ${styles.paper}`} key={board.id}>
+            <Stack gap={2}>
               {isEditingThisBoard ? (
                 renderEditingRow()
               ) : (
-                <Stack spacing={1}>
-                  <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                    <Stack spacing={0.5}>
+                <Stack gap={1}>
+                  <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                    <Stack gap={0.5}>
                       <Typography fontWeight={700}>{board.boardLabel}</Typography>
                       <Typography variant="body2" color="text.secondary">
                         월 {formatPrice(board.setting.price)}원
@@ -497,7 +498,7 @@ export default function BoardSubscriptions() {
                         {formatPrice(board.setting.requiredMinPrice)}원
                       </Typography>
                     </Stack>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" gap={1}>
                       <IconButton
                         type="button"
                         aria-label="게시판 구독 수정"
@@ -544,7 +545,7 @@ export default function BoardSubscriptions() {
                 </Stack>
               )}
             </Stack>
-          </Paper>
+          </div>
         );
       })}
 

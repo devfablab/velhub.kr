@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
+import styles from '@/app/manage.module.sass';
 
 type DonationKind = 'site' | 'post';
 
@@ -135,63 +136,67 @@ export default function Opt() {
   }
 
   return (
-    <Container menu="payments">
-      <Stack spacing={3}>
-        {errorMessage ? (
-          <Typography color="error" role="alert">
-            {errorMessage}
-          </Typography>
-        ) : null}
+    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack gap={3}>
+            {errorMessage ? (
+              <Typography color="error" role="alert">
+                {errorMessage}
+              </Typography>
+            ) : null}
 
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={1}>
-            <Typography variant="h6" component="h2">
-              후원 요약
-            </Typography>
-            <Typography>받은 후원 수: {donationData?.summary?.count ?? 0}건</Typography>
-            <Typography>받은 후원 총액: {formatPrice(donationData?.summary?.totalAmount ?? 0)}</Typography>
-            <Divider />
-            <Typography>
-              사이트 후원: {donationData?.summary?.siteDonationCount ?? 0}건 ·{' '}
-              {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)}
-            </Typography>
-            <Typography>
-              글 후원: {donationData?.summary?.postDonationCount ?? 0}건 ·{' '}
-              {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)}
-            </Typography>
-          </Stack>
-        </Paper>
-
-        <Paper variant="outlined" sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6" component="h2">
-              후원 내역
-            </Typography>
-
-            {donationData?.donations?.length ? (
-              <Stack spacing={2} divider={<Divider />}>
-                {donationData.donations.map((donation) => (
-                  <Stack key={donation.id} spacing={0.5}>
-                    <Typography fontWeight={700}>{getDonationKindLabel(donation.donationKind)}</Typography>
-                    <Typography>후원자: {donation.nickname}</Typography>
-                    <Typography>후원금액: {formatPrice(donation.amount)}</Typography>
-                    <Typography>후원일: {formatDateTime(donation.approvedAt ?? donation.createdAt)}</Typography>
-                    {donation.post ? (
-                      <Typography>
-                        후원 글: {donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} /{' '}
-                        {donation.post.subject}
-                      </Typography>
-                    ) : null}
-                    <Typography>주문번호: {donation.orderNo}</Typography>
-                  </Stack>
-                ))}
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={1}>
+                <Typography variant="h6" component="h2">
+                  후원 요약
+                </Typography>
+                <Typography>받은 후원 수: {donationData?.summary?.count ?? 0}건</Typography>
+                <Typography>받은 후원 총액: {formatPrice(donationData?.summary?.totalAmount ?? 0)}</Typography>
+                <Divider />
+                <Typography>
+                  사이트 후원: {donationData?.summary?.siteDonationCount ?? 0}건 ·{' '}
+                  {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)}
+                </Typography>
+                <Typography>
+                  글 후원: {donationData?.summary?.postDonationCount ?? 0}건 ·{' '}
+                  {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)}
+                </Typography>
               </Stack>
-            ) : (
-              <Typography color="text.secondary">아직 받은 후원이 없습니다.</Typography>
-            )}
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Stack gap={2}>
+                <Typography variant="h6" component="h2">
+                  후원 내역
+                </Typography>
+
+                {donationData?.donations?.length ? (
+                  <Stack gap={2} divider={<Divider />}>
+                    {donationData.donations.map((donation) => (
+                      <Stack key={donation.id} gap={0.5}>
+                        <Typography fontWeight={700}>{getDonationKindLabel(donation.donationKind)}</Typography>
+                        <Typography>후원자: {donation.nickname}</Typography>
+                        <Typography>후원금액: {formatPrice(donation.amount)}</Typography>
+                        <Typography>후원일: {formatDateTime(donation.approvedAt ?? donation.createdAt)}</Typography>
+                        {donation.post ? (
+                          <Typography>
+                            후원 글: {donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} /{' '}
+                            {donation.post.subject}
+                          </Typography>
+                        ) : null}
+                        <Typography>주문번호: {donation.orderNo}</Typography>
+                      </Stack>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography color="text.secondary">아직 받은 후원이 없습니다.</Typography>
+                )}
+              </Stack>
+            </div>
           </Stack>
-        </Paper>
-      </Stack>
+        </div>
+      </div>
     </Container>
   );
 }

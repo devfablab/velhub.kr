@@ -109,7 +109,7 @@ export default function Opt() {
                 <LoadingIndicator />
               </div>
             ) : (
-              <Stack spacing={3} alignItems="center">
+              <Stack gap={3} alignItems="center">
                 <Typography variant="h5" component="h1">
                   구독
                 </Typography>

@@ -119,7 +119,7 @@ export default function Opt() {
         <div className="content">
           <div className="paper">
             {isSuccess ? (
-              <Stack spacing={3} alignItems="center">
+              <Stack gap={3} alignItems="center">
                 <Typography variant="h5" component="h1">
                   글 후원이 완료되었습니다.
                 </Typography>
@@ -129,7 +129,7 @@ export default function Opt() {
                 </Button>
               </Stack>
             ) : (
-              <Stack spacing={3} alignItems="center">
+              <Stack gap={3} alignItems="center">
                 <Typography variant="h5" component="h1">
                   글 후원 결제를 완료하지 못했습니다.
                 </Typography>

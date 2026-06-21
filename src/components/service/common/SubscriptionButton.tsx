@@ -344,7 +344,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
 
   return (
     <>
-      <Stack spacing={1} alignItems="flex-start">
+      <Stack gap={1} alignItems="flex-start">
         {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
           <Button type="button" variant="contained" onClick={handleOpenDialog} disabled={isProcessing}>
             {getSubscribeButtonText({ targetType, subscriptionStatus })}

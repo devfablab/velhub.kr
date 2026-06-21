@@ -23,7 +23,7 @@ export default function Opt() {
   return (
     <Container menu="payments">
       <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack spacing={3} alignItems="center">
+        <Stack gap={3} alignItems="center">
           <Typography variant="h6" component="h1">
             결제수단 등록에 실패했습니다.
           </Typography>

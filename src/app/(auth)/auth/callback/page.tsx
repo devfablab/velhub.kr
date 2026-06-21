@@ -474,9 +474,9 @@ export default function Page() {
           className="VhiDrawer-bottom"
         >
           <h2>소셜 로그인 확인</h2>
-          <Stack spacing={2} sx={{ pt: 1 }}>
+          <Stack gap={2} sx={{ pt: 1 }}>
             <Typography>{confirmMessage}</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
                 이메일 로그인
               </button>

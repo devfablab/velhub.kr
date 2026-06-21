@@ -109,7 +109,7 @@ export default function Opt() {
       <div className="container">
         <div className="content">
           <div className="paper">
-            <Stack spacing={3} alignItems="center">
+            <Stack gap={3} alignItems="center">
               <Typography role="alert">{message}</Typography>
               <Button type="button" variant="contained" onClick={handleGoBack}>
                 글로 돌아가기
