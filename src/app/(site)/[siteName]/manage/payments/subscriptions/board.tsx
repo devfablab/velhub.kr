@@ -8,6 +8,7 @@ import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import {
   IconButton,
   InputAdornment,
@@ -394,55 +395,75 @@ export default function BoardSubscriptions() {
     const selectableBoards = editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards;
 
     return (
-      <div className={`paper ${styles.paper}`}>
-        <Stack gap={2}>
-          <TextField
-            select
-            label="게시판 선택"
-            value={editingRow.boardId}
-            onChange={handleEditingBoardChange}
-            disabled={isSaving || editingRow.mode === 'edit'}
-            fullWidth
-          >
-            {selectableBoards.map((board) => (
-              <MenuItem key={board.id} value={board.id}>
-                {board.boardLabel}
-              </MenuItem>
-            ))}
-          </TextField>
+      <Stack gap={2}>
+        <TextField
+          select
+          value={editingRow.boardId}
+          onChange={handleEditingBoardChange}
+          disabled={isSaving || editingRow.mode === 'edit'}
+          fullWidth
+          size="small"
+          slotProps={{
+            select: {
+              displayEmpty: true,
+              renderValue: (selected) => {
+                const selectedBoardId = typeof selected === 'string' ? selected : '';
+                const renderBoard = findBoard(selectedBoardId);
 
-          {selectedBoard ? (
-            <Typography variant="body2" color="text.secondary">
-              구독 설정된 연재 {selectedBoard.subscriptionEnabledSeriesCount}개 · 최소 금액{' '}
-              {formatPrice(selectedBoard.setting.requiredMinPrice)}원
-            </Typography>
-          ) : null}
+                return renderBoard?.boardLabel ?? '게시판 선택';
+              },
+            },
+          }}
+        >
+          <MenuItem value="">
+            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+            게시판 선택
+          </MenuItem>
+          {selectableBoards.map((board) => (
+            <MenuItem key={board.id} value={board.id}>
+              {editingRow.boardId === board.id ? (
+                <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+              ) : (
+                <i style={{ width: 14, height: 14, marginRight: 8 }} />
+              )}
+              {board.boardLabel}
+            </MenuItem>
+          ))}
+        </TextField>
 
-          <TextField
-            label="구독 금액"
-            value={editingRow.price}
-            onChange={handleEditingPriceChange}
-            fullWidth
-            InputProps={{
+        {selectedBoard ? (
+          <Typography variant="body2" color="text.secondary">
+            구독 설정된 연재 {selectedBoard.subscriptionEnabledSeriesCount}개 · 최소 금액{' '}
+            {formatPrice(selectedBoard.setting.requiredMinPrice)}원
+          </Typography>
+        ) : null}
+
+        <TextField
+          value={editingRow.price}
+          onChange={handleEditingPriceChange}
+          fullWidth
+          size="small"
+          slotProps={{
+            input: {
               endAdornment: <InputAdornment position="end">원</InputAdornment>,
-            }}
-          />
+            },
+          }}
+        />
 
-          <Stack direction="row" gap={1}>
-            <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
-              저장
-            </button>
-            <button
-              type="button"
-              className="button medium cancel"
-              onClick={() => setEditingRow(null)}
-              disabled={isSaving}
-            >
-              취소
-            </button>
-          </Stack>
+        <Stack direction="row" gap={1} justifyContent="flex-end">
+          <button
+            type="button"
+            className="button medium cancel"
+            onClick={() => setEditingRow(null)}
+            disabled={isSaving}
+          >
+            취소
+          </button>
+          <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
+            저장
+          </button>
         </Stack>
-      </div>
+      </Stack>
     );
   }
 
