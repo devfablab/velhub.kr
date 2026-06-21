@@ -42,18 +42,20 @@ type SeriesRow = {
 
 type SubscriptionRow = {
   id: string;
+  site_id: string;
   subscriber_user_id: string;
   subscription_type: string;
   target_type: string;
   target_id: string;
+  owner_user_id: string | null;
   price: number;
-  status: 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
-  last_payment_id: string | null;
+  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
   current_period_start: string;
   current_period_end: string;
   next_billing_at: string | null;
   canceled_at: string | null;
   expired_at: string | null;
+  last_payment_id: string | null;
 };
 
 type PaymentRow = {
@@ -296,12 +298,7 @@ export async function POST(request: Request) {
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)
-      .in('status', [
-        SUBSCRIPTION_STATUS.TRIALING,
-        SUBSCRIPTION_STATUS.ACTIVE,
-        SUBSCRIPTION_STATUS.PAST_DUE,
-        SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
-      ])
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
       .order('created_at', { ascending: false })
       .limit(1);
 
@@ -334,10 +331,8 @@ export async function POST(request: Request) {
       const subscriptionUpdateResult = await supabaseAdmin
         .from('subscriptions')
         .update({
-          status: SUBSCRIPTION_STATUS.CANCELED,
-          next_billing_at: null,
           canceled_at: nowText,
-          expired_at: nowText,
+          next_billing_at: null,
           updated_at: nowText,
         })
         .eq('id', subscription.id);
@@ -350,9 +345,9 @@ export async function POST(request: Request) {
 
       return Response.json({
         ok: true,
-        mode: 'canceled_without_payment',
+        mode: 'cancel_scheduled',
         refundAmount: 0,
-        retainedAmount: 0,
+        retainedAmount: subscription.price,
       });
     }
 
@@ -375,7 +370,6 @@ export async function POST(request: Request) {
       const subscriptionUpdateResult = await supabaseAdmin
         .from('subscriptions')
         .update({
-          status: SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
           next_billing_at: null,
           canceled_at: nowText,
           updated_at: nowText,

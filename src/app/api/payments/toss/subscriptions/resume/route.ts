@@ -34,7 +34,7 @@ type SeriesRow = {
 
 type SubscriptionRow = {
   id: string;
-  status: 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
+  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
   current_period_end: string;
   next_billing_at: string | null;
   canceled_at: string | null;
@@ -199,12 +199,7 @@ export async function POST(request: Request) {
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)
-      .in('status', [
-        SUBSCRIPTION_STATUS.TRIALING,
-        SUBSCRIPTION_STATUS.ACTIVE,
-        SUBSCRIPTION_STATUS.PAST_DUE,
-        SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
-      ])
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
       .order('created_at', { ascending: false })
       .limit(1);
 

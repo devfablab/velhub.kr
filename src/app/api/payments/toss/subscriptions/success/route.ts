@@ -436,7 +436,7 @@ async function hasActiveSubscription({
     .eq('subscription_type', subscriptionType)
     .eq('target_type', paymentTargetType)
     .eq('target_id', targetId)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('canceled_at', null)
     .is('expired_at', null)
     .order('created_at', { ascending: false })
@@ -491,7 +491,7 @@ async function cancelSeriesSubscriptionsInBoard({
     .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('target_id', seriesIds)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('canceled_at', null)
     .is('expired_at', null);
 

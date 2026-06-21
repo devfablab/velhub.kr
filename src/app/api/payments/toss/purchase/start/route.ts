@@ -108,12 +108,7 @@ async function hasActiveSubscription({
     .eq('target_type', targetType)
     .eq('target_id', targetId)
     .eq('subscription_type', subscriptionType)
-    .in('status', [
-      SUBSCRIPTION_STATUS.TRIALING,
-      SUBSCRIPTION_STATUS.ACTIVE,
-      SUBSCRIPTION_STATUS.PAST_DUE,
-      SUBSCRIPTION_STATUS.SCHEDULED_CANCEL,
-    ])
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('expired_at', null)
     .order('created_at', { ascending: false })
     .limit(1);

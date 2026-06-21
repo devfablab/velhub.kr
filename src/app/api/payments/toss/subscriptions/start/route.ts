@@ -173,86 +173,6 @@ async function getSiteByName({ supabaseAdmin, siteName }: { supabaseAdmin: Supab
   return siteResult.data as SiteRow;
 }
 
-async function getBoardByName({
-  supabaseAdmin,
-  siteId,
-  boardName,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardName: string;
-}) {
-  const boardResult = await supabaseAdmin
-    .from('boards')
-    .select('id, board_key, board_label')
-    .eq('site_id', siteId)
-    .eq('board_key', boardName)
-    .maybeSingle();
-
-  if (boardResult.error) {
-    throw new Error('게시판 정보를 확인하지 못했습니다.');
-  }
-
-  if (!boardResult.data) {
-    throw new Error('게시판 정보를 찾을 수 없습니다.');
-  }
-
-  return boardResult.data as BoardRow;
-}
-
-async function getSubscriptionSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesCountResult.error) {
-    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
-async function getSeriesByName({
-  supabaseAdmin,
-  siteId,
-  boardId,
-  seriesName,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-  seriesName: string;
-}) {
-  const seriesResult = await supabaseAdmin
-    .from('board_series')
-    .select('id, series_key, series_label, is_subscription')
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('series_key', seriesName)
-    .maybeSingle();
-
-  if (seriesResult.error) {
-    throw new Error('연재 정보를 확인하지 못했습니다.');
-  }
-
-  if (!seriesResult.data) {
-    throw new Error('연재 정보를 찾을 수 없습니다.');
-  }
-
-  return seriesResult.data as SeriesRow;
-}
-
 async function getSubscriptionEnabledSeriesCount({
   supabaseAdmin,
   siteId,
@@ -423,7 +343,7 @@ async function hasActiveSubscription({
     .eq('subscription_type', subscriptionType)
     .eq('target_type', paymentTargetType)
     .eq('target_id', targetId)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('canceled_at', null)
     .is('expired_at', null)
     .order('created_at', { ascending: false })
@@ -478,7 +398,7 @@ async function cancelSeriesSubscriptionsInBoard({
     .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('target_id', seriesIds)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
     .is('canceled_at', null)
     .is('expired_at', null);
 

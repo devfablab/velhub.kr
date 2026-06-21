@@ -84,18 +84,8 @@ type RhizomeStigmaRow = {
 };
 
 function getSubscriptionStatus(status: string) {
-  if (status === SUBSCRIPTION_STATUS.ACTIVE) {
-    return '유지 중';
-  }
-
-  if (status === SUBSCRIPTION_STATUS.PAST_DUE) {
-    return '결제 유예 중';
-  }
-
-  if (status === SUBSCRIPTION_STATUS.SCHEDULED_CANCEL) {
-    return '취소 예정';
-  }
-
+  if (status === SUBSCRIPTION_STATUS.ACTIVE) return '유지 중';
+  if (status === SUBSCRIPTION_STATUS.PAST_DUE) return '결제 유예 중';
   return '중단';
 }
 
