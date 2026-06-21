@@ -2,15 +2,23 @@
 
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  Divider,
+  FormControlLabel,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -232,8 +240,16 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container>
-        <LoadingIndicator />
+      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
       </Container>
     );
   }
@@ -244,79 +260,103 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack gap={3}>
             {errorMessage ? (
-              <Typography color="error" role="alert">
-                {errorMessage}
-              </Typography>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : null}
 
             {successMessage ? (
-              <Typography color="success.main" role="status">
-                {successMessage}
-              </Typography>
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>{successMessage}</span>
+              </p>
             ) : null}
 
             <div className={`paper ${styles.paper}`}>
               <Stack gap={3}>
                 <Stack gap={1}>
-                  <Typography variant="h6">멤버십 설정</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할
-                    수 있습니다.
-                    {maxSeriesPrice > 0
-                      ? ` 현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.`
-                      : ''}
-                  </Typography>
+                  <Typography variant="subtitle2">멤버십 설정</Typography>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>
+                      멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할
+                      수 있습니다.
+                    </span>
+                  </p>
+                  {maxSeriesPrice > 0 ? (
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.</span>
+                    </p>
+                  ) : null}
                 </Stack>
 
                 <Divider />
 
                 <FormControlLabel
-                  control={<Switch checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />}
+                  control={
+                    <IOSSwitch sx={{ m: 1 }} checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />
+                  }
                   label="멤버십 사용"
                 />
 
                 <TextField
-                  label="멤버십 금액"
                   value={membershipPrice}
                   onChange={handleMembershipPriceChange}
                   helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
-                  inputProps={{
-                    inputMode: 'numeric',
-                    'aria-label': '멤버십 금액',
-                  }}
                   disabled={isSaving}
                   fullWidth
+                  size="small"
                 />
 
                 <div>
-                  <Button variant="contained" onClick={handleSaveMembershipSetting} disabled={isSaving}>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSaveMembershipSetting}
+                    disabled={isSaving}
+                  >
                     저장
-                  </Button>
+                  </button>
                 </div>
               </Stack>
             </div>
 
             <div className={`paper ${styles.paper}`}>
               <Stack gap={3}>
-                <Typography variant="h6">멤버십 구독자</Typography>
+                <Typography variant="subtitle2">멤버십 구독자</Typography>
 
                 {members.length ? (
-                  <Stack gap={2}>
-                    {members.map((member) => (
-                      <Paper key={member.id} variant="outlined" sx={{ p: 2 }}>
-                        <Stack gap={1}>
-                          <Typography>닉네임: {member.nickname}</Typography>
-                          <Typography>상태: {member.status}</Typography>
-                          <Typography>유지 기간: {member.activeMonths}개월째</Typography>
-                          <Typography>최근 결제일: {formatDateTime(member.lastPaidAt)}</Typography>
-                          <Typography>최근 결제금액: {formatAmount(member.lastPaidAmount)}</Typography>
-                          <Typography>누적 결제금액: {formatAmount(member.totalPaidAmount)}</Typography>
-                        </Stack>
-                      </Paper>
-                    ))}
-                  </Stack>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>결제자</TableCell>
+                          <TableCell>상태</TableCell>
+                          <TableCell>유지기간</TableCell>
+                          <TableCell>최근 결제액</TableCell>
+                          <TableCell>누적 결제액</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {members.map((member) => (
+                          <TableRow key={member.id}>
+                            <TableCell>{member.nickname}</TableCell>
+                            <TableCell>{member.status}</TableCell>
+                            <TableCell>{formatDateTime(member.lastPaidAt)}</TableCell>
+                            <TableCell>{formatAmount(member.lastPaidAmount)}</TableCell>
+                            <TableCell>{formatAmount(member.totalPaidAmount)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 ) : (
-                  <Typography color="text.secondary">아직 멤버십 구독자가 없습니다.</Typography>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>아직 멤버십 구독자가 없습니다.</span>
+                  </p>
                 )}
               </Stack>
             </div>

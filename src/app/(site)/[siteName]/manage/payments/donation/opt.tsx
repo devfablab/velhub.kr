@@ -2,12 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Divider from '@mui/material/Divider';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -129,8 +138,16 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container menu="payments">
-        <LoadingIndicator />
+      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
+        <div className={`container ${styles.container}`}>
+          <div className={`${styles.content} content`}>
+            <div className={`paper ${styles.paper}`}>
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
+        </div>
       </Container>
     );
   }
@@ -141,56 +158,86 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack gap={3}>
             {errorMessage ? (
-              <Typography color="error" role="alert">
-                {errorMessage}
-              </Typography>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : null}
 
             <div className={`paper ${styles.paper}`}>
               <Stack gap={1}>
-                <Typography variant="h6" component="h2">
-                  후원 요약
-                </Typography>
-                <Typography>받은 후원 수: {donationData?.summary?.count ?? 0}건</Typography>
-                <Typography>받은 후원 총액: {formatPrice(donationData?.summary?.totalAmount ?? 0)}</Typography>
-                <Divider />
-                <Typography>
-                  사이트 후원: {donationData?.summary?.siteDonationCount ?? 0}건 ·{' '}
-                  {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)}
-                </Typography>
-                <Typography>
-                  글 후원: {donationData?.summary?.postDonationCount ?? 0}건 ·{' '}
-                  {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)}
-                </Typography>
+                <Typography variant="subtitle2">후원 요약</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>사이트 후원</TableCell>
+                        <TableCell>글 후원</TableCell>
+                        <TableCell>총 후원</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>
+                          {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)} (
+                          {donationData?.summary?.siteDonationCount ?? 0}건)
+                        </TableCell>
+                        <TableCell>
+                          {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)} (
+                          {donationData?.summary?.postDonationCount ?? 0}건)
+                        </TableCell>
+                        <TableCell>
+                          {formatPrice(donationData?.summary?.totalAmount ?? 0)} ({donationData?.summary?.count ?? 0}건)
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </Stack>
             </div>
 
             <div className={`paper ${styles.paper}`}>
               <Stack gap={2}>
-                <Typography variant="h6" component="h2">
-                  후원 내역
-                </Typography>
+                <Typography variant="subtitle2">후원 내역</Typography>
 
                 {donationData?.donations?.length ? (
-                  <Stack gap={2} divider={<Divider />}>
-                    {donationData.donations.map((donation) => (
-                      <Stack key={donation.id} gap={0.5}>
-                        <Typography fontWeight={700}>{getDonationKindLabel(donation.donationKind)}</Typography>
-                        <Typography>후원자: {donation.nickname}</Typography>
-                        <Typography>후원금액: {formatPrice(donation.amount)}</Typography>
-                        <Typography>후원일: {formatDateTime(donation.approvedAt ?? donation.createdAt)}</Typography>
-                        {donation.post ? (
-                          <Typography>
-                            후원 글: {donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} /{' '}
-                            {donation.post.subject}
-                          </Typography>
-                        ) : null}
-                        <Typography>주문번호: {donation.orderNo}</Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>후원 종류</TableCell>
+                          <TableCell>후원자</TableCell>
+                          <TableCell>후원일</TableCell>
+                          <TableCell>후원금액</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {donationData.donations.map((donation) => (
+                          <TableRow key={donation.id}>
+                            <TableCell>
+                              {donation.post ? (
+                                <Tooltip
+                                  title={`${donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} / {donation.post.subject}`}
+                                >
+                                  <button type="button">{getDonationKindLabel(donation.donationKind)}</button>
+                                </Tooltip>
+                              ) : (
+                                getDonationKindLabel(donation.donationKind)
+                              )}
+                            </TableCell>
+                            <TableCell>{donation.nickname}</TableCell>
+                            <TableCell>{formatDateTime(donation.approvedAt ?? donation.createdAt)}</TableCell>
+                            <TableCell>{formatPrice(donation.amount)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 ) : (
-                  <Typography color="text.secondary">아직 받은 후원이 없습니다.</Typography>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>아직 받은 후원이 없습니다.</span>
+                  </p>
                 )}
               </Stack>
             </div>

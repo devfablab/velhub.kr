@@ -5,20 +5,23 @@ import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
-import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
@@ -391,7 +394,7 @@ export default function BoardSubscriptions() {
     const selectableBoards = editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards;
 
     return (
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <div className={`paper ${styles.paper}`}>
         <Stack gap={2}>
           <TextField
             select
@@ -426,15 +429,20 @@ export default function BoardSubscriptions() {
           />
 
           <Stack direction="row" gap={1}>
-            <Button type="button" variant="contained" onClick={handleSaveEditingRow} disabled={isSaving}>
+            <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
               저장
-            </Button>
-            <Button type="button" onClick={() => setEditingRow(null)} disabled={isSaving}>
+            </button>
+            <button
+              type="button"
+              className="button medium cancel"
+              onClick={() => setEditingRow(null)}
+              disabled={isSaving}
+            >
               취소
-            </Button>
+            </button>
           </Stack>
         </Stack>
-      </Paper>
+      </div>
     );
   }
 
@@ -444,124 +452,131 @@ export default function BoardSubscriptions() {
 
   if (isLoading) {
     return (
-      <Stack gap={2}>
-        <Typography variant="h6" component="h2">
-          게시판 구독
-        </Typography>
-        <LoadingIndicator />
-      </Stack>
+      <div className={`paper ${styles.paper}`}>
+        <div className="loading-container">
+          <LoadingIndicator />
+        </div>
+      </div>
     );
   }
 
   return (
-    <Stack gap={2}>
-      <Typography variant="h6" component="h2">
-        게시판 구독
-      </Typography>
+    <div className={`paper ${styles.paper}`}>
+      <Stack gap={2}>
+        <Typography variant="subtitle2">게시판 구독</Typography>
 
-      {errorMessage ? (
-        <Typography color="error" role="alert">
-          {errorMessage}
-        </Typography>
-      ) : null}
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
 
-      {successMessage ? (
-        <Typography color="primary" role="status">
-          {successMessage}
-        </Typography>
-      ) : null}
+        {successMessage ? (
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>{successMessage}</span>
+          </p>
+        ) : null}
 
-      {!boards.length ? <Typography color="text.secondary">구독을 설정할 수 있는 게시판이 없습니다.</Typography> : null}
+        {!boards.length ? (
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>구독을 설정할 수 있는 게시판이 없습니다.</span>
+          </p>
+        ) : null}
 
-      {boards.length && !enabledBoards.length && !editingRow ? (
-        <Typography color="text.secondary">설정된 게시판 구독이 없습니다.</Typography>
-      ) : null}
+        {boards.length && !enabledBoards.length && !editingRow ? (
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>설정된 게시판 구독이 없습니다.</span>
+          </p>
+        ) : null}
 
-      {enabledBoards.map((board) => {
-        const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
+        {enabledBoards.map((board) => {
+          const isEditingThisBoard = editingRow?.mode === 'edit' && editingRow.boardId === board.id;
 
-        return (
-          <div className={`paper ${styles.paper}`} key={board.id}>
-            <Stack gap={2}>
-              {isEditingThisBoard ? (
-                renderEditingRow()
-              ) : (
-                <Stack gap={1}>
-                  <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-                    <Stack gap={0.5}>
-                      <Typography fontWeight={700}>{board.boardLabel}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        월 {formatPrice(board.setting.price)}원
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        구독 설정된 연재 {board.subscriptionEnabledSeriesCount}개 · 최소 금액{' '}
-                        {formatPrice(board.setting.requiredMinPrice)}원
-                      </Typography>
+          return (
+            <div className={`paper ${styles.paper}`} key={board.id}>
+              <Stack gap={2}>
+                {isEditingThisBoard ? (
+                  renderEditingRow()
+                ) : (
+                  <Stack gap={1}>
+                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                      <Stack gap={0.5}>
+                        <Typography variant="subtitle2">{board.boardLabel}</Typography>
+                        <Typography variant="body2">월 {formatPrice(board.setting.price)} 원</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          구독 설정된 연재 {board.subscriptionEnabledSeriesCount}개 (최소 금액{' '}
+                          {formatPrice(board.setting.requiredMinPrice)} 원)
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" gap={1}>
+                        <IconButton
+                          type="button"
+                          aria-label="게시판 구독 수정"
+                          onClick={() => handleEditRow(board)}
+                          disabled={isSaving || Boolean(editingRow)}
+                        >
+                          <EditRoundedIcon />
+                        </IconButton>
+                        <IconButton
+                          type="button"
+                          aria-label="게시판 구독 해제"
+                          onClick={() => void handleDisableBoardSubscription(board)}
+                          disabled={isSaving}
+                        >
+                          <RemoveRoundedIcon />
+                        </IconButton>
+                      </Stack>
                     </Stack>
-                    <Stack direction="row" gap={1}>
-                      <IconButton
-                        type="button"
-                        aria-label="게시판 구독 수정"
-                        onClick={() => handleEditRow(board)}
-                        disabled={isSaving || Boolean(editingRow)}
-                      >
-                        <EditRoundedIcon />
-                      </IconButton>
-                      <IconButton
-                        type="button"
-                        aria-label="게시판 구독 해제"
-                        onClick={() => void handleDisableBoardSubscription(board)}
-                        disabled={isSaving}
-                      >
-                        <RemoveRoundedIcon />
-                      </IconButton>
-                    </Stack>
-                  </Stack>
 
-                  {board.subscribers.length ? (
-                    <TableContainer>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>구독자</TableCell>
-                            <TableCell>상태</TableCell>
-                            <TableCell>유지 기간</TableCell>
-                            <TableCell>최근 결제일</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {board.subscribers.map((subscriber) => (
-                            <TableRow key={subscriber.id}>
-                              <TableCell>{subscriber.nickname}</TableCell>
-                              <TableCell>{subscriber.status}</TableCell>
-                              <TableCell>{subscriber.activeMonths}개월째</TableCell>
-                              <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
+                    {board.subscribers.length ? (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>구독자</TableCell>
+                              <TableCell>상태</TableCell>
+                              <TableCell>유지 기간</TableCell>
+                              <TableCell>최근 결제일</TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : null}
-                </Stack>
-              )}
-            </Stack>
-          </div>
-        );
-      })}
+                          </TableHead>
+                          <TableBody>
+                            {board.subscribers.map((subscriber) => (
+                              <TableRow key={subscriber.id}>
+                                <TableCell>{subscriber.nickname}</TableCell>
+                                <TableCell>{subscriber.status}</TableCell>
+                                <TableCell>{subscriber.activeMonths}개월째</TableCell>
+                                <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : null}
+                  </Stack>
+                )}
+              </Stack>
+            </div>
+          );
+        })}
 
-      {editingRow?.mode === 'new' ? renderEditingRow() : null}
+        {editingRow?.mode === 'new' ? renderEditingRow() : null}
 
-      {boards.length ? (
-        <Button
-          type="button"
-          variant="outlined"
-          startIcon={<AddRoundedIcon />}
-          onClick={handleAddRow}
-          disabled={isSaving || Boolean(editingRow) || availableBoards.length === 0}
-        >
-          게시판 구독 추가
-        </Button>
-      ) : null}
-    </Stack>
+        {boards.length ? (
+          <button
+            type="button"
+            className="button small action"
+            onClick={handleAddRow}
+            disabled={isSaving || Boolean(editingRow) || availableBoards.length === 0}
+          >
+            <span>게시판 구독 추가</span>
+            <AddRoundedIcon />
+          </button>
+        ) : null}
+      </Stack>
+    </div>
   );
 }
