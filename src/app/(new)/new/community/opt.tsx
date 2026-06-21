@@ -629,7 +629,6 @@ export default function Opt() {
           <Stack gap={1}>
             <Typography variant="subtitle2">커뮤니티 이름</Typography>
             <TextField
-              label="커뮤니티 이름"
               value={siteLabel}
               onChange={handleSiteLabelChange}
               fullWidth
