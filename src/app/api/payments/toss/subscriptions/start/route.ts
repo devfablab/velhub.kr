@@ -19,7 +19,6 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
-
 type SubscriptionTargetType = 'board' | 'series';
 
 type SubscriptionStartBody = {
@@ -226,7 +225,7 @@ async function getSubscriptionTarget({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
+  if (targetType === 'board') {
     const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
       supabaseAdmin,
       siteId,
@@ -344,7 +343,6 @@ async function hasActiveSubscription({
     .eq('target_type', paymentTargetType)
     .eq('target_id', targetId)
     .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
-    .is('canceled_at', null)
     .is('expired_at', null)
     .order('created_at', { ascending: false })
     .limit(1);
@@ -361,12 +359,16 @@ async function cancelSeriesSubscriptionsInBoard({
   authUserId,
   siteId,
   boardId,
+  now,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   authUserId: string;
   siteId: string;
   boardId: string;
+  now: Date;
 }) {
+  const canceledAt = now.toISOString();
+
   const seriesResult = await supabaseAdmin
     .from('board_series')
     .select('id')
@@ -375,31 +377,29 @@ async function cancelSeriesSubscriptionsInBoard({
     .eq('is_subscription', true);
 
   if (seriesResult.error) {
-    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+    throw new Error('게시판의 구독 연재를 확인하지 못했습니다.');
   }
 
-  const seriesIds = (seriesResult.data ?? []).map((item) => normalizeText(item.id)).filter(Boolean);
+  const seriesIds = (seriesResult.data ?? [])
+    .map((item) => normalizeText(item.id))
+    .filter((seriesId): seriesId is string => Boolean(seriesId));
 
   if (seriesIds.length === 0) {
     return;
   }
 
-  const now = new Date().toISOString();
-
   const cancelResult = await supabaseAdmin
     .from('subscriptions')
     .update({
       status: SUBSCRIPTION_STATUS.CANCELED,
-      canceled_at: now,
-      cancel_reason: 'board_subscription_started',
+      canceled_at: canceledAt,
+      expired_at: canceledAt,
     })
     .eq('subscriber_user_id', authUserId)
-    .eq('site_id', siteId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('target_id', seriesIds)
     .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
-    .is('canceled_at', null)
     .is('expired_at', null);
 
   if (cancelResult.error) {
@@ -430,12 +430,10 @@ export async function POST(request: Request) {
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
     const supabaseAdmin = getSupabaseAdmin();
-
     const site = await getSiteByName({
       supabaseAdmin,
       siteName,
     });
-
     const session = await verifySession({
       siteId: site.id,
     });
@@ -452,17 +450,19 @@ export async function POST(request: Request) {
       seriesName,
     });
 
+    if (!subscriptionTarget.isSubscriptionTarget) {
+      return Response.json({ error: '구독 가능한 대상이 아닙니다.' }, { status: 400 });
+    }
+
     const subscriptionType = getSubscriptionType(targetType);
     const paymentType = getPaymentType(targetType);
     const paymentTargetType = getPaymentTargetType(targetType);
-
     const setting = await getSubscriptionSetting({
       supabaseAdmin,
       paymentTargetType,
       targetId: subscriptionTarget.targetId,
       subscriptionType,
     });
-
     const hasSubscription = await hasActiveSubscription({
       supabaseAdmin,
       authUserId: session.authUserId,
@@ -479,13 +479,11 @@ export async function POST(request: Request) {
       supabaseAdmin,
       ownerId: site.owner_id,
     });
-
     const customerKey = createCustomerKey(session.authUserId);
     const orderNo = createSubscriptionOrderNo(targetType);
     const orderName =
       normalizeText(body.orderName) ||
       `${subscriptionTarget.targetLabel ?? (targetType === 'series' ? '연재' : '게시판')} 구독`;
-
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, customer_key, billing_key')
@@ -500,7 +498,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '등록된 결제수단을 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const billingMethods = (billingMethodResult.data ?? []) as unknown as BillingMethodRow[];
+    const billingMethods = (billingMethodResult.data ?? []) as BillingMethodRow[];
     const billingMethod = billingMethods[0] ?? null;
 
     successUrl.searchParams.set('siteName', siteName);
@@ -508,7 +506,6 @@ export async function POST(request: Request) {
     successUrl.searchParams.set('targetType', targetType);
     successUrl.searchParams.set('orderNo', orderNo);
     successUrl.searchParams.set('paymentType', paymentType);
-
     failUrl.searchParams.set('siteName', siteName);
     failUrl.searchParams.set('boardName', boardName);
     failUrl.searchParams.set('targetType', targetType);
@@ -542,7 +539,6 @@ export async function POST(request: Request) {
       orderId: orderNo,
       orderName,
     })) as TossBillingPaymentResult;
-
     const now = new Date();
     const billingAnchorDay = getBillingAnchorDay(now);
     const billingPeriod = createNextMonthlyBillingPeriod({
@@ -550,7 +546,6 @@ export async function POST(request: Request) {
       billingAnchorDay,
     });
     const refundableUntil = getRefundableUntil(now);
-
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
       .insert({
@@ -589,7 +584,6 @@ export async function POST(request: Request) {
     const subscriptionInsertResult = await supabaseAdmin
       .from('subscriptions')
       .insert({
-        site_id: site.id,
         subscriber_user_id: session.authUserId,
         subscription_type: subscriptionType,
         target_type: paymentTargetType,
@@ -629,6 +623,16 @@ export async function POST(request: Request) {
       return Response.json({ error: '결제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
     }
 
+    if (targetType === 'board') {
+      await cancelSeriesSubscriptionsInBoard({
+        supabaseAdmin,
+        authUserId: session.authUserId,
+        siteId: site.id,
+        boardId: subscriptionTarget.boardId,
+        now,
+      });
+    }
+
     await createOwnerPaymentSplits({
       supabaseAdmin,
       paymentId: paymentInsertResult.data.id,
@@ -637,15 +641,6 @@ export async function POST(request: Request) {
       amount: setting.price,
     });
 
-    if (targetType === 'board') {
-      await cancelSeriesSubscriptionsInBoard({
-        supabaseAdmin,
-        authUserId: session.authUserId,
-        siteId: site.id,
-        boardId: subscriptionTarget.boardId,
-      });
-    }
-
     return Response.json({
       mode: 'direct_billing',
       ok: true,
@@ -653,9 +648,7 @@ export async function POST(request: Request) {
       paymentId: paymentInsertResult.data.id,
     });
   } catch (unknownError) {
-    if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '구독을 시작하지 못했습니다.' }, { status: 500 });
-    }
+    console.error('[subscription start error]', unknownError);
 
     return Response.json({ error: '구독을 시작하지 못했습니다.' }, { status: 500 });
   }

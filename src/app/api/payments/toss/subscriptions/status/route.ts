@@ -322,7 +322,6 @@ export async function GET(request: Request) {
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('site_id', site.id)
       .eq('subscriber_user_id', session.authUserId)
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)

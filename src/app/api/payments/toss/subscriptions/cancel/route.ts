@@ -116,7 +116,6 @@ async function getSubscriptionTarget({
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label')
-    .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
 
@@ -144,7 +143,6 @@ async function getSubscriptionTarget({
   const seriesResult = await supabaseAdmin
     .from('board_series')
     .select('id, series_key, series_label')
-    .eq('site_id', siteId)
     .eq('board_id', board.id)
     .eq('series_key', seriesName)
     .maybeSingle();
@@ -293,7 +291,6 @@ export async function POST(request: Request) {
           'expired_at',
         ].join(', '),
       )
-      .eq('site_id', site.id)
       .eq('subscriber_user_id', session.authUserId)
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)

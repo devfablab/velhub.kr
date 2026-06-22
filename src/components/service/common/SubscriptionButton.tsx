@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -15,6 +16,9 @@ import {
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
+import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
+import styles from '@/app/board.module.sass';
 
 type BoardInfo = {
   id: string;
@@ -28,13 +32,15 @@ type SelectedSeries = {
 };
 
 type SubscriptionTargetType = 'board' | 'series';
-type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
+export type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type Props = {
   siteName: string;
   boardName: string;
   board: BoardInfo | null;
   selectedSeries: SelectedSeries | null;
+  selectedBoard: boolean | null;
+  onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
 
 type SubscriptionStatusResponse = {
@@ -123,7 +129,18 @@ function getDialogSubmitText(subscriptionStatus: SubscriptionStatus) {
   return '구독하기';
 }
 
-export default function SubscriptionButton({ siteName, boardName, board, selectedSeries }: Props) {
+function getCancelDialogTitle(targetType: SubscriptionTargetType) {
+  return targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소';
+}
+
+export default function SubscriptionButton({
+  siteName,
+  boardName,
+  board,
+  selectedSeries,
+  selectedBoard,
+  onStatusChange,
+}: Props) {
   const targetType: SubscriptionTargetType = selectedSeries ? 'series' : 'board';
   const targetLabel = selectedSeries?.series_label ?? board?.board_label ?? '';
 
@@ -141,10 +158,10 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     return params.toString();
   }, [siteName, boardName, targetType, selectedSeries]);
 
-  const [isEnabled, setIsEnabled] = useState(false);
   const [price, setPrice] = useState<number | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -156,9 +173,9 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     async function loadSubscriptionStatus() {
       try {
         setErrorMessage('');
-        setIsEnabled(false);
         setPrice(null);
         setSubscriptionStatus('none');
+        onStatusChange?.('none');
 
         if (!board) {
           return;
@@ -175,9 +192,11 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
           throw new Error(result.error ?? '구독 상태를 확인하지 못했습니다.');
         }
 
-        setIsEnabled(Boolean(result.isEnabled));
+        const nextSubscriptionStatus = result.subscriptionStatus ?? 'none';
+
         setPrice(result.price ?? null);
-        setSubscriptionStatus(result.subscriptionStatus ?? 'none');
+        setSubscriptionStatus(nextSubscriptionStatus);
+        onStatusChange?.(nextSubscriptionStatus);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '구독 상태를 확인하지 못했습니다.');
@@ -188,7 +207,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     }
 
     void loadSubscriptionStatus();
-  }, [board, statusQueryString]);
+  }, [board, statusQueryString, onStatusChange]);
 
   function handleOpenDialog() {
     setErrorMessage('');
@@ -201,6 +220,19 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     }
 
     setIsDialogOpen(false);
+  }
+
+  function handleOpenCancelDialog() {
+    setErrorMessage('');
+    setIsCancelDialogOpen(true);
+  }
+
+  function handleCloseCancelDialog() {
+    if (isProcessing) {
+      return;
+    }
+
+    setIsCancelDialogOpen(false);
   }
 
   async function handleStartSubscription() {
@@ -236,6 +268,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
 
       if (result.mode === 'direct_billing') {
         setSubscriptionStatus('active');
+        onStatusChange?.('active');
         setIsDialogOpen(false);
         return;
       }
@@ -293,9 +326,13 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
 
       if (result.mode === 'cancel_scheduled') {
         setSubscriptionStatus('scheduled_cancel');
+        onStatusChange?.('scheduled_cancel');
       } else {
         setSubscriptionStatus('canceled');
+        onStatusChange?.('canceled');
       }
+
+      setIsCancelDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '구독을 취소하지 못했습니다.');
@@ -337,6 +374,7 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
       }
 
       setSubscriptionStatus('active');
+      onStatusChange?.('active');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '구독 취소를 철회하지 못했습니다.');
@@ -348,58 +386,66 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
     }
   }
 
-  if (!isEnabled) {
-    return null;
-  }
-
   return (
     <>
-      <Stack gap={1} alignItems="flex-start">
-        {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
-          <button type="button" className="button medium submit" onClick={handleOpenDialog} disabled={isProcessing}>
-            {getSubscribeButtonText({ targetType, subscriptionStatus })}
-          </button>
-        ) : null}
+      {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
+        <button
+          type="button"
+          className={selectedBoard ? 'button small action' : styles.button}
+          onClick={handleOpenDialog}
+          disabled={isProcessing}
+        >
+          {selectedBoard ? null : <LoyaltyOutlinedIcon />}
+          <strong>{getSubscribeButtonText({ targetType, subscriptionStatus })}</strong>
+        </button>
+      ) : null}
 
-        {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
-          <button
-            type="button"
-            className="button medium cancel"
-            onClick={handleCancelSubscription}
-            disabled={isProcessing}
-          >
-            {targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}
-          </button>
-        ) : null}
+      {subscriptionStatus === 'active' || subscriptionStatus === 'past_due' ? (
+        <button
+          type="button"
+          className={selectedBoard ? 'button small action' : styles.button}
+          onClick={handleOpenCancelDialog}
+          disabled={isProcessing}
+        >
+          {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
+          <strong>{targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}</strong>
+        </button>
+      ) : null}
 
-        {subscriptionStatus === 'scheduled_cancel' ? (
-          <button
-            type="button"
-            className="button medium action"
-            onClick={handleResumeSubscription}
-            disabled={isProcessing}
-          >
-            재구독하기
-          </button>
-        ) : null}
+      {subscriptionStatus === 'scheduled_cancel' ? (
+        <button
+          type="button"
+          className={selectedBoard ? 'button small action' : styles.button}
+          onClick={handleResumeSubscription}
+          disabled={isProcessing}
+        >
+          {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
+          <strong>재구독하기</strong>
+        </button>
+      ) : null}
 
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-      </Stack>
+      {errorMessage ? (
+        <Snackbar
+          open={Boolean(errorMessage)}
+          message={errorMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+          onClose={() => setErrorMessage('')}
+        />
+      ) : null}
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
           <h2>{getDialogTitle({ targetType, subscriptionStatus })}</h2>
-          <button className="close-button" onClick={handleCloseDialog}>
+          <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
             <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시곘어요?
+              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시겠어요?
             </Typography>
             {errorMessage ? (
               <p className="alert error">
@@ -435,12 +481,12 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
           className="VhiDialog"
         >
           <DialogTitle id="subscription-dialog-title">{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
-          <button className="close-button" onClick={handleCloseDialog}>
+          <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시곘어요?
+              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시겠어요?
             </Typography>
             {errorMessage ? (
               <p className="alert error">
@@ -460,6 +506,86 @@ export default function SubscriptionButton({ siteName, boardName, board, selecte
               disabled={isProcessing}
             >
               {getDialogSubmitText(subscriptionStatus)}
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isCancelDialogOpen}
+          onClose={handleCloseCancelDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>{getCancelDialogTitle(targetType)}</h2>
+          <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <Typography variant="body2">{targetLabel} 구독을 취소하시겠어요?</Typography>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseCancelDialog}
+                disabled={isProcessing}
+              >
+                아니요
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handleCancelSubscription}
+                disabled={isProcessing}
+              >
+                구독 취소
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isCancelDialogOpen}
+          onClose={handleCloseCancelDialog}
+          aria-labelledby="subscription-cancel-dialog-title"
+          className="VhiDialog"
+        >
+          <DialogTitle id="subscription-cancel-dialog-title">{getCancelDialogTitle(targetType)}</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography variant="body2">{targetLabel} 구독을 취소하시겠어요?</Typography>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseCancelDialog}
+              disabled={isProcessing}
+            >
+              아니요
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handleCancelSubscription}
+              disabled={isProcessing}
+            >
+              구독 취소
             </button>
           </DialogActions>
         </Dialog>

@@ -88,14 +88,12 @@ function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
 async function hasActiveSubscription({
   supabaseAdmin,
   authUserId,
-  siteId,
   targetType,
   targetId,
   subscriptionType,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   authUserId: string;
-  siteId: string;
   targetType: string;
   targetId: string;
   subscriptionType: string;
@@ -103,7 +101,6 @@ async function hasActiveSubscription({
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('site_id', siteId)
     .eq('subscriber_user_id', authUserId)
     .eq('target_type', targetType)
     .eq('target_id', targetId)
@@ -296,7 +293,6 @@ export async function POST(request: NextRequest) {
     const hasBoardSubscription = await hasActiveSubscription({
       supabaseAdmin,
       authUserId: session.authUserId,
-      siteId: site.id,
       targetType: PAYMENT_TARGET_TYPE.BOARD,
       targetId: board.id,
       subscriptionType: SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION,
@@ -312,7 +308,6 @@ export async function POST(request: NextRequest) {
     const hasSeriesSubscription = await hasActiveSubscription({
       supabaseAdmin,
       authUserId: session.authUserId,
-      siteId: site.id,
       targetType: PAYMENT_TARGET_TYPE.SERIES,
       targetId: post.series_id,
       subscriptionType: SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION,

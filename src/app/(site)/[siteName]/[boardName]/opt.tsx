@@ -508,14 +508,15 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
+                  <SubscriptionButton
+                    siteName={siteName}
+                    boardName={boardName}
+                    board={board}
+                    selectedSeries={selectedSeries}
+                    selectedBoard={true}
+                  />
                 </h2>
               )}
-              <SubscriptionButton
-                siteName={siteName}
-                boardName={boardName}
-                board={board}
-                selectedSeries={selectedSeries}
-              />
             </>
           ) : (
             <SiteProfile />

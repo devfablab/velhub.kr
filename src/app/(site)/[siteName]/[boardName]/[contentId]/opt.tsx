@@ -24,6 +24,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
+  Snackbar,
+  Stack,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -42,6 +45,7 @@ import BoardPostCountTableList from '@/components/service/community/BoardPostCou
 import BoardRecentTableList from '@/components/service/community/BoardRecentTableList';
 import DonationButton from '@/components/service/common/DonationButton';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
+import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -369,6 +373,7 @@ export default function Opt({ isCommunity }: Props) {
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
+  const [purchasePromptOpen, setPurchasePromptOpen] = useState(false);
 
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
@@ -382,6 +387,8 @@ export default function Opt({ isCommunity }: Props) {
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+
+  const [boardSubscriptionStatus, setBoardSubscriptionStatus] = useState<SubscriptionStatus>('none');
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -414,6 +421,14 @@ export default function Opt({ isCommunity }: Props) {
 
   function closeGalleryViewer() {
     setGalleryViewerOpen(false);
+  }
+
+  function openPurchasePrompt() {
+    setPurchasePromptOpen(true);
+  }
+
+  function closePurchasePrompt() {
+    setPurchasePromptOpen(false);
   }
 
   function showPreviousGalleryImage() {
@@ -715,6 +730,23 @@ export default function Opt({ isCommunity }: Props) {
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
   const listHref = categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
+  const isSubscriptionSeriesPost = series?.is_subscription === true;
+
+  const canPurchasePost =
+    content.published_status === 'published' &&
+    !isPage &&
+    (content.is_purchase_required || isSubscriptionSeriesPost) &&
+    !content.has_board_subscription &&
+    !content.has_series_subscription &&
+    !content.has_post_purchase &&
+    !isAuthor &&
+    !isStaff;
+
+  const hasBoardSubscription =
+    boardSubscriptionStatus === 'active' ||
+    boardSubscriptionStatus === 'past_due' ||
+    boardSubscriptionStatus === 'scheduled_cancel';
+
   const seriesList =
     series && seriesContents.length > 0 ? (
       <div className="paper paper-p0">
@@ -739,40 +771,72 @@ export default function Opt({ isCommunity }: Props) {
 
   const postActionButtons =
     content.published_status === 'published' && !isPage ? (
-      <div className={styles.options}>
-        <div className={styles.buttons}>
-          <button
-            type="button"
-            className={`${styles.button} ${isLiked ? styles.active : ''}`}
-            onClick={() => void togglePostLike()}
-            disabled={isTogglingLike}
-            aria-label={isLiked ? '좋아요 취소' : '좋아요'}
-          >
-            {isTogglingLike ? (
-              <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
-            ) : (
-              <FavoriteBorderRoundedIcon />
-            )}
-            <strong>좋아요</strong>
-            {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
-          </button>
-          <button
-            type="button"
-            className={`${styles.button} ${isSaved ? styles.active : ''}`}
-            onClick={() => void togglePostSave()}
-            disabled={isTogglingSave}
-            aria-label={isSaved ? '저장 취소' : '저장'}
-          >
-            {isTogglingSave ? (
-              <CircularProgress color="inherit" aria-label="저장" size={24} />
-            ) : (
-              <TurnedInNotRoundedIcon />
-            )}
-            <strong>저장</strong>
-          </button>
-        </div>
-        {postActionErrorMessage ? <p>{postActionErrorMessage}</p> : null}
-      </div>
+      <>
+        <button
+          type="button"
+          className={`${styles.button} ${isLiked ? styles.active : ''}`}
+          onClick={() => void togglePostLike()}
+          disabled={isTogglingLike}
+          aria-label={isLiked ? '좋아요 취소' : '좋아요'}
+        >
+          {isTogglingLike ? (
+            <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
+          ) : (
+            <FavoriteBorderRoundedIcon />
+          )}
+          <strong>좋아요</strong>
+          {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${isSaved ? styles.active : ''}`}
+          onClick={() => void togglePostSave()}
+          disabled={isTogglingSave}
+          aria-label={isSaved ? '저장 취소' : '저장'}
+        >
+          {isTogglingSave ? (
+            <CircularProgress color="inherit" aria-label="저장" size={24} />
+          ) : (
+            <TurnedInNotRoundedIcon />
+          )}
+          <strong>저장</strong>
+        </button>
+        <Snackbar
+          open={Boolean(postActionErrorMessage)}
+          message={postActionErrorMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+          onClose={() => setPostActionErrorMessage('')}
+        />
+      </>
+    ) : null;
+
+  const subscriptionButtons =
+    content.published_status === 'published' && !isPage && content.is_purchase_required && !isAuthor && !isStaff ? (
+      <>
+        <SubscriptionButton
+          siteName={siteName}
+          boardName={boardName}
+          board={board}
+          selectedSeries={null}
+          onStatusChange={setBoardSubscriptionStatus}
+        />
+
+        {series && !hasBoardSubscription ? (
+          <SubscriptionButton
+            siteName={siteName}
+            boardName={boardName}
+            board={board}
+            selectedSeries={{
+              series_key: series.series_key,
+              series_label: series.series_label,
+            }}
+          />
+        ) : null}
+      </>
     ) : null;
 
   const postDonationButton =
@@ -780,36 +844,73 @@ export default function Opt({ isCommunity }: Props) {
     !isPage &&
     content.is_post_donation_available &&
     !content.is_purchase_required ? (
-      <div className={styles.options}>
-        <div className={styles.buttons}>
-          <DonationButton
-            targetType="post"
-            siteName={siteName}
-            boardName={boardName}
-            contentId={content.slug}
-            buttonText="글 후원"
-            className={styles.button}
-          />
-        </div>
-      </div>
+      <DonationButton
+        targetType="post"
+        siteName={siteName}
+        boardName={boardName}
+        contentId={content.slug}
+        buttonText="포스팅 후원"
+      />
     ) : null;
 
-  const postPurchaseButton =
-    content.published_status === 'published' &&
-    !isPage &&
-    content.is_purchase_required &&
-    !content.can_view_paid_content ? (
-      <div className={styles.options}>
-        <div className={styles.buttons}>
-          <PostPurchaseButton
-            siteName={siteName}
-            boardName={boardName}
-            contentId={content.slug}
-            buttonText="포스팅 구매"
-            className={styles.button}
-          />
-        </div>
-      </div>
+  const postPurchaseButton = canPurchasePost ? (
+    <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} />
+  ) : null;
+
+  const paidContentMoreButton = canPurchasePost ? (
+    <div className={styles.action}>
+      <button type="button" className="button small action" onClick={openPurchasePrompt}>
+        더 보기
+      </button>
+      {isMobile ? (
+        <Drawer anchor="bottom" open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDrawer-bottom">
+          <h2>포스팅 소장하기</h2>
+          <button type="button" className="close-button" onClick={closePurchasePrompt}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={closePurchasePrompt}>
+                취소
+              </button>
+              <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDialog">
+          <DialogTitle className={styles['dialog-title']}>포스팅 소장하기</DialogTitle>
+          <button type="button" className="close-button" onClick={closePurchasePrompt}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent className={styles['dialog-content']}>
+            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={closePurchasePrompt}>
+              취소
+            </button>
+            <PostPurchaseButton
+              siteName={siteName}
+              boardName={boardName}
+              contentId={content.slug}
+              buttonText="구매"
+              popup={true}
+            />
+          </DialogActions>
+        </Dialog>
+      )}
+    </div>
+  ) : null;
+
+  const paidContentActionButtons =
+    subscriptionButtons || postPurchaseButton || postDonationButton ? (
+      <>
+        {subscriptionButtons}
+        {postPurchaseButton}
+        {postDonationButton}
+      </>
     ) : null;
 
   return (
@@ -858,13 +959,16 @@ export default function Opt({ isCommunity }: Props) {
                 </header>
                 <div className={`${styles['board-container']} ${styles['basic-board']}`}>
                   {content.content_html ? (
-                    <EmbeddedContentHtml
-                      contentHtml={content.content_html}
-                      contentMarkdown={content.content_markdown}
-                      markdownStatus={board.markdown_status}
-                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                      className="viewer"
-                    />
+                    <>
+                      <EmbeddedContentHtml
+                        contentHtml={content.content_html}
+                        contentMarkdown={content.content_markdown}
+                        markdownStatus={board.markdown_status}
+                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                        className="viewer"
+                      />
+                      {paidContentMoreButton}
+                    </>
                   ) : null}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>
@@ -958,19 +1062,21 @@ export default function Opt({ isCommunity }: Props) {
                 </header>
               </div>
             )}
-
             {isGalleryBoard ? (
               <div className={`${styles['board-container']} ${styles['gallery-board']}`}>
                 <div className="paper">
                   {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
                   {content.content_html ? (
-                    <EmbeddedContentHtml
-                      contentHtml={content.content_html}
-                      contentMarkdown={content.content_markdown}
-                      markdownStatus={board.markdown_status}
-                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                      className="viewer"
-                    />
+                    <>
+                      <EmbeddedContentHtml
+                        contentHtml={content.content_html}
+                        contentMarkdown={content.content_markdown}
+                        markdownStatus={board.markdown_status}
+                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                        className="viewer"
+                      />
+                      {paidContentMoreButton}
+                    </>
                   ) : null}
                   {content.images && content.images.length > 0 ? (
                     <div className={styles['content-images']}>
@@ -1045,6 +1151,7 @@ export default function Opt({ isCommunity }: Props) {
                 <div className="paper">
                   <strong>{`유튜브 공개: ${formatDateSimple(content.youtube_created_at)}`}</strong>
                   {content.summary ? <div className={styles['content-simple']}>{content.summary}</div> : null}
+                  {paidContentMoreButton}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>
                       {hashtags.map((hashtag) => (
@@ -1061,6 +1168,7 @@ export default function Opt({ isCommunity }: Props) {
                   {content.content_simple ? (
                     <div className={styles['content-simple']}>{content.content_simple}</div>
                   ) : null}
+                  {paidContentMoreButton}
                   {feedLinkPreviewUrls.length > 0 ? (
                     <div className={styles['link-previews']}>
                       {feedLinkPreviewUrls.map((url) => (
@@ -1135,13 +1243,16 @@ export default function Opt({ isCommunity }: Props) {
               <div className={`${styles['board-container']} ${styles['basic-board']}`}>
                 <div className="paper">
                   {content.content_html ? (
-                    <EmbeddedContentHtml
-                      contentHtml={content.content_html}
-                      contentMarkdown={content.content_markdown}
-                      markdownStatus={board.markdown_status}
-                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                      className="viewer"
-                    />
+                    <>
+                      <EmbeddedContentHtml
+                        contentHtml={content.content_html}
+                        contentMarkdown={content.content_markdown}
+                        markdownStatus={board.markdown_status}
+                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                        className="viewer"
+                      />
+                      {paidContentMoreButton}
+                    </>
                   ) : null}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>
@@ -1281,9 +1392,12 @@ export default function Opt({ isCommunity }: Props) {
                 ) : null}
               </div>
             ) : null}
-            {postActionButtons}
-            {postDonationButton}
-            {postPurchaseButton}
+            <div className={styles.options}>
+              <div className={styles.buttons}>
+                {postActionButtons}
+                {paidContentActionButtons}
+              </div>
+            </div>
             {seriesList}
           </article>
           {content.published_status === 'published' ? (

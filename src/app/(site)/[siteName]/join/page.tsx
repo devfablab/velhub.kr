@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { Box, Stack, Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Opt from './opt';
 import Container from '../menu';

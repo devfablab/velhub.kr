@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import { Snackbar } from '@mui/material';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import styles from '@/app/board.module.sass';
 
 type PostPurchaseStartResponse = {
   ok?: boolean;
@@ -22,7 +24,7 @@ type Props = {
   boardName: string;
   contentId: string;
   buttonText?: string;
-  className?: string;
+  popup?: boolean;
   disabled?: boolean;
   successUrl?: string;
   failUrl?: string;
@@ -46,15 +48,7 @@ function getFailUrl({ siteName, boardName, contentId, failUrl }: Props) {
 }
 
 export default function PostPurchaseButton(props: Props) {
-  const {
-    siteName,
-    boardName,
-    contentId,
-    buttonText = '포스팅 구매',
-    className,
-    disabled = false,
-    onProcessingChange,
-  } = props;
+  const { siteName, boardName, contentId, popup, disabled = false, onProcessingChange } = props;
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -128,8 +122,14 @@ export default function PostPurchaseButton(props: Props) {
 
   return (
     <>
-      <button type="button" className={className} onClick={handlePurchase} disabled={disabled || isProcessing}>
-        {buttonText}
+      <button
+        type="button"
+        className={popup ? 'button medium submit' : styles.button}
+        onClick={handlePurchase}
+        disabled={disabled || isProcessing}
+      >
+        {popup ? null : <SellOutlinedIcon />}
+        <strong>포스팅 소장</strong>
       </button>
 
       <Snackbar

@@ -314,6 +314,77 @@ function getTextPreview(value: string | null | undefined, maxLength: number) {
   return Array.from(normalizedValue).slice(0, maxLength).join('');
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripHtml(value: string | null | undefined) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue
+    .replace(/<img\b[^>]*>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stripMarkdownMedia(value: string | null | undefined) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return '';
+  }
+
+  return normalizedValue
+    .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
+    .replace(/\[([^\]]+)]\([^)]+\)/g, '$1')
+    .replace(/<https?:\/\/[^>]+>/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function createPaidContentPreviewText({
+  summary,
+  contentSimple,
+  contentMarkdown,
+  contentHtml,
+}: {
+  summary: string | null | undefined;
+  contentSimple: string | null | undefined;
+  contentMarkdown: string | null | undefined;
+  contentHtml: string | null | undefined;
+}) {
+  const sourceText =
+    normalizeText(summary) ||
+    normalizeText(contentSimple) ||
+    stripMarkdownMedia(contentMarkdown) ||
+    stripHtml(contentHtml);
+
+  if (!sourceText) {
+    return null;
+  }
+
+  return Array.from(sourceText).slice(0, 170).join('');
+}
+
+function createPaidContentPreviewHtml(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return `<p>${escapeHtml(value)}...</p>`;
+}
+
 async function getPaidContentAccess({
   supabaseAdmin,
   authUserId,
@@ -403,12 +474,11 @@ async function getPaidContentAccess({
   const boardSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('site_id', siteId)
     .eq('subscriber_user_id', authUserId)
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
     .eq('target_id', boardId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', ['trialing', 'active', 'past_due'])
     .is('expired_at', null)
     .order('created_at', { ascending: false })
     .limit(1);
@@ -433,12 +503,11 @@ async function getPaidContentAccess({
   const seriesSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('site_id', siteId)
     .eq('subscriber_user_id', authUserId)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
-    .in('status', ['trialing', 'active', 'past_due', 'scheduled_cancel'])
+    .in('status', ['trialing', 'active', 'past_due'])
     .is('expired_at', null)
     .order('created_at', { ascending: false })
     .limit(1);
@@ -1072,6 +1141,17 @@ export async function GET(request: Request, context: RouteContext) {
       postId: postData.id,
     });
 
+    const shouldShowPaidPreview = paidContentAccess.is_purchase_required && !paidContentAccess.can_view_paid_content;
+
+    const paidContentPreviewText = shouldShowPaidPreview
+      ? createPaidContentPreviewText({
+          summary: post.data.summary,
+          contentSimple: post.data.content_simple,
+          contentMarkdown: post.data.content_markdown,
+          contentHtml: post.data.content_html,
+        })
+      : null;
+
     const canViewPaidContent = isAuthor || isStaff || paidContentAccess.can_view_paid_content;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
@@ -1282,12 +1362,12 @@ export async function GET(request: Request, context: RouteContext) {
       board: boardData,
       content: {
         ...postData,
-        summary: canViewPaidContent ? postData.summary : getTextPreview(postData.summary, 70),
-        content_html: canViewPaidContent ? postData.content_html : getTextPreview(postData.content_html, 120),
-        content_markdown: canViewPaidContent
-          ? postData.content_markdown
-          : getTextPreview(postData.content_markdown, 120),
-        content_simple: canViewPaidContent ? postData.content_simple : getTextPreview(postData.content_simple, 120),
+        summary: shouldShowPaidPreview ? paidContentPreviewText : post.data.summary,
+        content_html: shouldShowPaidPreview
+          ? createPaidContentPreviewHtml(paidContentPreviewText)
+          : post.data.content_html,
+        content_markdown: shouldShowPaidPreview ? paidContentPreviewText : post.data.content_markdown,
+        content_simple: shouldShowPaidPreview ? paidContentPreviewText : post.data.content_simple,
         slug: String(postData.slug),
         author_name: author.name,
         author_avatar_url: author.avatarUrl,

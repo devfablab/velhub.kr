@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import Container from '@/app/(site)/[siteName]/menu';
+import Anchor from '@/components/Anchor';
 
 type PurchaseSuccessResponse = {
   ok?: boolean;
@@ -80,28 +81,28 @@ export default function Opt() {
   }, [searchParams]);
 
   return (
-    <main>
+    <Container pageBack={`/${siteName}`} pageTitle="포스팅 구매">
       <div className="container">
-        <div className="content">
-          <div className="paper">
-            <Stack gap={3} alignItems="center">
-              <Typography variant="h5" component="h1">
-                포스팅 구매
-              </Typography>
-              {errorMessage ? (
-                <Typography color="error" role="alert">
-                  {errorMessage}
-                </Typography>
-              ) : (
-                <Typography role="status">{message}</Typography>
-              )}
-              <Button type="button" variant="contained" href={`/${siteName}/${boardName}/${contentId}`}>
-                글로 이동
-              </Button>
-            </Stack>
+        <div className="content" style={{ maxWidth: 572 }}>
+          <h2>포스팅 구매</h2>
+          <div className="paper" style={{ marginTop: 12 }}>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : (
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>{message}</span>
+              </p>
+            )}
+            <Anchor type="button" className="button medium submit" href={`/${siteName}/${boardName}/${contentId}`}>
+              글로 이동
+            </Anchor>
           </div>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

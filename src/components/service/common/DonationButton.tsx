@@ -17,6 +17,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
+import styles from '@/app/board.module.sass';
 
 type DonationTargetType = 'site' | 'post';
 
@@ -240,7 +242,8 @@ export default function DonationButton(props: Props) {
   return (
     <>
       <button type="button" className={className} onClick={handleOpenDialog} disabled={disabled || isProcessing}>
-        {buttonText}
+        {buttonText === '포스팅 후원' ? <VolunteerActivismOutlinedIcon /> : null}
+        <strong>{buttonText}</strong>
       </button>
 
       {isMobile ? (
