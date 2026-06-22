@@ -1199,6 +1199,20 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
+                  {dialogHelperMessage ? (
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>{dialogHelperMessage}</span>
+                    </p>
+                  ) : null}
+
+                  {dialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{dialogErrorMessage}</span>
+                    </p>
+                  ) : null}
+
                   <Stack gap={1}>
                     <Typography variant="subtitle2">연재 식별자 *</Typography>
                     <TextField
@@ -1371,8 +1385,8 @@ export default function Opt() {
                   </div>
 
                   {dialogHelperMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
                       <span>{dialogHelperMessage}</span>
                     </p>
                   ) : null}
