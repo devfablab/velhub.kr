@@ -444,241 +444,249 @@ export default function Opt() {
               게시판 생성
             </Typography>
           ) : null}
-          <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
-            {!canCreateBoard ? (
-              <div className={`paper paper-error ${styles.paper}`}>더 이상 게시판을 생성할 수 없습니다.</div>
-            ) : (
-              <>
-                {maxBoardCount > 0 ? (
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>
-                      생성된 게시판: {currentBoardCount}개 / {maxBoardCount}개
-                    </span>
-                  </p>
-                ) : null}
-
-                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-
-                <Snackbar
-                  open={Boolean(successMessage)}
-                  message={successMessage}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'center',
-                  }}
-                  autoHideDuration={3000}
-                  onClose={() => setSuccessMessage('')}
-                />
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">게시판 종류 *</Typography>
-                  <TextField select value={boardType} onChange={handleBoardTypeChange} fullWidth size="small">
-                    <MenuItem value="basic">
-                      {boardType === 'basic' ? (
-                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                      ) : (
-                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                      )}
-                      일반 게시판
-                    </MenuItem>
-                    <MenuItem value="gallery">
-                      {boardType === 'gallery' ? (
-                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                      ) : (
-                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                      )}
-                      갤러리 게시판
-                    </MenuItem>
-                    <MenuItem value="youtube">
-                      {boardType === 'youtube' ? (
-                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                      ) : (
-                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                      )}
-                      유튜브 영상 공유 게시판
-                    </MenuItem>
-                    <MenuItem value="feed">
-                      {boardType === 'feed' ? (
-                        <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                      ) : (
-                        <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                      )}
-                      피드 게시판
-                    </MenuItem>
-                  </TextField>
-                </Stack>
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">게시판 식별자 *</Typography>
-                  <TextField
-                    value={boardKey}
-                    onChange={handleBoardKeyChange}
-                    fullWidth
-                    size="small"
-                    helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            {baseUrl}/{siteName}/
-                          </InputAdornment>
-                        ),
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <button
-                              type="button"
-                              className="button small action"
-                              onClick={handleCheckBoardKey}
-                              disabled={isChecking || !canCreateBoard}
-                            >
-                              중복 확인
-                            </button>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-                </Stack>
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">게시판 이름 *</Typography>
-                  <TextField
-                    value={boardLabel}
-                    onChange={handleBoardLabelChange}
-                    fullWidth
-                    size="small"
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <button
-                              type="button"
-                              className="button small action"
-                              onClick={handleCheckBoardLabel}
-                              disabled={isCheckingBoardLabel || !canCreateBoard}
-                            >
-                              중복 확인
-                            </button>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-                </Stack>
-
-                <Snackbar
-                  open={Boolean(boardLabelCheckMessage)}
-                  message={boardLabelCheckMessage}
-                  anchorOrigin={{
-                    vertical: 'top',
-                    horizontal: 'center',
-                  }}
-                  autoHideDuration={3000}
-                  onClose={() => setBoardLabelCheckMessage('')}
-                />
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">목록 표시 개수 *</Typography>
-                  <TextField select value={postPerPage} onChange={handlePostPerPageChange} fullWidth size="small">
-                    {POST_PER_PAGE_OPTIONS.map((count) => (
-                      <MenuItem key={count} value={count}>
-                        {postPerPage === count ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        {count}개씩
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">마크다운 사용 여부 *</Typography>
-                  <TextField select value={markdownStatus} onChange={handleMarkdownStatusChange} fullWidth size="small">
-                    {MARKDOWN_STATUS_OPTIONS.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {markdownStatus === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
-
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">글 작성 권한 *</Typography>
-                  <TextField
-                    select
-                    value={writePermission}
-                    onChange={handleWritePermissionChange}
-                    fullWidth
-                    size="small"
-                  >
-                    {WRITE_PERMISSION_OPTIONS.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {writePermission === option.value ? (
-                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                        ) : (
-                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                        )}
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Stack>
-
-                {canUsePostType ? (
-                  <Stack gap={1}>
-                    <FormControl>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        말머리/연재 설정
-                      </Typography>
-                      <RadioGroup row value={postType} onChange={handlePostTypeChange}>
-                        <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
-                        <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
-                        <FormControlLabel value="series" control={<Radio />} label="연재형" />
-                      </RadioGroup>
-                    </FormControl>
-
-                    <p className="alert warning">
-                      <WarningAmberRoundedIcon />
-                      <span>말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.</span>
-                    </p>
+          <div className={`paper ${styles.paper}`}>
+            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+              {!canCreateBoard ? (
+                <div className={`paper paper-error ${styles.paper}`}>더 이상 게시판을 생성할 수 없습니다.</div>
+              ) : (
+                <>
+                  {maxBoardCount > 0 ? (
                     <p className="alert info">
                       <InfoOutlineRoundedIcon />
-                      <span>말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.</span>
+                      <span>
+                        생성된 게시판: {currentBoardCount}개 / {maxBoardCount}개
+                      </span>
                     </p>
-                  </Stack>
-                ) : null}
+                  ) : null}
 
-                <Stack direction="row" gap={1.5} justifyContent="space-between">
-                  <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/posts`}>
-                    취소
-                  </Anchor>
-                  {isMobile ? (
-                    <div className={styles['button-top']}>
-                      <button
-                        type="submit"
-                        className={`button ${styles.button}`}
-                        disabled={isSubmitting || !canCreateBoard}
-                      >
+                  {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+
+                  <Snackbar
+                    open={Boolean(successMessage)}
+                    message={successMessage}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'center',
+                    }}
+                    autoHideDuration={3000}
+                    onClose={() => setSuccessMessage('')}
+                  />
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">게시판 종류 *</Typography>
+                    <TextField select value={boardType} onChange={handleBoardTypeChange} fullWidth size="small">
+                      <MenuItem value="basic">
+                        {boardType === 'basic' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        일반 게시판
+                      </MenuItem>
+                      <MenuItem value="gallery">
+                        {boardType === 'gallery' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        갤러리 게시판
+                      </MenuItem>
+                      <MenuItem value="youtube">
+                        {boardType === 'youtube' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        유튜브 영상 공유 게시판
+                      </MenuItem>
+                      <MenuItem value="feed">
+                        {boardType === 'feed' ? (
+                          <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                        ) : (
+                          <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                        )}
+                        피드 게시판
+                      </MenuItem>
+                    </TextField>
+                  </Stack>
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">게시판 식별자 *</Typography>
+                    <TextField
+                      value={boardKey}
+                      onChange={handleBoardKeyChange}
+                      fullWidth
+                      size="small"
+                      helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              {baseUrl}/{siteName}/
+                            </InputAdornment>
+                          ),
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <button
+                                type="button"
+                                className="button small action"
+                                onClick={handleCheckBoardKey}
+                                disabled={isChecking || !canCreateBoard}
+                              >
+                                중복 확인
+                              </button>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  </Stack>
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">게시판 이름 *</Typography>
+                    <TextField
+                      value={boardLabel}
+                      onChange={handleBoardLabelChange}
+                      fullWidth
+                      size="small"
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <button
+                                type="button"
+                                className="button small action"
+                                onClick={handleCheckBoardLabel}
+                                disabled={isCheckingBoardLabel || !canCreateBoard}
+                              >
+                                중복 확인
+                              </button>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  </Stack>
+
+                  <Snackbar
+                    open={Boolean(boardLabelCheckMessage)}
+                    message={boardLabelCheckMessage}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'center',
+                    }}
+                    autoHideDuration={3000}
+                    onClose={() => setBoardLabelCheckMessage('')}
+                  />
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">목록 표시 개수 *</Typography>
+                    <TextField select value={postPerPage} onChange={handlePostPerPageChange} fullWidth size="small">
+                      {POST_PER_PAGE_OPTIONS.map((count) => (
+                        <MenuItem key={count} value={count}>
+                          {postPerPage === count ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          {count}개씩
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">마크다운 사용 여부 *</Typography>
+                    <TextField
+                      select
+                      value={markdownStatus}
+                      onChange={handleMarkdownStatusChange}
+                      fullWidth
+                      size="small"
+                    >
+                      {MARKDOWN_STATUS_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {markdownStatus === option.value ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">글 작성 권한 *</Typography>
+                    <TextField
+                      select
+                      value={writePermission}
+                      onChange={handleWritePermissionChange}
+                      fullWidth
+                      size="small"
+                    >
+                      {WRITE_PERMISSION_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {writePermission === option.value ? (
+                            <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+                          ) : (
+                            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+                          )}
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Stack>
+
+                  {canUsePostType ? (
+                    <Stack gap={1}>
+                      <FormControl>
+                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                          말머리/연재 설정
+                        </Typography>
+                        <RadioGroup row value={postType} onChange={handlePostTypeChange}>
+                          <FormControlLabel value="none" control={<Radio />} label="선택 안함" />
+                          <FormControlLabel value="prefix" control={<Radio />} label="말머리형" />
+                          <FormControlLabel value="series" control={<Radio />} label="연재형" />
+                        </RadioGroup>
+                      </FormControl>
+
+                      <p className="alert warning">
+                        <WarningAmberRoundedIcon />
+                        <span>말머리/연재 여부는 한번 설정하면 변경하실 수 없습니다. 유의해 주세요.</span>
+                      </p>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>말머리 및 연재 관리는 게시판을 만든 이후에 관리하실 수 있습니다.</span>
+                      </p>
+                    </Stack>
+                  ) : null}
+
+                  <Stack direction="row" gap={1.5} justifyContent="space-between">
+                    <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/posts`}>
+                      취소
+                    </Anchor>
+                    {isMobile ? (
+                      <div className={styles['button-top']}>
+                        <button
+                          type="submit"
+                          className={`button ${styles.button}`}
+                          disabled={isSubmitting || !canCreateBoard}
+                        >
+                          저장
+                        </button>
+                      </div>
+                    ) : (
+                      <button type="submit" className="button medium submit" disabled={isSubmitting || !canCreateBoard}>
                         저장
                       </button>
-                    </div>
-                  ) : (
-                    <button type="submit" className="button medium submit" disabled={isSubmitting || !canCreateBoard}>
-                      저장
-                    </button>
-                  )}
-                </Stack>
-              </>
-            )}
-          </Stack>
+                    )}
+                  </Stack>
+                </>
+              )}
+            </Stack>
+          </div>
         </div>
       </div>
     </Container>

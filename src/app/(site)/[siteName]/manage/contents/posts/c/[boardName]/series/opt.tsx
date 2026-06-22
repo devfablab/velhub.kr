@@ -30,8 +30,8 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -917,7 +917,7 @@ export default function Opt() {
                     <TableCell>식별자</TableCell>
                     <TableCell>연재명</TableCell>
                     <TableCell>완결</TableCell>
-                    <TableCell>마지막 연재</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>마지막 연재</TableCell>
                     <TableCell>생성일</TableCell>
                     <TableCell />
                   </TableRow>
