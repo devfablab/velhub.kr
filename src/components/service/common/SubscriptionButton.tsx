@@ -39,7 +39,7 @@ type Props = {
   boardName: string;
   board: BoardInfo | null;
   selectedSeries: SelectedSeries | null;
-  selectedBoard: boolean | null;
+  selectedBoard?: boolean | null;
   onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
 
