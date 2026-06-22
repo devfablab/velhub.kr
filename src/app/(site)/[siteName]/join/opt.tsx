@@ -8,13 +8,17 @@ import {
   Button,
   FormControlLabel,
   InputAdornment,
-  Paper,
   Radio,
   RadioGroup,
   Stack,
+  styled,
   TextField,
   Typography,
 } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -63,6 +67,18 @@ type AnswerRow = {
 type Props = {
   siteName: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 export default function Opt({ siteName }: Props) {
   const router = useRouter();
@@ -456,44 +472,44 @@ export default function Opt({ siteName }: Props) {
   return (
     <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
       {joinNotice ? (
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-            {joinNotice}
-          </Typography>
-        </Paper>
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{joinNotice}</span>
+        </p>
       ) : null}
 
       {isRejectedHistory ? (
-        <Alert variant="filled" severity="warning">
-          가입 반려 이력이 있는 사용자입니다.
-        </Alert>
+        <p className="alert warning">
+          <WarningAmberRoundedIcon />
+          <span>가입 반려 이력이 있는 사용자입니다.</span>
+        </p>
       ) : null}
 
-      <Alert variant="outlined" severity="info">
-        닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.
-      </Alert>
+      <p className="alert info">
+        <InfoOutlineRoundedIcon />
+        <span>닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.</span>
+      </p>
 
       <TextField
-        label="닉네임"
+        placeholder="닉네임"
         value={nickname}
         onChange={handleNicknameChange}
         fullWidth
-        size="medium"
+        size="small"
         error={Boolean(nicknameErrorMessage)}
         helperText={nicknameErrorMessage || nicknameSuccessMessage || ' '}
         slotProps={{
           input: {
             endAdornment: (
               <InputAdornment position="end">
-                <Button
+                <button
                   type="button"
-                  variant="outlined"
+                  className="button small action"
                   onClick={handleCheckNickname}
                   disabled={!nickname.trim() || isCheckingNickname}
-                  size="small"
                 >
                   중복 확인
-                </Button>
+                </button>
               </InputAdornment>
             ),
           },
@@ -502,13 +518,15 @@ export default function Opt({ siteName }: Props) {
 
       {joinQuestionStatus === 'enabled' ? (
         <Stack gap={2}>
-          <Alert variant="outlined" severity="warning">
-            다음 지문에 답해 주세요. (필수입력)
-          </Alert>
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>다음 지문에 답해 주세요. (필수입력)</span>
+          </p>
           {joinQuestions.map((question, index) => (
             <Stack key={question.id} gap={1.5}>
-              <Typography variant="subtitle2">{`질문 ${index + 1}`}</Typography>
-              <Typography variant="body2">{question.question}</Typography>
+              <Typography variant="subtitle2">
+                {`질문 ${index + 1}`}. {question.question}
+              </Typography>
 
               {question.type === 'objective' ? (
                 <RadioGroup
@@ -528,7 +546,7 @@ export default function Opt({ siteName }: Props) {
 
               {question.type === 'subjective' && !question.allow_image ? (
                 <TextField
-                  label="답변"
+                  placeholder="답변"
                   value={answers[question.id]?.answer_text ?? ''}
                   onChange={(event) => handleAnswerTextChange(question.id, event)}
                   fullWidth
@@ -547,18 +565,15 @@ export default function Opt({ siteName }: Props) {
                       alt="답변 이미지"
                       sx={{
                         width: '100%',
-                        maxWidth: 320,
-                        display: 'block',
-                        borderRadius: 1,
+                        height: 'auto',
                       }}
                     />
                   ) : null}
 
                   <Stack direction="row" gap={1}>
-                    <Button component="label" variant="outlined" disabled={Boolean(uploadingQuestionId)}>
+                    <Button component="label" className="button small action" disabled={Boolean(uploadingQuestionId)}>
                       {answers[question.id]?.answer_image ? '이미지 교체' : '이미지 업로드'}
-                      <input
-                        hidden
+                      <VisuallyHiddenInput
                         type="file"
                         accept="image/webp,image/jpeg,image/png"
                         onChange={(event) => void handleAnswerImageChange(question.id, event)}
@@ -566,15 +581,15 @@ export default function Opt({ siteName }: Props) {
                     </Button>
 
                     {answers[question.id]?.answer_image ? (
-                      <Button
+                      <button
                         type="button"
-                        variant="outlined"
+                        className="button small cancel"
                         color="error"
                         onClick={() => void handleDeleteAnswerImage(question.id)}
                         disabled={Boolean(uploadingQuestionId)}
                       >
                         이미지 삭제
-                      </Button>
+                      </button>
                     ) : null}
                   </Stack>
                 </Stack>
@@ -585,15 +600,16 @@ export default function Opt({ siteName }: Props) {
       ) : null}
 
       <Stack direction="row" justifyContent="flex-end">
-        <Button type="submit" variant="contained" disabled={isSubmitting || Boolean(uploadingQuestionId)}>
+        <button type="submit" className="button medium submit" disabled={isSubmitting || Boolean(uploadingQuestionId)}>
           가입하기
-        </Button>
+        </button>
       </Stack>
 
       {errorMessage ? (
-        <Alert severity="error" variant="filled">
-          {errorMessage}
-        </Alert>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
       ) : null}
     </Stack>
   );

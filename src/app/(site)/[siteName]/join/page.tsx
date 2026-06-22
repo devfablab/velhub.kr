@@ -32,15 +32,14 @@ export default async function Page(context: RouteContext) {
 
   return (
     <Container pageBack={`/${siteName}`} pageTitle="가입하기">
-      <Box sx={{ py: 8 }}>
-        <Stack gap={3}>
-          <Typography variant="h5" component="h1">
-            커뮤니티 가입
-          </Typography>
-
-          <Opt siteName={normalizedSiteName} />
-        </Stack>
-      </Box>
+      <div className="container">
+        <div className="content" style={{ maxWidth: 572 }}>
+          <h2>커뮤니티 가입</h2>
+          <div className="paper" style={{ marginTop: 12 }}>
+            <Opt siteName={normalizedSiteName} />
+          </div>
+        </div>
+      </div>
     </Container>
   );
 }
