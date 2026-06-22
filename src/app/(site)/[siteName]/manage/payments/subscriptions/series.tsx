@@ -327,23 +327,31 @@ export default function SeriesSubscriptions() {
       return;
     }
 
-    if (nextPrice > 0 && nextPrice % 1000 !== 0) {
-      return;
-    }
-
     setEditingRow({
       ...editingRow,
       price: nextPrice ? formatPrice(nextPrice) : '',
     });
 
-    if (nextPrice && nextPrice < minPrice) {
+    if (!nextPrice) {
+      setErrorMessage('');
+      setSuccessMessage('');
+      return;
+    }
+
+    if (nextPrice < minPrice) {
       setErrorMessage(`연재 구독 금액은 ${formatPrice(minPrice)}원 이상이어야 합니다.`);
       setSuccessMessage('');
       return;
     }
 
-    if (nextPrice && nextPrice > maxAllowedPrice) {
+    if (nextPrice > maxAllowedPrice) {
       setErrorMessage(`연재 구독 금액은 상위 구독 금액 기준 ${formatPrice(maxAllowedPrice)}원 이하여야 합니다.`);
+      setSuccessMessage('');
+      return;
+    }
+
+    if (nextPrice % 1000 !== 0) {
+      setErrorMessage('연재 구독 금액은 1,000원 단위로 입력해 주세요.');
       setSuccessMessage('');
       return;
     }
@@ -514,114 +522,112 @@ export default function SeriesSubscriptions() {
     const selectedSeries = findSeries(editingRow.boardId, editingRow.seriesId);
 
     return (
-      <div className={`paper ${styles.paper}`}>
-        <Stack gap={2}>
-          {siteType === 'community' ? (
-            <TextField
-              select
-              value={editingRow.boardId}
-              onChange={handleEditingBoardChange}
-              disabled={isSaving || editingRow.mode === 'edit'}
-              fullWidth
-              size="small"
-              slotProps={{
-                select: {
-                  displayEmpty: true,
-                  renderValue: (selected) => {
-                    const selectedBoardId = typeof selected === 'string' ? selected : '';
-                    const renderBoard = findBoard(selectedBoardId);
-
-                    return renderBoard?.boardLabel ?? '게시판 선택';
-                  },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                게시판 선택
-              </MenuItem>
-              {(editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards).map((board) => (
-                <MenuItem key={board.id} value={board.id}>
-                  {editingRow.boardId === board.id ? (
-                    <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
-                  ) : (
-                    <i style={{ width: 14, height: 14, marginRight: 8 }} />
-                  )}
-                  {board.boardLabel}
-                </MenuItem>
-              ))}
-            </TextField>
-          ) : null}
-
+      <Stack gap={2}>
+        {siteType === 'community' ? (
           <TextField
             select
-            value={editingRow.seriesId}
-            onChange={handleEditingSeriesChange}
-            disabled={isSaving || !editingRow.boardId || editingRow.mode === 'edit'}
+            value={editingRow.boardId}
+            onChange={handleEditingBoardChange}
+            disabled={isSaving || editingRow.mode === 'edit'}
             fullWidth
             size="small"
             slotProps={{
               select: {
                 displayEmpty: true,
                 renderValue: (selected) => {
-                  const selectedSeriesId = typeof selected === 'string' ? selected : '';
-                  const renderSeries = findSeries(editingRow.boardId, selectedSeriesId);
+                  const selectedBoardId = typeof selected === 'string' ? selected : '';
+                  const renderBoard = findBoard(selectedBoardId);
 
-                  return renderSeries?.seriesLabel ?? '연재 선택';
+                  return renderBoard?.boardLabel ?? '게시판 선택';
                 },
               },
             }}
           >
             <MenuItem value="">
               <i style={{ width: 14, height: 14, marginRight: 8 }} />
-              연재 선택
+              게시판 선택
             </MenuItem>
-            {availableSeries.map((series) => (
-              <MenuItem key={series.id} value={series.id}>
-                {editingRow.seriesId === series.id ? (
+            {(editingRow.mode === 'edit' && selectedBoard ? [selectedBoard] : availableBoards).map((board) => (
+              <MenuItem key={board.id} value={board.id}>
+                {editingRow.boardId === board.id ? (
                   <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
                 ) : (
                   <i style={{ width: 14, height: 14, marginRight: 8 }} />
                 )}
-                {series.seriesLabel}
+                {board.boardLabel}
               </MenuItem>
             ))}
           </TextField>
+        ) : null}
 
-          {selectedSeries ? (
-            <Typography variant="body2" color="text.secondary">
-              최소 {formatPrice(selectedSeries.setting.minPrice)}원 · 최대{' '}
-              {formatPrice(selectedSeries.setting.maxAllowedPrice)}원
-            </Typography>
-          ) : null}
+        <TextField
+          select
+          value={editingRow.seriesId}
+          onChange={handleEditingSeriesChange}
+          disabled={isSaving || !editingRow.boardId || editingRow.mode === 'edit'}
+          fullWidth
+          size="small"
+          slotProps={{
+            select: {
+              displayEmpty: true,
+              renderValue: (selected) => {
+                const selectedSeriesId = typeof selected === 'string' ? selected : '';
+                const renderSeries = findSeries(editingRow.boardId, selectedSeriesId);
 
-          <TextField
-            value={editingRow.price}
-            onChange={handleEditingPriceChange}
-            fullWidth
-            size="small"
-            slotProps={{
-              input: {
-                endAdornment: <InputAdornment position="end">원</InputAdornment>,
+                return renderSeries?.seriesLabel ?? '연재 선택';
               },
-            }}
-          />
+            },
+          }}
+        >
+          <MenuItem value="">
+            <i style={{ width: 14, height: 14, marginRight: 8 }} />
+            연재 선택
+          </MenuItem>
+          {availableSeries.map((series) => (
+            <MenuItem key={series.id} value={series.id}>
+              {editingRow.seriesId === series.id ? (
+                <CheckRoundedIcon sx={{ width: 14, height: 14, marginRight: 1 }} />
+              ) : (
+                <i style={{ width: 14, height: 14, marginRight: 8 }} />
+              )}
+              {series.seriesLabel}
+            </MenuItem>
+          ))}
+        </TextField>
 
-          <Stack direction="row" gap={1} justifyContent="flex-end">
-            <button
-              type="button"
-              className="button medium cancel"
-              onClick={() => setEditingRow(null)}
-              disabled={isSaving}
-            >
-              취소
-            </button>
-            <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
-              저장
-            </button>
-          </Stack>
+        <TextField
+          value={editingRow.price}
+          onChange={handleEditingPriceChange}
+          fullWidth
+          size="small"
+          slotProps={{
+            input: {
+              endAdornment: <InputAdornment position="end">원</InputAdornment>,
+            },
+          }}
+        />
+
+        {selectedSeries ? (
+          <Typography variant="body2" color="text.secondary">
+            (최소 {formatPrice(selectedSeries.setting.minPrice)}원 / 최대{' '}
+            {formatPrice(selectedSeries.setting.maxAllowedPrice)}원)
+          </Typography>
+        ) : null}
+
+        <Stack direction="row" gap={1} justifyContent="flex-end">
+          <button
+            type="button"
+            className="button medium cancel"
+            onClick={() => setEditingRow(null)}
+            disabled={isSaving}
+          >
+            취소
+          </button>
+          <button type="button" className="button medium submit" onClick={handleSaveEditingRow} disabled={isSaving}>
+            저장
+          </button>
         </Stack>
-      </div>
+      </Stack>
     );
   }
 
@@ -689,10 +695,6 @@ export default function SeriesSubscriptions() {
                         <Typography variant="body2" color="text.secondary">
                           월 {formatPrice(row.series.setting.price)}원
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          최소 {formatPrice(row.series.setting.minPrice)}원 (최대{' '}
-                          {formatPrice(row.series.setting.maxAllowedPrice)}원)
-                        </Typography>
                       </Stack>
                       <Stack direction="row" gap={1}>
                         <IconButton
@@ -745,7 +747,7 @@ export default function SeriesSubscriptions() {
           );
         })}
 
-        {editingRow?.mode === 'new' ? renderEditingRow() : null}
+        {editingRow?.mode === 'new' ? <div className={`paper ${styles.paper}`}>{renderEditingRow()}</div> : null}
 
         {boards.length ? (
           <button

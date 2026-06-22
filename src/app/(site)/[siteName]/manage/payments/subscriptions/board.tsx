@@ -430,14 +430,12 @@ export default function BoardSubscriptions() {
             </MenuItem>
           ))}
         </TextField>
-
         {selectedBoard ? (
           <Typography variant="body2" color="text.secondary">
             구독 설정된 연재 {selectedBoard.subscriptionEnabledSeriesCount}개 · 최소 금액{' '}
             {formatPrice(selectedBoard.setting.requiredMinPrice)}원
           </Typography>
         ) : null}
-
         <TextField
           value={editingRow.price}
           onChange={handleEditingPriceChange}
@@ -449,7 +447,6 @@ export default function BoardSubscriptions() {
             },
           }}
         />
-
         <Stack direction="row" gap={1} justifyContent="flex-end">
           <button
             type="button"
@@ -586,6 +583,12 @@ export default function BoardSubscriptions() {
 
         {editingRow?.mode === 'new' ? renderEditingRow() : null}
 
+        {availableBoards.length === 0 ? (
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>구독 설정된 연재가 2개 이상인 게시판이 있어야 게시판 구독 추가가 가능합니다.</span>
+          </p>
+        ) : null}
         {boards.length ? (
           <button
             type="button"
