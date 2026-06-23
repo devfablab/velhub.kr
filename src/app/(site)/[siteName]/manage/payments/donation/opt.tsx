@@ -171,22 +171,22 @@ export default function Opt() {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>사이트 후원</TableCell>
-                        <TableCell>글 후원</TableCell>
-                        <TableCell>총 후원</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트 후원</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>글 후원</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>총 후원</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       <TableRow>
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           {formatPrice(donationData?.summary?.siteDonationTotalAmount ?? 0)} (
                           {donationData?.summary?.siteDonationCount ?? 0}건)
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)} (
                           {donationData?.summary?.postDonationCount ?? 0}건)
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           {formatPrice(donationData?.summary?.totalAmount ?? 0)} ({donationData?.summary?.count ?? 0}건)
                         </TableCell>
                       </TableRow>
@@ -205,29 +205,35 @@ export default function Opt() {
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>후원 종류</TableCell>
-                          <TableCell>후원자</TableCell>
-                          <TableCell>후원일</TableCell>
-                          <TableCell>후원금액</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>후원 종류</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>후원자</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>후원일</TableCell>
+                          <TableCell sx={{ textAlign: 'right' }}>후원금액</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {donationData.donations.map((donation) => (
                           <TableRow key={donation.id}>
-                            <TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
                               {donation.post ? (
                                 <Tooltip
-                                  title={`${donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} / {donation.post.subject}`}
+                                  title={`${donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} / ${donation.post.subject}`}
                                 >
-                                  <button type="button">{getDonationKindLabel(donation.donationKind)}</button>
+                                  <button type="button" className={styles.tooltip}>
+                                    {getDonationKindLabel(donation.donationKind)}
+                                  </button>
                                 </Tooltip>
                               ) : (
                                 getDonationKindLabel(donation.donationKind)
                               )}
                             </TableCell>
-                            <TableCell>{donation.nickname}</TableCell>
-                            <TableCell>{formatDateTime(donation.approvedAt ?? donation.createdAt)}</TableCell>
-                            <TableCell>{formatPrice(donation.amount)}</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>{donation.nickname}</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                              {formatDateTime(donation.approvedAt ?? donation.createdAt)}
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                              {formatPrice(donation.amount)}
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

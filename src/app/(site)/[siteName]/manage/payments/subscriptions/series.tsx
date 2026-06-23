@@ -684,7 +684,7 @@ export default function SeriesSubscriptions() {
                   renderEditingRow()
                 ) : (
                   <Stack gap={1}>
-                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                    <Stack direction="row" gap={1} alignItems="flex-start" justifyContent="space-between">
                       <Stack gap={0.5}>
                         {siteType === 'community' ? (
                           <Typography variant="subtitle2" color="text.secondary">
@@ -693,7 +693,7 @@ export default function SeriesSubscriptions() {
                         ) : null}
                         <Typography variant="body2">{row.series.seriesLabel}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          월 {formatPrice(row.series.setting.price)}원
+                          월 {formatPrice(row.series.setting.price)} 원
                         </Typography>
                       </Stack>
                       <Stack direction="row" gap={1}>
@@ -703,7 +703,7 @@ export default function SeriesSubscriptions() {
                           onClick={() => handleEditRow(row)}
                           disabled={isSaving || Boolean(editingRow)}
                         >
-                          <EditRoundedIcon />
+                          <EditRoundedIcon sx={{ width: 17, height: 17 }} />
                         </IconButton>
                         <IconButton
                           type="button"
@@ -711,7 +711,7 @@ export default function SeriesSubscriptions() {
                           onClick={() => void handleDisableSeriesSubscription(row)}
                           disabled={isSaving}
                         >
-                          <RemoveRoundedIcon />
+                          <RemoveRoundedIcon sx={{ width: 17, height: 17 }} />
                         </IconButton>
                       </Stack>
                     </Stack>
@@ -721,19 +721,21 @@ export default function SeriesSubscriptions() {
                         <Table size="small">
                           <TableHead>
                             <TableRow>
-                              <TableCell>구독자</TableCell>
-                              <TableCell>상태</TableCell>
-                              <TableCell>유지 기간</TableCell>
-                              <TableCell>최근 결제일</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>구독자</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>유지 기간</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>최근 결제일</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
                             {row.series.subscribers.map((subscriber) => (
                               <TableRow key={subscriber.id}>
-                                <TableCell>{subscriber.nickname}</TableCell>
-                                <TableCell>{subscriber.status}</TableCell>
-                                <TableCell>{subscriber.activeMonths}개월째</TableCell>
-                                <TableCell>{formatDateTime(subscriber.lastPaidAt)}</TableCell>
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{subscriber.nickname}</TableCell>
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{subscriber.status}</TableCell>
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>{subscriber.activeMonths}개월째</TableCell>
+                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                  {formatDateTime(subscriber.lastPaidAt)}
+                                </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
