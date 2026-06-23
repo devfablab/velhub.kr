@@ -47,6 +47,7 @@ type SubscriptionStatusResponse = {
   isEnabled?: boolean;
   price?: number | null;
   subscriptionStatus?: SubscriptionStatus;
+  isRefundableCancellation?: boolean;
   error?: string;
 };
 
@@ -133,6 +134,14 @@ function getCancelDialogTitle(targetType: SubscriptionTargetType) {
   return targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소';
 }
 
+function getCancelDialogDescription(isRefundableCancellation: boolean) {
+  if (isRefundableCancellation) {
+    return '취소시 환불과 동시에 구독이 종료됩니다.';
+  }
+
+  return '취소시 이번 이용 기간 종료 후, 다음 결제부터는 추가 결제되지 않습니다.';
+}
+
 export default function SubscriptionButton({
   siteName,
   boardName,
@@ -165,6 +174,7 @@ export default function SubscriptionButton({
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isRefundableCancellation, setIsRefundableCancellation] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -173,10 +183,10 @@ export default function SubscriptionButton({
   useEffect(() => {
     async function loadSubscriptionStatus() {
       try {
-        setErrorMessage('');
         setIsEnabled(false);
         setPrice(null);
         setSubscriptionStatus('none');
+        setIsRefundableCancellation(false);
         onStatusChange?.('none');
 
         if (!board) {
@@ -199,6 +209,7 @@ export default function SubscriptionButton({
         setIsEnabled(Boolean(result.isEnabled));
         setPrice(result.price ?? null);
         setSubscriptionStatus(nextSubscriptionStatus);
+        setIsRefundableCancellation(Boolean(result.isRefundableCancellation));
         onStatusChange?.(nextSubscriptionStatus);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -530,13 +541,16 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
-            <Typography variant="body2">{targetLabel} 구독을 취소하시겠어요?</Typography>
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+            <Stack>
+              <Typography variant="subtitle2">{targetLabel} 구독을 취소하시겠어요?</Typography>
+              <Typography variant="body2">{getCancelDialogDescription(isRefundableCancellation)}</Typography>
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
             <Stack direction="column" spacing={1.5}>
               <button
                 type="button"
@@ -569,13 +583,16 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography variant="body2">{targetLabel} 구독을 취소하시겠어요?</Typography>
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+            <Stack>
+              <Typography variant="subtitle2">{targetLabel} 구독을 취소하시겠어요?</Typography>
+              <Typography variant="body2">{getCancelDialogDescription(isRefundableCancellation)}</Typography>
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
           </DialogContent>
           <DialogActions>
             <button

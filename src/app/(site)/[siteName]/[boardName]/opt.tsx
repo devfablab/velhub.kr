@@ -280,6 +280,7 @@ export default function Opt({ isCommunity }: Props) {
   const [totalPage, setTotalPage] = useState(1);
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
   const [canWritePost, setCanWritePost] = useState(false);
+  const [isBoardSubscriptionEnabled, setIsBoardSubscriptionEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const theme = useTheme();
@@ -341,6 +342,30 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
+  async function loadBoardSubscriptionStatus() {
+    const params = new URLSearchParams({
+      siteName,
+      boardName,
+      targetType: 'board',
+    });
+
+    const response = await fetch(`/api/payments/toss/subscriptions/status?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    const result = (await response.json()) as {
+      isEnabled?: boolean;
+    };
+
+    if (!response.ok) {
+      setIsBoardSubscriptionEnabled(false);
+      return;
+    }
+
+    setIsBoardSubscriptionEnabled(Boolean(result.isEnabled));
+  }
+
   function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '') {
     const queryParams = new URLSearchParams();
 
@@ -378,6 +403,7 @@ export default function Opt({ isCommunity }: Props) {
     setKeywordInput(nextKeyword);
     setIsLoading(true);
     void loadContents(nextPage, nextKeyword, nextSeriesName);
+    void loadBoardSubscriptionStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, boardName, searchParams]);
 
@@ -516,7 +542,7 @@ export default function Opt({ isCommunity }: Props) {
                     selectedSeries={selectedSeries}
                     selectedBoard={true}
                   />
-                  {isCommunity && board && board.board_type !== 'page' ? (
+                  {isCommunity && board && board.board_type !== 'page' && !isBoardSubscriptionEnabled ? (
                     <DonationButton
                       siteName={siteName}
                       targetType="board"
