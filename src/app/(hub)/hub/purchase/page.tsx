@@ -1,6 +1,9 @@
 import { cookies, headers } from 'next/headers';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import Anchor from '@/components/Anchor';
 import Content from './tab';
 import Container from '../menu';
+import BillingMethods from './billingMethods';
 import styles from '@/app/hub.module.sass';
 
 type PurchaseSummaryItem = {
@@ -9,18 +12,24 @@ type PurchaseSummaryItem = {
   amount: number;
 };
 
-type DefaultBillingMethod = {
+type BillingMethod = {
   id: string;
   provider: string;
   cardCompany: string | null;
   cardNumberLabel: string;
   cardType: string | null;
   ownerType: string | null;
+  isDefault: boolean;
+  createdAt: string;
   updatedAt: string | null;
 };
 
 type PurchasePayment = {
   id: string;
+  siteLabel: string;
+  siteHref: string;
+  targetLabel: string;
+  targetHref: string;
   paymentType: string;
   paymentTypeLabel: string;
   targetType: string;
@@ -46,7 +55,7 @@ type PurchaseResponse = {
     netAmount: number;
     amountByType: PurchaseSummaryItem[];
   };
-  defaultBillingMethod: DefaultBillingMethod | null;
+  billingMethods: BillingMethod[];
   recentPayments: PurchasePayment[];
   error?: string;
 };
@@ -122,77 +131,96 @@ export default async function Page() {
         <Content>
           <section className={`paper ${styles.paper}`}>
             <h2>결제 요약</h2>
-            <p>
-              총 결제금액
-              <br />
-              {formatAmount(result.summary.totalAmount)}
-            </p>
-            <p>
-              총 환불금액
-              <br />
-              {formatAmount(result.summary.totalRefundedAmount)}
-            </p>
-            <p>
-              실결제금액
-              <br />
-              {formatAmount(result.summary.netAmount)}
-            </p>
+            <dl className={styles.summary}>
+              <div className="paper">
+                <dt>총 결제금액</dt>
+                <dd>{formatAmount(result.summary.totalAmount)}</dd>
+              </div>
+              <div className="paper">
+                <dt>총 환불금액</dt>
+                <dd>{formatAmount(result.summary.totalRefundedAmount)}</dd>
+              </div>
+              <div className="paper">
+                <dt>실결제금액</dt>
+                <dd>{formatAmount(result.summary.netAmount)}</dd>
+              </div>
+            </dl>
+          </section>
 
-            {result.summary.amountByType.map((item) => (
-              <p key={item.paymentType}>
-                {item.label}
-                <br />
-                {formatAmount(item.amount)}
-              </p>
-            ))}
+          <section className={`paper ${styles.paper}`}>
+            <h2>결제 유형별 지출 요약</h2>
+            <div>
+              <p>포스팅 소장, 구독, 후원 등 결제 유형별 누적 결제 금액입니다.</p>
+            </div>
+            <dl className={`paper ${styles['type-summary']}`}>
+              {result.summary.amountByType.map((item) => (
+                <div key={item.paymentType}>
+                  <dt>{item.label}</dt>
+                  <dd>{formatAmount(item.amount)}</dd>
+                </div>
+              ))}
+            </dl>
           </section>
 
           <section className={`paper ${styles.paper}`}>
             <h2>결제수단</h2>
-
-            {result.defaultBillingMethod ? (
-              <>
-                <p>
-                  {result.defaultBillingMethod.cardCompany ?? '카드사 확인 필요'}{' '}
-                  {result.defaultBillingMethod.cardNumberLabel}
-                </p>
-                <p>
-                  최근 변경일
-                  <br />
-                  {formatDateTime(result.defaultBillingMethod.updatedAt)}
-                </p>
-              </>
-            ) : (
-              <p>등록된 기본 결제수단이 없습니다.</p>
-            )}
-
-            <div className={styles.buttons}>
-              <button type="button" className="button small action">
-                결제수단 변경
-              </button>
-            </div>
+            <BillingMethods billingMethods={result.billingMethods} />
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>
             <h2>최근 결제내역</h2>
 
             {result.recentPayments.length ? (
-              <div className={styles.items}>
-                <ol>
-                  {result.recentPayments.map((payment) => (
-                    <li key={payment.id}>
-                      <strong>{payment.paymentTypeLabel}</strong>
-                      <p>
-                        {payment.statusLabel} · {formatAmount(payment.netAmount)}
-                      </p>
-                      <div className={styles.tail}>
-                        <time>{formatDateTime(payment.approvedAt ?? payment.createdAt)}</time>
-                        {payment.refundedAmount > 0 ? <em>환불 {formatAmount(payment.refundedAmount)}</em> : null}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+              <TableContainer className={styles.items}>
+                <Table size="small" aria-label="최근 결제내역">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell component="th" scope="col">
+                        사이트
+                      </TableCell>
+                      <TableCell component="th" scope="col">
+                        콘텐츠
+                      </TableCell>
+                      <TableCell component="th" scope="col">
+                        결제유형
+                      </TableCell>
+                      <TableCell component="th" scope="col">
+                        상태
+                      </TableCell>
+                      <TableCell component="th" scope="col">
+                        금액
+                      </TableCell>
+                      <TableCell component="th" scope="col">
+                        일시
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.recentPayments.map((payment) => {
+                      const isRefunded = payment.status === 'refunded';
+                      const isPartiallyRefunded = payment.status === 'partially_refunded';
+                      const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
+
+                      return (
+                        <TableRow key={payment.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            <Anchor href={payment.siteHref}>{payment.siteLabel}</Anchor>
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            <Anchor href={payment.targetHref}>{payment.targetLabel}</Anchor>
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(displayAmount)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {formatDateTime(payment.approvedAt ?? payment.createdAt)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
               <p>결제내역이 없습니다.</p>
             )}

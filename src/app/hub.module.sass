@@ -16,6 +16,47 @@
       text-align: center
       @include ds.fw(neo, 600)
 
+    .type-summary
+      gap: ds.rem(2)
+
+      div
+        display: flex
+        justify-content: space-between
+        padding: ds.rem(7) ds.rem(12)
+        border-radius: ds.rem(7)
+
+        &:hover
+          html[data-theme="yellow-light"] &
+            background-color: rgb(ds.$rgb-tertiary, .1)
+
+          html[data-theme="yellow-dark"] &
+            background-color: rgb(ds.$rgb-tertiary, .2)
+
+        dt
+          @include ds.fw(pre, 700)
+
+    .summary
+      display: flex
+      flex-direction: row
+      gap: ds.rem(7)
+
+      div
+        @include ds.col
+        gap: ds.rem(7)
+
+        dt
+          @include ds.fw(neo, 700)
+          font-size: ds.rem(16)
+
+          html[data-theme="yellow-light"] &
+            color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+        dd
+          font-size: ds.rem(14)
+
 .home-content
   .profile
     gap: ds.rem(23)
