@@ -22,6 +22,7 @@ type DonationSuccessBody = {
   amount?: number;
   siteId?: string;
   targetType?: string;
+  boardId?: string;
   postId?: string;
 };
 
@@ -29,8 +30,18 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string;
+  site_type: string;
   owner_id: string;
   is_shutdown: boolean;
+};
+
+type BoardRow = {
+  id: string;
+  site_id: string;
+  board_key: string;
+  board_label: string | null;
+  board_type: string;
+  is_active: boolean;
 };
 
 type PostRow = {
@@ -143,7 +154,7 @@ async function getStigmaAuthUserId({
 async function getSiteById({ supabaseAdmin, siteId }: { supabaseAdmin: SupabaseAdminClient; siteId: string }) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, owner_id, is_shutdown')
+    .select('id, site_key, site_label, site_type, owner_id, is_shutdown')
     .eq('id', siteId)
     .maybeSingle();
 
@@ -164,6 +175,53 @@ async function getSiteById({ supabaseAdmin, siteId }: { supabaseAdmin: SupabaseA
   }
 
   return site;
+}
+
+async function getBoardById({
+  supabaseAdmin,
+  site,
+  boardId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  site: SiteRow;
+  boardId: string;
+}) {
+  if (site.site_type !== 'community') {
+    throw new Error('게시판 후원은 커뮤니티에서만 가능합니다.');
+  }
+
+  if (!boardId) {
+    throw new Error('boardId가 유효하지 않습니다.');
+  }
+
+  const boardResult = await supabaseAdmin
+    .from('boards')
+    .select('id, site_id, board_key, board_label, board_type, is_active')
+    .eq('site_id', site.id)
+    .eq('id', boardId)
+    .maybeSingle();
+
+  if (boardResult.error) {
+    console.error(boardResult.error);
+
+    throw new Error('게시판 정보를 불러오지 못했습니다.');
+  }
+
+  if (!boardResult.data) {
+    throw new Error('게시판 정보를 찾을 수 없습니다.');
+  }
+
+  const board = boardResult.data as BoardRow;
+
+  if (!board.is_active) {
+    throw new Error('현재 후원할 수 없는 게시판입니다.');
+  }
+
+  if (board.board_type === 'page') {
+    throw new Error('페이지 게시판은 후원할 수 없습니다.');
+  }
+
+  return board;
 }
 
 async function getPostById({
@@ -274,10 +332,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as DonationSuccessBody;
+
     const paymentKey = normalizeText(body.paymentKey);
     const orderId = normalizeText(body.orderId);
     const siteId = normalizeText(body.siteId);
     const targetType = normalizeText(body.targetType);
+    const boardId = normalizeText(body.boardId);
     const postId = normalizeText(body.postId);
     const amount = body.amount;
 
@@ -296,7 +356,16 @@ export async function POST(request: NextRequest) {
       siteId,
     });
 
-    const isPostDonation = targetType === PAYMENT_TARGET_TYPE.POST || Boolean(postId);
+    const isBoardDonation = targetType === PAYMENT_TARGET_TYPE.BOARD || (Boolean(boardId) && !postId);
+    const isPostDonation = targetType === PAYMENT_TARGET_TYPE.POST || (!isBoardDonation && Boolean(postId));
+
+    const board = isBoardDonation
+      ? await getBoardById({
+          supabaseAdmin,
+          site,
+          boardId,
+        })
+      : null;
 
     const post = isPostDonation
       ? await getPostById({
@@ -379,6 +448,7 @@ export async function POST(request: NextRequest) {
           supabaseAdmin,
           paymentId: existingPayment.id,
           siteId: site.id,
+          boardId: board?.id ?? null,
           siteOwnerUserId,
           amount: existingPayment.amount,
         });
@@ -410,9 +480,13 @@ export async function POST(request: NextRequest) {
         currency: confirmResult.currency || 'KRW',
         status: PAYMENT_STATUS.PAID,
         payment_method: PAYMENT_METHOD.CARD,
-        payment_type: post ? PAYMENT_TYPE.DONATION_POST : PAYMENT_TYPE.DONATION_SITE,
-        target_type: post ? PAYMENT_TARGET_TYPE.POST : PAYMENT_TARGET_TYPE.SITE,
-        target_id: post ? post.id : site.id,
+        payment_type: post
+          ? PAYMENT_TYPE.DONATION_POST
+          : board
+            ? PAYMENT_TYPE.DONATION_BOARD
+            : PAYMENT_TYPE.DONATION_SITE,
+        target_type: post ? PAYMENT_TARGET_TYPE.POST : board ? PAYMENT_TARGET_TYPE.BOARD : PAYMENT_TARGET_TYPE.SITE,
+        target_id: post ? post.id : board ? board.id : site.id,
         post_payment: post
           ? {
               site_id: site.id,
@@ -457,6 +531,7 @@ export async function POST(request: NextRequest) {
         supabaseAdmin,
         paymentId: paymentInsertResult.data.id,
         siteId: site.id,
+        boardId: board?.id ?? null,
         siteOwnerUserId,
         amount: confirmResult.totalAmount,
       });

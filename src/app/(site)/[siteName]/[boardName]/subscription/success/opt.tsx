@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from '../../../menu';
+import Anchor from '@/components/Anchor';
 
 type SubscriptionTargetType = 'board' | 'series';
 
@@ -100,34 +101,28 @@ export default function Opt() {
   }, [boardName, searchParams, siteName]);
 
   return (
-    <main>
+    <Container pageBack={`/${siteName}/${boardName}`} pageTitle="게시판 구독" pageFin>
       <div className="container">
-        <div className="content">
-          <div className="paper">
-            {isLoading ? (
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
+        <div className="content" style={{ maxWidth: 572 }}>
+          <h2>게시판 구독</h2>
+          <div className="paper" style={{ marginTop: 12 }}>
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : (
-              <Stack gap={3} alignItems="center">
-                <Typography variant="h5" component="h1">
-                  구독
-                </Typography>
-                {errorMessage ? (
-                  <Typography color="error" role="alert">
-                    {errorMessage}
-                  </Typography>
-                ) : (
-                  <Typography>{message}</Typography>
-                )}
-                <Button type="button" variant="contained" href={`/${siteName}/${boardName}`}>
-                  게시판으로 이동
-                </Button>
-              </Stack>
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>{message}</span>
+              </p>
             )}
+            <Anchor type="button" className="button medium submit" href={`/${siteName}/${boardName}`}>
+              포스팅으로 이동
+            </Anchor>
           </div>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

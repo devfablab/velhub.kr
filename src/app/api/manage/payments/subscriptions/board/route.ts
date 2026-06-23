@@ -198,7 +198,7 @@ async function getBoardPricePolicy({
     .from('subscription_settings')
     .select('target_id, price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .eq('is_enabled', true)
     .in('target_id', seriesIds);
 
@@ -293,7 +293,7 @@ export async function GET(request: Request) {
           .from('subscription_settings')
           .select('id, target_id, is_enabled, price')
           .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-          .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
           .in('target_id', boardIds)
       : { data: [], error: null };
 
@@ -310,7 +310,7 @@ export async function GET(request: Request) {
       ? await supabaseAdmin
           .from('subscriptions')
           .select('id, subscriber_user_id, target_id, status, price, created_at')
-          .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
           .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
           .in('target_id', boardIds)
           .order('created_at', { ascending: false })
@@ -340,7 +340,7 @@ export async function GET(request: Request) {
       ? await supabaseAdmin
           .from('payments')
           .select('id, buyer_user_id, target_id, amount, approved_at, created_at')
-          .eq('payment_type', PAYMENT_TYPE.BOARD_SUBSCRIPTION)
+          .eq('payment_type', PAYMENT_TYPE.SUBSCRIPTION_BOARD)
           .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
           .eq('status', PAYMENT_STATUS.PAID)
           .in('target_id', boardIds)
@@ -580,7 +580,7 @@ export async function PATCH(request: Request) {
       .select('id')
       .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
       .eq('target_id', board.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
       .maybeSingle();
 
     if (existingSettingResult.error) {
@@ -592,7 +592,7 @@ export async function PATCH(request: Request) {
     const payload = {
       target_type: PAYMENT_TARGET_TYPE.BOARD,
       target_id: board.id,
-      subscription_type: SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION,
+      subscription_type: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
       is_enabled: body.isEnabled,
       price: body.price,
     };

@@ -88,10 +88,10 @@ type SeriesSubscriptionSettingRow = {
 
 type PaidContentAccess = {
   is_purchase_required: boolean;
-  post_purchase_price: number;
-  has_board_subscription: boolean;
-  has_series_subscription: boolean;
-  has_post_purchase: boolean;
+  purchase_post_price: number;
+  has_subscription_board: boolean;
+  has_subscription_series: boolean;
+  has_purchase_post: boolean;
   can_view_paid_content: boolean;
 };
 
@@ -403,10 +403,10 @@ async function getPaidContentAccess({
   if (!seriesId) {
     return {
       is_purchase_required: false,
-      post_purchase_price: 0,
-      has_board_subscription: false,
-      has_series_subscription: false,
-      has_post_purchase: false,
+      purchase_post_price: 0,
+      has_subscription_board: false,
+      has_subscription_series: false,
+      has_purchase_post: false,
       can_view_paid_content: true,
     };
   }
@@ -426,10 +426,10 @@ async function getPaidContentAccess({
   if (seriesResult.data?.is_subscription !== true) {
     return {
       is_purchase_required: false,
-      post_purchase_price: 0,
-      has_board_subscription: false,
-      has_series_subscription: false,
-      has_post_purchase: false,
+      purchase_post_price: 0,
+      has_subscription_board: false,
+      has_subscription_series: false,
+      has_purchase_post: false,
       can_view_paid_content: true,
     };
   }
@@ -439,7 +439,7 @@ async function getPaidContentAccess({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
 
   if (subscriptionSettingResult.error) {
@@ -449,10 +449,10 @@ async function getPaidContentAccess({
   if (!subscriptionSettingResult.data?.is_enabled) {
     return {
       is_purchase_required: false,
-      post_purchase_price: 0,
-      has_board_subscription: false,
-      has_series_subscription: false,
-      has_post_purchase: false,
+      purchase_post_price: 0,
+      has_subscription_board: false,
+      has_subscription_series: false,
+      has_purchase_post: false,
       can_view_paid_content: true,
     };
   }
@@ -463,10 +463,10 @@ async function getPaidContentAccess({
   if (!authUserId) {
     return {
       is_purchase_required: true,
-      post_purchase_price: postPurchasePrice,
-      has_board_subscription: false,
-      has_series_subscription: false,
-      has_post_purchase: false,
+      purchase_post_price: postPurchasePrice,
+      has_subscription_board: false,
+      has_subscription_series: false,
+      has_purchase_post: false,
       can_view_paid_content: false,
     };
   }
@@ -477,7 +477,7 @@ async function getPaidContentAccess({
     .eq('subscriber_user_id', authUserId)
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
     .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
     .in('status', ['trialing', 'active', 'past_due'])
     .is('expired_at', null)
     .order('created_at', { ascending: false })
@@ -492,10 +492,10 @@ async function getPaidContentAccess({
   if (hasBoardSubscription) {
     return {
       is_purchase_required: true,
-      post_purchase_price: postPurchasePrice,
-      has_board_subscription: true,
-      has_series_subscription: false,
-      has_post_purchase: false,
+      purchase_post_price: postPurchasePrice,
+      has_subscription_board: true,
+      has_subscription_series: false,
+      has_purchase_post: false,
       can_view_paid_content: true,
     };
   }
@@ -506,7 +506,7 @@ async function getPaidContentAccess({
     .eq('subscriber_user_id', authUserId)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .in('status', ['trialing', 'active', 'past_due'])
     .is('expired_at', null)
     .order('created_at', { ascending: false })
@@ -521,10 +521,10 @@ async function getPaidContentAccess({
   if (hasSeriesSubscription) {
     return {
       is_purchase_required: true,
-      post_purchase_price: postPurchasePrice,
-      has_board_subscription: false,
-      has_series_subscription: true,
-      has_post_purchase: false,
+      purchase_post_price: postPurchasePrice,
+      has_subscription_board: false,
+      has_subscription_series: true,
+      has_purchase_post: false,
       can_view_paid_content: true,
     };
   }
@@ -533,7 +533,7 @@ async function getPaidContentAccess({
     .from('payments')
     .select('id')
     .eq('buyer_user_id', authUserId)
-    .eq('payment_type', PAYMENT_TYPE.POST_PURCHASE)
+    .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
     .eq('target_type', PAYMENT_TARGET_TYPE.POST)
     .eq('target_id', postId)
     .eq('status', PAYMENT_STATUS.PAID)
@@ -548,10 +548,10 @@ async function getPaidContentAccess({
 
   return {
     is_purchase_required: true,
-    post_purchase_price: postPurchasePrice,
-    has_board_subscription: false,
-    has_series_subscription: false,
-    has_post_purchase: hasPostPurchase,
+    purchase_post_price: postPurchasePrice,
+    has_subscription_board: false,
+    has_subscription_series: false,
+    has_purchase_post: hasPostPurchase,
     can_view_paid_content: hasPostPurchase,
   };
 }
@@ -1074,10 +1074,10 @@ export async function GET(request: Request, context: RouteContext) {
           author_manage_roles: author.manageRoles,
           author_manage_icon: author.manageIcon,
           is_purchase_required: false,
-          post_purchase_price: 0,
-          has_board_subscription: false,
-          has_series_subscription: false,
-          has_post_purchase: false,
+          purchase_post_price: 0,
+          has_subscription_board: false,
+          has_subscription_series: false,
+          has_purchase_post: false,
           can_view_paid_content: true,
           board_series_count: 0,
           is_post_donation_available: false,
@@ -1383,10 +1383,10 @@ export async function GET(request: Request, context: RouteContext) {
         comment_provider: commentProvider,
         giscus_settings: giscusSettings,
         is_purchase_required: paidContentAccess.is_purchase_required,
-        post_purchase_price: paidContentAccess.post_purchase_price,
-        has_board_subscription: paidContentAccess.has_board_subscription,
-        has_series_subscription: paidContentAccess.has_series_subscription,
-        has_post_purchase: paidContentAccess.has_post_purchase,
+        purchase_post_price: paidContentAccess.purchase_post_price,
+        has_subscription_board: paidContentAccess.has_subscription_board,
+        has_subscription_series: paidContentAccess.has_subscription_series,
+        has_purchase_post: paidContentAccess.has_purchase_post,
         can_view_paid_content: canViewPaidContent,
         board_series_count: boardSeriesCount,
         is_post_donation_available: isPostDonationAvailable,

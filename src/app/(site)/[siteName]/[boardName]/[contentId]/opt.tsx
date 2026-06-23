@@ -211,10 +211,10 @@ type PostContent = {
   closed_by_name: string;
   prefix_label: string | null;
   is_purchase_required: boolean;
-  post_purchase_price: number;
-  has_board_subscription: boolean;
-  has_series_subscription: boolean;
-  has_post_purchase: boolean;
+  purchase_post_price: number;
+  has_subscription_board: boolean;
+  has_subscription_series: boolean;
+  has_purchase_post: boolean;
   can_view_paid_content: boolean;
   board_series_count: number;
   is_post_donation_available: boolean;
@@ -736,9 +736,9 @@ export default function Opt({ isCommunity }: Props) {
     content.published_status === 'published' &&
     !isPage &&
     (content.is_purchase_required || isSubscriptionSeriesPost) &&
-    !content.has_board_subscription &&
-    !content.has_series_subscription &&
-    !content.has_post_purchase &&
+    !content.has_subscription_board &&
+    !content.has_subscription_series &&
+    !content.has_purchase_post &&
     !isAuthor &&
     !isStaff;
 

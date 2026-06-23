@@ -1,6 +1,6 @@
 export const SUBSCRIPTION_PRICE_UNIT = 1000;
 export const SUBSCRIPTION_PRICE_MAX = 100000;
-export const SERIES_SUBSCRIPTION_MIN_PRICE = 7000;
+export const SUBSCRIPTION_SERIES_MIN_PRICE = 7000;
 export const PARENT_SUBSCRIPTION_MIN_PRICE = 10000;
 
 export function isSubscriptionPriceUnit(value: number) {
@@ -38,7 +38,7 @@ export function validateSeriesSubscriptionPrice(price: number) {
     };
   }
 
-  if (price < SERIES_SUBSCRIPTION_MIN_PRICE) {
+  if (price < SUBSCRIPTION_SERIES_MIN_PRICE) {
     return {
       ok: false,
       message: '연재 구독 금액은 7,000원 이상이어야 합니다.',

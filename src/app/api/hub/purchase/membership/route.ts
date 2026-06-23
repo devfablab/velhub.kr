@@ -103,8 +103,8 @@ export async function GET() {
         'id, target_id, subscription_id, order_no, amount, refunded_amount, currency, status, payment_method, approved_at, created_at, refundable_until, failure_message',
       )
       .eq('buyer_user_id', session.authUserId)
-      .eq('payment_type', PAYMENT_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .order('created_at', { ascending: false });
 
     if (paymentsResult.error) {
@@ -129,8 +129,8 @@ export async function GET() {
               'id, target_id, status, price, current_period_start, current_period_end, next_billing_at, canceled_at, expired_at, created_at',
             )
             .eq('subscriber_user_id', session.authUserId)
-            .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-            .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+            .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+            .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
             .in('target_id', siteIds)
             .order('created_at', { ascending: false })
         : { data: [], error: null },

@@ -180,7 +180,7 @@ async function getMaxEnabledSeriesPrice({
     .from('subscription_settings')
     .select('target_id, price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .eq('is_enabled', true)
     .in('target_id', seriesIds);
 
@@ -218,9 +218,9 @@ export async function GET(request: Request) {
       supabaseAdmin
         .from('subscription_settings')
         .select('id, target_type, target_id, subscription_type, is_enabled, price, created_at')
-        .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+        .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
         .eq('target_id', site.id)
-        .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
         .maybeSingle(),
       getMaxEnabledSeriesPrice({
         supabaseAdmin,
@@ -240,8 +240,8 @@ export async function GET(request: Request) {
     const subscriptionsResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, subscriber_user_id, status, created_at')
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
       .order('created_at', { ascending: false });
 
@@ -266,8 +266,8 @@ export async function GET(request: Request) {
     const paymentsResult = await supabaseAdmin
       .from('payments')
       .select('id, buyer_user_id, amount, approved_at, created_at')
-      .eq('payment_type', PAYMENT_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
       .eq('status', PAYMENT_STATUS.PAID);
 
@@ -431,9 +431,9 @@ export async function PATCH(request: Request) {
     const existingSettingResult = await supabaseAdmin
       .from('subscription_settings')
       .select('id')
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .maybeSingle();
 
     if (existingSettingResult.error) {
@@ -443,9 +443,9 @@ export async function PATCH(request: Request) {
     }
 
     const payload = {
-      target_type: PAYMENT_TARGET_TYPE.BLOG,
+      target_type: PAYMENT_TARGET_TYPE.SITE,
       target_id: site.id,
-      subscription_type: SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP,
+      subscription_type: SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
       is_enabled: body.isEnabled,
       price: body.price,
     };

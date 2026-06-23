@@ -6,7 +6,7 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import {
-  SERIES_SUBSCRIPTION_MIN_PRICE,
+  SUBSCRIPTION_SERIES_MIN_PRICE,
   getMaxAllowedSeriesSubscriptionPrice,
   validateSeriesPriceAgainstParentPrice,
 } from '@/lib/payments/subscriptionPrice';
@@ -150,9 +150,9 @@ async function getBlogMembershipPrice({
   const settingResult = await supabaseAdmin
     .from('subscription_settings')
     .select('target_id, is_enabled, price')
-    .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
     .eq('target_id', siteId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
     .eq('is_enabled', true)
     .maybeSingle();
 
@@ -177,7 +177,7 @@ async function getBoardSubscriptionPrice({
     .select('target_id, is_enabled, price')
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
     .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
     .eq('is_enabled', true)
     .maybeSingle();
 
@@ -244,7 +244,7 @@ async function getParentPriceByBoardId({
     .from('subscription_settings')
     .select('target_id, is_enabled, price')
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
     .eq('is_enabled', true)
     .in('target_id', boardIds);
 
@@ -313,7 +313,7 @@ async function disableBoardSubscriptionIfNeeded({
     })
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
     .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION);
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD);
 
   if (settingUpdateResult.error) {
     throw new Error('게시판 구독 설정을 자동 해제하지 못했습니다.');
@@ -395,7 +395,7 @@ export async function GET(request: Request) {
           .from('subscription_settings')
           .select('id, target_id, is_enabled, price')
           .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-          .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
           .in('target_id', seriesIds)
       : { data: [], error: null };
 
@@ -412,7 +412,7 @@ export async function GET(request: Request) {
       ? await supabaseAdmin
           .from('subscriptions')
           .select('id, subscriber_user_id, target_id, status, price, created_at')
-          .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
           .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
           .in('target_id', seriesIds)
           .order('created_at', { ascending: false })
@@ -441,7 +441,7 @@ export async function GET(request: Request) {
       ? await supabaseAdmin
           .from('payments')
           .select('id, buyer_user_id, target_id, amount, approved_at, created_at')
-          .eq('payment_type', PAYMENT_TYPE.SERIES_SUBSCRIPTION)
+          .eq('payment_type', PAYMENT_TYPE.SUBSCRIPTION_SERIES)
           .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
           .eq('status', PAYMENT_STATUS.PAID)
           .in('target_id', seriesIds)
@@ -559,15 +559,15 @@ export async function GET(request: Request) {
                     id: setting.id,
                     isEnabled: setting.is_enabled,
                     price: setting.price,
-                    minPrice: SERIES_SUBSCRIPTION_MIN_PRICE,
+                    minPrice: SUBSCRIPTION_SERIES_MIN_PRICE,
                     maxAllowedPrice: maxAllowedSeriesPrice,
                     parentPrice,
                   }
                 : {
                     id: null,
                     isEnabled: false,
-                    price: SERIES_SUBSCRIPTION_MIN_PRICE,
-                    minPrice: SERIES_SUBSCRIPTION_MIN_PRICE,
+                    price: SUBSCRIPTION_SERIES_MIN_PRICE,
+                    minPrice: SUBSCRIPTION_SERIES_MIN_PRICE,
                     maxAllowedPrice: maxAllowedSeriesPrice,
                     parentPrice,
                   },
@@ -714,7 +714,7 @@ export async function PATCH(request: Request) {
       .select('id')
       .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
       .eq('target_id', series.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
       .maybeSingle();
 
     if (existingSettingResult.error) {
@@ -726,7 +726,7 @@ export async function PATCH(request: Request) {
     const payload = {
       target_type: PAYMENT_TARGET_TYPE.SERIES,
       target_id: series.id,
-      subscription_type: SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION,
+      subscription_type: SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
       is_enabled: body.isEnabled,
       price: body.price,
     };

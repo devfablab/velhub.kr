@@ -193,9 +193,9 @@ export async function POST(request: Request) {
     const settingResult = await supabaseAdmin
       .from('subscription_settings')
       .select('price, is_enabled')
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -223,8 +223,8 @@ export async function POST(request: Request) {
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('subscriber_user_id', session.authUserId)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -275,7 +275,7 @@ export async function POST(request: Request) {
     }
 
     const customerKey = createCustomerKey(session.authUserId);
-    const orderNo = createPaymentOrderNo('BLOG_MEMBERSHIP');
+    const orderNo = createPaymentOrderNo('MEMBERSHIP_BLOG');
 
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
@@ -301,7 +301,7 @@ export async function POST(request: Request) {
 
       failUrl.searchParams.set('siteName', siteName);
       failUrl.searchParams.set('orderNo', orderNo);
-      failUrl.searchParams.set('paymentType', PAYMENT_TYPE.BLOG_MEMBERSHIP);
+      failUrl.searchParams.set('paymentType', PAYMENT_TYPE.MEMBERSHIP_BLOG);
 
       return Response.json({
         mode: 'billing_auth',
@@ -341,8 +341,8 @@ export async function POST(request: Request) {
         currency: 'KRW',
         status: PAYMENT_STATUS.PAID,
         payment_method: PAYMENT_METHOD.CARD,
-        payment_type: PAYMENT_TYPE.BLOG_MEMBERSHIP,
-        target_type: PAYMENT_TARGET_TYPE.BLOG,
+        payment_type: PAYMENT_TYPE.MEMBERSHIP_BLOG,
+        target_type: PAYMENT_TARGET_TYPE.SITE,
         target_id: site.id,
         post_payment: null,
         subscription_id: null,
@@ -368,8 +368,8 @@ export async function POST(request: Request) {
       .from('subscriptions')
       .insert({
         subscriber_user_id: session.authUserId,
-        subscription_type: SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP,
-        target_type: PAYMENT_TARGET_TYPE.BLOG,
+        subscription_type: SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
+        target_type: PAYMENT_TARGET_TYPE.SITE,
         target_id: site.id,
         owner_user_id: siteOwnerUserId,
         price: setting.price,

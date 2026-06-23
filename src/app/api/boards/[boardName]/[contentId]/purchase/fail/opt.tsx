@@ -48,7 +48,7 @@ export default function Opt() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            paymentType: 'post_purchase',
+            paymentType: 'purchase_post',
             targetType: 'post',
             orderNo,
             code,

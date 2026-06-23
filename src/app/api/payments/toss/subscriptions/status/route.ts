@@ -57,10 +57,10 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
   if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
   }
 
-  return SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION;
+  return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {

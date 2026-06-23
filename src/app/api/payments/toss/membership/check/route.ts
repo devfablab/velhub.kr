@@ -57,7 +57,7 @@ function isValidCronRequest(request: Request) {
 }
 
 function createOrderNo() {
-  return createPaymentOrderNo('BLOG_MEMBERSHIP');
+  return createPaymentOrderNo('MEMBERSHIP_BLOG');
 }
 
 function createRefundableUntil(startedAt: Date) {
@@ -91,8 +91,8 @@ async function createFailedPayment({
     currency: 'KRW',
     status: PAYMENT_STATUS.FAILED,
     payment_method: PAYMENT_METHOD.CARD,
-    payment_type: PAYMENT_TYPE.BLOG_MEMBERSHIP,
-    target_type: PAYMENT_TARGET_TYPE.BLOG,
+    payment_type: PAYMENT_TYPE.MEMBERSHIP_BLOG,
+    target_type: PAYMENT_TARGET_TYPE.SITE,
     target_id: subscription.target_id,
     post_payment: null,
     subscription_id: subscription.id,
@@ -164,8 +164,8 @@ async function chargeMembershipSubscription({
         currency: paymentResult.currency || 'KRW',
         status: PAYMENT_STATUS.PAID,
         payment_method: PAYMENT_METHOD.CARD,
-        payment_type: PAYMENT_TYPE.BLOG_MEMBERSHIP,
-        target_type: PAYMENT_TARGET_TYPE.BLOG,
+        payment_type: PAYMENT_TYPE.MEMBERSHIP_BLOG,
+        target_type: PAYMENT_TARGET_TYPE.SITE,
         target_id: subscription.target_id,
         post_payment: null,
         subscription_id: subscription.id,
@@ -276,8 +276,8 @@ export async function GET(request: Request) {
           'billing_anchor_day',
         ].join(', '),
       )
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('status', SUBSCRIPTION_STATUS.ACTIVE)
       .is('canceled_at', null)
       .is('expired_at', null)

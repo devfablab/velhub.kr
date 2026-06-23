@@ -40,8 +40,8 @@ function verifyTaskRequest(request: Request) {
 
 function isSubscriptionApiTarget(subscription: PastDueSubscriptionRow) {
   if (
-    subscription.subscription_type !== SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION &&
-    subscription.subscription_type !== SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION
+    subscription.subscription_type !== SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD &&
+    subscription.subscription_type !== SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES
   ) {
     return false;
   }
@@ -66,7 +66,7 @@ async function expirePastDue(request: Request) {
     .from('subscriptions')
     .select('id, subscription_type, target_type, target_id, past_due_started_at')
     .eq('status', SUBSCRIPTION_STATUS.PAST_DUE)
-    .in('subscription_type', [SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION, SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION])
+    .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
     .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
     .is('expired_at', null)
     .lte('past_due_started_at', expiredBefore);

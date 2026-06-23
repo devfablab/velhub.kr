@@ -73,16 +73,16 @@ function verifyTaskRequest(request: Request) {
 }
 
 function createOrderNo(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION) {
-    return createPaymentOrderNo('BOARD_SUBSCRIPTION');
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
+    return createPaymentOrderNo('SUBSCRIPTION_BOARD');
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION) {
-    return createPaymentOrderNo('SERIES_SUBSCRIPTION');
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
+    return createPaymentOrderNo('SUBSCRIPTION_SERIES');
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP) {
-    return createPaymentOrderNo('BLOG_MEMBERSHIP');
+  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
+    return createPaymentOrderNo('MEMBERSHIP_BLOG');
   }
 
   return createPaymentOrderNo('PLAN');
@@ -93,16 +93,16 @@ function getPaymentType(subscriptionType: string) {
     return PAYMENT_TYPE.PLAN_BILLING;
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP) {
-    return PAYMENT_TYPE.BLOG_MEMBERSHIP;
+  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
+    return PAYMENT_TYPE.MEMBERSHIP_BLOG;
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION) {
-    return PAYMENT_TYPE.BOARD_SUBSCRIPTION;
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
+    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION) {
-    return PAYMENT_TYPE.SERIES_SUBSCRIPTION;
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
+    return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
   }
 
   return null;
@@ -113,15 +113,15 @@ function getOrderName(subscriptionType: string) {
     return '데브허브 사이트 요금제';
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP) {
+  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
     return '데브허브 블로그 멤버십';
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION) {
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
     return '데브허브 게시판 구독';
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION) {
+  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
     return '데브허브 연재 구독';
   }
 
@@ -131,7 +131,7 @@ function getOrderName(subscriptionType: string) {
 function isBillableTargetType(targetType: string) {
   return (
     targetType === PAYMENT_TARGET_TYPE.PLAN ||
-    targetType === PAYMENT_TARGET_TYPE.BLOG ||
+    targetType === PAYMENT_TARGET_TYPE.SITE ||
     targetType === PAYMENT_TARGET_TYPE.BOARD ||
     targetType === PAYMENT_TARGET_TYPE.SERIES
   );
@@ -139,9 +139,9 @@ function isBillableTargetType(targetType: string) {
 
 function shouldCreateOwnerSplits(subscriptionType: string) {
   return (
-    subscriptionType === SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP ||
-    subscriptionType === SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION ||
-    subscriptionType === SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION
+    subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG ||
+    subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD ||
+    subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES
   );
 }
 

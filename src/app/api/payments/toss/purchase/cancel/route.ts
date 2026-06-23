@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         ].join(', '),
       )
       .eq('id', paymentId)
-      .eq('payment_type', PAYMENT_TYPE.POST_PURCHASE)
+      .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
       .maybeSingle();
 
     if (paymentResult.error) {

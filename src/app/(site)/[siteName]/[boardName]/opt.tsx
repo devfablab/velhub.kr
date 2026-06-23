@@ -32,6 +32,7 @@ import SiteProfile from '@/components/service/blog/SiteProfile';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
+import DonationButton from '@/components/service/common/DonationButton';
 
 type Props = {
   isCommunity: boolean;
@@ -515,6 +516,14 @@ export default function Opt({ isCommunity }: Props) {
                     selectedSeries={selectedSeries}
                     selectedBoard={true}
                   />
+                  {isCommunity && board && board.board_type !== 'page' ? (
+                    <DonationButton
+                      siteName={siteName}
+                      targetType="board"
+                      boardName={boardName}
+                      buttonText="게시판 후원"
+                    />
+                  ) : null}
                 </h2>
               )}
             </>

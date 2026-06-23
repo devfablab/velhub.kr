@@ -226,7 +226,7 @@ async function getPurchaseTarget({
     .select('id, price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', post.series_id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
 
   if (subscriptionSettingResult.error) {
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
       authUserId: session.authUserId,
       targetType: PAYMENT_TARGET_TYPE.BOARD,
       targetId: board.id,
-      subscriptionType: SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION,
+      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
     });
 
     if (hasBoardSubscription) {
@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
       authUserId: session.authUserId,
       targetType: PAYMENT_TARGET_TYPE.SERIES,
       targetId: post.series_id,
-      subscriptionType: SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION,
+      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
     });
 
     if (hasSeriesSubscription) {
@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
       .from('payments')
       .select('id')
       .eq('buyer_user_id', session.authUserId)
-      .eq('payment_type', PAYMENT_TYPE.POST_PURCHASE)
+      .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
       .eq('target_type', PAYMENT_TARGET_TYPE.POST)
       .eq('target_id', post.id)
       .eq('status', PAYMENT_STATUS.PAID)
@@ -347,11 +347,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const orderNo = createPaymentOrderNo('POST_PURCHASE');
+    const orderNo = createPaymentOrderNo('PURCHASE_POST');
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 
-    successUrl.searchParams.set('paymentType', PAYMENT_TYPE.POST_PURCHASE);
+    successUrl.searchParams.set('paymentType', PAYMENT_TYPE.PURCHASE_POST);
     successUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.POST);
     successUrl.searchParams.set('siteId', site.id);
     successUrl.searchParams.set('boardId', board.id);
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
     successUrl.searchParams.set('contentId', String(post.slug));
     successUrl.searchParams.set('orderNo', orderNo);
 
-    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.POST_PURCHASE);
+    failUrl.searchParams.set('paymentType', PAYMENT_TYPE.PURCHASE_POST);
     failUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.POST);
     failUrl.searchParams.set('siteId', site.id);
     failUrl.searchParams.set('boardId', board.id);

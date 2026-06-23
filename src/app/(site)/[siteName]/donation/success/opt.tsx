@@ -7,6 +7,8 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from '../../menu';
+import Anchor from '@/components/Anchor';
 
 type DonationSuccessResponse = {
   ok?: boolean;
@@ -40,6 +42,8 @@ export default function Opt() {
         const orderId = normalizeText(searchParams.get('orderId'));
         const amountText = normalizeText(searchParams.get('amount'));
         const siteId = normalizeText(searchParams.get('siteId'));
+        const targetType = normalizeText(searchParams.get('targetType'));
+        const boardId = normalizeText(searchParams.get('boardId'));
 
         if (!paymentKey || !orderId || !amountText || !siteId) {
           throw new Error('후원 결제 승인 정보가 없습니다.');
@@ -62,6 +66,8 @@ export default function Opt() {
             orderId,
             amount,
             siteId,
+            targetType,
+            boardId,
           }),
         });
 
@@ -86,53 +92,46 @@ export default function Opt() {
     void confirmDonation();
   }, [searchParams]);
 
-  function handleGoSite() {
-    router.replace(`/${siteName}`);
-  }
-
-  function handleGoBack() {
-    router.replace(`/${siteName}`);
-  }
-
   if (isLoading) {
     return (
-      <div className="paper">
-        <div className="loading-container">
-          <LoadingIndicator />
+      <Container pageBack={`/${siteName}`} pageTitle="후원" pageFin>
+        <div className="container">
+          <div className={`content`}>
+            <div className="paper">
+              <div className="loading-container">
+                <LoadingIndicator />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="paper">
-      <Stack gap={2}>
-        {isSuccess ? (
-          <>
-            <Typography variant="h6">후원이 완료되었습니다.</Typography>
-            <Typography>응원해 주셔서 감사합니다.</Typography>
-            <div>
-              <Button type="button" variant="contained" onClick={handleGoSite}>
-                사이트로 이동
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <Typography variant="h6">후원 결제를 완료하지 못했습니다.</Typography>
-            {errorMessage ? (
-              <Typography role="status" color="error">
-                {errorMessage}
-              </Typography>
-            ) : null}
-            <div>
-              <Button type="button" variant="contained" onClick={handleGoBack}>
-                사이트로 이동
-              </Button>
-            </div>
-          </>
-        )}
-      </Stack>
-    </div>
+    <Container pageBack={`/${siteName}`} pageTitle="후원" pageFin>
+      <div className="container">
+        <div className="content" style={{ maxWidth: 572 }}>
+          {isSuccess ? (
+            <>
+              <h2>후원 완료되었습니다.</h2>
+              <div className="paper" style={{ marginTop: 12, marginBottom: 12 }}>
+                <p>응원해 주셔서 감사합니다.</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2>후원 결제를 완료하지 못했습니다.</h2>
+              <div className="paper" style={{ marginTop: 12, marginBottom: 12 }}>
+                {errorMessage ? <p>{errorMessage}</p> : null}
+              </div>
+            </>
+          )}
+          <Anchor type="button" className="button medium submit" href={`/${siteName}`}>
+            메인으로 이동
+          </Anchor>
+        </div>
+      </div>
+    </Container>
   );
 }

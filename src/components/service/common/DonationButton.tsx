@@ -1,9 +1,9 @@
 'use client';
 
-import { ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
 import { loadTossPayments } from '@tosspayments/payment-sdk';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import {
   Dialog,
   DialogActions,
@@ -11,16 +11,15 @@ import {
   DialogTitle,
   Drawer,
   InputAdornment,
+  Snackbar,
   Stack,
   TextField,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import styles from '@/app/board.module.sass';
 
-type DonationTargetType = 'site' | 'post';
+type DonationTargetType = 'site' | 'series' | 'board' | 'post';
 
 type DonationStartResponse = {
   clientKey?: string;
@@ -35,13 +34,19 @@ type DonationStartResponse = {
 type CommonProps = {
   siteName: string;
   buttonText?: string;
-  className?: string;
   disabled?: boolean;
   onProcessingChange?: (isProcessing: boolean) => void;
 };
 
 type SiteDonationProps = CommonProps & {
   targetType?: 'site';
+  successUrl?: string;
+  failUrl?: string;
+};
+
+type BoardDonationProps = CommonProps & {
+  targetType: 'board';
+  boardName: string;
   successUrl?: string;
   failUrl?: string;
 };
@@ -54,7 +59,7 @@ type PostDonationProps = CommonProps & {
   failUrl?: string;
 };
 
-type Props = SiteDonationProps | PostDonationProps;
+type Props = SiteDonationProps | BoardDonationProps | PostDonationProps;
 
 function formatDonationAmount(value: number) {
   if (!value) {
@@ -91,7 +96,29 @@ function isValidDonationAmount(amount: number) {
 }
 
 function getTargetType(props: Props): DonationTargetType {
-  return props.targetType === 'post' ? 'post' : 'site';
+  if (props.targetType === 'post') {
+    return 'post';
+  }
+
+  if (props.targetType === 'board') {
+    return 'board';
+  }
+
+  return 'site';
+}
+
+function getDonationTitle(props: Props) {
+  const targetType = getTargetType(props);
+
+  if (targetType === 'post') {
+    return '포스팅 후원';
+  }
+
+  if (targetType === 'board') {
+    return '게시판 후원';
+  }
+
+  return '후원';
 }
 
 function getSuccessUrl(props: Props) {
@@ -131,6 +158,17 @@ function createRequestBody(props: Props, amount: number) {
     };
   }
 
+  if (props.targetType === 'board') {
+    return {
+      targetType: 'board',
+      siteName: props.siteName,
+      boardName: props.boardName,
+      amount,
+      successUrl: getSuccessUrl(props),
+      failUrl: getFailUrl(props),
+    };
+  }
+
   return {
     targetType: 'site',
     siteName: props.siteName,
@@ -141,7 +179,7 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
-  const { buttonText = '후원하기', className, disabled = false, onProcessingChange } = props;
+  const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState('1,000');
@@ -151,6 +189,7 @@ export default function DonationButton(props: Props) {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const donationTitle = getDonationTitle(props);
 
   function updateProcessing(nextIsProcessing: boolean) {
     setIsProcessing(nextIsProcessing);
@@ -171,7 +210,7 @@ export default function DonationButton(props: Props) {
     setIsDialogOpen(false);
   }
 
-  function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement>) {
     const nextAmount = getDonationAmountNumber(event.target.value);
 
     if (nextAmount > 100000) {
@@ -239,31 +278,57 @@ export default function DonationButton(props: Props) {
     }
   }
 
+  function renderDonationForm() {
+    return (
+      <Stack spacing={2}>
+        <TextField
+          value={donationAmount}
+          onChange={handleDonationAmountChange}
+          disabled={isProcessing}
+          inputMode="numeric"
+          fullWidth
+          size="small"
+          slotProps={{
+            input: {
+              endAdornment: <InputAdornment position="end">원</InputAdornment>,
+            },
+          }}
+        />
+
+        <Snackbar
+          open={Boolean(errorMessage)}
+          message={errorMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+          onClose={() => setErrorMessage('')}
+        />
+      </Stack>
+    );
+  }
+
   return (
     <>
-      <button type="button" className={className} onClick={handleOpenDialog} disabled={disabled || isProcessing}>
-        {buttonText === '포스팅 후원' ? <VolunteerActivismOutlinedIcon /> : null}
+      <button
+        type="button"
+        className={props.targetType === 'post' ? styles.button : 'button small action'}
+        onClick={handleOpenDialog}
+        disabled={disabled || isProcessing}
+      >
+        {props.targetType === 'post' ? <VolunteerActivismOutlinedIcon fontSize="small" /> : null}
         <strong>{buttonText}</strong>
       </button>
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
-          <h2>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</h2>
+          <h2>{donationTitle}</h2>
           <button className="close-button" onClick={handleCloseDialog}>
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
-            <Typography variant="subtitle2">후원금액</Typography>
-            <TextField
-              type="text"
-              value={donationAmount}
-              onChange={handleDonationAmountChange}
-              helperText="1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요."
-              disabled={isProcessing}
-              fullWidth
-              size="small"
-            />
-
+            {renderDonationForm()}
             <Stack direction="column" spacing={1.5}>
               <button
                 type="button"
@@ -281,40 +346,11 @@ export default function DonationButton(props: Props) {
         </Drawer>
       ) : (
         <Dialog open={isDialogOpen} onClose={handleCloseDialog} fullWidth maxWidth="xs" className="VhiDialog">
-          <DialogTitle>{getTargetType(props) === 'post' ? '글 후원하기' : '후원하기'}</DialogTitle>
+          <DialogTitle>{donationTitle}</DialogTitle>
           <button className="close-button" onClick={handleCloseDialog}>
             <CloseRoundedIcon />
           </button>
-
-          <DialogContent>
-            <Stack gap={2} sx={{ pt: 1 }}>
-              <Stack gap={0.75}>
-                <Typography variant="subtitle2">후원금액</Typography>
-                <TextField
-                  type="text"
-                  value={donationAmount}
-                  onChange={handleDonationAmountChange}
-                  helperText="1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요."
-                  disabled={isProcessing}
-                  fullWidth
-                  size="small"
-                  slotProps={{
-                    input: {
-                      endAdornment: <InputAdornment position="end">원</InputAdornment>,
-                    },
-                  }}
-                />
-              </Stack>
-
-              {errorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{errorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
-          </DialogContent>
-
+          <DialogContent>{renderDonationForm()}</DialogContent>
           <DialogActions>
             <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소

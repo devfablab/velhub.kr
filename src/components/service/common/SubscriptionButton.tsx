@@ -157,6 +157,7 @@ export default function SubscriptionButton({
 
     return params.toString();
   }, [siteName, boardName, targetType, selectedSeries]);
+  const [isEnabled, setIsEnabled] = useState(false);
 
   const [price, setPrice] = useState<number | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
@@ -173,6 +174,7 @@ export default function SubscriptionButton({
     async function loadSubscriptionStatus() {
       try {
         setErrorMessage('');
+        setIsEnabled(false);
         setPrice(null);
         setSubscriptionStatus('none');
         onStatusChange?.('none');
@@ -194,6 +196,7 @@ export default function SubscriptionButton({
 
         const nextSubscriptionStatus = result.subscriptionStatus ?? 'none';
 
+        setIsEnabled(Boolean(result.isEnabled));
         setPrice(result.price ?? null);
         setSubscriptionStatus(nextSubscriptionStatus);
         onStatusChange?.(nextSubscriptionStatus);
@@ -384,6 +387,10 @@ export default function SubscriptionButton({
     } finally {
       setIsProcessing(false);
     }
+  }
+
+  if (!isEnabled) {
+    return null;
   }
 
   return (

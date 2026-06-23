@@ -98,10 +98,10 @@ function getPaymentType(value: string) {
     value === PAYMENT_TYPE.PLAN_BILLING ||
     value === PAYMENT_TYPE.DONATION_SITE ||
     value === PAYMENT_TYPE.DONATION_POST ||
-    value === PAYMENT_TYPE.POST_PURCHASE ||
-    value === PAYMENT_TYPE.BLOG_MEMBERSHIP ||
-    value === PAYMENT_TYPE.BOARD_SUBSCRIPTION ||
-    value === PAYMENT_TYPE.SERIES_SUBSCRIPTION
+    value === PAYMENT_TYPE.PURCHASE_POST ||
+    value === PAYMENT_TYPE.MEMBERSHIP_BLOG ||
+    value === PAYMENT_TYPE.SUBSCRIPTION_BOARD ||
+    value === PAYMENT_TYPE.SUBSCRIPTION_SERIES
   ) {
     return value;
   }
@@ -486,7 +486,7 @@ async function getPostPurchaseFailInfo({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', post.series_id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
 
   if (settingResult.error) {
@@ -505,7 +505,7 @@ async function getPostPurchaseFailInfo({
 
   return {
     amount: getPostPurchasePrice(setting.price),
-    paymentType: PAYMENT_TYPE.POST_PURCHASE,
+    paymentType: PAYMENT_TYPE.PURCHASE_POST,
     targetType: PAYMENT_TARGET_TYPE.POST,
     targetId: post.id,
     postPayment: {
@@ -515,7 +515,7 @@ async function getPostPurchaseFailInfo({
       post_id: post.id,
     },
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-    failureStage: 'post_purchase_fail',
+    failureStage: 'purchase_post_fail',
   };
 }
 
@@ -531,9 +531,9 @@ async function getMembershipFailInfo({
   const settingResult = await supabaseAdmin
     .from('subscription_settings')
     .select('price, is_enabled')
-    .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
     .eq('target_id', site.id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
     .maybeSingle();
 
   if (settingResult.error) {
@@ -548,8 +548,8 @@ async function getMembershipFailInfo({
 
   return {
     amount: setting.price,
-    paymentType: PAYMENT_TYPE.BLOG_MEMBERSHIP,
-    targetType: PAYMENT_TARGET_TYPE.BLOG,
+    paymentType: PAYMENT_TYPE.MEMBERSHIP_BLOG,
+    targetType: PAYMENT_TARGET_TYPE.SITE,
     targetId: site.id,
     postPayment: null,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
@@ -584,7 +584,7 @@ async function getSubscriptionFailInfo({
       .select('price, is_enabled')
       .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
       .eq('target_id', board.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -599,12 +599,12 @@ async function getSubscriptionFailInfo({
 
     return {
       amount: setting.price,
-      paymentType: PAYMENT_TYPE.BOARD_SUBSCRIPTION,
+      paymentType: PAYMENT_TYPE.SUBSCRIPTION_BOARD,
       targetType: PAYMENT_TARGET_TYPE.BOARD,
       targetId: board.id,
       postPayment: null,
       refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-      failureStage: 'board_subscription_fail',
+      failureStage: 'subscription_board_fail',
     };
   }
 
@@ -628,7 +628,7 @@ async function getSubscriptionFailInfo({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', series.id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
 
   if (settingResult.error) {
@@ -643,12 +643,12 @@ async function getSubscriptionFailInfo({
 
   return {
     amount: setting.price,
-    paymentType: PAYMENT_TYPE.SERIES_SUBSCRIPTION,
+    paymentType: PAYMENT_TYPE.SUBSCRIPTION_SERIES,
     targetType: PAYMENT_TARGET_TYPE.SERIES,
     targetId: series.id,
     postPayment: null,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-    failureStage: 'series_subscription_fail',
+    failureStage: 'subscription_series_fail',
   };
 }
 
@@ -705,7 +705,7 @@ async function getPaymentFailInfo({
     });
   }
 
-  if (paymentType === PAYMENT_TYPE.POST_PURCHASE) {
+  if (paymentType === PAYMENT_TYPE.PURCHASE_POST) {
     if (!siteId) {
       throw new Error('siteId가 유효하지 않습니다.');
     }
@@ -721,7 +721,7 @@ async function getPaymentFailInfo({
     });
   }
 
-  if (paymentType === PAYMENT_TYPE.BLOG_MEMBERSHIP) {
+  if (paymentType === PAYMENT_TYPE.MEMBERSHIP_BLOG) {
     if (!siteName) {
       throw new Error('siteName이 유효하지 않습니다.');
     }
@@ -729,7 +729,7 @@ async function getPaymentFailInfo({
     return getMembershipFailInfo({ supabaseAdmin, siteName });
   }
 
-  if (paymentType === PAYMENT_TYPE.BOARD_SUBSCRIPTION || paymentType === PAYMENT_TYPE.SERIES_SUBSCRIPTION) {
+  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_BOARD || paymentType === PAYMENT_TYPE.SUBSCRIPTION_SERIES) {
     if (!siteName && !siteId) {
       throw new Error('사이트 정보가 유효하지 않습니다.');
     }

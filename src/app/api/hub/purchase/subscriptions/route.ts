@@ -94,8 +94,8 @@ function getSubscriptionStatusLabel(status: string, canceledAt: string | null, e
 }
 
 function getPaymentTypeLabel(paymentType: string) {
-  if (paymentType === PAYMENT_TYPE.BOARD_SUBSCRIPTION) return '게시판 구독';
-  if (paymentType === PAYMENT_TYPE.SERIES_SUBSCRIPTION) return '연재 구독';
+  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_BOARD) return '게시판 구독';
+  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_SERIES) return '연재 구독';
 
   return '구독';
 }
@@ -133,7 +133,7 @@ export async function GET() {
         'id, payment_type, target_type, target_id, subscription_id, order_no, amount, refunded_amount, currency, status, payment_method, approved_at, created_at, refundable_until, failure_message',
       )
       .eq('buyer_user_id', session.authUserId)
-      .in('payment_type', [PAYMENT_TYPE.BOARD_SUBSCRIPTION, PAYMENT_TYPE.SERIES_SUBSCRIPTION])
+      .in('payment_type', [PAYMENT_TYPE.SUBSCRIPTION_BOARD, PAYMENT_TYPE.SUBSCRIPTION_SERIES])
       .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
       .order('created_at', { ascending: false });
 
@@ -178,7 +178,7 @@ export async function GET() {
               'id, subscription_type, target_type, target_id, status, price, current_period_start, current_period_end, next_billing_at, canceled_at, expired_at, created_at',
             )
             .eq('subscriber_user_id', session.authUserId)
-            .in('subscription_type', [SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION, SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION])
+            .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
             .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
             .order('created_at', { ascending: false })
         : { data: [], error: null },

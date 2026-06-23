@@ -81,7 +81,7 @@ export default function Opt() {
   }, [searchParams]);
 
   return (
-    <Container pageBack={`/${siteName}`} pageTitle="포스팅 구매">
+    <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="포스팅 구매" pageFin>
       <div className="container">
         <div className="content" style={{ maxWidth: 572 }}>
           <h2>포스팅 구매</h2>
@@ -98,7 +98,7 @@ export default function Opt() {
               </p>
             )}
             <Anchor type="button" className="button medium submit" href={`/${siteName}/${boardName}/${contentId}`}>
-              글로 이동
+              포스팅으로 이동
             </Anchor>
           </div>
         </div>

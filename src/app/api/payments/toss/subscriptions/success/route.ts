@@ -147,18 +147,18 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
   if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION;
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
   }
 
-  return SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION;
+  return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentType(targetType: SubscriptionTargetType) {
   if (targetType === 'board') {
-    return PAYMENT_TYPE.BOARD_SUBSCRIPTION;
+    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
   }
 
-  return PAYMENT_TYPE.SERIES_SUBSCRIPTION;
+  return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
@@ -379,7 +379,7 @@ async function cancelSeriesSubscriptionsInBoard({
       expired_at: canceledAt,
     })
     .eq('subscriber_user_id', authUserId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('target_id', seriesIds)
     .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])

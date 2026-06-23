@@ -45,11 +45,11 @@ function getPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
     case 'plan_billing':
       return '요금제';
-    case 'blog_membership':
+    case 'membership_blog':
       return '멤버십';
-    case 'board_subscription':
+    case 'subscription_board':
       return '게시판 구독';
-    case 'series_subscription':
+    case 'subscription_series':
       return '연재 구독';
     case 'donation':
       return '후원';

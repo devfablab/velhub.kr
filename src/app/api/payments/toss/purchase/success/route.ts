@@ -220,7 +220,7 @@ async function getSeriesSubscriptionPrice({
     .select('id, price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .maybeSingle();
 
   if (subscriptionSettingResult.error) {
@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
       authUserId: session.authUserId,
       targetType: PAYMENT_TARGET_TYPE.BOARD,
       targetId: post.board_id,
-      subscriptionType: SUBSCRIPTION_TYPE.BOARD_SUBSCRIPTION,
+      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
     });
 
     if (hasBoardSubscription) {
@@ -356,7 +356,7 @@ export async function POST(request: NextRequest) {
       authUserId: session.authUserId,
       targetType: PAYMENT_TARGET_TYPE.SERIES,
       targetId: post.series_id,
-      subscriptionType: SUBSCRIPTION_TYPE.SERIES_SUBSCRIPTION,
+      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
     });
 
     if (hasSeriesSubscription) {
@@ -428,7 +428,7 @@ export async function POST(request: NextRequest) {
         currency: confirmResult.currency,
         status: PAYMENT_STATUS.PAID,
         payment_method: PAYMENT_METHOD.CARD,
-        payment_type: PAYMENT_TYPE.POST_PURCHASE,
+        payment_type: PAYMENT_TYPE.PURCHASE_POST,
         target_type: PAYMENT_TARGET_TYPE.POST,
         target_id: post.id,
         post_payment: {

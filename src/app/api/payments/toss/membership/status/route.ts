@@ -121,9 +121,9 @@ export async function GET(request: Request) {
     const settingResult = await supabaseAdmin
       .from('subscription_settings')
       .select('id, is_enabled, price')
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .maybeSingle();
 
     if (settingResult.error) {
@@ -168,8 +168,8 @@ export async function GET(request: Request) {
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('subscriber_user_id', session.authUserId)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.BLOG_MEMBERSHIP)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BLOG)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
       .order('created_at', { ascending: false })
       .limit(1)

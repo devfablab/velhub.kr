@@ -6,7 +6,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type DonationTargetType = 'site' | 'post';
+type DonationTargetType = 'site' | 'series' | 'board' | 'post';
 
 type DonationStartBody = {
   siteName?: string;
@@ -22,6 +22,7 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string;
+  site_type: string;
   is_shutdown: boolean;
 };
 
@@ -29,6 +30,8 @@ type BoardRow = {
   id: string;
   board_key: string;
   board_label: string;
+  board_type: string;
+  is_active: boolean;
 };
 
 type PostRow = {
@@ -58,6 +61,15 @@ type DonationTarget =
       orderName: string;
     }
   | {
+      targetType: 'board';
+      paymentType: typeof PAYMENT_TYPE.DONATION_BOARD;
+      paymentTargetType: typeof PAYMENT_TARGET_TYPE.BOARD;
+      site: SiteRow;
+      board: BoardRow;
+      post: null;
+      orderName: string;
+    }
+  | {
       targetType: 'post';
       paymentType: typeof PAYMENT_TYPE.DONATION_POST;
       paymentTargetType: typeof PAYMENT_TARGET_TYPE.POST;
@@ -68,7 +80,7 @@ type DonationTarget =
     };
 
 function isDonationTargetType(value: string): value is DonationTargetType {
-  return value === 'site' || value === 'post';
+  return value === 'site' || value === 'board' || value === 'post';
 }
 
 function isNumericSlug(value: string) {
@@ -76,7 +88,15 @@ function isNumericSlug(value: string) {
 }
 
 function createOrderNo(targetType: DonationTargetType) {
-  return createPaymentOrderNo(targetType === 'post' ? 'POST_DONATION' : 'SITE_DONATION');
+  if (targetType === 'post') {
+    return createPaymentOrderNo('POST_DONATION');
+  }
+
+  if (targetType === 'board') {
+    return createPaymentOrderNo('BOARD_DONATION');
+  }
+
+  return createPaymentOrderNo('SITE_DONATION');
 }
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
@@ -114,7 +134,7 @@ async function getSiteByName(siteName: string) {
 
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, is_shutdown')
+    .select('id, site_key, site_label, site_type, is_shutdown')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -142,7 +162,7 @@ async function getBoardByName({ siteId, boardName }: { siteId: string; boardName
 
   const boardResult = await supabaseAdmin
     .from('boards')
-    .select('id, board_key, board_label')
+    .select('id, board_key, board_label, board_type, is_active')
     .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
@@ -157,7 +177,17 @@ async function getBoardByName({ siteId, boardName }: { siteId: string; boardName
     throw new Error('게시판 정보를 찾을 수 없습니다.');
   }
 
-  return boardResult.data as BoardRow;
+  const board = boardResult.data as BoardRow;
+
+  if (!board.is_active) {
+    throw new Error('현재 후원할 수 없는 게시판입니다.');
+  }
+
+  if (board.board_type === 'page') {
+    throw new Error('페이지 게시판은 후원할 수 없습니다.');
+  }
+
+  return board;
 }
 
 async function getPostBySlug({ siteId, boardId, contentId }: { siteId: string; boardId: string; contentId: string }) {
@@ -269,6 +299,31 @@ async function getDonationTarget({
     };
   }
 
+  if (targetType === 'board') {
+    if (site.site_type !== 'community') {
+      throw new Error('게시판 후원은 커뮤니티에서만 가능합니다.');
+    }
+
+    if (!boardName) {
+      throw new Error('boardName이 유효하지 않습니다.');
+    }
+
+    const board = await getBoardByName({
+      siteId: site.id,
+      boardName,
+    });
+
+    return {
+      targetType: 'board',
+      paymentType: PAYMENT_TYPE.DONATION_BOARD,
+      paymentTargetType: PAYMENT_TARGET_TYPE.BOARD,
+      site,
+      board,
+      post: null,
+      orderName: `${board.board_label || board.board_key} 게시판 후원`,
+    };
+  }
+
   if (!boardName) {
     throw new Error('boardName이 유효하지 않습니다.');
   }
@@ -327,6 +382,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as DonationStartBody;
+
     const siteName = normalizeText(body.siteName).toLowerCase();
     const targetTypeValue = normalizeText(body.targetType).toLowerCase();
     const targetType = isDonationTargetType(targetTypeValue) ? targetTypeValue : 'site';
@@ -369,6 +425,13 @@ export async function POST(request: NextRequest) {
     failUrl.searchParams.set('paymentType', target.paymentType);
     failUrl.searchParams.set('targetType', target.paymentTargetType);
     failUrl.searchParams.set('amount', String(amount));
+
+    if (target.targetType === 'board') {
+      successUrl.searchParams.set('boardId', target.board.id);
+      successUrl.searchParams.set('boardName', target.board.board_key);
+      failUrl.searchParams.set('boardId', target.board.id);
+      failUrl.searchParams.set('boardName', target.board.board_key);
+    }
 
     if (target.targetType === 'post') {
       successUrl.searchParams.set('boardId', target.board.id);
