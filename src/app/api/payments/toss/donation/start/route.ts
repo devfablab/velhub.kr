@@ -89,14 +89,14 @@ function isNumericSlug(value: string) {
 
 function createOrderNo(targetType: DonationTargetType) {
   if (targetType === 'post') {
-    return createPaymentOrderNo('POST_DONATION');
+    return createPaymentOrderNo('DONATION_POST');
   }
 
   if (targetType === 'board') {
-    return createPaymentOrderNo('BOARD_DONATION');
+    return createPaymentOrderNo('DONATION_BOARD');
   }
 
-  return createPaymentOrderNo('SITE_DONATION');
+  return createPaymentOrderNo('DONATION_SITE');
 }
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
