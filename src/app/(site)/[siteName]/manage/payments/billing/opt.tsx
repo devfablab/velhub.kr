@@ -373,7 +373,7 @@ export default function Opt() {
     void loadData();
   }, [loadData, siteName]);
 
-  async function handleBillingAuth(purpose: 'plan_subscription' | 'billing_method') {
+  async function handleBillingAuth(purpose: 'plan_subscription' | 'billing_method', addMethod: boolean) {
     try {
       setIsProcessing(true);
       setErrorMessage('');
@@ -383,6 +383,8 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
+      const url = addMethod ? '/api/payments/toss/billing-method/start' : '/api/payments/toss/plan-billing/start';
+
       const hadBillingMethod = Boolean(billingData.billingMethods?.length);
       const orderName =
         purpose === 'billing_method'
@@ -391,7 +393,7 @@ export default function Opt() {
             ? '데브허브 사이트 요금제 무료체험 시작'
             : '데브허브 사이트 요금제 결제수단 등록';
 
-      const response = await fetch('/api/payments/toss/billing-method/start', {
+      const response = await fetch(url, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -715,7 +717,7 @@ export default function Opt() {
                       type="button"
                       className="button small submit"
                       onClick={() => {
-                        void handleBillingAuth('plan_subscription');
+                        void handleBillingAuth('plan_subscription', false);
                       }}
                       disabled={isProcessing}
                     >
@@ -804,7 +806,7 @@ export default function Opt() {
                     type="button"
                     className="button small action"
                     onClick={() => {
-                      void handleBillingAuth('billing_method');
+                      void handleBillingAuth('billing_method', true);
                     }}
                     disabled={isProcessing}
                   >
