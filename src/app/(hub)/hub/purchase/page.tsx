@@ -134,15 +134,15 @@ export default async function Page() {
             <h2>결제 요약</h2>
             <dl className={styles.summary}>
               <div className="paper">
-                <dt>총 결제금액</dt>
+                <dt>주문 총액</dt>
                 <dd>{formatAmount(result.summary.totalAmount)}</dd>
               </div>
               <div className="paper">
-                <dt>총 환불금액</dt>
+                <dt>환불금액</dt>
                 <dd>{formatAmount(result.summary.totalRefundedAmount)}</dd>
               </div>
               <div className="paper">
-                <dt>실결제금액</dt>
+                <dt>실제 결제금액</dt>
                 <dd>{formatAmount(result.summary.netAmount)}</dd>
               </div>
             </dl>
