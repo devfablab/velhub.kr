@@ -118,7 +118,7 @@ function getDonationTitle(props: Props) {
     return '게시판 후원';
   }
 
-  return '후원';
+  return '블로그 후원';
 }
 
 function getSuccessUrl(props: Props) {

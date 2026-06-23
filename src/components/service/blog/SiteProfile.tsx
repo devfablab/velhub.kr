@@ -45,6 +45,11 @@ type MembershipStatusResponse = {
   error?: string;
 };
 
+type DonationStatusResponse = {
+  isEnabled?: boolean;
+  error?: string;
+};
+
 type MembershipStartResponse = {
   mode?: 'billing_auth' | 'direct_billing';
   clientKey?: string;
@@ -102,6 +107,7 @@ export default function SiteProfile() {
   const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
   const [membershipErrorMessage, setMembershipErrorMessage] = useState('');
   const [isMembershipProcessing, setIsMembershipProcessing] = useState(false);
+  const [isDonationEnabled, setIsDonationEnabled] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -123,6 +129,22 @@ export default function SiteProfile() {
       setIsMembershipEnabled(Boolean(result.isEnabled));
       setMembershipPrice(result.price ?? null);
       setMembershipStatus(result.membershipStatus ?? 'none');
+    }
+
+    async function loadDonationStatus() {
+      const response = await fetch(`/api/payments/toss/donation/status?siteName=${siteName}&targetType=site`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as DonationStatusResponse;
+
+      if (!response.ok) {
+        setIsDonationEnabled(false);
+        return;
+      }
+
+      setIsDonationEnabled(Boolean(result.isEnabled));
     }
 
     async function loadSiteProfile() {
@@ -149,7 +171,7 @@ export default function SiteProfile() {
         setProfilePictureUrl(normalizeText(result.profilePictureUrl));
         setProfileLogoUrl(normalizeText(result.profileLogoUrl));
 
-        await loadMembershipStatus();
+        await Promise.all([loadMembershipStatus(), loadDonationStatus()]);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -350,12 +372,15 @@ export default function SiteProfile() {
       </div>
 
       <div className={styles.action}>
-        <DonationButton
-          siteName={siteName}
-          className="button small submit"
-          disabled={isMembershipProcessing}
-          onProcessingChange={setIsDonationProcessing}
-        />
+        {isDonationEnabled ? (
+          <DonationButton
+            siteName={siteName}
+            targetType="site"
+            buttonText="블로그 후원"
+            disabled={isMembershipProcessing}
+            onProcessingChange={setIsDonationProcessing}
+          />
+        ) : null}
 
         {isMembershipEnabled ? (
           <button

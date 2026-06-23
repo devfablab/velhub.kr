@@ -19,12 +19,8 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -41,6 +37,7 @@ type StatusResponse = {
   boardName: string | null;
   commentProvider: CommentProvider;
   markdown_status: string | null;
+  authority: string;
 };
 
 type CreateResponse = {
@@ -216,6 +213,7 @@ export default function Opt() {
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
   const [hasBoard, setHasBoard] = useState(false);
+  const [authority, setAuthority] = useState('');
   const [boardName, setBoardName] = useState<string | null>(null);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
@@ -268,6 +266,7 @@ export default function Opt() {
         setBoardName(statusResult.boardName);
         setCommentProvider(statusResult.commentProvider);
         setIsComment(statusResult.commentProvider !== 'none');
+        setAuthority(statusResult.authority);
 
         if (statusResult.hasBoard && statusResult.boardName) {
           const [categoryResponse, seriesResponse] = await Promise.all([
@@ -524,7 +523,7 @@ export default function Opt() {
       return;
     }
 
-    if (!hasBoard || !boardName) {
+    if (!hasBoard && authority !== 'staff') {
       setErrorMessage('최초 글은 스텝만 작성 가능합니다');
       return;
     }
@@ -535,7 +534,9 @@ export default function Opt() {
     try {
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
 
-      const createResponse = await fetch(`/api/boards/${boardName}/new`, {
+      const targetUrl = hasBoard && boardName ? `/api/boards/${boardName}/new` : '/api/manage/contents/blog-posts/new';
+
+      const createResponse = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -579,8 +580,7 @@ export default function Opt() {
         throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
-      if (ti === 'i') router.replace(`/${siteName}/b/${createResult.slug}`);
-      else router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
+      router.replace(`/${siteName}/b/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 개설에 실패했습니다.');
@@ -608,7 +608,7 @@ export default function Opt() {
     );
   }
 
-  if (!hasBoard) {
+  if (!hasBoard && authority !== 'staff') {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>

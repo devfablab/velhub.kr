@@ -63,6 +63,7 @@ export async function GET(request: Request) {
         boardId: board.data?.id ?? null,
         siteId: rhizome.data.id,
         commentProvider: blog.data.comment_provider,
+        authority: session.case,
       });
     }
 

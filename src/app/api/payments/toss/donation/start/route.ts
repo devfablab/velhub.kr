@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { getTossClientKey } from '@/lib/payments/toss';
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -274,6 +274,47 @@ async function getBoardSeriesCount({ siteId, boardId }: { siteId: string; boardI
   return seriesCountResult.count ?? 0;
 }
 
+async function validateSiteDonationTarget(site: SiteRow) {
+  const supabaseAdmin = getSupabaseAdmin();
+
+  if (site.site_type !== 'blog') {
+    throw new Error('블로그 후원은 블로그에서만 가능합니다.');
+  }
+
+  const seriesCountResult = await supabaseAdmin
+    .from('board_series')
+    .select('id', { count: 'exact', head: true })
+    .eq('site_id', site.id);
+
+  if (seriesCountResult.error) {
+    console.error(seriesCountResult.error);
+
+    throw new Error('블로그 연재 개수를 확인하지 못했습니다.');
+  }
+
+  if ((seriesCountResult.count ?? 0) < 2) {
+    throw new Error('블로그 후원은 연재가 2개 이상 있는 블로그에서만 가능합니다.');
+  }
+
+  const membershipSettingResult = await supabaseAdmin
+    .from('subscription_settings')
+    .select('id, is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+    .eq('target_id', site.id)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+    .maybeSingle();
+
+  if (membershipSettingResult.error) {
+    console.error(membershipSettingResult.error);
+
+    throw new Error('블로그 멤버십 설정을 확인하지 못했습니다.');
+  }
+
+  if (membershipSettingResult.data?.is_enabled) {
+    throw new Error('블로그 멤버십이 설정된 블로그는 블로그 후원을 사용할 수 없습니다.');
+  }
+}
+
 async function getDonationTarget({
   siteName,
   targetType,
@@ -288,6 +329,7 @@ async function getDonationTarget({
   const site = await getSiteByName(siteName);
 
   if (targetType === 'site') {
+    await validateSiteDonationTarget(site);
     return {
       targetType: 'site',
       paymentType: PAYMENT_TYPE.DONATION_SITE,
@@ -295,7 +337,7 @@ async function getDonationTarget({
       site,
       board: null,
       post: null,
-      orderName: `${site.site_label || site.site_key} 후원`,
+      orderName: `${site.site_label || site.site_key} 블로그 후원`,
     };
   }
 
@@ -322,6 +364,10 @@ async function getDonationTarget({
       post: null,
       orderName: `${board.board_label || board.board_key} 게시판 후원`,
     };
+  }
+
+  if (targetType === 'series') {
+    throw new Error('연재 후원은 아직 준비 중입니다.');
   }
 
   if (!boardName) {
