@@ -16,6 +16,7 @@ type BillingMethod = {
   id: string;
   provider: string;
   cardCompany: string | null;
+  cardCompanyCode: string | null;
   cardNumberLabel: string;
   cardType: string | null;
   ownerType: string | null;

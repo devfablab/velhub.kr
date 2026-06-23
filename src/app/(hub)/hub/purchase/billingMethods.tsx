@@ -62,8 +62,8 @@ export default function BillingMethods({ billingMethods }: BillingMethodsProps) 
         },
         body: JSON.stringify({
           orderName: '데브허브 결제 수단 추가',
-          successUrl: `${window.location.origin}/hub/purchase/billing/success`,
-          failUrl: `${window.location.origin}/hub/purchase/billing/fail`,
+          successUrl: `${window.location.origin}/hub/purchase/success`,
+          failUrl: `${window.location.origin}/hub/purchase/fail`,
         }),
       });
 
@@ -120,6 +120,10 @@ export default function BillingMethods({ billingMethods }: BillingMethodsProps) 
         open={Boolean(normalizeText(errorMessage))}
         message={errorMessage}
         autoHideDuration={3000}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
         onClose={() => setErrorMessage('')}
       />
     </>

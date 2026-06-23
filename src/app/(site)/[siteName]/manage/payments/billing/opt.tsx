@@ -391,7 +391,7 @@ export default function Opt() {
             ? '데브허브 사이트 요금제 무료체험 시작'
             : '데브허브 사이트 요금제 결제수단 등록';
 
-      const response = await fetch('/api/payments/toss/plan-billing/start', {
+      const response = await fetch('/api/payments/toss/billing-method/start', {
         method: 'POST',
         credentials: 'include',
         headers: {

@@ -23,6 +23,7 @@ type BillingMethodRow = {
   id: string;
   provider: string;
   card_company: string | null;
+  card_company_code: string | null;
   card_number_masked: string | null;
   card_type: string | null;
   owner_type: string | null;
@@ -244,7 +245,7 @@ export async function GET() {
       supabaseAdmin
         .from('subscription_billing_methods')
         .select(
-          'id, provider, card_company, card_number_masked, card_type, owner_type, is_default, created_at, updated_at',
+          'id, provider, card_company, card_company_code, card_number_masked, card_type, owner_type, is_default, created_at, updated_at',
         )
         .eq('user_id', session.authUserId)
         .order('is_default', { ascending: false })
@@ -355,6 +356,7 @@ export async function GET() {
         id: billingMethod.id,
         provider: billingMethod.provider,
         cardCompany: billingMethod.card_company,
+        cardCompanyCode: billingMethod.card_company_code,
         cardNumberLabel: formatCardNumber(billingMethod.card_number_masked),
         cardType: billingMethod.card_type,
         ownerType: billingMethod.owner_type,
