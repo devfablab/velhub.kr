@@ -46,7 +46,7 @@ type MembershipResponse = {
 };
 
 function formatAmount(value: number) {
-  return `${value.toLocaleString('ko-KR')}원`;
+  return `${value.toLocaleString('ko-KR')} 원`;
 }
 
 function formatDateTime(value: string | null) {
@@ -116,26 +116,24 @@ export default async function Page() {
         <Content>
           <section className={`paper ${styles.paper}`}>
             <h2>멤버십 결제 요약</h2>
-            <p>
-              총 결제금액
-              <br />
-              {formatAmount(result.summary.totalAmount)}
-            </p>
-            <p>
-              총 환불금액
-              <br />
-              {formatAmount(result.summary.totalRefundedAmount)}
-            </p>
-            <p>
-              실결제금액
-              <br />
-              {formatAmount(result.summary.netAmount)}
-            </p>
-            <p>
-              결제 건수
-              <br />
-              {result.summary.count.toLocaleString('ko-KR')}건
-            </p>
+            <dl className={styles.summary}>
+              <div className="paper">
+                <dt>결제 총액</dt>
+                <dd>{formatAmount(result.summary.totalAmount)}</dd>
+              </div>
+              <div className="paper">
+                <dt>환불금액</dt>
+                <dd>{formatAmount(result.summary.totalRefundedAmount)}</dd>
+              </div>
+              <div className="paper">
+                <dt>실제 결제금액</dt>
+                <dd>{formatAmount(result.summary.netAmount)}</dd>
+              </div>
+              <div className="paper">
+                <dt>결제 건수</dt>
+                <dd>{result.summary.count.toLocaleString('ko-KR')} 건</dd>
+              </div>
+            </dl>
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>

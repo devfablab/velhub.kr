@@ -62,7 +62,7 @@ type PurchaseResponse = {
 };
 
 function formatAmount(value: number) {
-  return `${value.toLocaleString('ko-KR')}원`;
+  return `${value.toLocaleString('ko-KR')} 원`;
 }
 
 function formatDateTime(value: string | null) {
@@ -188,10 +188,10 @@ export default async function Page() {
                       <TableCell component="th" scope="col">
                         상태
                       </TableCell>
-                      <TableCell component="th" scope="col">
+                      <TableCell component="th" scope="col" sx={{ textAlign: 'right' }}>
                         금액
                       </TableCell>
-                      <TableCell component="th" scope="col">
+                      <TableCell component="th" scope="col" sx={{ textAlign: 'right' }}>
                         일시
                       </TableCell>
                     </TableRow>
@@ -212,8 +212,10 @@ export default async function Page() {
                           </TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(displayAmount)}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                            {formatAmount(displayAmount)}
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                             {formatDateTime(payment.approvedAt ?? payment.createdAt)}
                           </TableCell>
                         </TableRow>

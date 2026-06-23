@@ -40,6 +40,10 @@
       flex-direction: row
       gap: ds.rem(7)
 
+      @include ds.mq(maxExtraSmall)
+        display: grid
+        grid-template-columns: repeat(1, 1fr)
+
       div
         @include ds.col
         gap: ds.rem(7)
@@ -55,7 +59,18 @@
             color: ds.$hex-bright
 
         dd
+          text-align: right
           font-size: ds.rem(14)
+
+    td
+      a
+        text-decoration: underline
+
+        html[data-theme="yellow-light"] &
+          color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
 
 .home-content
   .profile
