@@ -231,53 +231,46 @@ export default function Opt() {
 
           {siteType === 'blog' && dashboard.blog ? (
             <>
-              <StatCard
-                label="재방문율"
-                value={formatPercent(dashboard.blog.revisit.rate)}
-                description={`재방문 ${formatNumber(dashboard.blog.revisit.revisitVisitors)}명 / 전체 ${formatNumber(
-                  dashboard.blog.revisit.totalVisitors,
-                )}명`}
-              />
-
               <div className={`paper ${styles.paper}`}>
-                <Stack spacing={1.5}>
-                  <Typography component="h2" variant="subtitle1">
-                    인기글 순위
-                  </Typography>
+                <Typography variant="subtitle2">재방문율</Typography>
+                <Typography variant="body2">
+                  {formatPercent(dashboard.blog.revisit.rate)} (재방문{' '}
+                  {formatNumber(dashboard.blog.revisit.revisitVisitors)} 명 / 전체
+                  {formatNumber(dashboard.blog.revisit.totalVisitors)} 명)
+                </Typography>
+              </div>
 
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
+              <div className={`paper ${styles['paper-table']}`}>
+                <Typography variant="subtitle2">인기글 순위</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>순위</TableCell>
+                        <TableCell>글</TableCell>
+                        <TableCell align="right">조회수</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {dashboard.blog.popularPosts.length > 0 ? (
+                        dashboard.blog.popularPosts.map((post, index) => {
+                          const href = getPostHref(siteName, post);
+                          return (
+                            <TableRow key={post.id}>
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}</TableCell>
+                              <TableCell align="right">{formatNumber(post.postCount)}</TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
                         <TableRow>
-                          <TableCell>순위</TableCell>
-                          <TableCell>글</TableCell>
-                          <TableCell align="right">조회수</TableCell>
+                          <TableCell colSpan={3}>인기글 정보가 없습니다.</TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {dashboard.blog.popularPosts.length > 0 ? (
-                          dashboard.blog.popularPosts.map((post, index) => {
-                            const href = getPostHref(siteName, post);
-
-                            return (
-                              <TableRow key={post.id}>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>
-                                  {href ? <Anchor href={href}>{post.subject || '(제목 없음)'}</Anchor> : post.subject}
-                                </TableCell>
-                                <TableCell align="right">{formatNumber(post.postCount)}</TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={3}>인기글 정보가 없습니다.</TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </div>
             </>
           ) : null}
