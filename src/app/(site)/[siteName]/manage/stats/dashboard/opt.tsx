@@ -202,9 +202,12 @@ export default function Opt() {
                     {formatNumber(dashboard.community.todayJoin.unapproved)} 명 포함)
                   </Typography>
                 </div>
-                <StatCard label="일주일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.week)}명`} />
-                <StatCard label="30일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.month)}명`} />
-                <StatCard label="총 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.total)}명`} />
+                <StatCard
+                  label="일주일 가입자 수"
+                  value={`${formatNumber(dashboard.community.approvedJoin.week)} 명`}
+                />
+                <StatCard label="30일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.month)} 명`} />
+                <StatCard label="총 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.total)} 명`} />
               </div>
               <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
                 비활동 유저 통계
@@ -213,11 +216,11 @@ export default function Opt() {
               <div className={`paper ${styles['stack-paper']}`}>
                 <StatCard
                   label="일주일 전 마지막 접속 유저 수"
-                  value={`${formatNumber(dashboard.community.inactiveMembers.week)}명`}
+                  value={`${formatNumber(dashboard.community.inactiveMembers.week)} 명`}
                 />
                 <StatCard
                   label="30일 이전 마지막 접속 유저 수"
-                  value={`${formatNumber(dashboard.community.inactiveMembers.month)}명`}
+                  value={`${formatNumber(dashboard.community.inactiveMembers.month)} 명`}
                 />
               </div>
             </>
