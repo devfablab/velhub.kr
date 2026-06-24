@@ -210,7 +210,7 @@ export default async function Page() {
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>
                             <Anchor href={payment.targetHref}>{payment.targetLabel}</Anchor>
                           </TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.paymentTypeLabel}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                             {formatAmount(displayAmount)}
