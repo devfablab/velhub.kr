@@ -156,7 +156,7 @@ function createPaymentDisplayInfo({
     return {
       siteLabel,
       siteHref,
-      targetLabel: '-',
+      targetLabel: '',
       targetHref: siteHref,
     };
   }
