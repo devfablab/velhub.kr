@@ -183,8 +183,8 @@ export default function Opt() {
           </Typography>
           <div className={`paper ${styles['stack-paper']}`}>
             <StatCard label="오늘 접속자 수" value={`${formatNumber(dashboard.visits.today)} 명`} />
-            <StatCard label="일주일간 접속자 수" value={`${formatNumber(dashboard.visits.week)} 명`} />
-            <StatCard label="30일간 접속자 수" value={`${formatNumber(dashboard.visits.month)} 명`} />
+            <StatCard label="일주일 접속자 수" value={`${formatNumber(dashboard.visits.week)} 명`} />
+            <StatCard label="30일 접속자 수" value={`${formatNumber(dashboard.visits.month)} 명`} />
             <StatCard label="총 접속자 수" value={`${formatNumber(dashboard.visits.total)} 명`} />
           </div>
 
@@ -202,14 +202,8 @@ export default function Opt() {
                     {formatNumber(dashboard.community.todayJoin.unapproved)} 명 포함)
                   </Typography>
                 </div>
-                <StatCard
-                  label="일주일간 가입자 수"
-                  value={`${formatNumber(dashboard.community.approvedJoin.week)}명`}
-                />
-                <StatCard
-                  label="30일간 가입자 수"
-                  value={`${formatNumber(dashboard.community.approvedJoin.month)}명`}
-                />
+                <StatCard label="일주일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.week)}명`} />
+                <StatCard label="30일 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.month)}명`} />
                 <StatCard label="총 가입자 수" value={`${formatNumber(dashboard.community.approvedJoin.total)}명`} />
               </div>
               <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
@@ -218,11 +212,11 @@ export default function Opt() {
 
               <div className={`paper ${styles['stack-paper']}`}>
                 <StatCard
-                  label="마지막 접속일 일주일 전 유저 수"
+                  label="일주일 전 마지막 접속 유저 수"
                   value={`${formatNumber(dashboard.community.inactiveMembers.week)}명`}
                 />
                 <StatCard
-                  label="마지막 접속일 30일 이전 유저 수"
+                  label="30일 이전 마지막 접속 유저 수"
                   value={`${formatNumber(dashboard.community.inactiveMembers.month)}명`}
                 />
               </div>
