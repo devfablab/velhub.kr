@@ -63,7 +63,11 @@
           font-size: ds.rem(14)
 
     td
-      a
+      button
+        padding: 0
+        background-color: transparent
+
+      a, button
         text-decoration: underline
 
         html[data-theme="yellow-light"] &
@@ -546,3 +550,49 @@
 
             em
               font-style: normal
+
+.detail-billing
+  display: flex
+  flex-direction: column
+  gap: ds.rem(3)
+  div
+    display: flex
+    flex-direction: row
+    justify-content: space-between
+    align-items: center
+
+    dt, dd
+      font-size: ds.rem(14)
+
+    dt
+      @include ds.fw(neo, 600)
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-primary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-bright
+
+    dd
+      opacity: .9
+      text-align: right
+
+      html[data-theme="yellow-light"] &
+        color: ds.$hex-secondary
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
+
+    &:last-of-type
+      padding-top: ds.rem(3)
+
+      dt, dd
+        font-size: ds.rem(20)
+        color: ds.$hex-warning!important
+
+      dt
+        @include ds.fw(neo, 800)
+
+      dd
+        opacity: 1
+        @include ds.fw(pre, 800)

@@ -1,6 +1,7 @@
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type PaymentRow = {
   id: string;
@@ -55,6 +56,20 @@ function getPaymentStatusLabel(status: string) {
   }
 }
 
+function getPaymentMethodLabel(paymentMethod: string | null) {
+  const normalizedPaymentMethod = normalizeText(paymentMethod);
+
+  if (!normalizedPaymentMethod) {
+    return '결제수단 확인 필요';
+  }
+
+  if (normalizedPaymentMethod === 'card') {
+    return '카드';
+  }
+
+  return normalizedPaymentMethod;
+}
+
 function getSubscriptionStatusLabel(status: string, canceledAt: string | null, expiredAt: string | null) {
   if (expiredAt) return '중단';
   if (canceledAt) return '해지 예정';
@@ -99,9 +114,7 @@ export async function GET() {
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
-      .select(
-        'id, target_id, subscription_id, order_no, amount, refunded_amount, currency, status, payment_method, approved_at, created_at, refundable_until, failure_message',
-      )
+      .select('*')
       .eq('buyer_user_id', session.authUserId)
       .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
@@ -165,6 +178,10 @@ export async function GET() {
         const site = payment.target_id ? siteById.get(payment.target_id) : null;
         const subscription = payment.target_id ? latestSubscriptionBySiteId.get(payment.target_id) : null;
 
+        const paymentTypeLabel = '블로그 멤버십';
+        const isRefunded = payment.status === 'refunded' || payment.status === 'partially_refunded';
+        const isCanceled = Boolean(subscription?.canceled_at || subscription?.expired_at);
+
         return {
           id: payment.id,
           siteId: site?.id ?? null,
@@ -200,6 +217,26 @@ export async function GET() {
                 expiredAt: subscription.expired_at,
               }
             : null,
+          detail: {
+            detailType: 'billing',
+            siteLabel: site?.site_label || site?.site_key || '사이트 확인 필요',
+            targetLabel: null,
+            paymentTypeLabel,
+            paymentMethodLabel: getPaymentMethodLabel(payment.payment_method),
+            approvedAt: payment.approved_at,
+            createdAt: payment.created_at,
+            status: payment.status,
+            statusLabel: getPaymentStatusLabel(payment.status),
+            amount: payment.amount,
+            refundedAmount: payment.refunded_amount ?? 0,
+            orderNo: payment.order_no,
+            nextBillingAt: !isRefunded && !isCanceled ? (subscription?.next_billing_at ?? null) : null,
+            serviceEndsAt:
+              !isRefunded && isCanceled ? (subscription?.current_period_end ?? subscription?.expired_at ?? null) : null,
+            refundedAt: isRefunded ? (payment.approved_at ?? payment.created_at) : null,
+            refundableUntil: null,
+            isRefundable: false,
+          },
         };
       }),
     });

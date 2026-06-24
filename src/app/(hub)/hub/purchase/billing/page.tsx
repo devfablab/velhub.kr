@@ -1,6 +1,8 @@
 import { cookies, headers } from 'next/headers';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Content from '../tab';
 import Container from '../../menu';
+import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
 import styles from '@/app/hub.module.sass';
 
 type BillingPayment = {
@@ -32,6 +34,7 @@ type BillingPayment = {
     canceledAt: string | null;
     expiredAt: string | null;
   } | null;
+  detail: BillingPopupDetail;
 };
 
 type BillingResponse = {
@@ -140,30 +143,58 @@ export default async function Page() {
             <h2>요금제 결제내역</h2>
 
             {result.payments.length ? (
-              <div className={styles.items}>
-                <ol>
-                  {result.payments.map((payment) => (
-                    <li key={payment.id}>
-                      <strong>{payment.siteLabel ?? payment.siteName ?? '사이트 정보 없음'}</strong>
-                      <p>
-                        {payment.planLabel ?? '요금제 정보 없음'} · {payment.statusLabel} ·{' '}
-                        {formatAmount(payment.netAmount)}
-                      </p>
-                      {payment.subscription ? (
-                        <p>
-                          구독 상태: {payment.subscription.statusLabel}
-                          <br />
-                          다음 결제일: {formatDateTime(payment.subscription.nextBillingAt)}
-                        </p>
-                      ) : null}
-                      <div className={styles.tail}>
-                        <time>{formatDateTime(payment.approvedAt ?? payment.createdAt)}</time>
-                        {payment.refundedAmount > 0 ? <em>환불 {formatAmount(payment.refundedAmount)}</em> : null}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+              <TableContainer className={styles.items}>
+                <Table size="small" summary="요금제 결제내역">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        사이트
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        대상
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        결제유형
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        상태
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        금액
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        일시
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.payments.map((payment) => {
+                      const isRefunded = payment.status === 'refunded';
+                      const isPartiallyRefunded = payment.status === 'partially_refunded';
+                      const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
+
+                      return (
+                        <TableRow key={payment.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {payment.siteLabel ?? payment.siteName ?? '사이트 정보 없음'}
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.planLabel ?? '요금제 정보 없음'}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>요금제</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            <BillingPopup paymentId={payment.id} detail={payment.detail}>
+                              {payment.statusLabel}
+                            </BillingPopup>
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(displayAmount)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {formatDateTime(payment.approvedAt ?? payment.createdAt)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
               <p>요금제 결제내역이 없습니다.</p>
             )}

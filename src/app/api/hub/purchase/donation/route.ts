@@ -1,6 +1,7 @@
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -41,6 +42,32 @@ function getPaymentStatusLabel(status: string) {
     default:
       return '확인 필요';
   }
+}
+
+function getPaymentMethodLabel(paymentMethod: string | null) {
+  const normalizedPaymentMethod = normalizeText(paymentMethod);
+
+  if (!normalizedPaymentMethod) {
+    return '결제수단 확인 필요';
+  }
+
+  if (normalizedPaymentMethod === 'card') {
+    return '카드';
+  }
+
+  return normalizedPaymentMethod;
+}
+
+function isRefundableDonation(payment: PaymentRow) {
+  if (payment.status !== 'paid') {
+    return false;
+  }
+
+  if (!payment.refundable_until) {
+    return false;
+  }
+
+  return new Date(payment.refundable_until).getTime() > Date.now();
 }
 
 function getSummary(payments: PaymentRow[]) {
@@ -130,6 +157,7 @@ export async function GET() {
       summary: getSummary(payments),
       payments: payments.map((payment) => {
         const site = payment.target_id ? siteById.get(payment.target_id) : null;
+        const paymentTypeLabel = '블로그 후원';
 
         return {
           id: payment.id,
@@ -149,6 +177,28 @@ export async function GET() {
           createdAt: payment.created_at,
           refundableUntil: payment.refundable_until,
           failureMessage: payment.failure_message,
+          detail: {
+            detailType: 'donation',
+            siteLabel: site?.site_label || site?.site_key || '사이트 확인 필요',
+            targetLabel: null,
+            paymentTypeLabel,
+            paymentMethodLabel: getPaymentMethodLabel(payment.payment_method),
+            approvedAt: payment.approved_at,
+            createdAt: payment.created_at,
+            status: payment.status,
+            statusLabel: getPaymentStatusLabel(payment.status),
+            amount: payment.amount,
+            refundedAmount: payment.refunded_amount ?? 0,
+            orderNo: payment.order_no,
+            nextBillingAt: null,
+            serviceEndsAt: null,
+            refundedAt:
+              payment.status === 'refunded' || payment.status === 'partially_refunded'
+                ? (payment.approved_at ?? payment.created_at)
+                : null,
+            refundableUntil: payment.refundable_until,
+            isRefundable: isRefundableDonation(payment),
+          },
         };
       }),
     });

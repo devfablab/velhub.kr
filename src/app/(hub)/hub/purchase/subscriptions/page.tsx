@@ -1,6 +1,8 @@
 import { cookies, headers } from 'next/headers';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Content from '../tab';
 import Container from '../../menu';
+import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
 import styles from '@/app/hub.module.sass';
 
 type SubscriptionPayment = {
@@ -42,6 +44,7 @@ type SubscriptionPayment = {
     canceledAt: string | null;
     expiredAt: string | null;
   } | null;
+  detail: BillingPopupDetail;
 };
 
 type SubscriptionsResponse = {
@@ -69,22 +72,6 @@ function formatDateTime(value: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(value));
-}
-
-function getTargetLabel(payment: SubscriptionPayment) {
-  if (payment.seriesLabel) {
-    return payment.seriesLabel;
-  }
-
-  if (payment.boardLabel) {
-    return payment.boardLabel;
-  }
-
-  return '구독 대상 정보 없음';
-}
-
-function getSiteLabel(payment: SubscriptionPayment) {
-  return payment.siteLabel ?? payment.siteName ?? '';
 }
 
 async function getSubscriptionsPurchase() {
@@ -166,34 +153,56 @@ export default async function Page() {
             <h2>구독 결제내역</h2>
 
             {result.payments.length ? (
-              <div className={styles.items}>
-                <ol>
-                  {result.payments.map((payment) => {
-                    const siteLabel = getSiteLabel(payment);
+              <TableContainer className={styles.items}>
+                <Table size="small" aria-label="구독 결제내역">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        사이트
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        대상
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        결제유형
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        상태
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        금액
+                      </TableCell>
+                      <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
+                        일시
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.payments.map((payment) => {
+                      const isRefunded = payment.status === 'refunded';
+                      const isPartiallyRefunded = payment.status === 'partially_refunded';
+                      const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
 
-                    return (
-                      <li key={payment.id}>
-                        <strong>{getTargetLabel(payment)}</strong>
-                        <p>
-                          {payment.paymentTypeLabel} · {payment.statusLabel} · {formatAmount(payment.netAmount)}
-                        </p>
-                        {siteLabel ? <p>{siteLabel}</p> : null}
-                        {payment.subscription ? (
-                          <p>
-                            구독 상태: {payment.subscription.statusLabel}
-                            <br />
-                            다음 결제일: {formatDateTime(payment.subscription.nextBillingAt)}
-                          </p>
-                        ) : null}
-                        <div className={styles.tail}>
-                          <time>{formatDateTime(payment.approvedAt ?? payment.createdAt)}</time>
-                          {payment.refundedAmount > 0 ? <em>환불 {formatAmount(payment.refundedAmount)}</em> : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
+                      return (
+                        <TableRow key={payment.id}>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.siteLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.targetLabel ?? '-'}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.paymentTypeLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            <BillingPopup paymentId={payment.id} detail={payment.detail}>
+                              {payment.statusLabel}
+                            </BillingPopup>
+                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(displayAmount)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                            {formatDateTime(payment.approvedAt ?? payment.createdAt)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
               <p>구독 결제내역이 없습니다.</p>
             )}
