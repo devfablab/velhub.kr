@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams, usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import {
   Avatar,
   Box,
@@ -48,7 +48,7 @@ type ContainerProps = {
   pageTitle?: string;
   pageBack?: string;
   pageEnterance?: boolean;
-  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments';
+  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments' | 'stats';
   children: React.ReactNode;
 };
 
@@ -631,6 +631,21 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       return [
         { href: `/${siteName}/manage/team/members`, label: '팀원 목록' },
         { href: `/${siteName}/manage/team/info`, label: '팀원 정보', startsWith: true },
+      ];
+    }
+
+    if (menu === 'stats') {
+      return [
+        { href: `/${siteName}/manage/stats/dashboard`, label: '대시보드' },
+        ...(siteType === 'blog'
+          ? [
+              { href: `/${siteName}/manage/stats/hot-post`, label: '인기글 순위' },
+              { href: `/${siteName}/manage/stats/repeat-visit`, label: '재방문율' },
+            ]
+          : [
+              { href: `/${siteName}/manage/stats/join`, label: '가입자수' },
+              { href: `/${siteName}/manage/stats/inactive-user `, label: '비활동 유저' },
+            ]),
       ];
     }
 

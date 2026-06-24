@@ -15,6 +15,16 @@ type SiteRow = {
   profile_logo: string | null;
 };
 
+type SiteVisitCountRow = {
+  id: string;
+  visit_count: number | string | null;
+};
+
+type SiteVisitRow = {
+  id: string;
+  last_visited_at: string | null;
+};
+
 type AccountRow = {
   email: string;
   user_name: string;
@@ -43,6 +53,7 @@ type BlogFontRow = {
 };
 
 const CHECKIN_INTERVAL_MS = 30 * 60 * 1000;
+const VISIT_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 function getPublicUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
@@ -93,6 +104,40 @@ function isSiteType(value: string | null | undefined): value is SiteType {
   return value === 'blog' || value === 'community';
 }
 
+function getForwardedIp(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  return normalizeText(value.split(',')[0]);
+}
+
+function getRequestIp(request: Request) {
+  const forwardedForIp = getForwardedIp(request.headers.get('x-forwarded-for'));
+
+  if (forwardedForIp) {
+    return forwardedForIp;
+  }
+
+  const realIp = normalizeText(request.headers.get('x-real-ip'));
+
+  if (realIp) {
+    return realIp;
+  }
+
+  const cfConnectingIp = normalizeText(request.headers.get('cf-connecting-ip'));
+
+  if (cfConnectingIp) {
+    return cfConnectingIp;
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    return 'local';
+  }
+
+  return null;
+}
+
 function shouldIncreaseCheckin(lastCheckinAt: string | null | undefined) {
   if (!lastCheckinAt) {
     return true;
@@ -105,6 +150,20 @@ function shouldIncreaseCheckin(lastCheckinAt: string | null | undefined) {
   }
 
   return Date.now() - lastCheckinTime >= CHECKIN_INTERVAL_MS;
+}
+
+function shouldIncreaseVisit(lastVisitedAt: string | null | undefined) {
+  if (!lastVisitedAt) {
+    return true;
+  }
+
+  const lastVisitedTime = new Date(lastVisitedAt).getTime();
+
+  if (Number.isNaN(lastVisitedTime)) {
+    return true;
+  }
+
+  return Date.now() - lastVisitedTime >= VISIT_INTERVAL_MS;
 }
 
 async function getBlogFontSettings(siteId: string, siteType: SiteType | null) {
@@ -140,6 +199,84 @@ async function getBlogFontSettings(siteId: string, siteType: SiteType | null) {
   };
 }
 
+async function processVisit(siteId: string, request: Request) {
+  const ipAddress = getRequestIp(request);
+
+  if (!ipAddress) {
+    return;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const siteVisitCountResult = await supabaseAdmin
+    .from('sites')
+    .select('id, visit_count')
+    .eq('site_id', siteId)
+    .maybeSingle();
+
+  if (siteVisitCountResult.error || !siteVisitCountResult.data) {
+    return;
+  }
+
+  const siteVisitCount = siteVisitCountResult.data as SiteVisitCountRow;
+  const nowIsoString = new Date().toISOString();
+
+  const visitResult = await supabaseAdmin
+    .from('site_visits')
+    .select('id, last_visited_at')
+    .eq('site_id', siteVisitCount.id)
+    .eq('ip_address', ipAddress)
+    .order('last_visited_at', { ascending: false })
+    .limit(1);
+
+  if (visitResult.error) {
+    return;
+  }
+
+  const visit = (visitResult.data?.[0] ?? null) as SiteVisitRow | null;
+
+  if (!visit) {
+    const insertVisitResult = await supabaseAdmin.from('site_visits').insert({
+      site_id: siteVisitCount.id,
+      ip_address: ipAddress,
+      last_visited_at: nowIsoString,
+    });
+
+    if (insertVisitResult.error) {
+      return;
+    }
+
+    await supabaseAdmin
+      .from('sites')
+      .update({
+        visit_count: (Number(siteVisitCount.visit_count ?? 0) || 0) + 1,
+      })
+      .eq('id', siteVisitCount.id);
+
+    return;
+  }
+
+  const shouldCount = shouldIncreaseVisit(visit.last_visited_at);
+
+  const updateVisitResult = await supabaseAdmin
+    .from('site_visits')
+    .update({
+      last_visited_at: nowIsoString,
+    })
+    .eq('id', visit.id);
+
+  if (updateVisitResult.error || !shouldCount) {
+    return;
+  }
+
+  await supabaseAdmin
+    .from('sites')
+    .update({
+      visit_count: (Number(siteVisitCount.visit_count ?? 0) || 0) + 1,
+    })
+    .eq('id', siteVisitCount.id);
+}
+
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
@@ -164,6 +301,8 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
     const siteType = isSiteType(site.site_type) ? site.site_type : null;
     const blogFontSettings = await getBlogFontSettings(site.id, siteType);
+
+    await processVisit(site.id, request);
 
     const session = await verifySession({ siteId: site.id });
 
