@@ -448,6 +448,7 @@ export default function Opt() {
           </Typography>
 
           <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">오늘 재방문율</Typography>
             <Typography variant="body2">
               {formatPercent(repeatVisitStats.summary.repeatVisitRate)} % (재방문{' '}
               {formatNumber(repeatVisitStats.summary.repeatVisitorCount)} 명{' / '}
