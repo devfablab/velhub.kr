@@ -77,14 +77,13 @@ function formatPercent(value: number | null | undefined) {
   })}%`;
 }
 
-function StatCard({ label, value, description }: StatCardProps) {
+function StatCard({ label, value }: StatCardProps) {
   return (
     <div className={`paper ${styles.paper}`}>
       <Typography variant="subtitle2">{label}</Typography>
       <Typography variant="body2" sx={{ textAlign: 'right' }}>
         {value}
       </Typography>
-      {description ? <Typography variant="body2">{description}</Typography> : null}
     </div>
   );
 }
