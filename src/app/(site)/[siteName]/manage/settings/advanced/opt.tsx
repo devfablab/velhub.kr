@@ -249,14 +249,6 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack component="form" gap={3} onSubmit={handleSubmit}>
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">멤버 목록 공개여부</Typography>
-              <RadioGroup value={visibilityMember} onChange={handleVisibilityMemberChange} row>
-                <FormControlLabel value="public" control={<Radio />} label="공개" />
-                <FormControlLabel value="private" control={<Radio />} label="비공개" />
-              </RadioGroup>
-            </div>
-
-            <div className={`paper ${styles.paper}`}>
               <Typography variant="subtitle2">검색엔진 등록 키워드</Typography>
               <TextField
                 value={searchKeywords}
