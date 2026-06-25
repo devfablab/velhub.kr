@@ -242,9 +242,9 @@ export default function Opt() {
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>순위</TableCell>
-                        <TableCell>글</TableCell>
-                        <TableCell align="right">조회수</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>순위</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>글</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>조회수</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -253,9 +253,13 @@ export default function Opt() {
                           const href = getPostHref(siteName, post);
                           return (
                             <TableRow key={post.id}>
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell>{href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}</TableCell>
-                              <TableCell align="right">{formatNumber(post.postCount)}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{index + 1}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                {href ? <Anchor href={href}>{post.subject}</Anchor> : post.subject}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                                {formatNumber(post.postCount)} 회
+                              </TableCell>
                             </TableRow>
                           );
                         })
