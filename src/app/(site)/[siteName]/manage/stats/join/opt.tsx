@@ -67,6 +67,17 @@ type JoinAreaChartProps = {
   dataKey: 'periodJoinCount' | 'cumulativeJoinCount';
 };
 
+function getChartColor(dataKey: JoinAreaChartProps['dataKey']) {
+  if (dataKey === 'periodJoinCount') {
+    return '#007ADB';
+  }
+  return '#FF555D';
+}
+
+function getGradientId(dataKey: JoinAreaChartProps['dataKey']) {
+  return `${dataKey}-gradient`;
+}
+
 const RANGE_OPTIONS: {
   value: Exclude<RangeType, 'custom'>;
   label: string;
@@ -202,16 +213,35 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
 }
 
 function JoinAreaChart({ title, data, dataKey }: JoinAreaChartProps) {
+  const chartColor = getChartColor(dataKey);
+  const gradientId = getGradientId(dataKey);
+
   return (
     <div className={`paper ${styles.paper}`}>
       <Typography variant="subtitle2">{title}</Typography>
       <ResponsiveContainer width="100%" height={240}>
         <AreaChart data={data} margin={{ top: 12, right: 12, bottom: 0, left: -18 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={chartColor} stopOpacity={0.45} />
+              <stop offset="95%" stopColor={chartColor} stopOpacity={0.04} />
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="label" tickMargin={8} />
-          <YAxis allowDecimals={false} tickFormatter={(value) => formatNumber(Number(value))} />
-          <Tooltip formatter={(value) => `${formatNumber(Number(value))} 명`} />
-          <Area type="monotone" dataKey={dataKey} stroke="currentColor" fill="currentColor" fillOpacity={0.18} />
+          <XAxis dataKey="label" tickMargin={8} tick={{ fontSize: 12 }} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickFormatter={(value) => formatNumber(Number(value))} />
+          <Tooltip formatter={(value) => `${formatNumber(Number(value))} 명`} wrapperStyle={{ fontSize: 12 }} />
+          <Area
+            type="monotone"
+            dataKey={dataKey}
+            stroke={chartColor}
+            fill={`url(#${gradientId})`}
+            strokeWidth={2}
+            dot={false}
+            activeDot={{
+              r: 4,
+            }}
+          />
         </AreaChart>
       </ResponsiveContainer>
     </div>
