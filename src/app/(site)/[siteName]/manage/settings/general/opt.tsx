@@ -256,10 +256,6 @@ export default function Opt() {
     applyColorSet(nextValue);
   }
 
-  function handleSwitchChange(event: InputChangeEvent) {
-    setDraftValue(event.currentTarget.checked);
-  }
-
   async function handleCheckSiteKey() {
     if (!siteInfo || isCheckingSiteKey) {
       return;
@@ -1031,56 +1027,6 @@ export default function Opt() {
                   type="button"
                   className="button small action"
                   onClick={() => startEdit('visibility_type', siteInfo.visibility_type)}
-                >
-                  변경
-                </button>
-              </Stack>
-            )}
-          </div>
-          <div className={`paper ${styles.paper}`}>
-            <Typography variant="subtitle2">운영 여부</Typography>
-            {editingField === 'is_shutdown' ? (
-              <Stack
-                direction="row"
-                gap={2}
-                sx={{
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <FormControlLabel
-                  label={Boolean(draftValue) ? '중단' : '운영'}
-                  control={<IOSSwitch sx={{ m: 1 }} checked={Boolean(draftValue)} onChange={handleSwitchChange} />}
-                />
-
-                <Stack
-                  direction="row"
-                  gap={2}
-                  sx={{
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                  }}
-                >
-                  <button type="button" className="button medium cancel" onClick={() => cancelEdit()}>
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={() => void saveField('is_shutdown')}
-                    disabled={isSubmitting}
-                  >
-                    변경 완료
-                  </button>
-                </Stack>
-              </Stack>
-            ) : (
-              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography variant="subtitle2">{siteInfo.is_shutdown ? '중단함' : '운영중'}</Typography>
-                <button
-                  type="button"
-                  className="button small action"
-                  onClick={() => startEdit('is_shutdown', siteInfo.is_shutdown)}
                 >
                   변경
                 </button>

@@ -12,6 +12,8 @@ type RouteContext = {
 type RequestBody = {
   visibilityMember?: string | null;
   searchKeywords?: string | null;
+  googleAnalytics?: string | null;
+  googleSearch?: string | null;
 };
 
 function normalizeSearchKeywords(rawValue: string) {
@@ -22,6 +24,22 @@ function normalizeSearchKeywords(rawValue: string) {
     .map((keyword) => keyword.trim().replace(/\s+/g, ' '))
     .filter(Boolean)
     .join(', ');
+}
+
+function getGoogleLogMessage(isGoogleAnalyticsChanged: boolean, isGoogleSearchChanged: boolean) {
+  if (isGoogleAnalyticsChanged && isGoogleSearchChanged) {
+    return '구글 애널리틱스 & 구글 서치 콘솔 적용';
+  }
+
+  if (isGoogleAnalyticsChanged) {
+    return '구글 애널리틱스 적용';
+  }
+
+  if (isGoogleSearchChanged) {
+    return '구글 서치 콘솔 적용';
+  }
+
+  return null;
 }
 
 async function checkAccess(siteName: string) {
@@ -134,6 +152,8 @@ export async function POST(request: Request, context: RouteContext) {
 
     const visibilityMember = normalizeText(requestBody.visibilityMember);
     const normalizedSearchKeywords = normalizeSearchKeywords(normalizeText(requestBody.searchKeywords));
+    const googleAnalytics = normalizeText(requestBody.googleAnalytics);
+    const googleSearch = normalizeText(requestBody.googleSearch);
 
     if (visibilityMember !== 'public' && visibilityMember !== 'private') {
       return Response.json({ error: '멤버 목록 공개여부 값이 올바르지 않습니다.' }, { status: 400 });
@@ -147,7 +167,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const currentSites = await access.supabaseAdmin
       .from('sites')
-      .select('site_id, visibility_member, search_keywords')
+      .select('site_id, visibility_member, search_keywords, google_analytics, google_search')
       .eq('site_id', access.siteId)
       .maybeSingle();
 
@@ -161,28 +181,30 @@ export async function POST(request: Request, context: RouteContext) {
 
     const previousVisibilityMember = normalizeText(currentSites.data.visibility_member);
     const previousSearchKeywords = normalizeText(currentSites.data.search_keywords);
+    const previousGoogleAnalytics = normalizeText(currentSites.data.google_analytics);
+    const previousGoogleSearch = normalizeText(currentSites.data.google_search);
 
     const isVisibilityChanged = previousVisibilityMember !== visibilityMember;
     const isSearchKeywordsChanged = previousSearchKeywords !== normalizedSearchKeywords;
+    const isGoogleAnalyticsChanged = previousGoogleAnalytics !== googleAnalytics;
+    const isGoogleSearchChanged = previousGoogleSearch !== googleSearch;
 
-    let logMessage: string | null = null;
-
-    if (isVisibilityChanged && isSearchKeywordsChanged) {
-      logMessage = '멤버 목록 공개여부, 검색용 키워드 변경';
-    } else if (isVisibilityChanged) {
-      logMessage = '멤버 목록 공개여부 변경';
-    } else if (isSearchKeywordsChanged) {
-      logMessage = '검색용 키워드 변경';
-    }
+    const logMessages = [
+      isVisibilityChanged ? '멤버 목록 공개여부 변경' : null,
+      isSearchKeywordsChanged ? '검색용 키워드 변경' : null,
+      getGoogleLogMessage(isGoogleAnalyticsChanged, isGoogleSearchChanged),
+    ].filter((message): message is string => Boolean(message));
 
     const updateResult = await access.supabaseAdmin
       .from('sites')
       .update({
         visibility_member: visibilityMember,
         search_keywords: normalizedSearchKeywords || null,
+        google_analytics: googleAnalytics || null,
+        google_search: googleSearch || null,
         updated_at: new Date().toISOString(),
         updated_by: access.updatedByStigmaId,
-        log: logMessage,
+        log: logMessages.length > 0 ? logMessages.join(', ') : null,
       })
       .eq('site_id', access.siteId);
 

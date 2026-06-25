@@ -42,6 +42,8 @@ type SitesRow = {
   log: string | null;
   visibility_member: string | null;
   search_keywords: string | null;
+  google_analytics: string | null;
+  google_search: string | null;
 };
 
 type GetResponse = {
@@ -72,6 +74,8 @@ export default function Opt() {
 
   const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>('public');
   const [searchKeywords, setSearchKeywords] = useState('');
+  const [googleAnalytics, setGoogleAnalytics] = useState('');
+  const [googleSearch, setGoogleSearch] = useState('');
 
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -119,6 +123,8 @@ export default function Opt() {
 
     setVisibilityMember(result.sites.visibility_member === 'private' ? 'private' : 'public');
     setSearchKeywords(result.sites.search_keywords ?? '');
+    setGoogleAnalytics(result.sites.google_analytics ?? '');
+    setGoogleSearch(result.sites.google_search ?? '');
   }
 
   useEffect(() => {
@@ -153,6 +159,14 @@ export default function Opt() {
     setSearchKeywords(event.currentTarget.value);
   }
 
+  function handleGoogleAnalyticsChange(event: InputChangeEvent) {
+    setGoogleAnalytics(event.currentTarget.value);
+  }
+
+  function handleGoogleSearchChange(event: InputChangeEvent) {
+    setGoogleSearch(event.currentTarget.value);
+  }
+
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
@@ -173,6 +187,8 @@ export default function Opt() {
         body: JSON.stringify({
           visibilityMember,
           searchKeywords,
+          googleAnalytics,
+          googleSearch,
         }),
       });
 
@@ -248,6 +264,28 @@ export default function Opt() {
                 fullWidth
                 size="small"
                 helperText="쉼표(,)로 구분해서 입력"
+              />
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle2">Google Analytics ID</Typography>
+              <TextField
+                value={googleAnalytics}
+                onChange={handleGoogleAnalyticsChange}
+                fullWidth
+                size="small"
+                placeholder="G-XXXXXXXXXX"
+              />
+            </div>
+
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle2">Google Search Console 인증 코드</Typography>
+              <TextField
+                value={googleSearch}
+                onChange={handleGoogleSearchChange}
+                fullWidth
+                size="small"
+                helperText="meta 태그의 content 값만 입력하세요"
               />
             </div>
 
