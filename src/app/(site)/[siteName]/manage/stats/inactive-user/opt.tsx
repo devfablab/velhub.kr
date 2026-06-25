@@ -18,25 +18,23 @@ type DateValue = {
   day: string;
 };
 
-type JoinChartRow = {
+type InactiveChartRow = {
   label: string;
   startDate: string;
   endDate: string;
-  periodJoinCount: number;
-  cumulativeJoinCount: number;
+  periodInactiveCount: number;
+  cumulativeInactiveCount: number;
 };
 
-type JoinStatsResponse = {
+type InactiveStatsResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
     siteType: 'community';
   };
   summary?: {
-    todayApprovedJoinCount: number;
-    todayUnapprovedJoinCount: number;
-    todayTotalJoinCount: number;
-    totalApprovedJoinCount: number;
+    weekInactiveMemberCount: number;
+    monthInactiveMemberCount: number;
   };
   range?: {
     type: RangeType;
@@ -44,7 +42,7 @@ type JoinStatsResponse = {
     startDate: string;
     endDate: string;
   };
-  chart?: JoinChartRow[];
+  chart?: InactiveChartRow[];
   error?: string;
 };
 
@@ -61,22 +59,11 @@ type DateSelectGroupProps = {
   onChange: (nextValue: DateValue) => void;
 };
 
-type JoinAreaChartProps = {
+type InactiveAreaChartProps = {
   title: string;
-  data: JoinChartRow[];
-  dataKey: 'periodJoinCount' | 'cumulativeJoinCount';
+  data: InactiveChartRow[];
+  dataKey: 'periodInactiveCount' | 'cumulativeInactiveCount';
 };
-
-function getChartColor(dataKey: JoinAreaChartProps['dataKey']) {
-  if (dataKey === 'periodJoinCount') {
-    return '#007ADB';
-  }
-  return '#FF555D';
-}
-
-function getGradientId(dataKey: JoinAreaChartProps['dataKey']) {
-  return `${dataKey}-gradient`;
-}
 
 const RANGE_OPTIONS: {
   value: Exclude<RangeType, 'custom'>;
@@ -146,6 +133,18 @@ function createYearOptions() {
   return createNumberOptions(currentYear - 5, currentYear + 1);
 }
 
+function getChartColor(dataKey: InactiveAreaChartProps['dataKey']) {
+  if (dataKey === 'periodInactiveCount') {
+    return '#007ADB';
+  }
+
+  return '#FF555D';
+}
+
+function getGradientId(dataKey: InactiveAreaChartProps['dataKey']) {
+  return `${dataKey}-gradient`;
+}
+
 function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGroupProps) {
   const monthOptions = createNumberOptions(1, 12);
   const dayOptions = createNumberOptions(1, getDaysInMonth(value.year, value.month));
@@ -179,6 +178,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
             </MenuItem>
           ))}
         </Select>
+
         <Select
           size="small"
           value={value.month}
@@ -193,6 +193,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
             </MenuItem>
           ))}
         </Select>
+
         <Select
           size="small"
           value={value.day}
@@ -212,7 +213,7 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
   );
 }
 
-function JoinAreaChart({ title, data, dataKey }: JoinAreaChartProps) {
+function InactiveAreaChart({ title, data, dataKey }: InactiveAreaChartProps) {
   const chartColor = getChartColor(dataKey);
   const gradientId = getGradientId(dataKey);
 
@@ -260,12 +261,12 @@ export default function Opt() {
   const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'week' });
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
-  const [joinStats, setJoinStats] = useState<JoinStatsResponse | null>(null);
+  const [inactiveStats, setInactiveStats] = useState<InactiveStatsResponse | null>(null);
 
   useEffect(() => {
-    async function loadJoinStats() {
+    async function loadInactiveStats() {
       try {
-        const isFirstLoad = !joinStats;
+        const isFirstLoad = !inactiveStats;
 
         if (isFirstLoad) {
           setIsInitialLoading(true);
@@ -285,33 +286,33 @@ export default function Opt() {
           query.set('endDate', appliedRequest.endDate);
         }
 
-        const response = await fetch(`/api/manage/stats/join?${query.toString()}`, {
+        const response = await fetch(`/api/manage/stats/inactive?${query.toString()}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const result = (await response.json()) as JoinStatsResponse;
+        const result = (await response.json()) as InactiveStatsResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '가입자수 통계를 불러오지 못했습니다.');
+          throw new Error(result.error ?? '비활동 유저 통계를 불러오지 못했습니다.');
         }
 
-        setJoinStats((prevJoinStats) => {
-          if (!prevJoinStats) {
+        setInactiveStats((prevInactiveStats) => {
+          if (!prevInactiveStats) {
             return result;
           }
 
           return {
-            ...prevJoinStats,
+            ...prevInactiveStats,
             range: result.range,
             chart: result.chart,
           };
         });
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입자수 통계를 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '비활동 유저 통계를 불러오지 못했습니다.');
         } else {
-          setErrorMessage('가입자수 통계를 불러오지 못했습니다.');
+          setErrorMessage('비활동 유저 통계를 불러오지 못했습니다.');
         }
       } finally {
         setIsInitialLoading(false);
@@ -326,7 +327,7 @@ export default function Opt() {
       return;
     }
 
-    void loadJoinStats();
+    void loadInactiveStats();
   }, [appliedRequest, siteName]);
 
   function handleSelectPreset(range: Exclude<RangeType, 'custom'>) {
@@ -348,7 +349,7 @@ export default function Opt() {
 
   if (isInitialLoading) {
     return (
-      <Container pageTitle="가입자수" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
+      <Container pageTitle="비활동 유저" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <div className={`paper ${styles.paper}`}>
@@ -362,13 +363,13 @@ export default function Opt() {
     );
   }
 
-  if (errorMessage || !joinStats?.summary || !joinStats.chart) {
+  if (errorMessage || !inactiveStats?.summary || !inactiveStats.chart) {
     return (
-      <Container pageTitle="가입자수" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
+      <Container pageTitle="비활동 유저" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
         <div className={`container ${styles.container}`}>
           <div className={`content ${styles.content} ${styles['content-manage']}`}>
             <div className={`paper paper-error ${styles.paper}`}>
-              {errorMessage || '가입자수 통계를 불러오지 못했습니다.'}
+              {errorMessage || '비활동 유저 통계를 불러오지 못했습니다.'}
             </div>
           </div>
         </div>
@@ -377,30 +378,29 @@ export default function Opt() {
   }
 
   return (
-    <Container pageTitle="가입자수" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
+    <Container pageTitle="비활동 유저" pageBack={`/${siteName}/manage/stats/dashboard`} menu="stats">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
-            가입자수 요약
+            비활동 유저 요약
           </Typography>
+
           <div className={`paper ${styles['stack-paper']}`}>
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">오늘 신규 가입자 수</Typography>
-              <Typography variant="body2">
-                {formatNumber(joinStats.summary.todayTotalJoinCount)} 명{' / '}
-                승인 {formatNumber(joinStats.summary.todayApprovedJoinCount)} 명{' / '}
-                비승인 {formatNumber(joinStats.summary.todayUnapprovedJoinCount)} 명
-              </Typography>
+              <Typography variant="subtitle2">일주일 전 비활동 유저 수</Typography>
+              <Typography variant="body2">{formatNumber(inactiveStats.summary.weekInactiveMemberCount)} 명</Typography>
             </div>
+
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">총 가입자 수</Typography>
-              <Typography variant="body2">{formatNumber(joinStats.summary.totalApprovedJoinCount)} 명</Typography>
+              <Typography variant="subtitle2">30일 이전 비활동 유저 수</Typography>
+              <Typography variant="body2">{formatNumber(inactiveStats.summary.monthInactiveMemberCount)} 명</Typography>
             </div>
           </div>
 
           <Typography variant="subtitle2" sx={{ p: 2, pb: 0 }}>
-            가입자수 조회
+            비활동 유저 조회
           </Typography>
+
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">기간 선택</Typography>
             <div className={styles.buttons}>
@@ -414,6 +414,7 @@ export default function Opt() {
                   {option.label}
                 </button>
               ))}
+
               <button
                 type="button"
                 className={`button small ${selectedRange === 'custom' ? 'action' : 'cancel'}`}
@@ -445,12 +446,20 @@ export default function Opt() {
               <div className={`paper ${styles.paper}`}>
                 <Typography variant="subtitle2">조회 기간</Typography>
                 <Typography variant="body2">
-                  {joinStats.range?.startDate} ~ {joinStats.range?.endDate}
+                  {inactiveStats.range?.startDate} ~ {inactiveStats.range?.endDate}
                 </Typography>
               </div>
 
-              <JoinAreaChart title="기간별 가입자 수" data={joinStats.chart} dataKey="periodJoinCount" />
-              <JoinAreaChart title="누적 가입자 수" data={joinStats.chart} dataKey="cumulativeJoinCount" />
+              <InactiveAreaChart
+                title="기간별 비활동 유저 수"
+                data={inactiveStats.chart}
+                dataKey="periodInactiveCount"
+              />
+              <InactiveAreaChart
+                title="누적 비활동 유저 수"
+                data={inactiveStats.chart}
+                dataKey="cumulativeInactiveCount"
+              />
             </>
           )}
         </div>

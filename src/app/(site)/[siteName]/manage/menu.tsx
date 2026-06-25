@@ -644,7 +644,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
             ]
           : [
               { href: `/${siteName}/manage/stats/join`, label: '가입자수' },
-              { href: `/${siteName}/manage/stats/inactive-user `, label: '비활동 유저' },
+              { href: `/${siteName}/manage/stats/inactive-user`, label: '비활동 유저' },
             ]),
       ];
     }
