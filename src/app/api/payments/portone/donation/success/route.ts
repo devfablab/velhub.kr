@@ -92,6 +92,8 @@ type PortOnePaymentConfirmResult = {
   status: string;
   approvedAt: string;
   currency?: string;
+  transactionId?: string | null;
+  rawData?: unknown;
 };
 
 function validateDonationAmount(amount: number) {
@@ -109,7 +111,6 @@ function validateDonationAmount(amount: number) {
 
   return amount % 1000 === 0;
 }
-
 
 class PortOnePaymentConfirmError extends Error {
   rawData: unknown;
