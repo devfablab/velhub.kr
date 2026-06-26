@@ -426,20 +426,21 @@ export function getPortOnePaymentTransactionNo(payment: PortOnePayment) {
 }
 
 export function getPortOnePaymentFromResponse(paymentResponse: PortOnePaymentResponse) {
-  if (paymentResponse.payment) {
-    const payment = paymentResponse.payment;
+  const paymentData = isRecord(paymentResponse.payment) ? paymentResponse.payment : paymentResponse;
+  const payment = paymentData as PortOnePayment;
 
-    if (!payment.status && payment.paidAt) {
-      return {
-        ...payment,
-        status: 'PAID',
-      };
-    }
+  if (!payment.status && payment.paidAt) {
+    return {
+      ...payment,
+      status: 'PAID',
+    };
+  }
 
+  if (payment.status || payment.paidAt || payment.approvedAt || payment.pgTxId || payment.transactionId) {
     return payment;
   }
 
-  console.error('PortOne payment field missing:', JSON.stringify(paymentResponse, null, 2));
+  console.error('PortOne payment parse failed:', JSON.stringify(paymentResponse, null, 2));
 
   throw new Error('포트원 결제 응답에서 payment 정보를 확인하지 못했습니다.');
 }
