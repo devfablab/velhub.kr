@@ -15,7 +15,7 @@ const PAYMENT_ORDER_NO_PREFIX = {
 type PaymentOrderNoType = keyof typeof PAYMENT_ORDER_NO_PREFIX;
 
 export function createPaymentOrderNo(type: PaymentOrderNoType) {
-  const randomText = crypto.randomBytes(8).toString('hex');
+  const randomText = crypto.randomBytes(3).toString('hex');
   const timestamp = Date.now();
 
   return `${PAYMENT_ORDER_NO_PREFIX[type]}-${timestamp}-${randomText}`;

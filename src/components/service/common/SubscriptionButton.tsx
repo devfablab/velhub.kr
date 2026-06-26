@@ -313,6 +313,8 @@ export default function SubscriptionButton({
         billingKeyMethod: 'CARD',
         issueId: result.orderNo,
         issueName: result.orderName,
+        displayAmount: result.amount,
+        currency: 'KRW',
         customer: {
           customerId: result.customerKey,
           fullName: result.customerName,

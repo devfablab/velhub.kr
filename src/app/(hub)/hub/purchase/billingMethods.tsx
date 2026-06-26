@@ -14,6 +14,7 @@ type PortOneBillingKeyResponse = {
 
 type BillingMethodStartResponse =
   | {
+      amount: number | undefined;
       customerName: string | undefined;
       storeId: string;
       channelKey: string;
@@ -135,6 +136,8 @@ export default function BillingMethods({ billingMethods }: BillingMethodsProps) 
         billingKeyMethod: 'CARD',
         issueId: result.orderNo,
         issueName: result.orderName,
+        displayAmount: result.amount,
+        currency: 'KRW',
         customer: {
           customerId: result.customerKey,
           fullName: result.customerName,

@@ -44,6 +44,7 @@ type PortOneBillingKeyPaymentParams = {
 export type PortOnePayment = {
   status: string;
   id: string;
+  pgTxId?: string;
   transactionId?: string;
   paymentId?: string;
   orderName?: string;
@@ -368,13 +369,14 @@ export async function requestPortOneBillingPayment({
         },
         amount: {
           total: amount,
-          currency: 'KRW',
         },
+        currency: 'KRW',
       }),
     },
     '자동결제에 실패했습니다.',
   );
 
+  console.error('PortOne billing payment response:', JSON.stringify(responseData, null, 2));
   return responseData as PortOnePaymentResponse;
 }
 
@@ -412,17 +414,34 @@ export async function cancelPortOnePayment({
 }
 
 export function getPortOnePaymentTransactionNo(payment: PortOnePayment) {
-  return typeof payment.transactionId === 'string' && payment.transactionId.trim()
-    ? payment.transactionId.trim()
-    : null;
+  if (typeof payment.transactionId === 'string' && payment.transactionId.trim()) {
+    return payment.transactionId.trim();
+  }
+
+  if (typeof payment.pgTxId === 'string' && payment.pgTxId.trim()) {
+    return payment.pgTxId.trim();
+  }
+
+  return null;
 }
 
 export function getPortOnePaymentFromResponse(paymentResponse: PortOnePaymentResponse) {
   if (paymentResponse.payment) {
-    return paymentResponse.payment;
+    const payment = paymentResponse.payment;
+
+    if (!payment.status && payment.paidAt) {
+      return {
+        ...payment,
+        status: 'PAID',
+      };
+    }
+
+    return payment;
   }
 
-  return paymentResponse as PortOnePayment;
+  console.error('PortOne payment field missing:', JSON.stringify(paymentResponse, null, 2));
+
+  throw new Error('포트원 결제 응답에서 payment 정보를 확인하지 못했습니다.');
 }
 
 export function assertPortOnePaidPayment(payment: PortOnePayment) {

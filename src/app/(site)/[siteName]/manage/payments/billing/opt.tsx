@@ -91,6 +91,7 @@ type PaymentItem = NonNullable<PlanBillingResponse['payments']>[number];
 
 type PlanBillingStartResponse =
   | {
+      amount: number | undefined;
       mode: 'billing_auth';
       storeId: string;
       channelKey: string;
@@ -510,6 +511,8 @@ export default function Opt() {
         billingKeyMethod: 'CARD',
         issueId: result.orderNo,
         issueName: result.orderName,
+        displayAmount: result.amount,
+        currency: 'KRW',
         customer: {
           customerId: result.customerKey,
           fullName: result.customerName,
