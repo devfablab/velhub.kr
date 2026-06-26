@@ -836,7 +836,11 @@ export default function Opt() {
                           <span>자동결제에 실패했습니다. 결제수단을 확인하거나 결제를 다시 시도해 주세요.</span>
                         </p>
                       ) : null}
-                      <Typography variant="body2">{formatDate(subscription.next_billing_at)}에 결제됩니다.</Typography>
+                      {subscription.next_billing_at ? (
+                        <Typography variant="body2">
+                          {formatDate(subscription.next_billing_at)}에 결제됩니다.
+                        </Typography>
+                      ) : null}
                     </Stack>
                   ) : (
                     <Typography variant="body2">{planSubscriptionGuideText}</Typography>

@@ -1,4 +1,11 @@
-import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import {
+  PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  PAYMENT_TARGET_TYPE,
+  PAYMENT_TYPE,
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_TYPE,
+} from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -19,6 +26,21 @@ type PaymentRow = {
   created_at: string;
   refundable_until: string | null;
   failure_message: string | null;
+};
+
+type SubscriptionRow = {
+  id: string;
+  subscription_type: string;
+  target_type: string;
+  target_id: string;
+  status: string;
+  price: number;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  next_billing_at: string | null;
+  canceled_at: string | null;
+  expired_at: string | null;
+  created_at: string;
 };
 
 type SiteRow = {
@@ -43,32 +65,33 @@ type SeriesRow = {
   series_label: string | null;
 };
 
-type SubscriptionRow = {
-  id: string;
-  subscription_type: string;
-  target_type: string;
-  target_id: string;
-  status: string;
-  price: number;
-  current_period_start: string | null;
-  current_period_end: string | null;
-  next_billing_at: string | null;
-  canceled_at: string | null;
-  expired_at: string | null;
-  created_at: string;
+type SubscriptionDisplayInfo = {
+  site: SiteRow | null;
+  targetLabel: string;
+  paymentTypeLabel: string;
 };
 
-const SUCCESS_PAYMENT_STATUSES = ['paid', 'partially_refunded', 'refunded'];
+const SUCCESS_PAYMENT_STATUSES: string[] = [
+  PAYMENT_STATUS.PAID,
+  PAYMENT_STATUS.PARTIALLY_REFUNDED,
+  PAYMENT_STATUS.REFUNDED,
+];
+
+const SUBSCRIPTION_PAYMENT_TYPES = [PAYMENT_TYPE.SUBSCRIPTION_BOARD, PAYMENT_TYPE.SUBSCRIPTION_SERIES];
+
+function normalizePaymentStatus(status: string) {
+  return normalizeText(status).toLowerCase();
+}
 
 function getPaymentStatusLabel(status: string) {
-  switch (status) {
-    case 'paid':
+  switch (normalizePaymentStatus(status)) {
+    case PAYMENT_STATUS.PAID:
       return '결제 완료';
-    case 'failed':
+    case PAYMENT_STATUS.FAILED:
       return '결제 실패';
-    case 'refunded':
+    case PAYMENT_STATUS.REFUNDED:
       return '환불 완료';
-    case 'partially_refunded':
+    case PAYMENT_STATUS.PARTIALLY_REFUNDED:
       return '부분 환불';
     default:
       return '확인 필요';
@@ -76,13 +99,13 @@ function getPaymentStatusLabel(status: string) {
 }
 
 function getPaymentMethodLabel(paymentMethod: string | null) {
-  const normalizedPaymentMethod = normalizeText(paymentMethod);
+  const normalizedPaymentMethod = normalizeText(paymentMethod).toLowerCase();
 
   if (!normalizedPaymentMethod) {
     return '결제수단 확인 필요';
   }
 
-  if (normalizedPaymentMethod === 'card') {
+  if (normalizedPaymentMethod === PAYMENT_METHOD.CARD) {
     return '카드';
   }
 
@@ -90,33 +113,58 @@ function getPaymentMethodLabel(paymentMethod: string | null) {
 }
 
 function getSubscriptionStatusLabel(status: string, canceledAt: string | null, expiredAt: string | null) {
-  if (expiredAt) return '중단';
-  if (canceledAt) return '해지 예정';
+  const normalizedStatus = normalizeText(status).toLowerCase();
 
-  switch (status) {
-    case 'trialing':
+  if (expiredAt) {
+    return '중단';
+  }
+
+  if (canceledAt) {
+    return '해지 예정';
+  }
+
+  switch (normalizedStatus) {
+    case SUBSCRIPTION_STATUS.TRIALING:
       return '무료 이용 중';
-    case 'active':
+    case SUBSCRIPTION_STATUS.ACTIVE:
       return '이용 중';
-    case 'past_due':
+    case SUBSCRIPTION_STATUS.PAST_DUE:
       return '결제 유예 중';
-    case 'canceled':
-    case 'expired':
+    case SUBSCRIPTION_STATUS.CANCELED:
+    case SUBSCRIPTION_STATUS.EXPIRED:
       return '중단';
     default:
       return '확인 필요';
   }
 }
 
-function getPaymentTypeLabel(paymentType: string) {
-  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_BOARD) return '게시판 구독';
-  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_SERIES) return '연재 구독';
+function getSubscriptionPaymentTypeLabel(paymentType: string) {
+  switch (paymentType) {
+    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
+      return '게시판 구독';
+    case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
+      return '연재 구독';
+    default:
+      return '구독';
+  }
+}
 
-  return '구독';
+function getSubscriptionTypeByPaymentType(paymentType: string) {
+  switch (paymentType) {
+    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
+      return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
+    case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
+      return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
+    default:
+      return '';
+  }
 }
 
 function getSummary(payments: PaymentRow[]) {
-  const successPayments = payments.filter((payment) => SUCCESS_PAYMENT_STATUSES.includes(payment.status));
+  const successPayments = payments.filter((payment) =>
+    SUCCESS_PAYMENT_STATUSES.includes(normalizePaymentStatus(payment.status)),
+  );
+
   const totalAmount = successPayments.reduce((sum, payment) => sum + payment.amount, 0);
   const totalRefundedAmount = successPayments.reduce((sum, payment) => sum + (payment.refunded_amount ?? 0), 0);
 
@@ -128,8 +176,44 @@ function getSummary(payments: PaymentRow[]) {
   };
 }
 
-function getSubscriptionKey(targetType: string, targetId: string | null) {
-  return `${targetType}:${targetId ?? ''}`;
+function createSubscriptionDisplayInfo({
+  payment,
+  siteById,
+  boardById,
+  seriesById,
+}: {
+  payment: PaymentRow;
+  siteById: Map<string, SiteRow>;
+  boardById: Map<string, BoardRow>;
+  seriesById: Map<string, SeriesRow>;
+}): SubscriptionDisplayInfo {
+  const paymentTypeLabel = getSubscriptionPaymentTypeLabel(payment.payment_type);
+
+  if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id) {
+    const board = boardById.get(payment.target_id);
+
+    return {
+      site: board ? (siteById.get(board.site_id) ?? null) : null,
+      targetLabel: board?.board_label || board?.board_key || '게시판 확인 필요',
+      paymentTypeLabel,
+    };
+  }
+
+  if (payment.target_type === PAYMENT_TARGET_TYPE.SERIES && payment.target_id) {
+    const series = seriesById.get(payment.target_id);
+
+    return {
+      site: series ? (siteById.get(series.site_id) ?? null) : null,
+      targetLabel: series?.series_label || series?.series_key || '연재 확인 필요',
+      paymentTypeLabel,
+    };
+  }
+
+  return {
+    site: null,
+    targetLabel: '구독 대상 확인 필요',
+    paymentTypeLabel,
+  };
 }
 
 export async function GET() {
@@ -144,10 +228,27 @@ export async function GET() {
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
-      .select('*')
+      .select(
+        [
+          'id',
+          'payment_type',
+          'target_type',
+          'target_id',
+          'subscription_id',
+          'order_no',
+          'amount',
+          'refunded_amount',
+          'currency',
+          'status',
+          'payment_method',
+          'approved_at',
+          'created_at',
+          'refundable_until',
+          'failure_message',
+        ].join(', '),
+      )
       .eq('buyer_user_id', session.authUserId)
-      .in('payment_type', [PAYMENT_TYPE.SUBSCRIPTION_BOARD, PAYMENT_TYPE.SUBSCRIPTION_SERIES])
-      .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
+      .in('payment_type', SUBSCRIPTION_PAYMENT_TYPES)
       .order('created_at', { ascending: false });
 
     if (paymentsResult.error) {
@@ -156,74 +257,137 @@ export async function GET() {
       return Response.json({ error: '구독 구입내역을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const payments = (paymentsResult.data ?? []) as PaymentRow[];
-    const boardIds = Array.from(
+    const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
+
+    const boardTargetIds = payments
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
+      .map((payment) => payment.target_id)
+      .filter((targetId): targetId is string => Boolean(targetId));
+
+    const seriesTargetIds = payments
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
+      .map((payment) => payment.target_id)
+      .filter((targetId): targetId is string => Boolean(targetId));
+
+    const subscriptionIds = Array.from(
       new Set(
         payments
-          .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
-          .map((payment) => payment.target_id)
-          .filter((targetId): targetId is string => Boolean(targetId)),
-      ),
-    );
-    const seriesIds = Array.from(
-      new Set(
-        payments
-          .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
-          .map((payment) => payment.target_id)
-          .filter((targetId): targetId is string => Boolean(targetId)),
+          .map((payment) => payment.subscription_id)
+          .filter((subscriptionId): subscriptionId is string => Boolean(subscriptionId)),
       ),
     );
 
-    const [boardsResult, seriesResult, subscriptionsResult] = await Promise.all([
-      boardIds.length
-        ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardIds)
+    const [boardsResult, seriesResult, subscriptionsByIdResult] = await Promise.all([
+      boardTargetIds.length
+        ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardTargetIds)
         : { data: [], error: null },
-      seriesIds.length
+      seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
             .select('id, site_id, board_id, series_key, series_label')
-            .in('id', seriesIds)
+            .in('id', seriesTargetIds)
         : { data: [], error: null },
-      payments.length
+      subscriptionIds.length
         ? supabaseAdmin
             .from('subscriptions')
             .select(
-              'id, subscription_type, target_type, target_id, status, price, current_period_start, current_period_end, next_billing_at, canceled_at, expired_at, created_at',
+              [
+                'id',
+                'subscription_type',
+                'target_type',
+                'target_id',
+                'status',
+                'price',
+                'current_period_start',
+                'current_period_end',
+                'next_billing_at',
+                'canceled_at',
+                'expired_at',
+                'created_at',
+              ].join(', '),
             )
             .eq('subscriber_user_id', session.authUserId)
-            .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
-            .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
-            .order('created_at', { ascending: false })
+            .in('id', subscriptionIds)
         : { data: [], error: null },
     ]);
 
-    if (boardsResult.error) {
-      console.error(boardsResult.error);
+    if (boardsResult.error || seriesResult.error || subscriptionsByIdResult.error) {
+      console.error(boardsResult.error || seriesResult.error || subscriptionsByIdResult.error);
 
-      return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    if (seriesResult.error) {
-      console.error(seriesResult.error);
-
-      return Response.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    if (subscriptionsResult.error) {
-      console.error(subscriptionsResult.error);
-
-      return Response.json({ error: '구독 상태를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '구독 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     const boards = (boardsResult.data ?? []) as BoardRow[];
     const seriesList = (seriesResult.data ?? []) as SeriesRow[];
-    const subscriptions = (subscriptionsResult.data ?? []) as SubscriptionRow[];
+    const subscriptionsById = (subscriptionsByIdResult.data ?? []) as SubscriptionRow[];
 
     const boardById = new Map(boards.map((board) => [board.id, board]));
     const seriesById = new Map(seriesList.map((series) => [series.id, series]));
+    const subscriptionById = new Map(subscriptionsById.map((subscription) => [subscription.id, subscription]));
+
+    const subscriptionTargetPairs = payments
+      .map((payment) => ({
+        targetType: payment.target_type,
+        targetId: payment.target_id,
+        subscriptionType: getSubscriptionTypeByPaymentType(payment.payment_type),
+      }))
+      .filter(
+        (
+          pair,
+        ): pair is {
+          targetType: string;
+          targetId: string;
+          subscriptionType: string;
+        } => Boolean(pair.targetId && pair.subscriptionType),
+      );
+
+    const subscriptionTargetIds = Array.from(new Set(subscriptionTargetPairs.map((pair) => pair.targetId)));
+
+    const subscriptionsByTargetResult = subscriptionTargetIds.length
+      ? await supabaseAdmin
+          .from('subscriptions')
+          .select(
+            [
+              'id',
+              'subscription_type',
+              'target_type',
+              'target_id',
+              'status',
+              'price',
+              'current_period_start',
+              'current_period_end',
+              'next_billing_at',
+              'canceled_at',
+              'expired_at',
+              'created_at',
+            ].join(', '),
+          )
+          .eq('subscriber_user_id', session.authUserId)
+          .in('target_id', subscriptionTargetIds)
+          .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
+          .order('created_at', { ascending: false })
+      : { data: [], error: null };
+
+    if (subscriptionsByTargetResult.error) {
+      console.error(subscriptionsByTargetResult.error);
+
+      return Response.json({ error: '구독 상태를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const subscriptionsByTarget = (subscriptionsByTargetResult.data ?? []) as SubscriptionRow[];
+    const latestSubscriptionByTargetKey = new Map<string, SubscriptionRow>();
+
+    subscriptionsByTarget.forEach((subscription) => {
+      const targetKey = `${subscription.subscription_type}:${subscription.target_type}:${subscription.target_id}`;
+
+      if (!latestSubscriptionByTargetKey.has(targetKey)) {
+        latestSubscriptionByTargetKey.set(targetKey, subscription);
+      }
+    });
+
     const siteIds = Array.from(
       new Set([...boards.map((board) => board.site_id), ...seriesList.map((series) => series.site_id)]),
-    );
+    ).filter(Boolean);
 
     const sitesResult = siteIds.length
       ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label, site_type').in('id', siteIds)
@@ -237,61 +401,45 @@ export async function GET() {
 
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteById = new Map(sites.map((site) => [site.id, site]));
-    const latestSubscriptionByKey = new Map<string, SubscriptionRow>();
-
-    for (const subscription of subscriptions) {
-      const subscriptionKey = getSubscriptionKey(subscription.target_type, subscription.target_id);
-
-      if (!latestSubscriptionByKey.has(subscriptionKey)) {
-        latestSubscriptionByKey.set(subscriptionKey, subscription);
-      }
-    }
 
     return Response.json({
       summary: getSummary(payments),
       payments: payments.map((payment) => {
-        const board =
-          payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id
-            ? boardById.get(payment.target_id)
-            : null;
-        const series =
-          payment.target_type === PAYMENT_TARGET_TYPE.SERIES && payment.target_id
-            ? seriesById.get(payment.target_id)
-            : null;
-        const site = board ? siteById.get(board.site_id) : series ? siteById.get(series.site_id) : null;
-        const subscription = latestSubscriptionByKey.get(getSubscriptionKey(payment.target_type, payment.target_id));
-
-        const paymentTypeLabel = getPaymentTypeLabel(payment.payment_type);
-        const targetLabel =
-          payment.target_type === PAYMENT_TARGET_TYPE.BOARD
-            ? board?.board_label || board?.board_key || '게시판 확인 필요'
-            : series?.series_label || series?.series_key || '연재 확인 필요';
-        const isRefunded = payment.status === 'refunded' || payment.status === 'partially_refunded';
+        const paymentStatus = normalizePaymentStatus(payment.status);
+        const subscriptionType = getSubscriptionTypeByPaymentType(payment.payment_type);
+        const targetKey = `${subscriptionType}:${payment.target_type}:${payment.target_id}`;
+        const subscription =
+          (payment.subscription_id ? subscriptionById.get(payment.subscription_id) : null) ??
+          latestSubscriptionByTargetKey.get(targetKey) ??
+          null;
+        const displayInfo = createSubscriptionDisplayInfo({
+          payment,
+          siteById,
+          boardById,
+          seriesById,
+        });
+        const site = displayInfo.site;
+        const isRefunded =
+          paymentStatus === PAYMENT_STATUS.REFUNDED || paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED;
         const isCanceled = Boolean(subscription?.canceled_at || subscription?.expired_at);
 
         return {
           id: payment.id,
-          paymentType: payment.payment_type,
-          paymentTypeLabel,
-          targetType: payment.target_type,
-          targetId: payment.target_id,
           siteId: site?.id ?? null,
           siteName: site?.site_key ?? null,
           siteLabel: site?.site_label ?? null,
           siteType: site?.site_type ?? null,
-          boardId: board?.id ?? series?.board_id ?? null,
-          boardName: board?.board_key ?? null,
-          boardLabel: board?.board_label ?? null,
-          seriesId: series?.id ?? null,
-          seriesName: series?.series_key ?? null,
-          seriesLabel: series?.series_label ?? null,
+          paymentType: payment.payment_type,
+          targetType: payment.target_type,
+          targetId: payment.target_id,
+          targetLabel: displayInfo.targetLabel,
           orderNo: payment.order_no,
           amount: payment.amount,
           refundedAmount: payment.refunded_amount ?? 0,
           netAmount: payment.amount - (payment.refunded_amount ?? 0),
           currency: payment.currency ?? 'KRW',
-          status: payment.status,
-          statusLabel: getPaymentStatusLabel(payment.status),
+          status: paymentStatus,
+          statusLabel: getPaymentStatusLabel(paymentStatus),
           paymentMethod: payment.payment_method,
           approvedAt: payment.approved_at,
           createdAt: payment.created_at,
@@ -300,6 +448,7 @@ export async function GET() {
           subscription: subscription
             ? {
                 id: subscription.id,
+                subscriptionType: subscription.subscription_type,
                 status: subscription.status,
                 statusLabel: getSubscriptionStatusLabel(
                   subscription.status,
@@ -317,13 +466,13 @@ export async function GET() {
           detail: {
             detailType: 'billing',
             siteLabel: site?.site_label || site?.site_key || '사이트 확인 필요',
-            targetLabel,
-            paymentTypeLabel,
+            targetLabel: displayInfo.targetLabel,
+            paymentTypeLabel: displayInfo.paymentTypeLabel,
             paymentMethodLabel: getPaymentMethodLabel(payment.payment_method),
             approvedAt: payment.approved_at,
             createdAt: payment.created_at,
-            status: payment.status,
-            statusLabel: getPaymentStatusLabel(payment.status),
+            status: paymentStatus,
+            statusLabel: getPaymentStatusLabel(paymentStatus),
             amount: payment.amount,
             refundedAmount: payment.refunded_amount ?? 0,
             orderNo: payment.order_no,

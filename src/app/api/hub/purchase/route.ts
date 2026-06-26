@@ -1,3 +1,4 @@
+import { PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -67,7 +68,15 @@ type PaymentDisplayInfo = {
   targetHref: string;
 };
 
-const SUCCESS_PAYMENT_STATUSES = ['paid', 'partially_refunded', 'refunded'];
+const SUCCESS_PAYMENT_STATUSES: string[] = [
+  PAYMENT_STATUS.PAID,
+  PAYMENT_STATUS.PARTIALLY_REFUNDED,
+  PAYMENT_STATUS.REFUNDED,
+];
+
+function normalizePaymentStatus(status: string) {
+  return normalizeText(status).toLowerCase();
+}
 
 function formatCardNumber(cardNumberMasked: string | null | undefined) {
   const normalizedCardNumber = normalizeText(cardNumberMasked).replace(/\D/g, '');
@@ -81,23 +90,23 @@ function formatCardNumber(cardNumberMasked: string | null | undefined) {
 
 function getPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
-    case 'plan_billing':
+    case PAYMENT_TYPE.PLAN_BILLING:
       return '요금제';
-    case 'membership_blog':
+    case PAYMENT_TYPE.MEMBERSHIP_BLOG:
       return '블로그 멤버십';
-    case 'subscription_board':
+    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
       return '게시판 구독';
-    case 'subscription_series':
+    case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return '연재 구독';
-    case 'donation_site':
+    case PAYMENT_TYPE.DONATION_SITE:
       return '블로그 후원';
-    case 'donation_board':
+    case PAYMENT_TYPE.DONATION_BOARD:
       return '게시판 후원';
-    case 'donation_series':
+    case PAYMENT_TYPE.DONATION_SERIES:
       return '연재 후원';
-    case 'donation_post':
+    case PAYMENT_TYPE.DONATION_POST:
       return '포스팅 후원';
-    case 'purchase_post':
+    case PAYMENT_TYPE.PURCHASE_POST:
       return '포스팅 구매';
     default:
       return '기타';
@@ -105,14 +114,14 @@ function getPaymentTypeLabel(paymentType: string) {
 }
 
 function getPaymentStatusLabel(status: string) {
-  switch (status) {
-    case 'paid':
+  switch (normalizePaymentStatus(status)) {
+    case PAYMENT_STATUS.PAID:
       return '결제 완료';
-    case 'failed':
+    case PAYMENT_STATUS.FAILED:
       return '결제 실패';
-    case 'refunded':
+    case PAYMENT_STATUS.REFUNDED:
       return '환불 완료';
-    case 'partially_refunded':
+    case PAYMENT_STATUS.PARTIALLY_REFUNDED:
       return '부분 환불';
     default:
       return '확인 필요';
@@ -151,7 +160,7 @@ function createPaymentDisplayInfo({
   const siteLabel = getSiteLabel(site);
   const siteHref = getSiteHref(site);
 
-  if (payment.target_type === 'site') {
+  if (payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN) {
     return {
       siteLabel,
       siteHref,
@@ -160,7 +169,7 @@ function createPaymentDisplayInfo({
     };
   }
 
-  if (payment.target_type === 'board') {
+  if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD) {
     return {
       siteLabel,
       siteHref,
@@ -169,7 +178,7 @@ function createPaymentDisplayInfo({
     };
   }
 
-  if (payment.target_type === 'series') {
+  if (payment.target_type === PAYMENT_TARGET_TYPE.SERIES) {
     return {
       siteLabel,
       siteHref,
@@ -178,7 +187,7 @@ function createPaymentDisplayInfo({
     };
   }
 
-  if (payment.target_type === 'post') {
+  if (payment.target_type === PAYMENT_TARGET_TYPE.POST) {
     return {
       siteLabel,
       siteHref,
@@ -197,12 +206,13 @@ function createPaymentDisplayInfo({
 }
 
 function getSummary(payments: PaymentRow[]) {
-  const successPayments = payments.filter((payment) => SUCCESS_PAYMENT_STATUSES.includes(payment.status));
+  const successPayments = payments.filter((payment) =>
+    SUCCESS_PAYMENT_STATUSES.includes(normalizePaymentStatus(payment.status)),
+  );
 
   const totalAmount = successPayments.reduce((sum, payment) => sum + payment.amount, 0);
   const totalRefundedAmount = successPayments.reduce((sum, payment) => sum + (payment.refunded_amount ?? 0), 0);
   const netAmount = totalAmount - totalRefundedAmount;
-
   const amountByType = successPayments.reduce<Record<string, number>>((result, payment) => {
     result[payment.payment_type] =
       (result[payment.payment_type] ?? 0) + payment.amount - (payment.refunded_amount ?? 0);
@@ -236,7 +246,22 @@ export async function GET() {
       supabaseAdmin
         .from('payments')
         .select(
-          'id, payment_type, target_type, target_id, order_no, amount, refunded_amount, currency, status, payment_method, approved_at, created_at, refundable_until, failure_message',
+          [
+            'id',
+            'payment_type',
+            'target_type',
+            'target_id',
+            'order_no',
+            'amount',
+            'refunded_amount',
+            'currency',
+            'status',
+            'payment_method',
+            'approved_at',
+            'created_at',
+            'refundable_until',
+            'failure_message',
+          ].join(', '),
         )
         .eq('buyer_user_id', session.authUserId)
         .order('created_at', { ascending: false })
@@ -244,7 +269,17 @@ export async function GET() {
       supabaseAdmin
         .from('subscription_billing_methods')
         .select(
-          'id, provider, card_company, card_number_masked, card_type, owner_type, is_default, created_at, updated_at',
+          [
+            'id',
+            'provider',
+            'card_company',
+            'card_number_masked',
+            'card_type',
+            'owner_type',
+            'is_default',
+            'created_at',
+            'updated_at',
+          ].join(', '),
         )
         .eq('user_id', session.authUserId)
         .order('is_default', { ascending: false })
@@ -263,45 +298,50 @@ export async function GET() {
       return Response.json({ error: '결제수단을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const payments = (paymentsResult.data ?? []) as PaymentRow[];
+    const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
+    const billingMethods = (billingMethodResult.data ?? []) as unknown as BillingMethodRow[];
+
     const siteTargetIds = payments
-      .filter((payment) => payment.target_type === 'site')
+      .filter(
+        (payment) =>
+          payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN,
+      )
       .map((payment) => payment.target_id)
-      .filter(Boolean) as string[];
-    const billingMethods = (billingMethodResult.data ?? []) as BillingMethodRow[];
+      .filter((targetId): targetId is string => Boolean(targetId));
 
     const boardTargetIds = payments
-      .filter((payment) => payment.target_type === 'board')
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
       .map((payment) => payment.target_id)
-      .filter(Boolean) as string[];
+      .filter((targetId): targetId is string => Boolean(targetId));
 
     const seriesTargetIds = payments
-      .filter((payment) => payment.target_type === 'series')
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
       .map((payment) => payment.target_id)
-      .filter(Boolean) as string[];
+      .filter((targetId): targetId is string => Boolean(targetId));
 
     const postTargetIds = payments
-      .filter((payment) => payment.target_type === 'post')
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.POST)
       .map((payment) => payment.target_id)
-      .filter(Boolean) as string[];
+      .filter((targetId): targetId is string => Boolean(targetId));
 
     const [boardResult, seriesResult, postResult] = await Promise.all([
       boardTargetIds.length
         ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardTargetIds)
-        : Promise.resolve({ data: [], error: null }),
+        : { data: [], error: null },
       seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
             .select('id, site_id, board_id, series_key, series_label')
             .in('id', seriesTargetIds)
-        : Promise.resolve({ data: [], error: null }),
+        : { data: [], error: null },
       postTargetIds.length
         ? supabaseAdmin.from('posts').select('id, site_id, board_id, slug, subject').in('id', postTargetIds)
-        : Promise.resolve({ data: [], error: null }),
+        : { data: [], error: null },
     ]);
 
     if (boardResult.error || seriesResult.error || postResult.error) {
       console.error(boardResult.error || seriesResult.error || postResult.error);
+
       return Response.json({ error: '결제 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -322,6 +362,7 @@ export async function GET() {
 
     if (relatedBoardResult.error) {
       console.error(relatedBoardResult.error);
+
       return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -336,7 +377,7 @@ export async function GET() {
         ...Array.from(seriesMap.values()).map((series) => series.site_id),
         ...Array.from(postMap.values()).map((post) => post.site_id),
       ]),
-    ).filter(Boolean) as string[];
+    ).filter(Boolean);
 
     const siteResult = siteIds.length
       ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
@@ -344,6 +385,7 @@ export async function GET() {
 
     if (siteResult.error) {
       console.error(siteResult.error);
+
       return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
@@ -363,16 +405,24 @@ export async function GET() {
         updatedAt: billingMethod.updated_at,
       })),
       recentPayments: payments.slice(0, 10).map((payment) => {
-        const board = payment.target_type === 'board' && payment.target_id ? boardMap.get(payment.target_id) : null;
-        const series = payment.target_type === 'series' && payment.target_id ? seriesMap.get(payment.target_id) : null;
-        const post = payment.target_type === 'post' && payment.target_id ? postMap.get(payment.target_id) : null;
+        const board =
+          payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id
+            ? boardMap.get(payment.target_id)
+            : null;
+        const series =
+          payment.target_type === PAYMENT_TARGET_TYPE.SERIES && payment.target_id
+            ? seriesMap.get(payment.target_id)
+            : null;
+        const post =
+          payment.target_type === PAYMENT_TARGET_TYPE.POST && payment.target_id ? postMap.get(payment.target_id) : null;
         const seriesBoard = series ? boardMap.get(series.board_id) : null;
         const postBoard = post ? boardMap.get(post.board_id) : null;
         const siteId =
-          payment.target_type === 'site'
+          payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN
             ? payment.target_id
             : (board?.site_id ?? series?.site_id ?? post?.site_id ?? null);
         const site = siteId ? siteMap.get(siteId) : null;
+        const paymentStatus = normalizePaymentStatus(payment.status);
         const displayInfo = createPaymentDisplayInfo({
           payment,
           site,
@@ -398,9 +448,9 @@ export async function GET() {
           refundedAmount: payment.refunded_amount ?? 0,
           netAmount: payment.amount - (payment.refunded_amount ?? 0),
           currency: payment.currency ?? 'KRW',
-          status: payment.status,
-          statusLabel: getPaymentStatusLabel(payment.status),
-          paymentMethod: payment.payment_method,
+          status: paymentStatus,
+          statusLabel: getPaymentStatusLabel(paymentStatus),
+          paymentMethod: payment.payment_method ?? PAYMENT_METHOD.CARD,
           approvedAt: payment.approved_at,
           createdAt: payment.created_at,
           refundableUntil: payment.refundable_until,
