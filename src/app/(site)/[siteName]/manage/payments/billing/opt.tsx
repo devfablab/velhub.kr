@@ -148,7 +148,7 @@ function formatPrice(price: number | null | undefined) {
     return '-';
   }
 
-  return `${price.toLocaleString('ko-KR')}원`;
+  return `${price.toLocaleString('ko-KR')} 원`;
 }
 
 function formatDateTime(value: string | null | undefined) {

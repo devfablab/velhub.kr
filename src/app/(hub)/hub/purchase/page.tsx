@@ -12,7 +12,7 @@ type PurchaseSummaryItem = {
   amount: number;
 };
 
-type BillingMethod = {
+export type BillingMethod = {
   id: string;
   provider: string;
   cardCompany: string | null;
@@ -169,7 +169,6 @@ export default async function Page() {
 
           <section className={`paper ${styles.paper} ${styles.history}`}>
             <h2>최근 결제내역</h2>
-
             {result.recentPayments.length ? (
               <TableContainer className={styles.items}>
                 <Table size="small" aria-label="최근 결제내역">
@@ -200,7 +199,6 @@ export default async function Page() {
                       const isRefunded = payment.status === 'refunded';
                       const isPartiallyRefunded = payment.status === 'partially_refunded';
                       const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
-
                       return (
                         <TableRow key={payment.id}>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>

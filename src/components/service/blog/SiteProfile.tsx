@@ -61,6 +61,7 @@ type MembershipStartResponse = {
   storeId?: string;
   channelKey?: string;
   customerKey?: string;
+  customerName?: string;
   orderNo?: string;
   orderName?: string;
   amount?: number;
@@ -243,7 +244,15 @@ export default function SiteProfile() {
         return;
       }
 
-      if (!result.storeId || !result.channelKey || !result.customerKey || !result.orderNo || !result.orderName || !result.successUrl) {
+      if (
+        !result.storeId ||
+        !result.channelKey ||
+        !result.customerKey ||
+        !result.customerName ||
+        !result.orderNo ||
+        !result.orderName ||
+        !result.successUrl
+      ) {
         throw new Error('멤버십 결제 정보가 올바르지 않습니다.');
       }
 
@@ -255,6 +264,8 @@ export default function SiteProfile() {
         issueName: result.orderName,
         customer: {
           customerId: result.customerKey,
+          fullName: result.customerName,
+          email: result.customerName,
         },
         redirectUrl: result.successUrl,
       })) as PortOneBillingKeyResponse | undefined;

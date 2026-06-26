@@ -15,6 +15,7 @@ type BillingMethodStartResponse = {
   storeId?: string;
   channelKey?: string;
   customerKey?: string;
+  customerName?: string;
   orderNo?: string;
   orderName?: string;
   successUrl?: string;
@@ -65,7 +66,15 @@ export default function ChangePaymentMethodButton() {
         throw new Error(result.error ?? '결제수단 변경을 시작하지 못했습니다.');
       }
 
-      if (!result.storeId || !result.channelKey || !result.customerKey || !result.orderNo || !result.orderName || !result.successUrl) {
+      if (
+        !result.storeId ||
+        !result.channelKey ||
+        !result.customerKey ||
+        !result.customerName ||
+        !result.orderNo ||
+        !result.orderName ||
+        !result.successUrl
+      ) {
         throw new Error('결제수단 변경 정보가 올바르지 않습니다.');
       }
 
@@ -77,6 +86,8 @@ export default function ChangePaymentMethodButton() {
         issueName: result.orderName,
         customer: {
           customerId: result.customerKey,
+          fullName: result.customerName,
+          email: result.customerName,
         },
         redirectUrl: result.successUrl,
       })) as PortOneBillingKeyResponse | undefined;
