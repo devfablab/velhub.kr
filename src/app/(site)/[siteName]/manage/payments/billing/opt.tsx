@@ -2,7 +2,7 @@
 
 import { type KeyboardEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { loadTossPayments } from '@tosspayments/payment-sdk';
+import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -76,11 +76,10 @@ type PlanBillingResponse = {
   billingMethods?: {
     id: string;
     provider: string;
-    card_company: string | null;
-    card_company_code: string | null;
-    card_number_masked: string | null;
-    owner_type: string | null;
-    card_type: string | null;
+    card_company: string;
+    card_number_masked: string;
+    owner_type: string;
+    card_type: string;
     is_default: boolean;
     created_at: string;
     updated_at: string | null;
@@ -93,8 +92,10 @@ type PaymentItem = NonNullable<PlanBillingResponse['payments']>[number];
 type PlanBillingStartResponse =
   | {
       mode: 'billing_auth';
-      clientKey: string;
+      storeId: string;
+      channelKey: string;
       customerKey: string;
+      customerName: string;
       orderNo: string;
       orderName: string;
       successUrl: string;
@@ -113,6 +114,12 @@ type PlanBillingStartResponse =
   | {
       error: string;
     };
+
+type PortOneBillingKeyResponse = {
+  billingKey?: string;
+  code?: string;
+  message?: string;
+};
 
 type PlanBillingCancelResponse =
   | {
@@ -166,6 +173,53 @@ function formatCardNumber(cardNumberMasked: string | null | undefined) {
   }
 
   return `${normalizedCardNumber.slice(0, 4)} ••••`;
+}
+
+function getCardCompanyText(cardCompany: string | null | undefined) {
+  const normalizedCardCompany = normalizeText(cardCompany);
+
+  const cardCompanyTextMap: Record<string, string> = {
+    HYUNDAI_CARD: '현대카드',
+    SHINHAN_CARD: '신한카드',
+    SAMSUNG_CARD: '삼성카드',
+    KB_CARD: '국민카드',
+    KOOKMIN_CARD: '국민카드',
+    LOTTE_CARD: '롯데카드',
+    HANA_CARD: '하나카드',
+    WOORI_CARD: '우리카드',
+    BC_CARD: 'BC카드',
+    NH_CARD: 'NH농협카드',
+    NONGHYUP_CARD: 'NH농협카드',
+    CITI_CARD: '씨티카드',
+    KAKAOBANK_CARD: '카카오뱅크카드',
+    K_BANK_CARD: '케이뱅크카드',
+    TOSSBANK_CARD: '토스뱅크카드',
+  };
+
+  return (cardCompanyTextMap[normalizedCardCompany] ?? normalizedCardCompany) || '카드';
+}
+
+function getCardTypeText(cardType: string | null | undefined) {
+  const normalizedCardType = normalizeText(cardType);
+
+  const cardTypeTextMap: Record<string, string> = {
+    CREDIT: '신용카드',
+    DEBIT: '체크카드',
+    GIFT: '기프트카드',
+  };
+
+  return (cardTypeTextMap[normalizedCardType] ?? normalizedCardType) || '카드 유형 확인 필요';
+}
+
+function getOwnerTypeText(ownerType: string | null | undefined) {
+  const normalizedOwnerType = normalizeText(ownerType);
+
+  const ownerTypeTextMap: Record<string, string> = {
+    PERSONAL: '개인카드',
+    CORPORATE: '법인카드',
+  };
+
+  return (ownerTypeTextMap[normalizedOwnerType] ?? normalizedOwnerType) || '소유 유형 확인 필요';
 }
 
 function getSubscriptionStatusText(status: SubscriptionStatus) {
@@ -383,7 +437,7 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
-      const url = addMethod ? '/api/payments/toss/billing-method/start' : '/api/payments/toss/plan-billing/start';
+      const url = addMethod ? '/api/payments/portone/billing-method/start' : '/api/payments/portone/plan-billing/start';
 
       const hadBillingMethod = Boolean(billingData.billingMethods?.length);
       const orderName =
@@ -439,24 +493,92 @@ export default function Opt() {
         return;
       }
 
-      if (!result.clientKey || !result.customerKey || !result.successUrl || !result.failUrl) {
+      if (
+        !result.storeId ||
+        !result.channelKey ||
+        !result.customerKey ||
+        !result.customerName ||
+        !result.successUrl ||
+        !result.failUrl
+      ) {
         throw new Error('결제수단 등록 정보가 올바르지 않습니다.');
       }
 
-      const tossPayments = await loadTossPayments(result.clientKey);
+      const billingKeyResponse = (await PortOne.requestIssueBillingKey({
+        storeId: result.storeId,
+        channelKey: result.channelKey,
+        billingKeyMethod: 'CARD',
+        issueId: result.orderNo,
+        issueName: result.orderName,
+        customer: {
+          customerId: result.customerKey,
+          fullName: result.customerName,
+          email: result.customerName,
+          phoneNumber: '01012345678',
+        },
+        redirectUrl: result.successUrl,
+      })) as PortOneBillingKeyResponse | undefined;
 
-      await tossPayments.requestBillingAuth('카드', {
-        customerKey: result.customerKey,
-        successUrl: result.successUrl,
-        failUrl: result.failUrl,
-      });
+      if (!billingKeyResponse) {
+        throw new Error('결제수단 등록 응답이 없습니다.');
+      }
+
+      if (billingKeyResponse.code) {
+        throw new Error(billingKeyResponse.message || '결제수단 등록에 실패했습니다.');
+      }
+
+      if (!billingKeyResponse.billingKey) {
+        throw new Error('billingKey가 발급되지 않았습니다.');
+      }
+
+      const successResponse = await fetch(
+        addMethod ? '/api/payments/portone/billing-method/success' : '/api/payments/portone/plan-billing/success',
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            billingKey: billingKeyResponse.billingKey,
+            customerKey: result.customerKey,
+            siteId: billingData.site.id,
+            orderNo: result.orderNo,
+            purpose,
+          }),
+        },
+      );
+
+      const successResult = (await successResponse.json()) as {
+        ok?: boolean;
+        mode?: 'resume_scheduled_cancel' | 'trial_started' | 'direct_billing';
+        error?: string;
+      };
+
+      if (!successResponse.ok) {
+        throw new Error(successResult.error ?? '결제수단 등록을 완료하지 못했습니다.');
+      }
+
+      const isLoaded = await loadData();
+
+      if (isLoaded) {
+        if (purpose === 'billing_method') {
+          setSuccessMessage('결제수단이 추가되었습니다.');
+        } else if (successResult.mode === 'trial_started') {
+          setSuccessMessage('무료체험이 시작되었습니다.');
+        } else if (successResult.mode === 'resume_scheduled_cancel') {
+          setSuccessMessage('요금제 구독 취소가 철회되었습니다.');
+        } else {
+          setSuccessMessage('요금제 구독이 시작되었습니다.');
+        }
+      }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '결제수단 등록을 시작하지 못했습니다.');
       } else {
         setErrorMessage('결제수단 등록을 시작하지 못했습니다.');
       }
-
+    } finally {
       setIsProcessing(false);
     }
   }
@@ -471,7 +593,7 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
-      const response = await fetch('/api/payments/toss/plan-billing/cancel', {
+      const response = await fetch('/api/payments/portone/plan-billing/cancel', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -518,7 +640,7 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
-      const response = await fetch('/api/payments/toss/plan-billing/resume', {
+      const response = await fetch('/api/payments/portone/plan-billing/resume', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -652,6 +774,12 @@ export default function Opt() {
   const shouldShowBillingAuthButton =
     !subscription || subscription.status === 'canceled' || subscription.status === 'expired';
 
+  const planBillingActionPurpose: 'plan_subscription' | 'billing_method' = hasBillingMethod
+    ? 'plan_subscription'
+    : 'billing_method';
+
+  const shouldAddBillingMethodBeforePlanStart = !hasBillingMethod;
+
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
@@ -717,7 +845,7 @@ export default function Opt() {
                       type="button"
                       className="button small submit"
                       onClick={() => {
-                        void handleBillingAuth('plan_subscription', false);
+                        void handleBillingAuth(planBillingActionPurpose, shouldAddBillingMethodBeforePlanStart);
                       }}
                       disabled={isProcessing}
                     >
@@ -786,7 +914,8 @@ export default function Opt() {
                         <div className={`paper ${styles.paper}`} key={billingMethod.id}>
                           <Stack gap={0.5} direction="row" justifyContent="space-between">
                             <Typography variant="body2">
-                              {billingMethod.card_company ?? '카드'}{' '}
+                              {getCardCompanyText(billingMethod.card_company)} (
+                              {getCardTypeText(billingMethod.card_type)} / {getOwnerTypeText(billingMethod.owner_type)}){' '}
                               {formatCardNumber(billingMethod.card_number_masked)}
                             </Typography>
                             {billingMethod.is_default ? (
@@ -797,7 +926,10 @@ export default function Opt() {
                       ))}
                     </Stack>
                   ) : (
-                    <Typography>등록된 결제 수단이 없습니다.</Typography>
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>등록된 결제 수단이 없습니다.</span>
+                    </p>
                   )}
                 </Stack>
 

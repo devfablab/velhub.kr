@@ -19,11 +19,10 @@ type PlanRow = {
 type BillingMethodRow = {
   id: string;
   provider: string;
-  card_company: string | null;
-  card_company_code: string | null;
-  card_number_masked: string | null;
-  owner_type: string | null;
-  card_type: string | null;
+  card_company: string;
+  card_number_masked: string;
+  owner_type: string;
+  card_type: string;
   is_default: boolean;
   created_at: string;
   updated_at: string | null;
@@ -168,7 +167,6 @@ export async function GET(request: Request) {
           'id',
           'provider',
           'card_company',
-          'card_company_code',
           'card_number_masked',
           'owner_type',
           'card_type',
@@ -178,7 +176,7 @@ export async function GET(request: Request) {
         ].join(', '),
       )
       .eq('user_id', session.authUserId)
-      .eq('provider', PAYMENT_PROVIDER.TOSS)
+      .eq('provider', PAYMENT_PROVIDER.KPN)
       .order('is_default', { ascending: false })
       .order('created_at', { ascending: false });
 

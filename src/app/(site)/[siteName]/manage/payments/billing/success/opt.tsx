@@ -32,24 +32,24 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const authKey = normalizeText(searchParams.get('authKey'));
+        const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
         const siteId = normalizeText(searchParams.get('siteId'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
         const purpose = normalizeText(searchParams.get('purpose'));
 
-        if (!authKey || !customerKey || !siteId || !orderNo) {
+        if (!billingKey || !customerKey || !siteId || !orderNo) {
           throw new Error('결제수단 등록 승인 정보가 없습니다.');
         }
 
-        const response = await fetch('/api/payments/toss/plan-billing/success', {
+        const response = await fetch('/api/payments/portone/plan-billing/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            authKey,
+            billingKey,
             customerKey,
             siteId,
             orderNo,

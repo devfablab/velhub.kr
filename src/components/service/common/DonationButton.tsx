@@ -1,7 +1,7 @@
 'use client';
 
 import { type ChangeEvent, useState } from 'react';
-import { loadTossPayments } from '@tosspayments/payment-sdk';
+import PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import {
@@ -22,12 +22,12 @@ import styles from '@/app/board.module.sass';
 type DonationTargetType = 'site' | 'series' | 'board' | 'post';
 
 type DonationStartResponse = {
-  clientKey?: string;
+  storeId?: string;
+  channelKey?: string;
   orderNo?: string;
   orderName?: string;
   amount?: number;
-  successUrl?: string;
-  failUrl?: string;
+  redirectUrl?: string;
   error?: string;
 };
 
@@ -232,7 +232,7 @@ export default function DonationButton(props: Props) {
         throw new Error('후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.');
       }
 
-      const response = await fetch('/api/payments/toss/donation/start', {
+      const response = await fetch('/api/payments/portone/donation/start', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -248,24 +248,26 @@ export default function DonationButton(props: Props) {
       }
 
       if (
-        !result.clientKey ||
+        !result.storeId ||
+        !result.channelKey ||
         !result.orderNo ||
         !result.orderName ||
         !result.amount ||
-        !result.successUrl ||
-        !result.failUrl
+        !result.redirectUrl
       ) {
         throw new Error('후원 결제 정보가 올바르지 않습니다.');
       }
 
-      const tossPayments = await loadTossPayments(result.clientKey);
-
-      await tossPayments.requestPayment('카드', {
-        amount: result.amount,
-        orderId: result.orderNo,
+      await PortOne.requestPayment({
+        storeId: result.storeId,
+        channelKey: result.channelKey,
+        paymentId: result.orderNo,
         orderName: result.orderName,
-        successUrl: result.successUrl,
-        failUrl: result.failUrl,
+        totalAmount: result.amount,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'CARD',
+        redirectUrl: result.redirectUrl,
+        forceRedirect: true,
       });
     } catch (unknownError) {
       if (unknownError instanceof Error) {

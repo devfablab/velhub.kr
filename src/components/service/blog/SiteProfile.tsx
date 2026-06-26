@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { loadTossPayments } from '@tosspayments/payment-sdk';
+import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
@@ -132,7 +132,7 @@ export default function SiteProfile() {
     }
 
     async function loadDonationStatus() {
-      const response = await fetch(`/api/payments/toss/donation/status?siteName=${siteName}&targetType=site`, {
+      const response = await fetch(`/api/payments/portone/donation/status?siteName=${siteName}&targetType=site`, {
         method: 'GET',
         credentials: 'include',
       });

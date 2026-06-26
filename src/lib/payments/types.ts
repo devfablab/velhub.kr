@@ -1,5 +1,6 @@
 export const PAYMENT_PROVIDER = {
-  TOSS: 'toss',
+  KPN: 'kpn',
+  INICIS: 'inicis',
 } as const;
 
 export const PAYMENT_METHOD = {
