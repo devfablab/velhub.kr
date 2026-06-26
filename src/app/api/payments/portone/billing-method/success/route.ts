@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
 
     const billingKeyInfo = await getPortOneBillingKeyInfo(billingKey);
 
-    console.error('PortOne billingKeyInfo full:', JSON.stringify(billingKeyInfo, null, 2));
 
     if (billingKeyInfo.status !== 'ISSUED') {
       return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });

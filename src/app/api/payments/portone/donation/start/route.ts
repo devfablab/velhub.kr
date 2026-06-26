@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
-import { getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
+import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -458,19 +458,20 @@ export async function POST(request: NextRequest) {
     });
 
     const orderNo = createOrderNo(target.targetType);
+    const paymentId = createPortOnePaymentKey(orderNo);
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 
     successUrl.searchParams.set('siteId', target.site.id);
     successUrl.searchParams.set('orderNo', orderNo);
-    successUrl.searchParams.set('paymentId', orderNo);
+    successUrl.searchParams.set('paymentId', paymentId);
     successUrl.searchParams.set('paymentType', target.paymentType);
     successUrl.searchParams.set('targetType', target.paymentTargetType);
     successUrl.searchParams.set('amount', String(amount));
 
     failUrl.searchParams.set('siteId', target.site.id);
     failUrl.searchParams.set('orderNo', orderNo);
-    failUrl.searchParams.set('paymentId', orderNo);
+    failUrl.searchParams.set('paymentId', paymentId);
     failUrl.searchParams.set('paymentType', target.paymentType);
     failUrl.searchParams.set('targetType', target.paymentTargetType);
     failUrl.searchParams.set('amount', String(amount));
@@ -500,6 +501,7 @@ export async function POST(request: NextRequest) {
       storeId: getPortOneStoreId(),
       channelKey: getPortOneKpnGeneralChannelKey(),
       orderNo,
+      paymentId,
       orderName: target.orderName,
       amount,
       redirectUrl: successUrl.toString(),

@@ -7,11 +7,14 @@ import {
   getBillingAnchorDay,
 } from '@/lib/payments/billingPeriod';
 import {
+  createPortOnePaymentKey,
+  getCurrentPortOneProvider,
   getPortOneBillingCardInfo,
   getPortOneBillingKeyInfo,
   getPortOnePaidAmount,
   getPortOnePaidAt,
   getPortOnePaymentMethod,
+  getPortOnePaymentTransactionNo,
   requestPortOneBillingPayment,
   type PortOnePayment,
   type PortOnePaymentResponse,
@@ -237,8 +240,6 @@ export async function POST(request: NextRequest) {
 
     const billingKeyInfo = await getPortOneBillingKeyInfo(billingKey);
 
-    console.error('PortOne billingKeyInfo full:', JSON.stringify(billingKeyInfo, null, 2));
-
     if (billingKeyInfo.status !== 'ISSUED') {
       return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });
     }
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
       .from('subscription_billing_methods')
       .select('id, is_default')
       .eq('user_id', session.authUserId)
-      .eq('provider', 'kpn')
+      .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .maybeSingle();
 
@@ -277,7 +278,7 @@ export async function POST(request: NextRequest) {
       .from('subscription_billing_methods')
       .select('id, is_default')
       .eq('user_id', session.authUserId)
-      .eq('provider', 'kpn')
+      .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKey)
       .maybeSingle();
 
@@ -313,7 +314,7 @@ export async function POST(request: NextRequest) {
         .from('subscription_billing_methods')
         .insert({
           user_id: session.authUserId,
-          provider: 'kpn',
+          provider: getCurrentPortOneProvider(),
           customer_key: customerKey,
           billing_key: billingKey,
           card_company: cardInfo.cardCompany,
@@ -434,7 +435,7 @@ export async function POST(request: NextRequest) {
     }
 
     const paymentResponse = await requestPortOneBillingPayment({
-      paymentId: orderNo,
+      paymentId: createPortOnePaymentKey(orderNo),
       billingKey,
       customerId: customerKey,
       amount: plan.price,
@@ -453,9 +454,11 @@ export async function POST(request: NextRequest) {
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
       .insert({
-        provider: 'kpn',
-        payment_key: orderNo,
+        provider: getCurrentPortOneProvider(),
+        payment_key: createPortOnePaymentKey(orderNo),
         order_no: orderNo,
+        tx_no: null,
+        transaction_no: getPortOnePaymentTransactionNo(payment),
         buyer_user_id: session.authUserId,
         amount: plan.price,
         refunded_amount: 0,

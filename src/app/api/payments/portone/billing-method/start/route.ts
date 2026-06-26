@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 
 type BillingMethodStartBody = {
   orderName?: string;
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     const customerKey = createCustomerKey(session.authUserId);
+    const customerName = await getPaymentCustomerName(session.authUserId);
     const orderNo = createOrderNo();
 
     successUrl.searchParams.set('orderNo', orderNo);
@@ -62,6 +64,7 @@ export async function POST(request: NextRequest) {
       storeId: getPortOneStoreId(),
       channelKey: getPortOneKpnSubscriptionChannelKey(),
       customerKey,
+      customerName,
       orderNo,
       orderName,
       successUrl: successUrl.toString(),

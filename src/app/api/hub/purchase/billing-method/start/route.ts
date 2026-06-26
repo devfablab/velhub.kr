@@ -1,11 +1,19 @@
 import crypto from 'crypto';
-import { getTossClientKey } from '@/lib/payments/toss';
+import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 
 function createCustomerKey(authUserId: string) {
   const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
 
   return `user_${customerKeyHash}`;
+}
+
+function createOrderNo() {
+  const randomText = crypto.randomBytes(8).toString('hex');
+  const timestamp = Date.now();
+
+  return `VH-BILL-METHOD-${timestamp}-${randomText}`;
 }
 
 function getBaseUrl(request: Request) {
@@ -24,14 +32,24 @@ export async function POST(request: Request) {
 
     const baseUrl = getBaseUrl(request);
     const customerKey = createCustomerKey(session.authUserId);
+    const customerName = await getPaymentCustomerName(session.authUserId);
+    const orderNo = createOrderNo();
     const successUrl = new URL('/api/hub/purchase/billing-method/success', baseUrl);
     const failUrl = new URL('/hub/purchase', baseUrl);
 
+    successUrl.searchParams.set('orderNo', orderNo);
+    successUrl.searchParams.set('customerKey', customerKey);
+
     failUrl.searchParams.set('billingMethod', 'fail');
+    failUrl.searchParams.set('orderNo', orderNo);
 
     return Response.json({
-      clientKey: getTossClientKey(),
+      storeId: getPortOneStoreId(),
+      channelKey: getPortOneKpnSubscriptionChannelKey(),
       customerKey,
+      customerName,
+      orderNo,
+      orderName: '데브허브 결제 수단 변경',
       successUrl: successUrl.toString(),
       failUrl: failUrl.toString(),
     });

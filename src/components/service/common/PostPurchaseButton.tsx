@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { loadTossPayments } from '@tosspayments/payment-sdk';
+import PortOne from '@portone/browser-sdk/v2';
 import {
   Checkbox,
   Dialog,
@@ -23,12 +23,13 @@ import styles from '@/app/board.module.sass';
 type PostPurchaseStartResponse = {
   ok?: boolean;
   alreadyPurchased?: boolean;
+  storeId?: string;
+  channelKey?: string;
   paymentId?: string;
-  clientKey?: string;
   orderNo?: string;
   orderName?: string;
   amount?: number;
-  successUrl?: string;
+  redirectUrl?: string;
   failUrl?: string;
   error?: string;
 };
@@ -40,7 +41,7 @@ type Props = {
   buttonText?: string;
   popup?: boolean;
   disabled?: boolean;
-  successUrl?: string;
+  redirectUrl?: string;
   failUrl?: string;
   onProcessingChange?: (isProcessing: boolean) => void;
 };
@@ -106,7 +107,7 @@ export default function PostPurchaseButton(props: Props) {
 
       updateProcessing(true);
 
-      const response = await fetch('/api/payments/toss/purchase/start', {
+      const response = await fetch('/api/payments/portone/purchase/start', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -133,24 +134,26 @@ export default function PostPurchaseButton(props: Props) {
       }
 
       if (
-        !result.clientKey ||
-        !result.orderNo ||
+        !result.storeId ||
+        !result.channelKey ||
+        !result.paymentId ||
         !result.orderName ||
         !result.amount ||
-        !result.successUrl ||
-        !result.failUrl
+        !result.redirectUrl
       ) {
         throw new Error('포스팅 구매 결제 정보가 올바르지 않습니다.');
       }
 
-      const tossPayments = await loadTossPayments(result.clientKey);
-
-      await tossPayments.requestPayment('카드', {
-        amount: result.amount,
-        orderId: result.orderNo,
+      await PortOne.requestPayment({
+        storeId: result.storeId,
+        channelKey: result.channelKey,
+        paymentId: result.paymentId,
         orderName: result.orderName,
-        successUrl: result.successUrl,
-        failUrl: result.failUrl,
+        totalAmount: result.amount,
+        currency: 'CURRENCY_KRW',
+        payMethod: 'CARD',
+        redirectUrl: result.redirectUrl,
+        forceRedirect: true,
       });
     } catch (unknownError) {
       if (unknownError instanceof Error) {

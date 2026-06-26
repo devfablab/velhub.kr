@@ -50,7 +50,7 @@ export default function Opt() {
           throw new Error('후원 실패 정보를 저장하지 못했습니다.');
         }
 
-        const response = await fetch('/api/payments/toss/fail', {
+        const response = await fetch('/api/payments/portone/fail', {
           method: 'POST',
           credentials: 'include',
           headers: {

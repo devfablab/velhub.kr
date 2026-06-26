@@ -22,18 +22,18 @@ export default function Page() {
   useEffect(() => {
     async function completeBillingMethod() {
       try {
-        const authKey = searchParams.get('authKey');
+        const billingKey = searchParams.get('billingKey');
         const customerKey = searchParams.get('customerKey');
         const orderNo = searchParams.get('orderNo');
 
-        const response = await fetch('/api/payments/toss/billing-method/success', {
+        const response = await fetch('/api/payments/portone/billing-method/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            authKey,
+            billingKey,
             customerKey,
             orderNo,
           }),

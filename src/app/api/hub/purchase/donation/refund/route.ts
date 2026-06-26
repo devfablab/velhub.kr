@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { cancelTossPayment } from '@/lib/payments/toss';
+import { cancelPortOnePayment } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -93,13 +93,13 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '환불 가능한 금액이 없습니다.' }, { status: 400 });
     }
 
-    const cancelResult = await cancelTossPayment({
-      paymentKey: payment.payment_key as string,
+    const cancelResult = await cancelPortOnePayment({
+      paymentId: payment.payment_key as string,
       cancelReason: '후원 환불 요청',
       cancelAmount: refundAmount,
     });
 
-    const canceledAt = cancelResult.cancels?.[0]?.canceledAt ?? new Date().toISOString();
+    const canceledAt = new Date().toISOString();
     const nextRefundedAmount = refundedAmount + refundAmount;
 
     const updateResult = await supabaseAdmin

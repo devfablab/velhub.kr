@@ -59,7 +59,7 @@ export default function Opt() {
       }
 
       try {
-        const response = await fetch('/api/payments/toss/fail', {
+        const response = await fetch('/api/payments/portone/fail', {
           method: 'POST',
           credentials: 'include',
           headers: {

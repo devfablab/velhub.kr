@@ -8,10 +8,13 @@ import {
 } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
+  createPortOnePaymentKey,
+  getCurrentPortOneProvider,
   getPortOneKpnSubscriptionChannelKey,
   getPortOnePaidAmount,
   getPortOnePaidAt,
   getPortOnePaymentMethod,
+  getPortOnePaymentTransactionNo,
   getPortOneStoreId,
   requestPortOneBillingPayment,
   type PortOnePayment,
@@ -311,7 +314,7 @@ export async function POST(request: NextRequest) {
       .from('subscription_billing_methods')
       .select('id, customer_key, billing_key')
       .eq('user_id', session.authUserId)
-      .eq('provider', 'kpn')
+      .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .limit(1);
 
@@ -404,7 +407,7 @@ export async function POST(request: NextRequest) {
     }
 
     const paymentResponse = await requestPortOneBillingPayment({
-      paymentId: orderNo,
+      paymentId: createPortOnePaymentKey(orderNo),
       billingKey: billingMethod.billing_key,
       customerId: billingMethod.customer_key,
       amount: plan.price,
@@ -423,9 +426,11 @@ export async function POST(request: NextRequest) {
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
       .insert({
-        provider: 'kpn',
-        payment_key: orderNo,
+        provider: getCurrentPortOneProvider(),
+        payment_key: createPortOnePaymentKey(orderNo),
         order_no: orderNo,
+        tx_no: null,
+        transaction_no: getPortOnePaymentTransactionNo(payment),
         buyer_user_id: session.authUserId,
         amount: plan.price,
         refunded_amount: 0,

@@ -27,21 +27,21 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const authKey = normalizeText(searchParams.get('authKey'));
+        const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
 
-        if (!authKey || !customerKey || !siteName || !orderNo) {
+        if (!billingKey || !customerKey || !siteName || !orderNo) {
           throw new Error('멤버십 가입 정보가 올바르지 않습니다.');
         }
 
-        const response = await fetch('/api/payments/toss/membership/success', {
+        const response = await fetch('/api/payments/portone/membership/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ authKey, customerKey, siteName, orderNo }),
+          body: JSON.stringify({ billingKey, customerKey, siteName, orderNo }),
         });
 
         const result = (await response.json()) as MembershipSuccessResponse;

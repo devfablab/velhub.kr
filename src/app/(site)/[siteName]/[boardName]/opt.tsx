@@ -349,7 +349,7 @@ export default function Opt({ isCommunity }: Props) {
       targetType: 'board',
     });
 
-    const response = await fetch(`/api/payments/toss/subscriptions/status?${params.toString()}`, {
+    const response = await fetch(`/api/payments/portone/subscriptions/status?${params.toString()}`, {
       method: 'GET',
       credentials: 'include',
     });

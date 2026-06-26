@@ -25,6 +25,7 @@ type DonationStartResponse = {
   storeId?: string;
   channelKey?: string;
   orderNo?: string;
+  paymentId?: string;
   orderName?: string;
   amount?: number;
   redirectUrl?: string;
@@ -250,7 +251,7 @@ export default function DonationButton(props: Props) {
       if (
         !result.storeId ||
         !result.channelKey ||
-        !result.orderNo ||
+        !result.paymentId ||
         !result.orderName ||
         !result.amount ||
         !result.redirectUrl
@@ -261,7 +262,7 @@ export default function DonationButton(props: Props) {
       await PortOne.requestPayment({
         storeId: result.storeId,
         channelKey: result.channelKey,
-        paymentId: result.orderNo,
+        paymentId: result.paymentId,
         orderName: result.orderName,
         totalAmount: result.amount,
         currency: 'CURRENCY_KRW',

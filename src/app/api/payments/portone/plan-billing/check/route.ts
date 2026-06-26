@@ -2,12 +2,15 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
+  getCurrentPortOneProvider,
+  createPortOnePaymentKey,
   getPortOnePaidAmount,
   getPortOnePaidAt,
   PortOneApiError,
   requestPortOneBillingPayment,
   type PortOnePayment,
   type PortOnePaymentResponse,
+  getPortOnePaymentTransactionNo,
 } from '@/lib/payments/portone';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import {
@@ -90,7 +93,7 @@ async function createFailedPayment({
   nowIso: string;
 }) {
   const failedPaymentResult = await supabaseAdmin.from('payments').insert({
-    provider: 'kpn',
+    provider: getCurrentPortOneProvider(),
     payment_key: null,
     order_no: orderNo,
     buyer_user_id: subscription.subscriber_user_id,
@@ -148,7 +151,7 @@ async function chargePlanBillingSubscription({
   try {
     const billingKey = decrypt(subscription.billing_key);
     const paymentResponse = await requestPortOneBillingPayment({
-      paymentId: orderNo,
+      paymentId: createPortOnePaymentKey(orderNo),
       billingKey,
       customerId: subscription.customer_key,
       amount: subscription.price,
@@ -161,9 +164,11 @@ async function chargePlanBillingSubscription({
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
       .insert({
-        provider: 'kpn',
-        payment_key: orderNo,
+        provider: getCurrentPortOneProvider(),
+        payment_key: createPortOnePaymentKey(orderNo),
         order_no: orderNo,
+        tx_no: null,
+        transaction_no: getPortOnePaymentTransactionNo(payment),
         buyer_user_id: subscription.subscriber_user_id,
         amount: getPortOnePaidAmount(payment) || subscription.price,
         refunded_amount: 0,

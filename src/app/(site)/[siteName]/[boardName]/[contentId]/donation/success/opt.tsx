@@ -31,8 +31,9 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const paymentKey = normalizeText(searchParams.get('paymentKey'));
-        const orderId = normalizeText(searchParams.get('orderId'));
+        const paymentKey = normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
+        const orderId = normalizeText(searchParams.get('orderId')) || normalizeText(searchParams.get('orderNo'));
+        const txId = normalizeText(searchParams.get('txId'));
         const amount = Number(normalizeText(searchParams.get('amount')));
         const siteId = normalizeText(searchParams.get('siteId'));
         const targetType = normalizeText(searchParams.get('targetType'));
@@ -42,7 +43,7 @@ export default function Opt() {
           throw new Error('후원 결제 정보가 올바르지 않습니다.');
         }
 
-        const response = await fetch('/api/payments/toss/donation/success', {
+        const response = await fetch('/api/payments/portone/donation/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -51,6 +52,7 @@ export default function Opt() {
           body: JSON.stringify({
             paymentKey,
             orderId,
+            txId,
             amount,
             siteId,
             targetType,

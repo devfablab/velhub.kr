@@ -43,13 +43,13 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const authKey = normalizeText(searchParams.get('authKey'));
+        const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
         const targetType = getTargetType(normalizeText(searchParams.get('targetType')));
         const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
-        if (!authKey || !customerKey || !orderNo || !targetType) {
+        if (!billingKey || !customerKey || !orderNo || !targetType) {
           throw new Error('구독 정보가 올바르지 않습니다.');
         }
 
@@ -57,14 +57,14 @@ export default function Opt() {
           throw new Error('연재 구독 정보가 올바르지 않습니다.');
         }
 
-        const response = await fetch('/api/payments/toss/subscriptions/success', {
+        const response = await fetch('/api/payments/portone/subscriptions/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            authKey,
+            billingKey,
             customerKey,
             orderNo,
             siteName,

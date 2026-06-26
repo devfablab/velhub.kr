@@ -50,9 +50,16 @@ type DonationStatusResponse = {
   error?: string;
 };
 
+type PortOneBillingKeyResponse = {
+  billingKey?: string;
+  code?: string;
+  message?: string;
+};
+
 type MembershipStartResponse = {
   mode?: 'billing_auth' | 'direct_billing';
-  clientKey?: string;
+  storeId?: string;
+  channelKey?: string;
   customerKey?: string;
   orderNo?: string;
   orderName?: string;
@@ -115,7 +122,7 @@ export default function SiteProfile() {
 
   useEffect(() => {
     async function loadMembershipStatus() {
-      const response = await fetch(`/api/payments/toss/membership/status?siteName=${siteName}`, {
+      const response = await fetch(`/api/payments/portone/membership/status?siteName=${siteName}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -210,7 +217,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/toss/membership/start', {
+      const response = await fetch('/api/payments/portone/membership/start', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -236,17 +243,57 @@ export default function SiteProfile() {
         return;
       }
 
-      if (!result.clientKey || !result.customerKey || !result.orderNo || !result.successUrl || !result.failUrl) {
+      if (!result.storeId || !result.channelKey || !result.customerKey || !result.orderNo || !result.orderName || !result.successUrl) {
         throw new Error('멤버십 결제 정보가 올바르지 않습니다.');
       }
 
-      const tossPayments = await loadTossPayments(result.clientKey);
+      const billingKeyResponse = (await PortOne.requestIssueBillingKey({
+        storeId: result.storeId,
+        channelKey: result.channelKey,
+        billingKeyMethod: 'CARD',
+        issueId: result.orderNo,
+        issueName: result.orderName,
+        customer: {
+          customerId: result.customerKey,
+        },
+        redirectUrl: result.successUrl,
+      })) as PortOneBillingKeyResponse | undefined;
 
-      await tossPayments.requestBillingAuth('카드', {
-        customerKey: result.customerKey,
-        successUrl: result.successUrl,
-        failUrl: result.failUrl,
+      if (!billingKeyResponse) {
+        throw new Error('멤버십 결제수단 등록 응답이 없습니다.');
+      }
+
+      if (billingKeyResponse.code) {
+        throw new Error(billingKeyResponse.message || '멤버십 결제수단 등록에 실패했습니다.');
+      }
+
+      if (!billingKeyResponse.billingKey) {
+        throw new Error('billingKey가 발급되지 않았습니다.');
+      }
+
+      const successResponse = await fetch('/api/payments/portone/membership/success', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          billingKey: billingKeyResponse.billingKey,
+          customerKey: result.customerKey,
+          siteName,
+          orderNo: result.orderNo,
+        }),
       });
+
+      const successResult = (await successResponse.json()) as MembershipActionResponse;
+
+      if (!successResponse.ok) {
+        throw new Error(successResult.error ?? '멤버십 가입을 완료하지 못했습니다.');
+      }
+
+      setMembershipStatus('active');
+      setIsMembershipDialogOpen(false);
+      setIsMembershipProcessing(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setMembershipErrorMessage(unknownError.message || '멤버십 가입을 시작하지 못했습니다.');
@@ -263,7 +310,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/toss/membership/cancel', {
+      const response = await fetch('/api/payments/portone/membership/cancel', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -297,7 +344,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/toss/membership/resume', {
+      const response = await fetch('/api/payments/portone/membership/resume', {
         method: 'POST',
         credentials: 'include',
         headers: {
