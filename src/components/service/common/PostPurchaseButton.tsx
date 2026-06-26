@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  FormControlLabel,
   Snackbar,
   Stack,
   Typography,
@@ -43,6 +42,7 @@ type Props = {
   disabled?: boolean;
   redirectUrl?: string;
   failUrl?: string;
+  successUrl?: string;
   onProcessingChange?: (isProcessing: boolean) => void;
 };
 
