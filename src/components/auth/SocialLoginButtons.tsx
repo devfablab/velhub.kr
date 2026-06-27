@@ -23,6 +23,7 @@ export default function SocialLoginButtons() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const actionText = pathname === '/auth/sign-up' ? '시작하기' : '계속하기';
+  const naverAuth = pathname === '/auth/sign-up' || pathname === '/auth/sign-in';
 
   async function handleGoogleLogin() {
     if (isSubmitting) {
@@ -186,15 +187,17 @@ export default function SocialLoginButtons() {
 
   return (
     <div className={styles.socials}>
-      <button
-        type="button"
-        className={`button medium submit ${styles.button} ${styles.naver}`}
-        onClick={handleNaverLogin}
-        disabled={isSubmitting}
-      >
-        <VhiNaver />
-        <span>네이버 아이디로 {actionText}</span>
-      </button>
+      {naverAuth ? (
+        <button
+          type="button"
+          className={`button medium submit ${styles.button} ${styles.naver}`}
+          onClick={handleNaverLogin}
+          disabled={isSubmitting}
+        >
+          <VhiNaver />
+          <span>네이버 아이디로 {actionText}</span>
+        </button>
+      ) : null}
 
       <button
         type="button"
