@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -32,6 +32,9 @@ export default function Verify2fa() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+
+  const verifyCodeInputRef = useRef<HTMLInputElement | null>(null);
+  const submitTimeoutRef = useRef<number | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,8 +92,51 @@ export default function Verify2fa() {
     void initialize();
   }, [router, supabase]);
 
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    const focusTimeoutId = window.setTimeout(() => {
+      verifyCodeInputRef.current?.focus();
+    }, 100);
+
+    return () => {
+      window.clearTimeout(focusTimeoutId);
+    };
+  }, [isLoading]);
+
+  useEffect(() => {
+    return () => {
+      if (submitTimeoutRef.current) {
+        window.clearTimeout(submitTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function handleVerifyCodeChange(event: InputChangeEvent) {
-    setVerifyCode(event.target.value.trim());
+    const nextVerifyCode = event.target.value.replace(/\D/g, '').slice(0, 6);
+
+    setVerifyCode(nextVerifyCode);
+
+    if (submitTimeoutRef.current) {
+      window.clearTimeout(submitTimeoutRef.current);
+      submitTimeoutRef.current = null;
+    }
+
+    if (nextVerifyCode.length !== 6 || isSubmitting) {
+      return;
+    }
+
+    const form = event.target.form;
+
+    if (!form) {
+      return;
+    }
+
+    submitTimeoutRef.current = window.setTimeout(() => {
+      form.requestSubmit();
+    }, 0);
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
@@ -98,6 +144,11 @@ export default function Verify2fa() {
 
     if (isSubmitting || !factorId || !verifyCode) {
       if (!verifyCode) setErrorMessage('인증 코드를 입력해주세요.');
+      return;
+    }
+
+    if (verifyCode.length !== 6) {
+      setErrorMessage('인증 코드 6자리를 입력해주세요.');
       return;
     }
 
@@ -113,6 +164,7 @@ export default function Verify2fa() {
       if (challengeAndVerifyResult.error) {
         throw new Error('인증 코드가 올바르지 않습니다.');
       }
+      window.location.reload();
 
       router.refresh();
     } catch (error) {
@@ -140,13 +192,20 @@ export default function Verify2fa() {
           <Stack gap={1}>
             <Typography variant="subtitle2">인증 코드</Typography>
             <TextField
+              inputRef={verifyCodeInputRef}
               placeholder="XXXXXX"
               type="text"
               value={verifyCode}
               onChange={handleVerifyCodeChange}
               disabled={isLoading || isSubmitting}
               fullWidth
-              autoComplete="off"
+              autoComplete="one-time-code"
+              size="small"
+              inputProps={{
+                inputMode: 'numeric',
+                pattern: '[0-9]*',
+                maxLength: 6,
+              }}
             />
           </Stack>
           {errorMessage ? (
@@ -169,16 +228,23 @@ export default function Verify2fa() {
         <>
           <DialogContent>
             <Typography variant="body1">보안을 위해 2단계 인증 코드를 입력해 주세요.</Typography>
-            <Stack gap={1}>
+            <Stack sx={{ pt: 2 }}>
               <Typography variant="subtitle2">인증 코드</Typography>
               <TextField
+                inputRef={verifyCodeInputRef}
                 placeholder="XXXXXX"
                 type="text"
                 value={verifyCode}
                 onChange={handleVerifyCodeChange}
                 disabled={isLoading || isSubmitting}
                 fullWidth
-                autoComplete="off"
+                autoComplete="one-time-code"
+                size="small"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 6,
+                }}
               />
             </Stack>
             {errorMessage ? (

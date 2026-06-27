@@ -6,8 +6,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
 import { getSessionClaims } from '@/lib/session';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
-import Verify2fa from '@/components/auth/Verify2fa';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import TotpGuard from '@/components/auth/TotpGuard';
 import './globals.sass';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -45,9 +44,6 @@ const Neo = localFont({
 });
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const sessionClaims = await getSessionClaims();
-  const needsTotp =
-    sessionClaims?.userId && sessionClaims?.authenticationLevel === 'aal1' && sessionClaims?.hasTotp === true;
   return (
     <html lang="ko-KR" className={`${Pre.variable} ${Neo.variable} ${Sans.variable} ${Serif.variable} ${Ham.variable}`}>
       <body>
@@ -55,23 +51,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <AuthStateProvider>
             <AppRouterCacheProvider>
               <ThemeProviderClient>
-                {needsTotp ? (
-                  <>
-                    <Verify2fa />
-                    <main>
-                      <div className="container">
-                        <div
-                          className="content"
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                        >
-                          <LoadingIndicator />
-                        </div>
-                      </div>
-                    </main>
-                  </>
-                ) : (
-                  children
-                )}
+                <TotpGuard>{children}</TotpGuard>
               </ThemeProviderClient>
             </AppRouterCacheProvider>
           </AuthStateProvider>

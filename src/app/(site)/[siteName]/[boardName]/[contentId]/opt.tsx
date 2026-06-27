@@ -814,7 +814,6 @@ export default function Opt({ isCommunity }: Props) {
       </>
     ) : null;
 
-  console.log('content: ', content);
   const subscriptionButtons =
     content.published_status === 'published' && !isPage && content.is_purchase_required && !isStaff ? (
       <>

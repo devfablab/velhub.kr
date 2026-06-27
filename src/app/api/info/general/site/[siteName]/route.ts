@@ -131,11 +131,6 @@ async function checkAccess(siteName: string) {
     .eq('site_id', rhizome.data.id)
     .maybeSingle();
 
-  console.log('session: ', session);
-
-  console.log('membership.error: ', membership.error);
-  console.log('membership.data?.user_id: ', membership.data?.user_id);
-
   if (membership.error || normalizeText(membership.data?.role) !== 'owner' || !membership.data?.user_id) {
     return {
       ok: false,
