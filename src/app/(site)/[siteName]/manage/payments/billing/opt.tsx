@@ -29,6 +29,7 @@ import { formatDate, formatDateSimple, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
+import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 
 type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
 type PaymentStatus = 'paid' | 'failed' | 'partially_refunded' | 'refunded';
@@ -115,12 +116,6 @@ type PlanBillingStartResponse =
   | {
       error: string;
     };
-
-type PortOneBillingKeyResponse = {
-  billingKey?: string;
-  code?: string;
-  message?: string;
-};
 
 type PlanBillingCancelResponse =
   | {
@@ -428,7 +423,7 @@ export default function Opt() {
     void loadData();
   }, [loadData, siteName]);
 
-  async function handleBillingAuth(purpose: 'plan_subscription' | 'billing_method', addMethod: boolean) {
+  async function handleBillingAuth() {
     try {
       setIsProcessing(true);
       setErrorMessage('');
@@ -438,17 +433,7 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
-      const url = addMethod ? '/api/payments/portone/billing-method/start' : '/api/payments/portone/plan-billing/start';
-
-      const hadBillingMethod = Boolean(billingData.billingMethods?.length);
-      const orderName =
-        purpose === 'billing_method'
-          ? '데브허브 결제수단 추가'
-          : hadBillingMethod
-            ? '데브허브 사이트 요금제 무료체험 시작'
-            : '데브허브 사이트 요금제 결제수단 등록';
-
-      const response = await fetch(url, {
+      const response = await fetch('/api/payments/portone/plan-billing/start', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -456,130 +441,37 @@ export default function Opt() {
         },
         body: JSON.stringify({
           siteId: billingData.site.id,
-          orderName,
+          orderName: '데브허브 사이트 요금제 무료체험 시작',
           successUrl: `/${siteName}/manage/payments/billing/success`,
           failUrl: `/${siteName}/manage/payments/billing/fail`,
-          purpose,
+          purpose: 'plan_subscription',
         }),
       });
 
       const result = (await response.json()) as PlanBillingStartResponse;
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error : '결제수단 등록을 시작하지 못했습니다.');
+        throw new Error('error' in result ? result.error : '요금제 구독을 시작하지 못했습니다.');
       }
 
       if ('error' in result) {
-        throw new Error(result.error || '결제수단 등록을 시작하지 못했습니다.');
-      }
-
-      if (result.mode === 'direct_billing' || result.mode === 'trial_started') {
-        const isLoaded = await loadData();
-
-        if (isLoaded) {
-          if (purpose === 'billing_method') {
-            setSuccessMessage('결제수단이 추가되었습니다.');
-          } else if (result.mode === 'trial_started') {
-            setSuccessMessage('무료체험이 시작되었습니다.');
-          } else {
-            setSuccessMessage(
-              hadBillingMethod
-                ? '요금제 구독이 시작되었습니다.'
-                : '결제수단 등록이 완료되고 요금제 구독이 시작되었습니다.',
-            );
-          }
-        }
-
-        setIsProcessing(false);
-        return;
-      }
-
-      if (
-        !result.storeId ||
-        !result.channelKey ||
-        !result.customerKey ||
-        !result.customerName ||
-        !result.successUrl ||
-        !result.failUrl
-      ) {
-        throw new Error('결제수단 등록 정보가 올바르지 않습니다.');
-      }
-
-      const billingKeyResponse = (await PortOne.requestIssueBillingKey({
-        storeId: result.storeId,
-        channelKey: result.channelKey,
-        billingKeyMethod: 'CARD',
-        issueId: result.orderNo,
-        issueName: result.orderName,
-        displayAmount: result.amount,
-        currency: 'KRW',
-        customer: {
-          customerId: result.customerKey,
-          fullName: result.customerName,
-          email: result.customerName,
-          phoneNumber: '01012345678',
-        },
-        redirectUrl: result.successUrl,
-      })) as PortOneBillingKeyResponse | undefined;
-
-      if (!billingKeyResponse) {
-        throw new Error('결제수단 등록 응답이 없습니다.');
-      }
-
-      if (billingKeyResponse.code) {
-        throw new Error(billingKeyResponse.message || '결제수단 등록에 실패했습니다.');
-      }
-
-      if (!billingKeyResponse.billingKey) {
-        throw new Error('billingKey가 발급되지 않았습니다.');
-      }
-
-      const successResponse = await fetch(
-        addMethod ? '/api/payments/portone/billing-method/success' : '/api/payments/portone/plan-billing/success',
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            billingKey: billingKeyResponse.billingKey,
-            customerKey: result.customerKey,
-            siteId: billingData.site.id,
-            orderNo: result.orderNo,
-            purpose,
-          }),
-        },
-      );
-
-      const successResult = (await successResponse.json()) as {
-        ok?: boolean;
-        mode?: 'resume_scheduled_cancel' | 'trial_started' | 'direct_billing';
-        error?: string;
-      };
-
-      if (!successResponse.ok) {
-        throw new Error(successResult.error ?? '결제수단 등록을 완료하지 못했습니다.');
+        throw new Error(result.error || '요금제 구독을 시작하지 못했습니다.');
       }
 
       const isLoaded = await loadData();
 
       if (isLoaded) {
-        if (purpose === 'billing_method') {
-          setSuccessMessage('결제수단이 추가되었습니다.');
-        } else if (successResult.mode === 'trial_started') {
+        if (result.mode === 'trial_started') {
           setSuccessMessage('무료체험이 시작되었습니다.');
-        } else if (successResult.mode === 'resume_scheduled_cancel') {
-          setSuccessMessage('요금제 구독 취소가 철회되었습니다.');
         } else {
           setSuccessMessage('요금제 구독이 시작되었습니다.');
         }
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '결제수단 등록을 시작하지 못했습니다.');
+        setErrorMessage(unknownError.message || '요금제 구독을 시작하지 못했습니다.');
       } else {
-        setErrorMessage('결제수단 등록을 시작하지 못했습니다.');
+        setErrorMessage('요금제 구독을 시작하지 못했습니다.');
       }
     } finally {
       setIsProcessing(false);
@@ -777,12 +669,6 @@ export default function Opt() {
   const shouldShowBillingAuthButton =
     !subscription || subscription.status === 'canceled' || subscription.status === 'expired';
 
-  const planBillingActionPurpose: 'plan_subscription' | 'billing_method' = hasBillingMethod
-    ? 'plan_subscription'
-    : 'billing_method';
-
-  const shouldAddBillingMethodBeforePlanStart = !hasBillingMethod;
-
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
@@ -848,16 +734,20 @@ export default function Opt() {
                 </Stack>
                 <Stack direction="row" gap={1} flexWrap="wrap">
                   {shouldShowBillingAuthButton ? (
-                    <button
-                      type="button"
-                      className="button small submit"
-                      onClick={() => {
-                        void handleBillingAuth(planBillingActionPurpose, shouldAddBillingMethodBeforePlanStart);
-                      }}
-                      disabled={isProcessing}
-                    >
-                      {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
-                    </button>
+                    hasBillingMethod ? (
+                      <button
+                        type="button"
+                        className="button small submit"
+                        onClick={() => {
+                          void handleBillingAuth();
+                        }}
+                        disabled={isProcessing}
+                      >
+                        {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
+                      </button>
+                    ) : (
+                      <BillingMethodButton />
+                    )
                   ) : null}
 
                   {canRetryPayment ? (
@@ -940,18 +830,7 @@ export default function Opt() {
                   )}
                 </Stack>
 
-                {canAddBillingMethod ? (
-                  <button
-                    type="button"
-                    className="button small action"
-                    onClick={() => {
-                      void handleBillingAuth('billing_method', true);
-                    }}
-                    disabled={isProcessing}
-                  >
-                    결제 수단 추가하기
-                  </button>
-                ) : null}
+                {canAddBillingMethod ? <BillingMethodButton /> : null}
               </Stack>
             </div>
 
