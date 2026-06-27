@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
       .eq('target_id', siteId)
-      .in('status', ['trialing', 'active', 'past_due'])
+      .in('status', ['active', 'past_due'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -135,6 +135,10 @@ export async function POST(request: Request) {
     }
 
     const subscription = subscriptionResult.data as unknown as SubscriptionRow;
+
+    if (subscription.status === 'trialing') {
+      return Response.json({ error: '무료체험 기간 중에는 요금제 구독을 취소할 수 없습니다.' }, { status: 400 });
+    }
 
     if (subscription.canceled_at && subscription.next_billing_at === null) {
       return Response.json({ error: '이미 취소된 요금제 구독입니다.' }, { status: 400 });

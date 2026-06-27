@@ -655,6 +655,7 @@ export default function Opt() {
     subscription &&
     !canRefundSubscription &&
     !subscription.canceled_at &&
+    subscription.status !== 'trialing' &&
     subscription.status !== 'scheduled_cancel' &&
     subscription.status !== 'canceled' &&
     subscription.status !== 'expired',
