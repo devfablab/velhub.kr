@@ -12,7 +12,18 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import { getCurrentPortOneProvider, createPortOnePaymentKey, getPortOnePaidAmount, getPortOnePaidAt, getPortOnePaymentFromResponse, getPortOnePaymentMethod, getPortOnePaymentTransactionNo, requestPortOneBillingPayment, assertPortOnePaidPayment, PortOneApiError } from '@/lib/payments/portone';
+import {
+  getCurrentPortOneProvider,
+  createPortOnePaymentKey,
+  getPortOnePaidAmount,
+  getPortOnePaidAt,
+  getPortOnePaymentFromResponse,
+  getPortOnePaymentMethod,
+  getPortOnePaymentTransactionNo,
+  requestPortOneBillingPayment,
+  assertPortOnePaidPayment,
+  PortOneApiError,
+} from '@/lib/payments/portone';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
@@ -41,7 +52,6 @@ type PortOneBillingPaymentResult = {
   transactionId?: string | null;
   rawData?: unknown;
 };
-
 
 async function requestPortOneBillingPaymentCompat({
   billingKey,
@@ -95,10 +105,6 @@ function isValidCronRequest(request: Request) {
   }
 
   return authorization === `Bearer ${cronSecret}`;
-}
-
-function createOrderNo() {
-  return createPaymentOrderNo('MEMBERSHIP_BLOG');
 }
 
 function createRefundableUntil(startedAt: Date) {
@@ -176,7 +182,7 @@ async function chargeMembershipSubscription({
   now: Date;
   nowIso: string;
 }) {
-  const orderNo = createOrderNo();
+  const orderNo = createPaymentOrderNo('MEMBERSHIP_BLOG');
 
   try {
     if (!subscription.owner_user_id) {

@@ -1,3 +1,4 @@
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -183,10 +184,25 @@ export async function GET(request: Request) {
 
     const subscription = (subscriptionResult.data as SubscriptionRow | null) ?? null;
 
+    async function getPaymentEmail() {
+      try {
+        const session = await verifySession({ siteId: null });
+        if (!session.authUserId) {
+          return null;
+        }
+        return getPaymentCustomerName(session.authUserId);
+      } catch (unknownError) {
+        console.error(unknownError);
+        return null;
+      }
+    }
+    const paymentEmail = await getPaymentEmail();
+
     return Response.json({
       isEnabled: true,
       price: setting.price,
       membershipStatus: getMembershipStatus(subscription),
+      paymentEmail,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

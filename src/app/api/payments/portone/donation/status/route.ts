@@ -2,6 +2,8 @@ import { type NextRequest } from 'next/server';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import verifySession from '@/lib/session/verifySession';
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 
 type SiteRow = {
   id: string;
@@ -111,8 +113,23 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    async function getPaymentEmail() {
+      try {
+        const session = await verifySession({ siteId: null });
+        if (!session.authUserId) {
+          return null;
+        }
+        return getPaymentCustomerName(session.authUserId);
+      } catch (unknownError) {
+        console.error(unknownError);
+        return null;
+      }
+    }
+    const paymentEmail = await getPaymentEmail();
+
     return Response.json({
       isEnabled: true,
+      paymentEmail,
     });
   } catch (unknownError) {
     console.error(unknownError);

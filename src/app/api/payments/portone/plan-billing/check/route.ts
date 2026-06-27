@@ -53,10 +53,6 @@ function isValidCronRequest(request: Request) {
   return authorization === `Bearer ${cronSecret}`;
 }
 
-function createOrderNo() {
-  return createPaymentOrderNo('PLAN');
-}
-
 function createRefundableUntil(startedAt: Date) {
   return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
 }
@@ -146,7 +142,7 @@ async function chargePlanBillingSubscription({
   now: Date;
   nowIso: string;
 }) {
-  const orderNo = createOrderNo();
+  const orderNo = createPaymentOrderNo('PLAN');
 
   try {
     const billingKey = decrypt(subscription.billing_key);

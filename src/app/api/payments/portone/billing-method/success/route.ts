@@ -4,6 +4,7 @@ import { getCurrentPortOneProvider, getPortOneBillingCardInfo, getPortOneBilling
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { createCustomerKey } from '@/lib/payments/customer';
 
 type BillingMethodSuccessBody = {
   billingKey?: string;
@@ -15,12 +16,6 @@ type BillingMethodRow = {
   id: string;
   is_default: boolean;
 };
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,7 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     const billingKeyInfo = await getPortOneBillingKeyInfo(billingKey);
-
 
     if (billingKeyInfo.status !== 'ISSUED') {
       return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });

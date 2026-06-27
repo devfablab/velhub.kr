@@ -29,7 +29,7 @@ import {
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -122,12 +122,6 @@ async function requestPortOneBillingPaymentCompat({
     transactionId: getPortOnePaymentTransactionNo(payment),
     rawData: payment,
   };
-}
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
 }
 
 function getSafeRedirectUrl(request: Request, url: string | undefined) {

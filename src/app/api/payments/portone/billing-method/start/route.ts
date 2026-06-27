@@ -3,19 +3,13 @@ import { NextRequest } from 'next/server';
 import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 
 type BillingMethodStartBody = {
   orderName?: string;
   successUrl?: string;
   failUrl?: string;
 };
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
-}
 
 function createOrderNo() {
   const randomText = crypto.randomBytes(8).toString('hex');

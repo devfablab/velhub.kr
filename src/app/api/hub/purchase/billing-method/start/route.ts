@@ -1,13 +1,7 @@
 import crypto from 'crypto';
 import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
-}
+import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 
 function createOrderNo() {
   const randomText = crypto.randomBytes(8).toString('hex');

@@ -5,16 +5,11 @@ import { SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { createCustomerKey } from '@/lib/payments/customer';
 
 type BillingMethodRow = {
   id: string;
 };
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
-}
 
 function getPurchaseRedirectUrl(request: Request, status: 'success' | 'fail', message?: string) {
   const requestUrl = new URL(request.url);

@@ -21,7 +21,7 @@ import {
   type PortOnePaymentResponse,
 } from '@/lib/payments/portone';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
@@ -70,16 +70,6 @@ type SubscriptionRow = {
   canceled_at: string | null;
   expired_at: string | null;
 };
-
-function createCustomerKey(authUserId: string) {
-  const customerKeyHash = crypto.createHash('sha256').update(authUserId).digest('hex');
-
-  return `user_${customerKeyHash}`;
-}
-
-function createOrderNo() {
-  return createPaymentOrderNo('PLAN');
-}
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
   if (!url) {
@@ -239,7 +229,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
-    const orderNo = createOrderNo();
+    const orderNo = createPaymentOrderNo('PLAN');
 
     if (purpose !== 'billing_method' && isOpenSubscription(latestSubscription)) {
       return Response.json({ error: '이미 요금제 구독이 등록되어 있습니다.' }, { status: 400 });
