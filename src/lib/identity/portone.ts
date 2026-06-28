@@ -102,10 +102,17 @@ export function extractVerifiedIdentity(
     return null;
   }
 
-  const identityVerification = toRecord(root.identityVerification) ?? root;
+  const wrappedData = toRecord(root.data);
+  const identityVerification = toRecord(root.identityVerification) ?? wrappedData ?? root;
   const status = getString(identityVerification.status);
 
   if (status !== 'VERIFIED') {
+    return null;
+  }
+
+  const id = getString(identityVerification.id);
+
+  if (id && id !== identityVerificationId) {
     return null;
   }
 

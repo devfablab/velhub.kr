@@ -29,7 +29,7 @@ function TotpLayout() {
 
 export default function TotpGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [needsTotp, setNeedsTotp] = useState(true);
+  const [needsTotp, setNeedsTotp] = useState(false);
 
   useEffect(() => {
     let isActive = true;

@@ -1,3 +1,4 @@
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
 
@@ -7,6 +8,9 @@ export default async function Page() {
       <div className={styles.container}>
         <div className={`content ${styles.content}`}>
           <h1>블로그 개설</h1>
+          <div className="paper">
+            <IdentityVerificationButton />
+          </div>
           <Opt />
         </div>
       </div>

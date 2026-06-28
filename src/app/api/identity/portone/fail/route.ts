@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionClaims } from '@/lib/session';
-import { getSupabaseAdmin } from '@/lib/supabase';
 
-type RequestBody = {
+type FailRequestBody = {
   identityVerificationId?: string;
+  code?: string;
+  message?: string;
 };
+
+function isValidIdentityVerificationId(identityVerificationId: string, userId: string) {
+  return identityVerificationId.startsWith(`identity-${userId}-`);
+}
 
 export async function POST(request: NextRequest) {
   const sessionClaims = await getSessionClaims();
@@ -13,22 +18,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => null)) as RequestBody | null;
-  const identityVerificationId = body?.identityVerificationId?.trim();
+  const body = (await request.json().catch(() => null)) as FailRequestBody | null;
+  const identityVerificationId = body?.identityVerificationId;
 
-  if (!identityVerificationId) {
-    return NextResponse.json({ ok: true });
+  if (identityVerificationId && !isValidIdentityVerificationId(identityVerificationId, sessionClaims.userId)) {
+    return NextResponse.json({ message: '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
-
-  await supabaseAdmin
-    .from('chorogons')
-    .update({
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', sessionClaims.userId)
-    .eq('verification_tx_id', identityVerificationId);
+  console.log('identity verification failed: ', {
+    userId: sessionClaims.userId,
+    identityVerificationId,
+    code: body?.code ?? null,
+    message: body?.message ?? null,
+  });
 
   return NextResponse.json({ ok: true });
 }

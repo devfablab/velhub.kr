@@ -127,7 +127,7 @@ function getPortOneApiSecret() {
 }
 
 export function getPortOneStoreId() {
-  return getRequiredEnv('NEXT_PUBLIC_PORTONE_STORE_ID');
+  return getRequiredEnv('PORTONE_STORE_ID');
 }
 
 export function getCurrentPortOneProvider() {
@@ -140,18 +140,18 @@ export function createPortOnePaymentKey(orderNo: string) {
 
 export function getPortOneKpnGeneralChannelKey() {
   if (CURRENT_PORTONE_PROVIDER === PORTONE_PROVIDER.INICIS) {
-    return getRequiredEnv('NEXT_PUBLIC_PORTONE_INICIS_GENERAL_CHANNEL_KEY');
+    return getRequiredEnv('PORTONE_INICIS_GENERAL_CHANNEL_KEY');
   }
 
-  return getRequiredEnv('NEXT_PUBLIC_PORTONE_KPN_GENERAL_CHANNEL_KEY');
+  return getRequiredEnv('PORTONE_KPN_GENERAL_CHANNEL_KEY');
 }
 
 export function getPortOneKpnSubscriptionChannelKey() {
   if (CURRENT_PORTONE_PROVIDER === PORTONE_PROVIDER.INICIS) {
-    return getRequiredEnv('NEXT_PUBLIC_PORTONE_INICIS_SUBSCRIPTION_CHANNEL_KEY');
+    return getRequiredEnv('PORTONE_INICIS_SUBSCRIPTION_CHANNEL_KEY');
   }
 
-  return getRequiredEnv('NEXT_PUBLIC_PORTONE_KPN_SUBSCRIPTION_CHANNEL_KEY');
+  return getRequiredEnv('PORTONE_KPN_SUBSCRIPTION_CHANNEL_KEY');
 }
 
 function getPortOneAuthorizationHeader() {
