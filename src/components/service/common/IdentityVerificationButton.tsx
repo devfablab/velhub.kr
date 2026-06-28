@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import PortOne from '@portone/browser-sdk/v2';
 import {
   Button,
@@ -18,6 +19,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 
@@ -225,6 +227,7 @@ async function sendFormData<T>(url: string, method: 'POST' | 'PATCH', body: Form
 }
 
 export default function IdentityVerificationButton() {
+  const pathname = usePathname();
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -378,6 +381,10 @@ export default function IdentityVerificationButton() {
       return;
     }
 
+    if (!isNewPage) {
+      return;
+    }
+
     if (settlement) {
       resetForm(settlement.settlement_type, settlement);
       setFormDialogOpen(true);
@@ -472,6 +479,8 @@ export default function IdentityVerificationButton() {
     return formData;
   };
 
+  const isNewPage = pathname?.startsWith('/new');
+
   const handleSubmit = async () => {
     if (isProcessing) {
       return;
@@ -491,6 +500,7 @@ export default function IdentityVerificationButton() {
       setFormDialogOpen(false);
       await loadStatus();
       showSnackbar(isEditing ? '정산 정보가 수정되었습니다.' : '정산 정보가 등록되었습니다.');
+      window.location.reload();
     } catch (error) {
       showSnackbar(getMessage(error));
     } finally {
@@ -500,14 +510,21 @@ export default function IdentityVerificationButton() {
 
   return (
     <>
-      <button
-        type="button"
-        className="button medium submit"
-        onClick={handleMainButtonClick}
-        disabled={isLoading || isProcessing}
-      >
-        {isProcessing ? '처리 중' : buttonText}
-      </button>
+      {(buttonText === '정산 정보 수정' || buttonText === '정산 정보 입력') && isNewPage ? (
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>본인 인증이 완료되었습니다.</span>
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="button medium submit"
+          onClick={handleMainButtonClick}
+          disabled={isLoading || isProcessing}
+        >
+          {isProcessing ? '처리 중' : buttonText}
+        </button>
+      )}
 
       {isMobile ? (
         <Drawer
