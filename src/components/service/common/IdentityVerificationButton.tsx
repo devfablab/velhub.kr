@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import {
   Button,
@@ -13,15 +13,13 @@ import {
   Select,
   Snackbar,
   Stack,
+  styled,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 
 type Identity = {
@@ -68,12 +66,6 @@ type IdentityVerificationSuccessResponse = {
   gender: string;
 };
 
-type PortOneIdentityVerificationResponse = {
-  identityVerificationId?: string;
-  code?: string;
-  message?: string;
-};
-
 type BusinessLicenseUploadResponse = {
   business_license: string;
 };
@@ -88,6 +80,75 @@ type SettlementPayload = {
   account_number: string;
   account_holder: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+function getExpectedResidentGenderDigits(birthDate: string, gender: string) {
+  const digits = onlyDigits(birthDate);
+  const year = Number(digits.slice(0, 4));
+
+  if (gender === 'MALE') {
+    return year >= 2000 ? ['3'] : ['1'];
+  }
+
+  if (gender === 'FEMALE') {
+    return year >= 2000 ? ['4'] : ['2'];
+  }
+
+  return [];
+}
+
+function isValidResidentRegistrationNumber(value: string) {
+  if (!/^\d{13}$/.test(value)) {
+    return false;
+  }
+
+  const weights = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+  const sum = weights.reduce((total, weight, index) => total + Number(value[index]) * weight, 0);
+  const checkDigit = (11 - (sum % 11)) % 10;
+
+  return checkDigit === Number(value[12]);
+}
+
+function validateResidentSuffix(
+  identity: Identity,
+  birthDatePrefix: string,
+  residentSuffix: string,
+  residentSuffixConfirm: string,
+) {
+  if (residentSuffix.length !== 7 || residentSuffixConfirm.length !== 7) {
+    throw new Error('주민등록번호 뒷자리를 입력해 주세요.');
+  }
+
+  if (residentSuffix !== residentSuffixConfirm) {
+    throw new Error('주민등록번호 뒷자리 확인값이 일치하지 않습니다.');
+  }
+
+  const expectedGenderDigits = getExpectedResidentGenderDigits(identity.birth_date, identity.gender);
+  const genderDigit = residentSuffix.slice(0, 1);
+
+  if (expectedGenderDigits.length > 0 && !expectedGenderDigits.includes(genderDigit)) {
+    throw new Error('주민등록번호 뒷자리 첫 숫자가 본인인증 정보와 일치하지 않습니다.');
+  }
+
+  const residentRegistrationNumber = `${birthDatePrefix}${residentSuffix}`;
+
+  if (!isValidResidentRegistrationNumber(residentRegistrationNumber)) {
+    throw new Error('주민등록번호 형식이 올바르지 않습니다.');
+  }
+
+  return residentRegistrationNumber;
+}
 
 function onlyDigits(value: string | null | undefined) {
   return String(value ?? '').replace(/\D/g, '');
@@ -223,6 +284,8 @@ export default function IdentityVerificationButton() {
   const isVerified = Boolean(identity);
   const canSettle = identity ? isAdult(identity.birth_date) : false;
   const birthDatePrefix = identity ? getBirthDatePrefix(identity.birth_date) : '';
+
+  const fileInputReference = useRef<HTMLInputElement | null>(null);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -386,13 +449,12 @@ export default function IdentityVerificationButton() {
     }
 
     if (selectedType === 'individual') {
-      if (residentSuffix.length !== 7 || residentSuffixConfirm.length !== 7) {
-        throw new Error('주민등록번호 뒷자리를 입력해 주세요.');
-      }
-
-      if (residentSuffix !== residentSuffixConfirm) {
-        throw new Error('주민등록번호 뒷자리 확인값이 일치하지 않습니다.');
-      }
+      const residentRegistrationNumber = validateResidentSuffix(
+        identity,
+        birthDatePrefix,
+        residentSuffix,
+        residentSuffixConfirm,
+      );
 
       if (!businessIncomeCode) {
         throw new Error('업종코드를 선택해 주세요.');
@@ -400,7 +462,7 @@ export default function IdentityVerificationButton() {
 
       return {
         settlement_type: 'individual',
-        resident_registration_number: `${birthDatePrefix}${residentSuffix}`,
+        resident_registration_number: residentRegistrationNumber,
         business_income_code: businessIncomeCode,
         bank_code: bankCode,
         account_number: accountNumber,
@@ -462,6 +524,10 @@ export default function IdentityVerificationButton() {
     }
   };
 
+  const selectMenuProps = {
+    disablePortal: true,
+  };
+
   return (
     <>
       <button
@@ -490,6 +556,7 @@ export default function IdentityVerificationButton() {
               displayEmpty
               size="small"
               value={selectedType}
+              MenuProps={selectMenuProps}
               onChange={(event) => setSelectedType(event.target.value as SettlementType | '')}
             >
               <MenuItem value="" disabled>
@@ -595,6 +662,7 @@ export default function IdentityVerificationButton() {
                     size="small"
                     value={businessIncomeCode}
                     onChange={(event) => setBusinessIncomeCode(event.target.value)}
+                    MenuProps={selectMenuProps}
                   >
                     <MenuItem value="" disabled>
                       업종코드를 선택해 주세요
@@ -628,14 +696,25 @@ export default function IdentityVerificationButton() {
 
                   <Button component="label" className="button small action">
                     사업자등록증 PDF 선택
-                    <input type="file" accept="application/pdf" hidden onChange={handleBusinessLicenseChange} />
+                    <VisuallyHiddenInput
+                      ref={fileInputReference}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleBusinessLicenseChange}
+                    />
                   </Button>
 
                   {businessLicenseFile ? <p>{businessLicenseFile.name}</p> : null}
                 </>
               ) : null}
 
-              <Select displayEmpty size="small" value={bankCode} onChange={(event) => setBankCode(event.target.value)}>
+              <Select
+                displayEmpty
+                size="small"
+                value={bankCode}
+                onChange={(event) => setBankCode(event.target.value)}
+                MenuProps={selectMenuProps}
+              >
                 <MenuItem value="" disabled>
                   입금 은행을 선택해 주세요
                 </MenuItem>
@@ -760,7 +839,12 @@ export default function IdentityVerificationButton() {
 
                   <Button component="label" className="button small action">
                     사업자등록증 PDF 선택
-                    <input type="file" accept="application/pdf" hidden onChange={handleBusinessLicenseChange} />
+                    <VisuallyHiddenInput
+                      ref={fileInputReference}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleBusinessLicenseChange}
+                    />
                   </Button>
 
                   {businessLicenseFile ? <p>{businessLicenseFile.name}</p> : null}
@@ -819,6 +903,9 @@ export default function IdentityVerificationButton() {
           horizontal: 'center',
         }}
         autoHideDuration={2700}
+        sx={{
+          zIndex: 20000,
+        }}
         onClose={() => setSnackbarMessage('')}
       />
     </>
