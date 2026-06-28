@@ -10,7 +10,7 @@ type RouteContext = {
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
   return (
-    <Container pageBack={`/${siteName}`} pageTitle="커뮤니티 가입">
+    <Container pageBack={`/${siteName}`} pageTitle="블로그 가입">
       <Opt />
     </Container>
   );

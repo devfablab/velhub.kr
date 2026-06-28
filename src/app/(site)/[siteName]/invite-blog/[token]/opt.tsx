@@ -2,13 +2,12 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Box, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Stack, TextField, Typography } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import SiteInfo from '@/components/service/community/SiteInfo';
-import UserInfo from '@/components/service/community/UserInfo';
+import SiteProfile from '@/components/service/blog/SiteProfile';
 import styles from '@/app/board.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -40,7 +39,6 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const token = normalizeText(params.token);
 
-  const [joinNotice, setJoinNotice] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [nickname, setNickname] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -50,16 +48,12 @@ export default function Opt() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
-
   useEffect(() => {
     async function loadInvite() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/manage/join/invite/${token}?siteName=${siteName}`, {
+        const response = await fetch(`/api/manage/team/members/invite/${token}?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -70,7 +64,6 @@ export default function Opt() {
           throw new Error(result.error ?? '초대 정보를 불러오지 못했습니다.');
         }
 
-        setJoinNotice(result.joinNotice ?? '');
         setInviteEmail(result.invite?.email ?? '');
         setIsLoggedIn(Boolean(result.isLoggedIn));
         setIsInvitedUser(Boolean(result.isInvitedUser));
@@ -105,7 +98,7 @@ export default function Opt() {
       setErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch(`/api/manage/join/invite/${token}?siteName=${siteName}`, {
+      const response = await fetch(`/api/manage/team/members/invite/${token}?siteName=${siteName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,19 +112,19 @@ export default function Opt() {
       const result = (await response.json()) as AcceptInviteResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '초대 처리에 실패했습니다.');
+        throw new Error(result.error ?? '초대 처리에 실패했습니다.1');
       }
 
       if (!result.siteName) {
-        throw new Error('초대 처리에 실패했습니다.');
+        throw new Error('초대 처리에 실패했습니다.1');
       }
 
       router.replace(`/${result.siteName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '초대 처리에 실패했습니다.');
+        setErrorMessage(unknownError.message || '초대 처리에 실패했습니다.3');
       } else {
-        setErrorMessage('초대 처리에 실패했습니다.');
+        setErrorMessage('초대 처리에 실패했습니다.4');
       }
     } finally {
       setIsSubmitting(false);
@@ -145,15 +138,13 @@ export default function Opt() {
   if (isAlreadyMember) {
     return (
       <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
+        <div className={`content ${styles.content} ${styles['blog-content']} `}>
+          <SiteProfile />
           <div className="paper">
             <Stack gap={2}>
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
-                <span>이미 가입된 멤버입니다.</span>
+                <span>이미 팀블로그에 소속된 멤버입니다!</span>
               </p>
 
               <Stack justifyContent="flex-end">
@@ -171,11 +162,6 @@ export default function Opt() {
             </Stack>
           </div>
         </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
       </div>
     );
   }
@@ -183,10 +169,8 @@ export default function Opt() {
   if (!isLoggedIn) {
     return (
       <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
+        <div className={`content ${styles.content} ${styles['blog-content']} `}>
+          <SiteProfile />
           <div className="paper">
             <Stack gap={2.5}>
               <Typography variant="subtitle2">{inviteEmail}</Typography>
@@ -197,13 +181,13 @@ export default function Opt() {
               <Stack direction="row" gap={1.5}>
                 <Anchor
                   className="button medium action"
-                  href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
+                  href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}&inviteType=blog`}
                 >
                   로그인
                 </Anchor>
                 <Anchor
                   className="button medium action"
-                  href={`/auth/sign-up?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
+                  href={`/auth/sign-up?inviteToken=${token}&siteName=${siteName}&inviteType=blog`}
                 >
                   회원가입
                 </Anchor>
@@ -218,11 +202,6 @@ export default function Opt() {
             ) : null}
           </div>
         </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
       </div>
     );
   }
@@ -230,10 +209,8 @@ export default function Opt() {
   if (!isInvitedUser) {
     return (
       <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
+        <div className={`content ${styles.content} ${styles['blog-content']} `}>
+          <SiteProfile />
           <div className="paper">
             <Stack gap={2}>
               <p className="alert info">
@@ -250,21 +227,14 @@ export default function Opt() {
             </Stack>
           </div>
         </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
       </div>
     );
   }
 
   return (
     <div className="container">
-      <aside>
-        <SiteInfo />
-      </aside>
-      <div className={`content ${styles.content} ${styles['home-content']} `}>
+      <div className={`content ${styles.content} ${styles['blog-content']} `}>
+        <SiteProfile />
         <div className="paper">
           <Box component="form" onSubmit={handleSubmit}>
             <Stack gap={2.5}>
@@ -290,11 +260,6 @@ export default function Opt() {
           ) : null}
         </div>
       </div>
-      {!isMobile ? (
-        <aside>
-          <UserInfo />
-        </aside>
-      ) : null}
     </div>
   );
 }

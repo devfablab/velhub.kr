@@ -84,7 +84,6 @@ export default function PendingInvite() {
           <div key={invite.id} className={styles['pending-site']}>
             <div className={styles['pending-header']}>
               <div className={styles['site-name']}>
-                <em>{invite.siteTypeLabel} </em>
                 {invite.profileLogoUrl ? (
                   <img src={invite.profileLogoUrl} alt="" />
                 ) : (
@@ -93,6 +92,7 @@ export default function PendingInvite() {
                     <strong>{invite.siteLabel}</strong>
                   </>
                 )}
+                <em>{invite.siteTypeLabel} </em>
               </div>
               <Anchor className="button action small" href={invite.href}>
                 가입하러 가기

@@ -44,9 +44,9 @@ export async function GET(request: Request, context: RouteContext) {
       .from('invite')
       .select('id, site_id, email, role, status, expires_at, accepted_user_id, joined_at, cancelled_at')
       .eq('token', normalizedToken)
-      .eq('role', 'member')
       .maybeSingle();
 
+    console.log('invite.error: ', invite.error);
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -76,10 +76,6 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    if (rhizome.data.site_type !== 'community') {
-      return Response.json({ error: '커뮤니티 사이트만 접근할 수 있습니다.' }, { status: 403 });
     }
 
     if (rhizome.data.site_key !== siteName) {
@@ -149,7 +145,6 @@ export async function GET(request: Request, context: RouteContext) {
         site_label: rhizome.data.site_label,
         site_type: rhizome.data.site_type,
       },
-      joinNotice: community.data?.join_notice ?? '',
       isLoggedIn,
       isInvitedUser,
       isAlreadyMember,
@@ -266,13 +261,19 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('user_id', stigma.data.id)
       .maybeSingle();
 
+    console.log('currentRhizomeStigma: ', currentRhizomeStigma);
+
     if (currentRhizomeStigma.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
+    let rhizomeStigmaId = '';
+
     const approvalAt = new Date().toISOString();
 
     if (currentRhizomeStigma.data) {
+      rhizomeStigmaId = currentRhizomeStigma.data.id;
+
       const updateRhizomeStigma = await supabaseAdmin
         .from('rhizome_stigmas')
         .update({
@@ -285,9 +286,11 @@ export async function POST(request: Request, context: RouteContext) {
           post_count: 0,
           comment_count: 0,
           checkin_count: 0,
-          last_visit_at: approvalAt,
+          last_checkin_at: approvalAt,
         })
         .eq('id', currentRhizomeStigma.data.id);
+
+      console.log('updateRhizomeStigma: ', updateRhizomeStigma);
 
       if (updateRhizomeStigma.error) {
         return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
@@ -308,7 +311,7 @@ export async function POST(request: Request, context: RouteContext) {
           post_count: 0,
           comment_count: 0,
           checkin_count: 0,
-          last_visit_at: approvalAt,
+          last_checkin_at: approvalAt,
           answered_questions: [],
           staff_note: null,
           handled_by: null,
@@ -317,26 +320,32 @@ export async function POST(request: Request, context: RouteContext) {
         .select('id')
         .maybeSingle();
 
+      console.log('insertRhizomeStigma: ', insertRhizomeStigma);
+
       if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
         return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
       }
+
+      rhizomeStigmaId = insertRhizomeStigma.data.id;
     }
 
     const updateInvite = await supabaseAdmin
       .from('invite')
       .update({
         status: 'joined',
-        accepted_user_id: stigma.data.id,
+        accepted_user_id: rhizomeStigmaId,
         joined_at: approvalAt,
       })
       .eq('id', invite.data.id);
 
+    console.log('updateInvite: ', updateInvite);
     if (updateInvite.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
     const deleteInvite = await supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
+    console.log('deleteInvite: ', deleteInvite);
     if (deleteInvite.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
@@ -346,10 +355,11 @@ export async function POST(request: Request, context: RouteContext) {
       siteName: rhizome.data.site_key,
     });
   } catch (unknownError) {
+    console.log('unknownError: ', unknownError);
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '초대 처리에 실패했습니다1.' }, { status: 500 });
   }
 }

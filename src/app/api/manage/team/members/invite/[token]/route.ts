@@ -46,6 +46,8 @@ export async function GET(request: Request, context: RouteContext) {
       .eq('token', normalizedToken)
       .maybeSingle();
 
+    console.log('invite: ', invite);
+
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -85,6 +87,44 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '초대장 정보가 올바르지 않습니다.' }, { status: 403 });
     }
 
+    const sessionClaims = await getSessionClaims();
+
+    let isLoggedIn = false;
+    let isInvitedUser = false;
+    let isAlreadyMember = false;
+
+    if (sessionClaims?.userId) {
+      isLoggedIn = true;
+
+      const stigma = await supabaseAdmin
+        .from('stigmas')
+        .select('id, email')
+        .eq('user_id', sessionClaims.userId)
+        .maybeSingle();
+
+      if (stigma.error) {
+        return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const currentEmail = stigma.data?.email ? decrypt(stigma.data.email) : '';
+
+      if (currentEmail && currentEmail.trim().toLowerCase() === invite.data.email.trim().toLowerCase()) {
+        isInvitedUser = true;
+      }
+
+      if (stigma.data?.id) {
+        const existingMember = await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', rhizome.data.id)
+          .eq('user_id', stigma.data.id)
+          .limit(1)
+          .maybeSingle();
+
+        isAlreadyMember = Boolean(existingMember.data);
+      }
+    }
+
     return Response.json({
       ok: true,
       invite: {
@@ -100,6 +140,9 @@ export async function GET(request: Request, context: RouteContext) {
         site_label: rhizome.data.site_label,
         site_type: rhizome.data.site_type,
       },
+      isLoggedIn,
+      isInvitedUser,
+      isAlreadyMember,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
@@ -139,6 +182,7 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('token', normalizedToken)
       .maybeSingle();
 
+    console.log('invite: ', invite);
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -198,9 +242,12 @@ export async function POST(request: Request, context: RouteContext) {
       .maybeSingle();
 
     let acceptedUserId = '';
+    const joinedAt = new Date().toISOString();
+
+    console.log('currentRhizomeStigma: ', currentRhizomeStigma);
 
     if (currentRhizomeStigma.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.1' }, { status: 500 });
     }
 
     if (currentRhizomeStigma.data) {
@@ -211,12 +258,15 @@ export async function POST(request: Request, context: RouteContext) {
         .update({
           role: invite.data.role,
           is_approval: true,
-          approval_at: new Date().toISOString(),
+          approval_at: joinedAt,
+          is_block: false,
+          block_count: 0,
+          last_checkin_at: joinedAt,
         })
         .eq('id', currentRhizomeStigma.data.id);
 
       if (updateRhizomeStigma.error) {
-        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '초대 처리에 실패했습니다.2' }, { status: 500 });
       }
     } else {
       const insertRhizomeStigma = await supabaseAdmin
@@ -226,21 +276,30 @@ export async function POST(request: Request, context: RouteContext) {
           user_id: stigma.data.id,
           role: invite.data.role,
           is_approval: true,
-          approval_at: new Date().toISOString(),
+          approval_at: joinedAt,
           is_block: false,
           block_count: 0,
+          blocked_at: null,
+          post_count: 0,
+          comment_count: 0,
+          checkin_count: 0,
+          last_checkin_at: joinedAt,
+          answered_questions: [],
+          staff_note: null,
+          handled_by: null,
+          handled_at: null,
         })
         .select('id')
         .maybeSingle();
 
+      console.log('insertRhizomeStigma: ', insertRhizomeStigma);
+
       if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
-        return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '초대 처리에 실패했습니다.3' }, { status: 500 });
       }
 
       acceptedUserId = insertRhizomeStigma.data.id;
     }
-
-    const joinedAt = new Date().toISOString();
 
     const updateInvite = await supabaseAdmin
       .from('invite')
@@ -252,13 +311,13 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('id', invite.data.id);
 
     if (updateInvite.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.4' }, { status: 500 });
     }
 
     const deleteInvite = await supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
     if (deleteInvite.error) {
-      return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '초대 처리에 실패했습니다.5' }, { status: 500 });
     }
 
     return Response.json({
@@ -267,9 +326,9 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.6' }, { status: 500 });
     }
 
-    return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '초대 처리에 실패했습니다.7' }, { status: 500 });
   }
 }

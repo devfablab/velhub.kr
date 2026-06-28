@@ -84,7 +84,6 @@ export default function PendingJoin() {
           <div key={join.id} className={styles['pending-site']}>
             <div className={styles['pending-header']}>
               <div className={styles['site-name']}>
-                <em>{join.siteTypeLabel} </em>
                 {join.profileLogoUrl ? (
                   <img src={join.profileLogoUrl} alt="" />
                 ) : (
@@ -95,6 +94,7 @@ export default function PendingJoin() {
                     <strong>{join.siteLabel}</strong>
                   </>
                 )}
+                <em>{join.siteTypeLabel}</em>
               </div>
               <Anchor className="button action small" href={join.href}>
                 커뮤니티 이동
