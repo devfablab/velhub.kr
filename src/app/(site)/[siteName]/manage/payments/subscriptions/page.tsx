@@ -122,12 +122,10 @@ export default async function Page(context: RouteContext) {
     const identityStatus = await getIdentityStatus(baseUrl, cookieHeader);
     const identity = identityStatus?.exists ? identityStatus.identity : null;
 
+    hasSettlement = await getSettlementStatus(baseUrl, cookieHeader);
+
     if (identity) {
       isMinor = !isAdult(identity.birth_date);
-
-      if (!isMinor) {
-        hasSettlement = await getSettlementStatus(baseUrl, cookieHeader);
-      }
     }
   }
 
