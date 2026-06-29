@@ -14,7 +14,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('chorogons')
-    .select('name, birth_date, gender, identity_verified_at')
+    .select('name, birth_date, birth_date_dummy, gender, identity_verified_at')
     .eq('user_id', sessionClaims.userId)
     .maybeSingle();
 
@@ -29,11 +29,16 @@ export async function GET() {
     });
   }
 
+  const birthDate =
+    process.env.NEXT_PUBLIC_APP_ENV === 'test' && data.birth_date_dummy
+      ? data.birth_date_dummy
+      : decrypt(String(data.birth_date));
+
   return NextResponse.json({
     exists: true,
     identity: {
       name: decrypt(String(data.name)),
-      birth_date: decrypt(String(data.birth_date)),
+      birth_date: birthDate,
       gender: decrypt(String(data.gender)),
       identity_verified_at: data.identity_verified_at,
     },

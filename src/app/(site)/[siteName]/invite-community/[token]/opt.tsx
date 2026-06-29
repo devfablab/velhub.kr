@@ -7,9 +7,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import SiteInfo from '@/components/service/community/SiteInfo';
-import UserInfo from '@/components/service/community/UserInfo';
-import styles from '@/app/board.module.sass';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -40,7 +38,6 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const token = normalizeText(params.token);
 
-  const [joinNotice, setJoinNotice] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [nickname, setNickname] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -70,7 +67,6 @@ export default function Opt() {
           throw new Error(result.error ?? '초대 정보를 불러오지 못했습니다.');
         }
 
-        setJoinNotice(result.joinNotice ?? '');
         setInviteEmail(result.invite?.email ?? '');
         setIsLoggedIn(Boolean(result.isLoggedIn));
         setIsInvitedUser(Boolean(result.isInvitedUser));
@@ -139,148 +135,29 @@ export default function Opt() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="paper">
+        <div className="loading-container">
+          <LoadingIndicator />
+        </div>
+      </div>
+    );
   }
 
   if (isAlreadyMember) {
     return (
-      <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
-          <div className="paper">
-            <Stack gap={2}>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>이미 가입된 멤버입니다.</span>
-              </p>
+      <div className="paper">
+        <Stack gap={2}>
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>이미 가입된 멤버입니다.</span>
+          </p>
 
-              <Stack justifyContent="flex-end">
-                <button type="button" className="button medium submit" onClick={() => router.replace(`/${siteName}`)}>
-                  커뮤니티로 이동
-                </button>
-              </Stack>
-
-              {errorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{errorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
-          </div>
-        </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (!isLoggedIn) {
-    return (
-      <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
-          <div className="paper">
-            <Stack gap={2.5}>
-              <Typography variant="subtitle2">{inviteEmail}</Typography>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>초대받은 이메일 계정으로 로그인 또는 회원가입 후 가입을 완료해주세요.</span>
-              </p>
-              <Stack direction="row" gap={1.5}>
-                <Anchor
-                  className="button medium action"
-                  href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
-                >
-                  로그인
-                </Anchor>
-                <Anchor
-                  className="button medium action"
-                  href={`/auth/sign-up?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
-                >
-                  회원가입
-                </Anchor>
-              </Stack>
-            </Stack>
-
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
-          </div>
-        </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (!isInvitedUser) {
-    return (
-      <div className="container">
-        <aside>
-          <SiteInfo />
-        </aside>
-        <div className={`content ${styles.content} ${styles['home-content']} `}>
-          <div className="paper">
-            <Stack gap={2}>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>초대받은 계정으로 로그인해주세요.</span>
-              </p>
-
-              {errorMessage ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>{errorMessage}</span>
-                </p>
-              ) : null}
-            </Stack>
-          </div>
-        </div>
-        {!isMobile ? (
-          <aside>
-            <UserInfo />
-          </aside>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="container">
-      <aside>
-        <SiteInfo />
-      </aside>
-      <div className={`content ${styles.content} ${styles['home-content']} `}>
-        <div className="paper">
-          <Box component="form" onSubmit={handleSubmit}>
-            <Stack gap={2.5}>
-              <Typography variant="body2">
-                닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.
-              </Typography>
-
-              <TextField placeholder="닉네임" value={nickname} onChange={handleNicknameChange} fullWidth size="small" />
-
-              <Stack direction="row" justifyContent="flex-end">
-                <button type="submit" className="button medium submit" disabled={isSubmitting}>
-                  가입하기
-                </button>
-              </Stack>
-            </Stack>
-          </Box>
+          <Stack justifyContent="flex-end">
+            <button type="button" className="button medium submit" onClick={() => router.replace(`/${siteName}`)}>
+              커뮤니티로 이동
+            </button>
+          </Stack>
 
           {errorMessage ? (
             <p className="alert error">
@@ -288,12 +165,89 @@ export default function Opt() {
               <span>{errorMessage}</span>
             </p>
           ) : null}
-        </div>
+        </Stack>
       </div>
-      {!isMobile ? (
-        <aside>
-          <UserInfo />
-        </aside>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="paper">
+        <Stack gap={2.5}>
+          <Typography variant="subtitle2">{inviteEmail}</Typography>
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>초대받은 이메일 계정으로 로그인 또는 회원가입 후 가입을 완료해주세요.</span>
+          </p>
+          <Stack direction="row" gap={1.5}>
+            <Anchor
+              className="button medium action"
+              href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
+            >
+              로그인
+            </Anchor>
+            <Anchor
+              className="button medium action"
+              href={`/auth/sign-up?inviteToken=${token}&siteName=${siteName}&inviteType=community`}
+            >
+              회원가입
+            </Anchor>
+          </Stack>
+        </Stack>
+
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (!isInvitedUser) {
+    return (
+      <div className="paper">
+        <Stack gap={2}>
+          <p className="alert info">
+            <InfoOutlineRoundedIcon />
+            <span>초대받은 계정으로 로그인해주세요.</span>
+          </p>
+
+          {errorMessage ? (
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
+        </Stack>
+      </div>
+    );
+  }
+
+  return (
+    <div className="paper">
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack gap={2.5}>
+          <Typography variant="body2">
+            닉네임은 선택입니다. 입력하지 않으면 기본 활동명이 자동으로 사용됩니다.
+          </Typography>
+
+          <TextField placeholder="닉네임" value={nickname} onChange={handleNicknameChange} fullWidth size="small" />
+
+          <Stack direction="row" justifyContent="flex-end">
+            <button type="submit" className="button medium submit" disabled={isSubmitting}>
+              가입하기
+            </button>
+          </Stack>
+        </Stack>
+      </Box>
+
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
       ) : null}
     </div>
   );

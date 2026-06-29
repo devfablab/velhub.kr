@@ -21,7 +21,6 @@ import {
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
 type MembershipMember = {
@@ -241,144 +240,124 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
+      <div className={`paper ${styles.paper}`}>
+        <div className="loading-container">
+          <LoadingIndicator />
         </div>
-      </Container>
+      </div>
     );
   }
 
   if (errorMessage === '멤버십은 블로그에서만 사용할 수 있습니다.') {
     return (
-      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
-              <NearbyErrorRoundedIcon />
-              <p>{errorMessage}</p>
-            </div>
-          </div>
-        </div>
-      </Container>
+      <div className="paper pape-error">
+        <NearbyErrorRoundedIcon />
+        <p>{errorMessage}</p>
+      </div>
     );
   }
 
   return (
-    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
-      <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack gap={3}>
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+    <Stack gap={3}>
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
 
-            {successMessage ? (
+      {successMessage ? (
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>{successMessage}</span>
+        </p>
+      ) : null}
+
+      <div className={`paper ${styles.paper}`}>
+        <Stack gap={3}>
+          <Stack gap={1}>
+            <Typography variant="subtitle2">멤버십 설정</Typography>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>
+                멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할 수
+                있습니다.
+              </span>
+            </p>
+            {maxSeriesPrice > 0 ? (
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
-                <span>{successMessage}</span>
+                <span>현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.</span>
               </p>
             ) : null}
-
-            <div className={`paper ${styles.paper}`}>
-              <Stack gap={3}>
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">멤버십 설정</Typography>
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>
-                      멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할
-                      수 있습니다.
-                    </span>
-                  </p>
-                  {maxSeriesPrice > 0 ? (
-                    <p className="alert info">
-                      <InfoOutlineRoundedIcon />
-                      <span>현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.</span>
-                    </p>
-                  ) : null}
-                </Stack>
-
-                <Divider />
-
-                <FormControlLabel
-                  control={
-                    <IOSSwitch sx={{ m: 1 }} checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />
-                  }
-                  label="멤버십 사용"
-                />
-
-                <TextField
-                  value={membershipPrice}
-                  onChange={handleMembershipPriceChange}
-                  helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
-                  disabled={isSaving}
-                  fullWidth
-                  size="small"
-                />
-
-                <div>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSaveMembershipSetting}
-                    disabled={isSaving}
-                  >
-                    저장
-                  </button>
-                </div>
-              </Stack>
-            </div>
-
-            <div className={`paper ${styles.paper}`}>
-              <Stack gap={3}>
-                <Typography variant="subtitle2">멤버십 구독자</Typography>
-
-                {members.length ? (
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>결제자</TableCell>
-                          <TableCell>상태</TableCell>
-                          <TableCell>유지기간</TableCell>
-                          <TableCell>최근 결제액</TableCell>
-                          <TableCell>누적 결제액</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {members.map((member) => (
-                          <TableRow key={member.id}>
-                            <TableCell>{member.nickname}</TableCell>
-                            <TableCell>{member.status}</TableCell>
-                            <TableCell>{formatDateTime(member.lastPaidAt)}</TableCell>
-                            <TableCell>{formatAmount(member.lastPaidAmount)}</TableCell>
-                            <TableCell>{formatAmount(member.totalPaidAmount)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>아직 멤버십 구독자가 없습니다.</span>
-                  </p>
-                )}
-              </Stack>
-            </div>
           </Stack>
-        </div>
+
+          <Divider />
+
+          <FormControlLabel
+            control={<IOSSwitch sx={{ m: 1 }} checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />}
+            label="멤버십 사용"
+          />
+
+          <TextField
+            value={membershipPrice}
+            onChange={handleMembershipPriceChange}
+            helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
+            disabled={isSaving}
+            fullWidth
+            size="small"
+          />
+
+          <div>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handleSaveMembershipSetting}
+              disabled={isSaving}
+            >
+              저장
+            </button>
+          </div>
+        </Stack>
       </div>
-    </Container>
+
+      <div className={`paper ${styles.paper}`}>
+        <Stack gap={3}>
+          <Typography variant="subtitle2">멤버십 구독자</Typography>
+
+          {members.length ? (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>결제자</TableCell>
+                    <TableCell>상태</TableCell>
+                    <TableCell>유지기간</TableCell>
+                    <TableCell>최근 결제액</TableCell>
+                    <TableCell>누적 결제액</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {members.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell>{member.nickname}</TableCell>
+                      <TableCell>{member.status}</TableCell>
+                      <TableCell>{formatDateTime(member.lastPaidAt)}</TableCell>
+                      <TableCell>{formatAmount(member.lastPaidAmount)}</TableCell>
+                      <TableCell>{formatAmount(member.totalPaidAmount)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>아직 멤버십 구독자가 없습니다.</span>
+            </p>
+          )}
+        </Stack>
+      </div>
+    </Stack>
   );
 }

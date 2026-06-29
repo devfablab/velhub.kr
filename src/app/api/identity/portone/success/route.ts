@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = {
-    verification_provider: 'portone',
+    provider: 'inicis',
     verification_tx_id: identityVerificationId,
     name: encrypt(verifiedIdentity.name),
     birth_date: encrypt(verifiedIdentity.birthDate),

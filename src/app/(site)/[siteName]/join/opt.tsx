@@ -3,7 +3,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Alert,
   Box,
   Button,
   FormControlLabel,
@@ -15,7 +14,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
