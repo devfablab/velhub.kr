@@ -40,6 +40,7 @@ type Props = {
   board: BoardInfo | null;
   selectedSeries: SelectedSeries | null;
   selectedBoard?: boolean | null;
+  ownerUserId: string;
   onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
 
@@ -97,6 +98,39 @@ type SubscriptionActionResponse =
   | {
       error: string;
     };
+
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: {
+    birth_date: string;
+  } | null;
+  error?: string;
+};
+
+function onlyDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
 
 function formatPrice(value: number) {
   return value.toLocaleString('ko-KR');
@@ -156,8 +190,11 @@ export default function SubscriptionButton({
   board,
   selectedSeries,
   selectedBoard,
+  ownerUserId,
   onStatusChange,
 }: Props) {
+  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
+
   const targetType: SubscriptionTargetType = selectedSeries ? 'series' : 'board';
   const targetLabel = selectedSeries?.series_label ?? board?.board_label ?? '';
 
@@ -187,6 +224,35 @@ export default function SubscriptionButton({
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function checkOwnerAge() {
+      try {
+        const response = await fetch(`/api/identity/portone/status?userId=${ownerUserId}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as IdentityStatusResponse;
+
+        if (!ignore) {
+          setCanShowDonationButton(Boolean(response.ok && result.identity && isAdult(result.identity.birth_date)));
+        }
+      } catch {
+        if (!ignore) {
+          setCanShowDonationButton(false);
+        }
+      }
+    }
+
+    void checkOwnerAge();
+
+    return () => {
+      ignore = true;
+    };
+  }, [ownerUserId]);
 
   useEffect(() => {
     async function loadSubscriptionStatus() {
@@ -230,6 +296,10 @@ export default function SubscriptionButton({
 
     void loadSubscriptionStatus();
   }, [board, statusQueryString, onStatusChange]);
+
+  if (!canShowDonationButton) {
+    return null;
+  }
 
   function handleOpenDialog() {
     setErrorMessage('');

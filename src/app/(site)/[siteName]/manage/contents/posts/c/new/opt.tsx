@@ -17,10 +17,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../../../menu';

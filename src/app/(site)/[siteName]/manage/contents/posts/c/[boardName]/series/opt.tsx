@@ -112,6 +112,11 @@ type SeriesUserSearchResponse = {
 
 type DialogMode = 'new' | 'edit' | 'delete' | null;
 
+type AgeCheckResponse = {
+  isAdult?: boolean;
+  error?: string;
+};
+
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -433,9 +438,38 @@ export default function Opt() {
     setIsUserDialogOpen(false);
   }
 
-  function handleSelectUser(user: SeriesUserSearchRow) {
-    setSelectedUser(user);
-    setIsUserDialogOpen(false);
+  type AgeCheckResponse = {
+    isAdult?: boolean;
+    error?: string;
+  };
+
+  async function handleSelectUser(user: SeriesUserSearchRow) {
+    try {
+      const response = await fetch(`/api/identity/portone/status?userId=${user.particleId}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as AgeCheckResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '사용자 나이를 확인하지 못했습니다.');
+      }
+
+      if (!result.isAdult) {
+        setSnackbarMessage('만 19세 미만은 선택할 수 없습니다');
+        return;
+      }
+
+      setSelectedUser(user);
+      setIsUserDialogOpen(false);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setSnackbarMessage(unknownError.message || '사용자 나이를 확인하지 못했습니다.');
+      } else {
+        setSnackbarMessage('사용자 나이를 확인하지 못했습니다.');
+      }
+    }
   }
 
   function handleClearUser() {
@@ -1613,8 +1647,7 @@ export default function Opt() {
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
-                      placeholder="이메일,
-활동명, 닉네임 검색"
+                      placeholder="이메일, 활동명, 닉네임 검색"
                       value={userSearchKeyword}
                       onChange={handleUserSearchKeywordChange}
                       fullWidth
@@ -1688,6 +1721,7 @@ export default function Opt() {
             autoHideDuration={2700}
             anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             onClose={() => setSnackbarMessage('')}
+            sx={{ zIndex: 20007 }}
             message={snackbarMessage}
           />
         </div>

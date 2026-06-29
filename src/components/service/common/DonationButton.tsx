@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
@@ -34,6 +34,7 @@ type DonationStartResponse = {
 
 type CommonProps = {
   siteName: string;
+  ownerUserId?: string;
   buttonText?: string;
   disabled?: boolean;
   onProcessingChange?: (isProcessing: boolean) => void;
@@ -61,6 +62,39 @@ type PostDonationProps = CommonProps & {
 };
 
 type Props = SiteDonationProps | BoardDonationProps | PostDonationProps;
+
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: {
+    birth_date: string;
+  } | null;
+  error?: string;
+};
+
+function onlyDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
 
 function formatDonationAmount(value: number) {
   if (!value) {
@@ -186,11 +220,45 @@ export default function DonationButton(props: Props) {
   const [donationAmount, setDonationAmount] = useState('1,000');
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
   const donationTitle = getDonationTitle(props);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function checkOwnerAge() {
+      try {
+        const response = await fetch(`/api/identity/portone/status?userId=${props.ownerUserId}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as IdentityStatusResponse;
+
+        if (!ignore) {
+          setCanShowDonationButton(Boolean(response.ok && result.identity && isAdult(result.identity.birth_date)));
+        }
+      } catch {
+        if (!ignore) {
+          setCanShowDonationButton(false);
+        }
+      }
+    }
+
+    void checkOwnerAge();
+
+    return () => {
+      ignore = true;
+    };
+  }, [props.ownerUserId]);
+
+  if (!canShowDonationButton) {
+    return null;
+  }
 
   function updateProcessing(nextIsProcessing: boolean) {
     setIsProcessing(nextIsProcessing);

@@ -1,9 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const sessionClaims = await getSessionClaims();
 
   if (!sessionClaims?.userId) {
@@ -11,11 +12,13 @@ export async function GET() {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+  const requestUrl = new URL(request.url);
+  const targetUserId = normalizeText(requestUrl.searchParams.get('userId')) || sessionClaims.userId;
 
   const { data, error } = await supabaseAdmin
     .from('chorogons')
     .select('name, birth_date, birth_date_dummy, gender, identity_verified_at')
-    .eq('user_id', sessionClaims.userId)
+    .eq('user_id', targetUserId)
     .maybeSingle();
 
   if (error) {

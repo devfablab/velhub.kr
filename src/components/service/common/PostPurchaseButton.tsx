@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import {
   Checkbox,
@@ -35,6 +35,7 @@ type PostPurchaseStartResponse = {
 
 type Props = {
   siteName: string;
+  ownerUserId: string;
   boardName: string;
   contentId: string;
   buttonText?: string;
@@ -45,6 +46,39 @@ type Props = {
   successUrl?: string;
   onProcessingChange?: (isProcessing: boolean) => void;
 };
+
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: {
+    birth_date: string;
+  } | null;
+  error?: string;
+};
+
+function onlyDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
 
 const PURCHASE_CONSENT_TEXT =
   '결제 즉시 디지털 콘텐츠 제공이 시작되며, 이에 따라 청약철회가 제한될 수 있음에 동의합니다.';
@@ -72,10 +106,44 @@ export default function PostPurchaseButton(props: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isPurchaseConsentChecked, setIsPurchaseConsentChecked] = useState(false);
+  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function checkOwnerAge() {
+      try {
+        const response = await fetch(`/api/identity/portone/status?userId=${props.ownerUserId}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as IdentityStatusResponse;
+
+        if (!ignore) {
+          setCanShowDonationButton(Boolean(response.ok && result.identity && isAdult(result.identity.birth_date)));
+        }
+      } catch {
+        if (!ignore) {
+          setCanShowDonationButton(false);
+        }
+      }
+    }
+
+    void checkOwnerAge();
+
+    return () => {
+      ignore = true;
+    };
+  }, [props.ownerUserId]);
+
+  if (!canShowDonationButton) {
+    return null;
+  }
 
   function updateProcessing(nextIsProcessing: boolean) {
     setIsProcessing(nextIsProcessing);

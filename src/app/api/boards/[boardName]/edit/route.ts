@@ -9,15 +9,16 @@ type RouteContext = {
 };
 
 type RequestBody = {
-  siteName: string | null;
-  boardKey?: string | null;
-  boardLabel?: string | null;
-  isActive?: boolean | null;
-  markdownStatus?: string | null;
-  writePermission?: string | null;
+  siteName: string;
+  boardKey: string;
+  boardLabel: string;
+  isActive: boolean;
+  markdownStatus: string;
+  writePermission: string;
+  postType: string;
 };
 
-function normalizeBoardKey(rawValue: string | null | undefined) {
+function normalizeBoardKey(rawValue: string) {
   return (rawValue ?? '')
     .trim()
     .toLowerCase()
@@ -54,9 +55,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const boardKey = normalizeBoardKey(requestBody.boardKey);
     const boardLabel = normalizeText(requestBody.boardLabel);
-    const markdownStatus = normalizeText(requestBody.markdownStatus) || 'markdown_default';
-    const writePermission = normalizeText(requestBody.writePermission) || 'member';
+    const markdownStatus = normalizeText(requestBody.markdownStatus);
+    const writePermission = normalizeText(requestBody.writePermission);
     const isActive = requestBody.isActive === null ? true : Boolean(requestBody.isActive);
+    const postType = normalizeText(requestBody.postType);
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -165,6 +167,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         is_active: isActive,
         markdown_status: markdownStatus,
         write_permission: writePermission,
+        post_type: postType,
       })
       .eq('id', currentBoard.data.id)
       .select('id, board_key')
