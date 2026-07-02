@@ -207,21 +207,6 @@ export default function RevenueList({ type }: RevenueListPageProps) {
   return (
     <div className={`container ${styles.container}`}>
       <div className={`content ${styles.content} ${styles['content-payments']}`}>
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
-
-        {!responseData && !errorMessage ? (
-          <div className={`paper ${styles.paper}`}>
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        ) : null}
-
         <Stack direction="column" gap={1} alignItems="flex-end">
           <ToggleButtonGroup
             exclusive
@@ -371,6 +356,21 @@ export default function RevenueList({ type }: RevenueListPageProps) {
             )}
           </Stack>
         </Stack>
+
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
+
+        {!responseData && !errorMessage ? (
+          <div className={`paper ${styles.paper}`}>
+            <div className="loading-container">
+              <LoadingIndicator />
+            </div>
+          </div>
+        ) : null}
 
         {responseData ? (
           <>

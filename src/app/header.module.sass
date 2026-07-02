@@ -129,6 +129,18 @@ header.header
     gap: ds.rem(12)
     padding-left: ds.rem(27)
 
+    li.current
+      a
+        html[data-theme="yellow-light"] &
+          color: rgba(ds.$rgb-secondary, .9)
+          @include ds.fw(neo, 800)
+          color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-light, .7)
+          @include ds.fw(neo, 800)
+          color: ds.$hex-light
+
     a
       @include ds.fw(neo, 500)
       font-size: ds.rem(18)
@@ -161,7 +173,7 @@ header.header
       display: flex
       flex-direction: row
       gap: ds.rem(7)
-      width: ds.rem(370)
+      width: ds.rem(270)
       position: relative
       border: 1px solid ds.$hex-accent
       border-radius: ds.rem(7)
