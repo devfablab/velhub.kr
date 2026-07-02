@@ -36,6 +36,8 @@ import CommunitySearch from '../header-groups/site/CommunitySearch';
 import NavMenu from '../header-groups/site/NavMenu';
 import NavManage from '../header-groups/site/NavManage';
 import styles from '@/app/header.module.sass';
+import PrimaryMenu from '../header-groups/site/PrimaryMenu';
+import NavPayments from '../header-groups/site/NavPayments';
 
 type SiteType = 'blog' | 'community';
 
@@ -235,6 +237,7 @@ export default function HeaderSite() {
   const searchParams = useSearchParams();
 
   const isManagePage = pathname === `/${siteName}/manage` || pathname.startsWith(`/${siteName}/manage/`);
+  const isPaymentPage = pathname === `/${siteName}/payments` || pathname.startsWith(`/${siteName}/payments/`);
 
   const lastScrollY = useRef(0);
   const [isUpScroll, setIsUpScroll] = useState(false);
@@ -450,6 +453,7 @@ export default function HeaderSite() {
                       )}
                     </Anchor>
                   </h1>
+                  <PrimaryMenu siteName={siteName} isBlog={isBlog} isSiteStaff={isSiteStaff} />
                   {siteType === 'blog' ? (
                     <BlogSearch siteName={siteName} isBlog={isBlog} />
                   ) : (
@@ -471,7 +475,13 @@ export default function HeaderSite() {
                 </div>
               </div>
               <div className={styles.bottom}>
-                {isManagePage ? <NavManage /> : <NavMenu siteName={siteName} isBlog={isBlog} />}
+                {isManagePage ? (
+                  <NavManage />
+                ) : isPaymentPage ? (
+                  <NavPayments />
+                ) : (
+                  <NavMenu siteName={siteName} isBlog={isBlog} />
+                )}
               </div>
             </div>
           </header>
@@ -494,7 +504,13 @@ export default function HeaderSite() {
                       )}
                     </Anchor>
                   </h1>
-                  {isManagePage ? <NavManage /> : <NavMenu siteName={siteName} isBlog={isBlog} />}
+                  {isManagePage ? (
+                    <NavManage />
+                  ) : isPaymentPage ? (
+                    <NavPayments />
+                  ) : (
+                    <NavMenu siteName={siteName} isBlog={isBlog} />
+                  )}
                 </div>
 
                 <div className={styles.iconbuttons}>

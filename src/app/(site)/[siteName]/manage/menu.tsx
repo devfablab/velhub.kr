@@ -40,6 +40,7 @@ import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
+import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
 import styles from '@/app/header.module.sass';
@@ -756,6 +757,12 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                       </button>
                     </li>
 
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
+                    <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
+
+                    <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
+                    <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+
                     {isSiteStaff ? (
                       <>
                         <ListSubheader className={styles['VhiDrawer-subheader']}>
@@ -764,9 +771,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         <DrawerManage siteName={siteName} siteType={siteType} onClose={handleCloseProfileDrawer} />
                       </>
                     ) : null}
-
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
-                    <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
 
                     {userProfile.isLoggedIn ? (
                       <>
