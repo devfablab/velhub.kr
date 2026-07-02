@@ -222,158 +222,158 @@ export default function RevenueList({ type }: RevenueListPageProps) {
           </div>
         ) : null}
 
+        <Stack direction="column" gap={1} alignItems="flex-end">
+          <ToggleButtonGroup
+            exclusive
+            value={rangeType}
+            size="small"
+            onChange={handleRangeTypeChange}
+            className={styles.ToggleButtonGroup}
+          >
+            <ToggleButton value="all">전체</ToggleButton>
+            <ToggleButton value="year">연 단위 검색</ToggleButton>
+            <ToggleButton value="quarter">분기별 검색</ToggleButton>
+            <ToggleButton value="half">반기별 검색</ToggleButton>
+            <ToggleButton value="custom">직접 입력</ToggleButton>
+          </ToggleButtonGroup>
+
+          <Stack direction="row" gap={1}>
+            {responseData && rangeType === 'year' ? (
+              <Select
+                size="small"
+                displayEmpty
+                value={searchParams.get('year') ?? ''}
+                onChange={(changeEvent) => updateSearchParams({ year: changeEvent.target.value })}
+              >
+                <MenuItem value="">년도 선택</MenuItem>
+                {responseData.filters.years.map((year) => (
+                  <MenuItem key={year} value={String(year)}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            ) : null}
+
+            {responseData && rangeType === 'quarter' ? (
+              <Select
+                size="small"
+                displayEmpty
+                value={
+                  searchParams.get('year') && searchParams.get('quarter')
+                    ? `${searchParams.get('year')}-${searchParams.get('quarter')}`
+                    : ''
+                }
+                onChange={(changeEvent) => {
+                  const [year, quarter] = changeEvent.target.value.split('-');
+                  updateSearchParams({ year, quarter });
+                }}
+              >
+                <MenuItem value="">분기 선택</MenuItem>
+                {responseData.filters.quarters.map((quarterOption) => (
+                  <MenuItem
+                    key={`${quarterOption.year}-${quarterOption.quarter}`}
+                    value={`${quarterOption.year}-${quarterOption.quarter}`}
+                  >
+                    {quarterOption.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            ) : null}
+
+            {responseData && rangeType === 'half' ? (
+              <Select
+                size="small"
+                displayEmpty
+                value={
+                  searchParams.get('year') && searchParams.get('half')
+                    ? `${searchParams.get('year')}-${searchParams.get('half')}`
+                    : ''
+                }
+                onChange={(changeEvent) => {
+                  const [year, half] = changeEvent.target.value.split('-');
+                  updateSearchParams({ year, half });
+                }}
+              >
+                <MenuItem value="">반기 선택</MenuItem>
+                {responseData.filters.halves.map((halfOption) => (
+                  <MenuItem
+                    key={`${halfOption.year}-${halfOption.half}`}
+                    value={`${halfOption.year}-${halfOption.half}`}
+                  >
+                    {halfOption.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            ) : null}
+
+            {responseData && rangeType === 'custom' ? (
+              <>
+                <Select
+                  size="small"
+                  displayEmpty
+                  value={searchParams.get('startYear') ?? ''}
+                  onChange={(changeEvent) => updateSearchParams({ startYear: changeEvent.target.value })}
+                >
+                  <MenuItem value="">시작 년도</MenuItem>
+                  {responseData.filters.years.map((year) => (
+                    <MenuItem key={year} value={String(year)}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Select
+                  size="small"
+                  displayEmpty
+                  value={searchParams.get('startMonth') ?? ''}
+                  onChange={(changeEvent) => updateSearchParams({ startMonth: changeEvent.target.value })}
+                >
+                  <MenuItem value="">시작 월</MenuItem>
+                  {Array.from({ length: 12 }, (_value, index) => index + 1).map((month) => (
+                    <MenuItem key={month} value={String(month)}>
+                      {month}월
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Typography sx={{ alignSelf: 'center' }}>~</Typography>
+                <Select
+                  size="small"
+                  displayEmpty
+                  value={searchParams.get('endYear') ?? ''}
+                  onChange={(changeEvent) => updateSearchParams({ endYear: changeEvent.target.value })}
+                >
+                  <MenuItem value="">종료 년도</MenuItem>
+                  {responseData.filters.years.map((year) => (
+                    <MenuItem key={year} value={String(year)}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Select
+                  size="small"
+                  displayEmpty
+                  value={searchParams.get('endMonth') ?? ''}
+                  onChange={(changeEvent) => updateSearchParams({ endMonth: changeEvent.target.value })}
+                >
+                  <MenuItem value="">종료 월</MenuItem>
+                  {Array.from({ length: 12 }, (_value, index) => index + 1).map((month) => (
+                    <MenuItem key={month} value={String(month)}>
+                      {month}월
+                    </MenuItem>
+                  ))}
+                </Select>
+              </>
+            ) : null}
+
+            {responseData && responseData.items.length === 0 ? null : (
+              <Button type="button" className="button medium submit" onClick={handleExcelDownload}>
+                엑셀 다운로드
+              </Button>
+            )}
+          </Stack>
+        </Stack>
+
         {responseData ? (
           <>
-            {responseData && responseData.items.length === 0 ? null : (
-              <Stack direction="column" gap={1} alignItems="flex-end">
-                <ToggleButtonGroup
-                  exclusive
-                  value={rangeType}
-                  size="small"
-                  onChange={handleRangeTypeChange}
-                  className={styles.ToggleButtonGroup}
-                >
-                  <ToggleButton value="all">전체</ToggleButton>
-                  <ToggleButton value="year">연 단위 검색</ToggleButton>
-                  <ToggleButton value="quarter">분기별 검색</ToggleButton>
-                  <ToggleButton value="half">반기별 검색</ToggleButton>
-                  <ToggleButton value="custom">직접 입력</ToggleButton>
-                </ToggleButtonGroup>
-
-                <Stack direction="row" gap={1}>
-                  {responseData && rangeType === 'year' ? (
-                    <Select
-                      size="small"
-                      displayEmpty
-                      value={searchParams.get('year') ?? ''}
-                      onChange={(changeEvent) => updateSearchParams({ year: changeEvent.target.value })}
-                    >
-                      <MenuItem value="">년도 선택</MenuItem>
-                      {responseData.filters.years.map((year) => (
-                        <MenuItem key={year} value={String(year)}>
-                          {year}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  ) : null}
-
-                  {responseData && rangeType === 'quarter' ? (
-                    <Select
-                      size="small"
-                      displayEmpty
-                      value={
-                        searchParams.get('year') && searchParams.get('quarter')
-                          ? `${searchParams.get('year')}-${searchParams.get('quarter')}`
-                          : ''
-                      }
-                      onChange={(changeEvent) => {
-                        const [year, quarter] = changeEvent.target.value.split('-');
-                        updateSearchParams({ year, quarter });
-                      }}
-                    >
-                      <MenuItem value="">분기 선택</MenuItem>
-                      {responseData.filters.quarters.map((quarterOption) => (
-                        <MenuItem
-                          key={`${quarterOption.year}-${quarterOption.quarter}`}
-                          value={`${quarterOption.year}-${quarterOption.quarter}`}
-                        >
-                          {quarterOption.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  ) : null}
-
-                  {responseData && rangeType === 'half' ? (
-                    <Select
-                      size="small"
-                      displayEmpty
-                      value={
-                        searchParams.get('year') && searchParams.get('half')
-                          ? `${searchParams.get('year')}-${searchParams.get('half')}`
-                          : ''
-                      }
-                      onChange={(changeEvent) => {
-                        const [year, half] = changeEvent.target.value.split('-');
-                        updateSearchParams({ year, half });
-                      }}
-                    >
-                      <MenuItem value="">반기 선택</MenuItem>
-                      {responseData.filters.halves.map((halfOption) => (
-                        <MenuItem
-                          key={`${halfOption.year}-${halfOption.half}`}
-                          value={`${halfOption.year}-${halfOption.half}`}
-                        >
-                          {halfOption.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  ) : null}
-
-                  {responseData && rangeType === 'custom' ? (
-                    <>
-                      <Select
-                        size="small"
-                        displayEmpty
-                        value={searchParams.get('startYear') ?? ''}
-                        onChange={(changeEvent) => updateSearchParams({ startYear: changeEvent.target.value })}
-                      >
-                        <MenuItem value="">시작 년도</MenuItem>
-                        {responseData.filters.years.map((year) => (
-                          <MenuItem key={year} value={String(year)}>
-                            {year}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <Select
-                        size="small"
-                        displayEmpty
-                        value={searchParams.get('startMonth') ?? ''}
-                        onChange={(changeEvent) => updateSearchParams({ startMonth: changeEvent.target.value })}
-                      >
-                        <MenuItem value="">시작 월</MenuItem>
-                        {Array.from({ length: 12 }, (_value, index) => index + 1).map((month) => (
-                          <MenuItem key={month} value={String(month)}>
-                            {month}월
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <Typography sx={{ alignSelf: 'center' }}>~</Typography>
-                      <Select
-                        size="small"
-                        displayEmpty
-                        value={searchParams.get('endYear') ?? ''}
-                        onChange={(changeEvent) => updateSearchParams({ endYear: changeEvent.target.value })}
-                      >
-                        <MenuItem value="">종료 년도</MenuItem>
-                        {responseData.filters.years.map((year) => (
-                          <MenuItem key={year} value={String(year)}>
-                            {year}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <Select
-                        size="small"
-                        displayEmpty
-                        value={searchParams.get('endMonth') ?? ''}
-                        onChange={(changeEvent) => updateSearchParams({ endMonth: changeEvent.target.value })}
-                      >
-                        <MenuItem value="">종료 월</MenuItem>
-                        {Array.from({ length: 12 }, (_value, index) => index + 1).map((month) => (
-                          <MenuItem key={month} value={String(month)}>
-                            {month}월
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </>
-                  ) : null}
-
-                  <Button type="button" className="button medium submit" onClick={handleExcelDownload}>
-                    엑셀 다운로드
-                  </Button>
-                </Stack>
-              </Stack>
-            )}
-
             {responseData.items.length === 0 ? (
               <p className="alert warning" style={{ justifyContent: 'center' }}>
                 <WarningAmberRoundedIcon />

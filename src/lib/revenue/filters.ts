@@ -176,7 +176,7 @@ export function isDateInRevenueRange(dateValue: string | null, filterParams: Rev
 
   if (filterParams.rangeType === 'custom') {
     if (!filterParams.startYear || !filterParams.startMonth || !filterParams.endYear || !filterParams.endMonth) {
-      return true;
+      return false;
     }
 
     const currentMonthValue = year * 100 + month;
