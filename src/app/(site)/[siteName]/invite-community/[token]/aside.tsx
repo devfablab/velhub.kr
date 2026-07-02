@@ -1,3 +1,5 @@
+'use client';
+
 import UserInfo from '@/components/service/community/UserInfo';
 import { useMediaQuery, useTheme } from '@mui/material';
 

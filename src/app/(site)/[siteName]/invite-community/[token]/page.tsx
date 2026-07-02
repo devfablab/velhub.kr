@@ -1,3 +1,4 @@
+import { cookies, headers } from 'next/headers';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -5,7 +6,6 @@ import Container from '../../menu';
 import Opt from './opt';
 import Aside from './aside';
 import styles from '@/app/board.module.sass';
-import { cookies, headers } from 'next/headers';
 
 type RouteContext = {
   params: Promise<{
