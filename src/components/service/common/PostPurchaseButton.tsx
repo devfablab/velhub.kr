@@ -35,7 +35,6 @@ type PostPurchaseStartResponse = {
 
 type Props = {
   siteName: string;
-  ownerUserId: string;
   boardName: string;
   contentId: string;
   buttonText?: string;
@@ -139,7 +138,7 @@ export default function PostPurchaseButton(props: Props) {
     return () => {
       ignore = true;
     };
-  }, [props.ownerUserId]);
+  }, []);
 
   if (!canShowDonationButton) {
     return null;

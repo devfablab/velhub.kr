@@ -40,7 +40,6 @@ type Props = {
   board: BoardInfo | null;
   selectedSeries: SelectedSeries | null;
   selectedBoard?: boolean | null;
-  ownerUserId: string;
   onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
 
@@ -251,7 +250,7 @@ export default function SubscriptionButton({
     return () => {
       ignore = true;
     };
-  }, [ownerUserId]);
+  }, []);
 
   useEffect(() => {
     async function loadSubscriptionStatus() {

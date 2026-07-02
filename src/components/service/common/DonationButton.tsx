@@ -34,7 +34,6 @@ type DonationStartResponse = {
 
 type CommonProps = {
   siteName: string;
-  ownerUserId?: string;
   buttonText?: string;
   disabled?: boolean;
   onProcessingChange?: (isProcessing: boolean) => void;
@@ -254,7 +253,7 @@ export default function DonationButton(props: Props) {
     return () => {
       ignore = true;
     };
-  }, [props.ownerUserId]);
+  }, []);
 
   if (!canShowDonationButton) {
     return null;
