@@ -123,33 +123,33 @@ export default function ThemeProviderClient({
           styleOverrides: {
             h1: {
               fontFamily: 'var(--neo)',
-              fontWeight: 600,
-              fontVariationSettings: '"wght" 600',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
             },
             h2: {
               fontFamily: 'var(--neo)',
-              fontWeight: 600,
-              fontVariationSettings: '"wght" 600',
+              fontWeight: 700,
+              fontVariationSettings: '"wght" 700',
             },
             h3: {
               fontFamily: 'var(--neo)',
-              fontWeight: 700,
-              fontVariationSettings: '"wght" 700',
+              fontWeight: 800,
+              fontVariationSettings: '"wght" 800',
             },
             h4: {
               fontFamily: 'var(--neo)',
-              fontWeight: 700,
-              fontVariationSettings: '"wght" 700',
+              fontWeight: 800,
+              fontVariationSettings: '"wght" 800',
             },
             h5: {
               fontFamily: 'var(--neo)',
-              fontWeight: 700,
-              fontVariationSettings: '"wght" 700',
+              fontWeight: 800,
+              fontVariationSettings: '"wght" 800',
             },
             h6: {
               fontFamily: 'var(--neo)',
-              fontWeight: 700,
-              fontVariationSettings: '"wght" 700',
+              fontWeight: 800,
+              fontVariationSettings: '"wght" 800',
             },
             subtitle1: {
               fontFamily: 'var(--neo)',
