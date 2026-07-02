@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Box, Stack, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Stack, TextField, Typography } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
@@ -46,10 +46,6 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
-  const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function loadInvite() {
