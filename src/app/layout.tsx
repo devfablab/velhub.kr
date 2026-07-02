@@ -4,7 +4,6 @@ import localFont from 'next/font/local';
 import { Noto_Sans_KR, Noto_Serif_KR, Hahmlet } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
-import { getSessionClaims } from '@/lib/session';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
 import './globals.sass';

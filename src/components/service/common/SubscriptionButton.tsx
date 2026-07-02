@@ -190,7 +190,6 @@ export default function SubscriptionButton({
   board,
   selectedSeries,
   selectedBoard,
-  ownerUserId,
   onStatusChange,
 }: Props) {
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
@@ -230,7 +229,7 @@ export default function SubscriptionButton({
 
     async function checkOwnerAge() {
       try {
-        const response = await fetch(`/api/identity/portone/status?userId=${ownerUserId}`, {
+        const response = await fetch(`/api/identity/portone/status`, {
           method: 'GET',
           credentials: 'include',
         });

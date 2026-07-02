@@ -445,7 +445,7 @@ export default function Opt() {
 
   async function handleSelectUser(user: SeriesUserSearchRow) {
     try {
-      const response = await fetch(`/api/identity/portone/status?userId=${user.particleId}`, {
+      const response = await fetch(`/api/identity/portone/status`, {
         method: 'GET',
         credentials: 'include',
       });

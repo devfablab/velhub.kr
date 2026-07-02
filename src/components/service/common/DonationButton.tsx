@@ -232,7 +232,7 @@ export default function DonationButton(props: Props) {
 
     async function checkOwnerAge() {
       try {
-        const response = await fetch(`/api/identity/portone/status?userId=${props.ownerUserId}`, {
+        const response = await fetch(`/api/identity/portone/status`, {
           method: 'GET',
           credentials: 'include',
         });

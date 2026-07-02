@@ -510,7 +510,7 @@ export default function IdentityVerificationButton() {
 
   return (
     <>
-      {(buttonText === '정산 정보 수정' || buttonText === '정산 정보 입력') && isNewPage ? (
+      {buttonText === '정산 정보 수정' && isNewPage ? (
         <p className="alert info">
           <InfoOutlineRoundedIcon />
           <span>본인 인증이 완료되었습니다.</span>
