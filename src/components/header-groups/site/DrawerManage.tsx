@@ -9,6 +9,7 @@ import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import Anchor from '@/components/Anchor';
 
 type SiteType = 'blog' | 'community';
@@ -63,14 +64,12 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
         </Anchor>
       </MenuItem>
 
-      {siteType === 'community' ? (
-        <MenuItem onClick={onClose}>
-          <Anchor href={`/${siteName}/manage/filtered`}>
-            <ReportOutlinedIcon fontSize="small" />
-            <span>제한된 콘텐츠</span>
-          </Anchor>
-        </MenuItem>
-      ) : null}
+      <MenuItem onClick={onClose}>
+        <Anchor href={`/${siteName}/manage/reports`}>
+          <ReportOutlinedIcon fontSize="small" />
+          <span>신고 관리</span>
+        </Anchor>
+      </MenuItem>
 
       <MenuItem onClick={onClose}>
         <Anchor
@@ -85,7 +84,7 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
 
       <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/payments/billing`}>
-          <DesignServicesOutlinedIcon fontSize="small" />
+          <SellOutlinedIcon fontSize="small" />
           <span>결제</span>
         </Anchor>
       </MenuItem>

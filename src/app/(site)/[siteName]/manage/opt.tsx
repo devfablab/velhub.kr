@@ -96,7 +96,7 @@ export default function Opt() {
       href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
     },
     { label: '콘텐츠 관리', href: `/${siteName}/manage/contents` },
-    ...(siteType === 'community' ? [{ label: '제한된 콘텐츠', href: `/${siteName}/manage/filtered` }] : []),
+    { label: '신고 관리', href: `/${siteName}/manage/reports` },
     {
       label: '디자인',
       href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`,

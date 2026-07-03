@@ -114,15 +114,11 @@ export default function NavManage() {
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
-    ...(siteType === 'community'
-      ? [
-          {
-            label: '제한된 콘텐츠',
-            href: `/${siteName}/manage/filtered`,
-            startsWith: true,
-          },
-        ]
-      : []),
+    {
+      label: '신고 관리',
+      href: `/${siteName}/manage/reports`,
+      startsWith: true,
+    },
     {
       label: '디자인',
       href: `/${siteName}/manage/design`,
