@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
+import ReportButton from '@/components/service/common/ReportButton';
 import styles from '@/app/header.module.sass';
 
 type Props = {
@@ -151,6 +152,9 @@ export default function NavMenu({ siteName, isBlog }: Props) {
               </li>
             );
           })}
+          <li>
+            <ReportButton targetType="site" siteName={siteName} />
+          </li>
         </ol>
       </nav>
     </div>

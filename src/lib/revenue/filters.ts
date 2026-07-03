@@ -83,10 +83,6 @@ function toHalf(value: string | null) {
   return null;
 }
 
-function getKstBoundary(year: number, month: number, day: number) {
-  return new Date(Date.UTC(year, month - 1, day, -9, 0, 0, 0)).toISOString();
-}
-
 export function getRevenueFilterParams(searchParams: URLSearchParams): RevenueFilterParams {
   const rangeTypeValue = searchParams.get('rangeType');
   const rangeType = isRevenueRangeType(rangeTypeValue) ? rangeTypeValue : 'all';

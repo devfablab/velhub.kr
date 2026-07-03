@@ -1,16 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import Avatar from '@mui/material/Avatar';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import {
+  Avatar,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import CommentForm from '@/components/comments/CommentForm';
+import ReportButton from '../service/common/ReportButton';
 import styles from '@/app/comments.module.sass';
-import { Drawer, useMediaQuery, useTheme } from '@mui/material';
 
 type AuthorRole =
   | 'owner'
@@ -80,6 +85,9 @@ export type CommentData = {
 };
 
 type Props = {
+  siteName: string;
+  boardName: string;
+  contentId: string;
   comment: CommentData;
   depth?: 0 | 1;
   activeReplyTargetId: string;
@@ -137,6 +145,9 @@ function getAuthorRoleLabel(role: AuthorRole) {
 }
 
 export default function CommentItem({
+  siteName,
+  boardName,
+  contentId,
   comment,
   depth = 0,
   activeReplyTargetId,
@@ -155,6 +166,9 @@ export default function CommentItem({
   const [isEditing, setIsEditing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [isLiking, setIsLiking] = useState(false);
+
+  console.log('comment: ', comment);
+  console.log('activeReplyTargetId: ', activeReplyTargetId);
 
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
@@ -236,7 +250,11 @@ export default function CommentItem({
 
   return (
     <div className={depth === 1 ? `${styles['comment-item']} ${styles['comment-reply-item']}` : styles['comment-item']}>
-      <Avatar src={comment.author_avatar_url} alt={comment.author_name} sx={{ width: 28, height: 28 }} />
+      <Avatar
+        src={comment.author_avatar_url}
+        alt={comment.author_name}
+        sx={{ width: 28, height: 28, position: 'relative', top: 5 }}
+      />
       <div className={styles['comment-detail']}>
         <div className={styles['comment-author-info']}>
           <cite>{comment.author_name}</cite>
@@ -262,6 +280,13 @@ export default function CommentItem({
 
           {comment.is_deleted ? <span className={styles['comment-status']}>삭제된 댓글</span> : null}
           {comment.is_blinded ? <span className={styles['comment-status']}>숨겨진 댓글</span> : null}
+          <ReportButton
+            targetType="comment"
+            siteName={siteName}
+            boardName={boardName}
+            contentId={contentId}
+            commentId={comment.id}
+          />
         </div>
 
         {isEditing ? (
@@ -343,6 +368,9 @@ export default function CommentItem({
           <div className={styles['comment-replies']}>
             {comment.replies.map((reply) => (
               <CommentItem
+                siteName={siteName}
+                boardName={boardName}
+                contentId={contentId}
                 key={reply.id}
                 comment={reply}
                 depth={1}

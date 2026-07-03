@@ -156,7 +156,12 @@
         .comment-author-info
           display: flex
           gap: ds.rem(12)
+          align-items: center
           font-size: ds.rem(12)
+
+          .author-type
+            @include ds.fw(pre, 700)
+            color: ds.$hex-accent
 
           cite
             @include ds.fw(pre, 700)
@@ -223,6 +228,8 @@
             opacity: .7
 
           button
+            background-color: transparent
+            padding: 0
             font-size: ds.rem(12)
 
         .comment-replies

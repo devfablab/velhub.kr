@@ -397,6 +397,9 @@ export default function CommunityCommentSection({ siteName, boardName, contentId
           comments.map((comment) => (
             <CommentItem
               key={comment.id}
+              siteName={siteName}
+              boardName={boardName}
+              contentId={contentId}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
               myPollChoiceLabel={myPollChoice?.label ?? ''}

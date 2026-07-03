@@ -48,6 +48,7 @@ import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
+import ReportButton from '@/components/service/common/ReportButton';
 
 type Props = {
   isCommunity: boolean;
@@ -1396,6 +1397,7 @@ export default function Opt({ isCommunity }: Props) {
               <div className={styles.buttons}>
                 {postActionButtons}
                 {paidContentActionButtons}
+                <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
               </div>
             </div>
             {seriesList}

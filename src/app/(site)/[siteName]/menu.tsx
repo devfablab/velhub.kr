@@ -44,6 +44,7 @@ import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import ReportButton from '@/components/service/common/ReportButton';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
@@ -435,6 +436,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                 </IconButton>
               ) : (
                 <>
+                  <ReportButton targetType="site" siteName={siteName} />
                   <IconButton onClick={handleOpenSearchDrawer} sx={{ width: 40, height: 40 }}>
                     <SearchOutlinedIcon />
                   </IconButton>

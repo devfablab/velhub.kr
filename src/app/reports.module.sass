@@ -1,0 +1,55 @@
+.reports
+  li
+    font-size: ds.rem(14)
+    position: relative
+    padding: ds.rem(2) 0 ds.rem(2) ds.rem(10)
+    line-height: 1.25
+
+    &::before
+      content: ''
+      display: inline-block
+      width: ds.rem(4)
+      height: ds.rem(4)
+      position: absolute
+      border-radius: ds.rem(4)
+      top: ds.rem(8)
+      left: 0
+
+      html[data-theme="yellow-light"] &
+        background-color: rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-tertiary, .5)
+
+.Accordion
+  margin: ds.rem(12)
+  padding: 0
+  gap: 0
+
+  > div
+    margin: 0!important
+    border: 0
+    box-shadow: none
+
+    &::before
+      opacity: 1!important
+
+    > div
+      html[data-theme="yellow-light"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+      html[data-theme="yellow-dark"] &
+        border-top: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+      div
+        padding-bottom: 0!important
+
+      > div
+        padding-top: ds.rem(7)!important
+        padding-bottom: ds.rem(7)!important
+
+      label
+        span
+          @include ds.fw(pre, 700)
+          font-size: ds.rem(14)
+          color: ds.$hex-warning!important

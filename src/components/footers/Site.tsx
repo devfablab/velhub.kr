@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '../Anchor';
 import styles from '@/app/footer.module.sass';
 

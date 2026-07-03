@@ -33,6 +33,7 @@ import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 import DonationButton from '@/components/service/common/DonationButton';
+import ReportButton from '@/components/service/common/ReportButton';
 
 type Props = {
   isCommunity: boolean;
@@ -550,6 +551,7 @@ export default function Opt({ isCommunity }: Props) {
                       buttonText="게시판 후원"
                     />
                   ) : null}
+                  <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
                 </h2>
               )}
             </>
