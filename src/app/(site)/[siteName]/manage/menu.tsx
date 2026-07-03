@@ -49,7 +49,7 @@ type ContainerProps = {
   pageTitle?: string;
   pageBack?: string;
   pageEnterance?: boolean;
-  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments' | 'stats';
+  menu?: 'contents' | 'design' | 'join' | 'members' | 'settings' | 'team' | 'payments' | 'stats' | 'reports';
   children: React.ReactNode;
 };
 
@@ -647,6 +647,14 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
               { href: `/${siteName}/manage/stats/join`, label: '가입자수' },
               { href: `/${siteName}/manage/stats/inactive-user`, label: '비활동 유저' },
             ]),
+      ];
+    }
+
+    if (menu === 'reports') {
+      return [
+        { href: `/${siteName}/manage/reports/boards`, label: '게시판 신고' },
+        { href: `/${siteName}/manage/reports/posts`, label: '게시물 신고' },
+        { href: `/${siteName}/manage/reports/comments`, label: '댓글 신고' },
       ];
     }
 
