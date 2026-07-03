@@ -333,7 +333,11 @@ export default function HeaderHub() {
                 )}
 
                 <IconButton onClick={handleOpenProfileMenu}>
-                  <Avatar src={userProfile.avatarUrl || '/broken-image.jpg'} alt={userProfile.name || ''} />
+                  <Avatar
+                    src={userProfile.avatarUrl || '/broken-image.jpg'}
+                    alt={userProfile.name || ''}
+                    sx={{ width: 24, height: 24 }}
+                  />
                 </IconButton>
 
                 {isMobile ? (

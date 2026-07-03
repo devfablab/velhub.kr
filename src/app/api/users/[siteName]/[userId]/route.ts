@@ -83,6 +83,10 @@ function getAvatarUrl(value: string | null | undefined) {
     return '';
   }
 
+  if (normalizedValue.startsWith('http://') || normalizedValue.startsWith('https://')) {
+    return normalizedValue;
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
   const publicUrl = supabaseAdmin.storage.from('avatar').getPublicUrl(normalizedValue);
 
@@ -385,7 +389,7 @@ async function getCommunityUserInfo(siteName: string) {
     data: {
       status: 'active',
       userInfo: {
-        avatarUrl: getAvatarUrl(stigma.avatar),
+        avatarUrl: getAvatarUrl(stigma.avatar ?? null),
         activityName: decryptNullable(stigma.user_name),
         nickname: normalizeText(membership.nickname),
         joinedAt: membership.created_at,
