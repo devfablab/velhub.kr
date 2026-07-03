@@ -115,6 +115,42 @@ export async function createPostPaymentSplits({
   }
 
   const platformAmount = Math.floor(amount * 0.17);
+
+  if (siteOwnerUserId === postAuthorUserId) {
+    const receiverAmount = amount - platformAmount;
+
+    const insertResult = await supabaseAdmin.from('payment_splits').insert([
+      {
+        payment_id: paymentId,
+        site_id: siteId,
+        board_id: boardId,
+        series_id: seriesId,
+        post_id: postId,
+        receiver_user_id: null,
+        receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.PLATFORM,
+        rate: 17,
+        amount: platformAmount,
+      },
+      {
+        payment_id: paymentId,
+        site_id: siteId,
+        board_id: boardId,
+        series_id: seriesId,
+        post_id: postId,
+        receiver_user_id: siteOwnerUserId,
+        receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
+        rate: 83,
+        amount: receiverAmount,
+      },
+    ]);
+
+    if (insertResult.error) {
+      throw new Error('결제 분배 내역을 저장하지 못했습니다.');
+    }
+
+    return;
+  }
+
   const postAuthorAmount = Math.floor(amount * 0.57);
   const siteOwnerAmount = amount - platformAmount - postAuthorAmount;
 
