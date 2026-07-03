@@ -11,16 +11,12 @@ const secondaryMenus = [
     exact: true,
   },
   {
-    href: '/concierge/blog',
+    href: '/concierge/faqs',
     label: '자주하는 질문',
   },
   {
-    href: '/concierge/community',
+    href: '/concierge/center',
     label: '신고센터',
-  },
-  {
-    href: '/concierge/moments',
-    label: '모먼트',
   },
 ];
 

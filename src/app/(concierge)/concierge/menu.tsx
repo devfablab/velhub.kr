@@ -21,13 +21,13 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
@@ -298,29 +298,23 @@ export default function Container({ children }: ContainerProps) {
                   </button>
                 </div>
 
-                <ListSubheader className={styles['VhiDrawer-subheader']}>데브허브</ListSubheader>
+                <ListSubheader className={styles['VhiDrawer-subheader']}>컨시어지</ListSubheader>
                 <MenuItem key="home" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/">
-                    <HomeOutlinedIcon fontSize="small" />
-                    <span>데브허브 홈</span>
+                  <Anchor href="/concierge">
+                    <SupportAgentOutlinedIcon fontSize="small" />
+                    <span>컨시어지 홈</span>
                   </Anchor>
                 </MenuItem>
-                <MenuItem key="blogs" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/lounge/blog">
-                    <MenuBookRoundedIcon fontSize="small" />
-                    <span>블로그 허브</span>
+                <MenuItem key="faqs" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/faqs">
+                    <QuestionAnswerOutlinedIcon fontSize="small" />
+                    <span>자주하는 질문</span>
                   </Anchor>
                 </MenuItem>
-                <MenuItem key="communities" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/lounge/community">
-                    <InterestsOutlinedIcon fontSize="small" />
-                    <span>커뮤니티 허브</span>
-                  </Anchor>
-                </MenuItem>
-                <MenuItem key="moments" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/home/moments">
-                    <SellOutlinedIcon fontSize="small" />
-                    <span>모먼트</span>
+                <MenuItem key="center" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/center">
+                    <ReportOutlinedIcon fontSize="small" />
+                    <span>신고센터</span>
                   </Anchor>
                 </MenuItem>
                 <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
@@ -359,10 +353,10 @@ export default function Container({ children }: ContainerProps) {
                         </Anchor>
                       </MenuItem>,
                     ]}
-                <MenuItem key="concierge" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge">
-                    <HearingOutlinedIcon fontSize="small" />
-                    <span>컨시어지</span>
+                <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/">
+                    <HomeOutlinedIcon fontSize="small" />
+                    <span>라운지 이동</span>
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="heart2hearts" onClick={handleCloseProfileDrawer}>

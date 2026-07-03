@@ -1,4 +1,4 @@
-import Container from '../menu';
+import Container from './menu';
 import Aside from './aside';
 import styles from '@/app/concierge.module.sass';
 
