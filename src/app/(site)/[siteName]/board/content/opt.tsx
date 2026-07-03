@@ -15,12 +15,19 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
+  Snackbar,
+  Stack,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -36,6 +43,10 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
+import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
+import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
+import DonationButton from '@/components/service/common/DonationButton';
+import ReportButton from '@/components/service/common/ReportButton';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -51,6 +62,7 @@ type BoardInfo = {
   markdown_status: string;
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
+  is_subscription: boolean | null;
 };
 
 type PostImage = {
@@ -140,6 +152,7 @@ type PostContent = {
   poll: PollData | null;
   hashtags: unknown;
   idx: number;
+  series_idx: number | null;
   user_id: string;
   created_at: string;
   is_closed: boolean;
@@ -157,6 +170,14 @@ type PostContent = {
   author_manage_icon: AuthorManageIcon | null;
   closed_by_name: string;
   prefix_label: string | null;
+  is_purchase_required: boolean;
+  purchase_post_price: number;
+  has_subscription_board: boolean;
+  has_subscription_series: boolean;
+  has_purchase_post: boolean;
+  can_view_paid_content: boolean;
+  board_series_count: number;
+  is_post_donation_available: boolean;
 };
 
 type SeriesItem = {
@@ -164,6 +185,7 @@ type SeriesItem = {
   series_key: string;
   series_label: string;
   is_completed: boolean;
+  is_subscription: boolean | null;
 };
 
 type DrawWinner = {
@@ -176,6 +198,12 @@ type DrawWinner = {
   author_avatar_url: string;
 };
 
+type AdjacentPost = {
+  slug: string;
+  subject: string;
+  href: string;
+};
+
 type DrawInfo = {
   draw_type: 'first_come' | 'random';
   draw_limit: number | null;
@@ -186,10 +214,22 @@ type DrawInfo = {
   winners: DrawWinner[];
 };
 
+type SeriesContentItem = {
+  id: string;
+  slug: string;
+  subject: string;
+  series_idx: number;
+  href: string;
+};
+
 type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
+  seriesContents?: SeriesContentItem[];
+  previousPost?: AdjacentPost | null;
+  nextPost?: AdjacentPost | null;
+  selectedCategory?: SelectedCategory | null;
   postActions?: PostActions;
   draw?: DrawInfo | null;
   isAuthor: boolean;
@@ -201,6 +241,11 @@ type CountResponse = {
   ok?: boolean;
   postCount?: number;
   error?: string;
+};
+
+type SelectedCategory = {
+  category_key: string;
+  category_label: string;
 };
 
 type PollResultOption = {
@@ -296,7 +341,6 @@ export default function Opt({ isCommunity }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
-
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(searchParams.get('boardName')).toLowerCase();
   const contentId = normalizeText(searchParams.get('contentId'));
@@ -304,6 +348,7 @@ export default function Opt({ isCommunity }: Props) {
   const [board, setBoard] = useState<BoardInfo | null>(null);
   const [content, setContent] = useState<PostContent | null>(null);
   const [series, setSeries] = useState<SeriesItem | null>(null);
+  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>([]);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -311,6 +356,7 @@ export default function Opt({ isCommunity }: Props) {
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
+  const [purchasePromptOpen, setPurchasePromptOpen] = useState(false);
 
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
@@ -323,6 +369,8 @@ export default function Opt({ isCommunity }: Props) {
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+
+  const [boardSubscriptionStatus, setBoardSubscriptionStatus] = useState<SubscriptionStatus>('none');
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -355,6 +403,14 @@ export default function Opt({ isCommunity }: Props) {
 
   function closeGalleryViewer() {
     setGalleryViewerOpen(false);
+  }
+
+  function openPurchasePrompt() {
+    setPurchasePromptOpen(true);
+  }
+
+  function closePurchasePrompt() {
+    setPurchasePromptOpen(false);
   }
 
   function showPreviousGalleryImage() {
@@ -493,9 +549,10 @@ export default function Opt({ isCommunity }: Props) {
         setBoard(result.board ?? null);
         setContent(result.content ?? null);
         setSeries(result.series ?? null);
-        setDraw(result.draw ?? null);
+        setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
+        setDraw(result.draw ?? null);
         setIsLiked(result.postActions?.isLiked === true);
         setIsSaved(result.postActions?.isSaved === true);
         setLikeCount(typeof result.postActions?.likeCount === 'number' ? result.postActions.likeCount : 0);
@@ -653,42 +710,183 @@ export default function Opt({ isCommunity }: Props) {
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
+  const isSubscriptionSeriesPost = series?.is_subscription === true;
+
+  const canPurchasePost =
+    content.published_status === 'published' &&
+    (content.is_purchase_required || isSubscriptionSeriesPost) &&
+    !content.has_subscription_board &&
+    !content.has_subscription_series &&
+    !content.has_purchase_post &&
+    !isAuthor &&
+    !isStaff;
+
+  const hasBoardSubscription =
+    boardSubscriptionStatus === 'active' ||
+    boardSubscriptionStatus === 'past_due' ||
+    boardSubscriptionStatus === 'scheduled_cancel';
+
+  const seriesList =
+    series && seriesContents.length > 0 ? (
+      <div className="paper paper-p0">
+        <Accordion disableGutters className={styles['vh-accordion']}>
+          <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+            <strong>{series.series_label}</strong>
+          </AccordionSummary>
+          <AccordionDetails>
+            <ol>
+              {seriesContents.map((seriesContent) => (
+                <li key={seriesContent.id}>
+                  <Anchor href={seriesContent.href}>
+                    {seriesContent.series_idx}. {seriesContent.subject}
+                  </Anchor>
+                </li>
+              ))}
+            </ol>
+          </AccordionDetails>
+        </Accordion>
+      </div>
+    ) : null;
+
   const postActionButtons =
     content.published_status === 'published' ? (
-      <div className={styles.options}>
-        <div className={styles.buttons}>
-          <button
-            type="button"
-            className={`${styles.button} ${isLiked ? styles.active : ''}`}
-            onClick={() => void togglePostLike()}
-            disabled={isTogglingLike}
-            aria-label={isLiked ? '좋아요 취소' : '좋아요'}
-          >
-            {isTogglingLike ? (
-              <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
-            ) : (
-              <FavoriteBorderRoundedIcon />
-            )}
-            <strong>좋아요</strong>
-            {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
+      <>
+        <button
+          type="button"
+          className={`${styles.button} ${isLiked ? styles.active : ''}`}
+          onClick={() => void togglePostLike()}
+          disabled={isTogglingLike}
+          aria-label={isLiked ? '좋아요 취소' : '좋아요'}
+        >
+          {isTogglingLike ? (
+            <CircularProgress color="inherit" aria-label="좋아요 상태 저장중" size={24} />
+          ) : (
+            <FavoriteBorderRoundedIcon />
+          )}
+          <strong>좋아요</strong>
+          {likeCount > 0 ? <em aria-label="좋아요 갯수">{likeCount}</em> : null}
+        </button>
+        <button
+          type="button"
+          className={`${styles.button} ${isSaved ? styles.active : ''}`}
+          onClick={() => void togglePostSave()}
+          disabled={isTogglingSave}
+          aria-label={isSaved ? '저장 취소' : '저장'}
+        >
+          {isTogglingSave ? (
+            <CircularProgress color="inherit" aria-label="저장" size={24} />
+          ) : (
+            <TurnedInNotRoundedIcon />
+          )}
+          <strong>저장</strong>
+        </button>
+        <Snackbar
+          open={Boolean(postActionErrorMessage)}
+          message={postActionErrorMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+          onClose={() => setPostActionErrorMessage('')}
+        />
+      </>
+    ) : null;
+
+  const subscriptionButtons =
+    content.published_status === 'published' && content.is_purchase_required && !isStaff ? (
+      <>
+        <SubscriptionButton
+          siteName={siteName}
+          boardName={boardName}
+          board={board}
+          selectedSeries={null}
+          onStatusChange={setBoardSubscriptionStatus}
+        />
+
+        {series && !hasBoardSubscription ? (
+          <SubscriptionButton
+            siteName={siteName}
+            boardName={boardName}
+            board={board}
+            selectedSeries={{
+              series_key: series.series_key,
+              series_label: series.series_label,
+            }}
+          />
+        ) : null}
+      </>
+    ) : null;
+
+  const postDonationButton =
+    content.published_status === 'published' && content.is_post_donation_available && !content.is_purchase_required ? (
+      <DonationButton
+        targetType="post"
+        siteName={siteName}
+        boardName={boardName}
+        contentId={content.slug}
+        buttonText="포스팅 후원"
+      />
+    ) : null;
+
+  const postPurchaseButton = canPurchasePost ? (
+    <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} />
+  ) : null;
+
+  const paidContentMoreButton = canPurchasePost ? (
+    <div className={styles.action}>
+      <button type="button" className="button small action" onClick={openPurchasePrompt}>
+        더 보기
+      </button>
+      {isMobile ? (
+        <Drawer anchor="bottom" open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDrawer-bottom">
+          <h2>포스팅 소장하기</h2>
+          <button type="button" className="close-button" onClick={closePurchasePrompt}>
+            <CloseRoundedIcon />
           </button>
-          <button
-            type="button"
-            className={`${styles.button} ${isSaved ? styles.active : ''}`}
-            onClick={() => void togglePostSave()}
-            disabled={isTogglingSave}
-            aria-label={isSaved ? '저장 취소' : '저장'}
-          >
-            {isTogglingSave ? (
-              <CircularProgress color="inherit" aria-label="저장" size={24} />
-            ) : (
-              <TurnedInNotRoundedIcon />
-            )}
-            <strong>저장</strong>
+          <Stack gap={3}>
+            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={closePurchasePrompt}>
+                취소
+              </button>
+              <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDialog">
+          <DialogTitle className={styles['dialog-title']}>포스팅 소장하기</DialogTitle>
+          <button type="button" className="close-button" onClick={closePurchasePrompt}>
+            <CloseRoundedIcon />
           </button>
-        </div>
-        {postActionErrorMessage ? <p>{postActionErrorMessage}</p> : null}
-      </div>
+          <DialogContent className={styles['dialog-content']}>
+            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={closePurchasePrompt}>
+              취소
+            </button>
+            <PostPurchaseButton
+              siteName={siteName}
+              boardName={boardName}
+              contentId={content.slug}
+              buttonText="구매"
+              popup={true}
+            />
+          </DialogActions>
+        </Dialog>
+      )}
+    </div>
+  ) : null;
+
+  const paidContentActionButtons =
+    subscriptionButtons || postPurchaseButton || postDonationButton ? (
+      <>
+        {subscriptionButtons}
+        {postPurchaseButton}
+        {postDonationButton}
+      </>
     ) : null;
 
   return (
@@ -796,13 +994,16 @@ export default function Opt({ isCommunity }: Props) {
                 <div className="paper">
                   {content.summary ? <p className={styles['content-summary']}>{content.summary}</p> : null}
                   {content.content_html ? (
-                    <EmbeddedContentHtml
-                      contentHtml={content.content_html}
-                      contentMarkdown={content.content_markdown}
-                      markdownStatus={board.markdown_status}
-                      themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                      className="viewer"
-                    />
+                    <>
+                      <EmbeddedContentHtml
+                        contentHtml={content.content_html}
+                        contentMarkdown={content.content_markdown}
+                        markdownStatus={board.markdown_status}
+                        themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                        className="viewer"
+                      />
+                      {paidContentMoreButton}
+                    </>
                   ) : null}
                   {content.images && content.images.length > 0 ? (
                     <div className={styles['content-images']}>
@@ -1124,7 +1325,14 @@ export default function Opt({ isCommunity }: Props) {
                 ) : null}
               </div>
             ) : null}
-            {postActionButtons}
+            <div className={styles.options}>
+              <div className={styles.buttons}>
+                {postActionButtons}
+                {paidContentActionButtons}
+                <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
+              </div>
+            </div>
+            {seriesList}
           </article>
           {content.published_status === 'published' ? (
             <CommentSection

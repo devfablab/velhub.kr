@@ -47,8 +47,8 @@ import DonationButton from '@/components/service/common/DonationButton';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
 import Container from '../../menu';
-import styles from '@/app/board.module.sass';
 import ReportButton from '@/components/service/common/ReportButton';
+import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;

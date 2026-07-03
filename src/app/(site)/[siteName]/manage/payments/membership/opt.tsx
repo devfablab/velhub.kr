@@ -280,14 +280,14 @@ export default function Opt() {
             <p className="alert info">
               <InfoOutlineRoundedIcon />
               <span>
-                멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 설정할 수
+                멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')} 원부터 100,000 원까지 1,000 원 단위로 설정할 수
                 있습니다.
               </span>
             </p>
             {maxSeriesPrice > 0 ? (
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
-                <span>현재 연재 구독 최고가는 ${maxSeriesPrice.toLocaleString('ko-KR')}원입니다.</span>
+                <span>현재 연재 구독 최고가는 {maxSeriesPrice.toLocaleString('ko-KR')} 원입니다.</span>
               </p>
             ) : null}
           </Stack>
@@ -330,21 +330,25 @@ export default function Opt() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>결제자</TableCell>
-                    <TableCell>상태</TableCell>
-                    <TableCell>유지기간</TableCell>
-                    <TableCell>최근 결제액</TableCell>
-                    <TableCell>누적 결제액</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>결제자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>유지기간</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>최근 결제액</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>누적 결제액</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {members.map((member) => (
                     <TableRow key={member.id}>
-                      <TableCell>{member.nickname}</TableCell>
-                      <TableCell>{member.status}</TableCell>
-                      <TableCell>{formatDateTime(member.lastPaidAt)}</TableCell>
-                      <TableCell>{formatAmount(member.lastPaidAmount)}</TableCell>
-                      <TableCell>{formatAmount(member.totalPaidAmount)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.nickname}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.status}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTime(member.lastPaidAt)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                        {formatAmount(member.lastPaidAmount)}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
+                        {formatAmount(member.totalPaidAmount)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -297,7 +297,7 @@ export default function DonationButton(props: Props) {
       const amount = getDonationAmountNumber(donationAmount);
 
       if (!isValidDonationAmount(amount)) {
-        throw new Error('후원금액은 1,000원부터 100,000원까지 1,000원 단위로 입력해 주세요.');
+        throw new Error('후원금액은 1,000 원부터 100,000 원까지 1,000 원 단위로 입력해 주세요.');
       }
 
       const response = await fetch('/api/payments/portone/donation/start', {

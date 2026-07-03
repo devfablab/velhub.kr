@@ -940,11 +940,11 @@ export default function Opt() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>식별자</TableCell>
-                    <TableCell>연재명</TableCell>
-                    <TableCell>완결</TableCell>
-                    <TableCell>마지막 연재</TableCell>
-                    <TableCell>생성일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>식별자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>연재명</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>완결</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>마지막 연재</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>생성일</TableCell>
                     <TableCell />
                   </TableRow>
                 </TableHead>
@@ -1168,8 +1168,8 @@ export default function Opt() {
                   </div>
 
                   {dialogHelperMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
                       <span>{dialogHelperMessage}</span>
                     </p>
                   ) : null}
@@ -1386,8 +1386,8 @@ export default function Opt() {
                   </div>
 
                   {dialogHelperMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
                       <span>{dialogHelperMessage}</span>
                     </p>
                   ) : null}
