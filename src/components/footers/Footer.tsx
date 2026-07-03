@@ -27,7 +27,7 @@ export default function Footer() {
                     <Anchor href="/concierge">고객센터</Anchor>
                   </li>
                   <li>
-                    <Anchor href="/concierge">공지사항</Anchor>
+                    <Anchor href="/heart2hearts/b/notice">공지사항</Anchor>
                   </li>
                 </ul>
               </li>

@@ -10,7 +10,7 @@ export default function PrimaryMenu() {
         <Anchor href="/concierge">컨시어지</Anchor>
       </li>
       <li>
-        <Anchor href="/help">이용안내</Anchor>
+        <Anchor href="/heart2hearts">이용안내</Anchor>
       </li>
     </ol>
   );

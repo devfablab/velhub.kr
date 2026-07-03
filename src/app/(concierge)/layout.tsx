@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderConcierge from '@/components/headers/Concierge';
-// import '../globals.sass';
+import Footer from '@/components/footers/Footer';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -16,6 +16,7 @@ export default function RootLayout({
     <>
       <HeaderConcierge />
       {children}
+      <Footer />
     </>
   );
 }
