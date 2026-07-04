@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Box,
+  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
@@ -11,11 +12,10 @@ import {
   Select,
   Snackbar,
   Stack,
+  styled,
   TextField,
   Typography,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
@@ -46,7 +46,19 @@ type SettlementResponse = {
   message?: string;
 };
 
-const maxFileSize = 10 * 1024 * 1024;
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+const maxFileSize = 5 * 1024 * 1024;
 
 const legalTypeOptions = [
   { value: 'illegal_info', label: '정보통신망법에 따른 불법정보/허위조작정보' },
@@ -91,6 +103,34 @@ const privacyReportTypeOptions = [
   { value: 'comment', label: '댓글' },
   { value: 'other', label: '그 외' },
 ];
+
+function formatBirthDate(value: string) {
+  const digits = value.replace(/\D/g, '');
+
+  if (digits.length !== 6 && digits.length !== 8) {
+    return value;
+  }
+
+  const currentYear = new Date().getFullYear();
+  const currentYearLastTwoDigits = currentYear % 100;
+
+  const year =
+    digits.length === 8
+      ? Number(digits.slice(0, 4))
+      : Number(digits.slice(0, 2)) <= currentYearLastTwoDigits
+        ? 2000 + Number(digits.slice(0, 2))
+        : 1900 + Number(digits.slice(0, 2));
+
+  const monthStartIndex = digits.length === 8 ? 4 : 2;
+  const month = Number(digits.slice(monthStartIndex, monthStartIndex + 2));
+  const day = Number(digits.slice(monthStartIndex + 2, monthStartIndex + 4));
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${year}년 ${month}월 ${day}일`;
+}
 
 function normalizeLegalType(value: string | null): LegalType | '' {
   const normalizedValue = normalizeText(value).toLowerCase();
@@ -193,6 +233,22 @@ function getFileError(files: File[]) {
   const oversizedFile = files.find((file) => file.size > maxFileSize);
 
   if (oversizedFile) {
+    return 'PDF 파일은 1개당 5MB 이하만 첨부할 수 있습니다.';
+  }
+
+  return '';
+}
+
+function getSingleFileError(file: File, currentFiles: File[]) {
+  if (currentFiles.length >= 2) {
+    return '파일은 최대 2개까지 첨부할 수 있습니다.';
+  }
+
+  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+    return 'PDF 파일만 첨부할 수 있습니다.';
+  }
+
+  if (file.size > maxFileSize) {
     return 'PDF 파일은 1개당 10MB 이하만 첨부할 수 있습니다.';
   }
 
@@ -331,17 +387,28 @@ export default function Opt() {
   }
 
   function handleFileChange(changeEvent: ChangeEvent<HTMLInputElement>) {
-    const nextFiles = Array.from(changeEvent.currentTarget.files ?? []);
-    const fileError = getFileError(nextFiles);
+    const file = changeEvent.currentTarget.files?.[0] ?? null;
+
+    changeEvent.currentTarget.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    const fileError = getSingleFileError(file, files);
 
     if (fileError) {
-      setFiles([]);
       setErrorMessage(fileError);
       return;
     }
 
     setErrorMessage('');
-    setFiles(nextFiles);
+    setFiles((currentFiles) => [...currentFiles, file]);
+  }
+
+  function handleRemoveFile(fileIndex: number) {
+    setFiles((currentFiles) => currentFiles.filter((file, index) => index !== fileIndex));
+    setErrorMessage('');
   }
 
   function validateCommonInputs() {
@@ -578,7 +645,7 @@ export default function Opt() {
               <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
                 생년월일
               </Typography>
-              <Typography variant="body2">{reporterBirthDate}</Typography>
+              <Typography variant="body2">{formatBirthDate(reporterBirthDate)}</Typography>
             </Stack>
           </Stack>
         )}
@@ -667,19 +734,43 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1} alignItems="center">
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction="row" gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
             파일첨부
           </Typography>
-          <input type="file" accept="application/pdf,.pdf" multiple onChange={handleFileChange} />
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            PDF 파일은 최대 2개, 1개당 10MB 이하로 첨부할 수 있습니다.
-          </Typography>
-          {files.length > 0 ? (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {files.map((file) => file.name).join(', ')}
-            </Typography>
-          ) : null}
+
+          <Stack direction="column" gap={1} sx={{ width: '100%' }}>
+            <Stack gap={1} sx={{ width: '100%' }}>
+              {files.map((file, fileIndex) => (
+                <Stack
+                  key={`${file.name}-${file.size}-${fileIndex}`}
+                  direction="row"
+                  gap={1}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography variant="subtitle2">{file.name}</Typography>
+                  <button type="button" className="button small danger" onClick={() => handleRemoveFile(fileIndex)}>
+                    파일 삭제
+                  </button>
+                </Stack>
+              ))}
+            </Stack>
+
+            {files.length < 2 ? (
+              <Box>
+                <Button component="label" className="button small action">
+                  파일 추가
+                  <VisuallyHiddenInput type="file" accept="application/pdf,.pdf" onChange={handleFileChange} />
+                </Button>
+              </Box>
+            ) : null}
+
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>PDF 파일 최대 2개, 1개당 10MB 이하로 첨부할 수 있습니다.</span>
+            </p>
+          </Stack>
         </Stack>
       </Stack>
     );
@@ -802,40 +893,39 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="body2" sx={{ minWidth: 150 }}>
-            「정보통신망법」제44조의12에 따라 위와 같이 신고·삭제요청을 합니다.
-          </Typography>
+        {requestType === 'illegal_info' || requestType === 'false_manipulated_info' ? (
+          <Stack justifyContent="flex-end" alignItems="flex-end">
+            <Typography variant="body2" sx={{ minWidth: 150 }}>
+              「정보통신망법」제44조의12에 따라 위와 같이 신고·삭제요청을 합니다.
+            </Typography>
+            {requestType === 'illegal_info' ? (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={illegalInfoConfirmed}
+                    onChange={(changeEvent) => setIllegalInfoConfirmed(changeEvent.currentTarget.checked)}
+                  />
+                }
+                label="불법정보 신고·요청 확인"
+              />
+            ) : null}
 
-          {requestType === 'illegal_info' ? (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={illegalInfoConfirmed}
-                  onChange={(changeEvent) => setIllegalInfoConfirmed(changeEvent.currentTarget.checked)}
-                />
-              }
-              label="불법정보 신고·요청 확인"
-            />
-          ) : null}
+            {requestType === 'false_manipulated_info' ? (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={falseManipulatedInfoConfirmed}
+                    onChange={(changeEvent) => setFalseManipulatedInfoConfirmed(changeEvent.currentTarget.checked)}
+                  />
+                }
+                label="허위조작정보 신고·요청 확인"
+              />
+            ) : null}
+          </Stack>
+        ) : null}
 
-          {requestType === 'false_manipulated_info' ? (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={falseManipulatedInfoConfirmed}
-                  onChange={(changeEvent) => setFalseManipulatedInfoConfirmed(changeEvent.currentTarget.checked)}
-                />
-              }
-              label="허위조작정보 신고·요청 확인"
-            />
-          ) : null}
-        </Stack>
-
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
-            불법정보/허위조작정보 신고 유의사항
-          </Typography>
+        <Stack justifyContent="flex-end" alignItems="flex-end">
+          <Typography variant="subtitle2">불법정보/허위조작정보 신고 유의사항</Typography>
           <FormControlLabel
             control={
               <Checkbox
@@ -854,7 +944,7 @@ export default function Opt() {
     return (
       <Stack gap={2}>
         <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
             신고·요청 구분
           </Typography>
           <Stack>
@@ -874,7 +964,7 @@ export default function Opt() {
         </Stack>
 
         <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
             신고·요청 사유
           </Typography>
           <Stack>
@@ -907,7 +997,7 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack>
+        <Stack justifyContent="flex-end" alignItems="flex-end">
           <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
             「전기통신사업법」 제22조의5제1항에 따라 위와 같이 신고ㆍ삭제요청을 합니다.
           </Typography>
@@ -922,7 +1012,7 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack>
+        <Stack justifyContent="flex-end" alignItems="flex-end">
           <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
             불법촬영물등 신고 유의사항
           </Typography>
@@ -1049,7 +1139,7 @@ export default function Opt() {
             {renderCommonFields()}
             {renderTypeForm()}
 
-            <Stack direction="row" gap={1}>
+            <Stack direction="row" justifyContent="flex-end">
               <button type="button" className="button medium submit" onClick={handleSubmit} disabled={submitting}>
                 {submitting ? '접수 중' : '신고 접수'}
               </button>
