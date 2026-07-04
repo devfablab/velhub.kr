@@ -1,8 +1,8 @@
 import { cookies, headers } from 'next/headers';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Container from '../../menu';
-import styles from '@/app/concierge.module.sass';
 import Opt from './opt';
+import styles from '@/app/concierge.module.sass';
 
 type SettlementResponse = {
   exists: boolean;
@@ -55,11 +55,11 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <h1>권리보호센터</h1>
-          {/* {!hasSettlement ? ( */}
-          <div className="paper">
-            <IdentityVerificationButton />
-          </div>
-          {/* ) : null} */}
+          {!hasSettlement ? (
+            <div className="paper">
+              <IdentityVerificationButton />
+            </div>
+          ) : null}
           {hasSettlement ? <Opt /> : null}
         </div>
       </div>

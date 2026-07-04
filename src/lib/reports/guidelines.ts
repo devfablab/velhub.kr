@@ -7,6 +7,10 @@ export const guidelineReportCategories = [
   'violence',
   'child_youth_protection',
   'offensive',
+  'legal_illegal_info',
+  'rights',
+  'illegal_filming',
+  'privacy',
 ] as const;
 
 export type GuidelineReportCategory = (typeof guidelineReportCategories)[number];
@@ -17,7 +21,75 @@ export type GuidelineReportItem = {
   value: GuidelineReportCategory;
   title: string;
   descriptions: string[];
+  inquery?: {
+    requestType: 'illegal_info' | 'rights' | 'illegal_filming' | 'privacy';
+    legalType?: 'illegal_info' | 'illegal_filming' | 'privacy';
+  };
 };
+
+function getTargetLabel(targetType: ReportTargetType) {
+  if (targetType === 'site') {
+    return '사이트';
+  }
+
+  if (targetType === 'board') {
+    return '게시판';
+  }
+
+  if (targetType === 'comment') {
+    return '댓글';
+  }
+
+  return '게시물';
+}
+
+function getInqueryReportItems(targetType: ReportTargetType): GuidelineReportItem[] {
+  const targetLabel = getTargetLabel(targetType);
+
+  return [
+    {
+      value: 'legal_illegal_info',
+      title: '정보통신망법에 따른 불법정보/허위조작정보',
+      descriptions: [
+        '본 신고는 정보통신망법에 따른 절차로 처리되며, 구체적인 위치, 사유 및 관련 근거 등의 추가 정보 입력이 필요합니다.',
+      ],
+      inquery: {
+        requestType: 'illegal_info',
+        legalType: 'illegal_info',
+      },
+    },
+    {
+      value: 'rights',
+      title: '명예훼손 또는 저작권이 침해되었습니다.',
+      descriptions: ['명예훼손/사생활/초상권 침해, 저작권 침해 등으로 피해를 입은 경우 추가 정보 입력이 필요합니다.'],
+      inquery: {
+        requestType: 'rights',
+      },
+    },
+    {
+      value: 'illegal_filming',
+      title: '불법촬영물등이 포함되어 있습니다.',
+      descriptions: [
+        '불법촬영물등에 대한 신고 및 삭제 요청은 전기통신사업법 시행령에 따라 상세 사유, 개인정보 수집 및 이용 동의 등이 필요합니다.',
+      ],
+      inquery: {
+        requestType: 'illegal_filming',
+        legalType: 'illegal_filming',
+      },
+    },
+    {
+      value: 'privacy',
+      title: `개인정보가 포함된 ${targetLabel}입니다.`,
+      descriptions: [
+        '본인의 개인정보 또는 타인의 법적으로 중요한 정보가 노출되어 있는 경우 추가 정보 입력이 필요합니다.',
+      ],
+      inquery: {
+        requestType: 'privacy',
+        legalType: 'privacy',
+      },
+    },
+  ];
+}
 
 const postGuidelineReportItems: GuidelineReportItem[] = [
   {
@@ -87,6 +159,7 @@ const postGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 상식적인 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 내용',
     ],
   },
+  ...getInqueryReportItems('post'),
 ];
 
 const boardGuidelineReportItems: GuidelineReportItem[] = [
@@ -162,6 +235,7 @@ const boardGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 게시판명, 설명, 공지, 운영 방식 등이 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 경우',
     ],
   },
+  ...getInqueryReportItems('board'),
 ];
 
 const siteGuidelineReportItems: GuidelineReportItem[] = [
@@ -237,13 +311,14 @@ const siteGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 사이트명, 소개, 공지, 운영 방향 등이 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 경우',
     ],
   },
+  ...getInqueryReportItems('site'),
 ];
 
 export const guidelineReportItemsByTargetType = {
   site: siteGuidelineReportItems,
   board: boardGuidelineReportItems,
   post: postGuidelineReportItems,
-  comment: postGuidelineReportItems,
+  comment: [...postGuidelineReportItems.slice(0, 8), ...getInqueryReportItems('comment')],
 } satisfies Record<ReportTargetType, GuidelineReportItem[]>;
 
 export function isGuidelineReportCategory(value: unknown): value is GuidelineReportCategory {
