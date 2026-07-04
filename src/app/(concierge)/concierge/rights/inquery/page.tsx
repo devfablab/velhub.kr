@@ -1,19 +1,16 @@
-import Container from './menu';
-import Aside from './aside';
+import Container from '../../menu';
 import styles from '@/app/concierge.module.sass';
 
-export default async function Page() {
+export default function Page() {
   return (
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <h1>제목</h1>
+          <h1>권리보호센터</h1>
           <section>
-            <h2>부제목</h2>
-            <p>컨시어지 내용</p>
+            <p>신고 내용</p>
           </section>
         </div>
-        <Aside />
       </div>
     </Container>
   );

@@ -35,7 +35,7 @@ import { getSupabaseBrowser } from '@/lib/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import { ServiceLogo } from '@/components/Svgs';
-import SecondaryMenu from '@/components/header-groups/lounge/SecondaryMenu';
+import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
@@ -311,10 +311,16 @@ export default function Container({ children }: ContainerProps) {
                     <span>자주하는 질문</span>
                   </Anchor>
                 </MenuItem>
-                <MenuItem key="center" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/concierge/center">
+                <MenuItem key="help" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/help">
                     <ReportOutlinedIcon fontSize="small" />
                     <span>신고센터</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="rights" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/rights">
+                    <ReportOutlinedIcon fontSize="small" />
+                    <span>권리보호센터</span>
                   </Anchor>
                 </MenuItem>
                 <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
