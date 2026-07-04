@@ -338,6 +338,8 @@ export default function Opt() {
         setReporterName(result.identity?.name ?? '');
         setReporterBirthDate(result.identity?.birth_date ?? '');
         setReporterCompanyName(result.settlement?.company_name ?? '');
+      } catch {
+        setErrorMessage('신고자 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       } finally {
         setReporterLoading(false);
       }
@@ -595,27 +597,31 @@ export default function Opt() {
     formData.append('exposedInformation', exposedInformation.trim());
     formData.append('privacyRequestReason', privacyRequestReason.trim());
 
-    setSubmitting(true);
-    setErrorMessage('');
+    try {
+      setSubmitting(true);
+      setErrorMessage('');
 
-    const response = await fetch('/api/reports/legals/new', {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
+      const response = await fetch('/api/reports/legals/new', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
 
-    const result = (await response.json().catch(() => ({
-      error: '신고 접수 응답을 확인하지 못했습니다.',
-    }))) as SubmitResponse;
+      const result = (await response.json().catch(() => ({
+        error: '신고 접수 응답을 확인하지 못했습니다.',
+      }))) as SubmitResponse;
 
-    setSubmitting(false);
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
+        return;
+      }
 
-    if (!response.ok || result.error) {
-      setErrorMessage(result.error ?? '신고를 접수하지 못했습니다.');
-      return;
+      setSnackbarOpen(true);
+    } catch {
+      setErrorMessage('신고를 접수하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setSnackbarOpen(true);
   }
 
   function renderReporterInfo() {
@@ -1138,6 +1144,13 @@ export default function Opt() {
 
             {renderCommonFields()}
             {renderTypeForm()}
+
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
 
             <Stack direction="row" justifyContent="flex-end">
               <button type="button" className="button medium submit" onClick={handleSubmit} disabled={submitting}>
