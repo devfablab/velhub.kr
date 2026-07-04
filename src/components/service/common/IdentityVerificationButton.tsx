@@ -34,6 +34,7 @@ type SettlementType = 'individual' | 'business';
 
 type Settlement = {
   settlement_type: SettlementType;
+  company_name: string | null;
   resident_registration_number: string | null;
   business_registration_number: string | null;
   business_license: string | null;
@@ -239,6 +240,7 @@ export default function IdentityVerificationButton() {
 
   const [residentSuffix, setResidentSuffix] = useState('');
   const [residentSuffixConfirm, setResidentSuffixConfirm] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [businessRegistrationNumber, setBusinessRegistrationNumber] = useState('');
   const [businessLicenseFile, setBusinessLicenseFile] = useState<File | null>(null);
   const [businessIncomeCode, setBusinessIncomeCode] = useState('');
@@ -328,6 +330,7 @@ export default function IdentityVerificationButton() {
     setBankCode(nextSettlement?.bank_code ?? '');
     setAccountHolder(nextSettlement?.account_holder ?? '');
     setAccountNumber(nextSettlement?.account_number ? onlyDigits(nextSettlement.account_number) : '');
+    setCompanyName(nextSettlement?.company_name ?? '');
   };
 
   const handleVerify = async () => {
@@ -471,6 +474,7 @@ export default function IdentityVerificationButton() {
     }
 
     formData.append('business_registration_number', businessRegistrationNumber);
+    formData.append('company_name', companyName);
 
     if (businessLicenseFile) {
       formData.append('business_license', businessLicenseFile);
@@ -666,6 +670,14 @@ export default function IdentityVerificationButton() {
               {identity && selectedType === 'business' ? (
                 <>
                   <Typography variant="subtitle2">대표자 이름 / {identity.name}</Typography>
+
+                  <TextField
+                    fullWidth
+                    placeholder="단체/회사명"
+                    size="small"
+                    value={companyName}
+                    onChange={(event) => setCompanyName(event.target.value)}
+                  />
 
                   <TextField
                     fullWidth

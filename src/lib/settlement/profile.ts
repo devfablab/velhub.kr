@@ -17,6 +17,7 @@ export type SettlementProfileRow = {
   account_number: string | number | null;
   account_holder: string | number | null;
   account_verified_at: string | null;
+  company_name: string | null;
 };
 
 type SettlementProfileInput = {
@@ -28,6 +29,7 @@ type SettlementProfileInput = {
   bank_code?: string;
   account_number?: string;
   account_holder?: string;
+  company_name?: string | null;
 };
 
 type ValidatedSettlementProfileInput = {
@@ -39,6 +41,7 @@ type ValidatedSettlementProfileInput = {
   bank_code: string;
   account_number: string;
   account_holder: string;
+  company_name?: string | null;
 };
 
 function normalizeText(value: unknown) {
@@ -129,6 +132,7 @@ export function serializeSettlementProfile(row: SettlementProfileRow | null) {
             row.resident_registration_number,
             row.birth_date,
           ),
+          company_name: decryptNullable(row.company_name),
           business_registration_number: decryptNullable(row.business_registration_number),
           business_license: row.business_license,
           business_income_code: row.business_income_code,
@@ -232,6 +236,7 @@ export function validateSettlementProfileInput(value: unknown) {
     ok: true as const,
     data: {
       settlement_type: validSettlementType,
+      company_name: input.company_name ? normalizeText(input.company_name) : null,
       resident_registration_number: null,
       business_registration_number: businessRegistrationNumber,
       business_license: businessLicense,
@@ -248,6 +253,7 @@ export function createSettlementProfileUpdatePayload(data: ValidatedSettlementPr
     settlement_type: data.settlement_type,
     resident_registration_number: data.resident_registration_number ? encrypt(data.resident_registration_number) : null,
     business_registration_number: data.business_registration_number ? encrypt(data.business_registration_number) : null,
+    company_name: data.company_name ? normalizeText(data.company_name) : null,
     business_license: data.business_license,
     business_income_code: data.business_income_code,
     bank_code: data.bank_code,

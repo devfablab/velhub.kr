@@ -55,9 +55,11 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <h1>권리보호센터</h1>
-          {!hasSettlement ? (
-            <div className="paper">{!hasSettlement ? <IdentityVerificationButton /> : null}</div>
-          ) : null}
+          {/* {!hasSettlement ? ( */}
+          <div className="paper">
+            <IdentityVerificationButton />
+          </div>
+          {/* ) : null} */}
           {hasSettlement ? <Opt /> : null}
         </div>
       </div>

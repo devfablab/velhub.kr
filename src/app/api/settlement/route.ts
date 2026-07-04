@@ -29,6 +29,7 @@ export async function GET() {
         'account_number',
         'account_holder',
         'account_verified_at',
+        'company_name',
       ].join(', '),
     )
     .eq('user_id', sessionClaims.userId)
