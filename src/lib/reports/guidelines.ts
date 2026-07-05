@@ -7,24 +7,43 @@ export const guidelineReportCategories = [
   'violence',
   'child_youth_protection',
   'offensive',
-  'legal_illegal_info',
-  'rights',
-  'illegal_filming',
-  'privacy',
 ] as const;
 
-export type GuidelineReportCategory = (typeof guidelineReportCategories)[number];
+export const legalReportCategories = ['legal_illegal_info', 'legal_illegal_filming', 'legal_privacy'] as const;
+
+export const rightsReportCategories = [
+  'rights_defamation',
+  'rights_personality_rights',
+  'rights_copyright',
+  'rights_trademark',
+  'rights_counterfeit',
+  'rights_design_patent_utility',
+] as const;
+
+export type GuidelineBaseReportCategory = (typeof guidelineReportCategories)[number];
+export type LegalReportCategory = (typeof legalReportCategories)[number];
+export type RightsReportCategory = (typeof rightsReportCategories)[number];
+
+export type GuidelineReportCategory = GuidelineBaseReportCategory | LegalReportCategory | RightsReportCategory;
 
 export type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
+
+export type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 
 export type GuidelineReportItem = {
   value: GuidelineReportCategory;
   title: string;
   descriptions: string[];
-  inquery?: {
-    requestType: 'illegal_info' | 'rights' | 'illegal_filming' | 'privacy';
-    legalType?: 'illegal_info' | 'illegal_filming' | 'privacy';
-  };
+  report?:
+    | {
+        kind: 'legal';
+        category: LegalReportCategory;
+        legalType: LegalType;
+      }
+    | {
+        kind: 'rights';
+        category: RightsReportCategory;
+      };
 };
 
 function getTargetLabel(targetType: ReportTargetType) {
@@ -43,7 +62,7 @@ function getTargetLabel(targetType: ReportTargetType) {
   return '게시물';
 }
 
-function getInqueryReportItems(targetType: ReportTargetType): GuidelineReportItem[] {
+function getLegalReportItems(targetType: ReportTargetType): GuidelineReportItem[] {
   const targetLabel = getTargetLabel(targetType);
 
   return [
@@ -53,45 +72,103 @@ function getInqueryReportItems(targetType: ReportTargetType): GuidelineReportIte
       descriptions: [
         '본 신고는 정보통신망법에 따른 절차로 처리되며, 구체적인 위치, 사유 및 관련 근거 등의 추가 정보 입력이 필요합니다.',
       ],
-      inquery: {
-        requestType: 'illegal_info',
+      report: {
+        kind: 'legal',
+        category: 'legal_illegal_info',
         legalType: 'illegal_info',
       },
     },
     {
-      value: 'rights',
-      title: '명예훼손 또는 저작권이 침해되었습니다.',
-      descriptions: ['명예훼손/사생활/초상권 침해, 저작권 침해 등으로 피해를 입은 경우 추가 정보 입력이 필요합니다.'],
-      inquery: {
-        requestType: 'rights',
-      },
-    },
-    {
-      value: 'illegal_filming',
+      value: 'legal_illegal_filming',
       title: '불법촬영물등이 포함되어 있습니다.',
       descriptions: [
         '불법촬영물등에 대한 신고 및 삭제 요청은 전기통신사업법 시행령에 따라 상세 사유, 개인정보 수집 및 이용 동의 등이 필요합니다.',
       ],
-      inquery: {
-        requestType: 'illegal_filming',
+      report: {
+        kind: 'legal',
+        category: 'legal_illegal_filming',
         legalType: 'illegal_filming',
       },
     },
     {
-      value: 'privacy',
+      value: 'legal_privacy',
       title: `개인정보가 포함된 ${targetLabel}입니다.`,
       descriptions: [
         '본인의 개인정보 또는 타인의 법적으로 중요한 정보가 노출되어 있는 경우 추가 정보 입력이 필요합니다.',
       ],
-      inquery: {
-        requestType: 'privacy',
+      report: {
+        kind: 'legal',
+        category: 'legal_privacy',
         legalType: 'privacy',
       },
     },
   ];
 }
 
-const postGuidelineReportItems: GuidelineReportItem[] = [
+function getRightsReportItems(): GuidelineReportItem[] {
+  return [
+    {
+      value: 'rights_defamation',
+      title: '명예훼손',
+      descriptions: ['특정인 · 단체 대상 비방 · 허위사실 유포'],
+      report: {
+        kind: 'rights',
+        category: 'rights_defamation',
+      },
+    },
+    {
+      value: 'rights_personality_rights',
+      title: '초상권 ∙ 사생활 등 인격권',
+      descriptions: ['특정인 사진 · 개인정보 무단 노출'],
+      report: {
+        kind: 'rights',
+        category: 'rights_personality_rights',
+      },
+    },
+    {
+      value: 'rights_copyright',
+      title: '저작권',
+      descriptions: ['글 · 이미지 · 영상 등 저작물 무단 복제 · 공유'],
+      report: {
+        kind: 'rights',
+        category: 'rights_copyright',
+      },
+    },
+    {
+      value: 'rights_trademark',
+      title: '상표권',
+      descriptions: ['상표를 상업적 목적으로 무단 사용'],
+      report: {
+        kind: 'rights',
+        category: 'rights_trademark',
+      },
+    },
+    {
+      value: 'rights_counterfeit',
+      title: '위조상품',
+      descriptions: ['소유 권리를 무단으로 활용한 가품 판매'],
+      report: {
+        kind: 'rights',
+        category: 'rights_counterfeit',
+      },
+    },
+    {
+      value: 'rights_design_patent_utility',
+      title: '디자인 ∙ 특허 ∙ 실용신안',
+      descriptions: ['해당 권리의 무단 사용'],
+      report: {
+        kind: 'rights',
+        category: 'rights_design_patent_utility',
+      },
+    },
+  ];
+}
+
+function getDetailedReportItems(targetType: ReportTargetType): GuidelineReportItem[] {
+  return [...getLegalReportItems(targetType), ...getRightsReportItems()];
+}
+
+const postBaseGuidelineReportItems: GuidelineReportItem[] = [
   {
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현입니다.',
@@ -159,10 +236,9 @@ const postGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 상식적인 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 내용',
     ],
   },
-  ...getInqueryReportItems('post'),
 ];
 
-const boardGuidelineReportItems: GuidelineReportItem[] = [
+const boardBaseGuidelineReportItems: GuidelineReportItem[] = [
   {
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현을 포함한 게시판입니다.',
@@ -235,10 +311,9 @@ const boardGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 게시판명, 설명, 공지, 운영 방식 등이 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 경우',
     ],
   },
-  ...getInqueryReportItems('board'),
 ];
 
-const siteGuidelineReportItems: GuidelineReportItem[] = [
+const siteBaseGuidelineReportItems: GuidelineReportItem[] = [
   {
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현을 포함한 사이트입니다.',
@@ -311,18 +386,45 @@ const siteGuidelineReportItems: GuidelineReportItem[] = [
       '상기 항목에 명시되지 않았으나, 사이트명, 소개, 공지, 운영 방향 등이 사회 통념상 타인에게 심한 혐오감, 공포심, 불쾌감을 유발하는 경우',
     ],
   },
-  ...getInqueryReportItems('site'),
+];
+
+const postGuidelineReportItems: GuidelineReportItem[] = [
+  ...postBaseGuidelineReportItems,
+  ...getDetailedReportItems('post'),
+];
+
+const commentGuidelineReportItems: GuidelineReportItem[] = [
+  ...postBaseGuidelineReportItems,
+  ...getDetailedReportItems('comment'),
+];
+
+const boardGuidelineReportItems: GuidelineReportItem[] = [
+  ...boardBaseGuidelineReportItems,
+  ...getDetailedReportItems('board'),
+];
+
+const siteGuidelineReportItems: GuidelineReportItem[] = [
+  ...siteBaseGuidelineReportItems,
+  ...getDetailedReportItems('site'),
 ];
 
 export const guidelineReportItemsByTargetType = {
   site: siteGuidelineReportItems,
   board: boardGuidelineReportItems,
   post: postGuidelineReportItems,
-  comment: [...postGuidelineReportItems.slice(0, 8), ...getInqueryReportItems('comment')],
+  comment: commentGuidelineReportItems,
 } satisfies Record<ReportTargetType, GuidelineReportItem[]>;
 
-export function isGuidelineReportCategory(value: unknown): value is GuidelineReportCategory {
-  return typeof value === 'string' && guidelineReportCategories.includes(value as GuidelineReportCategory);
+export function isGuidelineReportCategory(value: unknown): value is GuidelineBaseReportCategory {
+  return typeof value === 'string' && guidelineReportCategories.includes(value as GuidelineBaseReportCategory);
+}
+
+export function isLegalReportCategory(value: unknown): value is LegalReportCategory {
+  return typeof value === 'string' && legalReportCategories.includes(value as LegalReportCategory);
+}
+
+export function isRightsReportCategory(value: unknown): value is RightsReportCategory {
+  return typeof value === 'string' && rightsReportCategories.includes(value as RightsReportCategory);
 }
 
 export function isReportTargetType(value: unknown): value is ReportTargetType {

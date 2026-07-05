@@ -54,7 +54,7 @@ export default async function Page() {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <h1>권리센터</h1>
+          <h1>권리보호센터</h1>
           {!hasSettlement ? (
             <div className="paper">
               <IdentityVerificationButton />

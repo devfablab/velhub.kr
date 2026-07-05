@@ -117,19 +117,19 @@ export default function ReportButton({
     setErrorMessage('');
   }
 
-  function openInqueryWindow() {
-    if (!selectedItem?.inquery) {
+  function openReportWindow() {
+    if (!selectedItem?.report) {
       return;
     }
 
     const params = new URLSearchParams();
 
-    params.set('requestType', selectedItem.inquery.requestType);
+    params.set('reportCategory', selectedItem.report.category);
     params.set('targetType', targetType);
     params.set('siteName', siteName);
 
-    if (selectedItem.inquery.legalType) {
-      params.set('legalType', selectedItem.inquery.legalType);
+    if (selectedItem.report.kind === 'legal') {
+      params.set('legalType', selectedItem.report.legalType);
     }
 
     const boardNameValue = getStringParamValue(boardName);
@@ -148,8 +148,10 @@ export default function ReportButton({
       params.set('commentId', commentIdValue);
     }
 
+    const pathname = selectedItem.report.kind === 'rights' ? '/concierge/rights/inquery' : '/concierge/help/inquery';
+
     const reportWindow = window.open(
-      `/concierge/help/inquery?${params.toString()}`,
+      `${pathname}?${params.toString()}`,
       `velhub-report-${Date.now()}`,
       [
         'popup=yes',
@@ -180,8 +182,8 @@ export default function ReportButton({
       return;
     }
 
-    if (selectedItem.inquery) {
-      openInqueryWindow();
+    if (selectedItem.report) {
+      openReportWindow();
       return;
     }
 
