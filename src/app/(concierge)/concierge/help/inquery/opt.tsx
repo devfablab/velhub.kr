@@ -15,12 +15,16 @@ import {
   styled,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Anchor from '@/components/Anchor';
 
 type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 
@@ -42,6 +46,7 @@ type SettlementResponse = {
   settlement?: {
     settlement_type: string;
     company_name: string | null;
+    company_number: string | null;
   } | null;
   message?: string;
 };
@@ -286,6 +291,7 @@ export default function Opt() {
   const [reporterName, setReporterName] = useState('');
   const [reporterCompanyName, setReporterCompanyName] = useState('');
   const [reporterBirthDate, setReporterBirthDate] = useState('');
+  const [reporterCompanyNumber, setReporterCompanyNumber] = useState('');
   const [reporterLoading, setReporterLoading] = useState(true);
 
   const [email, setEmail] = useState('');
@@ -316,6 +322,10 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
+
   useEffect(() => {
     async function loadReporter() {
       try {
@@ -338,6 +348,7 @@ export default function Opt() {
         setReporterName(result.identity?.name ?? '');
         setReporterBirthDate(result.identity?.birth_date ?? '');
         setReporterCompanyName(result.settlement?.company_name ?? '');
+        setReporterCompanyNumber(result.settlement?.company_number ?? '');
       } catch {
         setErrorMessage('신고자 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       } finally {
@@ -633,26 +644,38 @@ export default function Opt() {
           </Stack>
         ) : (
           <Stack gap={1}>
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+              <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
                 이름
               </Typography>
               <Typography variant="body2">{reporterName}</Typography>
             </Stack>
-            {reporterCompanyName ? (
-              <Stack direction="row" gap={1}>
-                <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
-                  단체명
-                </Typography>
-                <Typography variant="body2">{reporterCompanyName}</Typography>
-              </Stack>
-            ) : null}
-            <Stack direction="row" gap={1}>
-              <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+              <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
                 생년월일
               </Typography>
               <Typography variant="body2">{formatBirthDate(reporterBirthDate)}</Typography>
             </Stack>
+            {selectedLegalType !== 'privacy' ? (
+              <>
+                {reporterCompanyName ? (
+                  <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+                    <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+                      단체명
+                    </Typography>
+                    <Typography variant="body2">{reporterCompanyName}</Typography>
+                  </Stack>
+                ) : null}
+                {reporterCompanyNumber ? (
+                  <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+                    <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+                      사업자번호
+                    </Typography>
+                    <Typography variant="body2">{reporterCompanyNumber}</Typography>
+                  </Stack>
+                ) : null}
+              </>
+            ) : null}
           </Stack>
         )}
       </Box>
@@ -665,8 +688,8 @@ export default function Opt() {
     }
 
     return (
-      <Stack direction="row" gap={1} alignItems="center">
-        <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+      <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
           신고 유형
         </Typography>
         <FormControl fullWidth size="small">
@@ -678,7 +701,6 @@ export default function Opt() {
               if (!selected) {
                 return '신고 유형 선택';
               }
-
               return legalTypeOptions.find((option) => option.value === selected)?.label ?? '';
             }}
           >
@@ -700,24 +722,9 @@ export default function Opt() {
     return (
       <Stack gap={2}>
         {renderReporterInfo()}
-        {renderLegalTypeSelect()}
 
-        {!hasTargetParams ? (
-          <Stack direction="row" gap={1} alignItems="center">
-            <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
-              문제 있는 링크
-            </Typography>
-            <TextField
-              value={reportUrl}
-              onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
-              fullWidth
-              size="small"
-            />
-          </Stack>
-        ) : null}
-
-        <Stack direction="row" gap={1} alignItems="center">
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             이메일
           </Typography>
           <TextField
@@ -728,8 +735,8 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1} alignItems="center">
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             휴대폰 또는 전화번호
           </Typography>
           <TextField
@@ -740,8 +747,8 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
             파일첨부
           </Typography>
 
@@ -778,6 +785,7 @@ export default function Opt() {
             </p>
           </Stack>
         </Stack>
+        {renderLegalTypeSelect()}
       </Stack>
     );
   }
@@ -785,8 +793,109 @@ export default function Opt() {
   function renderIllegalInfoForm() {
     return (
       <Stack gap={2}>
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <div className="paper">
+          <Typography variant="subtitle2">불법정보/허위조작정보 신고센터</Typography>
+          <Typography variant="body2">
+            정보통신망 이용촉진 및 정보보호 등에 관한 법률 제44조의12 제2항에 따라 신고를 하려는 자는 불법정보 또는
+            허위조작정보로 인식한 정보의 구체적 위치, 해당 정보가 불법정보 또는 허위조작정보인 이유와 근거, 연락처 등
+            대통령령으로 정하는 사항을 기재하여 접수할 수 있습니다.
+          </Typography>
+          <Typography variant="body2">
+            다만, 동법 제44조의12 제8항에 따라 언론사, 인터넷뉴스서비스사업자 및 인터넷 멀티미디어 방송사업자에 대해서는
+            정보 삭제 등 일부 조치를 적용할 수 없습니다.
+          </Typography>
+        </div>
+        <div className="paper">
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: 137 }}>
+              불법정보
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                ① 음란한 부호·문언·음향·화상 또는 영상을 배포·판매·임대하거나 공공연하게 전시하는 내용의 정보
+              </Typography>
+              <Typography variant="body2">
+                ② 사람을 비방할 목적으로 공공연하게 거짓의 사실을 드러내어 타인의 명예를 훼손하는 내용의 정보
+              </Typography>
+              <Stack>
+                <Typography variant="body2">
+                  ③ 공공연하게 인종, 국가, 지역, 성별, 장애, 연령, 사회적 신분, 소득수준 또는 재산상태를 이유로 특정
+                  개인이나 집단에 대해
+                </Typography>
+                <Typography variant="body2">- 직접적인 폭력이나 차별을 선동하는 정보</Typography>
+                <Typography variant="body2">
+                  - 증오심을 심각하게 조장하여 특정 개인이나 집단의 인간으로서의 존엄성을 현저히 훼손하는 정보
+                </Typography>
+              </Stack>
+              <Typography variant="body2">
+                ④ 공포심이나 불안감을 유발하는 부호·문언·음향·화상 또는 영상을 반복적으로 상대방에게 도달하도록 하는
+                내용의 정보
+              </Typography>
+              <Typography variant="body2">
+                ⑤ 정당한 사유 없이 정보통신시스템, 데이터 또는 프로그램 등을 훼손·멸실·변경·위조하거나 그 운용을
+                방해하는 내용의 정보
+              </Typography>
+              <Stack>
+                <Typography variant="body2">
+                  ⑥ 「청소년 보호법」에 따른 청소년유해매체물로서 상대방의 연령 확인, 표시의무 등 법령에 따른 의무를
+                  이행하지 아니하고 영리를 목적으로 제공하는 내용의 정보 / 법령에 따라 금지되는 사행행위
+                </Typography>
+                <Typography variant="body2">
+                  - 이 법 또는 개인정보 보호에 관한 법령을 위반하여 개인정보를 거래하는 내용의 정보
+                </Typography>
+                <Typography variant="body2">- 총포·화약류를 제조할 수 있는 방법이나 설계도 등의 정보</Typography>
+                <Typography variant="body2">
+                  - 마약류 사용, 제조, 매매 또는 매매의 알선 등에 해당하는 내용의 정보
+                </Typography>
+              </Stack>
+              <Typography variant="body2">⑦ 법령에 따라 분류된 비밀 등 국가기밀을 누설하는 내용의 정보</Typography>
+              <Typography variant="body2">⑧ 「국가보안법」에서 금지하는 행위를 수행하는 내용의 정보</Typography>
+              <Typography variant="body2">
+                ⑨ 그 밖에 범죄를 목적으로 하거나 교사(敎唆) 또는 방조하는 내용의 정보
+              </Typography>
+            </Stack>
+          </Stack>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: 137 }}>
+              허위조작정보
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                다음 각 호에 해당한다는 사실을 알았음에도 손해를 끼칠 의도 또는 부당한 이익을 얻을 목적으로 타인의
+                인격권이나 재산권 또는 공공의 이익을 침해하는 다음 각 호의 허위조작정보를 유통하는 경우. 다만, 풍자와
+                패러디는 제외.
+              </Typography>
+              <Stack>
+                <Typography variant="body2">1. 내용의 전부 또는 일부가 허위인 정보(이하 “허위정보”라 한다)</Typography>
+                <Typography variant="body2">2. 내용을 사실로 오인하도록 변형된 정보(이하 “조작정보”라 한다)</Typography>
+              </Stack>
+            </Stack>
+          </Stack>
+        </div>
+        {!hasTargetParams ? (
+          <Stack gap={1}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+              <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+                신고대상 URL
+              </Typography>
+              <TextField
+                value={reportUrl}
+                onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
+                fullWidth
+                size="small"
+              />
+            </Stack>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>
+                신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 아래 “신고내용”에 전달해 주세요.
+              </span>
+            </p>
+          </Stack>
+        ) : null}
+
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             신고·요청 구분
           </Typography>
           <Select
@@ -799,7 +908,6 @@ export default function Opt() {
               if (!selected) {
                 return '신고·요청 구분 선택';
               }
-
               return selected === 'illegal_info' ? '불법정보' : '허위조작정보';
             }}
           >
@@ -812,8 +920,8 @@ export default function Opt() {
         </Stack>
 
         {requestType === 'illegal_info' ? (
-          <Stack direction="row" gap={1}>
-            <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
               불법정보 신고·요청 구분
             </Typography>
             <Stack>
@@ -834,8 +942,8 @@ export default function Opt() {
         ) : null}
 
         {requestType === 'false_manipulated_info' ? (
-          <Stack direction="row" gap={1}>
-            <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
               허위조작 신고·요청 구분
             </Typography>
             <Stack>
@@ -857,11 +965,15 @@ export default function Opt() {
           </Stack>
         ) : null}
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography
+            variant="subtitle2"
+            sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+          >
             신고 내용
           </Typography>
           <TextField
+            placeholder="게시물 내에서 불법정보 또는 허위조작정보로 신고하려는 내용(문구, 이미지 등)을 구체적으로 기재하여 주시기 바랍니다."
             value={reportContent}
             onChange={(changeEvent) => setReportContent(changeEvent.currentTarget.value)}
             fullWidth
@@ -871,11 +983,15 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography
+            variant="subtitle2"
+            sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+          >
             신고 이유
           </Typography>
           <TextField
+            placeholder="해당 정보를 불법정보 또는 허위조작정보로 판단하신 이유를 기재하여 주시기 바랍니다."
             value={reportReason}
             onChange={(changeEvent) => setReportReason(changeEvent.currentTarget.value)}
             fullWidth
@@ -885,11 +1001,15 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography
+            variant="subtitle2"
+            sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+          >
             신고 근거
           </Typography>
           <TextField
+            placeholder="해당 정보를 불법정보 또는 허위조작정보로 판단하신 근거를 기재하고 증빙자료를 첨부해주시기 바랍니다."
             value={reportBasis}
             onChange={(changeEvent) => setReportBasis(changeEvent.currentTarget.value)}
             fullWidth
@@ -899,36 +1019,70 @@ export default function Opt() {
           />
         </Stack>
 
-        {requestType === 'illegal_info' || requestType === 'false_manipulated_info' ? (
-          <Stack justifyContent="flex-end" alignItems="flex-end">
-            <Typography variant="body2" sx={{ minWidth: 150 }}>
-              「정보통신망법」제44조의12에 따라 위와 같이 신고·삭제요청을 합니다.
-            </Typography>
-            {requestType === 'illegal_info' ? (
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={illegalInfoConfirmed}
-                    onChange={(changeEvent) => setIllegalInfoConfirmed(changeEvent.currentTarget.checked)}
-                  />
-                }
-                label="불법정보 신고·요청 확인"
-              />
-            ) : null}
-
-            {requestType === 'false_manipulated_info' ? (
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={falseManipulatedInfoConfirmed}
-                    onChange={(changeEvent) => setFalseManipulatedInfoConfirmed(changeEvent.currentTarget.checked)}
-                  />
-                }
-                label="허위조작정보 신고·요청 확인"
-              />
-            ) : null}
+        <Stack>
+          <Typography variant="subtitle2">
+            「정보통신망법」제44조의12에 따라 위와 같이 신고·삭제요청을 합니다.
+          </Typography>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={illegalInfoConfirmed}
+                  onChange={(changeEvent) => setIllegalInfoConfirmed(changeEvent.currentTarget.checked)}
+                />
+              }
+              label="불법정보 신고·요청 확인"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={falseManipulatedInfoConfirmed}
+                  onChange={(changeEvent) => setFalseManipulatedInfoConfirmed(changeEvent.currentTarget.checked)}
+                />
+              }
+              label="허위조작정보 신고·요청 확인"
+            />
           </Stack>
-        ) : null}
+        </Stack>
+
+        <div className="paper">
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              개인정보 수집 <br hidden={isMobile} />및 이용 안내
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
+                수집·이용합니다.
+              </Typography>
+              <Stack>
+                <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
+                <Typography variant="body2">
+                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                </Typography>
+                <Typography variant="body2">
+                  ※ 선택 항목 입력 시 정확하고 신속한 문의 내용 확인 및 처리가 가능하나, 입력하지 않으셔도 고객 문의
+                  접수가 가능합니다.
+                </Typography>
+                <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해주시기 바랍니다.</Typography>
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              신고 남용에 따른 <br hidden={isMobile} />
+              접수 제한 안내
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                원활한 신고 처리를 위해 정보통신망법 제44조의13(신고 남용에 대한 조치) 및 한국인터넷자율정책기구(KISO)
+                가이드라인에 따라, 명백한 근거 없이 신고를 빈번하게 하는 등 신고 제도를 남용한다고 판단되는 경우 일정
+                기간 신고 접수가 제한될 수 있습니다.
+              </Typography>
+            </Stack>
+          </Stack>
+        </div>
 
         <Stack justifyContent="flex-end" alignItems="flex-end">
           <Typography variant="subtitle2">불법정보/허위조작정보 신고 유의사항</Typography>
@@ -949,8 +1103,57 @@ export default function Opt() {
   function renderIllegalFilmingForm() {
     return (
       <Stack gap={2}>
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
+        <div className="paper">
+          <Typography variant="body2">
+            불법촬영물등에 대한 신고 및 삭제요청은 전기통신사업법 제22조의5 제1항 및 동법 시행령 제30조의5 제2항에 따라,
+            다음의 링크에서 “불법촬영물등 유통 신고·삭제요청서”를 다운로드 받아 여기에 작성하여 제출하시거나, 같은
+            서식의 내용이 포함된 아래의 입력란에 직접 기입하여 접수시키실 수 있습니다.
+          </Typography>
+          <Stack>
+            <Typography variant="subtitle2">※ 불법촬영물등 유통 신고·삭제요청서 다운로드</Typography>
+            <Typography variant="body2">
+              - 불법촬영물등 유통 신고·삭제요청서 다운받기 :{' '}
+              <Anchor href="/[별지_서식]_불법촬영물등_유통_신고ㆍ삭제요청서.hwp" className="link">
+                한글파일
+              </Anchor>{' '}
+              /{' '}
+              <Anchor href="/[별지_서식]_불법촬영물등_유통_신고ㆍ삭제요청서.docx" className="link">
+                워드파일
+              </Anchor>
+            </Typography>
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">※ 유의사항</Typography>
+            <Typography variant="body2">
+              - 신고·삭제요청(서) 각각의 항목 중 기재되지 않은 항목이 있거나, 대상이 된 불법촬영물등이 특정되지 않아
+              검토가 어려운 경우, 삭제 등의 조치가 취해지지 못하고 신고·삭제요청하신 내용에 대해 보완을 요청 드릴 수
+              있습니다.
+            </Typography>
+          </Stack>
+        </div>
+        {!hasTargetParams ? (
+          <Stack gap={1}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+              <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+                신고대상 URL
+              </Typography>
+              <TextField
+                value={reportUrl}
+                onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
+                fullWidth
+                size="small"
+              />
+            </Stack>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>
+                신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 아래 “신고·요청 대상”에 전달해 주세요.
+              </span>
+            </p>
+          </Stack>
+        ) : null}
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
             신고·요청 구분
           </Typography>
           <Stack>
@@ -969,8 +1172,8 @@ export default function Opt() {
           </Stack>
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150, position: 'relative', top: 9 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
             신고·요청 사유
           </Typography>
           <Stack>
@@ -989,11 +1192,47 @@ export default function Opt() {
           </Stack>
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <div className="paper">
+          <Stack>
+            <Typography variant="subtitle2">■ 불법촬영물</Typography>
+            <Typography variant="body2">
+              ① 성적 욕망 또는 수치심을 유발할 수 있는 사람의 신체를 촬영대상자의 의사에 반하여 촬영한 것
+            </Typography>
+            <Typography variant="body2">
+              ② 성적 욕망 또는 수치심을 유발할 수 있는 사람의 신체를 촬영 당시에는 촬영대상자의 의사에 반하지 아니한
+              경우(자신의 신체를 직접 촬영한 경우를 포함)에도 사후에 촬영대상자의 의사에 반하여 유통된 촬영물
+            </Typography>
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">■ 허위 영상물</Typography>
+            <Typography variant="body2">
+              ① 유통할 목적으로 사람의 얼굴·신체 또는 음성을 대상으로 한 촬영물·영상물 또는 음성물을 그 대상자의 의사에
+              반하여 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집·합성 또는 가공한 것
+            </Typography>
+            <Typography variant="body2">
+              ② 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집·합성 또는 가공할 당시에는 그 대상자의 의사에 반하지
+              아니한 경우에도 사후에 그 대상자의 의사에 반하여 유통된 촬영물·영상물 또는 음성물
+            </Typography>
+          </Stack>
+          <Stack>
+            <Typography variant="subtitle2">■ 아동·청소년 성착취물</Typography>
+            <Typography variant="body2">
+              아동·청소년 또는 아동·청소년으로 명백하게 인식될 수 있는 사람이나 표현물이 등장하여 성교 등 성적
+              행위(아동·청소년의 신체의 전부 또는 일부를 접촉·노출하는 행위로서 일반인의 성적 수치심이나 혐오감을
+              일으키는 행위도 포함)를 하는 내용이 표현된 것
+            </Typography>
+          </Stack>
+        </div>
+
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography
+            variant="subtitle2"
+            sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+          >
             신고·요청 대상
           </Typography>
           <TextField
+            placeholder="※ 불법촬영물등의 위치를 특정할 수 있도록 URL과 화면 캡쳐본을 첨부하여 주시되, URL 기재가 어려울 경우 검색어 등 해당 불법촬영물등의 위치에 대한 상세 설명을 기재하여 주시기 바랍니다."
             value={filmingTarget}
             onChange={(changeEvent) => setFilmingTarget(changeEvent.currentTarget.value)}
             fullWidth
@@ -1003,23 +1242,79 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack justifyContent="flex-end" alignItems="flex-end">
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <div className="paper">
+          <Typography variant="body2">
+            ※ 불법촬영물등에 해당하는지 여부를 판단하기 어려운 경우 사업자는 방송통신심의위원회에 심의를 요청할 수
+            있으며, 이 경우 신고ㆍ삭제요청서의 정보가 방송통신심의위원회에 전달ㆍ제공될 수 있습니다.
+          </Typography>
+        </div>
+
+        <Stack>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             「전기통신사업법」 제22조의5제1항에 따라 위와 같이 신고ㆍ삭제요청을 합니다.
           </Typography>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={filmingRequestConfirmed}
-                onChange={(changeEvent) => setFilmingRequestConfirmed(changeEvent.currentTarget.checked)}
-              />
-            }
-            label="불법촬영물등 신고·요청 확인"
-          />
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={filmingRequestConfirmed}
+                  onChange={(changeEvent) => setFilmingRequestConfirmed(changeEvent.currentTarget.checked)}
+                />
+              }
+              label="불법촬영물등 신고·요청 확인"
+            />
+          </Stack>
         </Stack>
 
+        <div className="paper">
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              개인정보 수집 <br hidden={isMobile} />및 이용 안내
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
+                수집·이용합니다.
+              </Typography>
+              <Stack>
+                <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
+                <Typography variant="body2">
+                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                </Typography>
+                <Typography variant="body2">
+                  ※ 선택 항목 입력 시 정확하고 신속한 문의 내용 확인 및 처리가 가능하나, 입력하지 않으셔도 고객 문의
+                  접수가 가능합니다.
+                </Typography>
+                <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해주시기 바랍니다.</Typography>
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              신고 남용에 따른 <br hidden={isMobile} />
+              접수 제한 안내
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                원활한 신고 처리를 위해 정보통신망법 제44조의13(신고 남용에 대한 조치) 및 한국인터넷자율정책기구(KISO)
+                가이드라인에 따라, 명백한 근거 없이 신고를 빈번하게 하는 등 신고 제도를 남용한다고 판단되는 경우 일정
+                기간 신고 접수가 제한될 수 있습니다.
+              </Typography>
+            </Stack>
+          </Stack>
+        </div>
+
+        <div className="paper">
+          <Typography variant="body2">
+            불법촬영물은 성적 욕망 또는 수치심을 유발할 수 있는 사람의 신체를 촬영한 것으로 그에 해당하지 않는 초상권
+            침해 및 명예훼손 신고는 관련법에 의거한 불법촬영물등 신고로 접수될 수 없으니 신고 내용을 다시 한번
+            확인해주시기 바랍니다.
+          </Typography>
+        </div>
+
         <Stack justifyContent="flex-end" alignItems="flex-end">
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             불법촬영물등 신고 유의사항
           </Typography>
           <FormControlLabel
@@ -1039,8 +1334,29 @@ export default function Opt() {
   function renderPrivacyForm() {
     return (
       <Stack gap={2}>
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        {!hasTargetParams ? (
+          <Stack gap={1}>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+              <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+                신고대상 URL
+              </Typography>
+              <TextField
+                value={reportUrl}
+                onChange={(changeEvent) => setReportUrl(changeEvent.currentTarget.value)}
+                fullWidth
+                size="small"
+              />
+            </Stack>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>
+                신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 아래 “요청사유”에 전달해 주세요.
+              </span>
+            </p>
+          </Stack>
+        ) : null}
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             신고유형
           </Typography>
           <Select
@@ -1068,25 +1384,25 @@ export default function Opt() {
           </Select>
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             노출된 정보
           </Typography>
           <TextField
+            placeholder="실명, 연락처 등 노출된 개인정보를 입력해주세요."
             value={exposedInformation}
             onChange={(changeEvent) => setExposedInformation(changeEvent.currentTarget.value)}
             fullWidth
-            multiline
-            minRows={4}
             size="small"
           />
         </Stack>
 
-        <Stack direction="row" gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
             요청사유
           </Typography>
           <TextField
+            placeholder="신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 '요청사유'에 전달해 주세요."
             value={privacyRequestReason}
             onChange={(changeEvent) => setPrivacyRequestReason(changeEvent.currentTarget.value)}
             fullWidth
@@ -1095,6 +1411,26 @@ export default function Opt() {
             size="small"
           />
         </Stack>
+        <div className="paper">
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              개인정보 수집 <br hidden={isMobile} />및 이용 안내
+            </Typography>
+            <Stack gap={1}>
+              <Typography variant="body2">
+                고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
+                수집·이용합니다.
+              </Typography>
+              <Stack>
+                <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
+                <Typography variant="body2">
+                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                </Typography>
+                <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해주시기 바랍니다.</Typography>
+              </Stack>
+            </Stack>
+          </Stack>
+        </div>
       </Stack>
     );
   }
@@ -1132,8 +1468,8 @@ export default function Opt() {
 
           <Stack gap={3}>
             {initialLegalType ? (
-              <Stack direction="row" gap={1}>
-                <Typography variant="subtitle2" sx={{ minWidth: 150 }}>
+              <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+                <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
                   선택하신 신고 사유
                 </Typography>
                 <p className="alert warning">

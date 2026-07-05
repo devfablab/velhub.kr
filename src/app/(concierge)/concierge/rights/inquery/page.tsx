@@ -6,7 +6,7 @@ export default function Page() {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <h1>권리보호센터</h1>
+          <h1>신고센터</h1>
           <section>
             <p>신고 내용</p>
           </section>
