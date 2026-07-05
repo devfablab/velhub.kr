@@ -15,9 +15,9 @@ export const rightsReportCategories = [
   'rights_defamation',
   'rights_personality_rights',
   'rights_copyright',
-  'rights_trademark',
-  'rights_counterfeit',
-  'rights_design_patent_utility',
+  // 'rights_trademark',
+  // 'rights_counterfeit',
+  // 'rights_design_patent_utility',
 ] as const;
 
 export type GuidelineBaseReportCategory = (typeof guidelineReportCategories)[number];
@@ -134,33 +134,33 @@ function getRightsReportItems(): GuidelineReportItem[] {
         category: 'rights_copyright',
       },
     },
-    {
-      value: 'rights_trademark',
-      title: '상표권',
-      descriptions: ['상표를 상업적 목적으로 무단 사용'],
-      report: {
-        kind: 'rights',
-        category: 'rights_trademark',
-      },
-    },
-    {
-      value: 'rights_counterfeit',
-      title: '위조상품',
-      descriptions: ['소유 권리를 무단으로 활용한 가품 판매'],
-      report: {
-        kind: 'rights',
-        category: 'rights_counterfeit',
-      },
-    },
-    {
-      value: 'rights_design_patent_utility',
-      title: '디자인 ∙ 특허 ∙ 실용신안',
-      descriptions: ['해당 권리의 무단 사용'],
-      report: {
-        kind: 'rights',
-        category: 'rights_design_patent_utility',
-      },
-    },
+    // {
+    //   value: 'rights_trademark',
+    //   title: '상표권',
+    //   descriptions: ['상표를 상업적 목적으로 무단 사용'],
+    //   report: {
+    //     kind: 'rights',
+    //     category: 'rights_trademark',
+    //   },
+    // },
+    // {
+    //   value: 'rights_counterfeit',
+    //   title: '위조상품',
+    //   descriptions: ['소유 권리를 무단으로 활용한 가품 판매'],
+    //   report: {
+    //     kind: 'rights',
+    //     category: 'rights_counterfeit',
+    //   },
+    // },
+    // {
+    //   value: 'rights_design_patent_utility',
+    //   title: '디자인 ∙ 특허 ∙ 실용신안',
+    //   descriptions: ['해당 권리의 무단 사용'],
+    //   report: {
+    //     kind: 'rights',
+    //     category: 'rights_design_patent_utility',
+    //   },
+    // },
   ];
 }
 
