@@ -128,7 +128,9 @@ export default async function Page(context: RouteContext) {
                   );
                 })}
               </div>
-            ) : null}
+            ) : (
+              <p>카테고리가 없습니다. 😭</p>
+            )}
           </div>
         </div>
       </div>

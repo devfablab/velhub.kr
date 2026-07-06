@@ -110,7 +110,6 @@ export default async function Page(context: RouteContext) {
               <div className={`${styles['series-items']} ${styles['blog-items']}`}>
                 {rows.map((item) => {
                   const imageUrl = getSeriesImageUrl(item.thumbnail_image);
-
                   return (
                     <Anchor href={`/${normalizedSiteName}/s/${item.series_key}`} key={item.id}>
                       <div className={styles.thumbnail}>
@@ -132,7 +131,9 @@ export default async function Page(context: RouteContext) {
                   );
                 })}
               </div>
-            ) : null}
+            ) : (
+              <p>연재글이 없습니다. 😭</p>
+            )}
           </div>
         </div>
       </div>
