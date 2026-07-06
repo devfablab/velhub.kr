@@ -101,8 +101,20 @@ export default async function Page(context: RouteContext) {
       .limit(1)
       .maybeSingle();
 
-    if (blogBoardResult.error || !blogBoardResult.data) {
+    if (blogBoardResult.error) {
       notFound();
+    }
+
+    if (blogBoardResult.data === null) {
+      return (
+        <Blog
+          siteName={normalizedSiteName}
+          board={null}
+          sitesInfo={sitesInfo}
+          blogInfo={blogInfo.data}
+          blogContents={null}
+        />
+      );
     }
 
     const blogBoard = blogBoardResult.data as BoardRow;

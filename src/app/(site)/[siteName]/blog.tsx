@@ -48,10 +48,10 @@ type BoardRow = {
 
 type Props = {
   siteName: string;
-  board: BoardRow;
+  board?: BoardRow | null;
   sitesInfo: SitesInfo;
   blogInfo: BlogInfo;
-  blogContents: PostListItem[];
+  blogContents?: PostListItem[] | null;
 };
 
 function getThumbnailImageUrl(content: PostListItem) {
@@ -59,6 +59,25 @@ function getThumbnailImageUrl(content: PostListItem) {
 }
 
 export default function Blog(props: Props) {
+  if (
+    props.board === null ||
+    props.board === undefined ||
+    props.blogContents === null ||
+    props.blogContents === undefined
+  ) {
+    return (
+      <Container>
+        <div className="container">
+          <div className={`content ${styles.content} ${styles['blog-content']} `}>
+            <SiteProfile />
+            <div className="paper">
+              <p>출간된 글이 없습니다. 😭</p>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
   return (
     <Container>
       <div className="container">
@@ -73,10 +92,9 @@ export default function Blog(props: Props) {
               <ol>
                 {props.blogContents.map((content) => {
                   const thumbnailImageUrl = getThumbnailImageUrl(content);
-
                   return (
                     <li key={content.id}>
-                      <Anchor href={`/${props.siteName}/${props.board.board_key}/${content.slug}`}>
+                      <Anchor href={`/${props.siteName}/${props.board?.board_key}/${content.slug}`}>
                         {thumbnailImageUrl && content.thumbnail_width && content.thumbnail_height ? (
                           <Image
                             src={thumbnailImageUrl}

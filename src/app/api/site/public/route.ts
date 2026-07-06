@@ -64,8 +64,7 @@ export async function GET(request: Request) {
     }
 
     return Response.json({
-      rhizomes: {
-        id: rhizome.data.id,
+      site: {
         site_key: rhizome.data.site_key,
         site_type: rhizome.data.site_type,
         visibility_type: rhizome.data.visibility_type,
