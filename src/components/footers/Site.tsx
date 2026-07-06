@@ -9,15 +9,10 @@ import styles from '@/app/footer.module.sass';
 
 type SiteInfo = {
   site_label: string | null;
-  profile_picture: string | null;
-  profile_logo: string | null;
-  summary: string | null;
 };
 
 type SiteProfileResponse = {
   siteInfo?: SiteInfo;
-  profilePictureUrl?: string;
-  profileLogoUrl?: string;
   error?: string;
 };
 
@@ -34,7 +29,7 @@ export default function FooterSite() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/info/general/site/${siteName}`, {
+        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
