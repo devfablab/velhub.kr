@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import Anchor from '@/components/Anchor';
 import Content from './tab';
 import Container from '../menu';
@@ -152,14 +153,18 @@ export default async function Page() {
             <div>
               <p>포스팅 소장, 구독, 후원 등 결제 유형별 누적 결제 금액입니다.</p>
             </div>
-            <dl className={`paper ${styles['type-summary']}`}>
-              {result.summary.amountByType.map((item) => (
-                <div key={item.paymentType}>
-                  <dt>{item.label}</dt>
-                  <dd>{formatAmount(item.amount)}</dd>
-                </div>
-              ))}
-            </dl>
+            {result.summary.amountByType.length === 0 ? (
+              <p>결제 내역이 없습니다.</p>
+            ) : (
+              <dl className={`paper ${styles['type-summary']}`}>
+                {result.summary.amountByType.map((item) => (
+                  <div key={item.paymentType}>
+                    <dt>{item.label}</dt>
+                    <dd>{formatAmount(item.amount)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </section>
 
           <section className={`paper ${styles.paper}`}>
@@ -222,7 +227,7 @@ export default async function Page() {
                 </Table>
               </TableContainer>
             ) : (
-              <p>결제내역이 없습니다.</p>
+              <p>결제 내역이 없습니다.</p>
             )}
           </section>
         </Content>

@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
-import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
-import SubscriptionsRoundedIcon from '@mui/icons-material/SubscriptionsRounded';
+import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
+import DiscountRoundedIcon from '@mui/icons-material/DiscountRounded';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 
@@ -33,12 +33,12 @@ const tabs = [
   {
     href: '/hub/purchase/membership',
     label: '멤버십',
-    icon: <WorkspacePremiumRoundedIcon />,
+    icon: <LoyaltyRoundedIcon />,
   },
   {
     href: '/hub/purchase/subscriptions',
     label: '구독',
-    icon: <SubscriptionsRoundedIcon />,
+    icon: <DiscountRoundedIcon />,
   },
 ];
 

@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 
 type PortOneBillingKeyResponse = {
@@ -259,12 +260,13 @@ export default function BillingMethodButton() {
           onClose={handleClosePaymentEmailDialog}
           className="VhiDrawer-bottom"
         >
-          <h2>결제 이메일 입력</h2>
-          <button className="close-button" onClick={handleClosePaymentEmailDialog}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            <form onSubmit={handleSubmitPaymentEmail}>
+          <form onSubmit={handleSubmitPaymentEmail}>
+            <h2>결제 이메일 입력</h2>
+            <button type="button" className="close-button" onClick={handleClosePaymentEmailDialog}>
+              <CloseRoundedIcon />
+            </button>
+
+            <Stack gap={3}>
               <Stack gap={1}>
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
@@ -286,21 +288,26 @@ export default function BillingMethodButton() {
                   size="small"
                 />
               </Stack>
-            </form>
-            <Stack direction="column" spacing={1.5}>
-              <button
-                type="button"
-                className="button medium cancel"
-                onClick={handleClosePaymentEmailDialog}
-                disabled={isProcessing}
-              >
-                취소
-              </button>
-              <button type="submit" className="button medium submit" disabled={isProcessing}>
-                저장하고 계속
-              </button>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>!!! PC 환경에서는 팝업허용해야 카드 등록을 하실ㄹ 수 있습니다 !!!</span>
+              </p>
+
+              <Stack direction="column" spacing={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleClosePaymentEmailDialog}
+                  disabled={isProcessing}
+                >
+                  취소
+                </button>
+                <button type="submit" className="button medium submit" disabled={isProcessing}>
+                  저장하고 계속
+                </button>
+              </Stack>
             </Stack>
-          </Stack>
+          </form>
         </Drawer>
       ) : (
         <Dialog
