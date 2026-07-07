@@ -4,6 +4,7 @@ import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
   siteName: string | null;
+  action?: 'draft' | 'publish' | 'unknown' | null;
   subject: string | null;
   summary: string | null;
   contentHtml: string | null;
@@ -11,7 +12,31 @@ type RequestBody = {
   thumbnailImage: string | null;
   thumbnailWidth: number | string | null;
   thumbnailHeight: number | string | null;
+  publishedAt?: string | null;
+  isComment?: boolean | null;
 };
+
+function normalizePublishedAt(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const date = new Date(normalizedValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  date.setSeconds(0, 0);
+
+  return date.toISOString();
+}
 
 function normalizeNumber(value: number | string | null | undefined) {
   if (typeof value === 'number') {
@@ -37,6 +62,8 @@ export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
 
+    const action = requestBody.action === 'unknown' ? 'unknown' : 'publish';
+    const requestedPublishedAt = normalizePublishedAt(requestBody.publishedAt);
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
@@ -86,6 +113,15 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    if (action === 'unknown' && !requestedPublishedAt) {
+      return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
+    }
+
+    const nowIsoString = new Date().toISOString();
+    const publishedAt = action === 'unknown' ? requestedPublishedAt : nowIsoString;
+    const publishedStatus = action === 'unknown' ? 'unknown' : 'published';
+    const isComment = typeof requestBody.isComment === 'boolean' ? requestBody.isComment : false;
+
     const post = await supabaseAdmin.rpc('create_post_with_blog_board', {
       p_site_id: rhizome.data.id,
       p_user_id: session.authUserId,
@@ -93,23 +129,32 @@ export async function POST(request: Request) {
       p_summary: summary || null,
       p_content_html: contentHtml,
       p_content_markdown: contentMarkdown || null,
-      p_edited_at: new Date().toISOString(),
+      p_edited_at: nowIsoString,
       p_thumbnail_image: thumbnailImage || null,
       p_thumbnail_width: thumbnailWidth,
       p_thumbnail_height: thumbnailHeight,
+      p_is_closed: false,
+      p_published_at: publishedAt,
+      p_published_status: publishedStatus,
+      p_is_comment: isComment,
+      p_post_count: 1,
+      p_is_pin: false,
     });
 
     if (post.error || !Array.isArray(post.data) || !post.data[0]) {
       return Response.json({ error: post.error?.message || '블로그 글 출간에 실패했습니다.' }, { status: 500 });
     }
 
+    const createdPost = post.data[0];
+
     return Response.json({
       ok: true,
-      boardId: post.data[0].board_id,
-      postId: post.data[0].post_id,
-      createdBoard: post.data[0].created_board,
-      slug: String(post.data[0].slug),
-      idx: post.data[0].idx,
+      boardId: createdPost.board_id,
+      postId: createdPost.post_id,
+      createdBoard: createdPost.created_board,
+      slug: String(createdPost.slug),
+      idx: createdPost.idx,
+      publishedStatus: action === 'unknown' ? 'unknown' : 'published',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

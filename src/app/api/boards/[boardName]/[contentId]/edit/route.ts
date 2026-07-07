@@ -42,7 +42,8 @@ type ImageRow = {
 
 type RequestBody = {
   siteName: string | null;
-  action?: 'draft' | 'publish' | 'update' | null;
+  action?: 'draft' | 'publish' | 'update' | 'unknown' | null;
+  publishedAt?: string | null;
   subject?: string | null;
   summary?: string | null;
   contentHtml?: string | null;
@@ -65,6 +66,28 @@ type RequestBody = {
   drawLimit?: number | null;
   drawEndsAt?: string | null;
 };
+
+function normalizePublishedAt(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const date = new Date(normalizedValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  date.setSeconds(0, 0);
+
+  return date.toISOString();
+}
 
 function isNumericSlug(value: string) {
   return /^\d+$/.test(value);
@@ -460,9 +483,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const action =
-      requestBody.action === 'draft' || requestBody.action === 'publish' || requestBody.action === 'update'
+      requestBody.action === 'draft' ||
+      requestBody.action === 'publish' ||
+      requestBody.action === 'update' ||
+      requestBody.action === 'unknown'
         ? requestBody.action
         : 'update';
+    const requestedPublishedAt = normalizePublishedAt(requestBody.publishedAt);
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
@@ -544,7 +571,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const postQuery = supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, poll, is_comment, draw_type',
+        'id, slug, user_id, board_id, site_id, is_closed, series_id, series_idx, prefix_id, published_status, published_at, poll, is_comment, draw_type',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', board.data.id);
@@ -858,7 +885,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const nowIsoString = new Date().toISOString();
     const nextPublishedStatus =
-      action === 'draft' ? 'draft' : currentPost.data.published_status === 'draft' ? 'published' : 'published';
+      action === 'draft'
+        ? 'draft'
+        : action === 'unknown'
+          ? 'unknown'
+          : action === 'publish'
+            ? 'published'
+            : currentPost.data.published_status;
     const previousSeriesId = currentPost.data.series_id ?? null;
     const shouldKeepCurrentSeriesIdx =
       currentPost.data.is_closed === false &&
@@ -897,7 +930,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       series_id: string | null;
       series_idx: number | null;
       prefix_id: string | null;
-      published_status: 'draft' | 'published';
+      published_status: 'draft' | 'published' | 'unknown';
       published_at?: string | null;
       edited_at?: string | null;
       is_comment: boolean;
@@ -931,6 +964,31 @@ export async function PATCH(request: Request, context: RouteContext) {
       draw_limit: resolvedDrawLimit,
       draw_ends_at: resolvedDrawEndsAt,
     };
+
+    if (action === 'unknown') {
+      updatePayload.published_at = requestedPublishedAt;
+      updatePayload.edited_at = null;
+    }
+
+    if (nextPublishedStatus === 'published' && currentPost.data.published_status !== 'published') {
+      const latestPost = await supabaseAdmin
+        .from('posts')
+        .select('idx')
+        .eq('site_id', rhizomeData.id)
+        .order('idx', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestPost.error) {
+        return Response.json({ error: '글 순서를 갱신하지 못했습니다.' }, { status: 500 });
+      }
+
+      const latestIdx = typeof latestPost.data?.idx === 'number' ? latestPost.data.idx : 0;
+
+      updatePayload.idx = latestIdx + 1;
+      updatePayload.published_at = nowIsoString;
+      updatePayload.edited_at = null;
+    }
 
     if (currentPost.data.published_status === 'draft' && nextPublishedStatus === 'published') {
       const latestPost = await supabaseAdmin
@@ -1012,6 +1070,10 @@ export async function PATCH(request: Request, context: RouteContext) {
           last_published_at: nowIsoString,
         })
         .eq('id', seriesId);
+    }
+
+    if (action === 'unknown' && !requestedPublishedAt) {
+      return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
     }
 
     return Response.json({

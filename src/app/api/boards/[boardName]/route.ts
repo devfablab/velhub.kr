@@ -54,7 +54,7 @@ type PostRow = {
   series_id: string | null;
   poll: unknown;
   published_at: string | null;
-  published_status: 'draft' | 'published';
+  published_status: 'draft' | 'published' | 'unknown';
   thumbnail_image: string | null;
   thumbnail_width: number | null;
   thumbnail_height: number | null;

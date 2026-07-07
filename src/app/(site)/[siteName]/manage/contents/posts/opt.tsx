@@ -76,6 +76,7 @@ type PostRow = {
   site_id: string;
   board_id: string;
   created_at: string;
+  published_at: string | null;
   author_name: string;
   is_closed: boolean;
   closed_by: string | null;
@@ -126,6 +127,24 @@ type DeleteMode = 'single' | 'bulk' | null;
 type DialogMode = 'delete' | 'restore' | null;
 
 const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+function getUnknownPostChipLabel(publishedAt: string | null) {
+  if (!publishedAt) {
+    return '예약글';
+  }
+
+  const publishedAtDate = new Date(publishedAt);
+
+  if (Number.isNaN(publishedAtDate.getTime())) {
+    return '예약글';
+  }
+
+  if (publishedAtDate.getTime() > Date.now()) {
+    return '예약글';
+  }
+
+  return `${publishedAtDate.getFullYear()}년 ${publishedAtDate.getMonth() + 1}월 ${publishedAtDate.getDate()}일에 공개됨`;
+}
 
 function parsePage(value: string | null) {
   const parsedValue = Number(value);
@@ -800,22 +819,25 @@ export default function Opt() {
       <div className={`content ${styles.content} ${styles['content-manage']}`}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
           <Stack direction="row" gap={1}>
-            <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/category`}>
-              카테고리 관리
-            </Anchor>
-            <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/series`}>
-              연재 관리
-            </Anchor>
-
-            {isMobile ? null : (
+            {posts.length >= 1 ? (
               <>
-                {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-                  <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
-                    삭제
-                  </button>
-                ) : null}
+                <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/category`}>
+                  카테고리 관리
+                </Anchor>
+                <Anchor className="button small cancel" href={`/${siteName}/manage/contents/posts/series`}>
+                  연재 관리
+                </Anchor>
+                {isMobile ? null : (
+                  <>
+                    {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                      <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                        삭제
+                      </button>
+                    ) : null}
+                  </>
+                )}
               </>
-            )}
+            ) : null}
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">
@@ -825,73 +847,75 @@ export default function Opt() {
           </Stack>
         </Stack>
 
-        <Stack
-          direction={isMobile ? 'column' : 'row'}
-          gap={1}
-          justifyContent={isMobile ? 'space-between' : 'flex-end'}
-          alignItems={isMobile ? 'flex-end' : 'center'}
-          sx={{ pr: 2, pl: 2 }}
-        >
+        {posts.length >= 1 ? (
           <Stack
-            direction="row"
+            direction={isMobile ? 'column' : 'row'}
             gap={1}
             justifyContent={isMobile ? 'space-between' : 'flex-end'}
-            sx={{ width: '100%' }}
+            alignItems={isMobile ? 'flex-end' : 'center'}
+            sx={{ pr: 2, pl: 2 }}
           >
-            {isMobile ? (
-              <>
-                {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
-                  <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
-                    삭제
-                  </button>
-                ) : (
-                  <i />
-                )}
-              </>
-            ) : null}
+            <Stack
+              direction="row"
+              gap={1}
+              justifyContent={isMobile ? 'space-between' : 'flex-end'}
+              sx={{ width: '100%' }}
+            >
+              {isMobile ? (
+                <>
+                  {selectedIds.length > 0 && currentFilter !== 'deleted' ? (
+                    <button type="button" className="button small danger" onClick={handleOpenBulkDeleteDialog}>
+                      삭제
+                    </button>
+                  ) : (
+                    <i />
+                  )}
+                </>
+              ) : null}
 
-            {isStaff ? (
-              <ButtonGroup size={isMobile ? 'small' : 'medium'}>
-                <Button
-                  LinkComponent={NextLink}
-                  type="button"
-                  variant={currentFilter === 'all' ? 'contained' : 'outlined'}
-                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'all' ? 'submit' : 'action'}`}
-                  href={getListHref({ page: 1, filter: 'all' })}
-                >
-                  전체글
-                </Button>
-                <Button
-                  LinkComponent={NextLink}
-                  type="button"
-                  size={isMobile ? 'small' : 'medium'}
-                  variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
-                  className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'deleted' ? 'submit' : 'action'}`}
-                  href={getListHref({ page: 1, filter: 'deleted' })}
-                >
-                  삭제글
-                </Button>
-              </ButtonGroup>
-            ) : null}
+              {isStaff ? (
+                <ButtonGroup size={isMobile ? 'small' : 'medium'}>
+                  <Button
+                    LinkComponent={NextLink}
+                    type="button"
+                    variant={currentFilter === 'all' ? 'contained' : 'outlined'}
+                    className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'all' ? 'submit' : 'action'}`}
+                    href={getListHref({ page: 1, filter: 'all' })}
+                  >
+                    전체글
+                  </Button>
+                  <Button
+                    LinkComponent={NextLink}
+                    type="button"
+                    size={isMobile ? 'small' : 'medium'}
+                    variant={currentFilter === 'deleted' ? 'contained' : 'outlined'}
+                    className={`button ${isMobile ? 'small' : 'medium'} ${currentFilter === 'deleted' ? 'submit' : 'action'}`}
+                    href={getListHref({ page: 1, filter: 'deleted' })}
+                  >
+                    삭제글
+                  </Button>
+                </ButtonGroup>
+              ) : null}
+            </Stack>
+
+            <TextField
+              select
+              value={currentSize}
+              onChange={(event) => {
+                router.push(getListHref({ page: 1, size: Number(event.target.value) }));
+              }}
+              size="small"
+              sx={{ minWidth: 180 }}
+            >
+              {SIZE_OPTIONS.map((sizeOption) => (
+                <MenuItem key={sizeOption} value={sizeOption}>
+                  {sizeOption}개씩
+                  {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
+                </MenuItem>
+              ))}
+            </TextField>
           </Stack>
-
-          <TextField
-            select
-            value={currentSize}
-            onChange={(event) => {
-              router.push(getListHref({ page: 1, size: Number(event.target.value) }));
-            }}
-            size="small"
-            sx={{ minWidth: 180 }}
-          >
-            {SIZE_OPTIONS.map((sizeOption) => (
-              <MenuItem key={sizeOption} value={sizeOption}>
-                {sizeOption}개씩
-                {board?.post_per_page === sizeOption ? ' (기본값)' : ''}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
+        ) : null}
 
         {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
@@ -934,12 +958,14 @@ export default function Opt() {
                       </TableCell>
 
                       <TableCell>
-                        {post.published_status === 'draft' ? (
-                          <Chip label="임시저장글" color="warning" size="small" />
-                        ) : null}
-                        <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}`}>
-                          {post.subject}
-                        </Anchor>
+                        <Stack direction="row" gap={1}>
+                          {post.published_status === 'unknown' ? (
+                            <Chip label={getUnknownPostChipLabel(post.published_at)} color="warning" size="small" />
+                          ) : null}
+                          <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}`}>
+                            {post.subject}
+                          </Anchor>
+                        </Stack>
                       </TableCell>
 
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.created_at)}</TableCell>

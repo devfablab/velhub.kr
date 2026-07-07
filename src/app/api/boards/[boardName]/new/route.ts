@@ -41,7 +41,7 @@ type ImageRow = {
 
 type RequestBody = {
   siteName: string | null;
-  action?: 'draft' | 'publish' | null;
+  action?: 'draft' | 'publish' | 'unknown' | null;
   subject?: string | null;
   summary?: string | null;
   contentHtml?: string | null;
@@ -63,7 +63,30 @@ type RequestBody = {
   drawType?: 'first_come' | 'random' | null;
   drawLimit?: number | null;
   drawEndsAt?: string | null;
+  publishedAt?: string | null;
 };
+
+function normalizePublishedAt(value: unknown) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const date = new Date(normalizedValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  date.setSeconds(0, 0);
+
+  return date.toISOString();
+}
 
 function isValidCategoryKey(value: string) {
   if (value.length < 2 || value.length > 16) {
@@ -419,8 +442,9 @@ export async function POST(request: Request, context: RouteContext) {
 
     const requestBody = (await request.json()) as RequestBody;
 
+    const requestedPublishedAt = normalizePublishedAt(requestBody.publishedAt);
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const action = requestBody.action === 'draft' ? 'draft' : 'publish';
+    const action = requestBody.action === 'draft' ? 'draft' : requestBody.action === 'unknown' ? 'unknown' : 'publish';
     const subject = normalizeText(requestBody.subject);
     const summary = normalizeText(requestBody.summary);
     const contentHtml = normalizeText(requestBody.contentHtml);
@@ -758,6 +782,10 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
+    if (action === 'unknown' && !requestedPublishedAt) {
+      return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
+    }
+
     const lastPost = await supabaseAdmin
       .from('posts')
       .select('idx, slug')
@@ -773,6 +801,7 @@ export async function POST(request: Request, context: RouteContext) {
     const nextIdx = typeof lastPost.data?.idx === 'number' ? Number(lastPost.data.idx) + 1 : 1;
     const nextSlug = typeof lastPost.data?.slug === 'number' ? Number(lastPost.data.slug) + 1 : Date.now();
     const nowIsoString = new Date().toISOString();
+    const publishedAt = action === 'publish' ? nowIsoString : action === 'unknown' ? requestedPublishedAt : null;
     const seriesIdx =
       seriesId && action === 'publish'
         ? await getNextSeriesIdx({
@@ -809,8 +838,8 @@ export async function POST(request: Request, context: RouteContext) {
         series_id: seriesId,
         series_idx: seriesIdx,
         prefix_id: resolvedPrefixId,
-        published_status: action === 'draft' ? 'draft' : 'published',
-        published_at: action === 'publish' ? nowIsoString : null,
+        published_status: action === 'draft' ? 'draft' : action === 'unknown' ? 'unknown' : 'published',
+        published_at: publishedAt,
         is_comment: resolvedIsComment,
         post_count: 1,
         is_pin: isPin,
@@ -857,7 +886,7 @@ export async function POST(request: Request, context: RouteContext) {
       ok: true,
       slug: String(insertPost.data.slug),
       contentId: insertPost.data.id,
-      publishedStatus: action === 'draft' ? 'draft' : 'published',
+      publishedStatus: action === 'draft' ? 'draft' : action === 'unknown' ? 'unknown' : 'published',
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

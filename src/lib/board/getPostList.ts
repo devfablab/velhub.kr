@@ -50,7 +50,7 @@ type RawPostRow = {
   series_id: string | null;
   poll: unknown;
   published_at: string | null;
-  published_status: 'draft' | 'published';
+  published_status: 'draft' | 'published' | 'unknown';
   post_count: number | null;
   is_pin: boolean;
   thumbnail_image: string | null;
@@ -95,7 +95,7 @@ export type PostListItem = {
   search_content_matched: boolean;
   search_content: string;
   published_at: string | null;
-  published_status: 'draft' | 'published';
+  published_status: 'draft' | 'published' | 'unknown';
   post_count: number;
   is_pin: boolean;
   board_key: string;
@@ -307,12 +307,23 @@ export async function getPostList({
       postsQuery = postsQuery.eq('is_closed', false);
     }
 
+    const nowIsoString = new Date().toISOString();
+
     if (authUserId) {
       postsQuery = postsQuery.or(
-        `published_status.eq.published,and(published_status.eq.draft,user_id.eq.${authUserId})`,
+        [
+          'published_status.eq.published',
+          `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`,
+          `and(published_status.eq.draft,user_id.eq.${authUserId})`,
+          `and(published_status.eq.unknown,user_id.eq.${authUserId})`,
+        ].join(','),
       );
     } else {
-      postsQuery = postsQuery.eq('published_status', 'published');
+      postsQuery = postsQuery.or(
+        ['published_status.eq.published', `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`].join(
+          ',',
+        ),
+      );
     }
   }
 

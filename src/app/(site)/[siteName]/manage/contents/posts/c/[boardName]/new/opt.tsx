@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
-  Button,
   FormControl,
   FormControlLabel,
   ListItemText,
@@ -17,11 +16,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -208,11 +204,6 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-const EMPTY_POLL: PollState = {
-  question: '',
-  options: ['', '', '', '', ''],
-};
-
 function getYoutubeId(value: string) {
   const normalizedValue = normalizeText(value);
 
@@ -272,8 +263,6 @@ export default function Opt() {
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
   const [images, setImages] = useState<PostImageRow[]>([]);
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
-  const [isPollEnabled, setIsPollEnabled] = useState(false);
-  const [poll, setPoll] = useState<PollState>(EMPTY_POLL);
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -390,32 +379,6 @@ export default function Opt() {
 
   function handlePrefixChange(event: SelectChangeEvent<string>) {
     setSelectedPrefixId(event.target.value);
-  }
-
-  function handlePollQuestionChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    setPoll((previousPoll) => ({
-      ...previousPoll,
-      question: event.currentTarget.value,
-    }));
-  }
-
-  function handlePollOptionChange(index: number, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-    const nextValue = event.currentTarget.value;
-
-    setPoll((previousPoll) => ({
-      ...previousPoll,
-      options: previousPoll.options.map((option, optionIndex) => (optionIndex === index ? nextValue : option)),
-    }));
-  }
-
-  function handleEnablePoll() {
-    setIsPollEnabled(true);
-    setPoll(EMPTY_POLL);
-  }
-
-  function handleDisablePoll() {
-    setIsPollEnabled(false);
-    setPoll(EMPTY_POLL);
   }
 
   async function uploadPostImage(file: File, folder: 'thumbnail' | 'images' | 'editor') {
@@ -699,7 +662,6 @@ export default function Opt() {
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt.toISOString().slice(0, 10) : null,
           images: isGalleryBoard || isFeedBoard ? images : [],
-          poll: isBasicBoard && isPollEnabled ? poll : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
           isComment,

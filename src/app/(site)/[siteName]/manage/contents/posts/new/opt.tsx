@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
-  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
   ListItemText,
   MenuItem,
+  Radio,
+  RadioGroup,
   Select,
   Stack,
   styled,
@@ -19,6 +20,10 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import { ko } from 'date-fns/locale/ko';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { normalizeText } from '@/lib/utils';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -26,6 +31,8 @@ import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
+
+type PublishTimeMode = 'now' | 'scheduled';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -192,9 +199,7 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
-  const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName);
-  const ti = normalizeText(searchParams.get('t'));
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -225,6 +230,8 @@ export default function Opt() {
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
   const [isComment, setIsComment] = useState(false);
+  const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
+  const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -310,6 +317,37 @@ export default function Opt() {
 
     void loadStatus();
   }, [siteName]);
+
+  function handlePublishTimeModeChange(event: InputChangeEvent) {
+    const nextValue = event.currentTarget.value;
+
+    if (nextValue !== 'now' && nextValue !== 'scheduled') {
+      return;
+    }
+
+    setPublishTimeMode(nextValue);
+
+    if (nextValue === 'now') {
+      setScheduledPublishedAt(null);
+    }
+
+    setErrorMessage('');
+  }
+
+  function getScheduledPublishedAtIsoString() {
+    if (!scheduledPublishedAt) {
+      return '';
+    }
+
+    const nextDate = new Date(scheduledPublishedAt);
+    nextDate.setSeconds(0, 0);
+
+    if (Number.isNaN(nextDate.getTime())) {
+      return '';
+    }
+
+    return nextDate.toISOString();
+  }
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -528,6 +566,13 @@ export default function Opt() {
       return;
     }
 
+    const publishedAt = publishTimeMode === 'scheduled' ? getScheduledPublishedAtIsoString() : '';
+
+    if (publishTimeMode === 'scheduled' && !publishedAt) {
+      setErrorMessage('예약 날짜와 시간을 선택해주세요.');
+      return;
+    }
+
     setErrorMessage('');
     setIsSubmitting(true);
 
@@ -544,6 +589,7 @@ export default function Opt() {
         credentials: 'include',
         body: JSON.stringify({
           siteName,
+          action: publishTimeMode === 'scheduled' ? 'unknown' : 'publish',
           subject,
           summary,
           contentHtml: uploadedEditorContent.contentHtml,
@@ -553,6 +599,7 @@ export default function Opt() {
           thumbnailHeight,
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
+          publishedAt: publishTimeMode === 'scheduled' ? publishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
         }),
       });
@@ -724,7 +771,7 @@ export default function Opt() {
                 </Stack>
               </Stack>
               <Stack gap={1}>
-                <Typography sx={{ mb: 1 }}>내용 *</Typography>
+                <Typography variant="subtitle2">내용 *</Typography>
                 <ToastEditor
                   initialValue={contentHtml}
                   initialMarkdown={contentMarkdown}
@@ -737,6 +784,33 @@ export default function Opt() {
                   onUploadImage={handleUploadEditorImage}
                 />
               </Stack>
+
+              <Stack gap={1}>
+                <Typography variant="subtitle2">블로그 글 출간시간 선택 *</Typography>
+                <RadioGroup value={publishTimeMode} onChange={handlePublishTimeModeChange}>
+                  <FormControlLabel value="now" control={<Radio />} label="현재 시각으로 등록하기" />
+                  <FormControlLabel value="scheduled" control={<Radio />} label="지정한 날짜와 시간으로 예약" />
+                </RadioGroup>
+              </Stack>
+
+              {publishTimeMode === 'scheduled' ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">날짜 및 시간 예약</Typography>
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                    <DateTimePicker
+                      value={scheduledPublishedAt}
+                      onChange={(nextValue) => setScheduledPublishedAt(nextValue)}
+                      ampm={false}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Stack>
+              ) : null}
 
               {commentProvider !== 'none' ? (
                 <FormControlLabel
