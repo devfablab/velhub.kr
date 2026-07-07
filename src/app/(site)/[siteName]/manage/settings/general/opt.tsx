@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Avatar,
   Box,
   FormControlLabel,
   InputAdornment,
@@ -28,6 +27,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -690,11 +690,7 @@ export default function Opt() {
             {formatDate(siteInfo.created_at)}에 개설
           </Typography>
           <Stack gap={1.5} alignItems="center">
-            <Avatar
-              src={profilePictureUrl || '/broken-image.jpg'}
-              alt={siteInfo.site_label ?? ''}
-              sx={{ width: 96, height: 96 }}
-            />
+            <AppIconAvatar src={profilePictureUrl || null} alt={siteInfo.site_label || ''} size={96} />
 
             <VisuallyHiddenInput
               ref={fileInputReference}
