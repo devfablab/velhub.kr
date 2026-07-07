@@ -295,11 +295,8 @@ export default function IdentityVerificationButton() {
         setSettlement(null);
         return;
       }
-
       setIdentity(identityStatus.identity);
-
       const settlementStatus = await getJson<SettlementResponse>('/api/settlement');
-
       setSettlement(settlementStatus.settlement);
     } catch (error) {
       showSnackbar(getMessage(error));
@@ -381,10 +378,6 @@ export default function IdentityVerificationButton() {
     }
 
     if (!canSettle) {
-      return;
-    }
-
-    if (!isNewPage) {
       return;
     }
 
