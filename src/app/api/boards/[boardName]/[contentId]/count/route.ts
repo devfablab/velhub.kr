@@ -16,7 +16,7 @@ function isNumericSlug(value: string) {
 }
 
 function getPostViewCookieName(siteKey: string, boardKey: string, idx: number) {
-  return `PS_${encrypt(siteKey)}_${encrypt(boardKey)}_${encrypt(String(idx))}`;
+  return `PS_${siteKey}_${boardKey}_${String(idx)}`;
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
