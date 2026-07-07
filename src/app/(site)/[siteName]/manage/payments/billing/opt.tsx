@@ -4,6 +4,7 @@ import { type KeyboardEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Chip,
@@ -791,6 +792,16 @@ export default function Opt() {
           <Typography variant="subtitle2">결제 수단</Typography>
           <Stack gap={1}>
             <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>매니저도 결제수단을 등록하여 요금제 결제하실 수 있습니다.</span>
+            </p>
+            {billingMethods.length ? (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
+              </p>
+            ) : null}
 
             {billingMethods.length ? (
               <Stack gap={1}>

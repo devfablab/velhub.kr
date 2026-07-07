@@ -290,7 +290,7 @@ export default function BillingMethodButton() {
               </Stack>
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
-                <span>!!! PC 환경에서는 팝업허용해야 카드 등록을 하실ㄹ 수 있습니다 !!!</span>
+                <span>!!! PC 환경에서는 팝업을 허용하셔야 카드 등록을 하실 수 있습니다 !!!</span>
               </p>
 
               <Stack direction="column" spacing={1.5}>
@@ -323,25 +323,27 @@ export default function BillingMethodButton() {
               <CloseRoundedIcon />
             </button>
             <DialogContent>
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>결제시에 사용하는 이메일입니다. 입력하신 이메일은 수정이 불가합니다.</span>
-              </p>
-              <TextField
-                placeholder="결제용 이메일주소 입력"
-                type="email"
-                value={paymentEmail}
-                onChange={(event) => {
-                  setPaymentEmail(event.target.value);
-                  setPaymentEmailErrorMessage('');
-                }}
-                error={Boolean(paymentEmailErrorMessage)}
-                helperText={paymentEmailErrorMessage || '이메일은 필수입니다'}
-                autoComplete="email"
-                fullWidth
-                required
-                size="small"
-              />
+              <Stack gap={1}>
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>결제시에 사용하는 이메일입니다. 입력하신 이메일은 수정이 불가합니다.</span>
+                </p>
+                <TextField
+                  placeholder="결제용 이메일주소 입력"
+                  type="email"
+                  value={paymentEmail}
+                  onChange={(event) => {
+                    setPaymentEmail(event.target.value);
+                    setPaymentEmailErrorMessage('');
+                  }}
+                  error={Boolean(paymentEmailErrorMessage)}
+                  helperText={paymentEmailErrorMessage || '이메일은 필수입니다'}
+                  autoComplete="email"
+                  fullWidth
+                  required
+                  size="small"
+                />
+              </Stack>
             </DialogContent>
             <DialogActions>
               <button
