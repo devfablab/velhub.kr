@@ -1,6 +1,7 @@
 'use client';
 
 import { type ChangeEvent, useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
@@ -17,6 +18,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { normalizeText } from '@/lib/utils';
 import styles from '@/app/board.module.sass';
 
 type DonationTargetType = 'site' | 'series' | 'board' | 'post';
@@ -65,8 +67,16 @@ type Props = SiteDonationProps | BoardDonationProps | PostDonationProps;
 type IdentityStatusResponse = {
   exists: boolean;
   identity: {
+    purchase_available?: boolean;
     birth_date: string;
   } | null;
+  error?: string;
+};
+
+type SitePublicResponse = {
+  siteInfo?: {
+    purchase_available?: boolean;
+  };
   error?: string;
 };
 
@@ -213,6 +223,8 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName);
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -220,6 +232,7 @@ export default function DonationButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
+  const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -231,7 +244,26 @@ export default function DonationButton(props: Props) {
 
     async function checkOwnerAge() {
       try {
-        const response = await fetch(`/api/identity/portone/status`, {
+        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as SitePublicResponse;
+
+        if (!ignore) {
+          setPurchaseAvailable(Boolean(response.ok && result.siteInfo?.purchase_available));
+        }
+      } catch {
+        if (!ignore) {
+          setPurchaseAvailable(false);
+        }
+      }
+    }
+
+    async function checkIdentity() {
+      try {
+        const response = await fetch('/api/identity/portone/status', {
           method: 'GET',
           credentials: 'include',
         });
@@ -239,7 +271,7 @@ export default function DonationButton(props: Props) {
         const result = (await response.json()) as IdentityStatusResponse;
 
         if (!ignore) {
-          setCanShowDonationButton(Boolean(response.ok && result.identity && isAdult(result.identity.birth_date)));
+          setCanShowDonationButton(Boolean(response.ok && result.exists && isAdult(result.identity?.birth_date)));
         }
       } catch {
         if (!ignore) {
@@ -249,11 +281,12 @@ export default function DonationButton(props: Props) {
     }
 
     void checkOwnerAge();
+    void checkIdentity();
 
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [siteName]);
 
   if (!canShowDonationButton) {
     return null;
@@ -377,6 +410,10 @@ export default function DonationButton(props: Props) {
         />
       </Stack>
     );
+  }
+
+  if (!purchaseAvailable) {
+    return;
   }
 
   return (

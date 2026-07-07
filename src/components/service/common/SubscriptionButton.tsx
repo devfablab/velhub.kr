@@ -101,8 +101,16 @@ type SubscriptionActionResponse =
 type IdentityStatusResponse = {
   exists: boolean;
   identity: {
+    purchase_available?: boolean;
     birth_date: string;
   } | null;
+  error?: string;
+};
+
+type SitePublicResponse = {
+  siteInfo?: {
+    purchase_available?: boolean;
+  };
   error?: string;
 };
 
@@ -218,6 +226,7 @@ export default function SubscriptionButton({
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRefundableCancellation, setIsRefundableCancellation] = useState(false);
+  const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -228,7 +237,26 @@ export default function SubscriptionButton({
 
     async function checkOwnerAge() {
       try {
-        const response = await fetch(`/api/identity/portone/status`, {
+        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as SitePublicResponse;
+
+        if (!ignore) {
+          setPurchaseAvailable(Boolean(response.ok && result.siteInfo?.purchase_available));
+        }
+      } catch {
+        if (!ignore) {
+          setPurchaseAvailable(false);
+        }
+      }
+    }
+
+    async function checkIdentity() {
+      try {
+        const response = await fetch('/api/identity/portone/status', {
           method: 'GET',
           credentials: 'include',
         });
@@ -236,7 +264,7 @@ export default function SubscriptionButton({
         const result = (await response.json()) as IdentityStatusResponse;
 
         if (!ignore) {
-          setCanShowDonationButton(Boolean(response.ok && result.identity && isAdult(result.identity.birth_date)));
+          setCanShowDonationButton(Boolean(response.ok && result.exists && isAdult(result.identity?.birth_date)));
         }
       } catch {
         if (!ignore) {
@@ -246,11 +274,12 @@ export default function SubscriptionButton({
     }
 
     void checkOwnerAge();
+    void checkIdentity();
 
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [siteName]);
 
   useEffect(() => {
     async function loadSubscriptionStatus() {
@@ -533,6 +562,10 @@ export default function SubscriptionButton({
 
   if (!isEnabled) {
     return null;
+  }
+
+  if (!purchaseAvailable) {
+    return;
   }
 
   return (

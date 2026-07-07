@@ -597,18 +597,18 @@ export default function Opt({ siteName }: Props) {
         </Stack>
       ) : null}
 
-      <Stack direction="row" justifyContent="flex-end">
-        <button type="submit" className="button medium submit" disabled={isSubmitting || Boolean(uploadingQuestionId)}>
-          가입하기
-        </button>
-      </Stack>
-
       {errorMessage ? (
         <p className="alert error">
           <ErrorOutlineRoundedIcon />
           <span>{errorMessage}</span>
         </p>
       ) : null}
+
+      <Stack direction="row" justifyContent="flex-end">
+        <button type="submit" className="button medium submit" disabled={isSubmitting || Boolean(uploadingQuestionId)}>
+          가입하기
+        </button>
+      </Stack>
     </Stack>
   );
 }

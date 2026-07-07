@@ -11,17 +11,6 @@ import styles from '@/app/board.module.sass';
 type RowValue = string | number | boolean | null;
 
 type SitesInfo = {
-  rhizomes: {
-    created_at: RowValue;
-    site_label: RowValue;
-    profile_picture: RowValue;
-    summary: RowValue;
-    site_type: RowValue;
-    plan_type: RowValue;
-    visibility_type: RowValue;
-    theme_type: RowValue;
-    is_shutdown: RowValue;
-  };
   sites: {
     updated_at: RowValue;
     updated_by: RowValue;

@@ -127,7 +127,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
   });
 
   let result: {
-    rhizomes?: {
+    siteInfo?: {
       visibility_type?: string | null;
       is_shutdown?: boolean | null;
       is_blocked?: boolean | null;
@@ -137,7 +137,7 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
 
   try {
     result = (await response.json()) as {
-      rhizomes?: {
+      siteInfo?: {
         visibility_type?: string | null;
         is_shutdown?: boolean | null;
         is_blocked?: boolean | null;
@@ -240,10 +240,10 @@ export async function proxy(request: NextRequest) {
     if (siteName) {
       const rhizomeState = await fetchRhizomeState(request, siteName);
 
-      if (rhizomeState.response.ok && rhizomeState.result?.rhizomes) {
+      if (rhizomeState.response.ok && rhizomeState.result?.siteInfo) {
         const isStatusPath = isSiteStatusPath(pathname, siteName);
 
-        if (rhizomeState.result.rhizomes.is_shutdown !== true) {
+        if (rhizomeState.result.siteInfo.is_shutdown !== true) {
           if (isStatusPath) {
             return redirectWithPath(request, `/${siteName}`);
           }
@@ -258,14 +258,14 @@ export async function proxy(request: NextRequest) {
           if (
             !(
               isSiteOwner &&
-              (rhizomeState.result.rhizomes.is_blocked === null || rhizomeState.result.rhizomes.is_blocked === false) &&
+              (rhizomeState.result.siteInfo.is_blocked === null || rhizomeState.result.siteInfo.is_blocked === false) &&
               isManagePath(pathname)
             )
           ) {
             const redirectPath = getShutdownRedirectPath({
               siteName,
               isSiteOwner,
-              isBlocked: rhizomeState.result.rhizomes.is_blocked,
+              isBlocked: rhizomeState.result.siteInfo.is_blocked,
             });
 
             if (pathname !== redirectPath) {
@@ -316,11 +316,11 @@ export async function proxy(request: NextRequest) {
 
     const rhizomeState = await fetchRhizomeState(request, siteName);
 
-    if (!rhizomeState.response.ok || !rhizomeState.result?.rhizomes) {
+    if (!rhizomeState.response.ok || !rhizomeState.result?.siteInfo) {
       return redirectWithPath(request, '/');
     }
 
-    if (rhizomeState.result.rhizomes.site_type !== 'community') {
+    if (rhizomeState.result.siteInfo.site_type !== 'community') {
       return redirectWithPath(request, `/${siteName}`);
     }
 

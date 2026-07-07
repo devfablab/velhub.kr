@@ -85,8 +85,8 @@ type PostRow = {
 };
 
 type SitePublicResponse = {
-  rhizomes?: {
-    site_type?: SiteType;
+  siteInfo: {
+    site_type: SiteType;
   };
 };
 
@@ -288,17 +288,12 @@ export default function Opt() {
           throw new Error(('error' in siteResult ? siteResult.error : '') || '사이트 정보를 불러오지 못했습니다.');
         }
 
-        if (!('rhizomes' in siteResult)) {
-          throw new Error('사이트 정보를 불러오지 못했습니다.');
+        if (!('siteInfo' in siteResult)) {
+          throw new Error('사이트 정보를 불러오지 못했습니다1.');
         }
 
-        const nextSiteType = siteResult.rhizomes?.site_type;
-
-        if (nextSiteType !== 'blog' && nextSiteType !== 'community') {
-          throw new Error('사이트 정보를 불러오지 못했습니다.');
-        }
-
-        setSiteType(nextSiteType);
+        const nextSiteType = siteResult.siteInfo?.site_type;
+        setSiteType(siteResult.siteInfo?.site_type);
 
         const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
           method: 'GET',
