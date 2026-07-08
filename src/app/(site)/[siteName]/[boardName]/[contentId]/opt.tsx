@@ -36,8 +36,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
-import CommunityCommentSection from '@/components/comments/CommunityCommentSection';
-import BlogCommentSection from '@/components/comments/BlogCommentSection';
+import Comment from '@/components/comments/Comment';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
@@ -196,7 +195,7 @@ type PostContent = {
   created_at: string;
   is_closed: boolean;
   closed_message: string | null;
-  published_status: 'draft' | 'published';
+  published_status: 'draft' | 'published' | 'unknown';
   published_at: string | null;
   is_comment: boolean;
   comment_provider: CommentProvider;
@@ -1402,29 +1401,19 @@ export default function Opt({ isCommunity }: Props) {
             </div>
             {seriesList}
           </article>
-          {content.published_status === 'published' ? (
-            isBlogBoard ? (
-              <BlogCommentSection
-                siteName={siteName}
-                boardName={boardName}
-                contentId={content.id}
-                postAuthorId={content.user_id}
-                isCommentEnabled={content.is_comment}
-                commentProvider={content.comment_provider}
-                giscusSettings={content.giscus_settings}
-                themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                title={content.subject}
-                slug={content.slug}
-              />
-            ) : (
-              <CommunityCommentSection
-                siteName={siteName}
-                boardName={boardName}
-                contentId={content.id}
-                postAuthorId={content.user_id}
-                isCommentEnabled={content.is_comment}
-              />
-            )
+          {content.published_status === 'published' || content.published_status === 'unknown' ? (
+            <Comment
+              siteName={siteName}
+              boardName={boardName}
+              contentId={content.id}
+              postAuthorId={content.user_id}
+              isCommentEnabled={content.is_comment}
+              commentProvider={content.comment_provider}
+              giscusSettings={content.giscus_settings}
+              themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+              title={content.subject}
+              slug={content.slug}
+            />
           ) : null}
         </div>
         {isCommunity && !isMobile ? (

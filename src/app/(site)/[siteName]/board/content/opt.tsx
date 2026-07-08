@@ -35,7 +35,7 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import CommentSection from '@/components/comments/CommunityCommentSection';
+import CommentSection from '@/components/comments/CommentList';
 import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import SiteInfo from '@/components/service/community/SiteInfo';

@@ -517,7 +517,7 @@ async function getBoardAndPost(siteName: string, boardName: string, contentId: s
       postId: post.data.id as string,
       postAuthorId: post.data.user_id as string,
       isClosed: post.data.is_closed === true,
-      isPublished: post.data.published_status === 'published',
+      isPublished: post.data.published_status === 'published' || post.data.published_status === 'unknown',
       isCommentEnabled: post.data.is_comment !== false,
       poll: isPollRow(post.data.poll) ? post.data.poll : null,
       drawType: (post.data.draw_type === 'first_come' || post.data.draw_type === 'random'
