@@ -35,9 +35,10 @@ import BlogSearch from '../header-groups/site/BlogSearch';
 import CommunitySearch from '../header-groups/site/CommunitySearch';
 import NavMenu from '../header-groups/site/NavMenu';
 import NavManage from '../header-groups/site/NavManage';
-import styles from '@/app/header.module.sass';
 import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NavPayments from '../header-groups/site/NavPayments';
+import AppIconAvatar from '../custom-ui/AppIconAvatar';
+import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
 
@@ -216,8 +217,6 @@ export default function HeaderSite() {
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
-  const [isThemeModeDrawerOpen, setIsThemeModeDrawerOpen] = useState(false);
-  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: null,
@@ -231,7 +230,6 @@ export default function HeaderSite() {
   const [siteLabel, setSiteLabel] = useState('');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
   const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
-  const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -347,11 +345,6 @@ export default function HeaderSite() {
   }, [isReady, siteName]);
 
   function handleOpenThemeModeMenu(event: React.MouseEvent<HTMLElement>) {
-    if (isMobile) {
-      setIsThemeModeDrawerOpen(true);
-      return;
-    }
-
     setThemeModeAnchorElement(event.currentTarget);
   }
 
@@ -359,24 +352,14 @@ export default function HeaderSite() {
     setThemeModeAnchorElement(null);
   }
 
-  function handleCloseThemeModeDrawer() {
-    setIsThemeModeDrawerOpen(false);
-  }
-
   function handleSelectThemeMode(nextThemeMode: ThemeMode) {
     window.localStorage.setItem(THEME_MODE_STORAGE_KEY, nextThemeMode);
     setThemeMode(nextThemeMode);
     applyThemeMode(nextThemeMode);
     handleCloseThemeModeMenu();
-    handleCloseThemeModeDrawer();
   }
 
   function handleOpenProfileMenu(event: React.MouseEvent<HTMLElement>) {
-    if (isMobile) {
-      setIsProfileDrawerOpen(true);
-      return;
-    }
-
     setProfileAnchorElement(event.currentTarget);
   }
 
@@ -384,21 +367,8 @@ export default function HeaderSite() {
     setProfileAnchorElement(null);
   }
 
-  function handleCloseProfileDrawer() {
-    setIsProfileDrawerOpen(false);
-  }
-
-  function handleOpenSearchDrawer() {
-    setIsSearchDrawerOpen(true);
-  }
-
-  function handleCloseSearchDrawer() {
-    setIsSearchDrawerOpen(false);
-  }
-
   async function handleLogout() {
     handleCloseProfileMenu();
-    handleCloseProfileDrawer();
 
     const supabase = getSupabaseBrowser();
     const signOutResult = await supabase.auth.signOut({
@@ -447,7 +417,9 @@ export default function HeaderSite() {
                         <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
                       ) : (
                         <>
-                          {profilePictureUrl ? <Avatar src={profilePictureUrl} alt="" aria-hidden="true" /> : null}
+                          {profilePictureUrl ? (
+                            <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                          ) : null}
                           <span>{siteLabel}</span>
                         </>
                       )}
