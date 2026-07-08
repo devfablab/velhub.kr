@@ -18,9 +18,7 @@ header.header
       opacity: 1
       overflow: visible
       z-index: 1020
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-white
+      background-color: ds.$hex-white
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-black
@@ -35,8 +33,7 @@ header.header
               height: ds.rem(20)
 
   &.settings-header
-    html[data-theme="yellow-light"] &
-      background-color: ds.$hex-white
+    background-color: ds.$hex-white
 
     html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
@@ -87,9 +84,7 @@ header.header
       display: inline-flex
       gap: ds.rem(7)
       padding: ds.rem(8)
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -144,13 +139,10 @@ header.header
 
     li.current
       a
-        html[data-theme="yellow-light"] &
-          color: rgba(ds.$rgb-secondary, .9)
-          @include ds.fw(neo, 800)
-          color: ds.$hex-primary
+        @include ds.fw(neo, 800)
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
-          color: rgba(ds.$rgb-light, .7)
           @include ds.fw(neo, 800)
           color: ds.$hex-light
 
@@ -159,13 +151,11 @@ header.header
       font-size: ds.rem(18)
       line-height: 1
       transition: all .4s cubic-bezier(.4,0,.2,1)
+      color: rgba(ds.$rgb-secondary, .9)
 
-      html[data-theme="yellow-light"] &
-        color: rgba(ds.$rgb-secondary, .9)
-
-        &:hover, &:focus-visible
-          @include ds.fw(neo, 800)
-          color: ds.$hex-primary
+      &:hover, &:focus-visible
+        @include ds.fw(neo, 800)
+        color: ds.$hex-primary
 
       html[data-theme="yellow-dark"] &
         color: rgba(ds.$rgb-light, .7)
@@ -191,10 +181,8 @@ header.header
       border: 1px solid ds.$hex-accent
       border-radius: ds.rem(7)
       @include ds.fw(pre, 700)
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$rgb-white
-        color: ds.$hex-primary
+      background-color: ds.$rgb-white
+      color: ds.$hex-primary
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$rgb-black
@@ -255,9 +243,7 @@ header.header
               font-size: ds.rem(16)
               line-height: 1
               transition: all .4s cubic-bezier(.4,0,.2,1)
-
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-primary
+              color: ds.$hex-primary
 
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-bright
@@ -333,9 +319,10 @@ header.header
           display: block
           line-height: 1
           @include ds.ellipsis
+          color: ds.$hex-secondary
 
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
 
         em
           @include ds.fw(neo, 800)
@@ -354,8 +341,7 @@ header.header
         background: transparent!important
 
     .MenuItem, .MenuItem-icon, .MenuItem-text
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -382,15 +368,13 @@ header.header
       opacity: .7
       transition: all .4s cubic-bezier(.4,0,.2,1)
       padding: ds.rem(7) ds.rem(17)
-
-      &:hover, &:focus-visible
-        opacity: 1
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
+
+      &:hover, &:focus-visible
+        opacity: 1
 
       span
         @include ds.fw(pre, 600)
@@ -406,6 +390,10 @@ header.header
   align-items: center
   padding: 0 ds.rem(17)
   z-index: 1024
+  background-color: ds.$hex-white
+
+  html[data-theme="yellow-dark"] &
+    background-color: ds.$hex-black
 
   &.header-appbar
     flex-direction: column
@@ -461,9 +449,7 @@ header.header
                   font-size: ds.rem(16)
                   line-height: 1
                   transition: all .4s cubic-bezier(.4,0,.2,1)
-
-                  html[data-theme="yellow-light"] &
-                    color: ds.$hex-primary
+                  color: ds.$hex-primary
 
                   html[data-theme="yellow-dark"] &
                     color: ds.$hex-bright
@@ -476,12 +462,6 @@ header.header
 
   &.hidden
     display: none
-
-  html[data-theme="yellow-light"] &
-    background-color: ds.$hex-white
-
-  html[data-theme="yellow-dark"] &
-    background-color: ds.$hex-black
 
   > i
     @include ds.mq(maxExtraSmall)
@@ -551,9 +531,7 @@ header.header
       top: 0
       padding: ds.rem(7)
       z-index: 1090
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-white
+      background-color: ds.$hex-white
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-black
@@ -568,9 +546,7 @@ header.header
         transform: translate(-50%, -50%)
         @include ds.fw(neo, 900)
         font-size: ds.rem(18)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-primary
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-bright
@@ -609,9 +585,7 @@ header.header
           display: block
           line-height: 1.2
           @include ds.ellipsis
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          color: ds.$hex-secondary
 
         em
           @include ds.fw(neo, 800)
@@ -638,10 +612,8 @@ header.header
         border: 1px solid ds.$hex-accent
         border-radius: ds.rem(37)
         @include ds.fw(pre, 700)
-
-        html[data-theme="yellow-light"] &
-          background-color: ds.$rgb-white
-          color: ds.$hex-primary
+        background-color: ds.$rgb-white
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           background-color: ds.$rgb-black
@@ -690,16 +662,14 @@ header.header
         margin-left: -1px
         padding: ds.rem(12) ds.rem(7)
         transition: all .4s cubic-bezier(.4,0,.2,1)
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        html[data-theme="yellow-dark"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         span
           @include ds.fw(pre, 600)
           transition: all .4s cubic-bezier(.4,0,.2,1)
-
-        html[data-theme="yellow-light"] &
-          border: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-        html[data-theme="yellow-dark"] &
-          border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         &.active
           border-color: ds.$hex-accent!important
@@ -725,9 +695,7 @@ header.header
       @include ds.fw(neo, 800)
       font-size: ds.rem(16)
       line-height: 1
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-primary
+      color: ds.$hex-primary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
@@ -736,8 +704,7 @@ header.header
         background: transparent!important
 
     .MenuItem, .MenuItem-icon, .MenuItem-text
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -765,15 +732,13 @@ header.header
       opacity: .7
       transition: all .4s cubic-bezier(.4,0,.2,1)
       padding: ds.rem(7) ds.rem(17)
-
-      &:hover, &:focus-visible
-        opacity: 1
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
+
+      &:hover, &:focus-visible
+        opacity: 1
 
       span
         @include ds.fw(pre, 600)
@@ -803,10 +768,8 @@ header.header
           border: 1px solid ds.$hex-accent
           border-radius: ds.rem(37)
           @include ds.fw(pre, 700)
-
-          html[data-theme="yellow-light"] &
-            background-color: ds.$rgb-white
-            color: ds.$hex-primary
+          background-color: ds.$rgb-white
+          color: ds.$hex-primary
 
           html[data-theme="yellow-dark"] &
             background-color: ds.$rgb-black
@@ -853,9 +816,7 @@ main.manage
       z-index: 21
       padding-right: 0
       padding-left: 0
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-white
+      background-color: ds.$hex-white
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-black
@@ -889,9 +850,7 @@ main.manage
           display: inline-flex
           @include ds.fw(neo, 500)
           font-size: ds.rem(16)
-
-          html[data-theme="yellow-light"] &
-            color: rgba(ds.$rgb-secondary, .8)
+          color: rgba(ds.$rgb-secondary, .8)
 
           html[data-theme="yellow-dark"] &
             color: rgba(ds.$rgb-light, .8)
@@ -910,9 +869,7 @@ main.manage
             border: 1px solid rgba(ds.$rgb-tertiary, .5)
             border-radius: ds.rem(32)
             padding: 0 ds.rem(12)
-
-            html[data-theme="yellow-light"] &
-              background-color: ds.$hex-white
+            background-color: ds.$hex-white
 
             html[data-theme="yellow-dark"] &
               background-color: ds.$hex-black
@@ -930,9 +887,6 @@ main.manage
               border: 1px solid ds.$hex-accent
               background-color: ds.$hex-accent!important
               color: ds.$hex-white
-
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-white
 
               html[data-theme="yellow-dark"] &
                 color: rgba(ds.$rgb-secondary, .8)
@@ -957,9 +911,7 @@ main.manage
 
       span
         @include ds.fw(pre, 700)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-secondary
+        color: ds.$hex-secondary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light

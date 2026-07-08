@@ -81,10 +81,8 @@
         position: relative
         border-radius: ds.rem(7)
         @include ds.fw(pre, 700)
-
-        html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$rgb-accent, .1)
-          color: ds.$hex-accent
+        background-color: rgba(ds.$rgb-accent, .1)
+        color: ds.$hex-accent
 
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$rgb-bright, .1)
@@ -144,10 +142,8 @@
             height: ds.rem(37)
             padding: 0 ds.rem(12)
             border-radius: ds.rem(7)
-
-            html[data-theme="yellow-light"] &
-              background-color: ds.$hex-white
-              border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+            background-color: ds.$hex-white
+            border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
             html[data-theme="yellow-dark"] &
               background-color: ds.$hex-black
@@ -157,9 +153,7 @@
               padding: 0 ds.rem(23) 0 0
               font-size: ds.rem(16)
               @include ds.fw(pre, 600)
-
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-primary
+              color: ds.$hex-primary
 
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-bright
@@ -207,9 +201,7 @@
               padding: 0 ds.rem(23) 0 0
               font-size: ds.rem(16)
               @include ds.fw(pre, 600)
-
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-primary
+              color: ds.$hex-primary
 
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-bright
@@ -223,9 +215,7 @@
             padding: 0 ds.rem(23) 0 ds.rem(12)
             font-size: ds.rem(16)
             @include ds.fw(pre, 600)
-
-            html[data-theme="yellow-light"] &
-              color: ds.$hex-primary
+            color: ds.$hex-primary
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
@@ -244,9 +234,7 @@
                 padding-left: ds.rem(182)
                 font-size: ds.rem(16)
                 @include ds.fw(pre, 600)
-
-                html[data-theme="yellow-light"] &
-                  color: ds.$hex-primary
+                color: ds.$hex-primary
 
                 html[data-theme="yellow-dark"] &
                   color: ds.$hex-bright
@@ -262,10 +250,8 @@
               border-radius: ds.rem(7)
               width: 100%
               height: ds.rem(37)
-
-              html[data-theme="yellow-light"] &
-                background-color: ds.$hex-white
-                border: 1px solid rgba(ds.$rgb-tertiary, .2)
+              background-color: ds.$hex-white
+              border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
               html[data-theme="yellow-dark"] &
                 background-color: ds.$hex-black
@@ -286,15 +272,13 @@
             width: ds.rem(37)
             border-radius: ds.rem(7)
             background-color: transparent
-
-            &.enabled
-              color: ds.$hex-accent!important
-
-            html[data-theme="yellow-light"] &
-              color: ds.$hex-primary
+            color: ds.$hex-primary
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
+
+            &.enabled
+              color: ds.$hex-accent!important
 
             svg
               width: ds.rem(35)
@@ -332,6 +316,14 @@
         border-radius: ds.rem(17)
         padding: ds.rem(23)
         overflow-wrap: anywhere
+        background-color: ds.$hex-white
+        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+        color: ds.$hex-primary
+
+        html[data-theme="yellow-dark"] &
+          background-color: ds.$hex-black
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
+          color: ds.$hex-bright
 
         @include ds.mq(maxMedium)
           &.content-simple-youtube
@@ -345,16 +337,6 @@
 
           &.content-simple-feed-edit
             height: calc(100vh - ds.rem(232))
-
-        html[data-theme="yellow-light"] &
-          background-color: ds.$hex-white
-          border: 1px solid rgba(ds.$rgb-tertiary, .2)
-          color: ds.$hex-primary
-
-        html[data-theme="yellow-dark"] &
-          background-color: ds.$hex-black
-          border: 1px solid rgba(ds.$rgb-tertiary, .5)
-          color: ds.$hex-bright
 
   .button-top
     position: fixed
@@ -385,8 +367,7 @@
       padding: 0 ds.rem(23)
 
     .link
-      html[data-theme="yellow-light"] &
-        color: rgba(ds.$rgb-primary, .5)
+      color: rgba(ds.$rgb-primary, .5)
 
       html[data-theme="yellow-dark"] &
         color: rgba(ds.$rgb-bright, .5)
@@ -582,9 +563,7 @@
           min-height: ds.rem(37)
           overflow: hidden
           position: relative
-
-          html[data-theme="yellow-light"] &
-            border: ds.rem(2) solid rgba(ds.$rgb-tertiary, .5)
+          border: ds.rem(2) solid rgba(ds.$rgb-tertiary, .5)
 
           html[data-theme="yellow-dark"] &
             border: ds.rem(2) solid rgba(ds.$rgb-tertiary, .7)
@@ -681,9 +660,7 @@
     overflow: hidden
     border-radius: 12px
     gap: 1px
-
-    html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$rgb-tertiary, .2)
+    background-color: rgba(ds.$rgb-tertiary, .2)
 
     html[data-theme="yellow-dark"] &
       background-color: rgba(ds.$rgb-tertiary, .5)
@@ -832,18 +809,16 @@
         gap: ds.rem(5)
         background-color: transparent
         padding: 0
+        color: rgba(ds.$rgb-secondary, .7)
+
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-light, .7)
 
         &:disabled
           opacity: .5
 
         &.active
           color: ds.$hex-accent!important
-
-        html[data-theme="yellow-light"] &
-          color: rgba(ds.$rgb-secondary, .7)
-
-        html[data-theme="yellow-dark"] &
-          color: rgba(ds.$rgb-light, .7)
 
         strong
           @include ds.fw(pre, 600)
@@ -874,9 +849,7 @@
       a
         display: inline-flex
         align-items: center
-
-        html[data-theme="yellow-light"] &
-          color: rgba(ds.$rgb-secondary, .5)
+        color: rgba(ds.$rgb-secondary, .5)
 
         html[data-theme="yellow-dark"] &
           color: rgba(ds.$rgb-light, .5)
@@ -921,9 +894,7 @@
             margin-left: ds.rem(5)
             display: inline-block
             flex: none
-
-            html[data-theme="yellow-light"] &
-              background-color: rgba(ds.$rgb-secondary, .5)
+            background-color: rgba(ds.$rgb-secondary, .5)
 
             html[data-theme="yellow-dark"] &
               background-color: rgba(ds.$rgb-light, .5)
@@ -937,6 +908,7 @@
             letter-spacing: -.05em
             min-width: 0
             height: ds.rem(21)
+              color: rgba(ds.$rgb-secondary, .7)
 
             &:hover, &:focus-visible
               text-decoration: underline
@@ -945,9 +917,6 @@
               font-family: var(--blog-description-font-family)
               font-weight: 500
               font-variation-settings: "wght" 500
-
-            html[data-theme="yellow-light"] &
-              color: rgba(ds.$rgb-secondary, .7)
 
             html[data-theme="yellow-dark"] &
               color: rgba(ds.$rgb-light, .7)
@@ -1010,14 +979,12 @@
             @include ds.line-abbr(3, 45, 1.25)
             @include ds.fw(neo, 600)
             font-size: ds.rem(12)
+            color: ds.$hex-secondary
 
             html[data-site-type='blog'] &
               font-family: var(--blog-subject-font-family)
               font-weight: 600
               font-variation-settings: "wght" 600
-
-            html[data-theme="yellow-light"] &
-              color: ds.$hex-secondary
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-light
@@ -1028,6 +995,7 @@
         flex-direction: column
         gap: ds.rem(7)
         padding: ds.rem(23) 0
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
 
         &:first-of-type
           padding-top: 0
@@ -1035,9 +1003,6 @@
         &:last-of-type
           border-bottom: 0!important
           padding-bottom: 0
-
-        html[data-theme="yellow-light"] &
-          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
 
         html[data-theme="yellow-dark"] &
           border-bottom: 1px solid rgba(ds.$rgb-tertiary, .9)
@@ -1089,9 +1054,7 @@
               height: auto
               object-fit: cover
               object-position: center
-
-              html[data-theme="yellow-light"] &
-                background-color: ds.$hex-bright
+              background-color: ds.$hex-bright
 
               html[data-theme="yellow-dark"] &
                 background-color: ds.$hex-primary
@@ -1100,9 +1063,7 @@
               display: flex
               justify-content: center
               align-items: center
-
-              html[data-theme="yellow-light"] &
-                color: rgba(ds.$rgb-secondary, .5)
+              color: rgba(ds.$rgb-secondary, .5)
 
               html[data-theme="yellow-dark"] &
                 color: rgba(ds.$rgb-light, .5)
@@ -1121,6 +1082,7 @@
               @include ds.fw(neo, 700)
               font-size: ds.rem(16)
               line-height: 1.37
+              color: ds.$hex-primary
 
               @include ds.mq(minMedium)
                 font-size: ds.rem(20)
@@ -1130,9 +1092,6 @@
                 font-weight: 700
                 font-variation-settings: "wght" 700
 
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-primary
-
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-bright
 
@@ -1141,6 +1100,7 @@
               font-size: ds.rem(14)
               line-height: 1.37
               opacity: .8
+              color: ds.$hex-secondary
 
               @include ds.mq(minMedium)
                 font-size: ds.rem(18)
@@ -1150,18 +1110,13 @@
                 font-weight: 500
                 font-variation-settings: "wght" 500
 
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-secondary
-
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-light
 
             time
               font-size: ds.rem(12)
               opacity: .5
-
-              html[data-theme="yellow-light"] &
-                color: ds.$hex-secondary
+              color: ds.$hex-secondary
 
               html[data-theme="yellow-dark"] &
                 color: ds.$hex-light
@@ -1216,10 +1171,8 @@
       border-radius: ds.rem(7)
       padding: 0 ds.rem(17)
       @include ds.fw(pre, 700)
-
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$rgb-accent, .1)
-        color: ds.$hex-accent
+      background-color: rgba(ds.$rgb-accent, .1)
+      color: ds.$hex-accent
 
       html[data-theme="yellow-dark"] &
         background-color: rgba(ds.$rgb-bright, .1)
@@ -1251,9 +1204,7 @@
       border-radius: ds.rem(7)
       overflow: hidden
       aspect-ratio: 1 / 1
-
-      html[data-theme="yellow-light"] &
-        border: 1px solid rgba(ds.$rgb-tertiary, .2)
+      border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
       html[data-theme="yellow-dark"] &
         border: 1px solid rgba(ds.$rgb-white, .5)
@@ -1302,10 +1253,8 @@
       border-radius: ds.rem(7)
       padding: 0 ds.rem(17)
       @include ds.fw(pre, 700)
-
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$rgb-accent, .1)
-        color: ds.$hex-accent
+      background-color: rgba(ds.$rgb-accent, .1)
+      color: ds.$hex-accent
 
       html[data-theme="yellow-dark"] &
         background-color: rgba(ds.$rgb-bright, .1)
@@ -1328,9 +1277,7 @@
     gap: ds.rem(12)
     border-radius: ds.rem(7)
     padding: ds.rem(12)
-
-    html[data-theme="yellow-light"] &
-      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
 
     html[data-theme="yellow-dark"] &
       border: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -1351,9 +1298,7 @@
         border-radius: 100%
         @include ds.fw(noe, 700)
         font-size: ds.rem(14)
-
-        html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$rgb-primary, .1)
+        background-color: rgba(ds.$rgb-primary, .1)
 
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$rgb-primary, .5)
@@ -1477,10 +1422,8 @@
       border-radius: ds.rem(7)
       padding: 0 ds.rem(17)
       @include ds.fw(pre, 700)
-
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$rgb-accent, .1)
-        color: ds.$hex-accent
+      background-color: rgba(ds.$rgb-accent, .1)
+      color: ds.$hex-accent
 
       html[data-theme="yellow-dark"] &
         background-color: rgba(ds.$rgb-bright, .1)
@@ -1531,8 +1474,7 @@
 
 .gallery-viewer-dialog
   div[aria-hidden="true"]
-    html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$rgb-white, .9)
+    background-color: rgba(ds.$rgb-white, .9)
 
     html[data-theme="yellow-dark"] &
       background-color: rgba(ds.$rgb-black, .9)
@@ -1576,10 +1518,8 @@
         width: ds.rem(37)
         height: ds.rem(37)
         border-radius: 100%
-
-        html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$rgb-white, .5)
-          color: ds.$hex-black
+        background-color: rgba(ds.$rgb-white, .5)
+        color: ds.$hex-black
 
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$rgb-black, .9)
@@ -1600,9 +1540,7 @@
     gap: ds.rem(3)
     border-radius: ds.rem(7)
     padding: ds.rem(3)
-
-    html[data-theme="yellow-light"] &
-      background-color: ds.$hex-white
+    background-color: ds.$hex-white
 
     html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
@@ -1617,9 +1555,7 @@
       margin-right: ds.rem(2)
       width: 1px
       height: ds.rem(20)
-
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$rgb-tertiary, .5)
+      background-color: rgba(ds.$rgb-tertiary, .5)
 
       html[data-theme="yellow-dark"] &
         background-color: rgba(ds.$rgb-tertiary, .9)
@@ -1635,16 +1571,13 @@
     background-color: transparent
     width: ds.rem(28)
     height: ds.rem(28)
-    color: ds.$hex-accent
-
-    &.selected
-      color: ds.$hex-accent!important
-
-    html[data-theme="yellow-light"] &
-      color: rgba(ds.$rgb-tertiary, .5)
+    color: rgba(ds.$rgb-tertiary, .5)
 
     html[data-theme="yellow-dark"] &
       color: rgba(ds.$rgb-tertiary, .9)
+
+    &.selected
+      color: ds.$hex-accent!important
 
     svg
       width: ds.rem(20)
@@ -1669,9 +1602,7 @@
       border-radius: ds.rem(7)
       width: 100%
       height: auto
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-bright
+      background-color: ds.$hex-bright
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-primary
@@ -1693,8 +1624,6 @@
           font-style: normal
           font-size: ds.rem(12)
           color: ds.$hex-warning
-
-          html[data-theme="yellow-light"] &
             background-color: ds.$hex-white
 
           html[data-theme="yellow-dark"] &
@@ -1712,9 +1641,7 @@
         display: flex
         justify-content: center
         align-items: center
-
-        html[data-theme="yellow-light"] &
-          color: rgba(ds.$rgb-secondary, .5)
+        color: rgba(ds.$rgb-secondary, .5)
 
         html[data-theme="yellow-dark"] &
           color: rgba(ds.$rgb-light, .5)
@@ -1740,9 +1667,7 @@
     .info
       display: flex
       flex-direction: column
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
@@ -1801,9 +1726,7 @@
         strong
           @include ds.fw(neo, 700)
           font-size: ds.rem(14)
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-primary
+          color: ds.$hex-primary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-bright
@@ -1811,9 +1734,7 @@
         p, time
           font-size: ds.rem(12)
           white-space: pre-wrap
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          color: ds.$hex-secondary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-light
@@ -1834,9 +1755,7 @@
       border-radius: ds.rem(7)
       width: 100%
       height: auto
-
-      html[data-theme="yellow-light"] &
-        background-color: ds.$hex-bright
+      background-color: ds.$hex-bright
 
       html[data-theme="yellow-dark"] &
         background-color: ds.$hex-primary
@@ -1854,9 +1773,7 @@
           align-items: center
           border-radius: ds.rem(3)
           height: ds.rem(20)
-
-          html[data-theme="yellow-light"] &
-            background-color: ds.$hex-white
+          background-color: ds.$hex-white
 
           html[data-theme="yellow-dark"] &
             background-color: ds.$hex-black
@@ -1888,9 +1805,7 @@
           font-style: normal
           font-size: ds.rem(12)
           color: ds.$hex-warning
-
-          html[data-theme="yellow-light"] &
-            background-color: ds.$hex-white
+          background-color: ds.$hex-white
 
           html[data-theme="yellow-dark"] &
             background-color: ds.$hex-black
@@ -1917,9 +1832,7 @@
     .info
       display: flex
       flex-direction: column
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
@@ -1990,6 +1903,10 @@
     flex-direction: column
     gap: ds.rem(12)
     padding: ds.rem(23) 0
+    border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
+
+    html[data-theme="yellow-dark"] &
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .9)
 
     &:first-of-type
       padding-top: 0
@@ -1998,20 +1915,12 @@
       border-bottom: 0!important
       padding-bottom: 0
 
-    html[data-theme="yellow-light"] &
-      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
-
-    html[data-theme="yellow-dark"] &
-      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .9)
-
     .content-simple
       white-space: pre-wrap
       overflow-wrap: anywhere
       font-size: ds.rem(14)
       line-height: 1.25
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -2021,9 +1930,7 @@
       align-items: center
       font-size: ds.rem(12)
       gap: ds.rem(7)
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -2060,9 +1967,7 @@
 
         &::before
           opacity: .5
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          color: ds.$hex-secondary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-light
@@ -2091,9 +1996,7 @@
       span
         @include ds.fw(neo, 800)
         font-size: ds.rem(16)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-primary
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-bright
@@ -2103,9 +2006,7 @@
       a
         @include ds.fw(pre, 600)
         font-size: ds.rem(14)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-secondary
+        color: ds.$hex-secondary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light

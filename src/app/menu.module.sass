@@ -8,15 +8,13 @@
   justify-content: space-between
   align-items: center
   padding: 0 ds.rem(17)
-
-  &.hidden
-    display: none
-
-  html[data-theme="yellow-light"] &
-    background-color: ds.$hex-white
+  background-color: ds.$hex-white
 
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-black
+
+  &.hidden
+    display: none
 
   .location
     width: ds.rem(24)
@@ -86,9 +84,7 @@
         transform: translate(-50%, -50%)
         @include ds.fw(neo, 900)
         font-size: ds.rem(18)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-primary
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-bright
@@ -128,8 +124,8 @@
           line-height: 1.2
           @include ds.ellipsis
 
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
 
         em
           @include ds.fw(neo, 800)
@@ -153,10 +149,8 @@
         border: 1px solid ds.$hex-accent
         border-radius: ds.rem(37)
         @include ds.fw(pre, 700)
-
-        html[data-theme="yellow-light"] &
-          background-color: ds.$rgb-white
-          color: ds.$hex-primary
+        background-color: ds.$rgb-white
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           background-color: ds.$rgb-black
@@ -202,16 +196,14 @@
         margin-left: -1px
         padding: ds.rem(12) ds.rem(7)
         transition: all .4s cubic-bezier(.4,0,.2,1)
+        border: 1px solid rgba(ds.$rgb-tertiary, .5)
+
+        html[data-theme="yellow-dark"] &
+          border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         span
           @include ds.fw(pre, 600)
           transition: all .4s cubic-bezier(.4,0,.2,1)
-
-        html[data-theme="yellow-light"] &
-          border: 1px solid rgba(ds.$rgb-tertiary, .5)
-
-        html[data-theme="yellow-dark"] &
-          border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
         &.active
           border-color: ds.$hex-accent!important
@@ -237,9 +229,7 @@
       @include ds.fw(neo, 800)
       font-size: ds.rem(16)
       line-height: 1
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-primary
+      color: ds.$hex-primary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-bright
@@ -248,8 +238,7 @@
         background: transparent!important
 
     .MenuItem, .MenuItem-icon, .MenuItem-text
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -277,15 +266,13 @@
       opacity: .7
       transition: all .4s cubic-bezier(.4,0,.2,1)
       padding: ds.rem(7) ds.rem(17)
-
-      &:hover, &:focus-visible
-        opacity: 1
-
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
+
+      &:hover, &:focus-visible
+        opacity: 1
 
       span
         @include ds.fw(pre, 600)
@@ -315,10 +302,8 @@
           border: 1px solid ds.$hex-accent
           border-radius: ds.rem(37)
           @include ds.fw(pre, 700)
-
-          html[data-theme="yellow-light"] &
-            background-color: ds.$rgb-white
-            color: ds.$hex-primary
+          background-color: ds.$rgb-white
+          color: ds.$hex-primary
 
           html[data-theme="yellow-dark"] &
             background-color: ds.$rgb-black

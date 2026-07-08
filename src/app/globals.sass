@@ -171,15 +171,11 @@ body, pre, input, button, textarea, select
   -webkit-font-smoothing: antialiased
 
 body
-  .MuiAppBar-root
-    background-color: transparent
+  background-color: ds.$hex-bright
+  color: ds.$hex-primary
 
-  html[data-theme="yellow-light"] &
-    background-color: ds.$hex-bright
+  pre, input, button, textarea, select
     color: ds.$hex-primary
-
-    pre, input, button, textarea, select
-      color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     background-color: ds.$hex-primary
@@ -187,6 +183,9 @@ body
 
     pre, input, button, textarea, select
       color: ds.$hex-bright
+
+  .MuiAppBar-root
+    background-color: transparent
 
 h1, h2, h3, h4, h5, h6
   margin-top: 0
@@ -230,16 +229,13 @@ button
   cursor: pointer
   border: 0
   padding: 0
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-primary
+  color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-bright
 
 input
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-primary
+  color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-bright
@@ -306,12 +302,12 @@ a, button, select, input
   .paper
     padding: ds.rem(12)
     border-radius: ds.rem(12)
-
-    html[data-theme="yellow-light"] &
-      border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+    background-color: ds.$hex-white
 
     html[data-theme="yellow-dark"] &
       border: 1px solid rgba(ds.$rgb-tertiary, .5)
+      background-color: ds.$hex-black
 
   &.paper-p0
     padding: 0
@@ -350,12 +346,6 @@ a, button, select, input
   caption
     @include ds.screen-reader-only
 
-  html[data-theme="yellow-light"] &
-    background-color: ds.$hex-white
-
-  html[data-theme="yellow-dark"] &
-    background-color: ds.$hex-black
-
   table:not(.MuiTable-root)
     table-layout: fixed
     border-collapse: collapse
@@ -363,8 +353,7 @@ a, button, select, input
 
     thead
       tr
-        html[data-theme="yellow-light"] &
-          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
         html[data-theme="yellow-dark"] &
           border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -381,15 +370,13 @@ a, button, select, input
 
     tbody
       tr
-        html[data-theme="yellow-light"] &
-          border-bottom: 1px solid rgba(ds.$rgb-tertiary, .05)
+        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .05)
 
         html[data-theme="yellow-dark"] &
           border-bottom: 1px solid rgba(ds.$rgb-tertiary, .25)
 
         &.pinned, &:hover
-          html[data-theme="yellow-light"] &
-            background-color: rgba(ds.$rgb-accent, .05)
+          background-color: rgba(ds.$rgb-accent, .05)
 
           html[data-theme="yellow-dark"] &
             background-color: rgba(ds.$rgb-accent, .1)
@@ -401,16 +388,14 @@ a, button, select, input
           height: ds.rem(37)
           font-size: ds.rem(14)
           text-align: center
+          color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
 
           &.long-cell
             padding: 0 ds.rem(12)
             text-align: left
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-primary
-
-          html[data-theme="yellow-dark"] &
-            color: ds.$hex-bright
 
           a
             strong
@@ -431,9 +416,7 @@ a, button, select, input
             font-size: ds.rem(14)
             line-height: ds.rem(14)
             letter-spacing: -.05em
-
-            html[data-theme="yellow-light"] &
-              color: ds.$hex-primary
+            color: ds.$hex-primary
 
             html[data-theme="yellow-dark"] &
               color: ds.$hex-bright
@@ -462,16 +445,13 @@ a, button, select, input
     a
       gap: ds.rem(7)
       padding: ds.rem(12) 0
-
-      html[data-theme="yellow-light"] &
-        border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
+      border-top: 1px solid rgba(ds.$rgb-tertiary, .1)
 
       html[data-theme="yellow-dark"] &
         border-top: 1px solid rgba(ds.$rgb-tertiary, .3)
 
       &.pinned
-        html[data-theme="yellow-light"] &
-          background-color: rgba(ds.$rgb-accent, .05)
+        background-color: rgba(ds.$rgb-accent, .05)
 
         html[data-theme="yellow-dark"] &
           background-color: rgba(ds.$rgb-accent, .1)
@@ -496,18 +476,14 @@ a, button, select, input
           letter-spacing: -.05em
           font-size: ds.rem(14)
           line-height: ds.rem(14)
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-primary
+          color: ds.$hex-primary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-bright
 
         strong
           opacity: .5
-
-          html[data-theme="yellow-light"] &
-            color: ds.$hex-secondary
+          color: ds.$hex-secondary
 
           html[data-theme="yellow-dark"] &
             color: ds.$hex-light
@@ -522,9 +498,7 @@ a, button, select, input
         font-size: ds.rem(12)
         opacity: .7
         line-height: 1
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-secondary
+        color: ds.$hex-secondary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light
@@ -591,12 +565,16 @@ a, button, select, input
       border-radius: ds.rem(6)
       line-height: 1
       font-size: ds.rem(12)
+      background-color: rgba(ds.$rgb-tertiary, .2)
+      color: rgba(ds.$rgb-primary, .7)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-tertiary, .5)
+        color: rgba(ds.$rgb-bright, .7)
 
       &.prefix-name
         border: 1px solid ds.$hex-accent
-
-        html[data-theme="yellow-light"] &
-          background-color: ds.$hex-white
+        background-color: ds.$hex-white
 
         html[data-theme="yellow-dark"] &
           background-color: ds.$hex-black
@@ -605,22 +583,12 @@ a, button, select, input
         background-color: transparent!important
         border: 1px solid ds.$hex-action
 
-      html[data-theme="yellow-light"] &
-        background-color: rgba(ds.$rgb-tertiary, .2)
-        color: rgba(ds.$rgb-primary, .7)
-
-      html[data-theme="yellow-dark"] &
-        background-color: rgba(ds.$rgb-tertiary, .5)
-        color: rgba(ds.$rgb-bright, .7)
-
   .board-content
     margin-bottom: ds.rem(3)
     @include ds.line-abbr(2, 42, 1.5)
     font-size: ds.rem(12)
     opacity: .7
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-secondary
+    color: ds.$hex-secondary
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-light
@@ -639,9 +607,7 @@ a, button, select, input
 
     .MuiDialogTitle-root
       font-size: ds.rem(16)
-
-      html[data-theme="yellow-light"] &
-        border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
+      border-bottom: 1px solid rgba(ds.$rgb-tertiary, .2)
 
       html[data-theme="yellow-dark"] &
         border-bottom: 1px solid rgba(ds.$rgb-tertiary, .5)
@@ -728,9 +694,7 @@ a, button, select, input
 .vh-form-control
   .Mui-focused, .MuiFormLabel-root
     @include ds.fw(neo, 400)
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-primary!important
+    color: ds.$hex-primary!important
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-bright!important
@@ -749,10 +713,6 @@ a, button, select, input
   font-size: ds.rem(16)
   white-space: nowrap
   background-color: ds.$hex-accent
-  color: ds.$hex-primary
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-bright
@@ -777,9 +737,6 @@ a, button, select, input
     background-color: ds.$hex-accent
     color: ds.$hex-white
 
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-white
-
     html[data-theme="yellow-dark"] &
       color: ds.$hex-black
 
@@ -791,9 +748,6 @@ a, button, select, input
     background-color: transparent
     color: rgba(ds.$rgb-secondary, .7)
 
-    html[data-theme="yellow-light"] &
-      color: rgba(ds.$rgb-secondary, .7)
-
     html[data-theme="yellow-dark"] &
       color: rgba(ds.$rgb-light, .7)
 
@@ -804,10 +758,6 @@ a, button, select, input
     border: 1px solid ds.$hex-accent!important
     background-color: ds.$hex-white
     color: rgba(ds.$rgb-secondary, .8)
-
-    html[data-theme="yellow-light"] &
-      background-color: ds.$hex-white
-      color: rgba(ds.$rgb-secondary, .8)
 
     html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
@@ -822,10 +772,6 @@ a, button, select, input
     border: 1px solid rgba(ds.$rgb-tertiary, .2)
     color: rgba(ds.$rgb-secondary, .9)
 
-    html[data-theme="yellow-light"] &
-      border: 1px solid rgba(ds.$rgb-tertiary, .2)
-      color: rgba(ds.$rgb-secondary, .9)
-
     html[data-theme="yellow-dark"] &
       border: 1px solid rgba(ds.$rgb-tertiary, .5)
       color: rgba(ds.$rgb-light, .7)
@@ -838,10 +784,6 @@ a, button, select, input
     background-color: ds.$hex-white
     color: ds.$hex-primary
 
-    html[data-theme="yellow-light"] &
-      background-color: ds.$hex-white
-      color: ds.$hex-primary
-
     html[data-theme="yellow-dark"] &
       background-color: ds.$hex-black
       color: ds.$hex-bright
@@ -850,9 +792,6 @@ a, button, select, input
     border: 1px solid ds.$hex-warning
     background-color: ds.$hex-warning
     color: ds.$hex-bright
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-bright
 
     html[data-theme="yellow-dark"] &
       color: rgba(ds.$rgb-secondary, .8)
@@ -884,9 +823,7 @@ a, button, select, input
   font-size: ds.rem(14)
   @include ds.ellipsis
   text-decoration: underline
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-primary
+  color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-bright
@@ -900,10 +837,8 @@ main
   display: flex
   flex: 1
   justify-content: center
-
-  html[data-theme="yellow-light"] &
-    background-color: rgba(ds.$rgb-bright, .5)
-    color: ds.$hex-primary
+  background-color: rgba(ds.$rgb-bright, .5)
+  color: ds.$hex-primary
 
   html[data-theme="yellow-dark"] &
     background-color: rgba(ds.$rgb-primary, .5)
@@ -1267,9 +1202,7 @@ html[data-site-type='blog']
     gap: ds.rem(5)
     padding: ds.rem(7) ds.rem(17)
     opacity: .8
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-secondary
+    color: ds.$hex-secondary
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-light
@@ -1387,8 +1320,7 @@ html[data-site-type='blog']
     color: ds.$hex-accent
 
     span
-      html[data-theme="yellow-light"] &
-        color: ds.$hex-secondary
+      color: ds.$hex-secondary
 
       html[data-theme="yellow-dark"] &
         color: ds.$hex-light
@@ -1410,9 +1342,8 @@ html[data-site-type='blog']
 
 .MuiChip-root.chip
   &.default
-    html[data-theme="yellow-light"] &
-      background-color: rgba(ds.$rgb-tertiary, .2)
-      color: ds.$hex-secondary
+    background-color: rgba(ds.$rgb-tertiary, .2)
+    color: ds.$hex-secondary
 
     html[data-theme="yellow-dark"] &
       background-color: rgba(ds.$rgb-tertiary, .5)
@@ -1420,18 +1351,14 @@ html[data-site-type='blog']
 
   &.success
     background-color: ds.$hex-accent
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-white
+    color: ds.$hex-white
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-black
 
   &.warning
     background-color: ds.$hex-warning
-
-    html[data-theme="yellow-light"] &
-      color: ds.$hex-white
+    color: ds.$hex-white
 
     html[data-theme="yellow-dark"] &
       color: ds.$hex-black

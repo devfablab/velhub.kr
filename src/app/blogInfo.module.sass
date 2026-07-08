@@ -33,18 +33,16 @@
       align-items: center
       gap: ds.rem(5)
       background-color: transparent
+      color: rgba(ds.$rgb-secondary, .6)
+
+      html[data-theme="yellow-dark"] &
+        color: rgba(ds.$rgb-light, .6)
 
       &:disabled
         opacity: .5
 
       &.active
         color: ds.$hex-accent!important
-
-      html[data-theme="yellow-light"] &
-        color: rgba(ds.$rgb-secondary, .6)
-
-      html[data-theme="yellow-dark"] &
-        color: rgba(ds.$rgb-light, .6)
 
       strong
         @include ds.fw(pre, 600)
@@ -96,8 +94,7 @@
         @include ds.col
 
       .general-items
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-secondary
+        color: ds.$hex-secondary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light
@@ -107,9 +104,7 @@
         align-items: center
         gap: ds.rem(3)
         @include ds.fw(pre, 500)
-
-        html[data-theme="yellow-light"] &
-          color: ds.$hex-primary
+        color: ds.$hex-primary
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-bright
@@ -147,9 +142,7 @@
 .educations-items
   display: flex
   flex-direction: column
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-secondary
+  color: ds.$hex-secondary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-light
@@ -167,9 +160,7 @@
 .awards-items
   display: flex
   flex-direction: column
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-secondary
+  color: ds.$hex-secondary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-light
@@ -192,9 +183,7 @@
   display: flex
   flex-direction: column
   gap: ds.rem(7)
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-secondary
+  color: ds.$hex-secondary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-light
@@ -215,9 +204,7 @@
   display: flex
   flex-direction: column
   gap: ds.rem(7)
-
-  html[data-theme="yellow-light"] &
-    color: ds.$hex-secondary
+  color: ds.$hex-secondary
 
   html[data-theme="yellow-dark"] &
     color: ds.$hex-light
