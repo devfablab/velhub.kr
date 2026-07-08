@@ -733,7 +733,7 @@ export default function Opt({ isCommunity }: Props) {
   const isSubscriptionSeriesPost = series?.is_subscription === true;
 
   const canPurchasePost =
-    content.published_status === 'published' &&
+    (content.published_status === 'published' || content.published_status === 'unknown') &&
     !isPage &&
     (content.is_purchase_required || isSubscriptionSeriesPost) &&
     !content.has_subscription_board &&
@@ -770,7 +770,7 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const postActionButtons =
-    content.published_status === 'published' && !isPage ? (
+    (content.published_status === 'published' || content.published_status === 'unknown') && !isPage ? (
       <>
         <button
           type="button"
@@ -815,7 +815,10 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const subscriptionButtons =
-    content.published_status === 'published' && !isPage && content.is_purchase_required && !isStaff ? (
+    (content.published_status === 'published' || content.published_status === 'unknown') &&
+    !isPage &&
+    content.is_purchase_required &&
+    !isStaff ? (
       <>
         <SubscriptionButton
           siteName={siteName}
@@ -840,7 +843,7 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const postDonationButton =
-    content.published_status === 'published' &&
+    (content.published_status === 'published' || content.published_status === 'unknown') &&
     !isPage &&
     content.is_post_donation_available &&
     !content.is_purchase_required ? (
