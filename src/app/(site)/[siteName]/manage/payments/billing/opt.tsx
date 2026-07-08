@@ -138,6 +138,16 @@ type PlanBillingResumeResponse =
       error: string;
     };
 
+type PlanBillingRetryResponse =
+  | {
+      ok: true;
+      subscriptionId: string;
+      paymentId: string;
+    }
+  | {
+      error: string;
+    };
+
 function formatPrice(price: number | null | undefined) {
   if (typeof price !== 'number') {
     return '-';
@@ -571,6 +581,53 @@ export default function Opt() {
     }
   }
 
+  async function handleRetryPlanBilling() {
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      if (!billingData?.site?.id) {
+        throw new Error('사이트 정보가 없습니다.');
+      }
+
+      const response = await fetch('/api/payments/portone/plan-billing/retry', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteId: billingData.site.id,
+        }),
+      });
+
+      const result = (await response.json()) as PlanBillingRetryResponse;
+
+      if (!response.ok) {
+        throw new Error('error' in result ? result.error : '결제를 다시 시도하지 못했습니다.');
+      }
+
+      if ('error' in result) {
+        throw new Error(result.error || '결제를 다시 시도하지 못했습니다.');
+      }
+
+      const isLoaded = await loadData();
+
+      if (isLoaded) {
+        setSuccessMessage('결제가 완료되었습니다.');
+      }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '결제를 다시 시도하지 못했습니다.');
+      } else {
+        setErrorMessage('결제를 다시 시도하지 못했습니다.');
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
   function handleCloseBillingDialog() {
     if (isProcessing) {
       return;
@@ -588,7 +645,7 @@ export default function Opt() {
 
     if (billingDialogType === 'retry') {
       setBillingDialogType(null);
-      setErrorMessage('결제 다시 시도 API가 아직 연결되지 않았습니다.');
+      await handleRetryPlanBilling();
     }
   }
 

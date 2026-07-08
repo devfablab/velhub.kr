@@ -77,6 +77,7 @@ async function createFailedPayment({
   orderNo,
   failureCode,
   failureMessage,
+  failureStage,
   rawData,
   nowIso,
 }: {
@@ -85,6 +86,7 @@ async function createFailedPayment({
   orderNo: string;
   failureCode: string | null;
   failureMessage: string;
+  failureStage: string;
   rawData: unknown;
   nowIso: string;
 }) {
@@ -105,7 +107,7 @@ async function createFailedPayment({
     subscription_id: subscription.id,
     failure_code: failureCode,
     failure_message: failureMessage,
-    failure_stage: 'plan_billing_check',
+    failure_stage: failureStage,
     refund_policy: REFUND_POLICY.SEVEN_DAYS,
     refundable_until: null,
     approved_at: null,
@@ -143,98 +145,23 @@ async function chargePlanBillingSubscription({
   nowIso: string;
 }) {
   const orderNo = createPaymentOrderNo('PLAN');
+  const paymentKey = createPortOnePaymentKey(orderNo);
+
+  let payment: PortOnePayment;
 
   try {
     const billingKey = decrypt(subscription.billing_key);
+
     const paymentResponse = await requestPortOneBillingPayment({
-      paymentId: createPortOnePaymentKey(orderNo),
+      paymentId: paymentKey,
       billingKey,
       customerId: subscription.customer_key,
       amount: subscription.price,
       orderName: '데브허브 사이트 요금제 결제',
     });
-    const payment = getPaymentFromResponse(paymentResponse);
 
+    payment = getPaymentFromResponse(paymentResponse);
     assertPaidPayment(payment);
-
-    const paymentInsertResult = await supabaseAdmin
-      .from('payments')
-      .insert({
-        provider: getCurrentPortOneProvider(),
-        payment_key: createPortOnePaymentKey(orderNo),
-        order_no: orderNo,
-        tx_no: null,
-        transaction_no: getPortOnePaymentTransactionNo(payment),
-        buyer_user_id: subscription.subscriber_user_id,
-        amount: getPortOnePaidAmount(payment) || subscription.price,
-        refunded_amount: 0,
-        currency: 'KRW',
-        status: PAYMENT_STATUS.PAID,
-        payment_method: PAYMENT_METHOD.CARD,
-        payment_type: PAYMENT_TYPE.PLAN_BILLING,
-        target_type: PAYMENT_TARGET_TYPE.PLAN,
-        target_id: subscription.target_id,
-        post_payment: null,
-        subscription_id: subscription.id,
-        failure_code: null,
-        failure_message: null,
-        failure_stage: null,
-        refund_policy: REFUND_POLICY.SEVEN_DAYS,
-        refundable_until: createRefundableUntil(now),
-        approved_at: getPortOnePaidAt(payment),
-        refunded_at: null,
-        raw_data: payment,
-      })
-      .select('id')
-      .single();
-
-    if (paymentInsertResult.error) {
-      console.error(paymentInsertResult.error);
-
-      throw new Error('결제 내역을 저장하지 못했습니다.');
-    }
-
-    const nextBillingPeriod = createNextMonthlyBillingPeriod({
-      currentPeriodEnd: subscription.next_billing_at,
-      billingAnchorDay: subscription.billing_anchor_day,
-    });
-
-    const subscriptionUpdateResult = await supabaseAdmin
-      .from('subscriptions')
-      .update({
-        status: SUBSCRIPTION_STATUS.ACTIVE,
-        current_period_start: nextBillingPeriod.currentPeriodStart,
-        current_period_end: nextBillingPeriod.currentPeriodEnd,
-        next_billing_at: nextBillingPeriod.nextBillingAt,
-        past_due_started_at: null,
-        last_payment_id: paymentInsertResult.data.id,
-        updated_at: nowIso,
-      })
-      .eq('id', subscription.id);
-
-    if (subscriptionUpdateResult.error) {
-      console.error(subscriptionUpdateResult.error);
-
-      throw new Error('구독 정보를 갱신하지 못했습니다.');
-    }
-
-    const siteOpenResult = await supabaseAdmin
-      .from('rhizomes')
-      .update({
-        is_shutdown: false,
-      })
-      .eq('id', subscription.target_id);
-
-    if (siteOpenResult.error) {
-      console.error(siteOpenResult.error);
-
-      throw new Error('사이트 상태를 갱신하지 못했습니다.');
-    }
-
-    return {
-      ok: true,
-      subscriptionId: subscription.id,
-    };
   } catch (unknownError) {
     const failureCode = unknownError instanceof PortOneApiError ? unknownError.code : null;
     const failureMessage =
@@ -247,6 +174,7 @@ async function chargePlanBillingSubscription({
       orderNo,
       failureCode,
       failureMessage,
+      failureStage: unknownError instanceof PortOneApiError ? 'request_portone_billing_payment' : 'assert_paid_payment',
       rawData,
       nowIso,
     });
@@ -256,6 +184,94 @@ async function chargePlanBillingSubscription({
       subscriptionId: subscription.id,
     };
   }
+
+  const paymentInsertResult = await supabaseAdmin
+    .from('payments')
+    .insert({
+      provider: getCurrentPortOneProvider(),
+      payment_key: paymentKey,
+      order_no: orderNo,
+      tx_no: null,
+      transaction_no: getPortOnePaymentTransactionNo(payment),
+      buyer_user_id: subscription.subscriber_user_id,
+      amount: getPortOnePaidAmount(payment) || subscription.price,
+      refunded_amount: 0,
+      currency: 'KRW',
+      status: PAYMENT_STATUS.PAID,
+      payment_method: PAYMENT_METHOD.CARD,
+      payment_type: PAYMENT_TYPE.PLAN_BILLING,
+      target_type: PAYMENT_TARGET_TYPE.PLAN,
+      target_id: subscription.target_id,
+      post_payment: null,
+      subscription_id: subscription.id,
+      failure_code: null,
+      failure_message: null,
+      failure_stage: null,
+      refund_policy: REFUND_POLICY.SEVEN_DAYS,
+      refundable_until: createRefundableUntil(now),
+      approved_at: getPortOnePaidAt(payment),
+      refunded_at: null,
+      raw_data: payment,
+    })
+    .select('id')
+    .single();
+
+  if (paymentInsertResult.error) {
+    console.error(paymentInsertResult.error);
+
+    return {
+      ok: false,
+      subscriptionId: subscription.id,
+    };
+  }
+
+  const nextBillingPeriod = createNextMonthlyBillingPeriod({
+    currentPeriodEnd: subscription.next_billing_at,
+    billingAnchorDay: subscription.billing_anchor_day,
+  });
+
+  const subscriptionUpdateResult = await supabaseAdmin
+    .from('subscriptions')
+    .update({
+      status: SUBSCRIPTION_STATUS.ACTIVE,
+      current_period_start: nextBillingPeriod.currentPeriodStart,
+      current_period_end: nextBillingPeriod.currentPeriodEnd,
+      next_billing_at: nextBillingPeriod.nextBillingAt,
+      past_due_started_at: null,
+      last_payment_id: paymentInsertResult.data.id,
+      updated_at: nowIso,
+    })
+    .eq('id', subscription.id);
+
+  if (subscriptionUpdateResult.error) {
+    console.error(subscriptionUpdateResult.error);
+
+    return {
+      ok: false,
+      subscriptionId: subscription.id,
+    };
+  }
+
+  const siteOpenResult = await supabaseAdmin
+    .from('rhizomes')
+    .update({
+      is_shutdown: false,
+    })
+    .eq('id', subscription.target_id);
+
+  if (siteOpenResult.error) {
+    console.error(siteOpenResult.error);
+
+    return {
+      ok: false,
+      subscriptionId: subscription.id,
+    };
+  }
+
+  return {
+    ok: true,
+    subscriptionId: subscription.id,
+  };
 }
 
 export async function GET(request: Request) {

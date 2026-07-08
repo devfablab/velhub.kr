@@ -97,6 +97,7 @@ function getPaymentType(value: string) {
   if (
     value === PAYMENT_TYPE.PLAN_BILLING ||
     value === PAYMENT_TYPE.DONATION_SITE ||
+    value === PAYMENT_TYPE.DONATION_BOARD ||
     value === PAYMENT_TYPE.DONATION_POST ||
     value === PAYMENT_TYPE.PURCHASE_POST ||
     value === PAYMENT_TYPE.MEMBERSHIP_BLOG ||
@@ -404,6 +405,44 @@ async function getDonationSiteFailInfo({
   };
 }
 
+async function getDonationBoardFailInfo({
+  supabaseAdmin,
+  siteId,
+  boardId,
+  amount,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+  boardId: string;
+  amount: number | undefined;
+}): Promise<PaymentFailInfo> {
+  await getSiteById(supabaseAdmin, siteId);
+
+  if (!boardId) {
+    throw new Error('boardId가 유효하지 않습니다.');
+  }
+
+  if (typeof amount !== 'number' || !validateDonationAmount(amount)) {
+    throw new Error('후원금액이 올바르지 않습니다.');
+  }
+
+  const board = await getBoardById({
+    supabaseAdmin,
+    siteId,
+    boardId,
+  });
+
+  return {
+    amount,
+    paymentType: PAYMENT_TYPE.DONATION_BOARD,
+    targetType: PAYMENT_TARGET_TYPE.BOARD,
+    targetId: board.id,
+    postPayment: null,
+    refundPolicy: REFUND_POLICY.DONATION_RESTRICTED,
+    failureStage: 'donation_board_fail',
+  };
+}
+
 async function getDonationPostFailInfo({
   supabaseAdmin,
   siteId,
@@ -684,6 +723,23 @@ async function getPaymentFailInfo({
     return getDonationSiteFailInfo({
       supabaseAdmin,
       siteId,
+      amount: body.amount,
+    });
+  }
+
+  if (paymentType === PAYMENT_TYPE.DONATION_BOARD) {
+    if (!siteId) {
+      throw new Error('siteId가 유효하지 않습니다.');
+    }
+
+    if (!boardId) {
+      throw new Error('boardId가 유효하지 않습니다.');
+    }
+
+    return getDonationBoardFailInfo({
+      supabaseAdmin,
+      siteId,
+      boardId,
       amount: body.amount,
     });
   }
