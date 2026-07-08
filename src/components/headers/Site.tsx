@@ -470,7 +470,7 @@ export default function HeaderSite() {
                         <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
                       ) : (
                         <>
-                          {profilePictureUrl ? <Avatar src={profilePictureUrl} alt="" aria-hidden="true" /> : null}
+                          <AppIconAvatar src={profilePictureUrl || null} alt="" size={24} />
                           <span>{siteLabel}</span>
                         </>
                       )}
