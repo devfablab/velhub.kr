@@ -1,15 +1,15 @@
 {
   "crons": [
     {
-      "path": "/api/payments/toss/membership/check",
+      "path": "/api/payments/portone/membership/check",
       "schedule": "*/5 * * * *"
     },
     {
-      "path": "/api/payments/toss/subscriptions/charge-due",
+      "path": "/api/payments/portone/subscriptions/charge-due",
       "schedule": "*/5 * * * *"
     },
     {
-      "path": "/api/payments/toss/plan-billing/check",
+      "path": "/api/payments/portone/plan-billing/check",
       "schedule": "*/5 * * * *"
     }
   ]
