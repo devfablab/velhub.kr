@@ -740,8 +740,8 @@ export default function Opt() {
         throw new Error(editResult.error ?? '블로그 글 수정에 실패했습니다.');
       }
 
-      if (ti === 'i') router.replace(`/${siteName}/b/${contentId}`);
-      else router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
+      if (ti === 'i') router.replace(`/${siteName}/manage/contents/posts/${contentId}`);
+      else router.replace(`/${siteName}/b/${contentId}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 수정에 실패했습니다.');

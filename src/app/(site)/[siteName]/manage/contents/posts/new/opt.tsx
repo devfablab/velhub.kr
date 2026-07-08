@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Checkbox,
@@ -200,6 +200,7 @@ export default function Opt() {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const searchParams = useSearchParams();
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -232,6 +233,7 @@ export default function Opt() {
   const [isComment, setIsComment] = useState(false);
   const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
   const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
+  const ti = normalizeText(searchParams.get('t'));
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -627,7 +629,8 @@ export default function Opt() {
         throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
-      router.replace(`/${siteName}/b/${createResult.slug}`);
+      if (ti === 'i') router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
+      else router.replace(`/${siteName}/b/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '블로그 글 개설에 실패했습니다.');

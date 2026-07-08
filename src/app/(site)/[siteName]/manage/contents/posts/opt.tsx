@@ -841,7 +841,7 @@ export default function Opt() {
           </Stack>
 
           <Stack direction="row" justifyContent="flex-end">
-            <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/new`}>
+            <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/new?ti=i`}>
               글쓰기
             </Anchor>
           </Stack>
@@ -962,7 +962,7 @@ export default function Opt() {
                           {post.published_status === 'unknown' ? (
                             <Chip label={getUnknownPostChipLabel(post.published_at)} color="warning" size="small" />
                           ) : null}
-                          <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}`}>
+                          <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}?ti=i`}>
                             {post.subject}
                           </Anchor>
                         </Stack>
