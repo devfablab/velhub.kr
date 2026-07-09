@@ -420,7 +420,7 @@ export async function POST(request: NextRequest) {
         refunded_amount: 0,
         currency: 'KRW',
         status: PAYMENT_STATUS.PAID,
-        payment_method: getPortOnePaymentMethod(payment) || PAYMENT_METHOD.CARD,
+        payment_method: PAYMENT_METHOD.CARD,
         payment_type: PAYMENT_TYPE.PLAN_BILLING,
         target_type: PAYMENT_TARGET_TYPE.PLAN,
         target_id: site.id,
