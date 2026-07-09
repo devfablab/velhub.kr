@@ -224,6 +224,7 @@ export default function SubscriptionButton({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isRefundableCancellation, setIsRefundableCancellation] = useState(false);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
@@ -388,6 +389,7 @@ export default function SubscriptionButton({
       if (result.mode === 'direct_billing') {
         setSubscriptionStatus('active');
         onStatusChange?.('active');
+        setSuccessMessage(`앞으로 ${targetLabel} 월 ${formatPrice(price ?? 0)} 원 결제됩니다.`);
         setIsDialogOpen(false);
         return;
       }
@@ -457,12 +459,13 @@ export default function SubscriptionButton({
 
       setSubscriptionStatus('active');
       onStatusChange?.('active');
+      setSuccessMessage(`앞으로 ${targetLabel} 월 ${formatPrice(price ?? 0)} 원 결제됩니다.`);
       setIsDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '구독을 시작하지 못했습니다.');
+        setErrorMessage(unknownError.message || '결제에 실패했습니다. 카드 한도 확인 및 유효기간 등을 확인하세요.');
       } else {
-        setErrorMessage('구독을 시작하지 못했습니다.');
+        setErrorMessage('결제에 실패했습니다. 카드 한도 확인 및 유효기간 등을 확인하세요.');
       }
     } finally {
       setIsProcessing(false);
@@ -619,6 +622,19 @@ export default function SubscriptionButton({
         />
       ) : null}
 
+      {successMessage ? (
+        <Snackbar
+          open={Boolean(successMessage)}
+          message={successMessage}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          autoHideDuration={2700}
+          onClose={() => setSuccessMessage('')}
+        />
+      ) : null}
+
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
           <h2>{getDialogTitle({ targetType, subscriptionStatus })}</h2>
@@ -627,7 +643,7 @@ export default function SubscriptionButton({
           </button>
           <Stack gap={3}>
             <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시겠어요?
+              {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
             </Typography>
             {errorMessage ? (
               <p className="alert error">
@@ -668,7 +684,7 @@ export default function SubscriptionButton({
           </button>
           <DialogContent>
             <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)}원에 구독하시겠어요?
+              {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
             </Typography>
             {errorMessage ? (
               <p className="alert error">

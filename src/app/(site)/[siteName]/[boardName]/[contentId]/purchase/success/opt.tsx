@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Dialog, DialogContent, DialogTitle, Drawer, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Container from '@/app/(site)/[siteName]/menu';
 import Anchor from '@/components/Anchor';
@@ -23,15 +25,22 @@ export default function Opt() {
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
 
-  const [message, setMessage] = useState('포스팅 구매를 처리하고 있습니다.');
+  const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(true);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function completePurchase() {
       try {
         setErrorMessage('');
+        setIsProcessing(true);
 
-        const paymentKey = normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
+        const paymentKey =
+          normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
         const orderId = normalizeText(searchParams.get('orderId')) || normalizeText(searchParams.get('orderNo'));
         const txId = normalizeText(searchParams.get('txId'));
         const amount = Number(normalizeText(searchParams.get('amount')));
@@ -71,6 +80,8 @@ export default function Opt() {
         } else {
           setErrorMessage('포스팅 구매를 완료하지 못했습니다.');
         }
+      } finally {
+        setIsProcessing(false);
       }
     }
 
@@ -79,11 +90,38 @@ export default function Opt() {
     }
 
     hasRequestedRef.current = true;
+
     void completePurchase();
   }, [searchParams]);
 
   return (
     <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="포스팅 구매" pageFin>
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isProcessing} className="VhiDrawer-bottom">
+          <h2>구매 처리중</h2>
+          <Stack gap={2}>
+            <Typography variant="subtitle2">포스팅 구매를 처리하고 있습니다.</Typography>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>잠시만 기다려 주세요.</span>
+            </p>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isProcessing} maxWidth="xs" className="VhiDialog">
+          <DialogTitle>구매 처리중</DialogTitle>
+          <DialogContent>
+            <Stack gap={2}>
+              <Typography variant="subtitle2">포스팅 구매를 처리하고 있습니다.</Typography>
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>잠시만 기다려 주세요.</span>
+              </p>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <div className="container">
         <div className="content" style={{ maxWidth: 572 }}>
           <h2>포스팅 구매</h2>
@@ -93,12 +131,13 @@ export default function Opt() {
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
-            ) : (
+            ) : message ? (
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
                 <span>{message}</span>
               </p>
-            )}
+            ) : null}
+
             <Anchor type="button" className="button medium submit" href={`/${siteName}/${boardName}/${contentId}`}>
               포스팅으로 이동
             </Anchor>

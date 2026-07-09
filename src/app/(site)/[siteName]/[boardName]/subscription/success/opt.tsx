@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Dialog, DialogContent, DialogTitle, Drawer, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import Anchor from '@/components/Anchor';
 
@@ -34,14 +35,19 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const boardName = normalizeText(params.boardName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState('구독을 처리하고 있습니다.');
+  const [isProcessing, setIsProcessing] = useState(true);
+  const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   useEffect(() => {
     async function completeSubscription() {
       try {
         setErrorMessage('');
+        setIsProcessing(true);
 
         const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
@@ -88,7 +94,7 @@ export default function Opt() {
           setErrorMessage('구독을 완료하지 못했습니다.');
         }
       } finally {
-        setIsLoading(false);
+        setIsProcessing(false);
       }
     }
 
@@ -102,6 +108,32 @@ export default function Opt() {
 
   return (
     <Container pageBack={`/${siteName}/${boardName}`} pageTitle="게시판 구독" pageFin>
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isProcessing} className="VhiDrawer-bottom">
+          <h2>구독 처리중</h2>
+          <Stack gap={2}>
+            <Typography variant="subtitle2">구독을 처리하고 있습니다.</Typography>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>잠시만 기다려 주세요.</span>
+            </p>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isProcessing} maxWidth="xs" className="VhiDialog">
+          <DialogTitle>구독 처리중</DialogTitle>
+          <DialogContent>
+            <Stack gap={2}>
+              <Typography variant="subtitle2">구독을 처리하고 있습니다.</Typography>
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>잠시만 기다려 주세요.</span>
+              </p>
+            </Stack>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <div className="container">
         <div className="content" style={{ maxWidth: 572 }}>
           <h2>게시판 구독</h2>
@@ -111,12 +143,13 @@ export default function Opt() {
                 <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
-            ) : (
+            ) : message ? (
               <p className="alert info">
                 <InfoOutlineRoundedIcon />
                 <span>{message}</span>
               </p>
-            )}
+            ) : null}
+
             <Anchor type="button" className="button medium submit" href={`/${siteName}/${boardName}`}>
               포스팅으로 이동
             </Anchor>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import UserInfo from '@/components/service/community/UserInfo';
@@ -30,53 +31,6 @@ type CommunityInfo = {
 
 type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
 
-type HomeContent = {
-  id: string;
-  slug: string;
-  subject: string;
-  summary: string;
-  content_simple: string | null;
-  edited_at: string;
-  created_at: string;
-  idx: number;
-  board_id: string;
-  site_id: string;
-  user_id: string;
-  author_name: string;
-  is_closed: boolean;
-  closed_by: string | null;
-  closed_at: string | null;
-  closed_message: string | null;
-  closed_by_name: string;
-  prefix_id: string | null;
-  prefix_label: string | null;
-  series_id: string | null;
-  series_label: string | null;
-  is_poll: boolean;
-  comment_count: number;
-  search_title_matched: boolean;
-  search_content_matched: boolean;
-  search_content: string;
-  published_at: string | null;
-  published_status: 'draft' | 'published';
-  post_count: number;
-  is_pin: boolean;
-  board_key: string;
-  board_label: string;
-  thumbnail_image_url: string | null;
-  thumbnail_width: number | null;
-  thumbnail_height: number | null;
-  images:
-    | {
-        path: string;
-        url: string;
-        width: number | null;
-        height: number | null;
-      }[]
-    | null;
-  youtube_id: string | null;
-};
-
 type HomeBoard = {
   board: {
     id: string;
@@ -88,7 +42,7 @@ type HomeBoard = {
     is_active: boolean;
     sort_order: number | null;
   };
-  contents: HomeContent[];
+  contents: PostListItem[];
 };
 
 type Props = {
@@ -104,7 +58,7 @@ function getYoutubeThumbnailUrl(videoId: string, quality: string) {
   return `https://i.ytimg.com/vi_webp/${videoId}/${quality}.webp`;
 }
 
-function YoutubeThumbnailImage({ content }: { content: HomeContent }) {
+function YoutubeThumbnailImage({ content }: { content: PostListItem }) {
   const [qualityIndex, setQualityIndex] = useState(0);
   const thumbnailUrl = content.thumbnail_image_url
     ? content.thumbnail_image_url

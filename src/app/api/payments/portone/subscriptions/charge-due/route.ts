@@ -401,6 +401,15 @@ async function chargeDue(request: Request) {
         subscription,
       });
 
+      if (!subscription.owner_user_id) {
+        console.error('정산 대상 오너 정보가 없습니다.');
+
+        return {
+          ok: false,
+          subscriptionId: subscription.id,
+        };
+      }
+
       await createOwnerPaymentSplits({
         supabaseAdmin,
         paymentId: paymentInsertResult.data.id,
