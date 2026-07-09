@@ -129,8 +129,10 @@ header.header
         height: ds.rem(24)
 
       svg
-        width: ds.rem(24)
         height: ds.rem(24)!important
+
+        &:not([data-className="svg"])
+          width: ds.rem(24)
 
   .menu
     display: flex
