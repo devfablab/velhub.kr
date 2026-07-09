@@ -11,6 +11,7 @@ import {
   type PortOnePayment,
   type PortOnePaymentResponse,
   getPortOnePaymentTransactionNo,
+  getPortOnePayment,
 } from '@/lib/payments/portone';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import {
@@ -34,6 +35,7 @@ type PlanBillingSubscriptionRow = {
   price: number;
   billing_key: string;
   customer_key: string;
+  last_payment_id: string | null;
   next_billing_at: string;
   billing_anchor_day: number;
 };
@@ -69,6 +71,30 @@ function assertPaidPayment(payment: PortOnePayment) {
   if (normalizeText(payment.status).toUpperCase() !== 'PAID') {
     throw new Error('결제가 완료되지 않았습니다.');
   }
+}
+
+async function getLastPaymentRawStatus({
+  supabaseAdmin,
+  lastPaymentId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  lastPaymentId: string;
+}) {
+  const paymentResult = await supabaseAdmin.from('payments').select('raw_data').eq('id', lastPaymentId).maybeSingle();
+
+  if (paymentResult.error) {
+    throw new Error('이전 결제 정보를 확인하지 못했습니다.');
+  }
+
+  const rawData = paymentResult.data?.raw_data;
+
+  if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
+    return '';
+  }
+
+  const status = (rawData as Record<string, unknown>).status;
+
+  return typeof status === 'string' ? normalizeText(status).toUpperCase() : '';
 }
 
 async function createFailedPayment({
@@ -146,13 +172,12 @@ async function chargePlanBillingSubscription({
 }) {
   const orderNo = createPaymentOrderNo('PLAN');
   const paymentKey = createPortOnePaymentKey(orderNo);
-
   let payment: PortOnePayment;
 
   try {
     const billingKey = decrypt(subscription.billing_key);
 
-    const paymentResponse = await requestPortOneBillingPayment({
+    await requestPortOneBillingPayment({
       paymentId: paymentKey,
       billingKey,
       customerId: subscription.customer_key,
@@ -160,7 +185,21 @@ async function chargePlanBillingSubscription({
       orderName: '데브허브 사이트 요금제 결제',
     });
 
+    const paymentResponse = await getPortOnePayment(paymentKey);
+
     payment = getPaymentFromResponse(paymentResponse);
+
+    if (subscription.last_payment_id) {
+      const lastPaymentRawStatus = await getLastPaymentRawStatus({
+        supabaseAdmin,
+        lastPaymentId: subscription.last_payment_id,
+      });
+
+      if (lastPaymentRawStatus !== 'PAID') {
+        throw new Error('이전 결제 상태를 확인하지 못했습니다.');
+      }
+    }
+
     assertPaidPayment(payment);
   } catch (unknownError) {
     const failureCode = unknownError instanceof PortOneApiError ? unknownError.code : null;
@@ -282,12 +321,10 @@ export async function GET(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const requestUrl = new URL(request.url);
-    const siteId = requestUrl.searchParams.get('siteId')?.trim() ?? '';
     const now = new Date();
     const nowIso = now.toISOString();
 
-    const baseSubscriptionQuery = supabaseAdmin
+    const subscriptionsResult = await supabaseAdmin
       .from('subscriptions')
       .select(
         [
@@ -297,6 +334,7 @@ export async function GET(request: Request) {
           'price',
           'billing_key',
           'customer_key',
+          'last_payment_id',
           'next_billing_at',
           'billing_anchor_day',
         ].join(', '),
@@ -310,9 +348,6 @@ export async function GET(request: Request) {
       .order('next_billing_at', { ascending: true })
       .limit(20);
 
-    const subscriptionQuery = siteId ? baseSubscriptionQuery.eq('target_id', siteId) : baseSubscriptionQuery;
-    const subscriptionsResult = await subscriptionQuery;
-
     if (subscriptionsResult.error) {
       console.error(subscriptionsResult.error);
 
@@ -320,6 +355,7 @@ export async function GET(request: Request) {
     }
 
     const subscriptions = (subscriptionsResult.data ?? []) as unknown as PlanBillingSubscriptionRow[];
+
     const results = await Promise.all(
       subscriptions.map((subscription) =>
         chargePlanBillingSubscription({

@@ -9,7 +9,7 @@ type ResumePlanBillingBody = {
 
 type SubscriptionRow = {
   id: string;
-  status: 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired';
+  status: 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
   current_period_end: string;
   next_billing_at: string | null;
   canceled_at: string | null;
@@ -41,7 +41,9 @@ export async function POST(request: Request) {
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
       .eq('target_id', siteId)
-      .in('status', ['trialing', 'active', 'past_due'])
+      .eq('status', 'scheduled_cancel')
+      .not('canceled_at', 'is', null)
+      .is('expired_at', null)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
     const subscriptionUpdateResult = await supabaseAdmin
       .from('subscriptions')
       .update({
+        status: 'active',
         canceled_at: null,
         next_billing_at: subscription.current_period_end,
         updated_at: nowText,

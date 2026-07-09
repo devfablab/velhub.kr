@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
@@ -15,6 +14,7 @@ import {
   getPortOneStoreId,
   requestPortOneBillingPayment,
   assertPortOnePaidPayment,
+  getPortOnePayment,
 } from '@/lib/payments/portone';
 import {
   PAYMENT_METHOD,
@@ -114,13 +114,16 @@ async function requestPortOneBillingPaymentCompat({
   orderName: string;
 }) {
   const paymentKey = createPortOnePaymentKey(orderId);
-  const paymentResponse = await requestPortOneBillingPayment({
+
+  await requestPortOneBillingPayment({
     paymentId: paymentKey,
     billingKey,
     customerId: customerKey,
     amount,
     orderName,
   });
+
+  const paymentResponse = await getPortOnePayment(paymentKey);
   const payment = getPortOnePaymentFromResponse(paymentResponse);
 
   assertPortOnePaidPayment(payment);

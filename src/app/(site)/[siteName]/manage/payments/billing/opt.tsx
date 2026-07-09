@@ -33,6 +33,7 @@ import styles from '@/app/manage.module.sass';
 type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
 type PaymentStatus = 'paid' | 'failed' | 'partially_refunded' | 'refunded';
 type BillingDialogType = 'cancel' | 'refund' | 'retry' | null;
+type PlanBillingCancelMode = 'cancel' | 'refund';
 
 type PlanBillingResponse = {
   site?: {
@@ -487,7 +488,7 @@ export default function Opt() {
     }
   }
 
-  async function handleCancelPlanBilling() {
+  async function handleCancelPlanBilling(mode: PlanBillingCancelMode) {
     try {
       setIsProcessing(true);
       setErrorMessage('');
@@ -505,6 +506,7 @@ export default function Opt() {
         },
         body: JSON.stringify({
           siteId: billingData.site.id,
+          mode,
         }),
       });
 
@@ -637,9 +639,15 @@ export default function Opt() {
   }
 
   async function handleConfirmBillingDialog() {
-    if (billingDialogType === 'cancel' || billingDialogType === 'refund') {
+    if (billingDialogType === 'cancel') {
       setBillingDialogType(null);
-      await handleCancelPlanBilling();
+      await handleCancelPlanBilling('cancel');
+      return;
+    }
+
+    if (billingDialogType === 'refund') {
+      setBillingDialogType(null);
+      await handleCancelPlanBilling('refund');
       return;
     }
 
@@ -710,15 +718,27 @@ export default function Opt() {
     subscription.status !== 'canceled' &&
     subscription.status !== 'expired',
   );
+  const subscriptionPeriodEndTime = subscription?.current_period_end
+    ? new Date(subscription.current_period_end).getTime()
+    : null;
+  const hasRemainingSubscriptionPeriod =
+    subscriptionPeriodEndTime !== null &&
+    !Number.isNaN(subscriptionPeriodEndTime) &&
+    subscriptionPeriodEndTime > Date.now();
   const canResumeSubscription = Boolean(
     subscription &&
     subscription.canceled_at &&
     !subscription.expired_at &&
+    hasRemainingSubscriptionPeriod &&
     subscription.status !== 'canceled' &&
     subscription.status !== 'expired',
   );
-  const shouldShowBillingAuthButton =
-    !subscription || subscription.status === 'canceled' || subscription.status === 'expired';
+  const shouldShowBillingAuthButton = Boolean(
+    !subscription ||
+    subscription.status === 'canceled' ||
+    subscription.status === 'expired' ||
+    (subscription.canceled_at && !hasRemainingSubscriptionPeriod),
+  );
 
   return (
     <Stack gap={3}>

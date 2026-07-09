@@ -8,11 +8,15 @@ import {
 } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
+  assertPaidPayment,
+  assertPortOnePaidPayment,
   createPortOnePaymentKey,
   getCurrentPortOneProvider,
   getPortOneKpnSubscriptionChannelKey,
   getPortOnePaidAmount,
   getPortOnePaidAt,
+  getPortOnePayment,
+  getPortOnePaymentFromResponse,
   getPortOnePaymentMethod,
   getPortOnePaymentTransactionNo,
   getPortOneStoreId,
@@ -127,20 +131,6 @@ function isScheduledCancelSubscription(subscription: SubscriptionRow | null, now
 
 function createRefundableUntil(startedAt: Date) {
   return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
-}
-
-function getPaymentFromResponse(paymentResponse: PortOnePaymentResponse) {
-  if (paymentResponse.payment) {
-    return paymentResponse.payment;
-  }
-
-  return paymentResponse as PortOnePayment;
-}
-
-function assertPaidPayment(payment: PortOnePayment) {
-  if (normalizeText(payment.status).toUpperCase() !== 'PAID') {
-    throw new Error('결제가 완료되지 않았습니다.');
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -396,16 +386,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const paymentResponse = await requestPortOneBillingPayment({
-      paymentId: createPortOnePaymentKey(orderNo),
+    const paymentKey = createPortOnePaymentKey(orderNo);
+
+    await requestPortOneBillingPayment({
+      paymentId: paymentKey,
       billingKey: billingMethod.billing_key,
       customerId: billingMethod.customer_key,
       amount: plan.price,
       orderName,
     });
-    const payment = getPaymentFromResponse(paymentResponse);
 
-    assertPaidPayment(payment);
+    const paymentResponse = await getPortOnePayment(paymentKey);
+    const payment = getPortOnePaymentFromResponse(paymentResponse);
+
+    assertPortOnePaidPayment(payment);
 
     const billingAnchorDay = getBillingAnchorDay(now);
     const billingPeriod = createNextMonthlyBillingPeriod({
@@ -417,7 +411,7 @@ export async function POST(request: NextRequest) {
       .from('payments')
       .insert({
         provider: getCurrentPortOneProvider(),
-        payment_key: createPortOnePaymentKey(orderNo),
+        payment_key: paymentKey,
         order_no: orderNo,
         tx_no: null,
         transaction_no: getPortOnePaymentTransactionNo(payment),

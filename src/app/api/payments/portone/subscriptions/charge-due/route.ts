@@ -2,7 +2,18 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createOwnerPaymentSplits } from '@/lib/payments/splits';
-import { getCurrentPortOneProvider, createPortOnePaymentKey, getPortOnePaidAmount, getPortOnePaidAt, getPortOnePaymentFromResponse, getPortOnePaymentMethod, getPortOnePaymentTransactionNo, requestPortOneBillingPayment, assertPortOnePaidPayment } from '@/lib/payments/portone';
+import {
+  PortOneApiError,
+  assertPortOnePaidPayment,
+  createPortOnePaymentKey,
+  getCurrentPortOneProvider,
+  getPortOnePaidAmount,
+  getPortOnePaidAt,
+  getPortOnePaymentFromResponse,
+  getPortOnePaymentTransactionNo,
+  requestPortOneBillingPayment,
+  type PortOnePayment,
+} from '@/lib/payments/portone';
 import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
@@ -18,80 +29,41 @@ type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 type SubscriptionRow = {
   id: string;
-  site_id: string;
   subscriber_user_id: string;
   subscription_type: string;
   target_type: string;
   target_id: string;
   owner_user_id: string | null;
   price: number;
-  status: string;
-  billing_key: string | null;
-  customer_key: string | null;
-  current_period_end: string | null;
-  next_billing_at: string | null;
-  billing_anchor_day: number | null;
+  billing_key: string;
+  customer_key: string;
+  next_billing_at: string;
+  billing_anchor_day: number;
 };
 
-type PortOneBillingPaymentResult = {
-  paymentKey: string;
-  orderId: string;
-  orderName: string;
-  method: string;
-  totalAmount: number;
-  status: string;
-  approvedAt: string;
-  currency?: string;
-  transactionId?: string | null;
-  rawData?: unknown;
+type BoardRow = {
+  id: string;
+  site_id: string;
+};
+
+type SeriesRow = {
+  id: string;
+  site_id: string;
+  board_id: string;
+};
+
+type SplitTarget = {
+  siteId: string;
+  boardId: string | null;
+  seriesId: string | null;
 };
 
 type ChargeDueResult = {
   subscriptionId: string;
-  status: 'paid' | 'past_due' | 'skipped';
+  status: 'paid' | 'past_due' | 'skipped' | 'internal_error';
   paymentId?: string;
   message?: string;
 };
-
-
-async function requestPortOneBillingPaymentCompat({
-  billingKey,
-  customerKey,
-  amount,
-  orderId,
-  orderName,
-}: {
-  billingKey: string;
-  customerKey: string;
-  amount: number;
-  orderId: string;
-  orderName: string;
-}) {
-  const paymentKey = createPortOnePaymentKey(orderId);
-  const paymentResponse = await requestPortOneBillingPayment({
-    paymentId: paymentKey,
-    billingKey,
-    customerId: customerKey,
-    amount,
-    orderName,
-  });
-  const payment = getPortOnePaymentFromResponse(paymentResponse);
-
-  assertPortOnePaidPayment(payment);
-
-  return {
-    paymentKey,
-    orderId,
-    orderName: payment.orderName ?? orderName,
-    method: getPortOnePaymentMethod(payment),
-    totalAmount: getPortOnePaidAmount(payment) || amount,
-    status: payment.status,
-    approvedAt: getPortOnePaidAt(payment),
-    currency: payment.amount?.currency ?? 'KRW',
-    transactionId: getPortOnePaymentTransactionNo(payment),
-    rawData: payment,
-  };
-}
 
 function isTestMode() {
   return process.env.NEXT_PUBLIC_APP_ENV === 'test';
@@ -119,26 +91,10 @@ function createOrderNo(subscriptionType: string) {
     return createPaymentOrderNo('SUBSCRIPTION_BOARD');
   }
 
-  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
-    return createPaymentOrderNo('SUBSCRIPTION_SERIES');
-  }
-
-  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
-    return createPaymentOrderNo('MEMBERSHIP_BLOG');
-  }
-
-  return createPaymentOrderNo('PLAN');
+  return createPaymentOrderNo('SUBSCRIPTION_SERIES');
 }
 
 function getPaymentType(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.PLAN_BILLING) {
-    return PAYMENT_TYPE.PLAN_BILLING;
-  }
-
-  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
-    return PAYMENT_TYPE.MEMBERSHIP_BLOG;
-  }
-
   if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
     return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
   }
@@ -151,14 +107,6 @@ function getPaymentType(subscriptionType: string) {
 }
 
 function getOrderName(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.PLAN_BILLING) {
-    return '데브허브 사이트 요금제';
-  }
-
-  if (subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG) {
-    return '데브허브 블로그 멤버십';
-  }
-
   if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
     return '데브허브 게시판 구독';
   }
@@ -170,21 +118,62 @@ function getOrderName(subscriptionType: string) {
   return '데브허브 구독';
 }
 
-function isBillableTargetType(targetType: string) {
-  return (
-    targetType === PAYMENT_TARGET_TYPE.PLAN ||
-    targetType === PAYMENT_TARGET_TYPE.SITE ||
-    targetType === PAYMENT_TARGET_TYPE.BOARD ||
-    targetType === PAYMENT_TARGET_TYPE.SERIES
-  );
-}
+async function getSplitTarget({
+  supabaseAdmin,
+  subscription,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  subscription: SubscriptionRow;
+}): Promise<SplitTarget> {
+  if (subscription.target_type === PAYMENT_TARGET_TYPE.BOARD) {
+    const boardResult = await supabaseAdmin
+      .from('boards')
+      .select('id, site_id')
+      .eq('id', subscription.target_id)
+      .maybeSingle();
 
-function shouldCreateOwnerSplits(subscriptionType: string) {
-  return (
-    subscriptionType === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG ||
-    subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD ||
-    subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES
-  );
+    if (boardResult.error) {
+      throw new Error('게시판 정보를 확인하지 못했습니다.');
+    }
+
+    if (!boardResult.data) {
+      throw new Error('게시판 정보를 찾을 수 없습니다.');
+    }
+
+    const board = boardResult.data as BoardRow;
+
+    return {
+      siteId: board.site_id,
+      boardId: board.id,
+      seriesId: null,
+    };
+  }
+
+  if (subscription.target_type === PAYMENT_TARGET_TYPE.SERIES) {
+    const seriesResult = await supabaseAdmin
+      .from('board_series')
+      .select('id, site_id, board_id')
+      .eq('id', subscription.target_id)
+      .maybeSingle();
+
+    if (seriesResult.error) {
+      throw new Error('연재 정보를 확인하지 못했습니다.');
+    }
+
+    if (!seriesResult.data) {
+      throw new Error('연재 정보를 찾을 수 없습니다.');
+    }
+
+    const series = seriesResult.data as SeriesRow;
+
+    return {
+      siteId: series.site_id,
+      boardId: series.board_id,
+      seriesId: series.id,
+    };
+  }
+
+  throw new Error('구독 대상 정보를 확인할 수 없습니다.');
 }
 
 async function markPastDue({
@@ -192,15 +181,19 @@ async function markPastDue({
   subscription,
   orderNo,
   paymentType,
+  failureCode,
   message,
+  rawData,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
   orderNo: string;
   paymentType: string;
+  failureCode: string | null;
   message: string;
+  rawData: unknown;
 }) {
-  const nowText = new Date().toISOString();
+  const nowIso = new Date().toISOString();
 
   const paymentInsertResult = await supabaseAdmin.from('payments').insert({
     provider: getCurrentPortOneProvider(),
@@ -211,22 +204,20 @@ async function markPastDue({
     refunded_amount: 0,
     currency: 'KRW',
     status: PAYMENT_STATUS.FAILED,
-    payment_method: null,
+    payment_method: PAYMENT_METHOD.CARD,
     payment_type: paymentType,
     target_type: subscription.target_type,
     target_id: subscription.target_id,
     post_payment: null,
     subscription_id: subscription.id,
-    failure_code: null,
+    failure_code: failureCode,
     failure_message: message,
     failure_stage: 'subscription_charge_due',
     refund_policy: REFUND_POLICY.SEVEN_DAYS,
     refundable_until: null,
     approved_at: null,
     refunded_at: null,
-    raw_data: {
-      message,
-    },
+    raw_data: rawData,
   });
 
   if (paymentInsertResult.error) {
@@ -237,8 +228,8 @@ async function markPastDue({
     .from('subscriptions')
     .update({
       status: SUBSCRIPTION_STATUS.PAST_DUE,
-      past_due_started_at: nowText,
-      updated_at: nowText,
+      past_due_started_at: nowIso,
+      updated_at: nowIso,
     })
     .eq('id', subscription.id);
 
@@ -247,43 +238,65 @@ async function markPastDue({
   }
 }
 
+async function requestDuePayment({ subscription, orderNo }: { subscription: SubscriptionRow; orderNo: string }) {
+  const paymentKey = createPortOnePaymentKey(orderNo);
+  const billingKey = decrypt(subscription.billing_key);
+
+  const paymentResponse = await requestPortOneBillingPayment({
+    paymentId: paymentKey,
+    billingKey,
+    customerId: subscription.customer_key,
+    amount: subscription.price,
+    orderName: getOrderName(subscription.subscription_type),
+  });
+
+  const payment = getPortOnePaymentFromResponse(paymentResponse);
+  assertPortOnePaidPayment(payment);
+
+  return {
+    paymentKey,
+    payment,
+  };
+}
+
 async function chargeDue(request: Request) {
   if (!verifyTaskRequest(request)) {
     return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const now = new Date();
-  const nowText = now.toISOString();
+  const nowIso = new Date().toISOString();
 
   const subscriptionsResult = await supabaseAdmin
     .from('subscriptions')
     .select(
       [
         'id',
-        'site_id',
         'subscriber_user_id',
         'subscription_type',
         'target_type',
         'target_id',
         'owner_user_id',
         'price',
-        'status',
         'billing_key',
         'customer_key',
-        'current_period_end',
         'next_billing_at',
         'billing_anchor_day',
       ].join(', '),
     )
+    .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
+    .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
     .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.TRIALING])
     .is('canceled_at', null)
     .is('expired_at', null)
-    .lte('next_billing_at', nowText);
+    .not('billing_key', 'is', null)
+    .not('customer_key', 'is', null)
+    .not('next_billing_at', 'is', null)
+    .not('billing_anchor_day', 'is', null)
+    .lte('next_billing_at', nowIso);
 
   if (subscriptionsResult.error) {
     console.error(subscriptionsResult.error);
-
     return Response.json({ error: '결제 대상 구독을 확인하지 못했습니다.' }, { status: 500 });
   }
 
@@ -293,7 +306,7 @@ async function chargeDue(request: Request) {
   for (const subscription of subscriptions) {
     const paymentType = getPaymentType(subscription.subscription_type);
 
-    if (!paymentType || !isBillableTargetType(subscription.target_type)) {
+    if (!paymentType) {
       results.push({
         subscriptionId: subscription.id,
         status: 'skipped',
@@ -302,142 +315,33 @@ async function chargeDue(request: Request) {
       continue;
     }
 
-    if (!subscription.billing_key || !subscription.customer_key) {
-      results.push({
-        subscriptionId: subscription.id,
-        status: 'skipped',
-        message: '빌링키 또는 customerKey가 없습니다.',
-      });
-      continue;
-    }
-
-    if (!subscription.next_billing_at || !subscription.billing_anchor_day) {
-      results.push({
-        subscriptionId: subscription.id,
-        status: 'skipped',
-        message: '다음 결제일 또는 결제 기준일이 없습니다.',
-      });
-      continue;
-    }
-
     const orderNo = createOrderNo(subscription.subscription_type);
 
+    let paymentKey = '';
+    let payment: PortOnePayment;
+
     try {
-      const decryptedBillingKey = decrypt(subscription.billing_key);
-
-      const portOnePaymentResult = (await requestPortOneBillingPaymentCompat({
-        billingKey: decryptedBillingKey,
-        customerKey: subscription.customer_key,
-        amount: subscription.price,
-        orderId: orderNo,
-        orderName: getOrderName(subscription.subscription_type),
-      })) as PortOneBillingPaymentResult;
-
-      const paymentInsertResult = await supabaseAdmin
-        .from('payments')
-        .insert({
-          provider: getCurrentPortOneProvider(),
-          payment_key: portOnePaymentResult.paymentKey,
-        tx_no: null,
-        transaction_no: portOnePaymentResult.transactionId ?? null,
-          order_no: orderNo,
-          buyer_user_id: subscription.subscriber_user_id,
-          amount: subscription.price,
-          refunded_amount: 0,
-          currency: 'KRW',
-          status: PAYMENT_STATUS.PAID,
-          payment_method: PAYMENT_METHOD.CARD,
-          payment_type: paymentType,
-          target_type: subscription.target_type,
-          target_id: subscription.target_id,
-          post_payment: null,
-          subscription_id: subscription.id,
-          failure_code: null,
-          failure_message: null,
-          failure_stage: null,
-          refund_policy: REFUND_POLICY.SEVEN_DAYS,
-          refundable_until: null,
-          approved_at: portOnePaymentResult.approvedAt,
-          refunded_at: null,
-          raw_data: portOnePaymentResult.rawData ?? portOnePaymentResult,
-        })
-        .select('id')
-        .single();
-
-      if (paymentInsertResult.error) {
-        console.error(paymentInsertResult.error);
-
-        await markPastDue({
-          supabaseAdmin,
-          subscription,
-          orderNo,
-          paymentType,
-          message: '결제는 승인되었으나 결제 정보 저장에 실패했습니다.',
-        });
-
-        results.push({
-          subscriptionId: subscription.id,
-          status: 'past_due',
-          message: '결제는 승인되었으나 결제 정보 저장에 실패했습니다.',
-        });
-        continue;
-      }
-
-      if (shouldCreateOwnerSplits(subscription.subscription_type) && subscription.owner_user_id) {
-        await createOwnerPaymentSplits({
-          supabaseAdmin,
-          paymentId: paymentInsertResult.data.id,
-          siteId: subscription.site_id,
-          siteOwnerUserId: subscription.owner_user_id,
-          amount: subscription.price,
-        });
-      }
-
-      const nextBillingPeriod = createNextMonthlyBillingPeriod({
-        currentPeriodEnd: subscription.next_billing_at,
-        billingAnchorDay: subscription.billing_anchor_day,
+      const duePayment = await requestDuePayment({
+        subscription,
+        orderNo,
       });
 
-      const subscriptionUpdateResult = await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          status: SUBSCRIPTION_STATUS.ACTIVE,
-          last_payment_id: paymentInsertResult.data.id,
-          current_period_start: nextBillingPeriod.currentPeriodStart,
-          current_period_end: nextBillingPeriod.currentPeriodEnd,
-          next_billing_at: nextBillingPeriod.nextBillingAt,
-          past_due_started_at: null,
-          updated_at: nowText,
-        })
-        .eq('id', subscription.id);
-
-      if (subscriptionUpdateResult.error) {
-        console.error(subscriptionUpdateResult.error);
-
-        results.push({
-          subscriptionId: subscription.id,
-          status: 'paid',
-          paymentId: paymentInsertResult.data.id,
-          message: '결제는 완료되었으나 구독 기간 갱신에 실패했습니다.',
-        });
-        continue;
-      }
-
-      results.push({
-        subscriptionId: subscription.id,
-        status: 'paid',
-        paymentId: paymentInsertResult.data.id,
-      });
+      paymentKey = duePayment.paymentKey;
+      payment = duePayment.payment;
     } catch (unknownError) {
       const message =
         unknownError instanceof Error ? unknownError.message || '정기결제에 실패했습니다.' : '정기결제에 실패했습니다.';
+      const failureCode = unknownError instanceof PortOneApiError ? unknownError.code : null;
+      const rawData = unknownError instanceof PortOneApiError ? unknownError.rawData : { message };
 
       await markPastDue({
         supabaseAdmin,
         subscription,
         orderNo,
         paymentType,
+        failureCode,
         message,
+        rawData,
       });
 
       results.push({
@@ -445,7 +349,112 @@ async function chargeDue(request: Request) {
         status: 'past_due',
         message,
       });
+      continue;
     }
+
+    const paidAmount = getPortOnePaidAmount(payment) || subscription.price;
+
+    const paymentInsertResult = await supabaseAdmin
+      .from('payments')
+      .insert({
+        provider: getCurrentPortOneProvider(),
+        payment_key: paymentKey,
+        tx_no: null,
+        transaction_no: getPortOnePaymentTransactionNo(payment),
+        order_no: orderNo,
+        buyer_user_id: subscription.subscriber_user_id,
+        amount: paidAmount,
+        refunded_amount: 0,
+        currency: 'KRW',
+        status: PAYMENT_STATUS.PAID,
+        payment_method: PAYMENT_METHOD.CARD,
+        payment_type: paymentType,
+        target_type: subscription.target_type,
+        target_id: subscription.target_id,
+        post_payment: null,
+        subscription_id: subscription.id,
+        failure_code: null,
+        failure_message: null,
+        failure_stage: null,
+        refund_policy: REFUND_POLICY.SEVEN_DAYS,
+        refundable_until: null,
+        approved_at: getPortOnePaidAt(payment),
+        refunded_at: null,
+        raw_data: payment,
+      })
+      .select('id')
+      .single();
+
+    if (paymentInsertResult.error) {
+      console.error(paymentInsertResult.error);
+      results.push({
+        subscriptionId: subscription.id,
+        status: 'internal_error',
+        message: '결제는 승인되었으나 결제 정보 저장에 실패했습니다.',
+      });
+      continue;
+    }
+
+    try {
+      const splitTarget = await getSplitTarget({
+        supabaseAdmin,
+        subscription,
+      });
+
+      await createOwnerPaymentSplits({
+        supabaseAdmin,
+        paymentId: paymentInsertResult.data.id,
+        siteId: splitTarget.siteId,
+        siteOwnerUserId: subscription.owner_user_id,
+        amount: paidAmount,
+        boardId: splitTarget.boardId,
+        seriesId: splitTarget.seriesId,
+      });
+    } catch (unknownError) {
+      console.error(unknownError);
+      results.push({
+        subscriptionId: subscription.id,
+        status: 'internal_error',
+        paymentId: paymentInsertResult.data.id,
+        message: '결제는 완료되었으나 결제 분배 내역 저장에 실패했습니다.',
+      });
+      continue;
+    }
+
+    const nextBillingPeriod = createNextMonthlyBillingPeriod({
+      currentPeriodEnd: subscription.next_billing_at,
+      billingAnchorDay: subscription.billing_anchor_day,
+    });
+
+    const subscriptionUpdateResult = await supabaseAdmin
+      .from('subscriptions')
+      .update({
+        status: SUBSCRIPTION_STATUS.ACTIVE,
+        last_payment_id: paymentInsertResult.data.id,
+        current_period_start: nextBillingPeriod.currentPeriodStart,
+        current_period_end: nextBillingPeriod.currentPeriodEnd,
+        next_billing_at: nextBillingPeriod.nextBillingAt,
+        past_due_started_at: null,
+        updated_at: nowIso,
+      })
+      .eq('id', subscription.id);
+
+    if (subscriptionUpdateResult.error) {
+      console.error(subscriptionUpdateResult.error);
+      results.push({
+        subscriptionId: subscription.id,
+        status: 'internal_error',
+        paymentId: paymentInsertResult.data.id,
+        message: '결제는 완료되었으나 구독 기간 갱신에 실패했습니다.',
+      });
+      continue;
+    }
+
+    results.push({
+      subscriptionId: subscription.id,
+      status: 'paid',
+      paymentId: paymentInsertResult.data.id,
+    });
   }
 
   return Response.json({
@@ -453,6 +462,7 @@ async function chargeDue(request: Request) {
     chargedCount: results.filter((result) => result.status === 'paid').length,
     pastDueCount: results.filter((result) => result.status === 'past_due').length,
     skippedCount: results.filter((result) => result.status === 'skipped').length,
+    internalErrorCount: results.filter((result) => result.status === 'internal_error').length,
     results,
   });
 }

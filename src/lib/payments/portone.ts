@@ -1,3 +1,5 @@
+import { normalizeText } from '../utils';
+
 const PORTONE_PROVIDER = {
   KPN: 'kpn',
   INICIS: 'inicis',
@@ -42,8 +44,8 @@ type PortOneBillingKeyPaymentParams = {
 };
 
 export type PortOnePayment = {
-  status: string;
-  id: string;
+  status?: string;
+  id?: string;
   pgTxId?: string;
   transactionId?: string;
   paymentId?: string;
@@ -467,4 +469,18 @@ export function getPortOnePaymentMethod(payment: PortOnePayment) {
   }
 
   return 'card';
+}
+
+function getRawDataStatus(payment: PortOnePayment) {
+  const rawData = payment as Record<string, unknown>;
+  const rawStatus = rawData.status;
+  console.log('rawStatus: ', rawStatus);
+
+  return typeof rawStatus === 'string' ? normalizeText(rawStatus).toUpperCase() : '';
+}
+
+export function assertPaidPayment(payment: PortOnePayment) {
+  if (getRawDataStatus(payment) !== 'PAID') {
+    throw new Error('결제가 완료되지 않았습니다.');
+  }
 }

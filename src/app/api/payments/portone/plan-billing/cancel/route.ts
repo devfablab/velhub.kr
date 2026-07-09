@@ -9,6 +9,7 @@ type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 type CancelPlanBillingBody = {
   siteId?: string;
+  mode?: 'cancel' | 'refund';
 };
 
 type SubscriptionRow = {
@@ -82,6 +83,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CancelPlanBillingBody;
     const siteId = normalizeText(body.siteId);
+    const mode = body.mode === 'refund' ? 'refund' : 'cancel';
 
     if (!siteId) {
       return Response.json({ error: 'siteId가 유효하지 않습니다.' }, { status: 400 });
@@ -149,6 +151,32 @@ export async function POST(request: Request) {
       subscription,
       siteId,
     });
+
+    if (mode === 'cancel') {
+      const subscriptionUpdateResult = await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          status: 'scheduled_cancel',
+          next_billing_at: null,
+          canceled_at: nowText,
+          expired_at: null,
+          updated_at: nowText,
+        })
+        .eq('id', subscription.id);
+
+      if (subscriptionUpdateResult.error) {
+        console.error(subscriptionUpdateResult.error);
+
+        return Response.json({ error: '요금제 구독 취소를 예약하지 못했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        mode: 'cancel_scheduled',
+        refundAmount: 0,
+        retainedAmount: payment?.amount ?? subscription.price,
+      });
+    }
 
     if (!payment) {
       const subscriptionUpdateResult = await supabaseAdmin
