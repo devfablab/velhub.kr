@@ -242,7 +242,7 @@ export default function UserInfo() {
       <div className={styles.info}>
         <div className={styles['info-detail']}>
           <em>{userInfo.activityName}</em>
-          <cite>{userInfo.nickname}</cite>
+          {userInfo.activityName !== userInfo.nickname ? <cite>{userInfo.nickname}</cite> : null}
           <span>{formatDate(userInfo.joinedAt)} 가입</span>
         </div>
         <div className={styles.button}>
