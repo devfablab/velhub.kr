@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
-import Anchor from '@/components/Anchor';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/header.module.sass';
 
 type HeaderSiteResponse = {
@@ -23,10 +23,6 @@ type PaymentNavItem = {
   href: string;
   startsWith?: boolean;
 };
-
-function isStaffRole(role: string | null) {
-  return role === 'owner' || role === 'manager';
-}
 
 function isCurrentPath(pathname: string, item: PaymentNavItem) {
   if (item.startsWith) {
@@ -61,12 +57,6 @@ export default function NavPayments() {
       const result = (await response.json()) as HeaderSiteResponse | { error?: string };
 
       if (!response.ok || !('siteRole' in result)) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      if (!isStaffRole(result.siteRole)) {
         setIsReady(true);
         setIsAllowed(false);
         return;
