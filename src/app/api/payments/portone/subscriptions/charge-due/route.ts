@@ -259,7 +259,7 @@ async function requestDuePayment({ subscription, orderNo }: { subscription: Subs
   };
 }
 
-async function chargeDue(request: Request) {
+async function chargeDue(request: Request): Promise<Response> {
   if (!verifyTaskRequest(request)) {
     return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
   }
@@ -404,10 +404,10 @@ async function chargeDue(request: Request) {
       if (!subscription.owner_user_id) {
         console.error('정산 대상 오너 정보가 없습니다.');
 
-        return {
+        return Response.json({
           ok: false,
           subscriptionId: subscription.id,
-        };
+        });
       }
 
       await createOwnerPaymentSplits({
@@ -476,10 +476,10 @@ async function chargeDue(request: Request) {
   });
 }
 
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<Response> {
   return chargeDue(request);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<Response> {
   return chargeDue(request);
 }
