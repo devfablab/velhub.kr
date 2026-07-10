@@ -861,6 +861,46 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '글 작성에 실패했습니다.' }, { status: 500 });
     }
 
+    if (action === 'publish' || action === 'unknown') {
+      const stigmaResult = await supabaseAdmin
+        .from('stigmas')
+        .select('id')
+        .eq('user_id', session.authUserId)
+        .maybeSingle();
+
+      if (stigmaResult.error) {
+        console.error(stigmaResult.error);
+      }
+
+      const stigmaId = stigmaResult.data?.id;
+
+      if (stigmaId) {
+        const rhizomeStigmaResult = await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id, post_count')
+          .eq('site_id', rhizomeData.id)
+          .eq('user_id', stigmaId)
+          .maybeSingle();
+
+        if (rhizomeStigmaResult.error) {
+          console.error(rhizomeStigmaResult.error);
+        }
+
+        if (rhizomeStigmaResult.data) {
+          const rhizomeStigmaUpdateResult = await supabaseAdmin
+            .from('rhizome_stigmas')
+            .update({
+              post_count: Number(rhizomeStigmaResult.data.post_count ?? 0) + 1,
+            })
+            .eq('id', rhizomeStigmaResult.data.id);
+
+          if (rhizomeStigmaUpdateResult.error) {
+            console.error(rhizomeStigmaUpdateResult.error);
+          }
+        }
+      }
+    }
+
     const postCountResult = await supabaseAdmin
       .from('posts')
       .select('*', { count: 'exact', head: true })
