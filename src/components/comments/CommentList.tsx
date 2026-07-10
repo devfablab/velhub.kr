@@ -30,6 +30,7 @@ type CommentsResponse = {
   actions?: {
     canWrite?: boolean;
     canManageComment?: boolean;
+    canWriteReason?: 'guest' | 'policy' | 'hidden' | null;
   };
   error?: string;
 };
@@ -94,6 +95,7 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
   const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(null);
   const [canWrite, setCanWrite] = useState(false);
+  const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(null);
   const [canManageComment, setCanManageComment] = useState(false);
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +121,7 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
       setMyPollChoice(result.myPollChoice ?? null);
       setCanWrite(result.actions?.canWrite === true);
+      setCanWriteReason(result.actions?.canWriteReason ?? null);
       setCanManageComment(result.actions?.canManageComment === true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -378,7 +381,7 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
         />
       ) : null}
 
-      {isCommentEnabled && !canWrite ? (
+      {isCommentEnabled && !canWrite && canWriteReason === 'guest' ? (
         <div className={styles.textarea}>
           <Avatar
             src="/broken-image.jpg"
@@ -386,6 +389,20 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
             sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
           />
           <Anchor href={`/auth/sign-in`}>로그인 하시면 댓글을 다실 수 있어요</Anchor>
+          <div className={styles.options}>
+            <div className={styles.submit}>등록</div>
+          </div>
+        </div>
+      ) : null}
+
+      {isCommentEnabled && !canWrite && canWriteReason === 'policy' ? (
+        <div className={styles.textarea}>
+          <Avatar
+            src="/broken-image.jpg"
+            alt=""
+            sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }}
+          />
+          <p>댓글 작성 요건에 충족하지 않습니다. 매니저에게 문의하세요.</p>
           <div className={styles.options}>
             <div className={styles.submit}>등록</div>
           </div>

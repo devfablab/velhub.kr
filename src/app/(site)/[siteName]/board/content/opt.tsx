@@ -35,7 +35,7 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import CommentSection from '@/components/comments/CommentList';
+import Comment from '@/components/comments/Comment';
 import LinkPreview from '@/components/service/LinkPreview';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -1335,7 +1335,7 @@ export default function Opt({ isCommunity }: Props) {
             {seriesList}
           </article>
           {content.published_status === 'published' ? (
-            <CommentSection
+            <Comment
               siteName={siteName}
               boardName={boardName}
               contentId={content.id}

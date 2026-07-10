@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
@@ -22,7 +24,7 @@ export default async function Page(context: RouteContext) {
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('site_type')
+    .select('id, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -31,5 +33,30 @@ export default async function Page(context: RouteContext) {
   }
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
-  return <Opt isCommunity={isCommunity} />;
+  let writePolicyMessage = '';
+
+  if (isCommunity) {
+    const session = await verifySession({
+      siteId: rhizomeResult.data.id,
+    });
+
+    if (!session.authUserId) {
+      writePolicyMessage = '로그인 후 글을 작성할 수 있습니다.';
+    } else {
+      try {
+        await assertCommunityPostWritePolicy({
+          siteId: rhizomeResult.data.id,
+          authUserId: session.authUserId,
+          sessionCase: session.case,
+        });
+      } catch (unknownError) {
+        writePolicyMessage =
+          unknownError instanceof Error
+            ? unknownError.message || '글 작성 권한이 없습니다.'
+            : '글 작성 권한이 없습니다.';
+      }
+    }
+  }
+
+  return <Opt isCommunity={isCommunity} writePolicyMessage={writePolicyMessage} />;
 }

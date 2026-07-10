@@ -24,11 +24,11 @@ type Props = {
   contentId: string;
   postAuthorId: string;
   isCommentEnabled: boolean;
-  commentProvider: CommentProvider;
-  giscusSettings: GiscusSettings | null;
-  themeMode: 'light' | 'dark';
-  title: string;
-  slug: string;
+  commentProvider?: CommentProvider | null;
+  giscusSettings?: GiscusSettings | null;
+  themeMode?: 'light' | 'dark' | null;
+  title?: string | null;
+  slug?: string | null;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -52,10 +52,6 @@ export default function Comment({
 
     return `${window.location.origin}/${siteName}/${boardName}/${slug}`;
   }, [siteName, boardName, slug]);
-
-  if (!isCommentEnabled || commentProvider === 'none') {
-    return null;
-  }
 
   if (boardName === 'b') {
     if (commentProvider === 'velhub') {
@@ -96,7 +92,7 @@ export default function Comment({
       );
     }
 
-    if (commentProvider === 'disqus') {
+    if (commentProvider === 'disqus' && (themeMode === 'dark' || themeMode === 'light') && title) {
       if (!DISQUS_SHORTNAME || !disqusUrl) {
         return null;
       }
@@ -115,15 +111,15 @@ export default function Comment({
         </div>
       );
     }
-  } else {
+  }
+
+  return (
     <CommentList
       siteName={siteName}
       boardName={boardName}
       contentId={contentId}
       postAuthorId={postAuthorId}
       isCommentEnabled={isCommentEnabled}
-    />;
-  }
-
-  return null;
+    />
+  );
 }

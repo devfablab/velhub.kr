@@ -2,6 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
+import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
 
 type RouteContext = {
   params: Promise<{
@@ -872,16 +873,40 @@ export async function GET(request: Request, context: RouteContext) {
       ),
     );
 
+    let canWriteReason: 'guest' | 'policy' | 'hidden' | null = null;
+
+    let canWrite = Boolean(
+      session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed,
+    );
+
+    if (!session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
+      canWriteReason = 'guest';
+    }
+
+    if (session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
+      try {
+        await assertCommunityCommentWritePolicy({
+          siteId: target.data.siteId,
+          authUserId: session.authUserId,
+          sessionCase: session.case,
+        });
+      } catch {
+        canWrite = false;
+        canWriteReason = 'policy';
+      }
+    }
+
+    if (!target.data.isPublished || !target.data.isCommentEnabled || target.data.isClosed) {
+      canWriteReason = 'hidden';
+    }
+
     return Response.json({
       comments: groupComments(commentItems),
       mySelfAvatarUrl,
       myPollChoice,
       actions: {
-        canWrite:
-          Boolean(session.authUserId) &&
-          target.data.isPublished &&
-          target.data.isCommentEnabled &&
-          !target.data.isClosed,
+        canWrite,
+        canWriteReason,
         canManageComment,
       },
     });
@@ -938,6 +963,12 @@ export async function POST(request: Request, context: RouteContext) {
     if (!target.data.isPublished || target.data.isClosed || !target.data.isCommentEnabled) {
       return Response.json({ error: '댓글을 작성할 수 없습니다.' }, { status: 403 });
     }
+
+    await assertCommunityCommentWritePolicy({
+      siteId: target.data.siteId,
+      authUserId: session.authUserId,
+      sessionCase: session.case,
+    });
 
     const supabaseAdmin = getSupabaseAdmin();
     let resolvedParentId: string | null = null;
@@ -1000,6 +1031,11 @@ export async function POST(request: Request, context: RouteContext) {
       userId: session.authUserId,
       drawType: target.data.drawType,
       drawLimit: target.data.drawLimit,
+    });
+
+    await increaseCommunityCommentCount({
+      siteId: target.data.siteId,
+      authUserId: session.authUserId,
     });
 
     const canManageComment = await getCommentAccess(

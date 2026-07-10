@@ -79,7 +79,7 @@
             background-color: rgba(ds.$rgb-tertiary, .2)
             color: rgba(ds.$rgb-bright, .2)
 
-    a, textarea
+    a, p, textarea
       display: block
       width: 100%
       min-height: ds.rem(127)
@@ -95,8 +95,12 @@
         background-color: rgba(ds.$rgb-primary, .5)
         color: rgba(ds.$rgb-bright, .7)
 
-    a
+    a, p
       line-height: 1
+
+    p
+      cursor: default
+      user-select: none
 
     textarea
       resize: none

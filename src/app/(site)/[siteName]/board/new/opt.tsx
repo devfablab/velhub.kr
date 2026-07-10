@@ -47,9 +47,11 @@ import NumberField from '@/components/custom-ui/NumberField';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
+import Anchor from '@/components/Anchor';
 
 type Props = {
   isCommunity: boolean;
+  writePolicyMessage?: string;
 };
 
 type BoardItem = {
@@ -531,7 +533,7 @@ function buildDrawPayload(draw: DrawState): DrawPayload {
   };
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -1755,6 +1757,12 @@ export default function Opt({ isCommunity }: Props) {
   if (isLoadingBoards) {
     return (
       <div className="container">
+        {isCommunity && !isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
         <div className={`${styles.content} content`}>
           <h2>
             <ListAltOutlinedIcon />
@@ -1773,14 +1781,49 @@ export default function Opt({ isCommunity }: Props) {
   if (boards.length === 0) {
     return (
       <div className="container">
+        {isCommunity && !isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
         <div className={`${styles.content} content`}>
           <h2>
             <ListAltOutlinedIcon />
-            <span>글쓰기</span>
+            <span>새글 쓰기</span>
           </h2>
           <div className="paper pape-error">
             <NearbyErrorRoundedIcon />
             <p>글을 작성할 수 있는 게시판이 없습니다.</p>
+            <Anchor className="button medium action" href={`/${siteName}/board`}>
+              게시판으로 이동
+            </Anchor>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (writePolicyMessage) {
+    return (
+      <div className="container">
+        {isCommunity && !isMobile ? (
+          <aside>
+            <SiteInfo />
+            <TableList />
+          </aside>
+        ) : null}
+        <div className={`${styles.content} content`}>
+          <h2>
+            <ListAltOutlinedIcon />
+            <span>새글 쓰기</span>
+          </h2>
+          <div className="paper pape-error">
+            <NearbyErrorRoundedIcon />
+            <p>{writePolicyMessage}</p>
+            <Anchor className="button medium action" href={`/${siteName}/board`}>
+              게시판으로 이동
+            </Anchor>
           </div>
         </div>
       </div>

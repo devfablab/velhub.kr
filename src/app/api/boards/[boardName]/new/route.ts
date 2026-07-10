@@ -2,6 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
+import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 
 type RouteContext = {
   params: Promise<{
@@ -810,6 +811,12 @@ export async function POST(request: Request, context: RouteContext) {
             seriesId,
           })
         : null;
+
+    await assertCommunityPostWritePolicy({
+      siteId: rhizomeData.id,
+      authUserId: session.authUserId,
+      sessionCase: session.case,
+    });
 
     const insertPost = await supabaseAdmin
       .from('posts')

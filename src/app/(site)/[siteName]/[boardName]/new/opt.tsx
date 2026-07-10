@@ -50,11 +50,13 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import NumberField from '@/components/custom-ui/NumberField';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
+import Anchor from '@/components/Anchor';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  writePolicyMessage?: string;
 };
 
 type BoardItem = {
@@ -551,7 +553,7 @@ function buildDrawPayload(draw: DrawState): DrawPayload {
   };
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -1777,6 +1779,12 @@ export default function Opt({ isCommunity }: Props) {
     return (
       <Container pageBack={`/${siteName}/${boardName}`} pageTitle="새글 쓰기" pageFin>
         <div className="container">
+          {isCommunity && !isMobile ? (
+            <aside>
+              <SiteInfo />
+              <TableList />
+            </aside>
+          ) : null}
           <div className={`${styles.content} content`}>
             <div className="paper">
               <div className="loading-container">
@@ -1789,14 +1797,23 @@ export default function Opt({ isCommunity }: Props) {
     );
   }
 
-  if (boards.length === 0) {
+  if (!isCommunity) {
     return (
       <Container pageBack={`/${siteName}/${boardName}`} pageTitle="새글 쓰기" pageFin>
         <div className="container">
+          {isCommunity && !isMobile ? (
+            <aside>
+              <SiteInfo />
+              <TableList />
+            </aside>
+          ) : null}
           <div className={`${styles.content} content`}>
             <div className="paper pape-error">
               <NearbyErrorRoundedIcon />
-              <p>글을 작성할 수 있는 게시판이 없습니다.</p>
+              <p>페이지를 찾을 수 없어요! 🥹</p>
+              <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
+                블로그 목록으로 이동
+              </Anchor>
             </div>
           </div>
         </div>
@@ -1804,14 +1821,47 @@ export default function Opt({ isCommunity }: Props) {
     );
   }
 
-  if (!isCommunity) {
+  if (boards.length === 0) {
     return (
       <Container pageBack={`/${siteName}/${boardName}`} pageTitle="새글 쓰기" pageFin>
         <div className="container">
+          {isCommunity && !isMobile ? (
+            <aside>
+              <SiteInfo />
+              <TableList />
+            </aside>
+          ) : null}
           <div className={`${styles.content} content`}>
             <div className="paper pape-error">
               <NearbyErrorRoundedIcon />
-              <p>페이지를 찾을 수 없어요! 🥹</p>
+              <p>글을 작성할 수 있는 게시판이 없습니다.</p>
+              <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
+                게시판으로 이동
+              </Anchor>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  if (writePolicyMessage) {
+    return (
+      <Container pageBack={`/${siteName}/${boardName}`} pageTitle="새글 쓰기" pageFin>
+        <div className="container">
+          {isCommunity && !isMobile ? (
+            <aside>
+              <SiteInfo />
+              <TableList />
+            </aside>
+          ) : null}
+          <div className={`${styles.content} content`}>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>{writePolicyMessage}</p>
+              <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
+                게시판으로 이동
+              </Anchor>
             </div>
           </div>
         </div>
