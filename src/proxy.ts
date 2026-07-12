@@ -200,7 +200,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (pathname.startsWith('/settings') || pathname.startsWith('/new')) {
+  if (pathname.startsWith('/settings') || pathname.startsWith('/new') || pathname.startsWith('/hub')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
     }
