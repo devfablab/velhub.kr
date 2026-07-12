@@ -27,10 +27,6 @@ function getSiteNameFromPath(pathname: string) {
   return segments[0] ?? '';
 }
 
-function isConciergeAdminPath(pathname: string) {
-  return pathname.startsWith('/concierge/admin');
-}
-
 function isReservedRootPath(pathname: string) {
   const firstSegment = pathname.split('/').filter(Boolean)[0] ?? '';
 
@@ -51,10 +47,6 @@ function isReservedRootPath(pathname: string) {
 
 function isSitePath(pathname: string) {
   if (pathname.startsWith('/api')) {
-    return false;
-  }
-
-  if (isConciergeAdminPath(pathname)) {
     return false;
   }
 
@@ -211,24 +203,6 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/settings') || pathname.startsWith('/new')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    return response;
-  }
-
-  if (isConciergeAdminPath(pathname)) {
-    if (!isLoggedIn) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    const admin = await fetchSessionRoute(request, '/api/session/admin', {});
-
-    if (admin.response.status === 401) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    if (!admin.response.ok) {
-      return redirectWithPath(request, '/');
     }
 
     return response;
