@@ -59,30 +59,6 @@ export type RevenueListResponse = {
   filters: RevenueFilterOptions;
 };
 
-const buyerNameKeys = [
-  'buyer_name',
-  'buyer_name_encrypted',
-  'encrypted_buyer_name',
-  'customer_name',
-  'customer_name_encrypted',
-  'encrypted_customer_name',
-  'name',
-  'name_encrypted',
-  'encrypted_name',
-];
-
-const buyerEmailKeys = [
-  'buyer_email',
-  'buyer_email_encrypted',
-  'encrypted_buyer_email',
-  'customer_email',
-  'customer_email_encrypted',
-  'encrypted_customer_email',
-  'email',
-  'email_encrypted',
-  'encrypted_email',
-];
-
 function getStringValue(row: UnknownRecord | null | undefined, key: string) {
   const value = row?.[key];
 
@@ -103,8 +79,8 @@ function getFirstStringValue(row: UnknownRecord | null | undefined, keys: string
   return keys.map((key) => getStringValue(row, key)).find((value): value is string => !!value) ?? null;
 }
 
-function getIdValue(row: UnknownRecord, key: string) {
-  const value = row[key];
+function getIdValue(row: UnknownRecord | null | undefined, key: string) {
+  const value = row?.[key];
 
   if (typeof value !== 'string' || !value) {
     return null;
@@ -133,22 +109,16 @@ function decryptValue(value: string | null) {
   }
 }
 
-function decryptFirstValue(row: UnknownRecord | null | undefined, keys: string[]) {
-  return decryptValue(getFirstStringValue(row, keys));
+function uniqueIds(values: (string | null)[]) {
+  return [...new Set(values.filter((value): value is string => !!value))];
 }
 
-function getPaymentUserId(payment: UnknownRecord | null) {
-  if (!payment) {
-    return null;
-  }
+function getPaymentId(payment: UnknownRecord | null) {
+  return getIdValue(payment, 'id');
+}
 
-  return (
-    getIdValue(payment, 'buyer_user_id') ??
-    getIdValue(payment, 'customer_user_id') ??
-    getIdValue(payment, 'payer_user_id') ??
-    getIdValue(payment, 'user_id') ??
-    getIdValue(payment, 'particle_id')
-  );
+function getPaymentBuyerId(payment: UnknownRecord | null) {
+  return getIdValue(payment, 'buyer_user_id');
 }
 
 function getBoardName(board: UnknownRecord | null) {
@@ -211,6 +181,30 @@ function getMapRows(rows: UnknownRecord[]) {
   return new Map(rows.map((row) => [String(row.id), row]));
 }
 
+function getMapRowsByKey(rows: UnknownRecord[], key: string) {
+  return new Map(
+    rows
+      .map((row) => {
+        const value = getStringValue(row, key);
+
+        if (!value) {
+          return null;
+        }
+
+        return [value, row] as const;
+      })
+      .filter((entry): entry is readonly [string, UnknownRecord] => Boolean(entry)),
+  );
+}
+
+function getBuyerName(params: { stigma: UnknownRecord | null; rhizomeStigma: UnknownRecord | null }) {
+  return getStringValue(params.rhizomeStigma, 'nickname') ?? decryptValue(getStringValue(params.stigma, 'user_name'));
+}
+
+function getBuyerEmail(stigma: UnknownRecord | null) {
+  return decryptValue(getStringValue(stigma, 'payment_email'));
+}
+
 async function getRowsByIds(context: RevenueContext, tableName: string, ids: string[]) {
   if (ids.length === 0) {
     return [];
@@ -225,8 +219,99 @@ async function getRowsByIds(context: RevenueContext, tableName: string, ids: str
   return (result.data ?? []) as UnknownRecord[];
 }
 
-function uniqueIds(values: (string | null)[]) {
-  return [...new Set(values.filter((value): value is string => !!value))];
+async function getSiteSplitRows(context: RevenueContext) {
+  const result = await context.supabase
+    .from('payment_splits')
+    .select('*')
+    .eq('site_id', context.siteId)
+    .order('created_at', { ascending: false });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as PaymentSplitRow[];
+}
+
+async function getSettlementSplitRows(context: RevenueContext) {
+  const result = await context.supabase
+    .from('payment_splits')
+    .select('*')
+    .eq('site_id', context.siteId)
+    .eq('receiver_user_id', context.stigmaId)
+    .order('created_at', { ascending: false });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as PaymentSplitRow[];
+}
+
+async function getPaymentRowsByIdsForBuyer(context: RevenueContext, paymentIds: string[]) {
+  if (paymentIds.length === 0) {
+    return [];
+  }
+
+  const result = await context.supabase
+    .from('payments')
+    .select('*')
+    .in('id', paymentIds)
+    .eq('buyer_user_id', context.particleId)
+    .order('created_at', { ascending: false });
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as UnknownRecord[];
+}
+
+async function getStigmaRowsByParticleIds(context: RevenueContext, particleIds: string[]) {
+  if (particleIds.length === 0) {
+    return [];
+  }
+
+  const result = await context.supabase
+    .from('stigmas')
+    .select('id, user_id, user_name, payment_email')
+    .in('user_id', particleIds);
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as UnknownRecord[];
+}
+
+async function getRhizomeStigmaRowsByStigmaIds(context: RevenueContext, stigmaIds: string[]) {
+  if (stigmaIds.length === 0) {
+    return [];
+  }
+
+  const result = await context.supabase
+    .from('rhizome_stigmas')
+    .select('user_id, nickname')
+    .eq('site_id', context.siteId)
+    .in('user_id', stigmaIds);
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return (result.data ?? []) as UnknownRecord[];
+}
+
+function getSplitMapByPaymentId(splitRows: PaymentSplitRow[]) {
+  const splitMap = new Map<string, PaymentSplitRow>();
+
+  splitRows.forEach((split) => {
+    if (split.payment_id && !splitMap.has(split.payment_id)) {
+      splitMap.set(split.payment_id, split);
+    }
+  });
+
+  return splitMap;
 }
 
 function mapRevenueListItem(params: {
@@ -235,7 +320,8 @@ function mapRevenueListItem(params: {
   board: UnknownRecord | null;
   series: UnknownRecord | null;
   post: UnknownRecord | null;
-  particle: UnknownRecord | null;
+  stigma: UnknownRecord | null;
+  rhizomeStigma: UnknownRecord | null;
   settlement: UnknownRecord | null;
 }): RevenueListItem {
   const paymentAmount = getVatBreakdown(getPaymentAmount(params.split, params.payment));
@@ -246,10 +332,11 @@ function mapRevenueListItem(params: {
 
   return {
     id: params.split.id,
-    buyerName:
-      decryptFirstValue(params.payment, buyerNameKeys) ?? decryptFirstValue(params.particle, buyerNameKeys),
-    buyerEmail:
-      decryptFirstValue(params.payment, buyerEmailKeys) ?? decryptFirstValue(params.particle, buyerEmailKeys),
+    buyerName: getBuyerName({
+      stigma: params.stigma,
+      rhizomeStigma: params.rhizomeStigma,
+    }),
+    buyerEmail: getBuyerEmail(params.stigma),
     boardName: getBoardName(params.board),
     seriesName: getSeriesName(params.series),
     postTitle: getPostTitle(params.post),
@@ -277,10 +364,7 @@ async function getSettlementMaps(context: RevenueContext, splitIds: string[]) {
     return new Map<string, UnknownRecord>();
   }
 
-  const itemResult = await context.supabase
-    .from('settlement_items')
-    .select('*')
-    .in('payment_split_id', splitIds);
+  const itemResult = await context.supabase.from('settlement_items').select('*').in('payment_split_id', splitIds);
 
   if (itemResult.error) {
     throw itemResult.error;
@@ -305,62 +389,101 @@ async function getSettlementMaps(context: RevenueContext, splitIds: string[]) {
   return splitSettlementMap;
 }
 
+async function hydrateRevenueListItems(params: {
+  context: RevenueContext;
+  splitRows: PaymentSplitRow[];
+  paymentRows: UnknownRecord[];
+  includeSettlements: boolean;
+}) {
+  const { context, splitRows, paymentRows, includeSettlements } = params;
+  const paymentMap = getMapRows(paymentRows);
+  const boardIds = uniqueIds(splitRows.map((row) => row.board_id));
+  const seriesIds = uniqueIds(splitRows.map((row) => row.series_id));
+  const postIds = uniqueIds(splitRows.map((row) => row.post_id));
+  const buyerParticleIds = uniqueIds(paymentRows.map((payment) => getPaymentBuyerId(payment)));
+
+  const [boardRows, seriesRows, postRows, stigmaRows, splitSettlementMap] = await Promise.all([
+    getRowsByIds(context, 'boards', boardIds),
+    getRowsByIds(context, 'board_series', seriesIds),
+    getRowsByIds(context, 'posts', postIds),
+    getStigmaRowsByParticleIds(context, buyerParticleIds),
+    includeSettlements
+      ? getSettlementMaps(context, uniqueIds(splitRows.map((row) => row.id)))
+      : new Map<string, UnknownRecord>(),
+  ]);
+
+  const stigmaMap = getMapRowsByKey(stigmaRows, 'user_id');
+  const stigmaIds = uniqueIds(stigmaRows.map((stigma) => getIdValue(stigma, 'id')));
+  const rhizomeStigmaRows = await getRhizomeStigmaRowsByStigmaIds(context, stigmaIds);
+  const rhizomeStigmaMap = getMapRowsByKey(rhizomeStigmaRows, 'user_id');
+  const boardMap = getMapRows(boardRows);
+  const seriesMap = getMapRows(seriesRows);
+  const postMap = getMapRows(postRows);
+
+  return splitRows.map((split) => {
+    const payment = split.payment_id ? (paymentMap.get(split.payment_id) ?? null) : null;
+    const buyerParticleId = getPaymentBuyerId(payment);
+    const stigma = buyerParticleId ? (stigmaMap.get(buyerParticleId) ?? null) : null;
+    const stigmaId = getIdValue(stigma, 'id');
+
+    return mapRevenueListItem({
+      split,
+      payment,
+      board: split.board_id ? (boardMap.get(split.board_id) ?? null) : null,
+      series: split.series_id ? (seriesMap.get(split.series_id) ?? null) : null,
+      post: split.post_id ? (postMap.get(split.post_id) ?? null) : null,
+      stigma,
+      rhizomeStigma: stigmaId ? (rhizomeStigmaMap.get(stigmaId) ?? null) : null,
+      settlement: splitSettlementMap.get(split.id) ?? null,
+    });
+  });
+}
+
+async function getPaymentListItems(context: RevenueContext) {
+  const siteSplitRows = await getSiteSplitRows(context);
+  const sitePaymentIds = uniqueIds(siteSplitRows.map((split) => split.payment_id));
+  const paymentRows = await getPaymentRowsByIdsForBuyer(context, sitePaymentIds);
+  const paymentIds = uniqueIds(paymentRows.map((payment) => getPaymentId(payment)));
+  const splitMap = getSplitMapByPaymentId(siteSplitRows);
+  const splitRows = paymentIds
+    .map((paymentId) => splitMap.get(paymentId) ?? null)
+    .filter((split): split is PaymentSplitRow => Boolean(split));
+
+  return hydrateRevenueListItems({
+    context,
+    splitRows,
+    paymentRows,
+    includeSettlements: false,
+  });
+}
+
+async function getSettlementListItems(context: RevenueContext) {
+  const splitRows = await getSettlementSplitRows(context);
+  const paymentIds = uniqueIds(splitRows.map((split) => split.payment_id));
+  const paymentRows = await getRowsByIds(context, 'payments', paymentIds);
+
+  return hydrateRevenueListItems({
+    context,
+    splitRows,
+    paymentRows,
+    includeSettlements: true,
+  });
+}
+
 export async function getRevenueList(
   context: RevenueContext,
   kind: RevenueListKind,
   filterParams: RevenueFilterParams,
 ): Promise<RevenueListResponse> {
-  const splitResult = await context.supabase
-    .from('payment_splits')
-    .select('*')
-    .eq('site_id', context.siteId)
-    .eq('receiver_user_id', context.userId)
-    .order('created_at', { ascending: false });
-
-  if (splitResult.error) {
-    throw splitResult.error;
-  }
-
-  const splitRows = (splitResult.data ?? []) as PaymentSplitRow[];
-  const paymentIds = uniqueIds(splitRows.map((row) => row.payment_id));
-  const boardIds = uniqueIds(splitRows.map((row) => row.board_id));
-  const seriesIds = uniqueIds(splitRows.map((row) => row.series_id));
-  const postIds = uniqueIds(splitRows.map((row) => row.post_id));
-
-  const paymentRows = await getRowsByIds(context, 'payments', paymentIds);
-  const paymentMap = getMapRows(paymentRows);
-  const particleIds = uniqueIds(paymentRows.map((payment) => getPaymentUserId(payment)));
-
-  const [boardRows, seriesRows, postRows, particleRows, splitSettlementMap] = await Promise.all([
-    getRowsByIds(context, 'boards', boardIds),
-    getRowsByIds(context, 'board_series', seriesIds),
-    getRowsByIds(context, 'posts', postIds),
-    getRowsByIds(context, 'particles', particleIds),
-    getSettlementMaps(context, uniqueIds(splitRows.map((row) => row.id))),
-  ]);
-
-  const boardMap = getMapRows(boardRows);
-  const seriesMap = getMapRows(seriesRows);
-  const postMap = getMapRows(postRows);
-  const particleMap = getMapRows(particleRows);
-
-  const allItems = splitRows.map((split) => {
-    const payment = split.payment_id ? paymentMap.get(split.payment_id) ?? null : null;
-    const particleId = getPaymentUserId(payment);
-
-    return mapRevenueListItem({
-      split,
-      payment,
-      board: split.board_id ? boardMap.get(split.board_id) ?? null : null,
-      series: split.series_id ? seriesMap.get(split.series_id) ?? null : null,
-      post: split.post_id ? postMap.get(split.post_id) ?? null : null,
-      particle: particleId ? particleMap.get(particleId) ?? null : null,
-      settlement: splitSettlementMap.get(split.id) ?? null,
-    });
-  });
+  const allItems =
+    kind === 'transactions' || kind === 'refunds'
+      ? await getPaymentListItems(context)
+      : await getSettlementListItems(context);
 
   const kindItems = allItems.filter((item) => shouldIncludeItem(item, kind));
-  const filteredItems = kindItems.filter((item) => isDateInRevenueRange(getPaymentDateForKind(item, kind), filterParams));
+  const filteredItems = kindItems.filter((item) =>
+    isDateInRevenueRange(getPaymentDateForKind(item, kind), filterParams),
+  );
   const from = (filterParams.page - 1) * filterParams.pageSize;
   const to = from + filterParams.pageSize;
 

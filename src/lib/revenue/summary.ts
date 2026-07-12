@@ -1,11 +1,10 @@
-import type { RevenueContext } from '@/lib/revenue/context';
 import { toNumber } from '@/lib/revenue/amounts';
+import type { RevenueContext } from '@/lib/revenue/context';
 
 type UnknownRecord = Record<string, unknown>;
 
 type PaymentSplitRow = UnknownRecord & {
   payment_id: string | null;
-  amount: number | string | null;
 };
 
 export type RevenueSummaryResponse = {
@@ -46,8 +45,8 @@ function uniqueIds(values: (string | null)[]) {
   return [...new Set(values.filter((value): value is string => !!value))];
 }
 
-function getPaymentAmount(split: PaymentSplitRow, payment: UnknownRecord | null) {
-  return toNumber(payment?.amount ?? split.amount);
+function getPaymentAmount(payment: UnknownRecord | null) {
+  return toNumber(payment?.amount);
 }
 
 function getRefundAmount(payment: UnknownRecord | null) {
@@ -55,29 +54,38 @@ function getRefundAmount(payment: UnknownRecord | null) {
 }
 
 function getPaidAt(payment: UnknownRecord | null) {
-  return getStringValue(payment, 'paid_at') ?? getStringValue(payment, 'approved_at') ?? getStringValue(payment, 'created_at');
+  return (
+    getStringValue(payment, 'paid_at') ??
+    getStringValue(payment, 'approved_at') ??
+    getStringValue(payment, 'created_at')
+  );
 }
 
 function getRefundedAt(payment: UnknownRecord | null) {
-  return getStringValue(payment, 'refunded_at') ?? getStringValue(payment, 'cancelled_at') ?? getStringValue(payment, 'canceled_at');
+  return (
+    getStringValue(payment, 'refunded_at') ??
+    getStringValue(payment, 'cancelled_at') ??
+    getStringValue(payment, 'canceled_at')
+  );
 }
 
 export async function getRevenueSummary(context: RevenueContext): Promise<RevenueSummaryResponse> {
-  const splitResult = await context.supabase
-    .from('payment_splits')
-    .select('*')
-    .eq('site_id', context.siteId)
-    .eq('receiver_user_id', context.userId);
+  const splitResult = await context.supabase.from('payment_splits').select('payment_id').eq('site_id', context.siteId);
 
   if (splitResult.error) {
     throw splitResult.error;
   }
 
   const splitRows = (splitResult.data ?? []) as PaymentSplitRow[];
-  const paymentIds = uniqueIds(splitRows.map((row) => row.payment_id));
+  const sitePaymentIds = uniqueIds(splitRows.map((row) => row.payment_id));
+
   const paymentResult =
-    paymentIds.length > 0
-      ? await context.supabase.from('payments').select('*').in('id', paymentIds)
+    sitePaymentIds.length > 0
+      ? await context.supabase
+          .from('payments')
+          .select('*')
+          .in('id', sitePaymentIds)
+          .eq('buyer_user_id', context.particleId)
       : { data: [], error: null };
 
   if (paymentResult.error) {
@@ -85,13 +93,11 @@ export async function getRevenueSummary(context: RevenueContext): Promise<Revenu
   }
 
   const paymentRows = (paymentResult.data ?? []) as UnknownRecord[];
-  const paymentMap = new Map(paymentRows.map((payment) => [String(payment.id), payment]));
   const todayRange = getTodayKstRange();
 
-  return splitRows.reduce<RevenueSummaryResponse>(
-    (summary, split) => {
-      const payment = split.payment_id ? paymentMap.get(split.payment_id) ?? null : null;
-      const paymentAmount = getPaymentAmount(split, payment);
+  return paymentRows.reduce<RevenueSummaryResponse>(
+    (summary, payment) => {
+      const paymentAmount = getPaymentAmount(payment);
       const refundAmount = getRefundAmount(payment);
       const paidAt = getPaidAt(payment);
       const refundedAt = getRefundedAt(payment);

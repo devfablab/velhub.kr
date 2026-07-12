@@ -14,7 +14,8 @@ export class RevenueError extends Error {
 
 export type RevenueContext = {
   supabase: ReturnType<typeof getSupabaseAdmin>;
-  userId: string;
+  particleId: string;
+  stigmaId: string;
   siteId: string;
   siteName: string;
 };
@@ -22,6 +23,10 @@ export type RevenueContext = {
 type SiteRow = {
   id: string;
   site_key: string;
+};
+
+type StigmaRow = {
+  id: string;
 };
 
 export async function getRevenueContext(siteNameValue: string | null): Promise<RevenueContext> {
@@ -38,11 +43,8 @@ export async function getRevenueContext(siteNameValue: string | null): Promise<R
   }
 
   const supabase = getSupabaseAdmin();
-  const siteResult = await supabase
-    .from('rhizomes')
-    .select('id, site_key')
-    .eq('site_key', siteName)
-    .maybeSingle();
+
+  const siteResult = await supabase.from('rhizomes').select('id, site_key').eq('site_key', siteName).maybeSingle();
 
   if (siteResult.error) {
     throw new RevenueError(siteResult.error.message, 500);
@@ -54,9 +56,22 @@ export async function getRevenueContext(siteNameValue: string | null): Promise<R
     throw new RevenueError('사이트를 찾을 수 없습니다.', 404);
   }
 
+  const stigmaResult = await supabase.from('stigmas').select('id').eq('user_id', sessionClaims.userId).maybeSingle();
+
+  if (stigmaResult.error) {
+    throw new RevenueError(stigmaResult.error.message, 500);
+  }
+
+  const stigma = stigmaResult.data as StigmaRow | null;
+
+  if (!stigma) {
+    throw new RevenueError('사용자 정보를 찾을 수 없습니다.', 404);
+  }
+
   return {
     supabase,
-    userId: sessionClaims.userId,
+    particleId: sessionClaims.userId,
+    stigmaId: stigma.id,
     siteId: site.id,
     siteName: site.site_key,
   };
