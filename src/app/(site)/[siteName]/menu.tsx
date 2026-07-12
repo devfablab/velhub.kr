@@ -36,6 +36,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { detectAdult } from '@/lib/service/detectAdult.client';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
@@ -236,6 +237,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [isAdult, setIsAdult] = useState<boolean>(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: null,
     email: null,
@@ -319,6 +321,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
       setSiteLabel(result.siteLabel || result.siteName || '');
       setProfilePictureUrl(result.profilePictureUrl);
       setProfileLogoUrl(result.profileLogoUrl);
+      setIsAdult(await detectAdult(siteName));
     }
 
     if (!isReady) {
@@ -587,8 +590,12 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                     <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
                     <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
 
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
-                    <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+                    {isAdult ? (
+                      <>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
+                        <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+                      </>
+                    ) : null}
 
                     {isSiteStaff ? (
                       <>

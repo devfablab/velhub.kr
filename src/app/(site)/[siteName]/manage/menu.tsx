@@ -36,6 +36,7 @@ import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { detectAdult } from '@/lib/service/detectAdult.client';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
@@ -448,6 +449,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const [siteLabel, setSiteLabel] = useState('');
+  const [isAdult, setIsAdult] = useState<boolean>(false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -529,6 +531,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         siteRole: result.siteRole,
       });
       setSiteLabel(result.siteLabel || result.siteName || '');
+      setIsAdult(await detectAdult(siteName));
     }
 
     if (!isReady) {
@@ -768,8 +771,12 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                     <ListSubheader className={styles['VhiDrawer-subheader']}>서비스화면</ListSubheader>
                     <DrawerMenu siteName={siteName} isBlog={isBlog} onClose={handleCloseProfileDrawer} />
 
-                    <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
-                    <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+                    {isAdult ? (
+                      <>
+                        <ListSubheader className={styles['VhiDrawer-subheader']}>수익/정산</ListSubheader>
+                        <DrawerPayments siteName={siteName} onClose={handleCloseProfileDrawer} />
+                      </>
+                    ) : null}
 
                     {isSiteStaff ? (
                       <>

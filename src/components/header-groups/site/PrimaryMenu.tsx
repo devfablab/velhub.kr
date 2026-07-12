@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { detectAdult } from '@/lib/service/detectAdult.client';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/header.module.sass';
 
@@ -32,6 +34,15 @@ function getCurrentHref(pathname: string, navItems: PaymentNavItem[]) {
 
 export default function PrimaryMenu({ siteName, isBlog, isSiteStaff }: Props) {
   const pathname = usePathname();
+  const [isAdult, setIsAdult] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function adultDetecter() {
+      setIsAdult(await detectAdult(siteName));
+    }
+    void adultDetecter();
+  }, []);
+
   const navItems: PaymentNavItem[] = [
     {
       label: isBlog ? '블로그' : '커뮤니티',
@@ -47,11 +58,15 @@ export default function PrimaryMenu({ siteName, isBlog, isSiteStaff }: Props) {
           },
         ]
       : []),
-    {
-      label: '수익/정산',
-      href: `/${siteName}/payments`,
-      startsWith: true,
-    },
+    ...(isAdult
+      ? [
+          {
+            label: '수익/정산',
+            href: `/${siteName}/payments`,
+            startsWith: true,
+          },
+        ]
+      : []),
   ];
   const currentHref = getCurrentHref(pathname, navItems);
 
