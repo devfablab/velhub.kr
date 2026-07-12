@@ -1,4 +1,5 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { detectAdult } from '@/lib/service/detectAdult';
 import Container from '../../menu';
 import Opt from './opt';
@@ -13,6 +14,8 @@ type RouteContext = {
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
   const isAdult = await detectAdult(siteName);
+  const supabaseAdmin = getSupabaseAdmin();
+  const siteInfo = await supabaseAdmin.from('rhizomes').select('site_type').eq('site_key', siteName).maybeSingle();
 
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
@@ -24,7 +27,9 @@ export default async function Page(context: RouteContext) {
             <div className="paper">
               <p className="alert warning">
                 <WarningAmberRoundedIcon />
-                <span>만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다.</span>
+                <span>
+                  본 {siteInfo.data?.site_type === 'blog' ? '블로그' : '커뮤니티'}에서는 수익을 창출할 수 없습니다.
+                </span>
               </p>
             </div>
           )}
