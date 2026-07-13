@@ -1,5 +1,15 @@
-import { normalizeText } from '@/lib/utils';
+import { isCommunityManageRole, type CommunityManageRoleType } from '@/lib/community-manager/permissions';
 import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
+
+type CommunityRow = {
+  id: string;
+};
+
+type CommunityManageRoleRow = {
+  role: string | null;
+};
 
 export async function GET(request: Request) {
   try {
@@ -37,6 +47,8 @@ export async function GET(request: Request) {
         redirectTo: null,
         stigmaId: currentStigma.stigmaId,
         role: currentStigma.role,
+        siteType: null,
+        communityRoles: [],
       });
     }
 
@@ -88,6 +100,62 @@ export async function GET(request: Request) {
       );
     }
 
+    if (site.siteType !== 'community') {
+      return Response.json({
+        ok: true,
+        allow: true,
+        redirectTo: null,
+        siteId: site.id,
+        stigmaId: currentStigma.stigmaId,
+        role: rhizomeStigma.role,
+        siteType: site.siteType,
+        communityRoles: [],
+      });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', site.id).maybeSingle();
+
+    if (communityResult.error || !communityResult.data) {
+      return Response.json(
+        {
+          ok: false,
+          status: 404,
+          error: '커뮤니티 정보를 불러오지 못했습니다.',
+        },
+        { status: 404 },
+      );
+    }
+
+    const community = communityResult.data as CommunityRow;
+
+    const manageRoleResult = await supabaseAdmin
+      .from('community_manage_role')
+      .select('role')
+      .eq('community_id', community.id)
+      .eq('manager_id', rhizomeStigma.id);
+
+    if (manageRoleResult.error) {
+      return Response.json(
+        {
+          ok: false,
+          status: 500,
+          error: '커뮤니티 권한을 불러오지 못했습니다.',
+        },
+        { status: 500 },
+      );
+    }
+
+    const manageRoles = ((manageRoleResult.data ?? []) as CommunityManageRoleRow[])
+      .map((item) => normalizeText(item.role))
+      .filter(isCommunityManageRole);
+
+    const communityRoles: CommunityManageRoleType[] = [
+      ...(rhizomeStigma.role === 'owner' ? (['owner'] as CommunityManageRoleType[]) : []),
+      ...manageRoles,
+    ];
+
     return Response.json({
       ok: true,
       allow: true,
@@ -95,6 +163,8 @@ export async function GET(request: Request) {
       siteId: site.id,
       stigmaId: currentStigma.stigmaId,
       role: rhizomeStigma.role,
+      siteType: site.siteType,
+      communityRoles: [...new Set(communityRoles)],
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

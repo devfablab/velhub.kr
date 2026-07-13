@@ -1,6 +1,33 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/session';
 
+type CommunityManageRole =
+  | 'owner'
+  | 'community-manager'
+  | 'board-manager'
+  | 'board-general-manager'
+  | 'board-assistant-manager';
+
+type CommunityManageLevel = CommunityManageRole | 'member';
+
+type SessionRouteResult = {
+  ok: boolean;
+  allow?: boolean;
+  redirectTo?: string | null;
+  role?: string | null;
+  siteType?: string | null;
+  communityRoles?: CommunityManageRole[];
+};
+
+type RhizomeStateResult = {
+  siteInfo?: {
+    visibility_type?: string | null;
+    is_shutdown?: boolean | null;
+    is_blocked?: boolean | null;
+    site_type?: string | null;
+  };
+};
+
 function isManagePath(pathname: string) {
   if (pathname.startsWith('/api')) {
     return false;
@@ -69,6 +96,191 @@ function isSiteStatusPath(pathname: string, siteName: string) {
   );
 }
 
+function startsWithAny(pathname: string, paths: string[]) {
+  return paths.some((path) => pathname.startsWith(path));
+}
+
+function isCommunityManagerRestrictedPath(pathname: string, siteName: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  const isBlogPostManagePath = pathname.startsWith(`/${siteName}/manage/contents/posts/`) && segments[4] !== 'c';
+
+  return (
+    isBlogPostManagePath ||
+    startsWithAny(pathname, [
+      `/${siteName}/manage/team`,
+      `/${siteName}/manage/design/blog`,
+      `/${siteName}/manage/invite-blog`,
+    ])
+  );
+}
+
+function isBlogManagerRestrictedPath(pathname: string, siteName: string) {
+  return startsWithAny(pathname, [
+    `/${siteName}/manage/join`,
+    `/${siteName}/manage/members`,
+    `/${siteName}/manage/design/community`,
+    `/${siteName}/manage/contents/posts/c`,
+  ]);
+}
+
+function isCommunityBoardRoleRestrictedPath(pathname: string, siteName: string) {
+  return startsWithAny(pathname, [
+    `/${siteName}/manage/settings`,
+    `/${siteName}/manage/join`,
+    `/${siteName}/manage/members`,
+    `/${siteName}/manage/reports`,
+    `/${siteName}/manage/design`,
+    `/${siteName}/manage/payments`,
+    `/${siteName}/manage/stats`,
+  ]);
+}
+
+function isCommunityGeneralRoleRestrictedPath(pathname: string, siteName: string) {
+  return pathname.startsWith(`/${siteName}/manage/contents/posts/c/new`);
+}
+
+function isCommunityAssistantRoleRestrictedPath(pathname: string, siteName: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  const isBoardEditPath =
+    pathname.startsWith(`/${siteName}/manage/contents/posts/c/`) && Boolean(segments[5]) && segments[6] === 'edit';
+
+  return (
+    isBoardEditPath ||
+    startsWithAny(pathname, [
+      `/${siteName}/manage/contents/posts/c/only-donation/series`,
+      `/${siteName}/manage/contents/posts/c/only-donation/prefix`,
+    ])
+  );
+}
+
+function isBlogMemberRestrictedPath(pathname: string, siteName: string) {
+  const segments = pathname.split('/').filter(Boolean);
+
+  const isPageEditPath =
+    pathname.startsWith(`/${siteName}/manage/contents/pages/`) && Boolean(segments[4]) && segments[5] === 'edit';
+
+  return (
+    isPageEditPath ||
+    startsWithAny(pathname, [
+      `/${siteName}/manage/design`,
+      `/${siteName}/manage/invite-blog`,
+      `/${siteName}/manage/join`,
+      `/${siteName}/manage/members`,
+      `/${siteName}/manage/payments`,
+      `/${siteName}/manage/reports`,
+      `/${siteName}/manage/settings`,
+      `/${siteName}/manage/stats`,
+      `/${siteName}/manage/team`,
+      `/${siteName}/manage/contents/pages/new`,
+      `/${siteName}/manage/contents/posts/c`,
+      `/${siteName}/manage/contents/posts/series`,
+      `/${siteName}/manage/contents/posts/category`,
+    ])
+  );
+}
+
+function getCommunityManageLevel(
+  baseRole: string | null | undefined,
+  communityRoles: CommunityManageRole[],
+): CommunityManageLevel {
+  if (baseRole === 'owner' || communityRoles.includes('owner')) {
+    return 'owner';
+  }
+
+  if (communityRoles.includes('community-manager')) {
+    return 'community-manager';
+  }
+
+  if (communityRoles.includes('board-manager')) {
+    return 'board-manager';
+  }
+
+  if (communityRoles.includes('board-general-manager')) {
+    return 'board-general-manager';
+  }
+
+  if (communityRoles.includes('board-assistant-manager')) {
+    return 'board-assistant-manager';
+  }
+
+  return 'member';
+}
+
+function getManageRedirectPath({
+  pathname,
+  siteName,
+  siteType,
+  baseRole,
+  communityRoles,
+}: {
+  pathname: string;
+  siteName: string;
+  siteType: string | null | undefined;
+  baseRole: string | null | undefined;
+  communityRoles: CommunityManageRole[];
+}) {
+  if (baseRole === 'admin') {
+    return null;
+  }
+
+  if (siteType === 'blog') {
+    if ((baseRole === 'owner' || baseRole === 'manager') && isBlogManagerRestrictedPath(pathname, siteName)) {
+      return `/${siteName}/manage`;
+    }
+
+    if (baseRole === 'member' && isBlogMemberRestrictedPath(pathname, siteName)) {
+      return `/${siteName}`;
+    }
+
+    if (baseRole !== 'owner' && baseRole !== 'manager' && baseRole !== 'member') {
+      return `/${siteName}`;
+    }
+
+    return null;
+  }
+
+  if (siteType === 'community') {
+    const manageLevel = getCommunityManageLevel(baseRole, communityRoles);
+
+    if (
+      (manageLevel === 'owner' || manageLevel === 'community-manager') &&
+      isCommunityManagerRestrictedPath(pathname, siteName)
+    ) {
+      return `/${siteName}/manage`;
+    }
+
+    if (
+      (manageLevel === 'board-manager' ||
+        manageLevel === 'board-general-manager' ||
+        manageLevel === 'board-assistant-manager') &&
+      isCommunityBoardRoleRestrictedPath(pathname, siteName)
+    ) {
+      return `/${siteName}/manage`;
+    }
+
+    if (
+      (manageLevel === 'board-general-manager' || manageLevel === 'board-assistant-manager') &&
+      isCommunityGeneralRoleRestrictedPath(pathname, siteName)
+    ) {
+      return `/${siteName}/manage`;
+    }
+
+    if (manageLevel === 'board-assistant-manager' && isCommunityAssistantRoleRestrictedPath(pathname, siteName)) {
+      return `/${siteName}/manage`;
+    }
+
+    if (manageLevel === 'member') {
+      return `/${siteName}`;
+    }
+
+    return null;
+  }
+
+  return `/${siteName}`;
+}
+
 async function fetchSessionRoute(request: NextRequest, pathname: string, query: Record<string, string>) {
   const targetUrl = new URL(pathname, request.url);
 
@@ -76,78 +288,56 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
     targetUrl.searchParams.set(key, value);
   });
 
-  const response = await fetch(targetUrl, {
+  const routeResponse = await fetch(targetUrl, {
     method: 'GET',
     headers: {
       cookie: request.headers.get('cookie') ?? '',
     },
   });
 
-  let result: {
-    ok: boolean;
-    allow?: boolean;
-    redirectTo?: string | null;
-    role?: string | null;
-  } | null = null;
+  let result: SessionRouteResult | null = null;
 
   try {
-    result = (await response.json()) as {
-      ok: boolean;
-      allow?: boolean;
-      redirectTo?: string | null;
-      role?: string | null;
-    };
+    result = (await routeResponse.json()) as SessionRouteResult;
   } catch {
     result = null;
   }
 
   return {
-    response,
+    response: routeResponse,
     result,
   };
 }
 
 async function fetchRhizomeState(request: NextRequest, siteName: string) {
   const targetUrl = new URL('/api/site/public', request.url);
+
   targetUrl.searchParams.set('siteName', siteName);
 
-  const response = await fetch(targetUrl, {
+  const routeResponse = await fetch(targetUrl, {
     method: 'GET',
     headers: {
       cookie: request.headers.get('cookie') ?? '',
     },
   });
 
-  let result: {
-    siteInfo?: {
-      visibility_type?: string | null;
-      is_shutdown?: boolean | null;
-      is_blocked?: boolean | null;
-      site_type?: string | null;
-    };
-  } | null = null;
+  let result: RhizomeStateResult | null = null;
 
   try {
-    result = (await response.json()) as {
-      siteInfo?: {
-        visibility_type?: string | null;
-        is_shutdown?: boolean | null;
-        is_blocked?: boolean | null;
-        site_type?: string | null;
-      };
-    };
+    result = (await routeResponse.json()) as RhizomeStateResult;
   } catch {
     result = null;
   }
 
   return {
-    response,
+    response: routeResponse,
     result,
   };
 }
 
 function redirectWithPath(request: NextRequest, pathname: string) {
   const redirectUrl = request.nextUrl.clone();
+
   redirectUrl.pathname = pathname;
   redirectUrl.search = '';
 
@@ -176,6 +366,7 @@ function getShutdownRedirectPath({
 
 export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
+
   const pathname = request.nextUrl.pathname;
   const isLoggedIn = Boolean(sessionClaims?.userId);
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
@@ -191,10 +382,17 @@ export async function proxy(request: NextRequest) {
 
   if (isLoggedIn && isAal1 && hasTotp) {
     if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth')) {
-      return new NextResponse(JSON.stringify({ error: '2FA verification required' }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new NextResponse(
+        JSON.stringify({
+          error: '2FA verification required',
+        }),
+        {
+          status: 403,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
     }
 
     return response;
@@ -226,6 +424,7 @@ export async function proxy(request: NextRequest) {
 
           if (isLoggedIn) {
             const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
+
             isSiteOwner = staff.response.ok && staff.result?.role === 'owner';
           }
 
@@ -264,14 +463,26 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
+    const member = await fetchSessionRoute(request, '/api/session/member', { siteName });
 
-    if (staff.response.status === 401) {
+    if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
     }
 
-    if (!staff.response.ok) {
+    if (!member.response.ok || !member.result?.ok) {
       return redirectWithPath(request, `/${siteName}`);
+    }
+
+    const redirectPath = getManageRedirectPath({
+      pathname,
+      siteName,
+      siteType: member.result.siteType,
+      baseRole: member.result.role,
+      communityRoles: member.result.communityRoles ?? [],
+    });
+
+    if (redirectPath && pathname !== redirectPath) {
+      return redirectWithPath(request, redirectPath);
     }
 
     return response;
