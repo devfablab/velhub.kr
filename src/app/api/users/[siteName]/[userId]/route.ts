@@ -272,6 +272,53 @@ async function getCommunityUserInfo(siteName: string) {
   }
 
   if (!membershipResult.data) {
+    const authUserResult = await supabaseAdmin.auth.admin.getUserById(session.authUserId);
+
+    if (authUserResult.error || !authUserResult.data.user?.email) {
+      return {
+        ok: false,
+        status: 500,
+        error: '사용자 이메일을 불러오지 못했습니다.',
+      } as const;
+    }
+
+    const email = authUserResult.data.user.email.trim().toLowerCase();
+
+    const nowIsoString = new Date().toISOString();
+
+    const inviteResult = await supabaseAdmin
+      .from('invite')
+      .select('token, expires_at')
+      .eq('site_id', siteResult.data.id)
+      .eq('email', email)
+      .eq('role', 'member')
+      .eq('status', 'pending')
+      .is('cancelled_at', null)
+      .is('joined_at', null)
+      .gt('expires_at', nowIsoString)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (inviteResult.error) {
+      return {
+        ok: false,
+        status: 500,
+        error: '초대 정보를 불러오지 못했습니다.',
+      } as const;
+    }
+
+    if (inviteResult.data) {
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          status: 'pending_invite',
+          inviteHref: `/${siteResult.data.site_key}/invite-community/${inviteResult.data.token}`,
+        },
+      } as const;
+    }
+
     return {
       ok: true,
       status: 200,
@@ -288,7 +335,7 @@ async function getCommunityUserInfo(siteName: string) {
       ok: true,
       status: 200,
       data: {
-        status: 'pending',
+        status: 'pending_join',
       },
     } as const;
   }

@@ -193,7 +193,14 @@ export default function Opt() {
       const result = (await response.json()) as CreateInviteResponse | { error?: string };
 
       if (!response.ok) {
-        throw new Error('error' in result ? result.error || '초대에 실패했습니다.' : '초대에 실패했습니다.');
+        const responseError = 'error' in result ? result.error || '초대에 실패했습니다.' : '초대에 실패했습니다.';
+
+        if (responseError === '이미 가입한 멤버입니다.' || responseError === '이미 초대장을 받은 멤버입니다.') {
+          setSnackbarMessage(responseError);
+          return;
+        }
+
+        throw new Error(responseError);
       }
 
       if (!('invite' in result) || !result.invite) {

@@ -10,7 +10,7 @@ import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/aside.module.sass';
 
-type UserInfoStatus = 'guest' | 'not_joined' | 'pending' | 'blocked' | 'active';
+type UserInfoStatus = 'guest' | 'not_joined' | 'pending_join' | 'pending_invite' | 'blocked' | 'active';
 
 type ManagerRoleItem = {
   role: string;
@@ -36,6 +36,7 @@ type UserInfoData = {
 type UserInfoResponse = {
   ok?: boolean;
   status?: UserInfoStatus;
+  inviteHref?: string;
   blockReason?: string;
   userInfo?: UserInfoData;
   error?: string;
@@ -48,6 +49,7 @@ export default function UserInfo() {
   const [status, setStatus] = useState<UserInfoStatus | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
   const [blockReason, setBlockReason] = useState('');
+  const [inviteHref, setInviteHref] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -88,6 +90,7 @@ export default function UserInfo() {
       }
 
       setStatus(result.status);
+      setInviteHref(result.inviteHref ?? '');
       setUserInfo(result.userInfo ?? null);
       setBlockReason(result.blockReason ?? '');
       setNickname(result.userInfo?.nickname ?? '');
@@ -207,11 +210,22 @@ export default function UserInfo() {
     );
   }
 
-  if (status === 'pending') {
+  if (status === 'pending_join') {
     return (
       <div className={`${styles['user-status']} paper`}>
         <p>가입 승인 대기중입니다.</p>
-        <p>조금만 기다려주세요! 😭</p>
+        <p>조금만 기다려주세요! </p>
+      </div>
+    );
+  }
+
+  if (status === 'pending_invite') {
+    return (
+      <div className={`${styles['user-status']} paper`}>
+        <p>받은 초대장이 있습니다</p>
+        <Anchor href={inviteHref} className="button">
+          초대에 응하기
+        </Anchor>
       </div>
     );
   }

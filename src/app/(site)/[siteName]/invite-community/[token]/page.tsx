@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Typography } from '@mui/material';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import Container from '../../menu';
@@ -132,6 +133,7 @@ export default async function Page(context: RouteContext) {
         <div className={`content ${styles.content} ${styles['home-content']} `}>
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
+              <Typography variant="subtitle2">회원가입</Typography>
               {!hasSettlement && !isMinor ? <IdentityVerificationButton /> : null}
               {isMinor ? (
                 <p className="alert warning">

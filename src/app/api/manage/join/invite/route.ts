@@ -214,6 +214,41 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
+    const particleResult = await access.supabaseAdmin.from('particles').select('id').eq('email', email).maybeSingle();
+
+    if (particleResult.error) {
+      return Response.json({ error: '회원 정보 확인에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (particleResult.data) {
+      const stigmaResult = await access.supabaseAdmin
+        .from('stigmas')
+        .select('id')
+        .eq('user_id', particleResult.data.id)
+        .maybeSingle();
+
+      if (stigmaResult.error) {
+        return Response.json({ error: '회원 정보 확인에 실패했습니다.' }, { status: 500 });
+      }
+
+      if (stigmaResult.data) {
+        const membershipResult = await access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', access.siteId)
+          .eq('user_id', stigmaResult.data.id)
+          .maybeSingle();
+
+        if (membershipResult.error) {
+          return Response.json({ error: '가입 정보 확인에 실패했습니다.' }, { status: 500 });
+        }
+
+        if (membershipResult.data) {
+          return Response.json({ error: '이미 가입한 멤버입니다.' }, { status: 400 });
+        }
+      }
+    }
+
     const duplicatePendingInvite = await access.supabaseAdmin
       .from('invite')
       .select('id')
@@ -231,7 +266,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (duplicatePendingInvite.data) {
-      return Response.json({ error: '이미 대기 중인 초대가 있습니다.' }, { status: 400 });
+      return Response.json({ error: '이미 초대장을 받은 대상자입니다.' }, { status: 400 });
     }
 
     const token = randomUUID();
