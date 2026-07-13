@@ -142,9 +142,7 @@ export async function getPublicMembersAccess(siteName: string) {
     } as const;
   }
 
-  const sites = sitesResult.data as SitesRow;
-
-  if (sites.visibility_member !== 'public' || site.visibility_type !== 'public' || site.is_shutdown === true) {
+  if (site.visibility_type !== 'public' || site.is_shutdown === true) {
     return {
       ok: false,
       status: 403,

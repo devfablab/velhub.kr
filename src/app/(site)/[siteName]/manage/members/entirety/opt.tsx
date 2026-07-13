@@ -1170,7 +1170,7 @@ export default function Opt() {
                       <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
                     </TableCell>
                     <TableCell>별명</TableCell>
-                    <TableCell>멤버 등급</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>멤버 등급</TableCell>
                     <TableCell>가입일</TableCell>
                     <TableCell>최종방문일</TableCell>
                     <TableCell>방문수</TableCell>

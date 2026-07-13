@@ -1691,45 +1691,47 @@ export default function Opt() {
             </Dialog>
           )}
 
-          {selectedManager && isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={isManagerEditOpen}
-              onClose={() => setIsManagerEditOpen(false)}
-              className="VhiDrawer-bottom"
-            >
-              <h2>매니저 변경</h2>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setIsManagerEditOpen(false)}
-                aria-label="매니저 변경 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
-              {managerEditContent}
-            </Drawer>
-          ) : null}
-
-          {selectedManager && !isMobile ? (
-            <Dialog
-              open={isManagerEditOpen}
-              onClose={() => setIsManagerEditOpen(false)}
-              fullWidth
-              maxWidth="sm"
-              className="VhiDialog"
-            >
-              <DialogTitle>매니저 변경</DialogTitle>
-              <button
-                type="button"
-                className="close-button"
-                onClick={() => setIsManagerEditOpen(false)}
-                aria-label="매니저 변경 닫기"
-              >
-                <CloseRoundedIcon />
-              </button>
-              <DialogContent>{managerEditContent}</DialogContent>
-            </Dialog>
+          {selectedManager ? (
+            <>
+              {isMobile ? (
+                <Drawer
+                  anchor="bottom"
+                  open={isManagerEditOpen}
+                  onClose={() => setIsManagerEditOpen(false)}
+                  className="VhiDrawer-bottom"
+                >
+                  <h2>매니저 변경</h2>
+                  <button
+                    type="button"
+                    className="close-button"
+                    onClick={() => setIsManagerEditOpen(false)}
+                    aria-label="매니저 변경 닫기"
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                  {managerEditContent}
+                </Drawer>
+              ) : (
+                <Dialog
+                  open={isManagerEditOpen}
+                  onClose={() => setIsManagerEditOpen(false)}
+                  fullWidth
+                  maxWidth="sm"
+                  className="VhiDialog"
+                >
+                  <DialogTitle>매니저 변경</DialogTitle>
+                  <button
+                    type="button"
+                    className="close-button"
+                    onClick={() => setIsManagerEditOpen(false)}
+                    aria-label="매니저 변경 닫기"
+                  >
+                    <CloseRoundedIcon />
+                  </button>
+                  <DialogContent>{managerEditContent}</DialogContent>
+                </Dialog>
+              )}
+            </>
           ) : null}
 
           {isMobile ? (

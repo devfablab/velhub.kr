@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  Alert,
   Box,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -477,15 +475,9 @@ export default function Opt() {
 
           {!enabled ? (
             <div className={`paper ${styles.paper}`}>
-              <Typography variant="h6" component="h2">
-                등업 시스템을 사용하시겠어요?
-              </Typography>
-
-              <Box>
-                <Button type="button" variant="contained" onClick={handleEnableLevels} disabled={isEnabling}>
-                  등업 시스템 사용하기
-                </Button>
-              </Box>
+              <button type="button" className="button medium action" onClick={handleEnableLevels} disabled={isEnabling}>
+                등업 시스템 사용하기
+              </button>
             </div>
           ) : (
             <>
