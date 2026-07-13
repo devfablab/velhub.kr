@@ -237,6 +237,8 @@ export default function Opt() {
   const [moveRole, setMoveRole] = useState<ManagerRole>('community-manager');
   const [moveBoardId, setMoveBoardId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [searchDialogErrorMessage, setSearchDialogErrorMessage] = useState('');
+  const [managerEditErrorMessage, setManagerEditErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [isSubmittingNew, setIsSubmittingNew] = useState(false);
   const [isSubmittingDelete, setIsSubmittingDelete] = useState(false);
@@ -590,12 +592,13 @@ export default function Opt() {
 
   function handleSearchKeywordChange(event: InputChangeEvent) {
     setSearchKeyword(event.currentTarget.value);
-    setErrorMessage('');
+    setSearchDialogErrorMessage('');
   }
 
   function handleMoveRoleChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const nextRole = event.target.value as ManagerRole;
 
+    setManagerEditErrorMessage('');
     setMoveRole(nextRole);
     setMoveBoardId(isBoardRole(nextRole) ? moveBoardId : '');
 
@@ -607,6 +610,7 @@ export default function Opt() {
   function handleMoveBoardChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const nextBoardId = event.target.value;
 
+    setManagerEditErrorMessage('');
     setMoveBoardId(nextBoardId);
 
     if (isMoveRoleFull(moveRole, nextBoardId)) {
@@ -615,6 +619,7 @@ export default function Opt() {
   }
 
   function openSearchDialog() {
+    setSearchDialogErrorMessage('');
     setIsSearchDialogOpen(true);
   }
 
@@ -632,6 +637,12 @@ export default function Opt() {
     setAssignCommonRole('community-manager');
     setAssignBoardId('');
     setAssignBoardRole('board-general-manager');
+    setSearchDialogErrorMessage('');
+  }
+
+  function closeManagerEdit() {
+    setIsManagerEditOpen(false);
+    setManagerEditErrorMessage('');
   }
 
   async function handleSearchMembers(event: FormSubmitEvent) {
@@ -644,7 +655,7 @@ export default function Opt() {
     }
 
     try {
-      setErrorMessage('');
+      setSearchDialogErrorMessage('');
       setIsSearching(true);
 
       const response = await fetch(`/api/manage/join/managers/search?siteName=${siteName}&keyword=${trimmedKeyword}`, {
@@ -663,9 +674,9 @@ export default function Opt() {
       setSelectedSearchMemberId('');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '멤버 검색에 실패했습니다.');
+        setSearchDialogErrorMessage(unknownError.message || '멤버 검색에 실패했습니다.');
       } else {
-        setErrorMessage('멤버 검색에 실패했습니다.');
+        setSearchDialogErrorMessage('멤버 검색에 실패했습니다.');
       }
     } finally {
       setIsSearching(false);
@@ -674,7 +685,7 @@ export default function Opt() {
 
   async function handleCreateManager() {
     if (!selectedSearchMember) {
-      setErrorMessage('위임할 멤버를 선택해주세요.');
+      setSearchDialogErrorMessage('위임할 멤버를 선택해주세요.');
       return;
     }
 
@@ -690,7 +701,7 @@ export default function Opt() {
 
     if (assignManagerGroup === 'common') {
       try {
-        setErrorMessage('');
+        setSearchDialogErrorMessage('');
         setIsSubmittingNew(true);
 
         const response = await fetch('/api/manage/join/managers/new', {
@@ -719,9 +730,9 @@ export default function Opt() {
         await loadManagers();
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '위임에 실패했습니다.');
+          setSearchDialogErrorMessage(unknownError.message || '위임에 실패했습니다.');
         } else {
-          setErrorMessage('위임에 실패했습니다.');
+          setSearchDialogErrorMessage('위임에 실패했습니다.');
         }
       } finally {
         setIsSubmittingNew(false);
@@ -731,12 +742,12 @@ export default function Opt() {
     }
 
     if (!assignBoardId) {
-      setErrorMessage('게시판을 선택해주세요.');
+      setSearchDialogErrorMessage('게시판을 선택해주세요.');
       return;
     }
 
     try {
-      setErrorMessage('');
+      setSearchDialogErrorMessage('');
       setIsSubmittingNew(true);
 
       const response = await fetch('/api/manage/join/managers/new', {
@@ -765,9 +776,9 @@ export default function Opt() {
       await loadManagers();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '위임에 실패했습니다.');
+        setSearchDialogErrorMessage(unknownError.message || '위임에 실패했습니다.');
       } else {
-        setErrorMessage('위임에 실패했습니다.');
+        setSearchDialogErrorMessage('위임에 실패했습니다.');
       }
     } finally {
       setIsSubmittingNew(false);
@@ -776,12 +787,12 @@ export default function Opt() {
 
   async function handleDeleteManager() {
     if (!selectedManager) {
-      setErrorMessage('해임할 매니저를 선택해주세요.');
+      setManagerEditErrorMessage('해임할 매니저를 선택해주세요.');
       return;
     }
 
     try {
-      setErrorMessage('');
+      setManagerEditErrorMessage('');
       setIsSubmittingDelete(true);
 
       const response = await fetch('/api/manage/join/managers/delete', {
@@ -804,14 +815,14 @@ export default function Opt() {
 
       setManagers(Array.isArray(result.managers) ? result.managers : []);
       setSelectedManagerRoleId('');
-      setIsManagerEditOpen(false);
+      closeManagerEdit();
       setSnackbarMessage('해임되었습니다.');
       await loadManagers();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '해임에 실패했습니다.');
+        setManagerEditErrorMessage(unknownError.message || '해임에 실패했습니다.');
       } else {
-        setErrorMessage('해임에 실패했습니다.');
+        setManagerEditErrorMessage('해임에 실패했습니다.');
       }
     } finally {
       setIsSubmittingDelete(false);
@@ -820,12 +831,12 @@ export default function Opt() {
 
   async function handleMoveManager() {
     if (!selectedManager) {
-      setErrorMessage('이동할 매니저를 선택해주세요.');
+      setManagerEditErrorMessage('이동할 매니저를 선택해주세요.');
       return;
     }
 
     if (isBoardRole(moveRole) && !moveBoardId) {
-      setErrorMessage('게시판을 선택해주세요.');
+      setManagerEditErrorMessage('게시판을 선택해주세요.');
       return;
     }
 
@@ -835,7 +846,7 @@ export default function Opt() {
     }
 
     try {
-      setErrorMessage('');
+      setManagerEditErrorMessage('');
       setIsSubmittingMove(true);
 
       const payload = {
@@ -869,14 +880,14 @@ export default function Opt() {
       setMoveRole('community-manager');
       setMoveBoardId('');
       setSelectedManagerRoleId('');
-      setIsManagerEditOpen(false);
+      closeManagerEdit();
       setSnackbarMessage('이동되었습니다.');
       await loadManagers();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '이동에 실패했습니다.');
+        setManagerEditErrorMessage(unknownError.message || '이동에 실패했습니다.');
       } else {
-        setErrorMessage('이동에 실패했습니다.');
+        setManagerEditErrorMessage('이동에 실패했습니다.');
       }
     } finally {
       setIsSubmittingMove(false);
@@ -901,6 +912,13 @@ export default function Opt() {
 
   const managerEditContent = selectedManager ? (
     <Stack gap={3}>
+      {managerEditErrorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{managerEditErrorMessage}</span>
+        </p>
+      ) : null}
+
       <Stack direction="column" gap={1}>
         <Stack sx={{ flexWrap: 'nowrap' }} direction="row" gap={3} alignItems="center">
           <Stack gap={1} direction="row">
@@ -1049,6 +1067,7 @@ export default function Opt() {
                         hover
                         selected={isSelected}
                         onClick={() => {
+                          setManagerEditErrorMessage('');
                           setSelectedManagerRoleId(manager.manageRoleId);
                           setMoveRole(manager.role);
                           setMoveBoardId(manager.boardId ?? '');
@@ -1307,6 +1326,13 @@ export default function Opt() {
               </button>
 
               <Stack gap={3}>
+                {searchDialogErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{searchDialogErrorMessage}</span>
+                  </p>
+                ) : null}
+
                 <Stack component="form" gap={3} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
                   <Stack direction="row" gap={1} alignItems="center">
                     <TextField
@@ -1506,6 +1532,12 @@ export default function Opt() {
 
               <DialogContent>
                 <Stack component="form" gap={2} sx={{ pt: 1 }} onSubmit={handleSearchMembers}>
+                  {searchDialogErrorMessage ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>{searchDialogErrorMessage}</span>
+                    </p>
+                  ) : null}
                   <Stack direction="row" gap={1} alignItems="center" sx={{ paddingRight: '3px' }}>
                     <TextField
                       placeholder="별명 검색"
@@ -1697,14 +1729,14 @@ export default function Opt() {
                 <Drawer
                   anchor="bottom"
                   open={isManagerEditOpen}
-                  onClose={() => setIsManagerEditOpen(false)}
+                  onClose={closeManagerEdit}
                   className="VhiDrawer-bottom"
                 >
                   <h2>매니저 변경</h2>
                   <button
                     type="button"
                     className="close-button"
-                    onClick={() => setIsManagerEditOpen(false)}
+                    onClick={closeManagerEdit}
                     aria-label="매니저 변경 닫기"
                   >
                     <CloseRoundedIcon />
@@ -1714,7 +1746,7 @@ export default function Opt() {
               ) : (
                 <Dialog
                   open={isManagerEditOpen}
-                  onClose={() => setIsManagerEditOpen(false)}
+                  onClose={closeManagerEdit}
                   fullWidth
                   maxWidth="sm"
                   className="VhiDialog"
@@ -1723,7 +1755,7 @@ export default function Opt() {
                   <button
                     type="button"
                     className="close-button"
-                    onClick={() => setIsManagerEditOpen(false)}
+                    onClick={closeManagerEdit}
                     aria-label="매니저 변경 닫기"
                   >
                     <CloseRoundedIcon />

@@ -224,22 +224,12 @@ export async function PATCH(request: Request) {
         return Response.json({ error: 'role이 유효하지 않습니다.' }, { status: 400 });
       }
 
-      if (sourceRole === 'board-general-manager') {
-        return Response.json({ error: '개별 게시판 총괄 매니저는 전용 이동으로 처리해야 합니다.' }, { status: 400 });
-      }
-
-      if (role === 'board-general-manager') {
-        return Response.json({ error: '개별 게시판 총괄 매니저는 이동으로 처리해야 합니다.' }, { status: 400 });
-      }
-
       if (role === 'community-manager') {
         if (!access.actor.canManageCommunityManager) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
-      } else {
-        if (!access.actor.canManageBoardManager) {
-          return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-        }
+      } else if (!access.actor.canManageBoardManager) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
 
       if (isBoardRequiredRole(role) && !boardId) {
@@ -248,6 +238,19 @@ export async function PATCH(request: Request) {
 
       if (!isBoardRequiredRole(role) && boardId) {
         return Response.json({ error: 'boardId는 사용할 수 없습니다.' }, { status: 400 });
+      }
+
+      if (isBoardRequiredRole(role)) {
+        const boardResult = await access.supabaseAdmin
+          .from('boards')
+          .select('id')
+          .eq('site_id', access.rhizome.id)
+          .eq('id', boardId)
+          .maybeSingle();
+
+        if (boardResult.error || !boardResult.data) {
+          return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+        }
       }
 
       if (role === 'community-manager') {
@@ -270,18 +273,20 @@ export async function PATCH(request: Request) {
         }
       }
 
-      if (role === 'board-assistant-manager') {
-        const boardResult = await access.supabaseAdmin
-          .from('boards')
-          .select('id')
-          .eq('site_id', access.rhizome.id)
-          .eq('id', boardId)
-          .maybeSingle();
+      if (role === 'board-general-manager') {
+        const currentCount = managerRows.filter(
+          (row) =>
+            row.id !== sourceRow.id &&
+            normalizeText(row.role) === 'board-general-manager' &&
+            normalizeText(row.board_id) === boardId,
+        ).length;
 
-        if (boardResult.error || !boardResult.data) {
-          return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+        if (currentCount >= access.planFeature.boardGeneralManagerLimit) {
+          return Response.json({ error: '해당 게시판의 총괄 매니저 자리가 꽉 찼습니다.' }, { status: 400 });
         }
+      }
 
+      if (role === 'board-assistant-manager') {
         const currentCount = managerRows.filter(
           (row) =>
             row.id !== sourceRow.id &&
