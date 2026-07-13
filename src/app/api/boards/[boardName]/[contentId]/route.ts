@@ -1048,12 +1048,14 @@ export async function GET(request: Request, context: RouteContext) {
       const page = await supabaseAdmin
         .from('pages')
         .select(
-          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, og_image_url, attachment_slug, attachment_origin, is_comment',
+          'id, slug, subject, summary, content_html, content_markdown, edited_at, sort_order, user_id, site_id, board_id, created_at, og_image, attachment_slug, attachment_origin, is_comment',
         )
         .eq('site_id', rhizomeData.id)
         .eq('board_id', boardData.id)
         .eq('slug', normalizedContentId)
         .maybeSingle();
+
+      console.log('page: ', page);
 
       if (page.error || !page.data) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
