@@ -44,6 +44,7 @@ import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
@@ -76,6 +77,10 @@ type HeaderResponse = {
   avatar: string | null;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
   sessionCase?: string | null;
 };
 
@@ -86,6 +91,10 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
 };
 
 type BlogFontSettings = {
@@ -449,6 +458,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const [siteLabel, setSiteLabel] = useState('');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
   const [isAdult, setIsAdult] = useState<boolean>(false);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -461,6 +471,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     isLoggedIn: false,
     globalRole: null,
     siteRole: null,
+    nickname: null,
+    isApproval: null,
+    invite: false,
+    join: false,
   });
 
   useEffect(() => {
@@ -513,8 +527,13 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
           isLoggedIn: false,
           globalRole: null,
           siteRole: null,
+          nickname: null,
+          isApproval: null,
+          invite: false,
+          join: false,
         });
         setSiteLabel('');
+        setProfilePictureUrl('');
         return;
       }
 
@@ -529,8 +548,13 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
+        nickname: result.nickname,
+        isApproval: result.isApproval,
+        invite: result.invite,
+        join: result.join,
       });
       setSiteLabel(result.siteLabel || result.siteName || '');
+      setProfilePictureUrl(result.profilePictureUrl);
       setIsAdult(await detectAdult(siteName));
     }
 
@@ -731,7 +755,25 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         </div>
                       </li>
                     )}
-
+                    {userProfile.isLoggedIn ? (
+                      <li className={styles['VhiMenu-profile']}>
+                        <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>{siteLabel}</em>
+                          <span>
+                            {userProfile.isApproval === true
+                              ? userProfile.nickname || userProfile.name
+                              : userProfile.isApproval === false
+                                ? '승인을 기다려요'
+                                : userProfile.invite
+                                  ? '초대에 응해 주세요'
+                                  : userProfile.join === false
+                                    ? '가입해 주세요'
+                                    : null}
+                          </span>
+                        </div>
+                      </li>
+                    ) : null}
                     <li className={styles.searchform}>
                       {siteType === 'blog' ? (
                         <BlogSearch siteName={siteName} isBlog={isBlog} />

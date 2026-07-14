@@ -1,24 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
-import { normalizeText } from '@/lib/utils';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
 
-type HeaderSiteResponse = {
-  siteName: string | null;
-  siteType: SiteType | null;
-  isLoggedIn: boolean;
-  email: string | null;
-  userName: string | null;
-  avatar: string | null;
-  themeMode: 'light' | 'system' | 'dark' | null;
-  globalRole: string | null;
-  siteRole: string | null;
-  sessionCase?: string | null;
+type NavManageProps = {
+  siteName: string;
+  siteType: SiteType;
+  isSiteStaff: boolean;
 };
 
 type StaffNavItem = {
@@ -26,10 +17,6 @@ type StaffNavItem = {
   href: string;
   startsWith?: boolean;
 };
-
-function isStaffRole(role: string | null) {
-  return role === 'owner' || role === 'manager';
-}
 
 function isCurrentPath(pathname: string, item: StaffNavItem) {
   if (item.startsWith) {
@@ -39,53 +26,10 @@ function isCurrentPath(pathname: string, item: StaffNavItem) {
   return pathname === item.href;
 }
 
-export default function NavManage() {
-  const params = useParams();
+export default function NavManage({ siteName, siteType, isSiteStaff }: NavManageProps) {
   const pathname = usePathname();
 
-  const siteName = normalizeText(params.siteName);
-
-  const [siteType, setSiteType] = useState<SiteType | null>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [isAllowed, setIsAllowed] = useState(false);
-
-  useEffect(() => {
-    async function loadHeader() {
-      if (!siteName) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderSiteResponse | { error?: string };
-
-      if (!response.ok || !('siteRole' in result)) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      setSiteType(result.siteType);
-
-      if (!isStaffRole(result.siteRole)) {
-        setIsReady(true);
-        setIsAllowed(false);
-        return;
-      }
-
-      setIsAllowed(true);
-      setIsReady(true);
-    }
-
-    void loadHeader();
-  }, [siteName]);
-
-  if (!isReady || !isAllowed || !siteName || !siteType) {
+  if (!isSiteStaff) {
     return null;
   }
 

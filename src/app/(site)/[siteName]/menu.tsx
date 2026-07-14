@@ -71,6 +71,10 @@ type HeaderResponse = {
   avatar: string | null;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
   sessionCase?: string | null;
 };
 
@@ -81,6 +85,10 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
 };
 
 type BlogFontSettings = {
@@ -245,6 +253,10 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
     isLoggedIn: false,
     globalRole: null,
     siteRole: null,
+    nickname: null,
+    isApproval: null,
+    invite: false,
+    join: false,
   });
 
   const [isSearchDrawerOpen, setIsSearchDrawerOpen] = useState(false);
@@ -299,6 +311,10 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
           isLoggedIn: false,
           globalRole: null,
           siteRole: null,
+          nickname: null,
+          isApproval: null,
+          invite: false,
+          join: false,
         });
         setSiteLabel('');
         setProfilePictureUrl(null);
@@ -317,6 +333,10 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
+        nickname: result.nickname,
+        isApproval: result.isApproval,
+        invite: result.invite,
+        join: result.join,
       });
       setSiteLabel(result.siteLabel || result.siteName || '');
       setProfilePictureUrl(result.profilePictureUrl);
@@ -546,6 +566,25 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         </div>
                       </li>
                     )}
+                    {userProfile.isLoggedIn ? (
+                      <ListSubheader className={styles['VhiMenu-profile']}>
+                        <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                        <div className={styles['VhiMenu-profile-info']}>
+                          <em>{siteLabel}</em>
+                          <span>
+                            {userProfile.isApproval === true
+                              ? userProfile.nickname || userProfile.name
+                              : userProfile.isApproval === false
+                                ? '승인을 기다려요'
+                                : userProfile.invite
+                                  ? '초대에 응해 주세요'
+                                  : userProfile.join === false
+                                    ? '가입해 주세요'
+                                    : null}
+                          </span>
+                        </div>
+                      </ListSubheader>
+                    ) : null}
 
                     {pageFin ? (
                       <>

@@ -1,4 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -33,6 +34,12 @@ type AccountRow = {
 };
 
 type MembershipRow = {
+  role: string | null;
+  nickname: string | null;
+  is_approval: boolean | null;
+};
+
+type CommunityManageRoleRow = {
   role: string | null;
 };
 
@@ -219,6 +226,7 @@ async function processVisit(siteId: string, request: Request) {
   }
 
   const siteVisitCount = siteVisitCountResult.data as SiteVisitCountRow;
+
   const nowIsoString = new Date().toISOString();
 
   const visitResult = await supabaseAdmin
@@ -300,11 +308,14 @@ export async function GET(request: Request) {
 
     const site = siteResult.data as SiteRow;
     const siteType = isSiteType(site.site_type) ? site.site_type : null;
+
     const blogFontSettings = await getBlogFontSettings(site.id, siteType);
 
     await processVisit(site.id, request);
 
-    const session = await verifySession({ siteId: site.id });
+    const session = await verifySession({
+      siteId: site.id,
+    });
 
     if (!session.authUserId) {
       return Response.json({
@@ -318,6 +329,11 @@ export async function GET(request: Request) {
         avatar: null,
         globalRole: null,
         siteRole: null,
+        siteRoles: [],
+        nickname: null,
+        isApproval: null,
+        invite: false,
+        join: false,
         sessionCase: session.case ?? null,
         siteLabel: site.site_label,
         profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
@@ -338,6 +354,7 @@ export async function GET(request: Request) {
 
       const checkin = checkinResult.data as CheckinRow;
       const nowIsoString = new Date().toISOString();
+
       const nextCheckinCount = shouldIncreaseCheckin(checkin.last_checkin_at)
         ? (Number(checkin.checkin_count ?? 0) || 0) + 1
         : Number(checkin.checkin_count ?? 0) || 0;
@@ -367,10 +384,10 @@ export async function GET(request: Request) {
 
     let membership: MembershipRow | null = null;
 
-    if ((session.case === 'staff' || session.case === 'member') && session.rhizomeStigmaId) {
+    if (session.rhizomeStigmaId) {
       const membershipResult = await supabaseAdmin
         .from('rhizome_stigmas')
-        .select('role')
+        .select('role, nickname, is_approval')
         .eq('id', session.rhizomeStigmaId)
         .maybeSingle();
 
@@ -381,7 +398,92 @@ export async function GET(request: Request) {
       membership = (membershipResult.data ?? null) as MembershipRow | null;
     }
 
+    let siteRoles: string[] = [];
+
+    if (membership?.is_approval === true) {
+      const membershipRole = normalizeText(membership.role).toLowerCase();
+
+      if (siteType === 'blog') {
+        siteRoles = membershipRole ? [membershipRole] : [];
+      }
+
+      if (siteType === 'community') {
+        if (membershipRole === 'owner') {
+          siteRoles = ['owner'];
+        } else if (session.rhizomeStigmaId) {
+          const communityResult = await supabaseAdmin
+            .from('communities')
+            .select('id')
+            .eq('site_id', site.id)
+            .maybeSingle();
+
+          if (communityResult.error || !communityResult.data) {
+            return Response.json(
+              {
+                error: '헤더 정보를 불러오지 못했습니다.',
+              },
+              { status: 500 },
+            );
+          }
+
+          const communityManageRoleResult = await supabaseAdmin
+            .from('community_manage_role')
+            .select('role')
+            .eq('community_id', communityResult.data.id)
+            .eq('manager_id', session.rhizomeStigmaId);
+
+          if (communityManageRoleResult.error) {
+            return Response.json(
+              {
+                error: '헤더 정보를 불러오지 못했습니다.',
+              },
+              { status: 500 },
+            );
+          }
+
+          const communityManageRoles = ((communityManageRoleResult.data ?? []) as CommunityManageRoleRow[])
+            .map((item) => normalizeText(item.role).toLowerCase())
+            .filter(Boolean);
+
+          siteRoles =
+            communityManageRoles.length > 0
+              ? [...new Set(communityManageRoles)]
+              : membershipRole === 'member'
+                ? ['member']
+                : [];
+        }
+      }
+    }
+
+    const sessionClaims = await getSessionClaims();
+    const inviteEmail = normalizeText(sessionClaims?.email).toLowerCase();
+
+    let hasInvite = false;
+
+    if (!membership && inviteEmail) {
+      const nowIsoString = new Date().toISOString();
+
+      const inviteResult = await supabaseAdmin
+        .from('invite')
+        .select('id')
+        .eq('site_id', site.id)
+        .eq('email', inviteEmail)
+        .eq('role', 'member')
+        .eq('status', 'pending')
+        .is('cancelled_at', null)
+        .is('joined_at', null)
+        .gt('expires_at', nowIsoString)
+        .limit(1);
+
+      if (inviteResult.error) {
+        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      hasInvite = (inviteResult.data?.length ?? 0) > 0;
+    }
+
     const account = accountResult.data as AccountRow;
+    const isApproval = membership?.is_approval === true ? true : membership?.is_approval === false ? false : null;
 
     return Response.json({
       siteName: site.site_key,
@@ -394,6 +496,11 @@ export async function GET(request: Request) {
       avatar: processAvatar(account.avatar),
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole: normalizeText(membership?.role).toLowerCase() || null,
+      siteRoles,
+      nickname: membership?.is_approval === true ? normalizeText(membership.nickname) || null : null,
+      isApproval,
+      invite: hasInvite,
+      join: Boolean(membership) || hasInvite,
       sessionCase: session.case ?? null,
       siteLabel: site.site_label,
       profilePictureUrl: getPublicUrl('avatar', site.profile_picture),

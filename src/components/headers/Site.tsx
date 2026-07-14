@@ -56,6 +56,10 @@ type HeaderResponse = {
   avatar: string | null;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
   sessionCase?: string | null;
 };
 
@@ -66,6 +70,10 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   siteRole: string | null;
+  nickname: string | null;
+  isApproval: boolean | null;
+  invite: boolean;
+  join: boolean;
 };
 
 type BlogFontSettings = {
@@ -225,6 +233,10 @@ export default function HeaderSite() {
     isLoggedIn: false,
     globalRole: null,
     siteRole: null,
+    nickname: null,
+    isApproval: null,
+    invite: false,
+    join: false,
   });
 
   const [siteLabel, setSiteLabel] = useState('');
@@ -312,6 +324,10 @@ export default function HeaderSite() {
           isLoggedIn: false,
           globalRole: null,
           siteRole: null,
+          nickname: null,
+          isApproval: null,
+          invite: false,
+          join: false,
         });
         setSiteLabel('');
         setProfilePictureUrl(null);
@@ -330,6 +346,10 @@ export default function HeaderSite() {
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
+        nickname: result.nickname,
+        isApproval: result.isApproval,
+        invite: result.invite,
+        join: result.join,
       });
 
       setSiteLabel(result.siteLabel || result.siteName || '');
@@ -447,8 +467,8 @@ export default function HeaderSite() {
                 </div>
               </div>
               <div className={styles.bottom}>
-                {isManagePage ? (
-                  <NavManage />
+                {isManagePage && siteType && isSiteStaff ? (
+                  <NavManage siteName={siteName} siteType={siteType} isSiteStaff={isSiteStaff} />
                 ) : isPaymentPage ? (
                   <NavPayments />
                 ) : (
@@ -476,8 +496,8 @@ export default function HeaderSite() {
                       )}
                     </Anchor>
                   </h1>
-                  {isManagePage ? (
-                    <NavManage />
+                  {isManagePage && siteType && isSiteStaff ? (
+                    <NavManage siteName={siteName} siteType={siteType} isSiteStaff={isSiteStaff} />
                   ) : isPaymentPage ? (
                     <NavPayments />
                   ) : (
@@ -549,6 +569,25 @@ export default function HeaderSite() {
                 </div>
               </li>
             )}
+            {userProfile.isLoggedIn ? (
+              <li className={styles['VhiMenu-profile']}>
+                <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>{siteLabel}</em>
+                  <span>
+                    {userProfile.isApproval === true
+                      ? userProfile.nickname || userProfile.name
+                      : userProfile.isApproval === false
+                        ? '승인을 기다려요'
+                        : userProfile.invite
+                          ? '초대에 응해 주세요'
+                          : userProfile.join === false
+                            ? '가입해 주세요'
+                            : null}
+                  </span>
+                </div>
+              </li>
+            ) : null}
 
             {isSiteStaff && !isManagePage
               ? [
