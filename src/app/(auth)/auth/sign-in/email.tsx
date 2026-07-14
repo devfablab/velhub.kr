@@ -368,7 +368,7 @@ export default function EmailSignIn() {
 
         {isCaptchaRequired ? (
           <Stack gap={1}>
-            <Typography variant="body2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
+            <Typography variant="subtitle2">로그인 실패가 누적되어 캡챠 확인이 필요합니다.</Typography>
             <HCaptchaBox onTokenChange={setCaptchaToken} resetKey={captchaResetKey} />
           </Stack>
         ) : null}
@@ -413,7 +413,7 @@ export default function EmailSignIn() {
             <CloseRoundedIcon />
           </button>
           <Stack gap={2} sx={{ pt: 1 }}>
-            <Typography>{decisionMessage}</Typography>
+            <Typography variant="subtitle2">{decisionMessage}</Typography>
             <Stack direction="column" gap={1.5}>
               <button
                 type="button"
@@ -447,7 +447,7 @@ export default function EmailSignIn() {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography>{decisionMessage}</Typography>
+            <Typography variant="subtitle2">{decisionMessage}</Typography>
           </DialogContent>
           <DialogActions>
             <button
@@ -482,7 +482,7 @@ export default function EmailSignIn() {
             <CloseRoundedIcon />
           </button>
           <Stack gap={2} sx={{ pt: 1 }}>
-            <Typography>{decisionMessage}</Typography>
+            <Typography variant="subtitle2">{decisionMessage}</Typography>
             <Stack direction="column" gap={1.5}>
               <button
                 type="button"
@@ -516,7 +516,7 @@ export default function EmailSignIn() {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography>{decisionMessage}</Typography>
+            <Typography variant="subtitle2">{decisionMessage}</Typography>
           </DialogContent>
           <DialogActions>
             <button

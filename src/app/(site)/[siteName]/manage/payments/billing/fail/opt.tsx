@@ -1,12 +1,12 @@
 'use client';
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { Stack, Typography } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
+import Anchor from '@/components/Anchor';
 
 export default function Opt() {
   const params = useParams();
@@ -16,28 +16,27 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
   const message = normalizeText(searchParams.get('message'));
 
-  function handleRetry() {
-    router.replace(`/${siteName}/manage/payments/billing`);
-  }
-
   return (
-    <Container menu="payments">
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack gap={3} alignItems="center">
-          <Typography variant="h6" component="h1">
-            결제수단 등록에 실패했습니다.
-          </Typography>
-          <Typography>결제수단을 다시 등록해 주세요.</Typography>
-          {message ? (
-            <Typography color="error" role="alert">
-              {message}
+    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage/payments/billing`} menu="payments">
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack gap={3} alignItems="center">
+            <Typography variant="h6" component="h1">
+              결제수단 등록에 실패했습니다.
             </Typography>
-          ) : null}
-          <Button type="button" variant="contained" onClick={handleRetry}>
-            다시 등록하기
-          </Button>
-        </Stack>
-      </Paper>
+            <Typography>결제수단을 다시 등록해 주세요.</Typography>
+            {message ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{message}</span>
+              </p>
+            ) : null}
+            <Anchor href={`/${siteName}/manage/payments/billing`} className="button medium submit">
+              다시 등록하기
+            </Anchor>
+          </Stack>
+        </div>
+      </div>
     </Container>
   );
 }

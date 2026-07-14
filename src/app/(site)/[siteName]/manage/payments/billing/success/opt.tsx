@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Anchor from '@/components/Anchor';
 import Container from '../../../menu';
+import styles from '@/app/manage.module.sass';
 
 type PlanBillingSuccessResponse = {
   ok?: boolean;
@@ -83,60 +83,57 @@ export default function Opt() {
     void completeBillingAuth();
   }, [searchParams]);
 
-  function handleGoBilling() {
-    router.replace(`/${siteName}/manage/payments/billing`);
-  }
-
-  function handleGoManage() {
-    router.replace(`/${siteName}/manage`);
-  }
-
   if (isLoading) {
     return (
-      <Container menu="payments">
-        <LoadingIndicator />
+      <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage/payments/billing`} menu="payments">
+        <div className={`container ${styles.container}`}>
+          <LoadingIndicator />
+        </div>
       </Container>
     );
   }
 
   return (
-    <Container menu="payments">
-      <Paper variant="outlined" sx={{ p: 3 }}>
-        <Stack gap={3} alignItems="center">
-          {isSuccess ? (
-            <>
-              <Typography variant="h6" component="h1">
-                {normalizeText(searchParams.get('purpose')) === 'billing_method'
-                  ? '결제수단이 추가되었습니다.'
-                  : '결제수단 등록이 완료되었습니다.'}
-              </Typography>
-              {normalizeText(searchParams.get('purpose')) === 'billing_method' ? null : (
-                <Typography color="text.secondary">무료체험이 적용되었고 사이트 운영이 가능합니다.</Typography>
-              )}
-            </>
-          ) : (
-            <>
-              <Typography variant="h6" component="h1">
-                결제수단 등록을 완료하지 못했습니다.
-              </Typography>
-              {errorMessage ? (
-                <Typography color="error" role="alert">
-                  {errorMessage}
+    <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage/payments/billing`} menu="payments">
+      <div className={`container ${styles.container}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <Stack gap={3} alignItems="center">
+            {isSuccess ? (
+              <>
+                <Typography variant="h6" component="h1">
+                  {normalizeText(searchParams.get('purpose')) === 'billing_method'
+                    ? '결제수단이 추가되었습니다.'
+                    : '결제수단 등록이 완료되었습니다.'}
                 </Typography>
-              ) : null}
-            </>
-          )}
+                {normalizeText(searchParams.get('purpose')) === 'billing_method' ? null : (
+                  <Typography color="text.secondary">무료체험이 적용되었고 사이트 운영이 가능합니다.</Typography>
+                )}
+              </>
+            ) : (
+              <>
+                <Typography variant="h6" component="h1">
+                  결제수단 등록을 완료하지 못했습니다.
+                </Typography>
+                {errorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{errorMessage}</span>
+                  </p>
+                ) : null}
+              </>
+            )}
 
-          <Button type="button" variant="contained" onClick={handleGoBilling}>
-            결제/구독 관리로 이동
-          </Button>
-          {isSuccess ? (
-            <Button type="button" onClick={handleGoManage}>
-              관리 홈으로 이동
-            </Button>
-          ) : null}
-        </Stack>
-      </Paper>
+            <Anchor href={`/${siteName}/manage/payments/billing`} className="button medium submit">
+              결제/구독 관리로 이동
+            </Anchor>
+            {isSuccess ? (
+              <Anchor href={`/${siteName}/manage`} className="button medium submit">
+                관리 홈으로 이동
+              </Anchor>
+            ) : null}
+          </Stack>
+        </div>
+      </div>
     </Container>
   );
 }

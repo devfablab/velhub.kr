@@ -259,7 +259,7 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <div className={`paper ${styles.paper}`}>
             <FormControl>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 댓글 방식
               </Typography>
 

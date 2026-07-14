@@ -1,9 +1,10 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import { Typography } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 
 export default function Opt() {
   const params = useParams();
@@ -16,13 +17,14 @@ export default function Opt() {
     <div className="paper">
       <Typography variant="h1">멤버십 가입 실패</Typography>
 
-      <Typography role="status" color="error">
-        {message}
-      </Typography>
+      <p className="alert error">
+        <ErrorOutlineRoundedIcon />
+        <span>{message}</span>
+      </p>
 
-      <Button type="button" href={`/${siteName}`} variant="contained">
+      <Anchor href={`/${siteName}`} className={`/${siteName}`}>
         사이트로 이동
-      </Button>
+      </Anchor>
     </div>
   );
 }

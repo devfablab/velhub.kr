@@ -6,12 +6,17 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Drawer, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import Button from '@mui/material/Button';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  Drawer,
+  Menu,
+  MenuItem,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
 import styles from '@/app/aside.module.sass';
@@ -230,9 +235,9 @@ export default function TableListMobile() {
             <DialogContentText>{alertMessage}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setAlertMessage('')} variant="contained">
+            <button onClick={() => setAlertMessage('')} className="button medium close">
               확인
-            </Button>
+            </button>
           </DialogActions>
         </Dialog>
       )}

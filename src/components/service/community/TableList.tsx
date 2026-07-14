@@ -8,15 +8,18 @@ import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import Button from '@mui/material/Button';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  Drawer,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
 import styles from '@/app/aside.module.sass';
-import { Drawer, useMediaQuery, useTheme } from '@mui/material';
 
 type BoardItem = {
   id: string;
@@ -214,9 +217,9 @@ export default function TableList() {
             <DialogContentText>{alertMessage}</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setAlertMessage('')} variant="contained">
+            <button onClick={() => setAlertMessage('')} className="button medmu close">
               확인
-            </Button>
+            </button>
           </DialogActions>
         </Dialog>
       )}

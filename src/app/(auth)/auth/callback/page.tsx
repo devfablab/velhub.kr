@@ -475,7 +475,7 @@ export default function Page() {
         >
           <h2>소셜 로그인 확인</h2>
           <Stack gap={2} sx={{ pt: 1 }}>
-            <Typography>{confirmMessage}</Typography>
+            <Typography variant="subtitle2">{confirmMessage}</Typography>
             <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>
                 이메일 로그인
@@ -496,7 +496,7 @@ export default function Page() {
         >
           <DialogTitle>소셜 로그인 확인</DialogTitle>
           <DialogContent>
-            <Typography>{confirmMessage}</Typography>
+            <Typography variant="subtitle2">{confirmMessage}</Typography>
           </DialogContent>
           <DialogActions>
             <button type="button" className="button medium action" onClick={handleCancelSocialLogin}>

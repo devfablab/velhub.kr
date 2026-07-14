@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
+import { Button, Stack, Typography } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 
 type FailResponse = {
@@ -91,16 +90,20 @@ export default function Opt() {
         <div className="content">
           <div className="paper">
             <Stack gap={3} alignItems="center">
-              <Typography variant="h5" component="h1">
+              <Typography variant="h6" component="h1">
                 글 후원 실패
               </Typography>
-              <Typography role="alert">{message}</Typography>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{message}</span>
+              </p>
               {logErrorMessage ? (
-                <Typography color="error" role="alert">
-                  {logErrorMessage}
-                </Typography>
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{logErrorMessage}</span>
+                </p>
               ) : null}
-              <Button type="button" variant="contained" href={`/${siteName}/${boardName}/${contentId}`}>
+              <Button type="button" className="button medium submit" href={`/${siteName}/${boardName}/${contentId}`}>
                 글로 이동
               </Button>
             </Stack>

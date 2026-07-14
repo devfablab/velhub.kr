@@ -783,7 +783,7 @@ export default function Opt() {
 
           {boards.length === 0 ? (
             <div className={`paper ${styles.paper}`}>
-              <Typography>게시판이 없습니다.</Typography>
+              <Typography variant="subtitle2">게시판이 없습니다.</Typography>
             </div>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
@@ -1176,7 +1176,7 @@ export default function Opt() {
             </button>
             <Stack gap={2} sx={{ pt: 1 }}>
               <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography>
+                <Typography variant="subtitle2">
                   해당 게시물을 복구하시겠습니까?
                   <br />
                   복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.
@@ -1212,7 +1212,7 @@ export default function Opt() {
             </button>
             <DialogContent>
               <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography>
+                <Typography variant="subtitle2">
                   해당 게시물을 복구하시겠습니까?
                   <br />
                   복구하시면 해당 게시물을 모두가 볼 수 있게 됩니다.

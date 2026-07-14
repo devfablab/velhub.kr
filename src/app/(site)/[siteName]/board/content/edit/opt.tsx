@@ -11,13 +11,13 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
 import {
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Drawer,
   FormControl,

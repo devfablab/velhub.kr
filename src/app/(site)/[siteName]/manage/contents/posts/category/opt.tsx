@@ -972,7 +972,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isMobile ? (
-            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               카테고리 관리
             </Typography>
           ) : null}
@@ -1381,7 +1381,7 @@ export default function Opt() {
               </button>
               <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">
@@ -1418,7 +1418,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 카테고리를 삭제하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 카테고리를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">

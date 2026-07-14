@@ -918,7 +918,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isMobile ? (
-            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               연재 관리
             </Typography>
           ) : null}

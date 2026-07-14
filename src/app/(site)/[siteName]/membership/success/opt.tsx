@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 
 type MembershipSuccessResponse = {
   ok?: boolean;
@@ -74,16 +76,20 @@ export default function Opt() {
       <Typography variant="h1">멤버십 가입</Typography>
 
       {errorMessage ? (
-        <Typography role="status" color="error">
-          {errorMessage}
-        </Typography>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
       ) : (
-        <Typography role="status">{message}</Typography>
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>{message}</span>
+        </p>
       )}
 
-      <Button type="button" href={`/${siteName}`} variant="contained">
+      <Anchor href={`/${siteName}`} className="button medium submit">
         사이트로 이동
-      </Button>
+      </Anchor>
     </div>
   );
 }

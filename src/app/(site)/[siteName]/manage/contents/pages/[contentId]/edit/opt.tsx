@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import Link from '@mui/material/Link';
 import { useParams, useRouter } from 'next/navigation';
 import {
-  Alert,
   Box,
   FormControlLabel,
   InputAdornment,
@@ -15,13 +13,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
+import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -609,7 +604,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isMobile ? (
-            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               페이지 수정
             </Typography>
           ) : null}
@@ -647,12 +642,10 @@ export default function Opt() {
                   }}
                 />
                 {slugMessage ? (
-                  <Alert
-                    severity={isSlugAvailable ? 'success' : 'error'}
-                    variant={isSlugAvailable ? 'outlined' : 'filled'}
-                  >
-                    {slugMessage}
-                  </Alert>
+                  <p className={`alert ${isSlugAvailable ? 'info' : 'error'}`}>
+                    {isSlugAvailable ? <ErrorOutlineRoundedIcon /> : <InfoOutlineRoundedIcon />}
+                    <span>{slugMessage}</span>
+                  </p>
                 ) : null}
               </Stack>
               <Stack gap={1}>

@@ -461,7 +461,7 @@ export default function Opt() {
               </button>
 
               <Stack gap={3}>
-                <Typography>
+                <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?
                   <br />
                   취소된 초대장은 더이상 사용할 수 없습니다.
@@ -491,7 +491,7 @@ export default function Opt() {
             <Dialog open={Boolean(targetInvite)} onClose={handleCloseCancelDialog} fullWidth maxWidth="xs">
               <DialogTitle>초대 취소</DialogTitle>
               <DialogContent>
-                <Typography>
+                <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?
                   <br />
                   취소된 초대장은 더이상 사용할 수 없습니다.

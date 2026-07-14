@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
+import { normalizeText } from '@/lib/utils';
 import Container from '../../menu';
 import Opt from './opt';
-import { normalizeText } from '@/lib/utils';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {

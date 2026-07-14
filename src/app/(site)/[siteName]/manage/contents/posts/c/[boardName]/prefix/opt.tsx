@@ -336,7 +336,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isMobile ? (
-            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               말머리 관리
             </Typography>
           ) : null}
@@ -363,7 +363,7 @@ export default function Opt() {
 
           {sortedPrefixes.length === 0 ? (
             <div className={`paper ${styles.paper}`}>
-              <Typography>등록된 말머리가 없습니다.</Typography>
+              <Typography variant="subtitle2">등록된 말머리가 없습니다.</Typography>
             </div>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>

@@ -1084,7 +1084,9 @@ export default function Opt() {
 
                 {isBasicBoard || isGalleryBoard ? (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>내용 *</Typography>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      내용 *
+                    </Typography>
                     <ToastEditor
                       initialValue={contentHtml}
                       initialMarkdown={contentMarkdown}

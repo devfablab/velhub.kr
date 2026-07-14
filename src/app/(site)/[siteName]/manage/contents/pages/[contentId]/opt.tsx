@@ -397,7 +397,7 @@ export default function Opt() {
               </button>
               <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">
@@ -446,7 +446,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 페이지를 삭제하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 페이지를 삭제하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">
@@ -490,7 +490,7 @@ export default function Opt() {
               </button>
               <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 페이지를 복구하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">
@@ -538,7 +538,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
-                  <Typography>해당 페이지를 복구하시겠습니까?</Typography>
+                  <Typography variant="subtitle2">해당 페이지를 복구하시겠습니까?</Typography>
 
                   {dialogErrorMessage ? (
                     <p className="alert error">

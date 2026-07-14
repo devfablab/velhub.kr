@@ -2,9 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
@@ -38,7 +35,8 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const paymentKey = normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
+        const paymentKey =
+          normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
         const orderId = normalizeText(searchParams.get('orderId')) || normalizeText(searchParams.get('orderNo'));
         const txId = normalizeText(searchParams.get('txId'));
         const amountText = normalizeText(searchParams.get('amount'));

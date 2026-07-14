@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from '../../menu';
 
 type PaymentFailResponse = {
   ok?: boolean;
@@ -94,7 +93,7 @@ export default function Opt() {
 
   if (isLoading) {
     return (
-      <main>
+      <Container pageBack={`/${siteName}`} pageTitle="후원" pageFin>
         <div className="container">
           <div className="content">
             <div className="paper">
@@ -104,32 +103,29 @@ export default function Opt() {
             </div>
           </div>
         </div>
-      </main>
+      </Container>
     );
   }
 
   return (
-    <main>
+    <Container pageBack={`/${siteName}`} pageTitle="후원" pageFin>
       <div className="container">
-        <div className="content">
-          <div className="paper">
-            <Stack gap={3} alignItems="center">
-              <Typography variant="h5" component="h1">
-                후원 결제에 실패했습니다.
-              </Typography>
-              <Typography>후원을 다시 시도해 주세요.</Typography>
-              {errorMessage ? (
-                <Typography color="error" role="alert">
-                  {errorMessage}
-                </Typography>
-              ) : null}
-              <Button type="button" variant="contained" onClick={handleGoSite}>
-                사이트로 이동
-              </Button>
-            </Stack>
+        <div className="content" style={{ maxWidth: 572 }}>
+          <h2>후원 결제에 실패했습니다.</h2>
+          <div className="paper" style={{ marginTop: 12, marginBottom: 12 }}>
+            <p>후원을 다시 시도해 주세요.</p>
           </div>
+          {errorMessage ? (
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
+          <button type="button" className="button small submit" onClick={handleGoSite}>
+            사이트로 이동
+          </button>
         </div>
       </div>
-    </main>
+    </Container>
   );
 }

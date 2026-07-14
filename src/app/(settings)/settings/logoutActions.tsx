@@ -6,7 +6,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
   Button,
   Dialog,
   DialogActions,
@@ -16,6 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import styles from '@/app/settings.module.sass';
@@ -153,9 +153,10 @@ export default function LogoutActions() {
             </button>
 
             {errorMessage ? (
-              <Alert severity="error" variant="filled">
-                {errorMessage}
-              </Alert>
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
             ) : null}
           </Stack>
         </AccordionDetails>
@@ -167,18 +168,22 @@ export default function LogoutActions() {
           <Typography>모든 디바이스에서 로그아웃하시겠어요?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button type="button" variant="outlined" onClick={handleCloseConfirm} disabled={isLoggingOutAllDevices}>
-            취소
-          </Button>
-          <Button
+          <button
             type="button"
-            variant="contained"
-            color="error"
+            className="button small cancel"
+            onClick={handleCloseConfirm}
+            disabled={isLoggingOutAllDevices}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className="button small danger"
             onClick={handleLogoutAllDevices}
             disabled={isLoggingOutAllDevices}
           >
             로그아웃
-          </Button>
+          </button>
         </DialogActions>
       </Dialog>
     </Grid>

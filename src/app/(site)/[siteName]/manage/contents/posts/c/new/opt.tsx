@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from '@mui/material/Link';
 import {
   FormControl,
   FormControlLabel,
@@ -21,9 +20,9 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
-import Anchor from '@/components/Anchor';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -438,7 +437,7 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isMobile ? (
-            <Typography variant="h5" component="h2" sx={{ p: 2 }}>
+            <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               게시판 생성
             </Typography>
           ) : null}

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from '@mui/material/Link';
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import Container from '../../menu';
-import styles from '@/app/manage.module.sass';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 
 type InviteResponse = {
   ok: boolean;
@@ -197,55 +198,59 @@ export default function Opt({ siteName, token }: Props) {
     <Paper sx={{ p: 3 }}>
       <Stack gap={3}>
         {errorMessage ? (
-          <Alert severity="error" variant="filled">
-            {errorMessage}
-          </Alert>
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
         ) : null}
 
         {invite ? (
           <>
             <Box>
-              <Typography variant="body2">사이트명</Typography>
-              <Typography>{invite.site.site_label}</Typography>
+              <Typography variant="subtitle2">사이트명</Typography>
+              <Typography variant="body2">{invite.site.site_label}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2">초대 이메일</Typography>
-              <Typography>{invite.invite.email}</Typography>
+              <Typography variant="subtitle2">초대 이메일</Typography>
+              <Typography variant="body2">{invite.invite.email}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2">역할</Typography>
-              <Typography>{getRoleLabel(invite.invite.role)}</Typography>
+              <Typography variant="subtitle2">역할</Typography>
+              <Typography variant="body2">{getRoleLabel(invite.invite.role)}</Typography>
             </Box>
 
             <Box>
-              <Typography variant="body2">유효일</Typography>
-              <Typography>{formatDate(invite.invite.expires_at)}</Typography>
+              <Typography variant="subtitle2">유효일</Typography>
+              <Typography variant="body2">{formatDate(invite.invite.expires_at)}</Typography>
             </Box>
 
             {isMatchedUser ? (
               <Stack gap={1.5}>
-                <Alert severity="success" variant="outlined">
-                  현재 로그인한 계정으로 초대를 수락할 수 있습니다.
-                </Alert>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>현재 로그인한 계정으로 초대를 수락할 수 있습니다.</span>
+                </p>
                 <Box>
-                  <Button type="button" variant="contained" onClick={handleJoin} disabled={isSubmitting}>
+                  <button type="button" className="button medium submit" onClick={handleJoin} disabled={isSubmitting}>
                     초대 수락하기
-                  </Button>
+                  </button>
                 </Box>
               </Stack>
             ) : null}
 
             {!isLoggedIn && isRegisteredEmail ? (
               <Stack gap={1.5}>
-                <Alert severity="info">이미 데브허브에 가입된 이메일입니다. 로그인 후 초대를 수락해주세요.</Alert>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>이미 데브허브에 가입된 이메일입니다. 로그인 후 초대를 수락해주세요.</span>
+                </p>
                 <Box>
                   <Button
                     component={Link}
                     href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}`}
-                    underline="none"
-                    variant="outlined"
+                    className="button medium submit"
                   >
                     로그인
                   </Button>
@@ -255,13 +260,15 @@ export default function Opt({ siteName, token }: Props) {
 
             {!isLoggedIn && !isRegisteredEmail ? (
               <Stack gap={1.5}>
-                <Alert severity="info">초대받은 이메일로 회원가입 후 초대를 수락해주세요.</Alert>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>초대받은 이메일로 회원가입 후 초대를 수락해주세요</span>
+                </p>
                 <Box>
                   <Button
                     component={Link}
                     href={`/auth/sign-up?inviteToken=${token}&siteName=${siteName}`}
-                    underline="none"
-                    variant="outlined"
+                    className="button medium submit"
                   >
                     회원가입
                   </Button>
@@ -271,13 +278,15 @@ export default function Opt({ siteName, token }: Props) {
 
             {isMismatchedUser ? (
               <Stack gap={1.5}>
-                <Alert severity="warning">현재 로그인한 계정 이메일과 초대받은 이메일이 일치하지 않습니다.</Alert>
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>현재 로그인한 계정 이메일과 초대받은 이메일이 일치하지 않습니다.</span>
+                </p>
                 <Box>
                   <Button
                     component={Link}
                     href={`/auth/sign-in?inviteToken=${token}&siteName=${siteName}`}
-                    underline="none"
-                    variant="outlined"
+                    className="button medium submit"
                   >
                     다른 계정으로 로그인
                   </Button>
