@@ -867,7 +867,12 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         <ListSubheader className={styles['VhiDrawer-subheader']}>
                           {isBlog ? '블로그' : '커뮤니티'} 관리
                         </ListSubheader>
-                        <DrawerManage siteName={siteName} siteType={siteType} onClose={handleCloseProfileDrawer} />
+                        <DrawerManage
+                          siteName={siteName}
+                          siteType={siteType}
+                          siteRole={userProfile.siteRole}
+                          onClose={handleCloseProfileDrawer}
+                        />
                       </>
                     ) : null}
 

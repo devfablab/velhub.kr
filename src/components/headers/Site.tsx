@@ -506,8 +506,13 @@ export default function HeaderSite() {
                 </div>
               </div>
               <div className={styles.bottom}>
-                {isManagePage && siteType && isSiteStaff ? (
-                  <NavManage siteName={siteName} siteType={siteType} isSiteStaff={isSiteStaff} />
+                {isManagePage && siteType ? (
+                  <NavManage
+                    siteName={siteName}
+                    siteType={siteType}
+                    isSiteStaff={isSiteStaff}
+                    siteRole={userProfile.siteRole}
+                  />
                 ) : isPaymentPage ? (
                   <NavPayments />
                 ) : (
@@ -535,8 +540,13 @@ export default function HeaderSite() {
                       )}
                     </Anchor>
                   </h1>
-                  {isManagePage && siteType && isSiteStaff ? (
-                    <NavManage siteName={siteName} siteType={siteType} isSiteStaff={isSiteStaff} />
+                  {isManagePage && siteType ? (
+                    <NavManage
+                      siteName={siteName}
+                      siteType={siteType}
+                      isSiteStaff={isSiteStaff}
+                      siteRole={userProfile.siteRole}
+                    />
                   ) : isPaymentPage ? (
                     <NavPayments />
                   ) : (

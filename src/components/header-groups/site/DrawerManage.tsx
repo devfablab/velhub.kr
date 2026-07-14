@@ -17,10 +17,25 @@ type SiteType = 'blog' | 'community';
 type Props = {
   siteName: string;
   siteType: SiteType | null;
+  siteRole: string | null;
   onClose: () => void;
 };
 
-export default function DrawerManage({ siteName, siteType, onClose }: Props) {
+function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | null) {
+  if (siteType === 'blog') {
+    return siteRole === 'owner' || siteRole === 'manager';
+  }
+
+  if (siteType === 'community') {
+    return siteRole === 'owner' || siteRole === 'community-manager';
+  }
+
+  return false;
+}
+
+export default function DrawerManage({ siteName, siteType, siteRole, onClose }: Props) {
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+
   return (
     <>
       <MenuItem onClick={onClose}>
@@ -30,14 +45,16 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
         </Anchor>
       </MenuItem>
 
-      <MenuItem onClick={onClose}>
-        <Anchor href={`/${siteName}/manage/settings`}>
-          {siteType === 'blog' ? <ArticleOutlinedIcon fontSize="small" /> : <InterestsRoundedIcon fontSize="small" />}
-          <span>{siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보'}</span>
-        </Anchor>
-      </MenuItem>
+      {showAllManageMenus ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/settings`}>
+            {siteType === 'blog' ? <ArticleOutlinedIcon fontSize="small" /> : <InterestsRoundedIcon fontSize="small" />}
+            <span>{siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보'}</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
-      {siteType === 'community' ? (
+      {showAllManageMenus && siteType === 'community' ? (
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/join`}>
             <ContactsOutlinedIcon fontSize="small" />
@@ -46,16 +63,18 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
         </MenuItem>
       ) : null}
 
-      <MenuItem onClick={onClose}>
-        <Anchor href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}>
-          {siteType === 'blog' ? (
-            <RememberMeOutlinedIcon fontSize="small" />
-          ) : (
-            <ManageAccountsOutlinedIcon fontSize="small" />
-          )}
-          <span>{siteType === 'blog' ? '팀원 관리' : '멤버 관리'}</span>
-        </Anchor>
-      </MenuItem>
+      {showAllManageMenus ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`}>
+            {siteType === 'blog' ? (
+              <RememberMeOutlinedIcon fontSize="small" />
+            ) : (
+              <ManageAccountsOutlinedIcon fontSize="small" />
+            )}
+            <span>{siteType === 'blog' ? '팀원 관리' : '멤버 관리'}</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
 
       <MenuItem onClick={onClose}>
         <Anchor href={`/${siteName}/manage/contents/posts`}>
@@ -64,37 +83,43 @@ export default function DrawerManage({ siteName, siteType, onClose }: Props) {
         </Anchor>
       </MenuItem>
 
-      <MenuItem onClick={onClose}>
-        <Anchor href={`/${siteName}/manage/reports`}>
-          <ReportOutlinedIcon fontSize="small" />
-          <span>신고 관리</span>
-        </Anchor>
-      </MenuItem>
+      {showAllManageMenus ? (
+        <>
+          <MenuItem onClick={onClose}>
+            <Anchor href={`/${siteName}/manage/reports`}>
+              <ReportOutlinedIcon fontSize="small" />
+              <span>신고 관리</span>
+            </Anchor>
+          </MenuItem>
 
-      <MenuItem onClick={onClose}>
-        <Anchor
-          href={
-            siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`
-          }
-        >
-          <DesignServicesOutlinedIcon fontSize="small" />
-          <span>디자인</span>
-        </Anchor>
-      </MenuItem>
+          <MenuItem onClick={onClose}>
+            <Anchor
+              href={
+                siteType === 'blog'
+                  ? `/${siteName}/manage/design/blog/fonts`
+                  : `/${siteName}/manage/design/community/home`
+              }
+            >
+              <DesignServicesOutlinedIcon fontSize="small" />
+              <span>디자인</span>
+            </Anchor>
+          </MenuItem>
 
-      <MenuItem onClick={onClose}>
-        <Anchor href={`/${siteName}/manage/payments/billing`}>
-          <SellOutlinedIcon fontSize="small" />
-          <span>결제</span>
-        </Anchor>
-      </MenuItem>
+          <MenuItem onClick={onClose}>
+            <Anchor href={`/${siteName}/manage/payments/billing`}>
+              <SellOutlinedIcon fontSize="small" />
+              <span>결제</span>
+            </Anchor>
+          </MenuItem>
 
-      <MenuItem onClick={onClose}>
-        <Anchor href={`/${siteName}/manage/stats`}>
-          <QueryStatsOutlinedIcon fontSize="small" />
-          <span>통계</span>
-        </Anchor>
-      </MenuItem>
+          <MenuItem onClick={onClose}>
+            <Anchor href={`/${siteName}/manage/stats`}>
+              <QueryStatsOutlinedIcon fontSize="small" />
+              <span>통계</span>
+            </Anchor>
+          </MenuItem>
+        </>
+      ) : null}
     </>
   );
 }

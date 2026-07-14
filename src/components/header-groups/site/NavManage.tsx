@@ -9,6 +9,7 @@ type SiteType = 'blog' | 'community';
 type NavManageProps = {
   siteName: string;
   siteType: SiteType;
+  siteRole: string | null;
   isSiteStaff: boolean;
 };
 
@@ -26,20 +27,34 @@ function isCurrentPath(pathname: string, item: StaffNavItem) {
   return pathname === item.href;
 }
 
-export default function NavManage({ siteName, siteType, isSiteStaff }: NavManageProps) {
+function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null) {
+  if (siteType === 'blog') {
+    return siteRole === 'owner' || siteRole === 'manager';
+  }
+
+  return siteRole === 'owner' || siteRole === 'community-manager';
+}
+
+export default function NavManage({ siteName, siteType, siteRole, isSiteStaff }: NavManageProps) {
   const pathname = usePathname();
 
   if (!isSiteStaff) {
     return null;
   }
 
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+
   const navItems: StaffNavItem[] = [
-    {
-      label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보',
-      href: `/${siteName}/manage/settings`,
-      startsWith: true,
-    },
-    ...(siteType === 'community'
+    ...(showAllManageMenus
+      ? [
+          {
+            label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보',
+            href: `/${siteName}/manage/settings`,
+            startsWith: true,
+          },
+        ]
+      : []),
+    ...(showAllManageMenus && siteType === 'community'
       ? [
           {
             label: '가입 관리',
@@ -48,35 +63,43 @@ export default function NavManage({ siteName, siteType, isSiteStaff }: NavManage
           },
         ]
       : []),
-    {
-      label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
-      startsWith: true,
-    },
+    ...(showAllManageMenus
+      ? [
+          {
+            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+            href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
+            startsWith: true,
+          },
+        ]
+      : []),
     {
       label: '콘텐츠 관리',
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
-    {
-      label: '신고 관리',
-      href: `/${siteName}/manage/reports`,
-      startsWith: true,
-    },
-    {
-      label: '디자인',
-      href: `/${siteName}/manage/design`,
-      startsWith: true,
-    },
-    {
-      label: '결제',
-      href: `/${siteName}/manage/payments/billing`,
-    },
-    {
-      label: '통계',
-      href: `/${siteName}/manage/stats`,
-      startsWith: true,
-    },
+    ...(showAllManageMenus
+      ? [
+          {
+            label: '신고 관리',
+            href: `/${siteName}/manage/reports`,
+            startsWith: true,
+          },
+          {
+            label: '디자인',
+            href: `/${siteName}/manage/design`,
+            startsWith: true,
+          },
+          {
+            label: '결제',
+            href: `/${siteName}/manage/payments/billing`,
+          },
+          {
+            label: '통계',
+            href: `/${siteName}/manage/stats`,
+            startsWith: true,
+          },
+        ]
+      : []),
   ];
 
   const homeHref = `/${siteName}/manage`;
