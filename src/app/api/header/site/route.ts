@@ -329,7 +329,6 @@ export async function GET(request: Request) {
         avatar: null,
         globalRole: null,
         siteRole: null,
-        siteRoles: [],
         nickname: null,
         isApproval: null,
         invite: false,
@@ -398,18 +397,18 @@ export async function GET(request: Request) {
       membership = (membershipResult.data ?? null) as MembershipRow | null;
     }
 
-    let siteRoles: string[] = [];
+    let siteRole: string | null = null;
 
     if (membership?.is_approval === true) {
       const membershipRole = normalizeText(membership.role).toLowerCase();
 
       if (siteType === 'blog') {
-        siteRoles = membershipRole ? [membershipRole] : [];
+        siteRole = membershipRole || null;
       }
 
       if (siteType === 'community') {
         if (membershipRole === 'owner') {
-          siteRoles = ['owner'];
+          siteRole = 'owner';
         } else if (session.rhizomeStigmaId) {
           const communityResult = await supabaseAdmin
             .from('communities')
@@ -418,39 +417,23 @@ export async function GET(request: Request) {
             .maybeSingle();
 
           if (communityResult.error || !communityResult.data) {
-            return Response.json(
-              {
-                error: '헤더 정보를 불러오지 못했습니다.',
-              },
-              { status: 500 },
-            );
+            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
           }
 
           const communityManageRoleResult = await supabaseAdmin
             .from('community_manage_role')
             .select('role')
             .eq('community_id', communityResult.data.id)
-            .eq('manager_id', session.rhizomeStigmaId);
+            .eq('manager_id', session.rhizomeStigmaId)
+            .maybeSingle();
 
           if (communityManageRoleResult.error) {
-            return Response.json(
-              {
-                error: '헤더 정보를 불러오지 못했습니다.',
-              },
-              { status: 500 },
-            );
+            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
           }
 
-          const communityManageRoles = ((communityManageRoleResult.data ?? []) as CommunityManageRoleRow[])
-            .map((item) => normalizeText(item.role).toLowerCase())
-            .filter(Boolean);
+          const communityManageRole = (communityManageRoleResult.data ?? null) as CommunityManageRoleRow | null;
 
-          siteRoles =
-            communityManageRoles.length > 0
-              ? [...new Set(communityManageRoles)]
-              : membershipRole === 'member'
-                ? ['member']
-                : [];
+          siteRole = normalizeText(communityManageRole?.role).toLowerCase() || 'member';
         }
       }
     }
@@ -495,8 +478,7 @@ export async function GET(request: Request) {
       userName: decryptValue(account.user_name),
       avatar: processAvatar(account.avatar),
       globalRole: normalizeText(account.role).toLowerCase() || null,
-      siteRole: normalizeText(membership?.role).toLowerCase() || null,
-      siteRoles,
+      siteRole,
       nickname: membership?.is_approval === true ? normalizeText(membership.nickname) || null : null,
       isApproval,
       invite: hasInvite,

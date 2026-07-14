@@ -189,11 +189,50 @@ function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: Blog
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
 function isStaffRole(role: string | null) {
-  return role === 'owner' || role === 'manager';
+  return (
+    role === 'owner' ||
+    role === 'manager' ||
+    role === 'community-manager' ||
+    role === 'board-manager' ||
+    role === 'board-general-manager' ||
+    role === 'board-assistant-manager'
+  );
 }
 
 function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getSiteRoleLabel(role: string) {
+  if (role === 'owner') {
+    return '운영자';
+  }
+
+  if (role === 'manager') {
+    return '매니저';
+  }
+
+  if (role === 'community-manager') {
+    return '커뮤니티 매니저';
+  }
+
+  if (role === 'board-manager') {
+    return '전체 게시판 매니저';
+  }
+
+  if (role === 'board-general-manager') {
+    return '개별 게시판 총괄 매니저';
+  }
+
+  if (role === 'board-assistant-manager') {
+    return '개별 게시판 부 매니저';
+  }
+
+  if (role === 'member') {
+    return '멤버';
+  }
+
+  return role;
 }
 
 function getStoredThemeMode() {
@@ -580,7 +619,10 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                                   ? '초대에 응해 주세요'
                                   : userProfile.join === false
                                     ? '가입해 주세요'
-                                    : null}
+                                    : null}{' '}
+                            {userProfile.isApproval === true && userProfile.siteRole ? (
+                              <>({getSiteRoleLabel(userProfile.siteRole)})</>
+                            ) : null}
                           </span>
                         </div>
                       </ListSubheader>
