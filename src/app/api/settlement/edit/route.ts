@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSettlementProfileUpdatePayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { encrypt } from '@/lib/encryption/encrypt';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 
@@ -30,6 +31,14 @@ function getFile(formData: FormData, key: string) {
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : '요청 처리에 실패했습니다.';
+}
+
+function normalizePaymentEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function isValidPaymentEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 async function uploadBusinessLicenseFile(userId: string, file: File) {
@@ -89,6 +98,12 @@ export async function PATCH(request: NextRequest) {
   try {
     const formData = await request.formData();
     const settlementType = getString(formData, 'settlement_type');
+    const paymentEmail = normalizePaymentEmail(getString(formData, 'payment_email'));
+
+    if (!isValidPaymentEmail(paymentEmail)) {
+      return NextResponse.json({ message: '이메일 주소 형식이 올바르지 않습니다.' }, { status: 400 });
+    }
+
     const businessLicenseFile = getFile(formData, 'business_license');
 
     let businessLicense = '';
@@ -129,6 +144,18 @@ export async function PATCH(request: NextRequest) {
       console.log('error: ', error);
 
       return NextResponse.json({ message: '정산 정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    const { error: paymentEmailError } = await supabaseAdmin
+      .from('stigmas')
+      .update({
+        payment_email: encrypt(paymentEmail),
+      })
+      .eq('user_id', sessionClaims.userId);
+
+    if (paymentEmailError) {
+      console.log('error: ', paymentEmailError);
+      return NextResponse.json({ message: '정산 이메일 수정에 실패했습니다.' }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });

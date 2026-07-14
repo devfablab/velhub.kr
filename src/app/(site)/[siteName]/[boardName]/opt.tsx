@@ -516,7 +516,12 @@ export default function Opt({ isCommunity }: Props) {
           {isCommunity ? (
             <>
               {isMobile ? (
-                <TableListMobile />
+                <TableListMobile
+                  board={board}
+                  selectedSeries={selectedSeries}
+                  isCommunity={isCommunity}
+                  isBoardSubscriptionEnabled={isBoardSubscriptionEnabled}
+                />
               ) : (
                 <h2>
                   {isSearchMode ? (

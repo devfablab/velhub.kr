@@ -22,12 +22,14 @@ export async function GET(request: NextRequest) {
     const siteName = normalizeText(request.nextUrl.searchParams.get('siteName')).toLowerCase();
     const targetType = normalizeText(request.nextUrl.searchParams.get('targetType')).toLowerCase();
 
+    console.log('siteName: ', siteName);
     if (!siteName) {
       return Response.json({
         isEnabled: false,
       });
     }
 
+    console.log('targetType: ');
     if (targetType !== PAYMENT_TARGET_TYPE.SITE) {
       return Response.json({
         isEnabled: false,
@@ -65,25 +67,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (site.site_type !== 'blog') {
-      return Response.json({
-        isEnabled: false,
-      });
-    }
-
-    const seriesCountResult = await supabaseAdmin
-      .from('board_series')
-      .select('id', { count: 'exact', head: true })
-      .eq('site_id', site.id);
-
-    if (seriesCountResult.error) {
-      console.error(seriesCountResult.error);
-
-      return Response.json({
-        isEnabled: false,
-      });
-    }
-
-    if ((seriesCountResult.count ?? 0) < 2) {
       return Response.json({
         isEnabled: false,
       });

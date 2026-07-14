@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -20,6 +21,7 @@ import { normalizeText } from '@/lib/utils';
 import DonationButton from '@/components/service/common/DonationButton';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import IdentityVerificationButton from '../common/IdentityVerificationButton';
 import styles from '@/app/aside.module.sass';
 
 type SiteInfo = {
@@ -79,6 +81,50 @@ type MembershipActionResponse = {
   error?: string;
 };
 
+type Identity = {
+  name: string;
+  birth_date: string;
+  gender: string;
+  identity_verified_at: string;
+};
+
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: Identity | null;
+};
+
+type SettlementResponse = {
+  exists: boolean;
+  settlement: {
+    settlement_type: 'individual' | 'business';
+  } | null;
+};
+
+function onlyDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
+
 function formatMembershipPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
@@ -101,6 +147,7 @@ function getMembershipButtonLabel(status: MembershipStatus) {
 
 export default function SiteProfile() {
   const params = useParams();
+  const router = useRouter();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
@@ -116,10 +163,46 @@ export default function SiteProfile() {
   const [membershipErrorMessage, setMembershipErrorMessage] = useState('');
   const [isMembershipProcessing, setIsMembershipProcessing] = useState(false);
   const [isDonationEnabled, setIsDonationEnabled] = useState(false);
+  const [hasSettlement, setHasSettlement] = useState(false);
+  const [isMinor, setIsMinor] = useState(false);
+  const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+
+  useEffect(() => {
+    async function loadIdentity() {
+      const [identityResponse, settlementResponse] = await Promise.all([
+        fetch('/api/identity/portone/status', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+        fetch('/api/settlement', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+      ]);
+
+      const identityData = identityResponse.ok
+        ? ((await identityResponse.json().catch(() => null)) as IdentityStatusResponse | null)
+        : null;
+
+      const settlementData = settlementResponse.ok
+        ? ((await settlementResponse.json().catch(() => null)) as SettlementResponse | null)
+        : null;
+
+      const identity = identityData?.exists ? identityData.identity : null;
+
+      setHasSettlement(Boolean(settlementData?.exists && settlementData.settlement));
+      setIsMinor(identity ? !isAdult(identity.birth_date) : false);
+      setIsLoading(false);
+    }
+
+    void loadIdentity();
+  }, [siteName, router]);
 
   useEffect(() => {
     async function loadMembershipStatus() {
@@ -199,6 +282,14 @@ export default function SiteProfile() {
 
     void loadSiteProfile();
   }, [siteName]);
+
+  function handleOpenIdentityDialog() {
+    setIsIdentityDialogOpen(true);
+  }
+
+  function handleCloseIdentityDialog() {
+    setIsIdentityDialogOpen(false);
+  }
 
   function handleOpenMembershipDialog() {
     setMembershipErrorMessage('');
@@ -410,10 +501,6 @@ export default function SiteProfile() {
     );
   }
 
-  if (errorMessage) {
-    return <div className="paper paper-error">{errorMessage}</div>;
-  }
-
   if (!siteInfo) {
     return null;
   }
@@ -432,26 +519,51 @@ export default function SiteProfile() {
       </div>
 
       <div className={styles.action}>
-        {isDonationEnabled ? (
-          <DonationButton
-            siteName={siteName}
-            targetType="site"
-            buttonText="블로그 후원"
-            disabled={isMembershipProcessing}
-            onProcessingChange={setIsDonationProcessing}
-          />
-        ) : null}
-
-        {isMembershipEnabled ? (
-          <button
-            type="button"
-            className="button small submit"
-            onClick={handleMembershipButtonClick}
-            disabled={isDonationProcessing || isMembershipProcessing}
-          >
-            {getMembershipButtonLabel(membershipStatus)}
-          </button>
-        ) : null}
+        {!hasSettlement ? (
+          <>
+            <Snackbar
+              open={Boolean(isMinor)}
+              message="만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다."
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'center',
+              }}
+              autoHideDuration={2700}
+              onClose={() => setIsMinor(false)}
+            />
+            {membershipStatus === 'none' ? (
+              <button type="button" className="button small action" onClick={handleOpenIdentityDialog}>
+                블로그 후원
+              </button>
+            ) : (
+              <button type="button" className="button small submit" onClick={handleOpenIdentityDialog}>
+                {getMembershipButtonLabel(membershipStatus)}
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {isDonationEnabled ? (
+              <DonationButton
+                siteName={siteName}
+                targetType="site"
+                buttonText="블로그 후원"
+                disabled={isMembershipProcessing}
+                onProcessingChange={setIsDonationProcessing}
+              />
+            ) : null}
+            {isMembershipEnabled ? (
+              <button
+                type="button"
+                className="button small submit"
+                onClick={handleMembershipButtonClick}
+                disabled={isDonationProcessing || isMembershipProcessing}
+              >
+                {getMembershipButtonLabel(membershipStatus)}
+              </button>
+            ) : null}
+          </>
+        )}
       </div>
 
       {membershipErrorMessage ? (
@@ -460,6 +572,57 @@ export default function SiteProfile() {
           <span>{membershipErrorMessage}</span>
         </p>
       ) : null}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>본인인증 필요</h2>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+
+          <Stack gap={3}>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+              닫기
+            </button>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>본인인증 필요</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+
+          <DialogContent>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+              닫기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       {isMobile ? (
         <Drawer

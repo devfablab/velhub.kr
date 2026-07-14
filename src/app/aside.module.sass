@@ -429,24 +429,33 @@
   align-items: center
   justify-content: space-between
 
-  .board-selector
-    button
-      border: 0
-      padding: 0
-      display: inline-flex
-      gap: ds.rem(3)
-      align-items: center
-      background-color: transparent
-      font-size: ds.rem(16)
-      color: ds.$hex-secondary
+  .board-subject
+    display: flex
+    align-items: center
+    gap: ds.rem(3)
 
-      html[data-theme="yellow-dark"] &
-        color: ds.$hex-light
+    .board-selector
+      button
+        border: 0
+        padding: 0
+        display: inline-flex
+        gap: ds.rem(3)
+        align-items: center
+        background-color: transparent
+        font-size: ds.rem(16)
+        color: ds.$hex-secondary
 
-      span
-        @include ds.fw(pre, 600)
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+        span
+          @include ds.fw(pre, 600)
 
   .board-post
+    display: flex
+    align-items: center
+    gap: ds.rem(3)
+
     a
       display: inline-flex
       justify-content: center

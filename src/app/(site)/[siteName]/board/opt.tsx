@@ -295,7 +295,7 @@ export default function Opt({ isCommunity }: Props) {
         }}
       >
         {isMobile ? (
-          <TableListMobile />
+          <TableListMobile isCommunity={isCommunity} />
         ) : (
           <h2>
             {isSearchMode ? <ManageSearchIcon /> : <ListAltOutlinedIcon />}

@@ -19,6 +19,9 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
+import ReportButton from '../common/ReportButton';
+import SubscriptionButton from '../common/SubscriptionButton';
+import DonationButton from '../common/DonationButton';
 import styles from '@/app/aside.module.sass';
 
 type BoardItem = {
@@ -26,7 +29,20 @@ type BoardItem = {
   board_key: string;
   board_label: string;
   board_type: 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed';
-  is_active: boolean;
+  post_type?: 'none' | 'prefix' | 'series' | null;
+  is_active?: boolean;
+};
+
+type SelectedSeries = {
+  series_key: string;
+  series_label: string;
+};
+
+type Props = {
+  board?: BoardItem | null;
+  selectedSeries?: SelectedSeries | null;
+  isCommunity?: boolean;
+  isBoardSubscriptionEnabled?: boolean;
 };
 
 type BoardsResponse = {
@@ -67,7 +83,12 @@ function isWritePath(pathname: string, siteName: string) {
   return false;
 }
 
-export default function TableListMobile() {
+export default function TableListMobile({
+  board = null,
+  selectedSeries = null,
+  isCommunity,
+  isBoardSubscriptionEnabled = false,
+}: Props) {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
@@ -173,36 +194,53 @@ export default function TableListMobile() {
 
   return (
     <div className={`${styles['table-list-header']} paper`}>
-      <div className={styles['board-selector']}>
-        <button type="button" onClick={handleMenuOpen} aria-haspopup="menu" aria-expanded={isMenuOpen}>
-          <span>{selectedBoardLabel}</span>
-          <KeyboardArrowDownRoundedIcon />
-        </button>
+      <div className={styles['board-subject']}>
+        <div className={styles['board-selector']}>
+          <button type="button" onClick={handleMenuOpen} aria-haspopup="menu" aria-expanded={isMenuOpen}>
+            <span>{selectedBoardLabel}</span>
+            <KeyboardArrowDownRoundedIcon />
+          </button>
 
-        <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={handleMenuClose} className="VhiMenu-popover">
-          <MenuItem onClick={handleMenuClose}>
-            <Anchor href={`/${siteName}/board`} className={!boardName ? 'current' : undefined}>
-              {!boardName ? <CheckRoundedIcon /> : <i />}
-              <span>최신글 보기</span>
-            </Anchor>
-          </MenuItem>
+          <Menu anchorEl={menuAnchorEl} open={isMenuOpen} onClose={handleMenuClose} className="VhiMenu-popover">
+            <MenuItem onClick={handleMenuClose}>
+              <Anchor href={`/${siteName}/board`} className={!boardName ? 'current' : undefined}>
+                {!boardName ? <CheckRoundedIcon /> : <i />}
+                <span>최신글 보기</span>
+              </Anchor>
+            </MenuItem>
 
-          {boards.map((board) => {
-            const isSelected = board.board_key === boardName;
+            {boards.map((board) => {
+              const isSelected = board.board_key === boardName;
 
-            return (
-              <MenuItem key={board.id} onClick={handleMenuClose}>
-                <Anchor href={`/${siteName}/${board.board_key}`} className={isSelected ? 'current' : undefined}>
-                  {isSelected ? <CheckRoundedIcon /> : <i />}
-                  <span>{board.board_label}</span>
-                </Anchor>
-              </MenuItem>
-            );
-          })}
-        </Menu>
+              return (
+                <MenuItem key={board.id} onClick={handleMenuClose}>
+                  <Anchor href={`/${siteName}/${board.board_key}`} className={isSelected ? 'current' : undefined}>
+                    {isSelected ? <CheckRoundedIcon /> : <i />}
+                    <span>{board.board_label}</span>
+                  </Anchor>
+                </MenuItem>
+              );
+            })}
+          </Menu>
+        </div>
+        {boardName && board ? (
+          <>
+            <SubscriptionButton
+              siteName={siteName}
+              boardName={boardName}
+              board={board}
+              selectedSeries={selectedSeries}
+              selectedBoard={true}
+            />
+            {isCommunity && board.board_type !== 'page' && !isBoardSubscriptionEnabled ? (
+              <DonationButton siteName={siteName} targetType="board" boardName={boardName} buttonText="게시판 후원" />
+            ) : null}
+          </>
+        ) : null}
       </div>
       {shouldRenderWriteLink ? (
         <div className={styles['board-post']}>
+          <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
           <Anchor href={boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`} aria-label="글쓰기">
             <EditRoundedIcon />
           </Anchor>

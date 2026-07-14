@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import PortOne from '@portone/browser-sdk/v2';
 import {
   Button,
@@ -22,12 +22,17 @@ import {
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
+import { normalizeText } from '@/lib/utils';
 
 type Identity = {
   name: string;
   birth_date: string;
   gender: string;
   identity_verified_at: string;
+};
+
+type PaymentEmailResponse = {
+  paymentEmail: string | null;
 };
 
 type SettlementType = 'individual' | 'business';
@@ -229,6 +234,8 @@ async function sendFormData<T>(url: string, method: 'POST' | 'PATCH', body: Form
 
 export default function IdentityVerificationButton() {
   const pathname = usePathname();
+  const params = useParams();
+  const siteName = normalizeText(params.siteName).toLowerCase();
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -240,6 +247,7 @@ export default function IdentityVerificationButton() {
 
   const [residentSuffix, setResidentSuffix] = useState('');
   const [residentSuffixConfirm, setResidentSuffixConfirm] = useState('');
+  const [paymentEmail, setPaymentEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [businessRegistrationNumber, setBusinessRegistrationNumber] = useState('');
   const [businessLicenseFile, setBusinessLicenseFile] = useState<File | null>(null);
@@ -417,6 +425,16 @@ export default function IdentityVerificationButton() {
       throw new Error('정산 유형을 선택해 주세요.');
     }
 
+    const normalizedPaymentEmail = paymentEmail.trim();
+
+    if (!normalizedPaymentEmail) {
+      throw new Error('연락할 수 있는 이메일 주소를 입력해 주세요.');
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedPaymentEmail)) {
+      throw new Error('이메일 주소 형식이 올바르지 않습니다.');
+    }
+
     if (!bankCode || !accountHolder.trim() || !accountNumber) {
       throw new Error('계좌 정보를 입력해 주세요.');
     }
@@ -424,6 +442,7 @@ export default function IdentityVerificationButton() {
     const formData = new FormData();
 
     formData.append('settlement_type', selectedType);
+    formData.append('payment_email', normalizedPaymentEmail);
     formData.append('bank_code', bankCode);
     formData.append('account_number', accountNumber);
     formData.append('account_holder', accountHolder.trim());
@@ -477,6 +496,7 @@ export default function IdentityVerificationButton() {
   };
 
   const isNewPage = pathname?.startsWith('/new');
+  const isBlogPage = pathname?.startsWith(`/${siteName}`);
 
   const handleSubmit = async () => {
     if (isProcessing) {
@@ -515,7 +535,7 @@ export default function IdentityVerificationButton() {
       ) : (
         <button
           type="button"
-          className="button medium submit"
+          className={`button ${isBlogPage ? 'small' : 'medium'} submit`}
           onClick={handleMainButtonClick}
           disabled={isLoading || isProcessing}
         >
@@ -694,6 +714,15 @@ export default function IdentityVerificationButton() {
                   {businessLicenseFile ? <p>{businessLicenseFile.name}</p> : null}
                 </>
               ) : null}
+
+              <TextField
+                fullWidth
+                type="email"
+                placeholder="연락할 수 있는 이메일 주소"
+                size="small"
+                value={paymentEmail}
+                onChange={(event) => setPaymentEmail(event.target.value)}
+              />
 
               <Select
                 displayEmpty

@@ -1,14 +1,60 @@
 'use client';
 
-import { Chip, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Chip, Stack, Typography } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { normalizeText } from '@/lib/utils';
-import { BillingMethod } from './page';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import { BillingMethod } from './page';
 
 type BillingMethodsProps = {
   billingMethods: BillingMethod[];
 };
+
+type Identity = {
+  name: string;
+  birth_date: string;
+  gender: string;
+  identity_verified_at: string;
+};
+
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: Identity | null;
+};
+
+type SettlementResponse = {
+  exists: boolean;
+  settlement: {
+    settlement_type: 'individual' | 'business';
+  } | null;
+};
+
+function onlyDigits(value: string | null | undefined) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
 
 function formatCardNumber(cardNumberMasked: string | null | undefined) {
   const normalizedCardNumber = normalizeText(cardNumberMasked).replace(/\D/g, '');
@@ -68,6 +114,31 @@ function getOwnerTypeText(ownerType: string | null | undefined) {
 }
 
 export default function BillingMethods({ billingMethods }: BillingMethodsProps) {
+  const [hasSettlement, setHasSettlement] = useState(false);
+  useEffect(() => {
+    async function loadIdentity() {
+      const [identityResponse, settlementResponse] = await Promise.all([
+        fetch('/api/identity/portone/status', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+        fetch('/api/settlement', {
+          method: 'GET',
+          credentials: 'include',
+          cache: 'no-store',
+        }),
+      ]);
+
+      const settlementData = settlementResponse.ok
+        ? ((await settlementResponse.json().catch(() => null)) as SettlementResponse | null)
+        : null;
+
+      setHasSettlement(Boolean(settlementData?.exists && settlementData.settlement));
+    }
+
+    void loadIdentity();
+  }, []);
   return (
     <>
       {billingMethods.length ? (
@@ -92,7 +163,16 @@ export default function BillingMethods({ billingMethods }: BillingMethodsProps) 
       )}
 
       <div>
-        <BillingMethodButton />
+        {!hasSettlement ? (
+          <Stack gap={1}>
+            <Typography variant="body2">본인인증을 하시면 결제 수단을 추가하실 수 있습니다.</Typography>
+            <Box>
+              <IdentityVerificationButton />
+            </Box>
+          </Stack>
+        ) : (
+          <BillingMethodButton />
+        )}
       </div>
     </>
   );

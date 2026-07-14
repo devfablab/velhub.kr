@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
@@ -121,6 +122,10 @@ export default async function Page() {
 
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>본인인증 하시면 블로그를 개설하실 수 있습니다.</span>
+              </p>
               {!hasSettlement && !isMinor ? <IdentityVerificationButton /> : null}
               {isMinor ? (
                 <p className="alert warning">
