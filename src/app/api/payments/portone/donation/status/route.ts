@@ -12,29 +12,18 @@ type SiteRow = {
   is_shutdown: boolean;
 };
 
-type MembershipSettingRow = {
-  id: string;
-  is_enabled: boolean;
-};
-
 export async function GET(request: NextRequest) {
   try {
     const siteName = normalizeText(request.nextUrl.searchParams.get('siteName')).toLowerCase();
     const targetType = normalizeText(request.nextUrl.searchParams.get('targetType')).toLowerCase();
 
-    console.log('siteName: ', siteName);
     if (!siteName) {
       return Response.json({
         isEnabled: false,
       });
     }
 
-    console.log('targetType: ');
-    if (targetType !== PAYMENT_TARGET_TYPE.SITE) {
-      return Response.json({
-        isEnabled: false,
-      });
-    }
+    console.log('siteName: ', siteName);
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -66,48 +55,96 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (site.site_type !== 'blog') {
+    const session = await verifySession({
+      siteId: site.id,
+    });
+
+    if (session.rhizomeStigmaId) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('id', session.rhizomeStigmaId)
+        .maybeSingle();
+
+      if (membershipResult.error) {
+        console.error(membershipResult.error);
+
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      if (membershipResult.data?.role === 'owner') {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+    }
+
+    if (site.site_type === 'community' && targetType !== PAYMENT_TARGET_TYPE.SITE) {
       return Response.json({
         isEnabled: false,
       });
     }
 
-    const membershipSettingResult = await supabaseAdmin
-      .from('subscription_settings')
-      .select('id, is_enabled')
-      .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
-      .eq('target_id', site.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
-      .maybeSingle();
-
-    if (membershipSettingResult.error) {
-      console.error(membershipSettingResult.error);
-
+    if (site.site_type === 'blog' && targetType === PAYMENT_TARGET_TYPE.BOARD) {
       return Response.json({
         isEnabled: false,
       });
     }
 
-    const membershipSetting = membershipSettingResult.data as MembershipSettingRow | null;
+    if (site.site_type === 'community') {
+      const seriesCountResult = await supabaseAdmin
+        .from('board_series')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', site.id);
 
-    if (membershipSetting?.is_enabled) {
-      return Response.json({
-        isEnabled: false,
-      });
+      if (seriesCountResult.error) {
+        console.error(seriesCountResult.error);
+
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      if ((seriesCountResult.count ?? 0) < 2) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+    }
+
+    if (site.site_type === 'blog') {
+      const membershipSettingResult = await supabaseAdmin
+        .from('subscription_settings')
+        .select('id')
+        .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+        .eq('target_id', site.id)
+        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+        .maybeSingle();
+
+      if (membershipSettingResult.error) {
+        console.error(membershipSettingResult.error);
+
+        return Response.json({
+          isEnabled: false,
+        });
+      }
     }
 
     async function getPaymentEmail() {
       try {
-        const session = await verifySession({ siteId: null });
         if (!session.authUserId) {
           return null;
         }
+
         return getPaymentCustomerName(session.authUserId);
       } catch (unknownError) {
         console.error(unknownError);
         return null;
       }
     }
+
     const paymentEmail = await getPaymentEmail();
 
     return Response.json({

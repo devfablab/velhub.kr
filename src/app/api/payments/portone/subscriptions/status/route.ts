@@ -312,6 +312,38 @@ export async function GET(request: Request) {
       siteId: site.id,
     });
 
+    if (session.rhizomeStigmaId) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('id', session.rhizomeStigmaId)
+        .maybeSingle();
+
+      if (membershipResult.error) {
+        console.error(membershipResult.error);
+
+        return Response.json({ error: '사이트 권한을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const siteRole = normalizeText(membershipResult.data?.role).toLowerCase();
+
+      const isManager =
+        siteRole === 'owner' ||
+        siteRole === 'manager' ||
+        siteRole === 'community-manager' ||
+        siteRole === 'board-manager' ||
+        siteRole === 'board-general-manager' ||
+        siteRole === 'board-assistant-manager';
+
+      if (isManager) {
+        return Response.json({
+          isEnabled: false,
+          price: null,
+          subscriptionStatus: 'none',
+        });
+      }
+    }
+
     if (!session.authUserId) {
       return Response.json({
         isEnabled: true,

@@ -862,6 +862,15 @@ export default function IdentityVerificationButton() {
                 </>
               ) : null}
 
+              <TextField
+                fullWidth
+                type="email"
+                placeholder="연락할 수 있는 이메일 주소"
+                size="small"
+                value={paymentEmail}
+                onChange={(event) => setPaymentEmail(event.target.value)}
+              />
+
               <Select displayEmpty size="small" value={bankCode} onChange={(event) => setBankCode(event.target.value)}>
                 <MenuItem value="" disabled>
                   입금 은행을 선택해 주세요

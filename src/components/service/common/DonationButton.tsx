@@ -73,6 +73,10 @@ type IdentityStatusResponse = {
   error?: string;
 };
 
+type DonationStatusResponse = {
+  isEnabled?: boolean;
+};
+
 type SitePublicResponse = {
   siteInfo?: {
     purchase_available?: boolean;
@@ -242,36 +246,37 @@ export default function DonationButton(props: Props) {
   useEffect(() => {
     let ignore = false;
 
-    async function checkOwnerAge() {
+    async function checkDonationStatus() {
       try {
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
+        const statusParams = new URLSearchParams({
+          siteName: props.siteName,
+          targetType: getTargetType(props),
         });
 
-        const result = (await response.json()) as SitePublicResponse;
+        const [identityResponse, donationStatusResponse] = await Promise.all([
+          fetch('/api/identity/portone/status', {
+            method: 'GET',
+            credentials: 'include',
+          }),
+          fetch(`/api/payments/portone/donation/status?${statusParams.toString()}`, {
+            method: 'GET',
+            credentials: 'include',
+          }),
+        ]);
+
+        const identityResult = (await identityResponse.json()) as IdentityStatusResponse;
+        const donationStatusResult = (await donationStatusResponse.json()) as DonationStatusResponse;
 
         if (!ignore) {
-          setPurchaseAvailable(Boolean(response.ok && result.siteInfo?.purchase_available));
-        }
-      } catch {
-        if (!ignore) {
-          setPurchaseAvailable(false);
-        }
-      }
-    }
-
-    async function checkIdentity() {
-      try {
-        const response = await fetch('/api/identity/portone/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as IdentityStatusResponse;
-
-        if (!ignore) {
-          setCanShowDonationButton(Boolean(response.ok && result.exists && isAdult(result.identity?.birth_date)));
+          setCanShowDonationButton(
+            Boolean(
+              identityResponse.ok &&
+              identityResult.identity &&
+              isAdult(identityResult.identity.birth_date) &&
+              donationStatusResponse.ok &&
+              donationStatusResult.isEnabled,
+            ),
+          );
         }
       } catch {
         if (!ignore) {
@@ -280,13 +285,12 @@ export default function DonationButton(props: Props) {
       }
     }
 
-    void checkOwnerAge();
-    void checkIdentity();
+    void checkDonationStatus();
 
     return () => {
       ignore = true;
     };
-  }, [siteName]);
+  }, [props.siteName, props.targetType]);
 
   if (!canShowDonationButton) {
     return null;

@@ -155,7 +155,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '멤버십 금액 설정이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const session = await verifySession({ siteId: null });
+    const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId) {
       return Response.json({
@@ -163,6 +163,28 @@ export async function GET(request: Request) {
         price: setting.price,
         membershipStatus: 'none',
       });
+    }
+
+    if (session.rhizomeStigmaId) {
+      const membershipResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('id', session.rhizomeStigmaId)
+        .maybeSingle();
+
+      if (membershipResult.error) {
+        console.error(membershipResult.error);
+
+        return Response.json({ error: '사이트 권한을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      if (membershipResult.data?.role === 'owner') {
+        return Response.json({
+          isEnabled: false,
+          price: null,
+          membershipStatus: 'none',
+        });
+      }
     }
 
     const subscriptionResult = await supabaseAdmin
