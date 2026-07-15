@@ -10,7 +10,7 @@ import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/aside.module.sass';
 
-type UserInfoStatus = 'guest' | 'not_joined' | 'pending_join' | 'pending_invite' | 'blocked' | 'active';
+type UserInfoStatus = 'guest' | 'not_joined' | 'invite_only' | 'pending_join' | 'pending_invite' | 'blocked' | 'active';
 
 type ManagerRoleItem = {
   role: string;
@@ -226,6 +226,14 @@ export default function UserInfo() {
         <Anchor href={inviteHref} className="button">
           초대에 응하기
         </Anchor>
+      </div>
+    );
+  }
+
+  if (status === 'invite_only') {
+    return (
+      <div className={`${styles['user-status']} paper`}>
+        <p>초대 전용 커뮤니티입니다.</p>
       </div>
     );
   }

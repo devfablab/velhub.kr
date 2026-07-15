@@ -319,6 +319,30 @@ async function getCommunityUserInfo(siteName: string) {
       } as const;
     }
 
+    const communityResult = await supabaseAdmin
+      .from('communities')
+      .select('join_type')
+      .eq('site_id', siteResult.data.id)
+      .maybeSingle();
+
+    if (communityResult.error || !communityResult.data) {
+      return {
+        ok: false,
+        status: 500,
+        error: '커뮤니티 가입 설정을 불러오지 못했습니다.',
+      } as const;
+    }
+
+    if (communityResult.data.join_type === 'invite') {
+      return {
+        ok: true,
+        status: 200,
+        data: {
+          status: 'invite_only',
+        },
+      } as const;
+    }
+
     return {
       ok: true,
       status: 200,

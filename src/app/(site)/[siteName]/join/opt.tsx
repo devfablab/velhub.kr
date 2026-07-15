@@ -81,6 +81,7 @@ const VisuallyHiddenInput = styled('input')({
 export default function Opt({ siteName }: Props) {
   const router = useRouter();
 
+  const [joinType, setJoinType] = useState('');
   const [nickname, setNickname] = useState('');
   const [joinNotice, setJoinNotice] = useState('');
   const [joinQuestionStatus, setJoinQuestionStatus] = useState('');
@@ -119,6 +120,7 @@ export default function Opt({ siteName }: Props) {
           throw new Error('가입 정보를 불러오지 못했습니다.');
         }
 
+        setJoinType(join.join_type);
         setJoinNotice(join.join_notice ?? '');
         setJoinQuestionStatus(join.join_question_status);
         setJoinQuestions(
@@ -465,6 +467,21 @@ export default function Opt({ siteName }: Props) {
 
   if (isLoading) {
     return null;
+  }
+
+  if (joinType === 'invite') {
+    return (
+      <>
+        <p className="alert warning">
+          <WarningAmberRoundedIcon />
+          <span>초대 전용 커뮤니티입니다.</span>
+        </p>
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>초대장을 받으셨다면 초대장 링크를 이용하세요.</span>
+        </p>
+      </>
+    );
   }
 
   return (
