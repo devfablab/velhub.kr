@@ -31,11 +31,8 @@ export async function POST(request: NextRequest) {
   }
 
   const portOneVerification = await getPortOneIdentityVerification(identityVerificationId);
-  console.log('portOneVerification: ', JSON.stringify(portOneVerification, null, 2));
 
   const verifiedIdentity = extractVerifiedIdentity(identityVerificationId, portOneVerification);
-
-  console.log('verifiedIdentity: ', verifiedIdentity);
 
   if (!verifiedIdentity) {
     return NextResponse.json({ message: '본인인증 결과를 확인할 수 없습니다.' }, { status: 400 });
@@ -51,8 +48,6 @@ export async function POST(request: NextRequest) {
     .maybeSingle();
 
   if (findError) {
-    console.log('error: ', findError);
-
     return NextResponse.json({ message: '본인인증 정보 확인에 실패했습니다.' }, { status: 500 });
   }
 
@@ -70,8 +65,6 @@ export async function POST(request: NextRequest) {
     const { error } = await supabaseAdmin.from('chorogons').update(payload).eq('user_id', sessionClaims.userId);
 
     if (error) {
-      console.log('error: ', error);
-
       return NextResponse.json({ message: '본인인증 정보 저장에 실패했습니다.' }, { status: 500 });
     }
 
@@ -84,8 +77,6 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    console.log('error: ', error);
-
     return NextResponse.json({ message: '본인인증 정보 저장에 실패했습니다.' }, { status: 500 });
   }
 

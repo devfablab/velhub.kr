@@ -125,7 +125,6 @@ export async function GET() {
 
     const inviteRows = (inviteResult.data ?? []).filter((invite) => !isExpired(invite.expires_at)) as InviteRow[];
 
-    console.log('inviteRows: ', inviteRows);
     if (inviteRows.length === 0) {
       return Response.json({
         invites: [],

@@ -216,8 +216,6 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as ReportRequestBody;
 
-  console.log('[report/new] body', body);
-
   if (!isReportTargetType(body.targetType)) {
     return Response.json({ error: '신고 대상이 올바르지 않습니다.' }, { status: 400 });
   }
@@ -243,15 +241,6 @@ export async function POST(request: Request) {
   const postSlug = body.targetType === 'post' ? getPostSlugValue(body.contentId) : null;
   const commentId = body.targetType === 'comment' ? getUuidValue(body.commentId) : null;
 
-  console.log('[report/new] parsed values', {
-    targetType: body.targetType,
-    siteName,
-    siteId,
-    boardName,
-    postSlug,
-    commentId,
-  });
-
   const boardId =
     body.targetType === 'board' || body.targetType === 'post' || body.targetType === 'comment'
       ? boardName
@@ -276,8 +265,6 @@ export async function POST(request: Request) {
       ? await getPost(supabase, siteId, boardId, postSlug)
       : { data: null, error: null };
 
-  console.log('[report/new] postResult', postResult);
-
   if (postResult.error) {
     return Response.json({ error: postResult.error }, { status: 500 });
   }
@@ -290,8 +277,6 @@ export async function POST(request: Request) {
     body.targetType === 'comment' && boardId && commentId
       ? await getComment(supabase, siteId, boardId, commentId)
       : { data: null, error: null };
-
-  console.log('[report/new] commentResult', commentResult);
 
   if (commentResult.error) {
     return Response.json({ error: commentResult.error }, { status: 500 });
@@ -308,8 +293,6 @@ export async function POST(request: Request) {
     postResult.data?.id ?? commentResult.data?.post_id ?? null,
     commentResult.data?.id ?? null,
   );
-
-  console.log('[report/new] targetValues', targetValues);
 
   if (!targetValues) {
     return Response.json({ error: '신고 대상 정보가 없습니다.' }, { status: 400 });

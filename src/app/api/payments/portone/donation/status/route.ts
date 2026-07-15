@@ -23,8 +23,6 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    console.log('siteName: ', siteName);
-
     const supabaseAdmin = getSupabaseAdmin();
 
     const siteResult = await supabaseAdmin
@@ -81,7 +79,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (site.site_type === 'community' && targetType !== PAYMENT_TARGET_TYPE.SITE) {
+    if (site.site_type === 'community' && targetType === PAYMENT_TARGET_TYPE.SITE) {
       return Response.json({
         isEnabled: false,
       });
@@ -106,6 +104,8 @@ export async function GET(request: NextRequest) {
           isEnabled: false,
         });
       }
+
+      console.log('seriesCountResult: ', seriesCountResult);
 
       if ((seriesCountResult.count ?? 0) < 2) {
         return Response.json({

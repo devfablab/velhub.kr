@@ -55,8 +55,6 @@ async function uploadBusinessLicenseFile(userId: string, file: File) {
   });
 
   if (error) {
-    console.log('error: ', error);
-
     throw new Error('사업자등록증 업로드에 실패했습니다.');
   }
 
@@ -80,8 +78,6 @@ export async function PATCH(request: NextRequest) {
     .maybeSingle();
 
   if (findError) {
-    console.log('error: ', findError);
-
     return NextResponse.json({ message: '정산 정보 확인에 실패했습니다.' }, { status: 500 });
   }
 
@@ -141,8 +137,6 @@ export async function PATCH(request: NextRequest) {
       .eq('user_id', sessionClaims.userId);
 
     if (error) {
-      console.log('error: ', error);
-
       return NextResponse.json({ message: '정산 정보 수정에 실패했습니다.' }, { status: 500 });
     }
 
@@ -154,7 +148,6 @@ export async function PATCH(request: NextRequest) {
       .eq('user_id', sessionClaims.userId);
 
     if (paymentEmailError) {
-      console.log('error: ', paymentEmailError);
       return NextResponse.json({ message: '정산 이메일 수정에 실패했습니다.' }, { status: 500 });
     }
 

@@ -46,7 +46,6 @@ export async function GET(request: Request, context: RouteContext) {
       .eq('token', normalizedToken)
       .maybeSingle();
 
-    console.log('invite.error: ', invite.error);
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -261,8 +260,6 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('user_id', stigma.data.id)
       .maybeSingle();
 
-    console.log('currentRhizomeStigma: ', currentRhizomeStigma);
-
     if (currentRhizomeStigma.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
@@ -289,8 +286,6 @@ export async function POST(request: Request, context: RouteContext) {
           last_checkin_at: approvalAt,
         })
         .eq('id', currentRhizomeStigma.data.id);
-
-      console.log('updateRhizomeStigma: ', updateRhizomeStigma);
 
       if (updateRhizomeStigma.error) {
         return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
@@ -320,8 +315,6 @@ export async function POST(request: Request, context: RouteContext) {
         .select('id')
         .maybeSingle();
 
-      console.log('insertRhizomeStigma: ', insertRhizomeStigma);
-
       if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
         return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
       }
@@ -338,14 +331,12 @@ export async function POST(request: Request, context: RouteContext) {
       })
       .eq('id', invite.data.id);
 
-    console.log('updateInvite: ', updateInvite);
     if (updateInvite.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
 
     const deleteInvite = await supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
-    console.log('deleteInvite: ', deleteInvite);
     if (deleteInvite.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
     }
@@ -355,7 +346,6 @@ export async function POST(request: Request, context: RouteContext) {
       siteName: rhizome.data.site_key,
     });
   } catch (unknownError) {
-    console.log('unknownError: ', unknownError);
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message || '초대 처리에 실패했습니다.' }, { status: 500 });
     }

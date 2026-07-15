@@ -25,12 +25,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
   }
 
-  console.log('identity verification failed: ', {
-    userId: sessionClaims.userId,
-    identityVerificationId,
-    code: body?.code ?? null,
-    message: body?.message ?? null,
-  });
-
   return NextResponse.json({ ok: true });
 }

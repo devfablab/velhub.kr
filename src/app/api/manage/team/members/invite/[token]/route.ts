@@ -46,8 +46,6 @@ export async function GET(request: Request, context: RouteContext) {
       .eq('token', normalizedToken)
       .maybeSingle();
 
-    console.log('invite: ', invite);
-
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -182,7 +180,6 @@ export async function POST(request: Request, context: RouteContext) {
       .eq('token', normalizedToken)
       .maybeSingle();
 
-    console.log('invite: ', invite);
     if (invite.error || !invite.data) {
       return Response.json({ error: '초대장을 찾을 수 없습니다.' }, { status: 404 });
     }
@@ -244,8 +241,6 @@ export async function POST(request: Request, context: RouteContext) {
     let acceptedUserId = '';
     const joinedAt = new Date().toISOString();
 
-    console.log('currentRhizomeStigma: ', currentRhizomeStigma);
-
     if (currentRhizomeStigma.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.1' }, { status: 500 });
     }
@@ -291,8 +286,6 @@ export async function POST(request: Request, context: RouteContext) {
         })
         .select('id')
         .maybeSingle();
-
-      console.log('insertRhizomeStigma: ', insertRhizomeStigma);
 
       if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
         return Response.json({ error: '초대 처리에 실패했습니다.3' }, { status: 500 });
