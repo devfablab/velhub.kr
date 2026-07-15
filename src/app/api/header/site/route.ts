@@ -465,6 +465,37 @@ export async function GET(request: Request) {
       hasInvite = (inviteResult.data?.length ?? 0) > 0;
     }
 
+    let inviteHref: string | null = null;
+
+    if (!membership && inviteEmail) {
+      const nowIsoString = new Date().toISOString();
+
+      const inviteResult = await supabaseAdmin
+        .from('invite')
+        .select('token')
+        .eq('site_id', site.id)
+        .eq('email', inviteEmail)
+        .eq('role', 'member')
+        .eq('status', 'pending')
+        .is('cancelled_at', null)
+        .is('joined_at', null)
+        .gt('expires_at', nowIsoString)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (inviteResult.error) {
+        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      if (inviteResult.data) {
+        inviteHref =
+          siteType === 'blog'
+            ? `/${site.site_key}/invite-blog/${inviteResult.data.token}`
+            : `/${site.site_key}/invite-community/${inviteResult.data.token}`;
+      }
+    }
+
     const account = accountResult.data as AccountRow;
     const isApproval = membership?.is_approval === true ? true : membership?.is_approval === false ? false : null;
 
@@ -481,8 +512,8 @@ export async function GET(request: Request) {
       siteRole,
       nickname: membership?.is_approval === true ? normalizeText(membership.nickname) || null : null,
       isApproval,
-      invite: hasInvite,
-      join: Boolean(membership) || hasInvite,
+      invite: Boolean(inviteHref),
+      join: Boolean(membership) || Boolean(inviteHref),
       sessionCase: session.case ?? null,
       siteLabel: site.site_label,
       profilePictureUrl: getPublicUrl('avatar', site.profile_picture),

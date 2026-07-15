@@ -395,7 +395,7 @@ export default function Opt() {
   async function refreshInfo(nextSiteName?: string) {
     const targetSiteName = nextSiteName ?? siteName;
 
-    const response = await fetch(`/api/info/general/site/${targetSiteName}/edit`, {
+    const response = await fetch(`/api/info/general/site/${targetSiteName}`, {
       method: 'GET',
       credentials: 'include',
     });

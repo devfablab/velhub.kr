@@ -17,6 +17,9 @@ type SessionRouteResult = {
   role?: string | null;
   siteType?: string | null;
   communityRoles?: CommunityManageRole[];
+  siteRole?: string | null;
+  invite?: boolean;
+  inviteHref?: string | null;
 };
 
 type RhizomeStateResult = {
@@ -84,10 +87,14 @@ function isSitePath(pathname: string) {
   return pathname.startsWith('/');
 }
 
-function isInviteBlogPath(pathname: string) {
+function isInvitePath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
-  return segments.length >= 3 && segments[1] === 'invite-blog';
+  return segments.length >= 3 && (segments[1] === 'invite-blog' || segments[1] === 'invite-community');
+}
+
+function isInviteOnlyPath(pathname: string, siteName: string) {
+  return pathname === `/${siteName}/invite-only`;
 }
 
 function isSiteStatusPath(pathname: string, siteName: string) {
@@ -406,13 +413,43 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isSitePath(pathname) && !isInviteBlogPath(pathname)) {
+  if (isSitePath(pathname) && !isInvitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (siteName) {
       const rhizomeState = await fetchRhizomeState(request, siteName);
 
       if (rhizomeState.response.ok && rhizomeState.result?.siteInfo) {
+        if (rhizomeState.result.siteInfo.visibility_type === 'private' && !isSiteStatusPath(pathname, siteName)) {
+          if (isInviteOnlyPath(pathname, siteName)) {
+            return response;
+          }
+
+          if (!isLoggedIn) {
+            return redirectWithPath(request, `/${siteName}/invite-only`);
+          }
+
+          const member = await fetchSessionRoute(request, '/api/session/member', {
+            siteName,
+          });
+
+          if (member.response.ok && member.result?.ok) {
+            return response;
+          }
+
+          const header = await fetchSessionRoute(request, '/api/header/site', {
+            siteName,
+          });
+
+          const inviteHref = header.result?.inviteHref ?? null;
+
+          if (header.response.ok && header.result?.invite && inviteHref) {
+            return redirectWithPath(request, inviteHref);
+          }
+
+          return redirectWithPath(request, `/${siteName}/invite-only`);
+        }
+
         const isStatusPath = isSiteStatusPath(pathname, siteName);
 
         if (rhizomeState.result.siteInfo.is_shutdown !== true) {
