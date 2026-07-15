@@ -804,8 +804,11 @@
   .options
     display: flex
     flex-direction: column
-    padding-bottom: ds.rem(23)
-    padding-left: ds.rem(23)
+    padding-left: ds.rem(12)
+
+    @include ds.mq(minLarge)
+      padding-bottom: ds.rem(23)
+      padding-left: ds.rem(23)
 
     .buttons
       display: flex
