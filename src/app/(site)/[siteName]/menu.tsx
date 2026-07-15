@@ -47,6 +47,7 @@ import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import ReportButton from '@/components/service/common/ReportButton';
 import styles from '@/app/header.module.sass';
+import NotificationButton from '@/components/service/common/NotificationButton';
 
 type ContainerProps = {
   pageTitle?: string;
@@ -564,6 +565,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                       </List>
                     </Box>
                   </Drawer>
+                  <NotificationButton isMobile={true} />
                   <IconButton
                     onClick={handleOpenProfileDrawer}
                     className={styles['theme-mode-button']}

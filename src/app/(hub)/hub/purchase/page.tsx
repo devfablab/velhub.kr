@@ -1,6 +1,5 @@
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import Anchor from '@/components/Anchor';
 import Content from './tab';
 import Container from '../menu';

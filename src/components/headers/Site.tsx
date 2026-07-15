@@ -38,6 +38,7 @@ import NavManage from '../header-groups/site/NavManage';
 import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NavPayments from '../header-groups/site/NavPayments';
 import AppIconAvatar from '../custom-ui/AppIconAvatar';
+import NotificationButton from '../service/common/NotificationButton';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -496,6 +497,7 @@ export default function HeaderSite() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
+                  <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}
@@ -558,6 +560,7 @@ export default function HeaderSite() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['icon-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
+                  <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}

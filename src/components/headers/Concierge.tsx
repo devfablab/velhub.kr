@@ -19,6 +19,7 @@ import { useAuthState } from '@/components/auth/AuthStateProvider';
 import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/concierge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/concierge/SecondaryMenu';
+import NotificationButton from '../service/common/NotificationButton';
 import styles from '@/app/header.module.sass';
 
 type HeaderResponse = {
@@ -263,7 +264,7 @@ export default function HeaderConcierge() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
-
+                  <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}
@@ -297,7 +298,7 @@ export default function HeaderConcierge() {
                   <IconButton onClick={handleOpenThemeModeMenu} className={styles['theme-mode-button']}>
                     {renderThemeModeIcon()}
                   </IconButton>
-
+                  <NotificationButton isMobile={false} />
                   <IconButton onClick={handleOpenProfileMenu}>
                     <Avatar
                       src={userProfile.avatarUrl || '/broken-image.jpg'}

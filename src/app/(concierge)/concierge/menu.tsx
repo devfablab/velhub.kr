@@ -36,6 +36,7 @@ import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import { ServiceLogo } from '@/components/Svgs';
 import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
+import NotificationButton from '@/components/service/common/NotificationButton';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
@@ -228,6 +229,7 @@ export default function Container({ children }: ContainerProps) {
               </Anchor>
             </h1>
             <div className={styles.iconbuttons}>
+              <NotificationButton isMobile={true} />
               <IconButton
                 onClick={handleOpenProfileDrawer}
                 className={styles['theme-mode-button']}
