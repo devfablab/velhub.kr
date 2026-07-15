@@ -294,7 +294,18 @@ export default function ReportButton({
       </IconButton>
 
       <Menu anchorEl={menuAnchorElement} open={menuOpen} onClose={handleMenuClose}>
-        <MenuItem onClick={handleOpen}>신고하기</MenuItem>
+        <MenuItem onClick={handleOpen}>
+          {targetType === 'board'
+            ? '게시판'
+            : targetType === 'comment'
+              ? '댓글'
+              : targetType === 'post'
+                ? '게시물'
+                : targetType === 'site'
+                  ? '사이트'
+                  : null}{' '}
+          신고하기
+        </MenuItem>
       </Menu>
 
       {isMobile ? (
