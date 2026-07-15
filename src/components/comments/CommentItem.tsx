@@ -167,9 +167,6 @@ export default function CommentItem({
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [isLiking, setIsLiking] = useState(false);
 
-  console.log('comment: ', comment);
-  console.log('activeReplyTargetId: ', activeReplyTargetId);
-
   const roleLabel = getAuthorRoleLabel(comment.author_role);
   const isReplyFormOpen = activeReplyTargetId === comment.id;
 
