@@ -1055,8 +1055,6 @@ export async function GET(request: Request, context: RouteContext) {
         .eq('slug', normalizedContentId)
         .maybeSingle();
 
-      console.log('page: ', page);
-
       if (page.error || !page.data) {
         return NextResponse.json({ error: '페이지를 찾을 수 없습니다.' }, { status: 404 });
       }
@@ -1358,7 +1356,8 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
-    const isPostDonationAvailable = boardSeriesCount >= 2 && Boolean(postData.series_id);
+    const isPostDonationAvailable =
+      rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id));
 
     return NextResponse.json({
       board: boardData,

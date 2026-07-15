@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { Chip } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -174,8 +175,10 @@ export default async function Page(context: RouteContext) {
         <div className={`content ${styles['blog-list']} ${styles.content}`}>
           <SiteProfile />
           <div className={styles.headline}>
-            <h2>{seriesData.series_label}</h2>
-            {seriesData.is_completed ? <em>완결</em> : null}
+            <div className={styles['series-info']}>
+              <h2>{seriesData.series_label}</h2>
+              {seriesData.is_completed ? <Chip label="완결" size="small" className={styles.em} /> : null}
+            </div>
             {seriesData.summary ? <p>{seriesData.summary}</p> : null}
           </div>
 

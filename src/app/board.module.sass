@@ -11,12 +11,23 @@
     gap: ds.rem(5)
     align-items: center
 
+    @include ds.mq(maxMedium)
+      font-size: ds.rem(18)
+
     svg
       width: ds.rem(26)
       height: ds.rem(26)
 
   .headline
+    .series-info
+      display: flex
+      gap: ds.rem(7)
+
+    .em
+      background-color: ds.$hex-accent
+
     p
+      white-space: pre-wrap
       font-size: ds.rem(14)
 
   .pagination

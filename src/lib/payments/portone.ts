@@ -474,7 +474,6 @@ export function getPortOnePaymentMethod(payment: PortOnePayment) {
 function getRawDataStatus(payment: PortOnePayment) {
   const rawData = payment as Record<string, unknown>;
   const rawStatus = rawData.status;
-  console.log('rawStatus: ', rawStatus);
 
   return typeof rawStatus === 'string' ? normalizeText(rawStatus).toUpperCase() : '';
 }

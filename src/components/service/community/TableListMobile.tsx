@@ -232,7 +232,7 @@ export default function TableListMobile({
               selectedSeries={selectedSeries}
               selectedBoard={true}
             />
-            {isCommunity && board.board_type !== 'page' && !isBoardSubscriptionEnabled ? (
+            {isCommunity && board.board_type !== 'page' ? (
               <DonationButton siteName={siteName} targetType="board" boardName={boardName} buttonText="게시판 후원" />
             ) : null}
           </>

@@ -244,8 +244,6 @@ export default function DonationButton(props: Props) {
   const donationTitle = getDonationTitle(props);
 
   useEffect(() => {
-    let ignore = false;
-
     async function checkDonationStatus() {
       try {
         const statusParams = new URLSearchParams({
@@ -267,28 +265,24 @@ export default function DonationButton(props: Props) {
         const identityResult = (await identityResponse.json()) as IdentityStatusResponse;
         const donationStatusResult = (await donationStatusResponse.json()) as DonationStatusResponse;
 
-        if (!ignore) {
-          setCanShowDonationButton(
-            Boolean(
-              identityResponse.ok &&
-              identityResult.identity &&
-              isAdult(identityResult.identity.birth_date) &&
-              donationStatusResponse.ok &&
-              donationStatusResult.isEnabled,
-            ),
-          );
-        }
+        setCanShowDonationButton(
+          Boolean(
+            identityResponse.ok &&
+            identityResult.identity &&
+            isAdult(identityResult.identity.birth_date) &&
+            donationStatusResponse.ok &&
+            donationStatusResult.isEnabled,
+          ),
+        );
       } catch {
-        if (!ignore) {
-          setCanShowDonationButton(false);
-        }
+        setCanShowDonationButton(false);
       }
     }
 
     void checkDonationStatus();
 
     return () => {
-      ignore = true;
+      setCanShowDonationButton(true);
     };
   }, [props.siteName, props.targetType]);
 
@@ -414,10 +408,6 @@ export default function DonationButton(props: Props) {
         />
       </Stack>
     );
-  }
-
-  if (!purchaseAvailable) {
-    return;
   }
 
   return (

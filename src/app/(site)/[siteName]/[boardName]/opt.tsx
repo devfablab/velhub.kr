@@ -548,7 +548,7 @@ export default function Opt({ isCommunity }: Props) {
                     selectedSeries={selectedSeries}
                     selectedBoard={true}
                   />
-                  {isCommunity && board && board.board_type !== 'page' && !isBoardSubscriptionEnabled ? (
+                  {isCommunity && board && board.board_type !== 'page' ? (
                     <DonationButton
                       siteName={siteName}
                       targetType="board"

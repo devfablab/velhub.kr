@@ -45,8 +45,8 @@ import BoardRecentTableList from '@/components/service/community/BoardRecentTabl
 import DonationButton from '@/components/service/common/DonationButton';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
-import Container from '../../menu';
 import ReportButton from '@/components/service/common/ReportButton';
+import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -842,11 +842,11 @@ export default function Opt({ isCommunity }: Props) {
       </>
     ) : null;
 
+  console.log('content: ', content);
   const postDonationButton =
     (content.published_status === 'published' || content.published_status === 'unknown') &&
     !isPage &&
-    content.is_post_donation_available &&
-    !content.is_purchase_required ? (
+    content.is_post_donation_available ? (
       <DonationButton
         targetType="post"
         siteName={siteName}
@@ -874,9 +874,6 @@ export default function Opt({ isCommunity }: Props) {
           <Stack gap={3}>
             <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
             <Stack direction="column" spacing={1.5}>
-              <button type="button" className="button medium cancel" onClick={closePurchasePrompt}>
-                취소
-              </button>
               <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
             </Stack>
           </Stack>
@@ -891,9 +888,6 @@ export default function Opt({ isCommunity }: Props) {
             <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" onClick={closePurchasePrompt}>
-              취소
-            </button>
             <PostPurchaseButton
               siteName={siteName}
               boardName={boardName}
