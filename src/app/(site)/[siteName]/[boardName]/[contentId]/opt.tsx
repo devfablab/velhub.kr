@@ -1391,9 +1391,11 @@ export default function Opt({ isCommunity }: Props) {
             ) : null}
             <div className={styles.options}>
               <div className={styles.buttons}>
-                {postActionButtons}
-                {paidContentActionButtons}
-                <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
+                <div className={styles['button-basics']}>{postActionButtons}</div>
+                <div className={styles['button-purchase']}>
+                  {paidContentActionButtons}
+                  <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
+                </div>
               </div>
             </div>
             {seriesList}

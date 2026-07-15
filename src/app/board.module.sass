@@ -809,15 +809,27 @@
 
     .buttons
       display: flex
-      gap: ds.rem(23)
+
+      @include ds.mq(maxSmall)
+        flex-direction: column
+
+      > div
+        display: flex
+        gap: ds.rem(13)
+
+        @include ds.mq(minMedium)
+          gap: ds.rem(23)
 
       .button
         display: inline-flex
         align-items: center
-        gap: ds.rem(5)
+        gap: ds.rem(3)
         background-color: transparent
         padding: 0
         color: rgba(ds.$rgb-secondary, .7)
+
+        @include ds.mq(minMedium)
+          gap: ds.rem(5)
 
         html[data-theme="yellow-dark"] &
           color: rgba(ds.$rgb-light, .7)
@@ -828,8 +840,20 @@
         &.active
           color: ds.$hex-accent!important
 
+        svg
+          width: ds.rem(20)
+          height: ds.rem(20)
+
+          @include ds.mq(minMedium)
+            width: ds.rem(24)
+            height: ds.rem(24)
+
         strong
           @include ds.fw(pre, 600)
+          font-size: ds.rem(14)
+
+          @include ds.mq(minMedium)
+            font-size: ds.rem(16)
 
         em
           @include ds.fw(neo, 400)
