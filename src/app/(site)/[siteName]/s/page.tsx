@@ -64,10 +64,6 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
-    notFound();
-  }
-
   const series = await supabaseAdmin
     .from('board_series')
     .select(

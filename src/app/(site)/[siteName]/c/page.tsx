@@ -63,11 +63,7 @@ export default async function Page(context: RouteContext) {
     notFound();
   }
 
-  if (
-    rhizome.data.site_type !== 'blog' ||
-    rhizome.data.visibility_type !== 'public' ||
-    rhizome.data.is_shutdown !== false
-  ) {
+  if (rhizome.data.site_type !== 'blog' || rhizome.data.is_shutdown !== false) {
     notFound();
   }
 

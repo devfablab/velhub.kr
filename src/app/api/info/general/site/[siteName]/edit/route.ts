@@ -185,11 +185,21 @@ async function checkAccess(siteName: string) {
     } as const;
   }
 
+  const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, membership.data.user_id);
+
+  if (!updatedByParticleId) {
+    return {
+      ok: false,
+      status: 403,
+      error: '수정자 정보를 확인할 수 없습니다.',
+    } as const;
+  }
+
   return {
     ok: true,
     status: 200,
     rhizome: rhizome.data,
-    updatedByParticleId: membership.data.user_id as string,
+    updatedByParticleId,
     supabaseAdmin,
   } as const;
 }

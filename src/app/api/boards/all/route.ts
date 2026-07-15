@@ -64,8 +64,10 @@ export async function GET(request: Request) {
       siteId: rhizome.data.id,
     });
 
+    const isAuth = session.case === 'admin' || session.case === 'staff' || session.case === 'member';
+
     if (rhizome.data.visibility_type !== 'public' || rhizome.data.is_shutdown !== false) {
-      if (session.case !== 'staff') {
+      if (!isAuth) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
     }
