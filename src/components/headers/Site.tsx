@@ -618,7 +618,7 @@ export default function HeaderSite() {
                 </div>
               </li>
             )}
-            {userProfile.isLoggedIn ? (
+            {userProfile.isLoggedIn && userProfile.join ? (
               <li className={styles['VhiMenu-profile']}>
                 <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
                 <div className={styles['VhiMenu-profile-info']}>
@@ -630,10 +630,20 @@ export default function HeaderSite() {
                         ? '승인을 기다려요'
                         : userProfile.invite
                           ? '초대에 응해 주세요'
-                          : userProfile.join === false
-                            ? '가입해 주세요'
-                            : null}
+                          : null}
                   </span>
+                  {userProfile.isApproval === true && userProfile.siteRole ? (
+                    <span>{getSiteRoleLabel(userProfile.siteRole)}</span>
+                  ) : null}
+                </div>
+              </li>
+            ) : null}
+            {userProfile.isLoggedIn && userProfile.join === false && siteType === 'community' ? (
+              <li className={styles['VhiMenu-profile']}>
+                <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                <div className={styles['VhiMenu-profile-info']}>
+                  <em>{siteLabel}</em>
+                  <span>가입해 주세요</span>
                   {userProfile.isApproval === true && userProfile.siteRole ? (
                     <span>{getSiteRoleLabel(userProfile.siteRole)}</span>
                   ) : null}
