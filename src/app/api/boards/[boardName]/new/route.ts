@@ -4,6 +4,7 @@ import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 
 type RouteContext = {
   params: Promise<{
@@ -475,6 +476,97 @@ async function createFavoriteBlogPostNotifications({
 
   if (notificationResult.error) {
     throw new Error(`즐겨찾기 새 글 알림 생성 실패: ${notificationResult.error.message}`);
+  }
+}
+
+async function createCommunitySubscriptionPostNotifications({
+  supabaseAdmin,
+  siteId,
+  boardId,
+  seriesId,
+  postId,
+  authorUserId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  boardId: string;
+  seriesId: string | null;
+  postId: string;
+  authorUserId: string;
+}) {
+  const boardSubscriptionsResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('subscriber_user_id')
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
+    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
+    .eq('target_id', boardId)
+    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+    .is('expired_at', null);
+
+  if (boardSubscriptionsResult.error) {
+    throw new Error(`게시판 구독자 조회 실패: ${boardSubscriptionsResult.error.message}`);
+  }
+
+  const boardNotificationRows = (boardSubscriptionsResult.data ?? [])
+    .map((subscription) => normalizeText(subscription.subscriber_user_id))
+    .filter((userId) => userId && userId !== authorUserId)
+    .map((userId) => ({
+      user_id: userId,
+      send_user_id: authorUserId,
+      send_site_id: siteId,
+      send_board_id: boardId,
+      send_series_id: null,
+      send_post_id: postId,
+      notification_type: NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST,
+      is_read: false,
+    }));
+
+  const seriesNotificationRows = [];
+
+  if (seriesId) {
+    const seriesSubscriptionsResult = await supabaseAdmin
+      .from('subscriptions')
+      .select('subscriber_user_id')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+      .eq('target_id', seriesId)
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .is('expired_at', null);
+
+    if (seriesSubscriptionsResult.error) {
+      throw new Error(`연재 구독자 조회 실패: ${seriesSubscriptionsResult.error.message}`);
+    }
+
+    for (const subscription of seriesSubscriptionsResult.data ?? []) {
+      const userId = normalizeText(subscription.subscriber_user_id);
+
+      if (!userId || userId === authorUserId) {
+        continue;
+      }
+
+      seriesNotificationRows.push({
+        user_id: userId,
+        send_user_id: authorUserId,
+        send_site_id: siteId,
+        send_board_id: boardId,
+        send_series_id: seriesId,
+        send_post_id: postId,
+        notification_type: NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST,
+        is_read: false,
+      });
+    }
+  }
+
+  const notificationRows = [...boardNotificationRows, ...seriesNotificationRows];
+
+  if (notificationRows.length === 0) {
+    return;
+  }
+
+  const notificationResult = await supabaseAdmin.from('notifications').insert(notificationRows);
+
+  if (notificationResult.error) {
+    throw new Error(`커뮤니티 새 글 알림 생성 실패: ${notificationResult.error.message}`);
   }
 }
 
@@ -952,6 +1044,17 @@ export async function POST(request: Request, context: RouteContext) {
         supabaseAdmin,
         siteId: rhizomeData.id,
         boardId: board.data.id,
+        postId: insertPost.data.id,
+        authorUserId: session.authUserId,
+      });
+    }
+
+    if (action === 'publish' && rhizomeData.site_type === 'community') {
+      await createCommunitySubscriptionPostNotifications({
+        supabaseAdmin,
+        siteId: rhizomeData.id,
+        boardId: board.data.id,
+        seriesId,
         postId: insertPost.data.id,
         authorUserId: session.authUserId,
       });
