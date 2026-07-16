@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { JSX, useRef, useState, type ChangeEvent } from 'react';
 import Avatar from '@mui/material/Avatar';
 import styles from '@/app/comments.module.sass';
 
@@ -15,6 +15,8 @@ type Props = {
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
 };
+
+type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 export default function CommentForm({
   placeholder = '댓글을 달아보세요.',
@@ -50,7 +52,7 @@ export default function CommentForm({
     });
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
     const normalizedContent = content.trim();
@@ -70,7 +72,7 @@ export default function CommentForm({
   }
 
   return (
-    <form onSubmit={(event) => void handleSubmit(event)} className="form">
+    <form onSubmit={handleSubmit} className="form">
       <fieldset>
         <legend>댓글쓰기 폼</legend>
         {errorMessage ? <p>{errorMessage}</p> : null}
@@ -78,7 +80,6 @@ export default function CommentForm({
           <Avatar src={avatarUrl} alt="" sx={{ width: 28, height: 28, position: 'absolute', top: 12, left: 12 }} />
 
           {replyTargetName ? <strong>{replyTargetName}</strong> : null}
-          {/* {pollChoiceLabel ? <span className={styles['poll-choice']}>{pollChoiceLabel}</span> : null} */}
 
           <textarea
             ref={textareaReference}
