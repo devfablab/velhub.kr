@@ -20,6 +20,40 @@
       text-align: center
       @include ds.fw(neo, 600)
 
+    .notifications
+      &.read-notification
+        opacity: .7
+
+      a, button
+        display: flex
+        flex-direction: column
+        align-items: flex-start
+        gap: ds.rem(7)
+        text-align: left
+
+        strong
+          @include ds.fw(neo, 700)
+          font-size: ds.rem(16)
+          color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+        div
+          display: flex
+          flex-direction: column
+          gap: ds.rem(2)
+
+        p, time
+          font-size: ds.rem(14)
+          color: ds.$hex-secondary
+
+        p
+          opacity: .9
+
+        time
+          opacity: .7
+
     .type-summary
       gap: ds.rem(2)
 

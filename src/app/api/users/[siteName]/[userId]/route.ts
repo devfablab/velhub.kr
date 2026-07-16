@@ -191,7 +191,7 @@ async function getCommentCount(siteId: string, userId: string) {
   return result.count ?? 0;
 }
 
-async function getCommunityUserInfo(siteName: string) {
+async function getUserInfo(siteName: string) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   if (!normalizedSiteName) {
@@ -218,13 +218,13 @@ async function getCommunityUserInfo(siteName: string) {
     } as const;
   }
 
-  if (siteResult.data.site_type !== 'community') {
-    return {
-      ok: false,
-      status: 400,
-      error: '커뮤니티 정보를 불러올 수 없습니다.',
-    } as const;
-  }
+  // if (siteResult.data.site_type !== 'community') {
+  //   return {
+  //     ok: false,
+  //     status: 400,
+  //     error: '커뮤니티 정보를 불러올 수 없습니다.',
+  //   } as const;
+  // }
 
   const session = await verifySession({
     siteId: siteResult.data.id,
@@ -487,7 +487,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const result = await getCommunityUserInfo(siteName);
+    const result = await getUserInfo(siteName);
 
     if (!result.ok) {
       return Response.json({ error: result.error }, { status: result.status });
@@ -603,7 +603,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '별명 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextInfo = await getCommunityUserInfo(siteName);
+    const nextInfo = await getUserInfo(siteName);
 
     if (!nextInfo.ok) {
       return Response.json({ error: nextInfo.error }, { status: nextInfo.status });

@@ -287,6 +287,58 @@ header.header
         &:not(.MenuItem)
           padding: 0
 
+      &.notification-items
+        background-color: transparent
+        padding: ds.rem(14) ds.rem(17)
+
+        &:hover
+          background-color: transparent!important
+
+        ul
+          padding-bottom: 0
+
+          button
+            background-color: transparent!important
+
+        .notification-item
+          padding: ds.rem(7) 0
+
+          &:hover
+            background-color: transparent!important
+
+      &.notification-item
+        padding: ds.rem(14) ds.rem(17)
+        background-color: transparent
+
+        &:hover
+          background-color: transparent!important
+
+        &.read-notification
+          opacity: .7
+
+        button
+          display: flex
+          flex-direction: column
+          align-items: flex-start
+          gap: ds.rem(7)
+          text-align: left
+          background-color: transparent
+
+          strong
+            @include ds.fw(neo, 700)
+            font-size: ds.rem(16)
+
+          div
+            display: flex
+            flex-direction: column
+            gap: ds.rem(3)
+
+          span, time
+            font-size: ds.rem(14)
+
+          time
+            opacity: .5
+
     .VhiMenu-theme
       border-bottom: 1px solid rgba(ds.$rgb-tertiary, .1)
       padding: ds.rem(17)
@@ -525,6 +577,57 @@ header.header
 
         &:not(.MenuItem)
           padding: 0
+
+      &.notification-items
+        background-color: transparent
+        padding: ds.rem(14) ds.rem(17)
+
+        &:hover
+          background-color: transparent!important
+
+        ul
+          padding-bottom: 0
+
+          button
+            background-color: transparent!important
+
+        .notification-item
+          padding: ds.rem(7) 0
+
+          &:hover
+            background-color: transparent!important
+
+      &.notification-item
+        padding: ds.rem(14) ds.rem(17)
+        background-color: transparent
+
+        &:hover
+          background-color: transparent!important
+
+        &.read-notification
+          opacity: .7
+
+        button
+          display: flex
+          flex-direction: column
+          align-items: flex-start
+          gap: ds.rem(7)
+          text-align: left
+
+          strong
+            @include ds.fw(neo, 700)
+            font-size: ds.rem(16)
+
+          div
+            display: flex
+            flex-direction: column
+            gap: ds.rem(3)
+
+          span, time
+            font-size: ds.rem(14)
+
+          time
+            opacity: .5
 
     .VhiDrawer-header
       display: flex

@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RequestBody = {
   siteName: string | null;
@@ -294,10 +295,51 @@ export async function POST(request: NextRequest) {
       await access.supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
       if (unknownError instanceof Error) {
-        return Response.json({ error: unknownError.message || '초대 메일 발송에 실패했습니다.' }, { status: 500 });
+        return Response.json(
+          {
+            error: unknownError.message || '초대 메일 발송에 실패했습니다.',
+          },
+          {
+            status: 500,
+          },
+        );
       }
 
-      return Response.json({ error: '초대 메일 발송에 실패했습니다.' }, { status: 500 });
+      return Response.json(
+        {
+          error: '초대 메일 발송에 실패했습니다.',
+        },
+        {
+          status: 500,
+        },
+      );
+    }
+
+    const invitedUserResult = await access.supabaseAdmin
+      .from('particles')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (invitedUserResult.error) {
+      console.error(invitedUserResult.error);
+    }
+
+    if (invitedUserResult.data?.id) {
+      const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+        user_id: invitedUserResult.data.id,
+        send_user_id: null,
+        send_site_id: access.siteId,
+        send_board_id: null,
+        send_series_id: null,
+        send_post_id: null,
+        notification_type: NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT,
+        is_read: false,
+      });
+
+      if (notificationResult.error) {
+        console.error(notificationResult.error);
+      }
     }
 
     return Response.json({

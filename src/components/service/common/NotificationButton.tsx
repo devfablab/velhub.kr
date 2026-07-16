@@ -10,6 +10,7 @@ import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneR
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { formatTimeAgo } from '@/lib/utils';
 import styles from '@/app/header.module.sass';
+import Anchor from '@/components/Anchor';
 
 type Props = {
   isMobile: boolean;
@@ -182,57 +183,48 @@ export default function NotificationButton({ isMobile }: Props) {
 
   function renderContent() {
     if (isLoggedIn === false) {
-      return (
-        <ul>
-          <li>로그인해 주세요</li>
-        </ul>
-      );
+      return <li className={styles['notification-item']}>로그인해 주세요</li>;
     }
 
     if (isLoading) {
-      return (
-        <ul>
-          <li>어떤 기다림...</li>
-        </ul>
-      );
+      return <li className={styles['notification-item']}>어떤 기다림...</li>;
     }
 
     if (errorMessage) {
-      return (
-        <ul>
-          <li>{errorMessage}</li>
-        </ul>
-      );
+      return <li className={styles['notification-item']}>{errorMessage}</li>;
     }
 
     if (visibleItems.length === 0) {
-      return (
-        <ul>
-          <li>새로운 알림이 없습니다.</li>
-        </ul>
-      );
+      return <li className={styles['notification-item']}>새로운 알림이 없습니다.</li>;
     }
 
     return (
-      <ul>
+      <>
         {visibleItems.map((item) => (
-          <li key={item.id} data-read={item.isRead}>
+          <li
+            key={item.id}
+            data-read={item.isRead}
+            className={`${styles['notification-item']} ${item.isRead ? styles['read-notification'] : ''}`}
+          >
             <button type="button" onClick={() => void handleNotificationClick(item)}>
               <strong>{item.title}</strong>
-              <span>{item.message}</span>
-              <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+              <div>
+                <span>{item.message}</span>
+                <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+              </div>
             </button>
           </li>
         ))}
-      </ul>
+      </>
     );
   }
 
   return (
     <>
       <IconButton onClick={handleOpen} aria-label="알림" aria-expanded={isOpen} className={styles['theme-mode-button']}>
-        {/* <Badge badgeContent={unreadCount} color="error" max={99}></Badge> */}
-        <NotificationsNoneRoundedIcon />
+        <Badge badgeContent={unreadCount} color="error" max={99}>
+          <NotificationsNoneRoundedIcon />
+        </Badge>
       </IconButton>
 
       {isMobile ? (
@@ -243,11 +235,23 @@ export default function NotificationButton({ isMobile }: Props) {
               <CloseRoundedIcon />
             </IconButton>
           </li>
-          <li className={styles.notification}>{renderContent()}</li>
+          <li className={styles['notification-items']}>
+            <ul>{renderContent()}</ul>
+          </li>
+          <li className={styles['notification-items']}>
+            <Anchor href="/hub/notifications" className="button small action">
+              더 보기
+            </Anchor>
+          </li>
         </Drawer>
       ) : (
         <Menu anchorEl={anchorElement} open={Boolean(anchorElement)} onClose={handleClose} className={styles.VhiMenu}>
           {renderContent()}
+          <li className={styles['notification-items']}>
+            <Anchor href="/hub/notifications" className="button small action">
+              더 보기
+            </Anchor>
+          </li>
         </Menu>
       )}
     </>

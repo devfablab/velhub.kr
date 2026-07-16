@@ -159,20 +159,28 @@ export default function Opt() {
       {items.length === 0 ? (
         <p>새로운 알림이 없습니다.</p>
       ) : (
-        <ul>
+        <ul className={styles.notifications}>
           {items.map((item) => (
-            <li key={item.id} data-read={item.isRead}>
+            <li
+              key={item.id}
+              data-read={item.isRead}
+              className={`paper ${styles['notification-item']} ${item.isRead ? styles['read-notification'] : ''}`}
+            >
               {item.href ? (
                 <Anchor href={item.href} onClick={() => void markNotificationAsRead(item.id)}>
                   <strong>{item.title}</strong>
-                  <p>{item.message}</p>
-                  <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+                  <div>
+                    <p>{item.message}</p>
+                    <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+                  </div>
                 </Anchor>
               ) : (
                 <button type="button" onClick={() => void markNotificationAsRead(item.id)}>
                   <strong>{item.title}</strong>
-                  <p>{item.message}</p>
-                  <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+                  <div>
+                    <p>{item.message}</p>
+                    <time dateTime={item.createdAt}>{formatTimeAgo(item.createdAt)}</time>
+                  </div>
                 </button>
               )}
             </li>
