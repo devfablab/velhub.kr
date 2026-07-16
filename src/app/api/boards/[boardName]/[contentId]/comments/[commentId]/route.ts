@@ -8,6 +8,7 @@ type RouteContext = {
   params: Promise<{
     boardName: string;
     contentId: string;
+    commentId: string;
   }>;
 };
 
@@ -1040,5 +1041,125 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json({ error: '게시글 정보를 불러오지 못했습니다.' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  try {
+    const { boardName, contentId, commentId } = await context.params;
+    const normalizedBoardName = normalizeText(boardName).toLowerCase();
+    const normalizedContentId = normalizeText(contentId);
+    const normalizedCommentId = normalizeText(commentId);
+    const requestBody = (await request.json()) as {
+      siteName?: string | null;
+      content?: string | null;
+    };
+    const siteName = normalizeText(requestBody.siteName).toLowerCase();
+    const content = normalizeText(requestBody.content);
+
+    if (!siteName) {
+      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedBoardName) {
+      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedContentId) {
+      return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedCommentId) {
+      return Response.json({ error: 'commentId가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!content) {
+      return Response.json({ error: '댓글 내용을 입력해주세요.' }, { status: 400 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+
+    if (siteResult.error || !siteResult.data) {
+      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const boardResult = await supabaseAdmin
+      .from('boards')
+      .select('id')
+      .eq('site_id', siteResult.data.id)
+      .eq('board_key', normalizedBoardName)
+      .maybeSingle();
+
+    if (boardResult.error || !boardResult.data) {
+      return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const postResult = await supabaseAdmin
+      .from('posts')
+      .select('id')
+      .eq('site_id', siteResult.data.id)
+      .eq('board_id', boardResult.data.id)
+      .eq('id', normalizedContentId)
+      .maybeSingle();
+
+    if (postResult.error || !postResult.data) {
+      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const session = await verifySession({
+      siteId: siteResult.data.id,
+    });
+
+    if (!session.authUserId) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const commentResult = await supabaseAdmin
+      .from('post_comments')
+      .select('id, user_id, is_deleted')
+      .eq('id', normalizedCommentId)
+      .eq('site_id', siteResult.data.id)
+      .eq('board_id', boardResult.data.id)
+      .eq('post_id', postResult.data.id)
+      .maybeSingle();
+
+    if (commentResult.error || !commentResult.data) {
+      return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (commentResult.data.user_id !== session.authUserId) {
+      return Response.json({ error: '댓글을 수정할 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (commentResult.data.is_deleted) {
+      return Response.json({ error: '삭제 처리된 댓글은 수정할 수 없습니다.' }, { status: 400 });
+    }
+
+    const updateResult = await supabaseAdmin
+      .from('post_comments')
+      .update({
+        content,
+      })
+      .eq('id', normalizedCommentId)
+      .eq('user_id', session.authUserId)
+      .select('id, content')
+      .maybeSingle();
+
+    if (updateResult.error || !updateResult.data) {
+      return Response.json({ error: '댓글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      ok: true,
+      comment: updateResult.data,
+    });
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return Response.json({ error: unknownError.message || '댓글 수정에 실패했습니다.1' }, { status: 500 });
+    }
+
+    return Response.json({ error: '댓글 수정에 실패했습니다.2' }, { status: 500 });
   }
 }

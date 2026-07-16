@@ -189,7 +189,6 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          action: 'edit',
           content,
         }),
       });
