@@ -19,6 +19,9 @@ type MembershipRow = {
   cleared_at?: string | null;
   cleared_by?: string | null;
   clear_reason?: string | null;
+  banned_at?: string | null;
+  banned_by?: string | null;
+  ban_reason?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -50,7 +53,7 @@ export async function GET(request: Request) {
 
     const userIds = membershipResult.memberships.map((membership) => membership.user_id);
     const processedByIds = membershipResult.memberships
-      .flatMap((membership) => [membership.kicked_by, membership.cleared_by])
+      .flatMap((membership) => [membership.kicked_by, membership.banned_by, membership.cleared_by])
       .filter(Boolean) as string[];
 
     const stigmaResult = await getStigmasByIds([...new Set([...userIds, ...processedByIds])]);
@@ -66,7 +69,7 @@ export async function GET(request: Request) {
       users: membershipResult.memberships.map((membership) => {
         const typedMembership = membership as MembershipRow;
         const targetUser = stigmaMap.get(typedMembership.user_id) ?? null;
-        const email = decryptNullable(targetUser?.email ?? null) || '';
+        const email = decryptNullable(targetUser?.payment_email ?? targetUser?.email) || '';
         const nickname = normalizeText(typedMembership.nickname);
         const emailWithNickname = nickname ? `${email} (${nickname})` : email;
 
@@ -80,6 +83,19 @@ export async function GET(request: Request) {
             processedAt: typedMembership.cleared_at,
             processedBy: getStigmaDisplayName(clearedByUser),
             type: '가입불가 해제됨',
+          };
+        }
+
+        if (typedMembership.banned_at) {
+          const bannedByUser = typedMembership.banned_by ? (stigmaMap.get(typedMembership.banned_by) ?? null) : null;
+
+          return {
+            userId: typedMembership.user_id,
+            displayName: emailWithNickname,
+            reason: normalizeText(typedMembership.ban_reason) || '',
+            processedAt: typedMembership.banned_at,
+            processedBy: getStigmaDisplayName(bannedByUser),
+            type: '가입불가',
           };
         }
 

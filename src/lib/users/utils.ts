@@ -13,10 +13,6 @@ type SiteRow = {
   is_shutdown: boolean | null;
 };
 
-type SitesRow = {
-  visibility_member: string | null;
-};
-
 type MembershipRow = {
   id: string;
   created_at?: string;
@@ -57,6 +53,7 @@ type MembershipRow = {
 type StigmaRow = {
   id: string;
   email: string | null;
+  payment_email: string | null;
   avatar: string | null;
   user_name?: string | null;
 };
@@ -261,8 +258,7 @@ export async function getWithdrawnMemberships(siteId: string) {
     .from('rhizome_stigmas')
     .select('*')
     .eq('site_id', siteId)
-    .is('banned_at', null)
-    .or('kicked_at.not.is.null,withdrawn_at.not.is.null,cleared_at.not.is.null')
+    .or('kicked_at.not.is.null,banned_at.not.is.null,withdrawn_at.not.is.null,cleared_at.not.is.null')
     .order('created_at', { ascending: false });
 
   if (membershipResult.error) {
@@ -379,7 +375,10 @@ export async function getStigmasByIds(userIds: string[]) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, email, avatar, user_name').in('id', userIds);
+  const stigmaResult = await supabaseAdmin
+    .from('stigmas')
+    .select('id, email, payment_email, avatar, user_name')
+    .in('id', userIds);
 
   if (stigmaResult.error) {
     return {

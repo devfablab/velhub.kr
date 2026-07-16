@@ -842,7 +842,6 @@ export default function Opt({ isCommunity }: Props) {
       </>
     ) : null;
 
-  console.log('content: ', content);
   const postDonationButton =
     (content.published_status === 'published' || content.published_status === 'unknown') &&
     !isPage &&

@@ -105,8 +105,6 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      console.log('seriesCountResult: ', seriesCountResult);
-
       if ((seriesCountResult.count ?? 0) < 2) {
         return Response.json({
           isEnabled: false,

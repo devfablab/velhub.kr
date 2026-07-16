@@ -105,8 +105,6 @@ export async function GET() {
       .eq('user_id', session.authUserId)
       .order('created_at', { ascending: false });
 
-    console.log('notificationsResult: ', notificationsResult);
-
     if (notificationsResult.error) {
       console.error(notificationsResult.error);
 
