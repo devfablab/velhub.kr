@@ -1,6 +1,10 @@
 import path from 'path';
 import sharp from 'sharp';
-import { buildCommunityManagerList, getBoardSummaries, getCommunityManagerAccess } from '@/lib/community-manager/utils';
+import {
+  buildCommunityManagerList,
+  getBoardSummaries,
+  getCommunityManagerAccess,
+} from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 

@@ -1,4 +1,4 @@
-import type { CommunityManagePermissionMap } from '@/lib/community-manager/permissions';
+import type { CommunityManagePermissionMap } from '@/lib/community/community-manager/permissions';
 
 type BoardPermissionCheckParams = {
   permissions: CommunityManagePermissionMap;

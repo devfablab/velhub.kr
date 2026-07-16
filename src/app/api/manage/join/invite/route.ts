@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { randomUUID } from 'crypto';
 import { Resend } from 'resend';
-import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 

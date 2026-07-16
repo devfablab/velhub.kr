@@ -1,4 +1,4 @@
-import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';

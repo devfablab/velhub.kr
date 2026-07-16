@@ -3,7 +3,7 @@ import {
   getActiveMembers,
   getBoardSummaries,
   getCommunityManagerAccess,
-} from '@/lib/community-manager/utils';
+} from '@/lib/community/community-manager/utils';
 import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {

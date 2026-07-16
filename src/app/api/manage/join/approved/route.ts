@@ -1,5 +1,5 @@
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
+import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';

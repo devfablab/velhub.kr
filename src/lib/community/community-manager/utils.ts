@@ -7,7 +7,7 @@ import {
   type CommunityManagePermissionMap,
   type CommunityManageRoleType,
   isCommunityManageRole,
-} from '@/lib/community-manager/permissions';
+} from '@/lib/community/community-manager/permissions';
 
 type RhizomeRow = {
   id: string;

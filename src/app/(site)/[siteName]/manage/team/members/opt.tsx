@@ -582,7 +582,7 @@ export default function Opt() {
               <TableHead>
                 <TableRow>
                   <TableCell>이메일</TableCell>
-                  <TableCell>이름</TableCell>
+                  <TableCell>별명</TableCell>
                   <TableCell>가입일</TableCell>
                   <TableCell>역할</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>차단 여부</TableCell>
@@ -651,7 +651,7 @@ export default function Opt() {
                     </Box>
 
                     <Box>
-                      <Typography variant="subtitle2">이름</Typography>
+                      <Typography variant="subtitle2">별명</Typography>
                       <Typography variant="body2">{selectedTeam.name}</Typography>
                     </Box>
 
@@ -712,7 +712,7 @@ export default function Opt() {
                     </Box>
 
                     <Box>
-                      <Typography variant="subtitle2">이름</Typography>
+                      <Typography variant="subtitle2">별명</Typography>
                       <Typography variant="body2">{selectedTeam.name}</Typography>
                     </Box>
 

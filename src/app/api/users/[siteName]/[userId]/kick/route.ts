@@ -2,6 +2,7 @@ import { normalizeText } from '@/lib/utils';
 import { getSiteMembership, getStaffMembersAccess } from '@/lib/users/utils';
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
 
 type RouteContext = {
   params: Promise<{
@@ -70,6 +71,18 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (updateResult.error) {
       return Response.json({ error: '강제탈퇴 처리에 실패했습니다.' }, { status: 500 });
     }
+
+    if (!access.session.stigmaId) {
+      return Response.json({ error: '처리한 매니저 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    await deleteMemberContents({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.site.id,
+      memberStigmaId: membershipResult.membership.user_id,
+      managerStigmaId: access.session.stigmaId,
+      closedMessage: '강제 탈퇴로 인한 삭제',
+    });
 
     await createMemberStatusNotification({
       supabaseAdmin: access.supabaseAdmin,
