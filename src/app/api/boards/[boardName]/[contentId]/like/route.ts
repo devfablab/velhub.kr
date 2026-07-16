@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -52,7 +53,7 @@ async function getTargetPost({
 
   const postResult = await supabaseAdmin
     .from('posts')
-    .select('id, site_id, board_id, published_status, is_closed')
+    .select('id, site_id, board_id, user_id, published_status, is_closed')
     .eq('site_id', rhizomeResult.data.id)
     .eq('board_id', boardResult.data.id)
     .eq('slug', Number(contentId))
@@ -66,6 +67,7 @@ async function getTargetPost({
     siteId: rhizomeResult.data.id as string,
     boardId: boardResult.data.id as string,
     postId: postResult.data.id as string,
+    postAuthorId: postResult.data.user_id as string,
     publishedStatus: postResult.data.published_status as string,
     isClosed: postResult.data.is_closed === true,
   };
@@ -76,7 +78,6 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { boardName, contentId } = await context.params;
     const normalizedBoardName = normalizeText(boardName).toLowerCase();
     const normalizedContentId = normalizeText(contentId);
-
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
 
@@ -142,11 +143,31 @@ export async function PATCH(request: Request, context: RouteContext) {
       if (insertResult.error) {
         return NextResponse.json({ error: '좋아요를 저장하지 못했습니다.' }, { status: 500 });
       }
+
+      if (targetPost.postAuthorId !== session.authUserId) {
+        const notificationResult = await supabaseAdmin.from('notifications').insert({
+          user_id: targetPost.postAuthorId,
+          send_user_id: session.authUserId,
+          send_site_id: targetPost.siteId,
+          send_board_id: targetPost.boardId,
+          send_series_id: null,
+          send_post_id: targetPost.postId,
+          notification_type: NOTIFICATION_TYPE.POST_LIKED,
+          is_read: false,
+        });
+
+        if (notificationResult.error) {
+          console.error('[post-like] notification insert error', notificationResult.error);
+        }
+      }
     }
 
     const countResult = await supabaseAdmin
       .from('post_likes')
-      .select('id', { count: 'exact', head: true })
+      .select('id', {
+        count: 'exact',
+        head: true,
+      })
       .eq('site_id', targetPost.siteId)
       .eq('board_id', targetPost.boardId)
       .eq('post_id', targetPost.postId);

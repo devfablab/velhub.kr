@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{
@@ -1037,6 +1038,23 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: target.data.siteId,
       authUserId: session.authUserId,
     });
+
+    if (target.data.postAuthorId !== session.authUserId) {
+      const notificationResult = await supabaseAdmin.from('notifications').insert({
+        user_id: target.data.postAuthorId,
+        send_user_id: session.authUserId,
+        send_site_id: target.data.siteId,
+        send_board_id: target.data.boardId,
+        send_series_id: null,
+        send_post_id: target.data.postId,
+        notification_type: NOTIFICATION_TYPE.POST_COMMENTED,
+        is_read: false,
+      });
+
+      if (notificationResult.error) {
+        console.error('[comments/post] notification insert error', notificationResult.error);
+      }
+    }
 
     const canManageComment = await getCommentAccess(
       target.data.siteId,

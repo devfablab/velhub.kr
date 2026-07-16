@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{
@@ -430,6 +431,51 @@ function buildFeedSubject(value: string) {
   }
 
   return normalizedValue.length > 100 ? normalizedValue.slice(0, 100) : normalizedValue;
+}
+
+async function createFavoriteBlogPostNotifications({
+  supabaseAdmin,
+  siteId,
+  boardId,
+  postId,
+  authorUserId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  boardId: string;
+  postId: string;
+  authorUserId: string;
+}) {
+  const favoritesResult = await supabaseAdmin.from('blog_favorites').select('user_id').eq('site_id', siteId);
+
+  if (favoritesResult.error) {
+    throw new Error(`즐겨찾기 사용자 조회 실패: ${favoritesResult.error.message}`);
+  }
+
+  const recipientUserIds = [
+    ...new Set((favoritesResult.data ?? []).map((favorite) => normalizeText(favorite.user_id)).filter(Boolean)),
+  ];
+
+  if (recipientUserIds.length === 0) {
+    return;
+  }
+
+  const notificationResult = await supabaseAdmin.from('notifications').insert(
+    recipientUserIds.map((userId) => ({
+      user_id: userId,
+      send_user_id: authorUserId,
+      send_site_id: siteId,
+      send_board_id: boardId,
+      send_series_id: null,
+      send_post_id: postId,
+      notification_type: NOTIFICATION_TYPE.FAVORITE_BLOG_NEW_POST,
+      is_read: false,
+    })),
+  );
+
+  if (notificationResult.error) {
+    throw new Error(`즐겨찾기 새 글 알림 생성 실패: ${notificationResult.error.message}`);
+  }
 }
 
 export async function POST(request: Request, context: RouteContext) {
@@ -899,6 +945,16 @@ export async function POST(request: Request, context: RouteContext) {
           }
         }
       }
+    }
+
+    if (action === 'publish' && rhizomeData.site_type === 'blog') {
+      await createFavoriteBlogPostNotifications({
+        supabaseAdmin,
+        siteId: rhizomeData.id,
+        boardId: board.data.id,
+        postId: insertPost.data.id,
+        authorUserId: session.authUserId,
+      });
     }
 
     const postCountResult = await supabaseAdmin
