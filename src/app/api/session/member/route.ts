@@ -83,7 +83,32 @@ export async function GET(request: Request) {
         {
           ok: false,
           status: 403,
-          error: '접근 권한이 없습니다.',
+          error: '활동이 정지된 사용자입니다.',
+          redirectTo: `/${siteName}/block`,
+        },
+        { status: 403 },
+      );
+    }
+
+    if (site.siteType === 'community' && rhizomeStigma.isBanned) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '가입할 수 없는 사용자입니다.',
+          redirectTo: `/${siteName}/ban`,
+        },
+        { status: 403 },
+      );
+    }
+
+    if (site.siteType === 'community' && rhizomeStigma.isKicked) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '강제 탈퇴된 사용자입니다.',
+          redirectTo: `/${siteName}/kick`,
         },
         { status: 403 },
       );

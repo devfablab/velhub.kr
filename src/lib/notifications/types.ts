@@ -19,8 +19,14 @@ export const NOTIFICATION_TYPE = {
 
   REPORT_RECEIVED: 'report_received',
   REPORT_RESULT: 'report_result',
-  SITE_BLOCKED: 'site_blocked',
-  SITE_UNBLOCKED: 'site_unblocked',
+  VELHUB_SITE_BLOCKED: 'velhub_site_blocked',
+  VELHUB_SITE_UNBLOCKED: 'velhub_site_unblocked',
+  SITE_MEMBER_BLOCKED: 'site_member_blocked',
+  SITE_MEMBER_UNBLOCKED: 'site_member_unblocked',
+  COMMUNITY_MEMBER_KICKED: 'community_member_kicked',
+  COMMUNITY_MEMBER_KICK_REVOKED: 'community_member_kick_revoked',
+  COMMUNITY_MEMBER_BANNED: 'community_member_banned',
+  COMMUNITY_MEMBER_BAN_REVOKED: 'community_member_ban_revoked',
 
   POST_COMMENTED: 'post_commented',
   POST_LIKED: 'post_liked',

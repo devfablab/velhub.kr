@@ -1024,9 +1024,10 @@ export async function GET(request: Request, context: RouteContext) {
     });
 
     const isStaff = session.case === 'staff';
+    const isAuth = session.case === 'admin' || session.case === 'staff' || session.case === 'member';
 
     if (rhizomeData.visibility_type !== 'public' || rhizomeData.is_shutdown !== false) {
-      if (!isStaff) {
+      if (!isAuth) {
         return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
     }

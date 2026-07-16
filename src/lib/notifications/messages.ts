@@ -147,17 +147,59 @@ export function getNotificationText(
     };
   }
 
-  if (notificationType === NOTIFICATION_TYPE.SITE_BLOCKED) {
+  if (notificationType === NOTIFICATION_TYPE.VELHUB_SITE_BLOCKED) {
     return {
-      title: '사이트 차단',
-      message: `${siteLabel} 사이트가 차단되었습니다.`,
+      title: '사이트 이용 제한',
+      message: `${siteLabel} 사이트가 벨허브 운영 정책에 따라 차단되었습니다.`,
     };
   }
 
-  if (notificationType === NOTIFICATION_TYPE.SITE_UNBLOCKED) {
+  if (notificationType === NOTIFICATION_TYPE.VELHUB_SITE_UNBLOCKED) {
     return {
-      title: '사이트 차단 해제',
-      message: `${siteLabel} 사이트의 차단이 해제되었습니다.`,
+      title: '사이트 이용 제한 해제',
+      message: `${siteLabel} 사이트의 벨허브 운영 정책에 따른 차단이 해제되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED) {
+    return {
+      title: '사이트 접근 차단',
+      message: `${siteLabel} 사이트에서 접근이 차단되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED) {
+    return {
+      title: '사이트 접근 차단 해제',
+      message: `${siteLabel} 사이트의 접근 차단이 해제되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MEMBER_KICKED) {
+    return {
+      title: '커뮤니티 강제 탈퇴',
+      message: `${siteLabel} 커뮤니티에서 강제 탈퇴되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MEMBER_KICK_REVOKED) {
+    return {
+      title: '커뮤니티 강제 탈퇴 해제',
+      message: `${siteLabel} 커뮤니티의 강제 탈퇴 처리가 해제되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MEMBER_BANNED) {
+    return {
+      title: '커뮤니티 가입 불가',
+      message: `${siteLabel} 커뮤니티에 가입할 수 없도록 처리되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MEMBER_BAN_REVOKED) {
+    return {
+      title: '커뮤니티 가입 불가 해제',
+      message: `${siteLabel} 커뮤니티의 가입 불가 처리가 해제되었습니다.`,
     };
   }
 

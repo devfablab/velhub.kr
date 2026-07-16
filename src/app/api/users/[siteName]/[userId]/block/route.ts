@@ -1,5 +1,7 @@
 import { normalizeText } from '@/lib/utils';
 import { getSiteMembership, getStaffMembersAccess } from '@/lib/users/utils';
+import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{
@@ -64,6 +66,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '활동정지 처리에 실패했습니다.' }, { status: 500 });
     }
 
+    await createMemberStatusNotification({
+      supabaseAdmin: access.supabaseAdmin,
+      recipientStigmaId: membershipResult.membership.user_id,
+      senderStigmaId: access.session.stigmaId,
+      siteId: access.site.id,
+      notificationType: NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED,
+    });
+
     return Response.json({
       ok: true,
       userId,
@@ -121,6 +131,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (updateResult.error) {
       return Response.json({ error: '활동정지 해제에 실패했습니다.' }, { status: 500 });
     }
+
+    await createMemberStatusNotification({
+      supabaseAdmin: access.supabaseAdmin,
+      recipientStigmaId: membershipResult.membership.user_id,
+      senderStigmaId: access.session.stigmaId,
+      siteId: access.site.id,
+      notificationType: NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED,
+    });
 
     return Response.json({
       ok: true,

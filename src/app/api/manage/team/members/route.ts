@@ -194,7 +194,7 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '역할 변경에 실패했습니다.' }, { status: 500 });
       }
 
-      const stigmaIds = [team.data.user_id, access.session.stigmaId].filter((value): value is string => Boolean(value));
+      const stigmaIds = [...new Set([team.data.user_id, access.session.stigmaId])];
 
       const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
 
@@ -204,12 +204,11 @@ export async function PATCH(request: Request) {
         const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
 
         const userId = particleIdMap.get(team.data.user_id);
-        const sendUserId = access.session.stigmaId ? (particleIdMap.get(access.session.stigmaId) ?? null) : null;
 
         if (userId) {
           const notificationResult = await access.supabaseAdmin.from('notifications').insert({
             user_id: userId,
-            send_user_id: sendUserId,
+            send_user_id: particleIdMap.get(access.session.stigmaId) ?? null,
             send_site_id: access.siteId,
             send_board_id: null,
             send_series_id: null,
@@ -256,6 +255,35 @@ export async function PATCH(request: Request) {
 
     if (updateTeam.error || !updateTeam.data) {
       return Response.json({ error: '차단 상태 변경에 실패했습니다.' }, { status: 500 });
+    }
+
+    const stigmaIds = [...new Set([team.data.user_id, access.session.stigmaId])];
+
+    const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
+
+    if (stigmaResult.error) {
+      console.error(stigmaResult.error);
+    } else {
+      const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
+
+      const userId = particleIdMap.get(team.data.user_id);
+
+      if (userId) {
+        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+          user_id: userId,
+          send_user_id: particleIdMap.get(access.session.stigmaId) ?? null,
+          send_site_id: access.siteId,
+          send_board_id: null,
+          send_series_id: null,
+          send_post_id: null,
+          notification_type: isBlock ? NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED : NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED,
+          is_read: false,
+        });
+
+        if (notificationResult.error) {
+          console.error(notificationResult.error);
+        }
+      }
     }
 
     return Response.json({

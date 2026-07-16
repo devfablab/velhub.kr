@@ -1,7 +1,8 @@
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { isGuidelineReportCategory, isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { isGuidelineReportCategory, isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 
 type ReportRequestBody = {
   targetType?: string;
@@ -14,6 +15,7 @@ type ReportRequestBody = {
 
 type SiteRow = {
   id: string;
+  site_type: string;
 };
 
 type BoardRow = {
@@ -72,15 +74,15 @@ function getUuidValue(value: string | number | null | undefined) {
   return null;
 }
 
-async function getSiteId(supabase: ReturnType<typeof getSupabaseAdmin>, siteName: string) {
-  const result = await supabase.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+async function getSite(supabase: ReturnType<typeof getSupabaseAdmin>, siteName: string) {
+  const result = await supabase.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
   if (result.error) {
-    console.error('[report/new] getSiteId error', result.error);
+    console.error('[report/new] getSite error', result.error);
     return null;
   }
 
-  return (result.data as SiteRow | null)?.id ?? null;
+  return result.data as SiteRow | null;
 }
 
 async function getBoardId(supabase: ReturnType<typeof getSupabaseAdmin>, siteId: string, boardName: string) {
@@ -207,6 +209,150 @@ function getTargetInsertValues(
   return null;
 }
 
+async function createReportNotifications({
+  supabase,
+  siteId,
+  siteType,
+  reporterAuthUserId,
+  boardId,
+  postId,
+}: {
+  supabase: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  siteType: string;
+  reporterAuthUserId: string;
+  boardId: string | null;
+  postId: string | null;
+}) {
+  const recipientMembershipIds = new Set<string>();
+  const recipientStigmaIds = new Set<string>();
+
+  const ownerResult = await supabase
+    .from('rhizome_stigmas')
+    .select('id, user_id')
+    .eq('site_id', siteId)
+    .eq('role', 'owner')
+    .eq('is_approval', true)
+    .eq('is_block', false);
+
+  if (ownerResult.error) {
+    console.error('[report/new] owner notification recipients error', ownerResult.error);
+    return;
+  }
+
+  for (const membership of ownerResult.data ?? []) {
+    recipientMembershipIds.add(membership.id);
+    recipientStigmaIds.add(membership.user_id);
+  }
+
+  if (siteType === 'blog') {
+    const managerResult = await supabase
+      .from('rhizome_stigmas')
+      .select('id, user_id')
+      .eq('site_id', siteId)
+      .eq('role', 'manager')
+      .eq('is_approval', true)
+      .eq('is_block', false);
+
+    if (managerResult.error) {
+      console.error('[report/new] blog manager notification recipients error', managerResult.error);
+      return;
+    }
+
+    for (const membership of managerResult.data ?? []) {
+      recipientMembershipIds.add(membership.id);
+      recipientStigmaIds.add(membership.user_id);
+    }
+  }
+
+  if (siteType === 'community') {
+    const communityResult = await supabase.from('communities').select('id').eq('site_id', siteId).maybeSingle();
+
+    if (communityResult.error || !communityResult.data) {
+      console.error('[report/new] community notification recipients error', communityResult.error);
+      return;
+    }
+
+    const managerRoleResult = await supabase
+      .from('community_manage_role')
+      .select('manager_id')
+      .eq('community_id', communityResult.data.id)
+      .eq('role', 'community-manager');
+
+    if (managerRoleResult.error) {
+      console.error('[report/new] community manager roles error', managerRoleResult.error);
+      return;
+    }
+
+    const managerMembershipIds = [...new Set((managerRoleResult.data ?? []).map((row) => row.manager_id))];
+
+    if (managerMembershipIds.length > 0) {
+      const managerMembershipResult = await supabase
+        .from('rhizome_stigmas')
+        .select('id, user_id')
+        .eq('site_id', siteId)
+        .eq('is_approval', true)
+        .eq('is_block', false)
+        .in('id', managerMembershipIds);
+
+      if (managerMembershipResult.error) {
+        console.error('[report/new] community manager notification recipients error', managerMembershipResult.error);
+        return;
+      }
+
+      for (const membership of managerMembershipResult.data ?? []) {
+        recipientMembershipIds.add(membership.id);
+        recipientStigmaIds.add(membership.user_id);
+      }
+    }
+  }
+
+  if (recipientStigmaIds.size === 0) {
+    return;
+  }
+
+  const reporterStigmaResult = await supabase
+    .from('stigmas')
+    .select('user_id')
+    .eq('user_id', reporterAuthUserId)
+    .maybeSingle();
+
+  if (reporterStigmaResult.error) {
+    console.error('[report/new] reporter notification user error', reporterStigmaResult.error);
+  }
+
+  const recipientStigmaResult = await supabase
+    .from('stigmas')
+    .select('id, user_id')
+    .in('id', [...recipientStigmaIds]);
+
+  if (recipientStigmaResult.error) {
+    console.error('[report/new] notification recipient users error', recipientStigmaResult.error);
+    return;
+  }
+
+  const notificationRows = (recipientStigmaResult.data ?? []).map((stigma) => ({
+    user_id: stigma.user_id,
+    send_user_id: reporterStigmaResult.data?.user_id ?? null,
+    send_site_id: siteId,
+    send_board_id: boardId,
+    send_series_id: null,
+    send_post_id: postId,
+    notification_type: NOTIFICATION_TYPE.REPORT_RECEIVED,
+    is_read: false,
+  }));
+
+  if (notificationRows.length === 0) {
+    return;
+  }
+
+  const notificationResult = await supabase.from('notifications').insert(notificationRows);
+
+  if (notificationResult.error) {
+    console.error('[report/new] notification insert error', notificationResult.error);
+  }
+}
+
 export async function POST(request: Request) {
   const sessionClaims = await getSessionClaims();
 
@@ -231,20 +377,19 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseAdmin();
-  const siteId = await getSiteId(supabase, siteName);
+  const site = await getSite(supabase, siteName);
 
-  if (!siteId) {
+  if (!site) {
     return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
   }
 
   const boardName = getStringValue(body.boardName);
   const postSlug = body.targetType === 'post' ? getPostSlugValue(body.contentId) : null;
   const commentId = body.targetType === 'comment' ? getUuidValue(body.commentId) : null;
-
   const boardId =
     body.targetType === 'board' || body.targetType === 'post' || body.targetType === 'comment'
       ? boardName
-        ? await getBoardId(supabase, siteId, boardName)
+        ? await getBoardId(supabase, site.id, boardName)
         : null
       : null;
 
@@ -262,7 +407,7 @@ export async function POST(request: Request) {
 
   const postResult =
     body.targetType === 'post' && boardId && postSlug !== null
-      ? await getPost(supabase, siteId, boardId, postSlug)
+      ? await getPost(supabase, site.id, boardId, postSlug)
       : { data: null, error: null };
 
   if (postResult.error) {
@@ -275,7 +420,7 @@ export async function POST(request: Request) {
 
   const commentResult =
     body.targetType === 'comment' && boardId && commentId
-      ? await getComment(supabase, siteId, boardId, commentId)
+      ? await getComment(supabase, site.id, boardId, commentId)
       : { data: null, error: null };
 
   if (commentResult.error) {
@@ -288,7 +433,7 @@ export async function POST(request: Request) {
 
   const targetValues = getTargetInsertValues(
     body.targetType,
-    siteId,
+    site.id,
     boardId,
     postResult.data?.id ?? commentResult.data?.post_id ?? null,
     commentResult.data?.id ?? null,
@@ -313,6 +458,15 @@ export async function POST(request: Request) {
     console.error('[report/new] insert error', insertResult.error);
     return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
   }
+
+  await createReportNotifications({
+    supabase,
+    siteId: site.id,
+    siteType: site.site_type,
+    reporterAuthUserId: sessionClaims.userId,
+    boardId: targetValues.board_id,
+    postId: targetValues.post_id,
+  });
 
   return Response.json({ ok: true });
 }

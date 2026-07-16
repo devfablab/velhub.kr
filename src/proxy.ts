@@ -103,6 +103,10 @@ function isSiteStatusPath(pathname: string, siteName: string) {
   );
 }
 
+function isMemberStatusPath(pathname: string, siteName: string) {
+  return pathname === `/${siteName}/block` || pathname === `/${siteName}/ban` || pathname === `/${siteName}/kick`;
+}
+
 function startsWithAny(pathname: string, paths: string[]) {
   return paths.some((path) => pathname.startsWith(path));
 }
@@ -420,7 +424,11 @@ export async function proxy(request: NextRequest) {
       const rhizomeState = await fetchRhizomeState(request, siteName);
 
       if (rhizomeState.response.ok && rhizomeState.result?.siteInfo) {
-        if (rhizomeState.result.siteInfo.visibility_type === 'private' && !isSiteStatusPath(pathname, siteName)) {
+        if (
+          rhizomeState.result.siteInfo.visibility_type === 'private' &&
+          !isSiteStatusPath(pathname, siteName) &&
+          !isMemberStatusPath(pathname, siteName)
+        ) {
           if (isInviteOnlyPath(pathname, siteName)) {
             return response;
           }
@@ -485,6 +493,33 @@ export async function proxy(request: NextRequest) {
             return response;
           }
         }
+      }
+      const isMemberStatus = isMemberStatusPath(pathname, siteName);
+
+      if (isLoggedIn) {
+        const member = await fetchSessionRoute(request, '/api/session/member', {
+          siteName,
+        });
+
+        const memberRedirectTo = member.result?.redirectTo ?? null;
+
+        if (
+          memberRedirectTo === `/${siteName}/block` ||
+          memberRedirectTo === `/${siteName}/ban` ||
+          memberRedirectTo === `/${siteName}/kick`
+        ) {
+          if (pathname !== memberRedirectTo) {
+            return redirectWithPath(request, memberRedirectTo);
+          }
+
+          return response;
+        }
+
+        if (isMemberStatus) {
+          return redirectWithPath(request, `/${siteName}`);
+        }
+      } else if (isMemberStatus) {
+        return redirectWithPath(request, '/auth/sign-in');
       }
     }
   }

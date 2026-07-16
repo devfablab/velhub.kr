@@ -1,5 +1,7 @@
 import { normalizeText } from '@/lib/utils';
 import { getSiteMembership, getStaffMembersAccess } from '@/lib/users/utils';
+import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{
@@ -69,6 +71,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '강제탈퇴 처리에 실패했습니다.' }, { status: 500 });
     }
 
+    await createMemberStatusNotification({
+      supabaseAdmin: access.supabaseAdmin,
+      recipientStigmaId: membershipResult.membership.user_id,
+      senderStigmaId: access.session.stigmaId,
+      siteId: access.site.id,
+      notificationType: NOTIFICATION_TYPE.COMMUNITY_MEMBER_KICKED,
+    });
+
     return Response.json({
       ok: true,
       userId,
@@ -134,6 +144,14 @@ export async function DELETE(request: Request, context: RouteContext) {
     if (updateResult.error) {
       return Response.json({ error: '강제탈퇴 해제에 실패했습니다.' }, { status: 500 });
     }
+
+    await createMemberStatusNotification({
+      supabaseAdmin: access.supabaseAdmin,
+      recipientStigmaId: membershipResult.membership.user_id,
+      senderStigmaId: access.session.stigmaId,
+      siteId: access.site.id,
+      notificationType: NOTIFICATION_TYPE.COMMUNITY_MEMBER_KICK_REVOKED,
+    });
 
     return Response.json({
       ok: true,
