@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
+
 import { useParams } from 'next/navigation';
+
 import {
   Checkbox,
   Dialog,
@@ -20,17 +22,22 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+
 import Container from '../../menu';
+
 import styles from '@/app/manage.module.sass';
 
 type TextFieldChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 type WithdrawnUserRow = {
@@ -48,14 +55,29 @@ type WithdrawnUsersResponse = {
   error?: string;
 };
 
-type ActionType = 'unkick' | 'ban' | null;
+type ActionType = 'unkick' | 'ban' | 'unban' | null;
+type SelectionType = 'banned' | 'kicked' | 'bannable' | null;
+
+function getUserSelectionType(user: WithdrawnUserRow): Exclude<SelectionType, null> {
+  if (user.type === '가입불가') {
+    return 'banned';
+  }
+
+  if (user.type === '강제탈퇴') {
+    return 'kicked';
+  }
+
+  return 'bannable';
+}
 
 export default function Opt() {
   const params = useParams();
+
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [users, setUsers] = useState<WithdrawnUserRow[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const [nicknameKeyword, setNicknameKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
 
@@ -92,6 +114,7 @@ export default function Opt() {
     async function init() {
       try {
         setErrorMessage('');
+
         await loadUsers();
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -117,8 +140,29 @@ export default function Opt() {
     return users.filter((user) => normalizeText(user.displayName).toLowerCase().includes(keyword));
   }, [appliedKeyword, users]);
 
+  const selectionType = useMemo<SelectionType>(() => {
+    const firstSelectedUserId = selectedUserIds[0];
+
+    if (!firstSelectedUserId) {
+      return null;
+    }
+
+    const firstSelectedUser = users.find((user) => user.userId === firstSelectedUserId);
+
+    return firstSelectedUser ? getUserSelectionType(firstSelectedUser) : null;
+  }, [selectedUserIds, users]);
+
+  const selectableFilteredUsers = useMemo(() => {
+    if (!selectionType) {
+      return filteredUsers;
+    }
+
+    return filteredUsers.filter((user) => getUserSelectionType(user) === selectionType);
+  }, [filteredUsers, selectionType]);
+
   const allFilteredSelected =
-    filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.userId));
+    selectableFilteredUsers.length > 0 &&
+    selectableFilteredUsers.every((user) => selectedUserIds.includes(user.userId));
 
   function handleNicknameKeywordChange(event: TextFieldChangeEvent) {
     setNicknameKeyword(event.currentTarget.value);
@@ -133,23 +177,35 @@ export default function Opt() {
     if (event.currentTarget.checked) {
       setSelectedUserIds((previousUserIds) => {
         const nextUserIds = new Set(previousUserIds);
+        const firstFilteredUser = filteredUsers[0];
+
+        if (!firstFilteredUser) {
+          return previousUserIds;
+        }
+
+        const nextSelectionType = selectionType ?? getUserSelectionType(firstFilteredUser);
 
         filteredUsers.forEach((user) => {
-          nextUserIds.add(user.userId);
+          if (getUserSelectionType(user) === nextSelectionType) {
+            nextUserIds.add(user.userId);
+          }
         });
 
         return [...nextUserIds];
       });
+
       return;
     }
 
-    const filteredUserIdSet = new Set(filteredUsers.map((user) => user.userId));
+    const filteredUserIdSet = new Set(selectableFilteredUsers.map((user) => user.userId));
+
     setSelectedUserIds((previousUserIds) => previousUserIds.filter((userId) => !filteredUserIdSet.has(userId)));
   }
 
   function handleToggleUser(userId: string, checked: boolean) {
     if (checked) {
       setSelectedUserIds((previousUserIds) => [...new Set([...previousUserIds, userId])]);
+
       return;
     }
 
@@ -159,6 +215,7 @@ export default function Opt() {
   function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
       setErrorMessage('멤버를 선택해주세요.');
+
       return;
     }
 
@@ -183,7 +240,11 @@ export default function Opt() {
     }
 
     if (actionType === 'ban') {
-      return '가입 불가';
+      return '가입불가';
+    }
+
+    if (actionType === 'unban') {
+      return '가입불가 해제';
     }
 
     return '';
@@ -198,6 +259,10 @@ export default function Opt() {
       return '가입불가 사유';
     }
 
+    if (actionType === 'unban') {
+      return '가입불가 해제 사유';
+    }
+
     return '';
   }
 
@@ -210,6 +275,7 @@ export default function Opt() {
 
     if (!trimmedReason) {
       setDialogErrorMessage(`${getActionReasonLabel()}를 입력해주세요.`);
+
       return;
     }
 
@@ -240,6 +306,27 @@ export default function Opt() {
           continue;
         }
 
+        if (actionType === 'unban') {
+          const response = await fetch(`/api/users/${siteName}/${userId}/ban`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              reason: trimmedReason,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error ?? '가입불가 해제에 실패했습니다.');
+          }
+
+          continue;
+        }
+
         const response = await fetch(`/api/users/${siteName}/${userId}/ban`, {
           method: 'PATCH',
           headers: {
@@ -258,11 +345,14 @@ export default function Opt() {
         }
       }
 
+      const completedActionTitle = getActionTitle();
+
       await loadUsers();
+
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
-      setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
+      setSnackbarMessage(`${completedActionTitle} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setDialogErrorMessage(unknownError.message || `${getActionTitle()} 처리에 실패했습니다.`);
@@ -303,54 +393,98 @@ export default function Opt() {
                 fullWidth
                 size="small"
               />
+
               <button type="button" className="button medium action" onClick={handleSearch}>
                 <SearchRoundedIcon />
               </button>
             </Stack>
+
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
           </div>
 
-          <Stack gap={1.5}>
-            <Stack direction="row" justifyContent="space-between" sx={{ p: 2, pb: 0 }}>
-              <button
-                type="button"
-                className="button small action"
-                onClick={() => handleOpenActionDialog('unkick')}
-                disabled={isActionSubmitting}
-              >
-                강제탈퇴 해제
-              </button>
-              <Stack direction="row" gap={1.5} justifyContent="space-between">
+          {selectedUserIds.length > 0 ? (
+            <Stack direction="row" justifyContent="space-between" gap={1.5} sx={{ p: 2, pb: 0 }}>
+              {selectionType === 'banned' ? (
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => handleOpenActionDialog('unban')}
+                  disabled={isActionSubmitting}
+                >
+                  가입불가 해제
+                </button>
+              ) : null}
+
+              {selectionType === 'kicked' ? (
+                <>
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={() => handleOpenActionDialog('unkick')}
+                    disabled={isActionSubmitting}
+                  >
+                    강제탈퇴 해제
+                  </button>
+
+                  <button
+                    type="button"
+                    className="button small warning"
+                    onClick={() => handleOpenActionDialog('ban')}
+                    disabled={isActionSubmitting}
+                  >
+                    가입불가
+                  </button>
+                </>
+              ) : null}
+
+              {selectionType === 'bannable' ? (
                 <button
                   type="button"
                   className="button small warning"
                   onClick={() => handleOpenActionDialog('ban')}
                   disabled={isActionSubmitting}
                 >
-                  가입 불가
+                  가입불가
                 </button>
-              </Stack>
+              ) : null}
             </Stack>
+          ) : null}
 
-            <div className={`paper ${styles.paper}`}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
-                    </TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
-                    <TableCell>탈퇴 사유</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 처리일 (처리자)</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 종류</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
+          <div className={`paper ${styles.paper}`}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={allFilteredSelected}
+                      onChange={handleToggleAll}
+                      disabled={isActionSubmitting || filteredUsers.length === 0}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
+                  <TableCell>탈퇴 사유</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 처리일 (처리자)</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 종류</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {filteredUsers.map((user) => {
+                  return (
                     <TableRow key={user.userId}>
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={selectedUserIds.includes(user.userId)}
                           onChange={(event) => handleToggleUser(user.userId, event.currentTarget.checked)}
+                          disabled={
+                            isActionSubmitting ||
+                            (selectionType !== null && getUserSelectionType(user) !== selectionType)
+                          }
                         />
                       </TableCell>
                       <TableCell>{user.displayName}</TableCell>
@@ -360,128 +494,159 @@ export default function Opt() {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.type}</TableCell>
                     </TableRow>
-                  ))}
+                  );
+                })}
 
-                  {filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center">
-                        검색 결과가 없습니다.
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
-            </div>
-          </Stack>
-          {isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={Boolean(actionType)}
-              onClose={handleCloseActionDialog}
-              className="VhiDrawer-bottom"
-            >
-              <h2>{getActionTitle()}</h2>
-              <button className="close-button" onClick={handleCloseActionDialog}>
-                <CloseRoundedIcon />
-              </button>
-              <Stack gap={2} sx={{ pt: 1 }}>
-                <TextField
-                  placeholder={getActionReasonLabel()}
-                  value={actionReason}
-                  onChange={(event) => setActionReason(event.currentTarget.value)}
-                  fullWidth
-                  multiline
-                  minRows={4}
-                  size="small"
-                />
-
-                {dialogErrorMessage ? (
-                  <p className="alert error">
-                    <ErrorOutlineRoundedIcon />
-                    <span>{dialogErrorMessage}</span>
-                  </p>
+                {filteredUsers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>검색 결과가 없습니다.</span>
+                      </p>
+                    </TableCell>
+                  </TableRow>
                 ) : null}
-                <Stack direction="column" gap={1.5}>
-                  <button
-                    type="button"
-                    className="button medium cancel"
-                    onClick={handleCloseActionDialog}
-                    disabled={isActionSubmitting}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="button"
-                    className="button medium submit"
-                    onClick={handleSubmitAction}
-                    disabled={isActionSubmitting}
-                  >
-                    확인
-                  </button>
-                </Stack>
-              </Stack>
-            </Drawer>
-          ) : (
-            <Dialog
-              open={Boolean(actionType)}
-              onClose={handleCloseActionDialog}
-              fullWidth
-              maxWidth="sm"
-              className="VhiDialog"
-            >
-              <DialogTitle>{getActionTitle()}</DialogTitle>
-              <button className="close-button" onClick={handleCloseActionDialog}>
-                <CloseRoundedIcon />
-              </button>
-              <DialogContent>
-                <Stack gap={2} sx={{ pt: 1 }}>
-                  <TextField
-                    placeholder={getActionReasonLabel()}
-                    value={actionReason}
-                    onChange={(event) => setActionReason(event.currentTarget.value)}
-                    fullWidth
-                    multiline
-                    minRows={4}
-                    size="small"
-                  />
-
-                  {dialogErrorMessage ? (
-                    <p className="alert error">
-                      <ErrorOutlineRoundedIcon />
-                      <span>{dialogErrorMessage}</span>
-                    </p>
-                  ) : null}
-                </Stack>
-              </DialogContent>
-              <DialogActions>
-                <button
-                  type="button"
-                  className="button medium close"
-                  onClick={handleCloseActionDialog}
-                  disabled={isActionSubmitting}
-                >
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handleSubmitAction}
-                  disabled={isActionSubmitting}
-                >
-                  확인
-                </button>
-              </DialogActions>
-            </Dialog>
-          )}
-          <Snackbar
-            open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
-            message={snackbarMessage}
-          />
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(actionType)}
+          onClose={handleCloseActionDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>{getActionTitle()}</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseActionDialog}
+            disabled={isActionSubmitting}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack direction="column" gap={2} sx={{ p: 1 }}>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
+            </p>
+
+            <TextField
+              placeholder={getActionReasonLabel()}
+              value={actionReason}
+              onChange={(event) => setActionReason(event.currentTarget.value)}
+              fullWidth
+              multiline
+              minRows={4}
+              size="small"
+            />
+
+            {dialogErrorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{dialogErrorMessage}</span>
+              </p>
+            ) : null}
+
+            <Stack direction="column" gap={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={handleCloseActionDialog}
+                disabled={isActionSubmitting}
+              >
+                취소
+              </button>
+
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handleSubmitAction}
+                disabled={isActionSubmitting}
+              >
+                확인
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(actionType)}
+          onClose={handleCloseActionDialog}
+          fullWidth
+          maxWidth="sm"
+          className="VhiDialog"
+        >
+          <DialogTitle>{getActionTitle()}</DialogTitle>
+
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseActionDialog}
+            disabled={isActionSubmitting}
+          >
+            <CloseRoundedIcon />
+          </button>
+
+          <DialogContent>
+            <Stack direction="column" gap={2}>
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>선택한 멤버에게 해당 처리를 진행합니다.</span>
+              </p>
+
+              <TextField
+                placeholder={getActionReasonLabel()}
+                value={actionReason}
+                onChange={(event) => setActionReason(event.currentTarget.value)}
+                fullWidth
+                multiline
+                minRows={4}
+                size="small"
+              />
+
+              {dialogErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{dialogErrorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
+          </DialogContent>
+
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseActionDialog}
+              disabled={isActionSubmitting}
+            >
+              취소
+            </button>
+
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handleSubmitAction}
+              disabled={isActionSubmitting}
+            >
+              확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      <Snackbar
+        open={Boolean(snackbarMessage)}
+        autoHideDuration={2700}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        onClose={() => setSnackbarMessage('')}
+        message={snackbarMessage}
+      />
     </Container>
   );
 }
