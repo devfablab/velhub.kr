@@ -33,6 +33,7 @@ export async function deleteMemberContents({
       .from('posts')
       .update({
         is_closed: true,
+        is_locked: true,
         closed_by: managerStigmaId,
         closed_at: closedAt,
         closed_message: closedMessage,
@@ -42,10 +43,11 @@ export async function deleteMemberContents({
     supabaseAdmin
       .from('post_comments')
       .update({
-        is_closed: true,
-        closed_by: managerStigmaId,
-        closed_at: closedAt,
-        closed_message: closedMessage,
+        is_deleted: true,
+        is_locked: true,
+        deleted_by: managerStigmaId,
+        deleted_at: closedAt,
+        deleted_message: closedMessage,
       })
       .eq('site_id', siteId)
       .eq('user_id', memberUserId),
