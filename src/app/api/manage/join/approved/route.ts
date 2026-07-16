@@ -2,6 +2,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getCommunityManagerAccess } from '@/lib/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RequestBody = {
   siteName?: string | null;
@@ -201,6 +202,62 @@ async function getJoinManageAccess(siteName: string) {
       status: 403,
       error: '접근 권한이 없습니다.',
     } as const;
+  }
+}
+
+async function createJoinRejectedNotifications({
+  supabaseAdmin,
+  siteId,
+  recipientStigmaIds,
+  actorStigmaId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  recipientStigmaIds: string[];
+  actorStigmaId: string;
+}) {
+  const stigmaIds = [...new Set([...recipientStigmaIds, actorStigmaId])];
+
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
+
+  if (stigmaResult.error) {
+    console.error(stigmaResult.error);
+    return;
+  }
+
+  const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
+
+  const sendUserId = particleIdMap.get(actorStigmaId) ?? null;
+
+  const notifications = recipientStigmaIds.flatMap((stigmaId) => {
+    const userId = particleIdMap.get(stigmaId);
+
+    if (!userId) {
+      return [];
+    }
+
+    return [
+      {
+        user_id: userId,
+        send_user_id: sendUserId,
+        send_site_id: siteId,
+        send_board_id: null,
+        send_series_id: null,
+        send_post_id: null,
+        notification_type: NOTIFICATION_TYPE.COMMUNITY_JOIN_REJECTED,
+        is_read: false,
+      },
+    ];
+  });
+
+  if (notifications.length === 0) {
+    return;
+  }
+
+  const notificationResult = await supabaseAdmin.from('notifications').insert(notifications);
+
+  if (notificationResult.error) {
+    console.error(notificationResult.error);
   }
 }
 
@@ -409,6 +466,32 @@ export async function PATCH(request: Request) {
     if (siteResult.error) {
       return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
     }
+
+    const deleteMembershipResult = await access.supabaseAdmin
+      .from('rhizome_stigmas')
+      .delete()
+      .eq('site_id', access.rhizome.id)
+      .in('user_id', userIds)
+      .eq('is_approval', false);
+
+    if (deleteMembershipResult.error) {
+      console.error(deleteMembershipResult.error);
+      return Response.json({ error: '가입 신청 정보 삭제에 실패했습니다.' }, { status: 500 });
+    }
+
+    await createJoinRejectedNotifications({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.rhizome.id,
+      recipientStigmaIds: userIds,
+      actorStigmaId: access.actor.stigmaId,
+    });
+
+    await createJoinRejectedNotifications({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.rhizome.id,
+      recipientStigmaIds: userIds,
+      actorStigmaId: access.actor.stigmaId,
+    });
 
     return Response.json({
       ok: true,

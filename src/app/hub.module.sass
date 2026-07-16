@@ -21,6 +21,10 @@
       @include ds.fw(neo, 600)
 
     .notifications
+      display: flex
+      flex-direction: column
+      gap: ds.rem(12)
+
       &.read-notification
         opacity: .7
 
@@ -50,6 +54,7 @@
 
         p
           opacity: .9
+          line-height: 1.25
 
         time
           opacity: .7

@@ -2,6 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RequestBody = {
   siteName: string | null;
@@ -191,6 +192,39 @@ export async function PATCH(request: Request) {
 
       if (updateTeam.error || !updateTeam.data) {
         return Response.json({ error: '역할 변경에 실패했습니다.' }, { status: 500 });
+      }
+
+      const stigmaIds = [team.data.user_id, access.session.stigmaId].filter((value): value is string => Boolean(value));
+
+      const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
+
+      if (stigmaResult.error) {
+        console.error(stigmaResult.error);
+      } else {
+        const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
+
+        const userId = particleIdMap.get(team.data.user_id);
+        const sendUserId = access.session.stigmaId ? (particleIdMap.get(access.session.stigmaId) ?? null) : null;
+
+        if (userId) {
+          const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+            user_id: userId,
+            send_user_id: sendUserId,
+            send_site_id: access.siteId,
+            send_board_id: null,
+            send_series_id: null,
+            send_post_id: null,
+            notification_type:
+              role === 'manager'
+                ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
+                : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER,
+            is_read: false,
+          });
+
+          if (notificationResult.error) {
+            console.error(notificationResult.error);
+          }
+        }
       }
 
       return Response.json({

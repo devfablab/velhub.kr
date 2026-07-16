@@ -9,6 +9,8 @@ type RouteContext = {
   }>;
 };
 
+type SiteType = 'blog' | 'community';
+
 type MembershipRow = {
   id: string;
   created_at: string;
@@ -52,7 +54,7 @@ type PatchRequestBody = {
   nickname: string | null;
 };
 
-const MANAGER_ROLE_PRIORITY = [
+const COMMUNITY_MANAGER_ROLE_PRIORITY = [
   'owner',
   'community-manager',
   'board-manager',
@@ -60,7 +62,12 @@ const MANAGER_ROLE_PRIORITY = [
   'board-assistant-manager',
 ] as const;
 
-type ManagerRole = (typeof MANAGER_ROLE_PRIORITY)[number];
+type CommunityManagerRole = (typeof COMMUNITY_MANAGER_ROLE_PRIORITY)[number];
+type ManagerRole = CommunityManagerRole | 'manager';
+
+function isSiteType(value: string): value is SiteType {
+  return value === 'blog' || value === 'community';
+}
 
 function decryptNullable(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
@@ -119,13 +126,17 @@ function getManagerIconUrl(value: string | null | undefined) {
   return publicUrl.data.publicUrl ?? '';
 }
 
-function isManagerRole(value: string): value is ManagerRole {
-  return MANAGER_ROLE_PRIORITY.includes(value as ManagerRole);
+function isCommunityManagerRole(value: string): value is CommunityManagerRole {
+  return COMMUNITY_MANAGER_ROLE_PRIORITY.includes(value as CommunityManagerRole);
 }
 
 function getManagerRoleLabel(role: string) {
   if (role === 'owner') {
     return '운영자';
+  }
+
+  if (role === 'manager') {
+    return '매니저';
   }
 
   if (role === 'community-manager') {
@@ -147,10 +158,13 @@ function getManagerRoleLabel(role: string) {
   return role;
 }
 
-function sortManagerRoles(roles: string[]) {
+function sortCommunityManagerRoles(roles: string[]) {
   return [...new Set(roles)]
-    .filter(isManagerRole)
-    .sort((a, b) => MANAGER_ROLE_PRIORITY.indexOf(a) - MANAGER_ROLE_PRIORITY.indexOf(b));
+    .filter(isCommunityManagerRole)
+    .sort(
+      (firstRole, secondRole) =>
+        COMMUNITY_MANAGER_ROLE_PRIORITY.indexOf(firstRole) - COMMUNITY_MANAGER_ROLE_PRIORITY.indexOf(secondRole),
+    );
 }
 
 async function getPostCount(siteId: string, userId: string) {
@@ -191,7 +205,7 @@ async function getCommentCount(siteId: string, userId: string) {
   return result.count ?? 0;
 }
 
-async function getUserInfo(siteName: string) {
+async function getSiteUserInfo(siteName: string) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   if (!normalizedSiteName) {
@@ -218,16 +232,24 @@ async function getUserInfo(siteName: string) {
     } as const;
   }
 
-  // if (siteResult.data.site_type !== 'community') {
-  //   return {
-  //     ok: false,
-  //     status: 400,
-  //     error: '커뮤니티 정보를 불러올 수 없습니다.',
-  //   } as const;
-  // }
+  const siteType = normalizeText(siteResult.data.site_type).toLowerCase();
+
+  if (!isSiteType(siteType)) {
+    return {
+      ok: false,
+      status: 400,
+      error: '사이트 정보를 불러올 수 없습니다.',
+    } as const;
+  }
+
+  const site = {
+    id: siteResult.data.id,
+    siteKey: siteResult.data.site_key,
+    siteType,
+  };
 
   const session = await verifySession({
-    siteId: siteResult.data.id,
+    siteId: site.id,
   });
 
   if (!session.authUserId) {
@@ -259,7 +281,7 @@ async function getUserInfo(siteName: string) {
   const membershipResult = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('id, created_at, user_id, site_id, is_approval, is_block, block_reason, role, nickname, lv, checkin_count')
-    .eq('site_id', siteResult.data.id)
+    .eq('site_id', site.id)
     .eq('user_id', stigma.id)
     .maybeSingle();
 
@@ -283,15 +305,13 @@ async function getUserInfo(siteName: string) {
     }
 
     const email = authUserResult.data.user.email.trim().toLowerCase();
-
     const nowIsoString = new Date().toISOString();
 
     const inviteResult = await supabaseAdmin
       .from('invite')
       .select('token, expires_at')
-      .eq('site_id', siteResult.data.id)
+      .eq('site_id', site.id)
       .eq('email', email)
-      .eq('role', 'member')
       .eq('status', 'pending')
       .is('cancelled_at', null)
       .is('joined_at', null)
@@ -314,33 +334,38 @@ async function getUserInfo(siteName: string) {
         status: 200,
         data: {
           status: 'pending_invite',
-          inviteHref: `/${siteResult.data.site_key}/invite-community/${inviteResult.data.token}`,
+          inviteHref:
+            site.siteType === 'blog'
+              ? `/${site.siteKey}/invite-blog/${inviteResult.data.token}`
+              : `/${site.siteKey}/invite-community/${inviteResult.data.token}`,
         },
       } as const;
     }
 
-    const communityResult = await supabaseAdmin
-      .from('communities')
-      .select('join_type')
-      .eq('site_id', siteResult.data.id)
-      .maybeSingle();
+    if (site.siteType === 'community') {
+      const communityResult = await supabaseAdmin
+        .from('communities')
+        .select('join_type')
+        .eq('site_id', site.id)
+        .maybeSingle();
 
-    if (communityResult.error || !communityResult.data) {
-      return {
-        ok: false,
-        status: 500,
-        error: '커뮤니티 가입 설정을 불러오지 못했습니다.',
-      } as const;
-    }
+      if (communityResult.error || !communityResult.data) {
+        return {
+          ok: false,
+          status: 500,
+          error: '커뮤니티 가입 설정을 불러오지 못했습니다.',
+        } as const;
+      }
 
-    if (communityResult.data.join_type === 'invite') {
-      return {
-        ok: true,
-        status: 200,
-        data: {
-          status: 'invite_only',
-        },
-      } as const;
+      if (communityResult.data.join_type === 'invite') {
+        return {
+          ok: true,
+          status: 200,
+          data: {
+            status: 'invite_only',
+          },
+        } as const;
+      }
     }
 
     return {
@@ -354,7 +379,7 @@ async function getUserInfo(siteName: string) {
 
   const membership = membershipResult.data as MembershipRow;
 
-  if (!membership.is_approval) {
+  if (site.siteType === 'community' && !membership.is_approval) {
     return {
       ok: true,
       status: 200,
@@ -375,83 +400,88 @@ async function getUserInfo(siteName: string) {
     } as const;
   }
 
-  const communityResult = await supabaseAdmin
-    .from('communities')
-    .select('id')
-    .eq('site_id', siteResult.data.id)
-    .maybeSingle();
-
-  if (communityResult.error || !communityResult.data) {
-    return {
-      ok: false,
-      status: 500,
-      error: '커뮤니티 정보를 불러오지 못했습니다.',
-    } as const;
-  }
-
-  const manageRoleResult = await supabaseAdmin
-    .from('community_manage_role')
-    .select('role, board_id')
-    .eq('community_id', communityResult.data.id)
-    .eq('manager_id', membership.id);
-
-  if (manageRoleResult.error) {
-    return {
-      ok: false,
-      status: 500,
-      error: '매니저 정보를 불러오지 못했습니다.',
-    } as const;
-  }
-
   const baseRole = normalizeText(membership.role);
-  const manageRoles = (manageRoleResult.data ?? [])
-    .map((row) => normalizeText((row as ManagerRoleRow).role))
-    .filter(isManagerRole);
-
-  const managerRoles = sortManagerRoles([...(baseRole === 'owner' ? ['owner'] : []), ...manageRoles]);
-  const primaryManagerRole = managerRoles[0] ?? '';
-
+  let managerRoles: ManagerRole[] = [];
   let managerIconUrl = '';
-
-  if (primaryManagerRole) {
-    const managerIconResult = await supabaseAdmin
-      .from('community_manage_icons')
-      .select('role, icon')
-      .eq('site_id', siteResult.data.id)
-      .eq('role', primaryManagerRole)
-      .maybeSingle();
-
-    if (!managerIconResult.error && managerIconResult.data) {
-      managerIconUrl = getManagerIconUrl((managerIconResult.data as ManagerIconRow).icon);
-    }
-  }
-
   let level: {
     name: string;
     iconUrl: string;
   } | null = null;
 
-  if (!primaryManagerRole && membership.lv) {
-    const levelResult = await supabaseAdmin
-      .from('community_levels')
-      .select('id, lv, name, icon')
-      .eq('site_id', siteResult.data.id)
-      .eq('id', membership.lv)
-      .maybeSingle();
+  if (site.siteType === 'community') {
+    const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', site.id).maybeSingle();
 
-    if (!levelResult.error && levelResult.data) {
-      const levelRow = levelResult.data as LevelRow;
+    if (communityResult.error || !communityResult.data) {
+      return {
+        ok: false,
+        status: 500,
+        error: '커뮤니티 정보를 불러오지 못했습니다.',
+      } as const;
+    }
 
-      level = {
-        name: normalizeText(levelRow.name) || String(levelRow.lv),
-        iconUrl: getLevelIconUrl(levelRow.icon),
-      };
+    const manageRoleResult = await supabaseAdmin
+      .from('community_manage_role')
+      .select('role, board_id')
+      .eq('community_id', communityResult.data.id)
+      .eq('manager_id', membership.id);
+
+    if (manageRoleResult.error) {
+      return {
+        ok: false,
+        status: 500,
+        error: '매니저 정보를 불러오지 못했습니다.',
+      } as const;
+    }
+
+    const manageRoles = (manageRoleResult.data ?? [])
+      .map((row) => normalizeText((row as ManagerRoleRow).role))
+      .filter(isCommunityManagerRole);
+
+    managerRoles = sortCommunityManagerRoles([...(baseRole === 'owner' ? ['owner'] : []), ...manageRoles]);
+
+    const primaryManagerRole = managerRoles[0] ?? '';
+
+    if (primaryManagerRole) {
+      const managerIconResult = await supabaseAdmin
+        .from('community_manage_icons')
+        .select('role, icon')
+        .eq('site_id', site.id)
+        .eq('role', primaryManagerRole)
+        .maybeSingle();
+
+      if (!managerIconResult.error && managerIconResult.data) {
+        managerIconUrl = getManagerIconUrl((managerIconResult.data as ManagerIconRow).icon);
+      }
+    }
+
+    if (!primaryManagerRole && membership.lv) {
+      const levelResult = await supabaseAdmin
+        .from('community_levels')
+        .select('id, lv, name, icon')
+        .eq('site_id', site.id)
+        .eq('id', membership.lv)
+        .maybeSingle();
+
+      if (!levelResult.error && levelResult.data) {
+        const levelRow = levelResult.data as LevelRow;
+
+        level = {
+          name: normalizeText(levelRow.name) || String(levelRow.lv),
+          iconUrl: getLevelIconUrl(levelRow.icon),
+        };
+      }
+    }
+  } else {
+    if (baseRole === 'owner') {
+      managerRoles = ['owner'];
+    } else if (baseRole === 'manager') {
+      managerRoles = ['manager'];
     }
   }
 
   const [postCount, commentCount] = await Promise.all([
-    getPostCount(siteResult.data.id, session.authUserId),
-    getCommentCount(siteResult.data.id, session.authUserId),
+    getPostCount(site.id, session.authUserId),
+    getCommentCount(site.id, session.authUserId),
   ]);
 
   return {
@@ -460,7 +490,7 @@ async function getUserInfo(siteName: string) {
     data: {
       status: 'active',
       userInfo: {
-        avatarUrl: getAvatarUrl(stigma.avatar ?? null),
+        avatarUrl: getAvatarUrl(stigma.avatar),
         activityName: decryptNullable(stigma.user_name),
         nickname: normalizeText(membership.nickname),
         joinedAt: membership.created_at,
@@ -487,7 +517,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const result = await getUserInfo(siteName);
+    const result = await getSiteUserInfo(siteName);
 
     if (!result.ok) {
       return Response.json({ error: result.error }, { status: result.status });
@@ -532,8 +562,10 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (siteResult.data.site_type !== 'community') {
-      return Response.json({ error: '커뮤니티 정보를 불러올 수 없습니다.' }, { status: 400 });
+    const siteType = normalizeText(siteResult.data.site_type).toLowerCase();
+
+    if (!isSiteType(siteType)) {
+      return Response.json({ error: '사이트 정보를 불러올 수 없습니다.' }, { status: 400 });
     }
 
     const session = await verifySession({
@@ -603,7 +635,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '별명 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    const nextInfo = await getUserInfo(siteName);
+    const nextInfo = await getSiteUserInfo(siteName);
 
     if (!nextInfo.ok) {
       return Response.json({ error: nextInfo.error }, { status: nextInfo.status });

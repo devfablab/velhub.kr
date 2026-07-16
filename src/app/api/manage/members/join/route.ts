@@ -2,6 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RequestBody = {
   siteName: string | null;
@@ -172,6 +173,105 @@ async function getNextAutoNickname(params: { siteId: string; stigmaId: string; b
   return `${baseNickname}${nextNumber}`;
 }
 
+async function createJoinRequestNotifications({
+  supabaseAdmin,
+  communityId,
+  siteId,
+  applicantParticleId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  communityId: string;
+  siteId: string;
+  applicantParticleId: string;
+}) {
+  const [ownerResult, communityManagerResult] = await Promise.all([
+    supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id, user_id')
+      .eq('site_id', siteId)
+      .eq('role', 'owner')
+      .eq('is_approval', true)
+      .eq('is_block', false),
+    supabaseAdmin
+      .from('community_manage_role')
+      .select('manager_id')
+      .eq('community_id', communityId)
+      .eq('role', 'community-manager'),
+  ]);
+
+  if (ownerResult.error || communityManagerResult.error) {
+    console.error(ownerResult.error ?? communityManagerResult.error);
+    return;
+  }
+
+  const communityManagerMembershipIds = [
+    ...new Set((communityManagerResult.data ?? []).map((item) => normalizeText(item.manager_id)).filter(Boolean)),
+  ];
+
+  const communityManagerMembershipResult =
+    communityManagerMembershipIds.length > 0
+      ? await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id, user_id')
+          .in('id', communityManagerMembershipIds)
+          .eq('site_id', siteId)
+          .eq('is_approval', true)
+          .eq('is_block', false)
+      : {
+          data: [],
+          error: null,
+        };
+
+  if (communityManagerMembershipResult.error) {
+    console.error(communityManagerMembershipResult.error);
+    return;
+  }
+
+  const recipientStigmaIds = [
+    ...new Set(
+      [...(ownerResult.data ?? []), ...(communityManagerMembershipResult.data ?? [])]
+        .map((membership) => normalizeText(membership.user_id))
+        .filter(Boolean),
+    ),
+  ];
+
+  if (recipientStigmaIds.length === 0) {
+    return;
+  }
+
+  const recipientResult = await supabaseAdmin.from('stigmas').select('user_id').in('id', recipientStigmaIds);
+
+  if (recipientResult.error) {
+    console.error(recipientResult.error);
+    return;
+  }
+
+  const recipientParticleIds = [
+    ...new Set((recipientResult.data ?? []).map((recipient) => normalizeText(recipient.user_id)).filter(Boolean)),
+  ];
+
+  if (recipientParticleIds.length === 0) {
+    return;
+  }
+
+  const notificationResult = await supabaseAdmin.from('notifications').insert(
+    recipientParticleIds.map((recipientParticleId) => ({
+      user_id: recipientParticleId,
+      send_user_id: applicantParticleId,
+      send_site_id: siteId,
+      send_board_id: null,
+      send_series_id: null,
+      send_post_id: null,
+      notification_type: NOTIFICATION_TYPE.COMMUNITY_JOIN_REQUESTED,
+      is_read: false,
+    })),
+  );
+
+  if (notificationResult.error) {
+    console.error(notificationResult.error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
@@ -207,7 +307,7 @@ export async function POST(request: Request) {
     const community = await supabaseAdmin
       .from('communities')
       .select(
-        'join_type, join_question_status, join_questions, join_accept_status, join_accept_start_day, join_accept_end_day',
+        'id, join_type, join_question_status, join_questions, join_accept_status, join_accept_start_day, join_accept_end_day',
       )
       .eq('site_id', rhizome.data.id)
       .maybeSingle();
@@ -247,7 +347,11 @@ export async function POST(request: Request) {
       return Response.json({ error: '가입할 수 없는 사용자입니다.' }, { status: 403 });
     }
 
-    const stigma = await supabaseAdmin.from('stigmas').select('id, user_name').eq('id', session.stigmaId).maybeSingle();
+    const stigma = await supabaseAdmin
+      .from('stigmas')
+      .select('id, user_id, user_name')
+      .eq('id', session.stigmaId)
+      .maybeSingle();
 
     if (stigma.error || !stigma.data) {
       return Response.json({ error: '사용자 정보를 찾을 수 없습니다.' }, { status: 404 });
@@ -388,6 +492,13 @@ export async function POST(request: Request) {
         return Response.json({ error: '가입에 실패했습니다.' }, { status: 500 });
       }
 
+      await createJoinRequestNotifications({
+        supabaseAdmin,
+        communityId: community.data.id,
+        siteId: rhizome.data.id,
+        applicantParticleId: stigma.data.user_id,
+      });
+
       return Response.json({
         ok: true,
         siteName: rhizome.data.site_key,
@@ -424,6 +535,13 @@ export async function POST(request: Request) {
     if (insertRhizomeStigma.error || !insertRhizomeStigma.data) {
       return Response.json({ error: '가입에 실패했습니다.' }, { status: 500 });
     }
+
+    await createJoinRequestNotifications({
+      supabaseAdmin,
+      communityId: community.data.id,
+      siteId: rhizome.data.id,
+      applicantParticleId: stigma.data.user_id,
+    });
 
     return Response.json({
       ok: true,

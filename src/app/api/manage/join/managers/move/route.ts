@@ -2,7 +2,9 @@ import {
   buildCommunityManagerList,
   getCommunityManagerAccess,
   getCommunityManagerRows,
+  type CommunityManagerAccess,
 } from '@/lib/community-manager/utils';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -21,11 +23,22 @@ type RequestBody = {
   managerId?: string | null;
 };
 
+type CommunityManagerRole = 'community-manager' | 'board-manager' | 'board-general-manager' | 'board-assistant-manager';
+
+type NotificationAction = 'assigned' | 'removed';
+
+type ManagerNotification = {
+  managerId: string;
+  role: CommunityManagerRole;
+  boardId: string | null;
+  action: NotificationAction;
+};
+
 function isBoardRequiredRole(role: string) {
   return role === 'board-general-manager' || role === 'board-assistant-manager';
 }
 
-function isMoveRole(role: string) {
+function isMoveRole(role: string): role is CommunityManagerRole {
   return (
     role === 'community-manager' ||
     role === 'board-manager' ||
@@ -34,10 +47,103 @@ function isMoveRole(role: string) {
   );
 }
 
+function getNotificationType(role: CommunityManagerRole, action: NotificationAction) {
+  if (role === 'community-manager') {
+    return action === 'assigned'
+      ? NOTIFICATION_TYPE.COMMUNITY_MANAGER_ASSIGNED
+      : NOTIFICATION_TYPE.COMMUNITY_MANAGER_REMOVED;
+  }
+
+  if (role === 'board-manager') {
+    return action === 'assigned' ? NOTIFICATION_TYPE.BOARD_MANAGER_ASSIGNED : NOTIFICATION_TYPE.BOARD_MANAGER_REMOVED;
+  }
+
+  if (role === 'board-general-manager') {
+    return action === 'assigned'
+      ? NOTIFICATION_TYPE.BOARD_GENERAL_MANAGER_ASSIGNED
+      : NOTIFICATION_TYPE.BOARD_GENERAL_MANAGER_REMOVED;
+  }
+
+  return action === 'assigned'
+    ? NOTIFICATION_TYPE.BOARD_ASSISTANT_MANAGER_ASSIGNED
+    : NOTIFICATION_TYPE.BOARD_ASSISTANT_MANAGER_REMOVED;
+}
+
+async function createManagerNotifications({
+  access,
+  notifications,
+}: {
+  access: CommunityManagerAccess;
+  notifications: ManagerNotification[];
+}) {
+  if (notifications.length === 0) {
+    return;
+  }
+
+  const managerIds = [...new Set(notifications.map((notification) => notification.managerId))];
+
+  const membershipResult = await access.supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('id, user_id')
+    .eq('site_id', access.rhizome.id)
+    .in('id', managerIds);
+
+  if (membershipResult.error) {
+    console.error(membershipResult.error);
+    return;
+  }
+
+  const membershipMap = new Map((membershipResult.data ?? []).map((membership) => [membership.id, membership.user_id]));
+
+  const stigmaIds = [...new Set([...Array.from(membershipMap.values()), access.actor.stigmaId])];
+
+  const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
+
+  if (stigmaResult.error) {
+    console.error(stigmaResult.error);
+    return;
+  }
+
+  const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
+
+  const sendUserId = particleIdMap.get(access.actor.stigmaId) ?? null;
+
+  const insertRows = notifications.flatMap((notification) => {
+    const stigmaId = membershipMap.get(notification.managerId);
+    const userId = stigmaId ? particleIdMap.get(stigmaId) : null;
+
+    if (!userId) {
+      return [];
+    }
+
+    return [
+      {
+        user_id: userId,
+        send_user_id: sendUserId,
+        send_site_id: access.rhizome.id,
+        send_board_id: notification.boardId,
+        send_series_id: null,
+        send_post_id: null,
+        notification_type: getNotificationType(notification.role, notification.action),
+        is_read: false,
+      },
+    ];
+  });
+
+  if (insertRows.length === 0) {
+    return;
+  }
+
+  const notificationResult = await access.supabaseAdmin.from('notifications').insert(insertRows);
+
+  if (notificationResult.error) {
+    console.error(notificationResult.error);
+  }
+}
+
 export async function PATCH(request: Request) {
   try {
     const requestBody = (await request.json()) as RequestBody;
-
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
     const action = normalizeText(requestBody.action);
     const sourceManageRoleId = normalizeText(requestBody.sourceManageRoleId);
@@ -60,7 +166,6 @@ export async function PATCH(request: Request) {
 
     const access = await getCommunityManagerAccess(siteName);
     const managerRows = await getCommunityManagerRows(access);
-
     const sourceRow = managerRows.find((row) => row.id === sourceManageRoleId);
 
     if (!sourceRow) {
@@ -69,14 +174,16 @@ export async function PATCH(request: Request) {
 
     const sourceRole = normalizeText(sourceRow.role);
 
+    if (!isMoveRole(sourceRole)) {
+      return Response.json({ error: '기존 역할이 유효하지 않습니다.' }, { status: 400 });
+    }
+
     if (sourceRole === 'community-manager') {
       if (!access.actor.canManageCommunityManager) {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
-    } else {
-      if (!access.actor.canManageBoardManager) {
-        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-      }
+    } else if (!access.actor.canManageBoardManager) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     if (action === 'move-board-general-manager') {
@@ -119,6 +226,36 @@ export async function PATCH(request: Request) {
       if (secondUpdate.error) {
         return Response.json({ error: '이동에 실패했습니다.' }, { status: 500 });
       }
+
+      await createManagerNotifications({
+        access,
+        notifications: [
+          {
+            managerId: sourceRow.manager_id,
+            role: 'board-general-manager',
+            boardId: sourceRow.board_id,
+            action: 'removed',
+          },
+          {
+            managerId: sourceRow.manager_id,
+            role: 'board-general-manager',
+            boardId: targetRow.board_id,
+            action: 'assigned',
+          },
+          {
+            managerId: targetRow.manager_id,
+            role: 'board-general-manager',
+            boardId: targetRow.board_id,
+            action: 'removed',
+          },
+          {
+            managerId: targetRow.manager_id,
+            role: 'board-general-manager',
+            boardId: sourceRow.board_id,
+            action: 'assigned',
+          },
+        ],
+      });
 
       const managers = await buildCommunityManagerList(access);
 
@@ -198,18 +335,50 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
       }
 
-      const updatePreviousManagerRoleResult = await access.supabaseAdmin
-        .from('rhizome_stigmas')
-        .update({
-          role: 'member',
-        })
-        .eq('id', sourceRow.manager_id)
-        .eq('site_id', access.rhizome.id)
-        .neq('role', 'owner');
+      const previousRemainingRoleResult = await access.supabaseAdmin
+        .from('community_manage_role')
+        .select('id')
+        .eq('community_id', access.community.id)
+        .eq('manager_id', sourceRow.manager_id)
+        .limit(1)
+        .maybeSingle();
 
-      if (updatePreviousManagerRoleResult.error) {
-        return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
+      if (previousRemainingRoleResult.error) {
+        return Response.json({ error: '기존 매니저 역할 확인에 실패했습니다.' }, { status: 500 });
       }
+
+      if (!previousRemainingRoleResult.data) {
+        const updatePreviousManagerRoleResult = await access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .update({
+            role: 'member',
+          })
+          .eq('id', sourceRow.manager_id)
+          .eq('site_id', access.rhizome.id)
+          .neq('role', 'owner');
+
+        if (updatePreviousManagerRoleResult.error) {
+          return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
+        }
+      }
+
+      await createManagerNotifications({
+        access,
+        notifications: [
+          {
+            managerId: sourceRow.manager_id,
+            role: 'board-general-manager',
+            boardId: sourceRow.board_id,
+            action: 'removed',
+          },
+          {
+            managerId,
+            role: 'board-general-manager',
+            boardId: sourceRow.board_id,
+            action: 'assigned',
+          },
+        ],
+      });
 
       const managers = await buildCommunityManagerList(access);
 
@@ -222,6 +391,14 @@ export async function PATCH(request: Request) {
     if (action === 'move-manager-role' || action === 'move-manager-board' || action === 'move-manager-role-board') {
       if (!isMoveRole(role)) {
         return Response.json({ error: 'role이 유효하지 않습니다.' }, { status: 400 });
+      }
+
+      if (sourceRole === 'board-general-manager') {
+        return Response.json({ error: '개별 게시판 총괄 매니저는 전용 이동으로 처리해야 합니다.' }, { status: 400 });
+      }
+
+      if (role === 'board-general-manager') {
+        return Response.json({ error: '개별 게시판 총괄 매니저는 이동으로 처리해야 합니다.' }, { status: 400 });
       }
 
       if (role === 'community-manager') {
@@ -238,19 +415,6 @@ export async function PATCH(request: Request) {
 
       if (!isBoardRequiredRole(role) && boardId) {
         return Response.json({ error: 'boardId는 사용할 수 없습니다.' }, { status: 400 });
-      }
-
-      if (isBoardRequiredRole(role)) {
-        const boardResult = await access.supabaseAdmin
-          .from('boards')
-          .select('id')
-          .eq('site_id', access.rhizome.id)
-          .eq('id', boardId)
-          .maybeSingle();
-
-        if (boardResult.error || !boardResult.data) {
-          return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
-        }
       }
 
       if (role === 'community-manager') {
@@ -273,20 +437,18 @@ export async function PATCH(request: Request) {
         }
       }
 
-      if (role === 'board-general-manager') {
-        const currentCount = managerRows.filter(
-          (row) =>
-            row.id !== sourceRow.id &&
-            normalizeText(row.role) === 'board-general-manager' &&
-            normalizeText(row.board_id) === boardId,
-        ).length;
-
-        if (currentCount >= access.planFeature.boardGeneralManagerLimit) {
-          return Response.json({ error: '해당 게시판의 총괄 매니저 자리가 꽉 찼습니다.' }, { status: 400 });
-        }
-      }
-
       if (role === 'board-assistant-manager') {
+        const boardResult = await access.supabaseAdmin
+          .from('boards')
+          .select('id')
+          .eq('site_id', access.rhizome.id)
+          .eq('id', boardId)
+          .maybeSingle();
+
+        if (boardResult.error || !boardResult.data) {
+          return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+        }
+
         const currentCount = managerRows.filter(
           (row) =>
             row.id !== sourceRow.id &&
@@ -337,6 +499,24 @@ export async function PATCH(request: Request) {
       if (updateMemberRoleResult.error) {
         return Response.json({ error: '멤버 역할 변경에 실패했습니다.' }, { status: 500 });
       }
+
+      await createManagerNotifications({
+        access,
+        notifications: [
+          {
+            managerId: sourceRow.manager_id,
+            role: sourceRole,
+            boardId: sourceRow.board_id,
+            action: 'removed',
+          },
+          {
+            managerId: sourceRow.manager_id,
+            role,
+            boardId: boardId || null,
+            action: 'assigned',
+          },
+        ],
+      });
 
       const managers = await buildCommunityManagerList(access);
 

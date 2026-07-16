@@ -42,6 +42,13 @@ export function getNotificationText(
     };
   }
 
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_JOIN_REQUESTED) {
+    return {
+      title: '새로운 가입 신청',
+      message: `${siteLabel} 커뮤니티에 새로운 가입 신청이 있습니다.`,
+    };
+  }
+
   if (notificationType === NOTIFICATION_TYPE.COMMUNITY_JOIN_APPROVED) {
     return {
       title: '가입 신청 승인',

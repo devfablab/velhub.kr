@@ -318,7 +318,7 @@ export default function Opt() {
                       {invite.status === 'pending' ? (
                         <button
                           type="button"
-                          className="button medium cancel"
+                          className="button small cancel"
                           onClick={() => handleOpenCancelDialog(invite)}
                         >
                           취소

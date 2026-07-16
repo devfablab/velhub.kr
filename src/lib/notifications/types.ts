@@ -1,6 +1,7 @@
 export const NOTIFICATION_TYPE = {
   BLOG_TEAM_INVITATION_SENT: 'blog_team_invitation_sent',
   COMMUNITY_MEMBER_INVITATION_SENT: 'community_member_invitation_sent',
+  COMMUNITY_JOIN_REQUESTED: 'community_join_requested',
   COMMUNITY_JOIN_APPROVED: 'community_join_approved',
   COMMUNITY_JOIN_REJECTED: 'community_join_rejected',
 

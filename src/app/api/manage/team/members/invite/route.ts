@@ -295,24 +295,10 @@ export async function POST(request: NextRequest) {
       await access.supabaseAdmin.from('invite').delete().eq('id', invite.data.id);
 
       if (unknownError instanceof Error) {
-        return Response.json(
-          {
-            error: unknownError.message || '초대 메일 발송에 실패했습니다.',
-          },
-          {
-            status: 500,
-          },
-        );
+        return Response.json({ error: unknownError.message || '초대 메일 발송에 실패했습니다.' }, { status: 500 });
       }
 
-      return Response.json(
-        {
-          error: '초대 메일 발송에 실패했습니다.',
-        },
-        {
-          status: 500,
-        },
-      );
+      return Response.json({ error: '초대 메일 발송에 실패했습니다.' }, { status: 500 });
     }
 
     const invitedUserResult = await access.supabaseAdmin
