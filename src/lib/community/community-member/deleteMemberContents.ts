@@ -15,18 +15,25 @@ export async function deleteMemberContents({
   managerStigmaId,
   closedMessage,
 }: CloseMemberContentsParams) {
-  const memberStigmaResult = await supabaseAdmin
+  const stigmaResult = await supabaseAdmin
     .from('stigmas')
-    .select('user_id')
-    .eq('id', memberStigmaId)
-    .maybeSingle();
+    .select('id, user_id')
+    .in('id', [memberStigmaId, managerStigmaId]);
 
-  if (memberStigmaResult.error || !memberStigmaResult.data?.user_id) {
+  if (stigmaResult.error) {
+    throw new Error('사용자 정보를 불러오지 못했습니다.');
+  }
+
+  const userIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
+
+  const memberUserId = userIdMap.get(memberStigmaId);
+  const managerUserId = userIdMap.get(managerStigmaId);
+
+  if (!memberUserId || !managerUserId) {
     throw new Error('사용자 정보를 불러오지 못했습니다.');
   }
 
   const closedAt = new Date().toISOString();
-  const memberUserId = memberStigmaResult.data.user_id;
 
   const [postsResult, commentsResult] = await Promise.all([
     supabaseAdmin
@@ -34,7 +41,7 @@ export async function deleteMemberContents({
       .update({
         is_closed: true,
         is_locked: true,
-        closed_by: managerStigmaId,
+        closed_by: managerUserId,
         closed_at: closedAt,
         closed_message: closedMessage,
       })
@@ -45,7 +52,7 @@ export async function deleteMemberContents({
       .update({
         is_deleted: true,
         is_locked: true,
-        deleted_by: managerStigmaId,
+        deleted_by: managerUserId,
         deleted_at: closedAt,
         deleted_message: closedMessage,
       })

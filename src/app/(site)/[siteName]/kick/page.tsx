@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import { Stack, Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
@@ -34,8 +35,22 @@ export default async function Page(context: RouteContext) {
         <div className={`${styles.content} content`}>
           <div className="paper pape-error">
             <NearbyErrorRoundedIcon />
-            <h2>강제 탈퇴 회원</h2>
-            <p>원하시면 재가입이 가능합니다.</p>
+            <h2>강제 탈퇴</h2>
+            <Stack direction="column" gap={1}>
+              <div className="paper">
+                <Typography variant="subtitle2">강제 탈퇴 날짜</Typography>
+                <Typography variant="body2">2027년 6월 12일</Typography>
+              </div>
+              <div className="paper">
+                <Typography variant="subtitle2">강제 탈퇴 사유</Typography>
+                <Typography variant="body2">블라블라</Typography>
+              </div>
+              <div className="paper">
+                <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                <Typography variant="body2">2027년 6월 13일</Typography>
+              </div>
+            </Stack>
+
             {rhizome.site_type === 'community' ? (
               <Anchor href={`/${siteName}/join`} className="button medium submit">
                 가입하기

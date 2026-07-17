@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useParams } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
-import { DialogActions, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
+import { DialogActions, DialogContent, DialogTitle, Drawer, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -55,6 +55,9 @@ export default function UserInfo() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [nickname, setNickname] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
+  const [isWithdrawSubmitting, setIsWithdrawSubmitting] = useState(false);
+  const [withdrawErrorMessage, setWithdrawErrorMessage] = useState('');
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -129,6 +132,54 @@ export default function UserInfo() {
     setNickname(userInfo?.nickname ?? '');
     setDialogErrorMessage('');
     setIsDialogOpen(false);
+  }
+
+  function handleOpenWithdrawDialog() {
+    setWithdrawErrorMessage('');
+    setIsWithdrawDialogOpen(true);
+  }
+
+  function handleCloseWithdrawDialog() {
+    if (isWithdrawSubmitting) {
+      return;
+    }
+
+    setWithdrawErrorMessage('');
+    setIsWithdrawDialogOpen(false);
+  }
+
+  async function handleWithdraw() {
+    if (isWithdrawSubmitting) {
+      return;
+    }
+
+    try {
+      setWithdrawErrorMessage('');
+      setIsWithdrawSubmitting(true);
+
+      const response = await fetch(`/api/users/${siteName}/[userId]`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const result = (await response.json()) as UserInfoResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '커뮤니티 탈퇴에 실패했습니다.');
+      }
+
+      setIsWithdrawDialogOpen(false);
+      setUserInfo(null);
+      setStatus('not_joined');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setWithdrawErrorMessage(unknownError.message || '커뮤니티 탈퇴에 실패했습니다.');
+      } else {
+        setWithdrawErrorMessage('커뮤니티 탈퇴에 실패했습니다.');
+      }
+    } finally {
+      setIsWithdrawSubmitting(false);
+    }
   }
 
   function handleNicknameChange(event: ChangeEvent<HTMLInputElement>) {
@@ -271,6 +322,9 @@ export default function UserInfo() {
           <button type="button" onClick={handleOpenDialog}>
             프로필 설정
           </button>
+          <button type="button" onClick={handleOpenWithdrawDialog}>
+            탈퇴하기
+          </button>
         </div>
       </div>
 
@@ -382,6 +436,87 @@ export default function UserInfo() {
             </button>
             <button type="button" onClick={handleSubmit} disabled={!canSubmit || isSubmitting}>
               확인
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isWithdrawDialogOpen}
+          onClose={handleCloseWithdrawDialog}
+          className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
+        >
+          <h2>커뮤니티 탈퇴</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseWithdrawDialog}
+            disabled={isWithdrawSubmitting}
+            aria-label="커뮤니티 탈퇴 닫기"
+          >
+            <CloseRoundedIcon />
+          </button>
+          <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
+            <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
+            {withdrawErrorMessage ? (
+              <p className="alert error">
+                <span>{withdrawErrorMessage}</span>
+              </p>
+            ) : null}
+          </div>
+
+          <div className={styles['drawer-dialog-actions']}>
+            <button
+              type="button"
+              className="button medium cancel"
+              onClick={handleCloseWithdrawDialog}
+              disabled={isWithdrawSubmitting}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium warning"
+              onClick={handleWithdraw}
+              disabled={isWithdrawSubmitting}
+            >
+              탈퇴하기
+            </button>
+          </div>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isWithdrawDialogOpen}
+          onClose={handleCloseWithdrawDialog}
+          fullWidth
+          maxWidth="xs"
+          className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
+        >
+          <DialogTitle>커뮤니티 탈퇴</DialogTitle>
+
+          <DialogContent className={styles['info-content']}>
+            <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
+
+            {withdrawErrorMessage ? (
+              <p className="alert error">
+                <span>{withdrawErrorMessage}</span>
+              </p>
+            ) : null}
+          </DialogContent>
+
+          <DialogActions>
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={handleCloseWithdrawDialog}
+              disabled={isWithdrawSubmitting}
+            >
+              취소
+            </button>
+
+            <button type="button" className="warning-button" onClick={handleWithdraw} disabled={isWithdrawSubmitting}>
+              탈퇴하기
             </button>
           </DialogActions>
         </Dialog>

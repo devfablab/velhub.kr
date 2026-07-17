@@ -1,4 +1,5 @@
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import { Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
@@ -10,10 +11,19 @@ export default function Page() {
         <div className={`${styles.content} content`}>
           <div className="paper pape-error">
             <NearbyErrorRoundedIcon />
-            <h2>가입 불가 회원</h2>
-            <p>소명은 컨시어지 - 권리보호센터에서 하실 수 있습니다.</p>
+            <h2>가입 불가</h2>
+            <Stack direction="column" gap={1}>
+              <div className="paper">
+                <Typography variant="subtitle2">가입 불가 처리일</Typography>
+                <Typography variant="body2">2027년 6월 12일</Typography>
+              </div>
+              <div className="paper">
+                <Typography variant="subtitle2">가입 불가 사유</Typography>
+                <Typography variant="body2">블라블라</Typography>
+              </div>
+            </Stack>
             <Anchor href="/concierge/rights" className="button medium submit">
-              바로가기
+              소명하기
             </Anchor>
           </div>
         </div>

@@ -227,6 +227,7 @@ export default function Opt() {
   const [dateSearchType, setDateSearchType] = useState<DateSearchType>('approval_at');
   const [dateStartDate, setDateStartDate] = useState<Date | null>(null);
   const [dateEndDate, setDateEndDate] = useState<Date | null>(null);
+  const [kickTerm, setKickTerm] = useState<Date | null>(null);
 
   const [appliedSearch, setAppliedSearch] = useState<AppliedSearch>(null);
   const [selectedLevelId, setSelectedLevelId] = useState('');
@@ -621,6 +622,8 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setKickTerm(null);
+
     setActionType(nextActionType);
   }
 
@@ -631,6 +634,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setKickTerm(null);
     setActionType(null);
   }
 
@@ -692,6 +696,7 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             reason: trimmedReason,
+            kickTerm: actionType === 'kick' && kickTerm ? kickTerm.toISOString() : null,
           }),
         });
 
@@ -706,6 +711,7 @@ export default function Opt() {
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
+      setKickTerm(null);
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -1252,15 +1258,39 @@ export default function Opt() {
 
                 <Stack gap={3}>
                   <Stack gap={2} sx={{ pt: 1 }}>
-                    <TextField
-                      placeholder={getActionReasonLabel()}
-                      value={actionReason}
-                      onChange={(event) => setActionReason(event.currentTarget.value)}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      size="small"
-                    />
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                      <TextField
+                        value={actionReason}
+                        onChange={(event) => setActionReason(event.currentTarget.value)}
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        size="small"
+                      />
+                    </Stack>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                        <DatePicker
+                          value={kickTerm}
+                          onChange={setKickTerm}
+                          format="yyyy년 MM월 dd일"
+                          disabled={isActionSubmitting}
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              size: 'small',
+                            },
+                            popper: {
+                              sx: {
+                                zIndex: 9999,
+                              },
+                            },
+                          }}
+                        />
+                      </Stack>
+                    </LocalizationProvider>
 
                     {dialogErrorMessage ? (
                       <p className="alert error">
@@ -1309,15 +1339,39 @@ export default function Opt() {
 
                 <DialogContent>
                   <Stack gap={2} sx={{ pt: 1 }}>
-                    <TextField
-                      placeholder={getActionReasonLabel()}
-                      value={actionReason}
-                      onChange={(event) => setActionReason(event.currentTarget.value)}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      size="small"
-                    />
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                      <TextField
+                        value={actionReason}
+                        onChange={(event) => setActionReason(event.currentTarget.value)}
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        size="small"
+                      />
+                    </Stack>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                        <DatePicker
+                          value={kickTerm}
+                          onChange={setKickTerm}
+                          format="yyyy년 MM월 dd일"
+                          disabled={isActionSubmitting}
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              size: 'small',
+                            },
+                            popper: {
+                              sx: {
+                                zIndex: 9999,
+                              },
+                            },
+                          }}
+                        />
+                      </Stack>
+                    </LocalizationProvider>
 
                     {dialogErrorMessage ? (
                       <p className="alert error">

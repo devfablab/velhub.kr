@@ -28,12 +28,9 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
-
 import Container from '../../menu';
-
 import styles from '@/app/manage.module.sass';
 
 type TextFieldChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
@@ -47,6 +44,7 @@ type WithdrawnUserRow = {
   processedAt: string | null;
   processedBy: string;
   type: string;
+  kickTerm: string | null;
 };
 
 type WithdrawnUsersResponse = {
@@ -467,7 +465,7 @@ export default function Opt() {
                     />
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일 (별명)</TableCell>
-                  <TableCell>탈퇴 사유</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 사유</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 처리일 (처리자)</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 종류</TableCell>
                 </TableRow>
@@ -488,11 +486,15 @@ export default function Opt() {
                         />
                       </TableCell>
                       <TableCell>{user.displayName}</TableCell>
-                      <TableCell>{user.reason}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'pre-line' }}>{user.reason}</TableCell>
                       <TableCell>
                         {user.processedAt ? `${formatDate(user.processedAt)} (${user.processedBy})` : ''}
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.type}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.type === '강제탈퇴' && user.kickTerm
+                          ? `${user.type} (${formatDate(user.kickTerm)} 재가입 가능)`
+                          : user.type}
+                      </TableCell>
                     </TableRow>
                   );
                 })}

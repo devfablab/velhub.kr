@@ -17,14 +17,17 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
@@ -63,6 +66,7 @@ export default function Opt() {
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
+  const [kickTerm, setKickTerm] = useState<Date | null>(null);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
@@ -163,6 +167,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setKickTerm(null);
     setActionType(nextActionType);
   }
 
@@ -173,6 +178,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setKickTerm(null);
     setActionType(null);
   }
 
@@ -245,6 +251,7 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             reason: trimmedReason,
+            kickTerm: actionType === 'kick' && kickTerm ? kickTerm.toISOString() : null,
           }),
         });
 
@@ -259,6 +266,7 @@ export default function Opt() {
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
+      setKickTerm(null);
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -397,15 +405,41 @@ export default function Opt() {
               <Stack gap={2} sx={{ pt: 1 }}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
-                    <TextField
-                      label={getActionReasonLabel()}
-                      value={actionReason}
-                      onChange={(event) => setActionReason(event.currentTarget.value)}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      size="small"
-                    />
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                      <TextField
+                        value={actionReason}
+                        onChange={(event) => setActionReason(event.currentTarget.value)}
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        size="small"
+                      />
+                    </Stack>
+                  ) : null}
+                  {actionType === 'kick' ? (
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                        <DatePicker
+                          value={kickTerm}
+                          onChange={setKickTerm}
+                          format="yyyy년 MM월 dd일"
+                          disabled={isActionSubmitting}
+                          slotProps={{
+                            textField: {
+                              fullWidth: true,
+                              size: 'small',
+                            },
+                            popper: {
+                              sx: {
+                                zIndex: 9999,
+                              },
+                            },
+                          }}
+                        />
+                      </Stack>
+                    </LocalizationProvider>
                   ) : null}
 
                   {dialogErrorMessage ? (
@@ -451,15 +485,34 @@ export default function Opt() {
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   {actionType === 'kick' || actionType === 'ban' ? (
-                    <TextField
-                      label={getActionReasonLabel()}
-                      value={actionReason}
-                      onChange={(event) => setActionReason(event.currentTarget.value)}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      size="small"
-                    />
+                    <>
+                      <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>
+                      <TextField
+                        value={actionReason}
+                        onChange={(event) => setActionReason(event.currentTarget.value)}
+                        fullWidth
+                        multiline
+                        minRows={4}
+                        size="small"
+                      />
+                    </>
+                  ) : null}
+                  {actionType === 'kick' ? (
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                      <DatePicker
+                        value={kickTerm}
+                        onChange={setKickTerm}
+                        format="yyyy.MM.dd"
+                        disabled={isActionSubmitting}
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
                   ) : null}
 
                   {dialogErrorMessage ? (

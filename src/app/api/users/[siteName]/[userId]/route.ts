@@ -19,10 +19,18 @@ type MembershipRow = {
   is_approval: boolean;
   is_block: boolean;
   block_reason: string | null;
+  blocked_at: string | null;
+  block_count: number | null;
+  kicked_at: string | null;
+  kick_reason: string | null;
+  kick_term: string | null;
+  banned_at: string | null;
+  ban_reason: string | null;
   role: string | null;
   nickname: string | null;
   lv: string | null;
   checkin_count: number | null;
+  withdrawn_at: string | null;
 };
 
 type StigmaRow = {
@@ -280,7 +288,9 @@ async function getSiteUserInfo(siteName: string) {
 
   const membershipResult = await supabaseAdmin
     .from('rhizome_stigmas')
-    .select('id, created_at, user_id, site_id, is_approval, is_block, block_reason, role, nickname, lv, checkin_count')
+    .select(
+      'id, created_at, user_id, site_id, is_approval, is_block, block_reason, blocked_at, block_count, kicked_at, kick_reason, kick_term, banned_at, ban_reason, role, nickname, lv, checkin_count, withdrawn_at',
+    )
     .eq('site_id', site.id)
     .eq('user_id', stigma.id)
     .maybeSingle();
@@ -378,6 +388,16 @@ async function getSiteUserInfo(siteName: string) {
   }
 
   const membership = membershipResult.data as MembershipRow;
+
+  if (membership.withdrawn_at) {
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        status: 'not_joined',
+      },
+    } as const;
+  }
 
   if (site.siteType === 'community' && !membership.is_approval) {
     return {
@@ -497,6 +517,15 @@ async function getSiteUserInfo(siteName: string) {
         postCount,
         commentCount,
         checkinCount: Number(membership.checkin_count ?? 0),
+        kickedAt: membership.kicked_at,
+        kickReason: membership.kick_reason,
+        kickTerm: membership.kick_term,
+        isBlock: membership.is_block,
+        blockReason: membership.is_block ? membership.block_reason : null,
+        blockedAt: membership.is_block ? membership.blocked_at : null,
+        blockCount: Number(membership.block_count ?? 0),
+        bannedAt: membership.banned_at,
+        banReason: membership.ban_reason,
         managerRoles: managerRoles.map((role) => ({
           role,
           label: getManagerRoleLabel(role),
@@ -651,5 +680,127 @@ export async function PATCH(request: Request) {
     }
 
     return Response.json({ error: '별명 수정에 실패했습니다.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  try {
+    const { siteName: rawSiteName } = await context.params;
+    const siteName = normalizeText(rawSiteName).toLowerCase();
+
+    if (!siteName) {
+      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const siteResult = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_type')
+      .eq('site_key', siteName)
+      .maybeSingle();
+
+    if (siteResult.error || !siteResult.data) {
+      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (normalizeText(siteResult.data.site_type) !== 'community') {
+      return Response.json({ error: '커뮤니티에서만 탈퇴할 수 있습니다.' }, { status: 400 });
+    }
+
+    const session = await verifySession({
+      siteId: siteResult.data.id,
+    });
+
+    if (!session.authUserId) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const stigmaResult = await supabaseAdmin
+      .from('stigmas')
+      .select('id')
+      .eq('user_id', session.authUserId)
+      .maybeSingle();
+
+    if (stigmaResult.error || !stigmaResult.data) {
+      return Response.json({ error: '사용자 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const membershipResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id, is_approval, withdrawn_at')
+      .eq('site_id', siteResult.data.id)
+      .eq('user_id', stigmaResult.data.id)
+      .maybeSingle();
+
+    if (membershipResult.error || !membershipResult.data) {
+      return Response.json({ error: '가입 정보를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    if (!membershipResult.data.is_approval || membershipResult.data.withdrawn_at) {
+      return Response.json({ error: '탈퇴할 수 없는 상태입니다.' }, { status: 400 });
+    }
+
+    const updateResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .update({
+        withdrawn_at: new Date().toISOString(),
+      })
+      .eq('id', membershipResult.data.id);
+
+    console.log('updateResult: ', updateResult);
+
+    if (updateResult.error) {
+      return Response.json({ error: '커뮤니티 탈퇴에 실패했습니다.' }, { status: 500 });
+    }
+
+    const closedAt = new Date().toISOString();
+
+    const [postsResult, commentsResult] = await Promise.all([
+      supabaseAdmin
+        .from('posts')
+        .update({
+          is_closed: true,
+          is_locked: true,
+          closed_by: stigmaResult.data.id,
+          closed_at: closedAt,
+          closed_message: '커뮤니티 탈퇴로 인한 삭제',
+        })
+        .eq('site_id', siteResult.data.id)
+        .eq('user_id', session.authUserId),
+      supabaseAdmin
+        .from('post_comments')
+        .update({
+          is_deleted: true,
+          is_locked: true,
+          deleted_by: session.authUserId,
+          deleted_at: closedAt,
+          deleted_message: '커뮤니티 탈퇴로 인한 삭제',
+        })
+        .eq('site_id', siteResult.data.id)
+        .eq('user_id', session.authUserId),
+    ]);
+
+    console.log('commentsResult: ', commentsResult);
+
+    if (postsResult.error) {
+      return Response.json({ error: '작성한 글 삭제 처리에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (commentsResult.error) {
+      return Response.json({ error: '작성한 댓글 삭제 처리에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      ok: true,
+      status: 'not_joined',
+    });
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      console.log('unknownError: ', unknownError);
+      return Response.json({ error: unknownError.message || '커뮤니티 탈퇴에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({ error: '커뮤니티 탈퇴에 실패했습니다.' }, { status: 500 });
   }
 }

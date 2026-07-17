@@ -13,6 +13,7 @@ type RouteContext = {
 
 type PatchRequestBody = {
   reason?: string | null;
+  kickTerm?: string | null;
 };
 
 type DeleteRequestBody = {
@@ -27,6 +28,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     const siteName = normalizeText(rawSiteName).toLowerCase();
     const userId = normalizeText(rawUserId);
     const reason = normalizeText(requestBody.reason);
+
+    const normalizedKickTerm = normalizeText(requestBody.kickTerm);
+    const parsedKickTerm = normalizedKickTerm ? new Date(normalizedKickTerm) : null;
+
+    if (parsedKickTerm && Number.isNaN(parsedKickTerm.getTime())) {
+      return Response.json({ error: '재가입 가능 날짜가 유효하지 않습니다.' }, { status: 400 });
+    }
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -62,6 +70,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         kicked_at: new Date().toISOString(),
         kicked_by: access.session.stigmaId,
         kick_reason: reason,
+        kick_term: parsedKickTerm?.toISOString() ?? null,
         cleared_at: null,
         cleared_by: null,
         clear_reason: null,
@@ -148,6 +157,7 @@ export async function DELETE(request: Request, context: RouteContext) {
         kicked_at: null,
         kicked_by: null,
         kick_reason: null,
+        kick_term: null,
         cleared_at: new Date().toISOString(),
         cleared_by: access.session.stigmaId,
         clear_reason: reason,

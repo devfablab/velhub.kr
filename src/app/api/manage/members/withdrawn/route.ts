@@ -14,14 +14,15 @@ type MembershipRow = {
   kicked_at?: string | null;
   kicked_by?: string | null;
   kick_reason?: string | null;
+  kick_term?: string | null;
+  banned_at?: string | null;
+  banned_by?: string | null;
+  ban_reason?: string | null;
   withdrawn_at?: string | null;
   withdraw_reason?: string | null;
   cleared_at?: string | null;
   cleared_by?: string | null;
   clear_reason?: string | null;
-  banned_at?: string | null;
-  banned_by?: string | null;
-  ban_reason?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -108,6 +109,7 @@ export async function GET(request: Request) {
             reason: normalizeText(typedMembership.kick_reason) || '',
             processedAt: typedMembership.kicked_at,
             processedBy: getStigmaDisplayName(kickedByUser),
+            kickTerm: typedMembership.kick_term ?? null,
             type: '강제탈퇴',
           };
         }
@@ -118,7 +120,7 @@ export async function GET(request: Request) {
           reason: normalizeText(typedMembership.withdraw_reason) || '',
           processedAt: typedMembership.withdrawn_at ?? null,
           processedBy: nickname || email,
-          type: '일반탈퇴',
+          type: '임의탈퇴',
         };
       }),
     });
