@@ -2,6 +2,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{
@@ -66,6 +68,119 @@ type RequestBody = {
   drawLimit?: number | null;
   drawEndsAt?: string | null;
 };
+
+type SubscriptionNotificationRow = {
+  user_id: string;
+  send_user_id: string;
+  send_site_id: string;
+  send_board_id: string;
+  send_series_id: string | null;
+  send_post_id: string;
+  notification_type:
+    | typeof NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST
+    | typeof NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST;
+  is_read: boolean;
+};
+
+async function createCommunitySubscriptionPostNotifications({
+  supabaseAdmin,
+  siteId,
+  boardId,
+  isBoardSubscription,
+  seriesId,
+  postId,
+  authorUserId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  siteId: string;
+  boardId: string;
+  isBoardSubscription: boolean;
+  seriesId: string | null;
+  postId: string;
+  authorUserId: string;
+}) {
+  const notificationRows: SubscriptionNotificationRow[] = [];
+
+  if (isBoardSubscription) {
+    const boardSubscriptionsResult = await supabaseAdmin
+      .from('subscriptions')
+      .select('subscriber_user_id')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
+      .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
+      .eq('target_id', boardId)
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .is('expired_at', null);
+
+    if (boardSubscriptionsResult.error) {
+      throw new Error(`게시판 구독자 조회 실패: ${boardSubscriptionsResult.error.message}`);
+    }
+
+    const recipientUserIds = [
+      ...new Set(
+        (boardSubscriptionsResult.data ?? [])
+          .map((subscription) => normalizeText(subscription.subscriber_user_id))
+          .filter((userId) => userId && userId !== authorUserId),
+      ),
+    ];
+
+    notificationRows.push(
+      ...recipientUserIds.map((userId) => ({
+        user_id: userId,
+        send_user_id: authorUserId,
+        send_site_id: siteId,
+        send_board_id: boardId,
+        send_series_id: null,
+        send_post_id: postId,
+        notification_type: NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST,
+        is_read: false,
+      })),
+    );
+  }
+
+  if (seriesId) {
+    const seriesSubscriptionsResult = await supabaseAdmin
+      .from('subscriptions')
+      .select('subscriber_user_id')
+      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+      .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+      .eq('target_id', seriesId)
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+      .is('expired_at', null);
+
+    if (seriesSubscriptionsResult.error) {
+      throw new Error(`연재 구독자 조회 실패: ${seriesSubscriptionsResult.error.message}`);
+    }
+
+    const recipientUserIds = [
+      ...new Set(
+        (seriesSubscriptionsResult.data ?? [])
+          .map((subscription) => normalizeText(subscription.subscriber_user_id))
+          .filter((userId) => userId && userId !== authorUserId),
+      ),
+    ];
+
+    notificationRows.push(
+      ...recipientUserIds.map((userId) => ({
+        user_id: userId,
+        send_user_id: authorUserId,
+        send_site_id: siteId,
+        send_board_id: boardId,
+        send_series_id: seriesId,
+        send_post_id: postId,
+        notification_type: NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST,
+        is_read: false,
+      })),
+    );
+  }
+
+  if (notificationRows.length === 0) return;
+
+  const notificationResult = await supabaseAdmin.from('notifications').insert(notificationRows);
+
+  if (notificationResult.error) {
+    throw new Error(`커뮤니티 새 글 알림 생성 실패: ${notificationResult.error.message}`);
+  }
+}
 
 function normalizePublishedAt(value: unknown) {
   if (typeof value !== 'string') {
@@ -555,7 +670,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, site_id, post_type')
+      .select('id, board_key, board_type, site_id, post_type, is_subscription')
       .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -1023,6 +1138,22 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updatePost.error || !updatePost.data) {
       return Response.json({ error: '글 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (
+      action === 'publish' &&
+      rhizomeData.site_type === 'community' &&
+      currentPost.data.published_status !== 'published'
+    ) {
+      await createCommunitySubscriptionPostNotifications({
+        supabaseAdmin,
+        siteId: rhizomeData.id,
+        boardId: board.data.id,
+        isBoardSubscription: board.data.is_subscription === true,
+        seriesId,
+        postId: updatePost.data.id,
+        authorUserId: currentPost.data.user_id,
+      });
     }
 
     const postCountResult = await supabaseAdmin
