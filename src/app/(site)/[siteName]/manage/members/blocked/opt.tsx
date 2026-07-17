@@ -484,6 +484,7 @@ export default function Opt() {
               </button>
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1 }}>
+                  {actionType === 'unblock' ? <Typography variant="subtitle2">활동정지를 해제합니다</Typography> : null}
                   {actionType === 'kick' || actionType === 'ban' ? (
                     <>
                       <Typography variant="subtitle2">{getActionReasonLabel()}</Typography>

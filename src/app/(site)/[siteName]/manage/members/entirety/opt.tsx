@@ -1269,28 +1269,30 @@ export default function Opt() {
                         size="small"
                       />
                     </Stack>
-                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                      <Stack gap={1}>
-                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
-                        <DatePicker
-                          value={kickTerm}
-                          onChange={setKickTerm}
-                          format="yyyy년 MM월 dd일"
-                          disabled={isActionSubmitting}
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              size: 'small',
-                            },
-                            popper: {
-                              sx: {
-                                zIndex: 9999,
+                    {actionType === 'kick' ? (
+                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                        <Stack gap={1}>
+                          <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                          <DatePicker
+                            value={kickTerm}
+                            onChange={setKickTerm}
+                            format="yyyy년 MM월 dd일"
+                            disabled={isActionSubmitting}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                size: 'small',
                               },
-                            },
-                          }}
-                        />
-                      </Stack>
-                    </LocalizationProvider>
+                              popper: {
+                                sx: {
+                                  zIndex: 9999,
+                                },
+                              },
+                            }}
+                          />
+                        </Stack>
+                      </LocalizationProvider>
+                    ) : null}
 
                     {dialogErrorMessage ? (
                       <p className="alert error">
@@ -1350,28 +1352,30 @@ export default function Opt() {
                         size="small"
                       />
                     </Stack>
-                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                      <Stack gap={1}>
-                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
-                        <DatePicker
-                          value={kickTerm}
-                          onChange={setKickTerm}
-                          format="yyyy년 MM월 dd일"
-                          disabled={isActionSubmitting}
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              size: 'small',
-                            },
-                            popper: {
-                              sx: {
-                                zIndex: 9999,
+                    {actionType === 'kick' ? (
+                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                        <Stack gap={1}>
+                          <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                          <DatePicker
+                            value={kickTerm}
+                            onChange={setKickTerm}
+                            format="yyyy년 MM월 dd일"
+                            disabled={isActionSubmitting}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                size: 'small',
                               },
-                            },
-                          }}
-                        />
-                      </Stack>
-                    </LocalizationProvider>
+                              popper: {
+                                sx: {
+                                  zIndex: 9999,
+                                },
+                              },
+                            }}
+                          />
+                        </Stack>
+                      </LocalizationProvider>
+                    ) : null}
 
                     {dialogErrorMessage ? (
                       <p className="alert error">

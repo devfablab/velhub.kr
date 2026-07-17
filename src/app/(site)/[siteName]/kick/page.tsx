@@ -1,33 +1,60 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Stack, Typography } from '@mui/material';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
+import { formatDate, normalizeText } from '@/lib/utils';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
-type RouteContext = {
-  params: Promise<{
-    siteName: string;
-  }>;
+type UserInfoData = {
+  kickedAt: string | null;
+  kickReason: string | null;
+  kickTerm: string | null;
 };
 
-export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
-  const supabaseAdmin = getSupabaseAdmin();
-  const rhizomeResult = await supabaseAdmin
-    .from('rhizomes')
-    .select(
-      'id, created_at, site_label, profile_picture, summary, site_type, plan_type, visibility_type, theme_type, is_shutdown',
-    )
-    .eq('site_key', siteName)
-    .maybeSingle();
+type UserInfoResponse = {
+  userInfo?: UserInfoData;
+  error?: string;
+};
 
-  if (rhizomeResult.error || !rhizomeResult.data) {
-    notFound();
-  }
+export default function Page() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName).toLowerCase();
+  const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const rhizome = rhizomeResult.data;
+  useEffect(() => {
+    if (!siteName) return;
+
+    async function loadUserInfo() {
+      try {
+        setErrorMessage('');
+
+        const response = await fetch(`/api/users/${siteName}/[userId]`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const result = (await response.json()) as UserInfoResponse;
+
+        if (!response.ok || !result.userInfo) {
+          throw new Error(result.error ?? '강제 탈퇴 정보를 불러오지 못했습니다.');
+        }
+
+        setUserInfo(result.userInfo);
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '강제 탈퇴 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('강제 탈퇴 정보를 불러오지 못했습니다.');
+        }
+      }
+    }
+
+    void loadUserInfo();
+  }, [siteName]);
 
   return (
     <Container>
@@ -36,25 +63,39 @@ export default async function Page(context: RouteContext) {
           <div className="paper pape-error">
             <NearbyErrorRoundedIcon />
             <h2>강제 탈퇴</h2>
-            <Stack direction="column" gap={1}>
-              <div className="paper">
-                <Typography variant="subtitle2">강제 탈퇴 날짜</Typography>
-                <Typography variant="body2">2027년 6월 12일</Typography>
-              </div>
-              <div className="paper">
-                <Typography variant="subtitle2">강제 탈퇴 사유</Typography>
-                <Typography variant="body2">블라블라</Typography>
-              </div>
-              <div className="paper">
-                <Typography variant="subtitle2">재가입 가능 날짜</Typography>
-                <Typography variant="body2">2027년 6월 13일</Typography>
-              </div>
-            </Stack>
 
-            {rhizome.site_type === 'community' ? (
-              <Anchor href={`/${siteName}/join`} className="button medium submit">
-                가입하기
-              </Anchor>
+            {errorMessage ? (
+              <p className="alert error">
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+
+            {userInfo ? (
+              <Stack direction="column" gap={1}>
+                <div className="paper">
+                  <Typography variant="subtitle2">강제 탈퇴 날짜</Typography>
+                  <Typography variant="body2">{formatDate(userInfo.kickedAt)}</Typography>
+                </div>
+                <div className="paper">
+                  <Typography variant="subtitle2">강제 탈퇴 사유</Typography>
+                  <Typography variant="body2">{normalizeText(userInfo.kickReason)}</Typography>
+                </div>
+                <div className="paper">
+                  <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                  <Typography variant="body2">
+                    {userInfo.kickTerm ? formatDate(userInfo.kickTerm) : '가입 가능'}
+                  </Typography>
+                </div>
+              </Stack>
+            ) : null}
+            {userInfo ? (
+              <>
+                {!userInfo.kickTerm || new Date(userInfo.kickTerm).getTime() <= Date.now() ? (
+                  <Anchor href={`/${siteName}/join`} className="button medium submit">
+                    가입하기
+                  </Anchor>
+                ) : null}
+              </>
             ) : null}
           </div>
         </div>

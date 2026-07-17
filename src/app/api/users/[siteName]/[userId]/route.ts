@@ -415,7 +415,10 @@ async function getSiteUserInfo(siteName: string) {
       status: 200,
       data: {
         status: 'blocked',
-        blockReason: normalizeText(membership.block_reason) || '등록된 사유가 없습니다.',
+        isBlock: true,
+        blockReason: normalizeText(membership.block_reason),
+        blockedAt: membership.blocked_at,
+        blockCount: Number(membership.block_count ?? 0),
       },
     } as const;
   }
