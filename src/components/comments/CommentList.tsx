@@ -27,6 +27,7 @@ type CommentsResponse = {
   comments?: CommentData[];
   mySelfAvatarUrl?: string;
   myPollChoice?: PollChoice | null;
+  isStaff: string;
   actions?: {
     canWrite?: boolean;
     canManageComment?: boolean;
@@ -97,6 +98,7 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
   const [canWrite, setCanWrite] = useState(false);
   const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(null);
   const [canManageComment, setCanManageComment] = useState(false);
+  const [isStaff, setIsStaff] = useState('');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,6 +118,8 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
       if (!response.ok) {
         throw new Error(result.error ?? '댓글 목록을 불러오지 못했습니다.');
       }
+
+      setIsStaff(result.isStaff);
 
       setComments(Array.isArray(result.comments) ? result.comments : []);
       setMySelfAvatarUrl(result.mySelfAvatarUrl ?? '');
@@ -416,6 +420,7 @@ export default function CommentList({ siteName, boardName, contentId, isCommentE
               siteName={siteName}
               boardName={boardName}
               contentId={contentId}
+              isStaff={isStaff}
               comment={comment}
               avatarUrl={mySelfAvatarUrl}
               myPollChoiceLabel={myPollChoice?.label ?? ''}

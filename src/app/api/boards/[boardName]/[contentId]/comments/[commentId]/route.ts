@@ -1163,3 +1163,127 @@ export async function PATCH(request: Request, context: RouteContext) {
     return Response.json({ error: '댓글 수정에 실패했습니다.2' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request, context: RouteContext) {
+  try {
+    const { boardName, contentId, commentId } = await context.params;
+    const normalizedBoardName = normalizeText(boardName).toLowerCase();
+    const normalizedContentId = normalizeText(contentId);
+    const normalizedCommentId = normalizeText(commentId);
+    const requestUrl = new URL(request.url);
+    const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+
+    if (!siteName) {
+      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedBoardName) {
+      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedContentId) {
+      return Response.json({ error: 'contentId가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (!normalizedCommentId) {
+      return Response.json({ error: 'commentId가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
+
+    if (siteResult.error || !siteResult.data) {
+      return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const boardResult = await supabaseAdmin
+      .from('boards')
+      .select('id')
+      .eq('site_id', siteResult.data.id)
+      .eq('board_key', normalizedBoardName)
+      .maybeSingle();
+
+    if (boardResult.error || !boardResult.data) {
+      return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const postResult = await supabaseAdmin
+      .from('posts')
+      .select('id')
+      .eq('site_id', siteResult.data.id)
+      .eq('board_id', boardResult.data.id)
+      .eq('id', normalizedContentId)
+      .maybeSingle();
+
+    if (postResult.error || !postResult.data) {
+      return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const session = await verifySession({
+      siteId: siteResult.data.id,
+    });
+
+    if (!session.authUserId) {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const commentResult = await supabaseAdmin
+      .from('post_comments')
+      .select('id, user_id, is_deleted, is_locked')
+      .eq('id', normalizedCommentId)
+      .eq('site_id', siteResult.data.id)
+      .eq('board_id', boardResult.data.id)
+      .eq('post_id', postResult.data.id)
+      .maybeSingle();
+
+    if (commentResult.error || !commentResult.data) {
+      return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const isCommentAuthor = commentResult.data.user_id === session.authUserId;
+    const isStaff = session.case === 'staff' || session.case === 'admin';
+
+    if (!isCommentAuthor && !isStaff) {
+      return Response.json({ error: '댓글을 삭제할 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (commentResult.data.is_deleted) {
+      return Response.json({ error: '이미 삭제 처리된 댓글입니다.' }, { status: 400 });
+    }
+
+    if (commentResult.data.is_locked && !isStaff) {
+      return Response.json({ error: '잠긴 댓글은 삭제할 수 없습니다.' }, { status: 403 });
+    }
+
+    const deletedAt = new Date().toISOString();
+
+    const deleteResult = await supabaseAdmin
+      .from('post_comments')
+      .update({
+        is_deleted: true,
+        is_locked: false,
+        deleted_by: session.authUserId,
+        deleted_at: deletedAt,
+        deleted_message: isStaff ? '매니저에 의한 삭제' : '작성자에 의한 삭제',
+      })
+      .eq('id', normalizedCommentId)
+      .select('id, is_deleted, is_locked, deleted_at')
+      .maybeSingle();
+
+    if (deleteResult.error || !deleteResult.data) {
+      return Response.json({ error: '댓글 삭제에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({
+      ok: true,
+      comment: deleteResult.data,
+    });
+  } catch (unknownError) {
+    if (unknownError instanceof Error) {
+      return Response.json({ error: unknownError.message || '댓글 삭제에 실패했습니다.' }, { status: 500 });
+    }
+
+    return Response.json({ error: '댓글 삭제에 실패했습니다.' }, { status: 500 });
+  }
+}

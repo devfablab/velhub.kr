@@ -63,6 +63,7 @@ export type CommentData = {
   deleted_at: string | null;
   deleted_by: string | null;
   is_blinded: boolean;
+  is_locked: boolean;
   blinded_at: string | null;
   blinded_by: string | null;
   blinded_message: string | null;
@@ -88,6 +89,7 @@ type Props = {
   siteName: string;
   boardName: string;
   contentId: string;
+  isStaff: string;
   comment: CommentData;
   depth?: 0 | 1;
   activeReplyTargetId: string;
@@ -148,6 +150,7 @@ export default function CommentItem({
   siteName,
   boardName,
   contentId,
+  isStaff,
   comment,
   depth = 0,
   activeReplyTargetId,
@@ -178,7 +181,7 @@ export default function CommentItem({
     if (confirmAction === 'delete') {
       return {
         title: '댓글 삭제',
-        content: '정말로 댓글을 삭제하시겠습니까?\n삭제된 댓글은 복구할 수 없습니다.',
+        content: '정말로 댓글을 삭제하시겠습니까?\n삭제된 댓글은 매니저만 복구할 수 있습니다.',
         confirmLabel: '삭제',
         confirmClassName: 'delete-button',
         onConfirm: async () => {
@@ -275,8 +278,12 @@ export default function CommentItem({
           {comment.is_author ? <span className={styles['author-type']}>글 작성자</span> : null}
           {comment.is_me ? <span className={styles['author-type']}>본인</span> : null}
 
-          {comment.is_deleted ? <span className={styles['comment-status']}>삭제된 댓글</span> : null}
-          {comment.is_blinded ? <span className={styles['comment-status']}>숨겨진 댓글</span> : null}
+          {isStaff ? (
+            <>
+              {comment.is_deleted ? <span className={styles['comment-status']}>삭제된 댓글</span> : null}
+              {comment.is_locked ? <span className={styles['comment-status']}>복구 불가</span> : null}
+            </>
+          ) : null}
           <ReportButton
             targetType="comment"
             siteName={siteName}
@@ -330,21 +337,9 @@ export default function CommentItem({
             </button>
           ) : null}
 
-          {comment.can_delete ? (
+          {comment.can_delete || isStaff ? (
             <button type="button" onClick={() => setConfirmAction('delete')} disabled={isSubmitting}>
               삭제
-            </button>
-          ) : null}
-
-          {comment.can_blind ? (
-            <button type="button" onClick={() => setConfirmAction('blind')} disabled={isSubmitting}>
-              댓글 숨김
-            </button>
-          ) : null}
-
-          {comment.can_unblind ? (
-            <button type="button" onClick={() => setConfirmAction('unblind')} disabled={isSubmitting}>
-              댓글 숨김 취소
             </button>
           ) : null}
         </div>
@@ -361,13 +356,14 @@ export default function CommentItem({
           />
         ) : null}
 
-        {depth === 0 && comment.replies.length > 0 ? (
+        {depth === 0 && comment.replies.length > 0 && comment.can_edit ? (
           <div className={styles['comment-replies']}>
             {comment.replies.map((reply) => (
               <CommentItem
                 siteName={siteName}
                 boardName={boardName}
                 contentId={contentId}
+                isStaff={isStaff}
                 key={reply.id}
                 comment={reply}
                 depth={1}

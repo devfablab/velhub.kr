@@ -50,6 +50,7 @@ type CommentRow = {
   reply_to_id: string | null;
   content: string;
   is_deleted: boolean;
+  is_locked: boolean;
   deleted_at: string | null;
   deleted_by: string | null;
   is_blinded: boolean;
@@ -67,6 +68,7 @@ type CommentItem = {
   reply_to_author_name: string;
   content: string;
   is_deleted: boolean;
+  is_locked: boolean;
   deleted_at: string | null;
   deleted_by: string | null;
   is_blinded: boolean;
@@ -675,6 +677,7 @@ async function buildCommentItem({
     is_deleted: isDeleted,
     deleted_at: comment.deleted_at,
     deleted_by: comment.deleted_by,
+    is_locked: comment.is_locked,
     is_blinded: isBlinded,
     blinded_at: comment.blinded_at,
     blinded_by: comment.blinded_by,
@@ -780,7 +783,7 @@ export async function GET(request: Request, context: RouteContext) {
     const commentsResult = await supabaseAdmin
       .from('post_comments')
       .select(
-        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message',
+        'id, created_at, site_id, board_id, post_id, user_id, parent_id, reply_to_id, content, is_deleted, deleted_at, deleted_by, is_blinded, blinded_at, blinded_by, blinded_message, is_locked',
       )
       .eq('site_id', target.data.siteId)
       .eq('board_id', target.data.boardId)
@@ -901,10 +904,13 @@ export async function GET(request: Request, context: RouteContext) {
       canWriteReason = 'hidden';
     }
 
+    const isStaff = session.case === 'staff' || session.case === 'admin';
+
     return Response.json({
       comments: groupComments(commentItems),
       mySelfAvatarUrl,
       myPollChoice,
+      isStaff,
       actions: {
         canWrite,
         canWriteReason,
