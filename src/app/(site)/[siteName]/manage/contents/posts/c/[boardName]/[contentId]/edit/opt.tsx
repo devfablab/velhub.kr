@@ -16,11 +16,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -52,6 +49,8 @@ type ContentResponse = {
     slug: string;
     subject: string | null;
     summary: string | null;
+    is_closed: boolean;
+    is_locked: boolean;
     content_html: string | null;
     content_markdown: string | null;
     content_simple?: string | null;
@@ -94,6 +93,8 @@ type ContentResponse = {
     id: string;
     prefix_label: string;
   }>;
+  isAuthor: boolean;
+  isStaff: boolean;
   error?: string;
 };
 
@@ -297,6 +298,10 @@ export default function Opt() {
   const [prefixList, setPrefixList] = useState<Array<{ id: string; prefix_label: string }>>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
+  const [isClosed, setIsClosed] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [subject, setSubject] = useState('');
   const [summary, setSummary] = useState('');
   const [contentHtml, setContentHtml] = useState('');
@@ -368,6 +373,10 @@ export default function Opt() {
         setBoardType(nextBoardType);
         setPostType(nextPostType);
         setMarkdownStatus(nextMarkdownStatus);
+        setIsAuthor(contentResult.isAuthor);
+        setIsStaff(contentResult.isStaff);
+        setIsClosed(nextContent.is_closed);
+        setIsLocked(nextContent.is_locked);
         setSubject(nextContent.subject ?? '');
         setSummary(nextContent.summary ?? '');
         setContentHtml(nextContent.content_html ?? '');
@@ -846,6 +855,29 @@ export default function Opt() {
                 <LoadingIndicator />
               </div>
             </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  const canEdit = (isAuthor && !isClosed) || (isStaff && !isLocked);
+
+  if (!canEdit) {
+    return (
+      <Container
+        pageTitle="콘텐츠 관리"
+        pageBack={`/${siteName}/manage/contents/posts/c/${boardName}/${contentId}`}
+        menu="contents"
+      >
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <div className={`paper paper-error ${styles.paper}`}>수정하실 수 없습니다.</div>
+            <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
+              <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
+                목록
+              </Anchor>
+            </Stack>
           </div>
         </div>
       </Container>

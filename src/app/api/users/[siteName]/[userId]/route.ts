@@ -765,7 +765,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
         .update({
           is_closed: true,
           is_locked: true,
-          closed_by: stigmaResult.data.id,
+          closed_by: session.authUserId,
           closed_at: closedAt,
           closed_message: '커뮤니티 탈퇴로 인한 삭제',
         })
@@ -785,6 +785,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     ]);
 
     console.log('commentsResult: ', commentsResult);
+    console.log('postsResult: ', postsResult);
 
     if (postsResult.error) {
       return Response.json({ error: '작성한 글 삭제 처리에 실패했습니다.' }, { status: 500 });

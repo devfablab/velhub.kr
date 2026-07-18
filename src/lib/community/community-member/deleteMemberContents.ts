@@ -59,6 +59,7 @@ export async function deleteMemberContents({
       .eq('site_id', siteId)
       .eq('user_id', memberUserId),
   ]);
+  console.log('postsResult: ', postsResult);
 
   if (postsResult.error) {
     throw new Error('작성한 글 삭제 처리에 실패했습니다.');

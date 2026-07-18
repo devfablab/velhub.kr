@@ -305,6 +305,8 @@ export async function getPostList({
 
     if (!isStaff) {
       postsQuery = postsQuery.eq('is_closed', false);
+    } else if (authUserId) {
+      postsQuery = postsQuery.or(`is_closed.eq.false,user_id.neq.${authUserId}`);
     }
 
     const nowIsoString = new Date().toISOString();

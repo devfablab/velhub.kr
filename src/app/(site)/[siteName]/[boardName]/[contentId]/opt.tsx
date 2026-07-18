@@ -194,6 +194,7 @@ type PostContent = {
   user_id: string;
   created_at: string;
   is_closed: boolean;
+  is_locked: boolean;
   closed_message: string | null;
   published_status: 'draft' | 'published' | 'unknown';
   published_at: string | null;
@@ -574,8 +575,8 @@ export default function Opt({ isCommunity }: Props) {
         setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
         setPreviousPost(result.previousPost ?? null);
         setNextPost(result.nextPost ?? null);
-        setIsAuthor(result.isAuthor === true);
-        setIsStaff(result.isStaff === true);
+        setIsAuthor(result.isAuthor);
+        setIsStaff(result.isStaff);
         setSelectedCategory(result.selectedCategory ?? null);
         setDraw(result.draw ?? null);
         setIsLiked(result.postActions?.isLiked === true);
@@ -719,7 +720,7 @@ export default function Opt({ isCommunity }: Props) {
     );
   }
 
-  const canEdit = isAuthor || isStaff;
+  const canEdit = (isAuthor && !content.is_closed) || (isStaff && !content.is_locked);
   const isBasicBoard = board.board_type === 'basic';
   const isBlogBoard = board.board_type === 'blog';
   const isGalleryBoard = board.board_type === 'gallery';
@@ -1007,6 +1008,7 @@ export default function Opt({ isCommunity }: Props) {
                         <PushPinRoundedIcon />
                       </i>
                     ) : null}
+                    {content.is_closed ? <small>(삭제글)</small> : null}
                     {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
                     {series ? (
                       <small>

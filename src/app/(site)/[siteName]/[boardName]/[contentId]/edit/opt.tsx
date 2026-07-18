@@ -101,14 +101,16 @@ type ContentResponse = {
     published_status: 'draft' | 'published';
     is_comment: boolean;
     is_pin: boolean;
+    is_closed: boolean;
+    is_locked: boolean;
     draw_type: 'first_come' | 'random' | null;
     draw_limit: number | null;
     draw_ends_at: string | null;
   };
   prefixes?: PrefixRow[];
   series?: SeriesRow | null;
-  isAuthor?: boolean;
-  isStaff?: boolean;
+  isAuthor: boolean;
+  isStaff: boolean;
   error?: string;
 };
 
@@ -670,6 +672,10 @@ export default function Opt({ isCommunity }: Props) {
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [isClosed, setIsClosed] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
   const [subject, setSubject] = useState('');
   const [subjectPaddingLeft, setSubjectPaddingLeft] = useState(12);
   const [summary, setSummary] = useState('');
@@ -842,7 +848,11 @@ export default function Opt({ isCommunity }: Props) {
         setBoard(result.board);
         setBoardType(result.board.board_type === 'page' ? 'basic' : result.board.board_type);
         setPostType(result.board.post_type ?? 'none');
+        setIsAuthor(result.isAuthor);
+        setIsStaff(result.isStaff);
         setSubject(result.content.subject ?? '');
+        setIsClosed(result.content.is_closed);
+        setIsLocked(result.content.is_locked);
         setSummary(result.content.summary ?? '');
         setContentHtml(result.content.content_html ?? '');
         setContentMarkdown(result.content.content_markdown ?? '');
@@ -1863,6 +1873,23 @@ export default function Opt({ isCommunity }: Props) {
             <div className="paper pape-error">
               <NearbyErrorRoundedIcon />
               <p>페이지를 찾을 수 없어요! 🥹</p>
+            </div>
+          </div>
+        </div>
+      </Container>
+    );
+  }
+
+  const canEdit = (isAuthor && !isClosed) || (isStaff && !isLocked);
+
+  if (!canEdit) {
+    return (
+      <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
+        <div className="container">
+          <div className={`${styles.content} content`}>
+            <div className="paper pape-error">
+              <NearbyErrorRoundedIcon />
+              <p>접근권한이 없어요 🥹</p>
             </div>
           </div>
         </div>

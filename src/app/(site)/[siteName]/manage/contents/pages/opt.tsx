@@ -162,7 +162,7 @@ export default function Opt() {
     try {
       await Promise.all(
         reorderedPages.map(async (page: PageRow) => {
-          const response = await fetch(`/api/boards/${boardName}/${page.slug}/order`, {
+          const response = await fetch(`/api/boards/${boardName}/${page.slug}/order?siteName=${siteName}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',

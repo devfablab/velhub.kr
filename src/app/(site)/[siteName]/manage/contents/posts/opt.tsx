@@ -576,7 +576,7 @@ export default function Opt() {
       setErrorMessage('');
       setIsOrderingBoards(true);
 
-      const response = await fetch(`/api/boards/${siteName}/order`, {
+      const response = await fetch(`/api/boards/${boardName}/order?siteName=${siteName}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

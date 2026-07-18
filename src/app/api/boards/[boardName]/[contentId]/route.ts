@@ -1098,7 +1098,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', boardData.id)
@@ -1113,11 +1113,15 @@ export async function GET(request: Request, context: RouteContext) {
 
     const isAuthor = Boolean(session.authUserId) && postData.user_id === session.authUserId;
 
-    if (postData.published_status === 'draft' && !isAuthor) {
-      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (postData.is_closed === true && isAuthor) {
+      return NextResponse.json({ error: '삭제된 글입니다.' }, { status: 400 });
     }
 
     if (postData.is_closed === true && !isStaff) {
+      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (postData.published_status === 'draft' && !isAuthor) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -1384,6 +1388,8 @@ export async function GET(request: Request, context: RouteContext) {
         post_count: postCount,
         comment_provider: commentProvider,
         giscus_settings: giscusSettings,
+        is_closed: postData.is_closed,
+        is_locked: postData.is_locked,
         is_purchase_required: paidContentAccess.is_purchase_required,
         purchase_post_price: paidContentAccess.purchase_post_price,
         has_subscription_board: paidContentAccess.has_subscription_board,
