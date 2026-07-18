@@ -909,7 +909,7 @@ export default function Opt({ isCommunity }: Props) {
               </p>
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
               <Stack direction="row" spacing={1.5}>
-                <button type="button" className="button medium" onClick={() => setDeleteDialogOpen(false)}>
+                <button type="button" className="button medium cancel" onClick={() => setDeleteDialogOpen(false)}>
                   취소
                 </button>
                 <button
@@ -926,6 +926,9 @@ export default function Opt({ isCommunity }: Props) {
         ) : (
           <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} className="VhiDialog">
             <DialogTitle>글 삭제</DialogTitle>
+            <button className="close-button" onClick={() => setDeleteDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
             <DialogContent>
               <p>
                 정말로 글을 삭제하시겠습니까?
@@ -935,7 +938,7 @@ export default function Opt({ isCommunity }: Props) {
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
             </DialogContent>
             <DialogActions>
-              <button type="button" className="button medium" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
