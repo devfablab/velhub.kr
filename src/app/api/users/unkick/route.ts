@@ -30,6 +30,7 @@ export async function GET(request: Request) {
         kicked_at: null,
         kicked_by: null,
         kick_term: null,
+        is_rejoin: true,
       })
       .not('kicked_at', 'is', null)
       .not('kick_term', 'is', null)

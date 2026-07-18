@@ -161,6 +161,7 @@ export async function DELETE(request: Request, context: RouteContext) {
         cleared_at: new Date().toISOString(),
         cleared_by: access.session.stigmaId,
         clear_reason: reason,
+        is_rejoin: true,
       })
       .eq('id', membershipResult.membership.id);
 

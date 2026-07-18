@@ -748,10 +748,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
       .from('rhizome_stigmas')
       .update({
         withdrawn_at: new Date().toISOString(),
+        is_rejoin: true,
       })
       .eq('id', membershipResult.data.id);
-
-    console.log('updateResult: ', updateResult);
 
     if (updateResult.error) {
       return Response.json({ error: '커뮤니티 탈퇴에 실패했습니다.' }, { status: 500 });
