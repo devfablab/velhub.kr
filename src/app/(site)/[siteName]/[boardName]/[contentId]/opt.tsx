@@ -15,6 +15,7 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import {
   Accordion,
   AccordionDetails,
@@ -369,6 +370,9 @@ export default function Opt({ isCommunity }: Props) {
   const [nextPost, setNextPost] = useState<AdjacentPost | null>(null);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -549,6 +553,44 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
+  async function deletePost() {
+    if (isDeletingPost) return;
+
+    try {
+      setIsDeletingPost(true);
+      setDeleteErrorMessage('');
+
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/delete?siteName=${siteName}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'close',
+        }),
+      });
+
+      const result = (await response.json()) as {
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '글을 삭제하지 못했습니다.');
+      }
+
+      window.location.assign(listHref);
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setDeleteErrorMessage(unknownError.message || '글을 삭제하지 못했습니다.');
+      } else {
+        setDeleteErrorMessage('글을 삭제하지 못했습니다.');
+      }
+    } finally {
+      setIsDeletingPost(false);
+    }
+  }
+
   useEffect(() => {
     async function loadContent() {
       try {
@@ -721,6 +763,7 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   const canEdit = (isAuthor && !content.is_closed) || (isStaff && !content.is_locked);
+  const canDelete = (isAuthor || isStaff) && !content.is_closed && !content.is_locked;
   const isBasicBoard = board.board_type === 'basic';
   const isBlogBoard = board.board_type === 'blog';
   const isGalleryBoard = board.board_type === 'gallery';
@@ -812,6 +855,100 @@ export default function Opt({ isCommunity }: Props) {
           autoHideDuration={2700}
           onClose={() => setPostActionErrorMessage('')}
         />
+      </>
+    ) : null;
+
+  const postManageButtons =
+    (content.published_status === 'published' || content.published_status === 'unknown') &&
+    !isPage &&
+    !content.is_locked ? (
+      <>
+        {canEdit ? (
+          <Anchor
+            href={
+              board.board_type === 'blog'
+                ? `/${siteName}/manage/contents/posts/${content.slug}/edit`
+                : `/${siteName}/${boardName}/${content.slug}/edit`
+            }
+            className={`${styles.button} button`}
+          >
+            <EditNoteRoundedIcon />
+            <strong>수정</strong>
+          </Anchor>
+        ) : null}
+
+        {canDelete ? (
+          <button
+            type="button"
+            className={`${styles.button} button`}
+            onClick={() => {
+              setDeleteErrorMessage('');
+              setDeleteDialogOpen(true);
+            }}
+          >
+            <DeleteForeverRoundedIcon />
+            <strong>삭제</strong>
+          </button>
+        ) : null}
+        {isMobile ? (
+          <Drawer
+            anchor="bottom"
+            open={deleteDialogOpen}
+            onClose={() => setDeleteDialogOpen(false)}
+            className="VhiDrawer-bottom"
+          >
+            <h2>글 삭제</h2>
+            <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
+              <CloseRoundedIcon />
+            </button>
+            <Stack gap={3}>
+              <p>
+                정말로 글을 삭제하시겠습니까?
+                <br />
+                삭제된 글은 매니저만 복구할 수 있습니다.
+              </p>
+              {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+              <Stack direction="row" spacing={1.5}>
+                <button type="button" className="button medium" onClick={() => setDeleteDialogOpen(false)}>
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void deletePost()}
+                  disabled={isDeletingPost}
+                >
+                  삭제
+                </button>
+              </Stack>
+            </Stack>
+          </Drawer>
+        ) : (
+          <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} className="VhiDialog">
+            <DialogTitle>글 삭제</DialogTitle>
+            <DialogContent>
+              <p>
+                정말로 글을 삭제하시겠습니까?
+                <br />
+                삭제된 글은 매니저만 복구할 수 있습니다.
+              </p>
+              {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+            </DialogContent>
+            <DialogActions>
+              <button type="button" className="button medium" onClick={() => setDeleteDialogOpen(false)}>
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void deletePost()}
+                disabled={isDeletingPost}
+              >
+                삭제
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
       </>
     ) : null;
 
@@ -1392,7 +1529,10 @@ export default function Opt({ isCommunity }: Props) {
             ) : null}
             <div className={styles.options}>
               <div className={styles.buttons}>
-                <div className={styles['button-basics']}>{postActionButtons}</div>
+                <div className={styles['button-basics']}>
+                  {postActionButtons}
+                  {postManageButtons}
+                </div>
                 <div className={styles['button-purchase']}>
                   {paidContentActionButtons}
                   <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
