@@ -53,7 +53,8 @@ type ContentRow = {
   site_id: string;
   user_id: string;
   author_name: string;
-  is_closed?: boolean;
+  is_closed: boolean;
+  is_locked: boolean;
   closed_by: string | null;
   closed_at: string | null;
   closed_message: string | null;
@@ -605,10 +606,10 @@ export default function Opt() {
                       />
                     </TableCell>
                     <TableCell />
-                    <TableCell>제목</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
-                    <TableCell>작성일</TableCell>
-                    <TableCell>작성자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>작성일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>작성자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
@@ -657,19 +658,27 @@ export default function Opt() {
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
                       </TableCell>
-                      <TableCell sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+                      <TableCell sx={{ whiteSpace: 'nowrap', overflowWrap: 'anywhere' }}>
                         {content.closed_message}
                       </TableCell>
 
                       <TableCell align="right">
                         {content.is_closed ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => handleOpenRestoreDialog(content)}
-                          >
-                            복구
-                          </button>
+                          <>
+                            {!content.is_locked ? (
+                              <button
+                                type="button"
+                                className="button small action"
+                                onClick={() => handleOpenRestoreDialog(content)}
+                              >
+                                복구
+                              </button>
+                            ) : (
+                              <button type="button" className="button small action" disabled>
+                                복구 불가
+                              </button>
+                            )}
+                          </>
                         ) : (
                           <button
                             type="button"
