@@ -20,6 +20,7 @@ type SessionRouteResult = {
   siteRole?: string | null;
   invite?: boolean;
   inviteHref?: string | null;
+  isRejoin?: boolean;
 };
 
 type RhizomeStateResult = {
@@ -49,6 +50,16 @@ function isJoinPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean);
 
   return segments.length === 2 && segments[1] === 'join';
+}
+
+function isRejoinPath(pathname: string) {
+  if (pathname.startsWith('/api')) {
+    return false;
+  }
+
+  const segments = pathname.split('/').filter(Boolean);
+
+  return segments.length === 2 && segments[1] === 'rejoin';
 }
 
 function getSiteNameFromPath(pathname: string) {
@@ -419,6 +430,15 @@ export async function proxy(request: NextRequest) {
 
   if (isSitePath(pathname) && !isInvitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+    const member = await fetchSessionRoute(request, '/api/session/member', {
+      siteName,
+    });
+
+    if (member.response.status === 401) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const isRejoin = member.result?.isRejoin === true;
 
     if (siteName) {
       const rhizomeState = await fetchRhizomeState(request, siteName);
@@ -427,7 +447,8 @@ export async function proxy(request: NextRequest) {
         if (
           rhizomeState.result.siteInfo.visibility_type === 'private' &&
           !isSiteStatusPath(pathname, siteName) &&
-          !isMemberStatusPath(pathname, siteName)
+          !isMemberStatusPath(pathname, siteName) &&
+          !isRejoin
         ) {
           if (isInviteOnlyPath(pathname, siteName)) {
             return response;
@@ -503,11 +524,14 @@ export async function proxy(request: NextRequest) {
 
         const memberRedirectTo = member.result?.redirectTo ?? null;
 
-        if (
+        const hasMemberStatusRedirect =
           memberRedirectTo === `/${siteName}/block` ||
           memberRedirectTo === `/${siteName}/ban` ||
-          memberRedirectTo === `/${siteName}/kick`
-        ) {
+          memberRedirectTo === `/${siteName}/kick`;
+
+        const shouldAllowRejoin = isRejoinPath(pathname) && isRejoin;
+
+        if (hasMemberStatusRedirect && !shouldAllowRejoin) {
           if (pathname !== memberRedirectTo) {
             return redirectWithPath(request, memberRedirectTo);
           }
@@ -560,7 +584,7 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isJoinPath(pathname)) {
+  if (isJoinPath(pathname) || isRejoinPath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (!siteName) {
@@ -581,10 +605,27 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, `/${siteName}`);
     }
 
-    const member = await fetchSessionRoute(request, '/api/session/member', { siteName });
+    const member = await fetchSessionRoute(request, '/api/session/member', {
+      siteName,
+    });
 
     if (member.response.status === 401) {
       return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const isRejoin = member.result?.isRejoin === true;
+    console.log('isRejoin: ', isRejoin);
+
+    if (isRejoinPath(pathname)) {
+      if (!isRejoin) {
+        return redirectWithPath(request, `/${siteName}`);
+      }
+
+      return response;
+    }
+
+    if (isRejoin) {
+      return redirectWithPath(request, `/${siteName}/rejoin`);
     }
 
     if (member.response.ok) {

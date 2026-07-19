@@ -116,10 +116,9 @@ export async function getSiteByName(siteName: string) {
 
 export async function getRhizomeStigma(siteId: string, stigmaId: string) {
   const supabaseAdmin = getSupabaseAdmin();
-
   const rhizomeStigmaResult = await supabaseAdmin
     .from('rhizome_stigmas')
-    .select('id, role, is_approval, is_block, kicked_at, banned_at')
+    .select('id, role, is_approval, is_block, is_rejoin, banned_at, kicked_at')
     .eq('site_id', siteId)
     .eq('user_id', stigmaId)
     .maybeSingle();
@@ -133,7 +132,8 @@ export async function getRhizomeStigma(siteId: string, stigmaId: string) {
     role: rhizomeStigmaResult.data.role as string,
     isApproval: Boolean(rhizomeStigmaResult.data.is_approval),
     isBlock: Boolean(rhizomeStigmaResult.data.is_block),
-    isKicked: Boolean(rhizomeStigmaResult.data.kicked_at),
-    isBanned: Boolean(rhizomeStigmaResult.data.banned_at),
+    isRejoin: rhizomeStigmaResult.data.is_rejoin,
+    isBanned: rhizomeStigmaResult.data.banned_at,
+    isKicked: rhizomeStigmaResult.data.kicked_at,
   };
 }

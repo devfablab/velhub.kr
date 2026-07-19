@@ -90,6 +90,18 @@ export async function GET(request: Request) {
       );
     }
 
+    if (rhizomeStigma.isRejoin) {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '재가입이 필요합니다.',
+          isRejoin: true,
+        },
+        { status: 403 },
+      );
+    }
+
     if (site.siteType === 'community' && rhizomeStigma.isBanned) {
       return Response.json(
         {
