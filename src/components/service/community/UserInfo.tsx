@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { DialogActions, DialogContent, DialogTitle, Drawer, Typography, useMediaQuery, useTheme } from '@mui/material';
@@ -44,6 +44,7 @@ type UserInfoResponse = {
 
 export default function UserInfo() {
   const params = useParams();
+  const router = useRouter();
   const siteName = normalizeText(params.siteName);
 
   const [status, setStatus] = useState<UserInfoStatus | null>(null);
@@ -171,6 +172,7 @@ export default function UserInfo() {
       setIsWithdrawDialogOpen(false);
       setUserInfo(null);
       setStatus('not_joined');
+      router.replace(`/${siteName}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setWithdrawErrorMessage(unknownError.message || '커뮤니티 탈퇴에 실패했습니다.');

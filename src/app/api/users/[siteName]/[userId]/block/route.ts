@@ -2,6 +2,7 @@ import { normalizeText } from '@/lib/utils';
 import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 
 type RouteContext = {
   params: Promise<{
@@ -54,6 +55,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (membershipResult.membership.is_block) {
       return Response.json({ error: '이미 활동정지된 멤버입니다.' }, { status: 400 });
     }
+
+    await cancelMemberSiteSubscriptions({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.site.id,
+      memberStigmaId: membershipResult.membership.user_id,
+      actionLabel: '활동정지',
+    });
 
     const updateResult = await access.supabaseAdmin
       .from('rhizome_stigmas')

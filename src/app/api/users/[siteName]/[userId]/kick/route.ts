@@ -3,6 +3,7 @@ import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } 
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
+import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 
 type RouteContext = {
   params: Promise<{
@@ -67,6 +68,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (membershipResult.membership.kicked_at) {
       return Response.json({ error: '이미 강제탈퇴 처리된 멤버입니다.' }, { status: 400 });
     }
+
+    await cancelMemberSiteSubscriptions({
+      supabaseAdmin: access.supabaseAdmin,
+      siteId: access.site.id,
+      memberStigmaId: membershipResult.membership.user_id,
+      actionLabel: '강제탈퇴',
+    });
 
     const updateResult = await access.supabaseAdmin
       .from('rhizome_stigmas')

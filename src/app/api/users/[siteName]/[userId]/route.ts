@@ -2,6 +2,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 
 type RouteContext = {
   params: Promise<{
@@ -743,6 +744,13 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (!membershipResult.data.is_approval || membershipResult.data.withdrawn_at) {
       return Response.json({ error: '탈퇴할 수 없는 상태입니다.' }, { status: 400 });
     }
+
+    await cancelMemberSiteSubscriptions({
+      supabaseAdmin,
+      siteId: siteResult.data.id,
+      memberStigmaId: stigmaResult.data.id,
+      actionLabel: '커뮤니티 탈퇴',
+    });
 
     const updateResult = await supabaseAdmin
       .from('rhizome_stigmas')
