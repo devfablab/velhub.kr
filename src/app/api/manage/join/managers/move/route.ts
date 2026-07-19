@@ -5,6 +5,7 @@ import {
   type CommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { createCommunityManagerChangeNotifications } from '@/lib/notifications/createCommunityManagerChangeNotifications';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -298,6 +299,8 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '이동할 수 없는 멤버입니다.' }, { status: 400 });
       }
 
+      const targetWasManager = normalizeText(memberResult.data.role) === 'manager';
+
       const duplicateTarget = managerRows.find(
         (row) =>
           row.manager_id === managerId &&
@@ -347,7 +350,9 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '기존 매니저 역할 확인에 실패했습니다.' }, { status: 500 });
       }
 
-      if (!previousRemainingRoleResult.data) {
+      const previousChangedToMember = !previousRemainingRoleResult.data;
+
+      if (previousChangedToMember) {
         const updatePreviousManagerRoleResult = await access.supabaseAdmin
           .from('rhizome_stigmas')
           .update({
@@ -379,6 +384,22 @@ export async function PATCH(request: Request) {
           },
         ],
       });
+
+      if (previousChangedToMember) {
+        await createCommunityManagerChangeNotifications({
+          access,
+          targetRhizomeStigmaId: sourceRow.manager_id,
+          action: 'removed',
+        });
+      }
+
+      if (!targetWasManager) {
+        await createCommunityManagerChangeNotifications({
+          access,
+          targetRhizomeStigmaId: managerId,
+          action: 'assigned',
+        });
+      }
 
       const managers = await buildCommunityManagerList(access);
 

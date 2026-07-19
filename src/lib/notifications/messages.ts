@@ -3,6 +3,7 @@ import { normalizeText } from '@/lib/utils';
 
 export type NotificationMessageData = {
   sendUserName?: string | null;
+  targetUserName?: string | null;
   siteLabel?: string | null;
   boardLabel?: string | null;
   seriesLabel?: string | null;
@@ -23,6 +24,7 @@ export function getNotificationText(
   data: NotificationMessageData,
 ): NotificationText {
   const sendUserName = getText(data.sendUserName, '사용자');
+  const targetUserName = getText(data.targetUserName, '사용자');
   const siteLabel = getText(data.siteLabel, '사이트');
   const boardLabel = getText(data.boardLabel, '게시판');
   const seriesLabel = getText(data.seriesLabel, '연재');
@@ -130,6 +132,20 @@ export function getNotificationText(
     return {
       title: '게시판 부 매니저 해임',
       message: `${siteLabel}의 ${boardLabel} 게시판 부 매니저에서 해임되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MANAGER_DELEGATED) {
+    return {
+      title: '매니저 위임',
+      message: `${siteLabel}의 ${sendUserName}님이 ${targetUserName}님을 매니저로 위임했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MANAGER_DISMISSED) {
+    return {
+      title: '매니저 해임',
+      message: `${siteLabel}의 ${sendUserName}님이 ${targetUserName}님을 매니저에서 해임했습니다.`,
     };
   }
 

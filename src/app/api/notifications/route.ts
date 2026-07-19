@@ -10,6 +10,7 @@ type NotificationRow = {
   created_at: string;
   user_id: string;
   send_user_id: string | null;
+  target_id: string | null;
   send_site_id: string | null;
   send_board_id: string | null;
   send_series_id: string | null;
@@ -100,7 +101,7 @@ export async function GET() {
     const notificationsResult = await supabaseAdmin
       .from('notifications')
       .select(
-        'id, created_at, user_id, send_user_id, send_site_id, send_board_id, send_series_id, send_post_id, notification_type, is_read',
+        'id, created_at, user_id, send_user_id, target_id, send_site_id, send_board_id, send_series_id, send_post_id, notification_type, is_read',
       )
       .eq('user_id', session.authUserId)
       .order('created_at', { ascending: false });
@@ -120,6 +121,14 @@ export async function GET() {
           .filter((value): value is string => Boolean(value)),
       ),
     ];
+
+    const targetUserIds = [
+      ...new Set(
+        notifications.map((notification) => notification.target_id).filter((value): value is string => Boolean(value)),
+      ),
+    ];
+
+    const notificationUserIds = [...new Set([...sendUserIds, ...targetUserIds])];
 
     const siteIds = [
       ...new Set(
@@ -154,8 +163,8 @@ export async function GET() {
     ];
 
     const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult] = await Promise.all([
-      sendUserIds.length > 0
-        ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', sendUserIds)
+      notificationUserIds.length > 0
+        ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
         : Promise.resolve({ data: [], error: null }),
       siteIds.length > 0
         ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
@@ -206,6 +215,7 @@ export async function GET() {
 
       const text = getNotificationText(notification.notification_type, {
         sendUserName: notification.send_user_id ? (stigmaMap.get(notification.send_user_id) ?? '') : '',
+        targetUserName: notification.target_id ? (stigmaMap.get(notification.target_id) ?? '') : '',
         siteLabel: site?.site_label ?? null,
         boardLabel: board?.board_label ?? null,
         seriesLabel: series?.series_label ?? null,

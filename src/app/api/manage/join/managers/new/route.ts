@@ -5,6 +5,7 @@ import {
   type CommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { createCommunityManagerChangeNotifications } from '@/lib/notifications/createCommunityManagerChangeNotifications';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -164,6 +165,8 @@ export async function POST(request: Request) {
       return Response.json({ error: '위임할 수 없는 멤버입니다.' }, { status: 400 });
     }
 
+    const wasManager = normalizeText(memberResult.data.role) === 'manager';
+
     const duplicateRow = managerRows.find(
       (row) =>
         row.manager_id === managerId &&
@@ -247,6 +250,14 @@ export async function POST(request: Request) {
       role,
       boardId: boardId || null,
     });
+
+    if (!wasManager) {
+      await createCommunityManagerChangeNotifications({
+        access,
+        targetRhizomeStigmaId: managerId,
+        action: 'assigned',
+      });
+    }
 
     const managers = await buildCommunityManagerList(access);
 

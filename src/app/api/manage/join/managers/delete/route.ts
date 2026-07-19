@@ -5,6 +5,7 @@ import {
   type CommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { createCommunityManagerChangeNotifications } from '@/lib/notifications/createCommunityManagerChangeNotifications';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {
@@ -157,7 +158,9 @@ export async function DELETE(request: Request) {
       return Response.json({ error: '매니저 역할 확인에 실패했습니다.' }, { status: 500 });
     }
 
-    if (!remainingRoleResult.data) {
+    const changedToMember = !remainingRoleResult.data;
+
+    if (changedToMember) {
       const updateMemberRoleResult = await access.supabaseAdmin
         .from('rhizome_stigmas')
         .update({
@@ -178,6 +181,14 @@ export async function DELETE(request: Request) {
       role: targetRole,
       boardId: targetRow.board_id,
     });
+
+    if (changedToMember) {
+      await createCommunityManagerChangeNotifications({
+        access,
+        targetRhizomeStigmaId: targetRow.manager_id,
+        action: 'removed',
+      });
+    }
 
     const managers = await buildCommunityManagerList(access);
 

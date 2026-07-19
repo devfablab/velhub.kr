@@ -16,6 +16,8 @@ export const NOTIFICATION_TYPE = {
   BOARD_GENERAL_MANAGER_REMOVED: 'board_general_manager_removed',
   BOARD_ASSISTANT_MANAGER_ASSIGNED: 'board_assistant_manager_assigned',
   BOARD_ASSISTANT_MANAGER_REMOVED: 'board_assistant_manager_removed',
+  COMMUNITY_MANAGER_DELEGATED: 'community_manager_delegated',
+  COMMUNITY_MANAGER_DISMISSED: 'community_manager_dismissed',
 
   REPORT_RECEIVED: 'report_received',
   REPORT_RESULT: 'report_result',
