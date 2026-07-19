@@ -447,42 +447,56 @@ export default function UserInfo() {
           onClose={handleCloseWithdrawDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
         >
-          <h2>커뮤니티 탈퇴</h2>
+          <h2>{isManager ? '탈퇴 불가' : '커뮤니티 탈퇴'}</h2>
           <button
             type="button"
             className="close-button"
             onClick={handleCloseWithdrawDialog}
             disabled={isWithdrawSubmitting}
-            aria-label="커뮤니티 탈퇴 닫기"
+            aria-label={isManager ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
           >
             <CloseRoundedIcon />
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
-            <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
-            {withdrawErrorMessage ? (
-              <p className="alert error">
-                <span>{withdrawErrorMessage}</span>
-              </p>
-            ) : null}
+            {isManager ? (
+              <Typography variant="subtitle2">매니저는 탈퇴하실 수 없습니다.</Typography>
+            ) : (
+              <>
+                <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
+                {withdrawErrorMessage ? (
+                  <p className="alert error">
+                    <span>{withdrawErrorMessage}</span>
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
 
           <div className={styles['drawer-dialog-actions']}>
-            <button
-              type="button"
-              className="button medium cancel"
-              onClick={handleCloseWithdrawDialog}
-              disabled={isWithdrawSubmitting}
-            >
-              취소
-            </button>
-            <button
-              type="button"
-              className="button medium warning"
-              onClick={handleWithdraw}
-              disabled={isWithdrawSubmitting}
-            >
-              탈퇴하기
-            </button>
+            {isManager ? (
+              <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
+                닫기
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCloseWithdrawDialog}
+                  disabled={isWithdrawSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium warning"
+                  onClick={handleWithdraw}
+                  disabled={isWithdrawSubmitting}
+                >
+                  탈퇴하기
+                </button>
+              </>
+            )}
           </div>
         </Drawer>
       ) : (
@@ -493,31 +507,50 @@ export default function UserInfo() {
           maxWidth="xs"
           className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
-          <DialogTitle>커뮤니티 탈퇴</DialogTitle>
+          <DialogTitle>{isManager ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
 
           <DialogContent className={styles['info-content']}>
-            <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
+            {isManager ? (
+              <Typography variant="subtitle2">매니저는 탈퇴하실 수 없습니다.</Typography>
+            ) : (
+              <>
+                <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
 
-            {withdrawErrorMessage ? (
-              <p className="alert error">
-                <span>{withdrawErrorMessage}</span>
-              </p>
-            ) : null}
+                {withdrawErrorMessage ? (
+                  <p className="alert error">
+                    <span>{withdrawErrorMessage}</span>
+                  </p>
+                ) : null}
+              </>
+            )}
           </DialogContent>
 
           <DialogActions>
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={handleCloseWithdrawDialog}
-              disabled={isWithdrawSubmitting}
-            >
-              취소
-            </button>
+            {isManager ? (
+              <button type="button" className="cancel-button" onClick={handleCloseWithdrawDialog}>
+                닫기
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={handleCloseWithdrawDialog}
+                  disabled={isWithdrawSubmitting}
+                >
+                  취소
+                </button>
 
-            <button type="button" className="warning-button" onClick={handleWithdraw} disabled={isWithdrawSubmitting}>
-              탈퇴하기
-            </button>
+                <button
+                  type="button"
+                  className="warning-button"
+                  onClick={handleWithdraw}
+                  disabled={isWithdrawSubmitting}
+                >
+                  탈퇴하기
+                </button>
+              </>
+            )}
           </DialogActions>
         </Dialog>
       )}
