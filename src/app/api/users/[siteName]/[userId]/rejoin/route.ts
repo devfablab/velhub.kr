@@ -32,10 +32,34 @@ type MembershipRow = {
 
 type UserRow = {
   id: string;
+  authUserId: string;
   kickedAt: string;
   kickReason: string;
   kickTerm: string;
 };
+
+type ResetCommentRow = {
+  id: string;
+  parent_id: string | null;
+  post_id: string;
+};
+
+type StoredReportFile = {
+  path?: unknown;
+};
+
+type ResetDeleteTable =
+  | 'comment_likes'
+  | 'post_comments'
+  | 'post_draws'
+  | 'post_likes'
+  | 'post_polls'
+  | 'post_reads'
+  | 'post_saves'
+  | 'posts'
+  | 'report_guidelines'
+  | 'report_legals'
+  | 'report_rights';
 
 type ImageItem = {
   path?: unknown;
@@ -191,6 +215,62 @@ async function removeStorageFiles(bucket: string, paths: string[], errorMessage:
   }
 }
 
+function getBatches<T>(values: T[], size = 100) {
+  const batches: T[][] = [];
+
+  for (let index = 0; index < values.length; index += size) {
+    batches.push(values.slice(index, index + size));
+  }
+
+  return batches;
+}
+
+function addStoredReportFilePaths(pathSet: Set<string>, value: unknown) {
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  value.forEach((item) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
+
+    const rawPath = (item as StoredReportFile).path;
+
+    if (typeof rawPath !== 'string') {
+      return;
+    }
+
+    const path = normalizeText(rawPath);
+
+    if (path) {
+      pathSet.add(path);
+    }
+  });
+}
+
+async function deleteRowsByIds({
+  supabaseAdmin,
+  table,
+  column,
+  ids,
+  errorMessage,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  table: ResetDeleteTable;
+  column: 'id' | 'comment_id' | 'post_id';
+  ids: string[];
+  errorMessage: string;
+}) {
+  for (const batch of getBatches(ids)) {
+    const deleteResult = await supabaseAdmin.from(table).delete().in(column, batch);
+
+    if (deleteResult.error) {
+      throw new Error(errorMessage);
+    }
+  }
+}
+
 async function getUserInfo(siteName: string) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
@@ -280,6 +360,7 @@ async function getUserInfo(siteName: string) {
       status: 'active',
       userInfo: {
         id: stigma.id,
+        authUserId: stigma.user_id,
         kickedAt: membership.kicked_at,
         kickReason: membership.kick_reason,
         kickTerm: membership.kick_term,
@@ -305,13 +386,18 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: result.error }, { status: result.status });
     }
 
+    if (result.data.status !== 'active') {
+      return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
     const userResult = result.data.userInfo as unknown as UserRow;
 
-    if (!userResult.id) {
+    if (!userResult.id || !userResult.authUserId) {
       return Response.json({ error: 'userId가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const normalizedUserId = normalizeText(userResult.id);
+    const normalizedStigmaId = normalizeText(userResult.id);
+    const normalizedUserId = normalizeText(userResult.authUserId);
 
     if (mode !== 'restore' && mode !== 'reset') {
       return Response.json({ error: '재가입 방식을 선택해주세요.' }, { status: 400 });
@@ -341,7 +427,7 @@ export async function POST(request: Request, context: RouteContext) {
       .from('rhizome_stigmas')
       .select('id, is_rejoin, withdrawn_at, is_block')
       .eq('site_id', siteResult.data.id)
-      .eq('user_id', normalizedUserId)
+      .eq('user_id', normalizedStigmaId)
       .maybeSingle();
 
     if (membershipResult.error || !membershipResult.data) {
@@ -404,8 +490,11 @@ export async function POST(request: Request, context: RouteContext) {
 
       const posts = (postsResult.data ?? []) as PostRow[];
       const postIds = posts.map((post) => post.id);
+      const commentMap = new Map<string, ResetCommentRow>();
       const postImagePaths = new Set<string>();
       const ogImagePaths = new Set<string>();
+      const legalReportFilePaths = new Set<string>();
+      const rightsReportFilePaths = new Set<string>();
 
       posts.forEach((post) => {
         addStructuredPostImagePaths(postImagePaths, post, normalizedUserId);
@@ -414,57 +503,213 @@ export async function POST(request: Request, context: RouteContext) {
         addOgImagePath(ogImagePaths, post.og_image);
       });
 
+      const ownCommentsResult = await supabaseAdmin
+        .from('post_comments')
+        .select('id, parent_id, post_id')
+        .eq('site_id', siteResult.data.id)
+        .eq('user_id', normalizedUserId)
+        .eq('is_locked', true);
+
+      if (ownCommentsResult.error) {
+        return Response.json({ error: '기존 댓글을 불러오지 못했습니다.' }, { status: 500 });
+      }
+
+      const ownComments = (ownCommentsResult.data ?? []) as ResetCommentRow[];
+
+      ownComments.forEach((comment) => {
+        commentMap.set(comment.id, comment);
+      });
+
+      const ownRootCommentIds = ownComments
+        .filter((comment) => comment.parent_id === null)
+        .map((comment) => comment.id);
+
+      for (const rootCommentIdBatch of getBatches(ownRootCommentIds)) {
+        const repliesResult = await supabaseAdmin
+          .from('post_comments')
+          .select('id, parent_id, post_id')
+          .eq('site_id', siteResult.data.id)
+          .in('parent_id', rootCommentIdBatch);
+
+        if (repliesResult.error) {
+          return Response.json({ error: '기존 대댓글을 불러오지 못했습니다.' }, { status: 500 });
+        }
+
+        ((repliesResult.data ?? []) as ResetCommentRow[]).forEach((comment) => {
+          commentMap.set(comment.id, comment);
+        });
+      }
+
+      for (const postIdBatch of getBatches(postIds)) {
+        const postCommentsResult = await supabaseAdmin
+          .from('post_comments')
+          .select('id, parent_id, post_id')
+          .eq('site_id', siteResult.data.id)
+          .in('post_id', postIdBatch);
+
+        if (postCommentsResult.error) {
+          return Response.json({ error: '기존 글의 댓글을 불러오지 못했습니다.' }, { status: 500 });
+        }
+
+        ((postCommentsResult.data ?? []) as ResetCommentRow[]).forEach((comment) => {
+          commentMap.set(comment.id, comment);
+        });
+      }
+
+      const comments = [...commentMap.values()];
+      const commentIds = comments.map((comment) => comment.id);
+      const replyCommentIds = comments.filter((comment) => comment.parent_id !== null).map((comment) => comment.id);
+      const rootCommentIds = comments.filter((comment) => comment.parent_id === null).map((comment) => comment.id);
+
+      const reportTargets = [
+        {
+          column: 'comment_id' as const,
+          batches: getBatches(commentIds),
+        },
+        {
+          column: 'post_id' as const,
+          batches: getBatches(postIds),
+        },
+      ];
+
+      for (const reportTarget of reportTargets) {
+        for (const idBatch of reportTarget.batches) {
+          const [legalReportsResult, rightsReportsResult] = await Promise.all([
+            supabaseAdmin.from('report_legals').select('attachments').in(reportTarget.column, idBatch),
+            supabaseAdmin
+              .from('report_rights')
+              .select('copyright_proof_files')
+              .in(reportTarget.column, idBatch),
+          ]);
+
+          if (legalReportsResult.error || rightsReportsResult.error) {
+            return Response.json({ error: '기존 신고 파일 정보를 불러오지 못했습니다.' }, { status: 500 });
+          }
+
+          (legalReportsResult.data ?? []).forEach((report) => {
+            addStoredReportFilePaths(legalReportFilePaths, report.attachments);
+          });
+
+          (rightsReportsResult.data ?? []).forEach((report) => {
+            addStoredReportFilePaths(rightsReportFilePaths, report.copyright_proof_files);
+          });
+        }
+      }
+
       await removeStorageFiles(POST_BUCKET, [...postImagePaths], '기존 이미지 파일을 삭제하지 못했습니다.');
       await removeStorageFiles(
         OG_IMAGE_BUCKET,
         [...ogImagePaths],
         '기존 오픈그래프 이미지 파일을 삭제하지 못했습니다.',
       );
+      await removeStorageFiles(
+        'report-legals',
+        [...legalReportFilePaths],
+        '기존 법적 신고 첨부파일을 삭제하지 못했습니다.',
+      );
+      await removeStorageFiles(
+        'report-rights',
+        [...rightsReportFilePaths],
+        '기존 권리 신고 첨부파일을 삭제하지 못했습니다.',
+      );
+
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'comment_likes',
+        column: 'comment_id',
+        ids: commentIds,
+        errorMessage: '기존 댓글 좋아요를 삭제하지 못했습니다.',
+      });
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'post_draws',
+        column: 'comment_id',
+        ids: commentIds,
+        errorMessage: '기존 댓글 추첨 정보를 삭제하지 못했습니다.',
+      });
+
+      for (const table of ['report_guidelines', 'report_legals', 'report_rights'] as const) {
+        await deleteRowsByIds({
+          supabaseAdmin,
+          table,
+          column: 'comment_id',
+          ids: commentIds,
+          errorMessage: '기존 댓글 신고 정보를 삭제하지 못했습니다.',
+        });
+      }
 
       if (postIds.length > 0) {
-        const deletePostDrawsResult = await supabaseAdmin
-          .from('post_draws')
-          .delete()
-          .eq('user_id', normalizedUserId)
-          .in('post_id', postIds);
-
-        if (deletePostDrawsResult.error) {
-          return Response.json({ error: '기존 추첨 참여 정보를 삭제하지 못했습니다.' }, { status: 500 });
+        for (const table of ['post_likes', 'post_reads', 'post_saves', 'post_polls'] as const) {
+          await deleteRowsByIds({
+            supabaseAdmin,
+            table,
+            column: 'post_id',
+            ids: postIds,
+            errorMessage: '기존 글의 관련 정보를 삭제하지 못했습니다.',
+          });
         }
 
-        const deletePostPollsResult = await supabaseAdmin
-          .from('post_polls')
-          .delete()
-          .eq('creator_id', normalizedUserId)
-          .in('post_id', postIds);
+        for (const table of ['report_guidelines', 'report_legals', 'report_rights'] as const) {
+          await deleteRowsByIds({
+            supabaseAdmin,
+            table,
+            column: 'post_id',
+            ids: postIds,
+            errorMessage: '기존 글 신고 정보를 삭제하지 못했습니다.',
+          });
+        }
 
-        if (deletePostPollsResult.error) {
-          return Response.json({ error: '기존 투표 정보를 삭제하지 못했습니다.' }, { status: 500 });
+        for (const postIdBatch of getBatches(postIds)) {
+          const [notificationsResult, paymentSplitsResult] = await Promise.all([
+            supabaseAdmin.from('notifications').update({ send_post_id: null }).in('send_post_id', postIdBatch),
+            supabaseAdmin.from('payment_splits').update({ post_id: null }).in('post_id', postIdBatch),
+          ]);
+
+          if (notificationsResult.error || paymentSplitsResult.error) {
+            return Response.json({ error: '기존 글의 참조 정보를 정리하지 못했습니다.' }, { status: 500 });
+          }
         }
       }
 
-      const deleteCommentsResult = await supabaseAdmin
-        .from('post_comments')
-        .delete()
-        .eq('site_id', siteResult.data.id)
-        .eq('user_id', normalizedUserId)
-        .eq('is_locked', true);
-
-      if (deleteCommentsResult.error) {
-        return Response.json({ error: '기존 댓글을 삭제하지 못했습니다.' }, { status: 500 });
-      }
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'post_comments',
+        column: 'id',
+        ids: replyCommentIds,
+        errorMessage: '기존 대댓글을 삭제하지 못했습니다.',
+      });
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'post_comments',
+        column: 'id',
+        ids: rootCommentIds,
+        errorMessage: '기존 댓글을 삭제하지 못했습니다.',
+      });
+      await deleteRowsByIds({
+        supabaseAdmin,
+        table: 'posts',
+        column: 'id',
+        ids: postIds,
+        errorMessage: '기존 글을 삭제하지 못했습니다.',
+      });
 
       if (postIds.length > 0) {
-        const deletePostsResult = await supabaseAdmin
+        const postCountResult = await supabaseAdmin
           .from('posts')
-          .delete()
-          .eq('site_id', siteResult.data.id)
-          .eq('user_id', normalizedUserId)
-          .eq('is_locked', true)
-          .in('id', postIds);
+          .select('id', { count: 'exact', head: true })
+          .eq('site_id', siteResult.data.id);
 
-        if (deletePostsResult.error) {
-          return Response.json({ error: '기존 글을 삭제하지 못했습니다.' }, { status: 500 });
+        if (postCountResult.error) {
+          return Response.json({ error: '사이트 글 수를 불러오지 못했습니다.' }, { status: 500 });
+        }
+
+        const updateSiteResult = await supabaseAdmin
+          .from('rhizomes')
+          .update({ post_count: postCountResult.count ?? 0 })
+          .eq('id', siteResult.data.id);
+
+        if (updateSiteResult.error) {
+          return Response.json({ error: '사이트 글 수를 수정하지 못했습니다.' }, { status: 500 });
         }
       }
     }
@@ -475,10 +720,17 @@ export async function POST(request: Request, context: RouteContext) {
         withdrawn_at: null,
         is_rejoin: false,
         is_approval: true,
+        ...(mode === 'reset'
+          ? {
+              post_count: 0,
+              comment_count: 0,
+              like_count: 0,
+            }
+          : {}),
       })
       .eq('id', membershipResult.data.id)
       .eq('site_id', siteResult.data.id)
-      .eq('user_id', normalizedUserId);
+      .eq('user_id', normalizedStigmaId);
 
     if (updateMembershipResult.error) {
       return Response.json({ error: '재가입 처리에 실패했습니다.' }, { status: 500 });
