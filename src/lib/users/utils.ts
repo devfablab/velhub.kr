@@ -365,6 +365,40 @@ export async function getSiteMembership(siteId: string, userId: string) {
   } as const;
 }
 
+export async function isCommunityStaffMembership(
+  siteId: string,
+  membership: Pick<MembershipRow, 'id' | 'role'>,
+) {
+  const baseRole = normalizeText(membership.role);
+
+  if (baseRole === 'owner' || baseRole === 'manager') {
+    return true;
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const communityResult = await supabaseAdmin
+    .from('communities')
+    .select('id')
+    .eq('site_id', siteId)
+    .maybeSingle();
+
+  if (communityResult.error || !communityResult.data) {
+    throw new Error('커뮤니티 정보를 불러오지 못했습니다.');
+  }
+
+  const manageRoleResult = await supabaseAdmin
+    .from('community_manage_role')
+    .select('id', { count: 'exact', head: true })
+    .eq('community_id', communityResult.data.id)
+    .eq('manager_id', membership.id);
+
+  if (manageRoleResult.error) {
+    throw new Error('멤버 역할을 확인하지 못했습니다.');
+  }
+
+  return (manageRoleResult.count ?? 0) > 0;
+}
+
 export async function getStigmasByIds(userIds: string[]) {
   if (userIds.length === 0) {
     return {

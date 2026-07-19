@@ -55,6 +55,7 @@ type UserMembershipRow = {
   approval_at: string | null;
   is_block: boolean;
   role: string | null;
+  is_selectable: boolean;
   nickname: string | null;
   post_count: number;
   comment_count: number;
@@ -261,7 +262,13 @@ export default function Opt() {
       throw new Error(result.error ?? '멤버 목록을 불러오지 못했습니다.');
     }
 
-    setUsers(Array.isArray(result.users) ? result.users : []);
+    const nextUsers = Array.isArray(result.users) ? result.users : [];
+    const selectableUserIdSet = new Set(
+      nextUsers.filter((user) => user.membership.is_selectable).map((user) => user.membership.user_id),
+    );
+
+    setUsers(nextUsers);
+    setSelectedUserIds((previousUserIds) => previousUserIds.filter((userId) => selectableUserIdSet.has(userId)));
   }
 
   async function loadLevels() {
@@ -428,8 +435,14 @@ export default function Opt() {
     });
   }, [appliedSearch, users]);
 
+  const selectableFilteredUsers = useMemo(
+    () => filteredUsers.filter((user) => user.membership.is_selectable),
+    [filteredUsers],
+  );
+
   const allFilteredSelected =
-    filteredUsers.length > 0 && filteredUsers.every((user) => selectedUserIds.includes(user.membership.user_id));
+    selectableFilteredUsers.length > 0 &&
+    selectableFilteredUsers.every((user) => selectedUserIds.includes(user.membership.user_id));
 
   function handleSearchMethodChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value === 'detail' ? 'detail' : 'nickname';
@@ -481,7 +494,7 @@ export default function Opt() {
       setSelectedUserIds((previousUserIds) => {
         const nextUserIds = new Set(previousUserIds);
 
-        filteredUsers.forEach((user) => {
+        selectableFilteredUsers.forEach((user) => {
           nextUserIds.add(user.membership.user_id);
         });
 
@@ -490,11 +503,17 @@ export default function Opt() {
       return;
     }
 
-    const filteredUserIdSet = new Set(filteredUsers.map((user) => user.membership.user_id));
+    const filteredUserIdSet = new Set(selectableFilteredUsers.map((user) => user.membership.user_id));
     setSelectedUserIds((previousUserIds) => previousUserIds.filter((userId) => !filteredUserIdSet.has(userId)));
   }
 
-  function handleToggleUser(userId: string, checked: boolean) {
+  function handleToggleUser(user: UserRow, checked: boolean) {
+    if (!user.membership.is_selectable) {
+      return;
+    }
+
+    const userId = user.membership.user_id;
+
     if (checked) {
       setSelectedUserIds((previousUserIds) => [...new Set([...previousUserIds, userId])]);
       return;
@@ -1173,7 +1192,11 @@ export default function Opt() {
                 <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
-                      <Checkbox checked={allFilteredSelected} onChange={handleToggleAll} />
+                      <Checkbox
+                        checked={allFilteredSelected}
+                        disabled={selectableFilteredUsers.length === 0}
+                        onChange={handleToggleAll}
+                      />
                     </TableCell>
                     <TableCell>별명</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>멤버 등급</TableCell>
@@ -1190,7 +1213,8 @@ export default function Opt() {
                       <TableCell padding="checkbox">
                         <Checkbox
                           checked={selectedUserIds.includes(user.membership.user_id)}
-                          onChange={(event) => handleToggleUser(user.membership.user_id, event.currentTarget.checked)}
+                          disabled={!user.membership.is_selectable}
+                          onChange={(event) => handleToggleUser(user, event.currentTarget.checked)}
                         />
                       </TableCell>
                       <TableCell>

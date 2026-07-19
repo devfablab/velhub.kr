@@ -127,12 +127,18 @@ export async function GET(_request: Request, context: RouteContext) {
       siteName: access.site.site_key,
       users: membershipsResult.memberships.map((membership) => {
         const memberResponse = buildMemberResponse(membership, stigmaMap, levelMap);
+        const normalizedMembershipRole = normalizeText(membership.role);
+        const isManageMember =
+          normalizedMembershipRole === 'owner' ||
+          normalizedMembershipRole === 'manager' ||
+          manageRoleMap.has(membership.id);
 
         return {
           ...memberResponse,
           membership: {
             ...memberResponse.membership,
             role: getMembershipRoleLabel(membership.role, manageRoleMap.get(membership.id) ?? null),
+            is_selectable: !isManageMember,
           },
         };
       }),

@@ -1,5 +1,5 @@
 import { normalizeText } from '@/lib/utils';
-import { getSiteMembership, getStaffMembersAccess } from '@/lib/users/utils';
+import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
@@ -45,6 +45,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!membershipResult.ok) {
       return Response.json({ error: membershipResult.error }, { status: membershipResult.status });
+    }
+
+    if (await isCommunityStaffMembership(access.site.id, membershipResult.membership)) {
+      return Response.json({ error: '운영자와 매니저는 활동정지할 수 없습니다.' }, { status: 403 });
     }
 
     if (membershipResult.membership.is_block) {
