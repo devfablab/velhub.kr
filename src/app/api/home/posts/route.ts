@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .select('id, site_key, site_label, site_type, profile_picture')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false)
-      .eq('is_blocked', false);
+      .or('is_blocked.eq.false,is_blocked.is.null');
 
     if (siteType) {
       rhizomesQuery = rhizomesQuery.eq('site_type', siteType);
