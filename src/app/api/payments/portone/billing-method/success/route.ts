@@ -1,14 +1,17 @@
 import { NextRequest } from 'next/server';
+import { encrypt } from '@/lib/encryption/encrypt';
 import { getCurrentPortOneProvider, getPortOneBillingCardInfo, getPortOneBillingKeyInfo } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { createCustomerKey } from '@/lib/payments/customer';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 
 type BillingMethodSuccessBody = {
   billingKey?: string;
   customerKey?: string;
   orderNo?: string;
+  siteId?: string;
 };
 
 type BillingMethodRow = {
@@ -22,6 +25,7 @@ export async function POST(request: NextRequest) {
     const billingKey = normalizeText(body.billingKey);
     const customerKey = normalizeText(body.customerKey);
     const orderNo = normalizeText(body.orderNo);
+    const siteId = normalizeText(body.siteId);
 
     if (!billingKey) {
       return Response.json({ error: 'billingKey가 유효하지 않습니다.' }, { status: 400 });
@@ -35,10 +39,14 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'orderNo가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const session = await verifySession({ siteId: null });
+    const session = await verifySession({ siteId: siteId || null });
 
     if (!session.authUserId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    if (siteId && session.case !== 'staff') {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const expectedCustomerKey = createCustomerKey(session.authUserId);
@@ -70,6 +78,53 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    async function updatePlanBillingSubscription() {
+      if (!siteId || !session.authUserId) {
+        return;
+      }
+
+      const subscriptionResult = await supabaseAdmin
+        .from('subscriptions')
+        .select('id, status, expired_at')
+        .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
+        .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
+        .eq('target_id', siteId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subscriptionResult.error) {
+        console.error(subscriptionResult.error);
+        throw new Error('요금제 구독 정보를 확인하지 못했습니다.');
+      }
+
+      const subscription = subscriptionResult.data;
+
+      if (
+        !subscription ||
+        subscription.expired_at ||
+        subscription.status === SUBSCRIPTION_STATUS.CANCELED ||
+        subscription.status === SUBSCRIPTION_STATUS.EXPIRED
+      ) {
+        return;
+      }
+
+      const subscriptionUpdateResult = await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          subscriber_user_id: session.authUserId,
+          billing_key: encrypt(billingKey),
+          customer_key: customerKey,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', subscription.id);
+
+      if (subscriptionUpdateResult.error) {
+        console.error(subscriptionUpdateResult.error);
+        throw new Error('요금제 결제수단을 변경하지 못했습니다.');
+      }
+    }
 
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
@@ -123,6 +178,8 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '결제 수단을 갱신하지 못했습니다.' }, { status: 500 });
       }
 
+      await updatePlanBillingSubscription();
+
       return Response.json({ ok: true });
     }
 
@@ -143,6 +200,8 @@ export async function POST(request: NextRequest) {
 
       return Response.json({ error: '결제 수단을 저장하지 못했습니다.' }, { status: 500 });
     }
+
+    await updatePlanBillingSubscription();
 
     return Response.json({ ok: true });
   } catch (unknownError) {

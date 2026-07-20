@@ -811,7 +811,7 @@ export default function Opt() {
                   {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
                 </button>
               ) : (
-                <BillingMethodButton />
+                <BillingMethodButton siteId={billingData?.site?.id} />
               )
             ) : null}
 
@@ -903,7 +903,7 @@ export default function Opt() {
             )}
           </Stack>
 
-          {canAddBillingMethod ? <BillingMethodButton /> : null}
+          {canAddBillingMethod ? <BillingMethodButton siteId={billingData?.site?.id} /> : null}
         </Stack>
       </div>
 

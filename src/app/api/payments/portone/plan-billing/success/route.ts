@@ -285,6 +285,26 @@ export async function POST(request: NextRequest) {
 
     const existingBillingMethod = existingBillingMethodResult.data as BillingMethodRow | null;
 
+    if (
+      existingDefaultBillingMethodResult.data &&
+      existingDefaultBillingMethodResult.data.id !== existingBillingMethod?.id
+    ) {
+      const previousDefaultBillingMethodUpdateResult = await supabaseAdmin
+        .from('subscription_billing_methods')
+        .update({
+          is_default: false,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', existingDefaultBillingMethodResult.data.id)
+        .eq('user_id', session.authUserId);
+
+      if (previousDefaultBillingMethodUpdateResult.error) {
+        console.error(previousDefaultBillingMethodUpdateResult.error);
+
+        return Response.json({ error: '기본 결제수단을 변경하지 못했습니다.' }, { status: 500 });
+      }
+    }
+
     if (existingBillingMethod) {
       const billingMethodUpdateResult = await supabaseAdmin
         .from('subscription_billing_methods')
@@ -294,7 +314,7 @@ export async function POST(request: NextRequest) {
           card_number_masked: cardInfo.cardNumberMasked,
           card_type: cardInfo.cardType,
           owner_type: cardInfo.ownerType,
-          is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
+          is_default: true,
           updated_at: now.toISOString(),
         })
         .eq('id', existingBillingMethod.id);
@@ -316,7 +336,7 @@ export async function POST(request: NextRequest) {
           card_number_masked: cardInfo.cardNumberMasked,
           card_type: cardInfo.cardType,
           owner_type: cardInfo.ownerType,
-          is_default: !existingDefaultBillingMethodResult.data,
+          is_default: true,
         })
         .select('id')
         .single();
@@ -329,6 +349,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (purpose === 'billing_method') {
+      if (
+        latestSubscription &&
+        !latestSubscription.expired_at &&
+        latestSubscription.status !== SUBSCRIPTION_STATUS.CANCELED &&
+        latestSubscription.status !== SUBSCRIPTION_STATUS.EXPIRED
+      ) {
+        const subscriptionBillingMethodUpdateResult = await supabaseAdmin
+          .from('subscriptions')
+          .update({
+            subscriber_user_id: session.authUserId,
+            billing_key: encrypt(billingKey),
+            customer_key: customerKey,
+            updated_at: now.toISOString(),
+          })
+          .eq('id', latestSubscription.id);
+
+        if (subscriptionBillingMethodUpdateResult.error) {
+          console.error(subscriptionBillingMethodUpdateResult.error);
+
+          return Response.json({ error: '요금제 결제수단을 변경하지 못했습니다.' }, { status: 500 });
+        }
+      }
+
       return Response.json({ ok: true });
     }
 

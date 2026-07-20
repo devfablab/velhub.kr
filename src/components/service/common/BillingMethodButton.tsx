@@ -29,7 +29,11 @@ type BillingMethodStartResponse =
     }
   | { error: string };
 
-export default function BillingMethodButton() {
+type BillingMethodButtonProps = {
+  siteId?: string | null;
+};
+
+export default function BillingMethodButton({ siteId }: BillingMethodButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -115,6 +119,7 @@ export default function BillingMethodButton() {
         billingKey: billingKeyResponse.billingKey,
         customerKey: result.customerKey,
         orderNo: result.orderNo,
+        siteId: normalizeText(siteId) || undefined,
       }),
     });
 
