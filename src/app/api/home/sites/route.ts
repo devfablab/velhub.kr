@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
         'site_key, site_label, profile_picture, summary, site_type, profile_logo, member_count, post_count, created_at',
       )
       .eq('visibility_type', 'public')
-      .eq('is_shutdown', false);
+      .eq('is_shutdown', false)
+      .eq('is_blocked', false);
 
     if (siteType === 'blog' || siteType === 'community') {
       query = query.eq('site_type', siteType);
