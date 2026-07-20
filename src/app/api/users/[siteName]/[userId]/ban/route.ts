@@ -4,6 +4,7 @@ import { createMemberStatusNotification } from '@/lib/notifications/createMember
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
+import { isPlanBillingSubscriberStigma } from '@/lib/payments/planBillingSubscriber';
 
 type RouteContext = {
   params: Promise<{
@@ -51,6 +52,16 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!membershipResult.ok) {
       return Response.json({ error: membershipResult.error }, { status: membershipResult.status });
+    }
+
+    if (
+      await isPlanBillingSubscriberStigma({
+        supabaseAdmin: access.supabaseAdmin,
+        siteId: access.site.id,
+        stigmaId: membershipResult.membership.user_id,
+      })
+    ) {
+      return Response.json({ error: '해당 멤버는 요금제를 월결제해주시는 분입니다.' }, { status: 403 });
     }
 
     if (await isCommunityStaffMembership(access.site.id, membershipResult.membership)) {

@@ -38,6 +38,7 @@ type UserInfoResponse = {
   status?: UserInfoStatus;
   inviteHref?: string;
   blockReason?: string;
+  isPlanBillingSubscriber?: boolean;
   userInfo?: UserInfoData;
   error?: string;
 };
@@ -59,6 +60,7 @@ export default function UserInfo() {
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
   const [isWithdrawSubmitting, setIsWithdrawSubmitting] = useState(false);
   const [withdrawErrorMessage, setWithdrawErrorMessage] = useState('');
+  const [isPlanBillingSubscriber, setIsPlanBillingSubscriber] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -97,6 +99,7 @@ export default function UserInfo() {
       setInviteHref(result.inviteHref ?? '');
       setUserInfo(result.userInfo ?? null);
       setBlockReason(result.blockReason ?? '');
+      setIsPlanBillingSubscriber(result.isPlanBillingSubscriber === true);
       setNickname(result.userInfo?.nickname ?? '');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -166,6 +169,10 @@ export default function UserInfo() {
       const result = (await response.json()) as UserInfoResponse;
 
       if (!response.ok) {
+        if (result.error === '이용자님은 요금제를 월결제하시는 분입니다. 탈퇴하실 수 없어요.') {
+          setIsPlanBillingSubscriber(true);
+        }
+
         throw new Error(result.error ?? '커뮤니티 탈퇴에 실패했습니다.');
       }
 
@@ -305,6 +312,11 @@ export default function UserInfo() {
   }
 
   const isManager = userInfo.managerRoles.length > 0;
+  const isWithdrawBlocked = isManager || isPlanBillingSubscriber;
+  const withdrawBlockedMessage = isPlanBillingSubscriber
+    ? '이용자님은 요금제를 월결제하시는 분입니다. 탈퇴하실 수 없어요.'
+    : '매니저는 탈퇴하실 수 없습니다.';
+  const withdrawBlockedButtonText = isPlanBillingSubscriber ? '확인' : '닫기';
   const roleIconUrl = isManager ? userInfo.managerIconUrl : userInfo.level?.iconUrl || '';
   const roleLabel = isManager ? userInfo.managerRoles.map((role) => role.label).join(', ') : userInfo.level?.name || '';
 
@@ -449,19 +461,19 @@ export default function UserInfo() {
           onClose={handleCloseWithdrawDialog}
           className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['draw-dialog']}`}
         >
-          <h2>{isManager ? '탈퇴 불가' : '커뮤니티 탈퇴'}</h2>
+          <h2>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</h2>
           <button
             type="button"
             className="close-button"
             onClick={handleCloseWithdrawDialog}
             disabled={isWithdrawSubmitting}
-            aria-label={isManager ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
+            aria-label={isWithdrawBlocked ? '탈퇴 불가 안내 닫기' : '커뮤니티 탈퇴 닫기'}
           >
             <CloseRoundedIcon />
           </button>
           <div className={`VhiDrawer-bottom-content ${styles['info-content']}`}>
-            {isManager ? (
-              <Typography variant="subtitle2">매니저는 탈퇴하실 수 없습니다.</Typography>
+            {isWithdrawBlocked ? (
+              <Typography variant="subtitle2">{withdrawBlockedMessage}</Typography>
             ) : (
               <>
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
@@ -475,9 +487,9 @@ export default function UserInfo() {
           </div>
 
           <div className={styles['drawer-dialog-actions']}>
-            {isManager ? (
+            {isWithdrawBlocked ? (
               <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
-                닫기
+                {withdrawBlockedButtonText}
               </button>
             ) : (
               <>
@@ -509,11 +521,11 @@ export default function UserInfo() {
           maxWidth="xs"
           className={`vh-dialog vh-alert-dialog ${styles['info-dialog']}`}
         >
-          <DialogTitle>{isManager ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
+          <DialogTitle>{isWithdrawBlocked ? '탈퇴 불가' : '커뮤니티 탈퇴'}</DialogTitle>
 
           <DialogContent className={styles['info-content']}>
-            {isManager ? (
-              <Typography variant="subtitle2">매니저는 탈퇴하실 수 없습니다.</Typography>
+            {isWithdrawBlocked ? (
+              <Typography variant="subtitle2">{withdrawBlockedMessage}</Typography>
             ) : (
               <>
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
@@ -528,9 +540,9 @@ export default function UserInfo() {
           </DialogContent>
 
           <DialogActions>
-            {isManager ? (
+            {isWithdrawBlocked ? (
               <button type="button" className="cancel-button" onClick={handleCloseWithdrawDialog}>
-                닫기
+                {withdrawBlockedButtonText}
               </button>
             ) : (
               <>

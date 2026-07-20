@@ -39,6 +39,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PlanBillingMemberPopup from '../planBillingMemberPopup';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -111,6 +112,12 @@ type ManageLevelRow = {
   required_checkins: number;
   required_days: number;
   required_likes: number;
+};
+
+type PlanBillingSubscriberResponse = {
+  ok?: boolean;
+  userId?: string | null;
+  error?: string;
 };
 
 type LevelsResponse = {
@@ -236,6 +243,7 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLevelChanging, setIsLevelChanging] = useState(false);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
+  const [isPlanBillingMemberPopupOpen, setIsPlanBillingMemberPopupOpen] = useState(false);
   const [isLevelChangeDialogOpen, setIsLevelChangeDialogOpen] = useState(false);
 
   const [actionType, setActionType] = useState<ActionType>(null);
@@ -249,6 +257,21 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+
+  async function getPlanBillingSubscriberUserId() {
+    const response = await fetch(`/api/manage/members/plan-billing-subscriber?siteName=${siteName}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    const result = (await response.json()) as PlanBillingSubscriberResponse;
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '요금제 결제 멤버를 확인하지 못했습니다.');
+    }
+
+    return normalizeText(result.userId) || null;
+  }
 
   async function loadUsers() {
     const response = await fetch(`/api/users/${siteName}`, {
@@ -633,9 +656,25 @@ export default function Opt() {
     }
   }
 
-  function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
+  async function handleOpenActionDialog(nextActionType: Exclude<ActionType, null>) {
     if (selectedUserIds.length === 0) {
       setErrorMessage('멤버를 선택해주세요.');
+      return;
+    }
+
+    try {
+      const planBillingSubscriberUserId = await getPlanBillingSubscriberUserId();
+
+      if (planBillingSubscriberUserId && selectedUserIds.includes(planBillingSubscriberUserId)) {
+        setIsPlanBillingMemberPopupOpen(true);
+        return;
+      }
+    } catch (unknownError) {
+      setErrorMessage(
+        unknownError instanceof Error
+          ? unknownError.message || '요금제 결제 멤버를 확인하지 못했습니다.'
+          : '요금제 결제 멤버를 확인하지 못했습니다.',
+      );
       return;
     }
 
@@ -1429,6 +1468,11 @@ export default function Opt() {
                 </DialogActions>
               </Dialog>
             )}
+
+            <PlanBillingMemberPopup
+              open={isPlanBillingMemberPopupOpen}
+              onClose={() => setIsPlanBillingMemberPopupOpen(false)}
+            />
 
             <Snackbar
               open={Boolean(snackbarMessage)}
