@@ -12,6 +12,7 @@ import styles from '@/app/board.module.sass';
 type UserInfoData = {
   bannedAt: string | null;
   banReason: string | null;
+  banTerm: string | null;
 };
 
 type UserInfoResponse = {
@@ -24,6 +25,7 @@ export default function Page() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const canRejoin = Boolean(userInfo?.banTerm && new Date(userInfo.banTerm).getTime() <= Date.now());
 
   useEffect(() => {
     if (!siteName) return;
@@ -79,12 +81,28 @@ export default function Page() {
                   <Typography variant="subtitle2">가입 불가 사유</Typography>
                   <Typography variant="body2">{normalizeText(userInfo.banReason)}</Typography>
                 </div>
+                <div className="paper">
+                  <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                  <Typography variant="body2">
+                    {canRejoin ? '가입 가능' : userInfo.banTerm ? formatDate(userInfo.banTerm) : '재가입 불가'}
+                  </Typography>
+                </div>
               </Stack>
             ) : null}
 
-            <Anchor href="/concierge/rights" className="button medium submit">
-              소명하기
-            </Anchor>
+            {userInfo ? (
+              <>
+                {canRejoin ? (
+                  <Anchor href={`/${siteName}/join`} className="button medium submit">
+                    가입하기
+                  </Anchor>
+                ) : (
+                  <Anchor href="/concierge/rights" className="button medium submit">
+                    소명하기
+                  </Anchor>
+                )}
+              </>
+            ) : null}
           </div>
         </div>
       </div>

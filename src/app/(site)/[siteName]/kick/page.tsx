@@ -25,6 +25,7 @@ export default function Page() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const canRejoin = Boolean(userInfo?.kickTerm && new Date(userInfo.kickTerm).getTime() <= Date.now());
 
   useEffect(() => {
     if (!siteName) return;
@@ -83,18 +84,22 @@ export default function Page() {
                 <div className="paper">
                   <Typography variant="subtitle2">재가입 가능 날짜</Typography>
                   <Typography variant="body2">
-                    {userInfo.kickTerm ? formatDate(userInfo.kickTerm) : '가입 가능'}
+                    {canRejoin ? '가입 가능' : userInfo.kickTerm ? formatDate(userInfo.kickTerm) : '재가입 불가'}
                   </Typography>
                 </div>
               </Stack>
             ) : null}
             {userInfo ? (
               <>
-                {!userInfo.kickTerm || new Date(userInfo.kickTerm).getTime() <= Date.now() ? (
+                {canRejoin ? (
                   <Anchor href={`/${siteName}/join`} className="button medium submit">
                     가입하기
                   </Anchor>
-                ) : null}
+                ) : (
+                  <Anchor href="/concierge/rights" className="button medium submit">
+                    소명하기
+                  </Anchor>
+                )}
               </>
             ) : null}
           </div>

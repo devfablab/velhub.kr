@@ -19,6 +19,7 @@ type UserInfoResponse = {
   isBlock?: boolean;
   blockReason?: string | null;
   blockedAt?: string | null;
+  blockTerm?: string | null;
   blockCount?: number;
   error?: string;
 };
@@ -28,6 +29,7 @@ export default function Page() {
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [blockedAt, setBlockedAt] = useState<string | null>(null);
+  const [blockTerm, setBlockTerm] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -52,6 +54,7 @@ export default function Page() {
         }
 
         setBlockedAt(result.blockedAt ?? null);
+        setBlockTerm(result.blockTerm ?? null);
         setBlockReason(normalizeText(result.blockReason) || '등록된 사유가 없습니다.');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -91,6 +94,13 @@ export default function Page() {
                   <Typography variant="subtitle2">활동 정지 사유</Typography>
                   <Typography variant="body2">{blockReason}</Typography>
                 </div>
+
+                {blockTerm ? (
+                  <div className="paper">
+                    <Typography variant="subtitle2">활동 정지 해제일</Typography>
+                    <Typography variant="body2">{formatDate(blockTerm)}</Typography>
+                  </div>
+                ) : null}
               </Stack>
             ) : null}
 

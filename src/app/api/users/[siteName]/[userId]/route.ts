@@ -22,12 +22,14 @@ type MembershipRow = {
   is_block: boolean;
   block_reason: string | null;
   blocked_at: string | null;
+  block_term: string | null;
   block_count: number | null;
   kicked_at: string | null;
   kick_reason: string | null;
   kick_term: string | null;
   banned_at: string | null;
   ban_reason: string | null;
+  ban_term: string | null;
   role: string | null;
   nickname: string | null;
   lv: string | null;
@@ -297,7 +299,7 @@ async function getSiteUserInfo(siteName: string) {
   const membershipResult = await supabaseAdmin
     .from('rhizome_stigmas')
     .select(
-      'id, created_at, user_id, site_id, is_approval, is_block, block_reason, blocked_at, block_count, kicked_at, kick_reason, kick_term, banned_at, ban_reason, role, nickname, lv, checkin_count, withdrawn_at',
+      'id, created_at, user_id, site_id, is_approval, is_block, block_reason, blocked_at, block_term, block_count, kicked_at, kick_reason, kick_term, banned_at, ban_reason, ban_term, role, nickname, lv, checkin_count, withdrawn_at',
     )
     .eq('site_id', site.id)
     .eq('user_id', stigma.id)
@@ -426,6 +428,7 @@ async function getSiteUserInfo(siteName: string) {
         isBlock: true,
         blockReason: normalizeText(membership.block_reason),
         blockedAt: membership.blocked_at,
+        blockTerm: membership.block_term,
         blockCount: Number(membership.block_count ?? 0),
       },
     } as const;
@@ -538,6 +541,7 @@ async function getSiteUserInfo(siteName: string) {
         blockCount: Number(membership.block_count ?? 0),
         bannedAt: membership.banned_at,
         banReason: membership.ban_reason,
+        banTerm: membership.ban_term,
         managerRoles: managerRoles.map((role) => ({
           role,
           label: getManagerRoleLabel(role),
