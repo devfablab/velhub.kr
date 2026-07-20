@@ -19,6 +19,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -28,6 +29,10 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PlanBillingMemberPopup from '../planBillingMemberPopup';
@@ -46,6 +51,7 @@ type WithdrawnUserRow = {
   processedBy: string;
   type: string;
   kickTerm: string | null;
+  banTerm: string | null;
 };
 
 type PlanBillingSubscriberResponse = {
@@ -92,6 +98,7 @@ export default function Opt() {
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
+  const [actionTerm, setActionTerm] = useState<Date | null>(null);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
@@ -259,6 +266,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setActionTerm(null);
     setActionType(nextActionType);
   }
 
@@ -269,6 +277,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
+    setActionTerm(null);
     setActionType(null);
   }
 
@@ -373,6 +382,7 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             reason: trimmedReason,
+            banTerm: actionTerm ? actionTerm.toISOString() : null,
           }),
         });
 
@@ -390,6 +400,7 @@ export default function Opt() {
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
+      setActionTerm(null);
       setSnackbarMessage(`${completedActionTitle} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -533,7 +544,9 @@ export default function Opt() {
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.type === '강제탈퇴' && user.kickTerm
                           ? `${user.type} (${formatDate(user.kickTerm)} 재가입 가능)`
-                          : user.type}
+                          : user.type === '가입불가' && user.banTerm
+                            ? `${user.type} (${formatDate(user.banTerm)} 재가입 가능)`
+                            : user.type}
                       </TableCell>
                     </TableRow>
                   );
@@ -586,6 +599,31 @@ export default function Opt() {
               minRows={4}
               size="small"
             />
+
+            {actionType === 'ban' ? (
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
+                  <DatePicker
+                    value={actionTerm}
+                    onChange={setActionTerm}
+                    format="yyyy년 MM월 dd일"
+                    disabled={isActionSubmitting}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                      },
+                      popper: {
+                        sx: {
+                          zIndex: 9999,
+                        },
+                      },
+                    }}
+                  />
+                </Stack>
+              </LocalizationProvider>
+            ) : null}
 
             {dialogErrorMessage ? (
               <p className="alert error">
@@ -650,6 +688,26 @@ export default function Opt() {
                 minRows={4}
                 size="small"
               />
+
+              {actionType === 'ban' ? (
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">가입불가 해제 날짜</Typography>
+                    <DatePicker
+                      value={actionTerm}
+                      onChange={setActionTerm}
+                      format="yyyy년 MM월 dd일"
+                      disabled={isActionSubmitting}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          size: 'small',
+                        },
+                      }}
+                    />
+                  </Stack>
+                </LocalizationProvider>
+              ) : null}
 
               {dialogErrorMessage ? (
                 <p className="alert error">

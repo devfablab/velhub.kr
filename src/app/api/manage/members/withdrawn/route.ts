@@ -18,6 +18,7 @@ type MembershipRow = {
   banned_at?: string | null;
   banned_by?: string | null;
   ban_reason?: string | null;
+  ban_term?: string | null;
   withdrawn_at?: string | null;
   withdraw_reason?: string | null;
   cleared_at?: string | null;
@@ -96,6 +97,7 @@ export async function GET(request: Request) {
             reason: normalizeText(typedMembership.ban_reason) || '',
             processedAt: typedMembership.banned_at,
             processedBy: getStigmaDisplayName(bannedByUser),
+            banTerm: typedMembership.ban_term ?? null,
             type: '가입불가',
           };
         }

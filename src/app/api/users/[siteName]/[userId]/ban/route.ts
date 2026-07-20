@@ -15,6 +15,7 @@ type RouteContext = {
 
 type PatchRequestBody = {
   reason?: string | null;
+  banTerm?: string | null;
 };
 
 type DeleteRequestBody = {
@@ -29,6 +30,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     const siteName = normalizeText(rawSiteName).toLowerCase();
     const userId = normalizeText(rawUserId);
     const reason = normalizeText(requestBody.reason);
+    const normalizedBanTerm = normalizeText(requestBody.banTerm);
+    const parsedBanTerm = normalizedBanTerm ? new Date(normalizedBanTerm) : null;
+
+    if (parsedBanTerm && Number.isNaN(parsedBanTerm.getTime())) {
+      return Response.json({ error: '가입불가 해제 날짜가 유효하지 않습니다.' }, { status: 400 });
+    }
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -85,13 +92,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         banned_at: new Date().toISOString(),
         banned_by: access.session.stigmaId,
         ban_reason: reason,
+        ban_term: parsedBanTerm?.toISOString() ?? null,
         is_block: false,
         blocked_at: null,
         blocked_by: null,
         block_reason: null,
+        block_term: null,
         kicked_at: null,
         kicked_by: null,
         kick_reason: null,
+        kick_term: null,
         cleared_at: null,
         cleared_by: null,
         clear_reason: null,
@@ -178,6 +188,7 @@ export async function DELETE(request: Request, context: RouteContext) {
         banned_at: null,
         banned_by: null,
         ban_reason: null,
+        ban_term: null,
         cleared_at: new Date().toISOString(),
         cleared_by: access.session.stigmaId,
         clear_reason: reason,

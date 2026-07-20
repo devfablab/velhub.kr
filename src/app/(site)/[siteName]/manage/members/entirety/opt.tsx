@@ -235,7 +235,7 @@ export default function Opt() {
   const [dateSearchType, setDateSearchType] = useState<DateSearchType>('approval_at');
   const [dateStartDate, setDateStartDate] = useState<Date | null>(null);
   const [dateEndDate, setDateEndDate] = useState<Date | null>(null);
-  const [kickTerm, setKickTerm] = useState<Date | null>(null);
+  const [actionTerm, setActionTerm] = useState<Date | null>(null);
 
   const [appliedSearch, setAppliedSearch] = useState<AppliedSearch>(null);
   const [selectedLevelId, setSelectedLevelId] = useState('');
@@ -680,7 +680,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
-    setKickTerm(null);
+    setActionTerm(null);
 
     setActionType(nextActionType);
   }
@@ -692,7 +692,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
-    setKickTerm(null);
+    setActionTerm(null);
     setActionType(null);
   }
 
@@ -728,6 +728,22 @@ export default function Opt() {
     return '';
   }
 
+  function getActionTermLabel() {
+    if (actionType === 'block') {
+      return '활동정지 해제 날짜';
+    }
+
+    if (actionType === 'kick') {
+      return '재가입 가능 날짜';
+    }
+
+    if (actionType === 'ban') {
+      return '가입불가 해제 날짜';
+    }
+
+    return '';
+  }
+
   async function handleSubmitAction() {
     if (!actionType) {
       return;
@@ -754,7 +770,9 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             reason: trimmedReason,
-            kickTerm: actionType === 'kick' && kickTerm ? kickTerm.toISOString() : null,
+            blockTerm: actionType === 'block' && actionTerm ? actionTerm.toISOString() : null,
+            kickTerm: actionType === 'kick' && actionTerm ? actionTerm.toISOString() : null,
+            banTerm: actionType === 'ban' && actionTerm ? actionTerm.toISOString() : null,
           }),
         });
 
@@ -769,7 +787,7 @@ export default function Opt() {
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
-      setKickTerm(null);
+      setActionTerm(null);
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -1314,7 +1332,7 @@ export default function Opt() {
                   type="button"
                   className="close-button"
                   onClick={handleCloseActionDialog}
-                  disabled={isLevelChanging}
+                  disabled={isActionSubmitting}
                 >
                   <CloseRoundedIcon />
                 </button>
@@ -1332,13 +1350,13 @@ export default function Opt() {
                         size="small"
                       />
                     </Stack>
-                    {actionType === 'kick' ? (
+                    {actionType ? (
                       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                         <Stack gap={1}>
-                          <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                          <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
                           <DatePicker
-                            value={kickTerm}
-                            onChange={setKickTerm}
+                            value={actionTerm}
+                            onChange={setActionTerm}
                             format="yyyy년 MM월 dd일"
                             disabled={isActionSubmitting}
                             slotProps={{
@@ -1369,17 +1387,17 @@ export default function Opt() {
                       type="button"
                       className="button medium cancel"
                       onClick={handleCloseActionDialog}
-                      disabled={isLevelChanging}
+                      disabled={isActionSubmitting}
                     >
                       취소
                     </button>
                     <button
                       type="button"
                       className="button medium submit"
-                      onClick={() => void handleChangeLevel()}
-                      disabled={isLevelChanging}
+                      onClick={handleSubmitAction}
+                      disabled={isActionSubmitting}
                     >
-                      변경
+                      확인
                     </button>
                   </Stack>
                 </Stack>
@@ -1415,13 +1433,13 @@ export default function Opt() {
                         size="small"
                       />
                     </Stack>
-                    {actionType === 'kick' ? (
+                    {actionType ? (
                       <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                         <Stack gap={1}>
-                          <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                          <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
                           <DatePicker
-                            value={kickTerm}
-                            onChange={setKickTerm}
+                            value={actionTerm}
+                            onChange={setActionTerm}
                             format="yyyy년 MM월 dd일"
                             disabled={isActionSubmitting}
                             slotProps={{

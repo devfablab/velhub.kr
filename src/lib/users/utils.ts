@@ -41,8 +41,11 @@ type MembershipRow = {
   banned_by: string | null;
   blocked_by?: string | null;
   block_reason?: string | null;
+  block_term?: string | null;
   kick_reason?: string | null;
+  kick_term?: string | null;
   ban_reason?: string | null;
+  ban_term?: string | null;
   withdrawn_at?: string | null;
   withdraw_reason?: string | null;
   cleared_at?: string | null;

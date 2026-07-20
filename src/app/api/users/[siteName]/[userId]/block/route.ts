@@ -14,6 +14,7 @@ type RouteContext = {
 
 type RequestBody = {
   reason?: string | null;
+  blockTerm?: string | null;
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -24,6 +25,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     const siteName = normalizeText(rawSiteName).toLowerCase();
     const userId = normalizeText(rawUserId);
     const reason = normalizeText(requestBody.reason);
+    const normalizedBlockTerm = normalizeText(requestBody.blockTerm);
+    const parsedBlockTerm = normalizedBlockTerm ? new Date(normalizedBlockTerm) : null;
+
+    if (parsedBlockTerm && Number.isNaN(parsedBlockTerm.getTime())) {
+      return Response.json({ error: '활동정지 해제 날짜가 유효하지 않습니다.' }, { status: 400 });
+    }
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -82,6 +89,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         block_count: Number(membershipResult.membership.block_count ?? 0) + 1,
         blocked_by: access.session.stigmaId,
         block_reason: reason,
+        block_term: parsedBlockTerm?.toISOString() ?? null,
       })
       .eq('id', membershipResult.membership.id);
 
@@ -148,6 +156,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
         blocked_at: null,
         blocked_by: null,
         block_reason: null,
+        block_term: null,
       })
       .eq('id', membershipResult.membership.id);
 

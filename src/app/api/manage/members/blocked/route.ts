@@ -15,6 +15,7 @@ type MembershipRow = {
   blocked_at: string | null;
   blocked_by?: string | null;
   block_reason?: string | null;
+  block_term?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -69,6 +70,7 @@ export async function GET(request: Request) {
           nickname: normalizeText(typedMembership.nickname) || decryptNullable(blockedUser?.email ?? null) || '',
           blockReason: normalizeText(typedMembership.block_reason) || '',
           blockedAt: typedMembership.blocked_at,
+          blockTerm: typedMembership.block_term ?? null,
           blockedBy: getStigmaDisplayName(blockedByUser),
         };
       }),

@@ -42,6 +42,7 @@ type BlockedUserRow = {
   nickname: string;
   blockReason: string;
   blockedAt: string | null;
+  blockTerm: string | null;
   blockedBy: string;
 };
 
@@ -74,7 +75,7 @@ export default function Opt() {
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
-  const [kickTerm, setKickTerm] = useState<Date | null>(null);
+  const [actionTerm, setActionTerm] = useState<Date | null>(null);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
@@ -208,7 +209,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
-    setKickTerm(null);
+    setActionTerm(null);
     setActionType(nextActionType);
   }
 
@@ -219,7 +220,7 @@ export default function Opt() {
 
     setDialogErrorMessage('');
     setActionReason('');
-    setKickTerm(null);
+    setActionTerm(null);
     setActionType(null);
   }
 
@@ -246,6 +247,18 @@ export default function Opt() {
 
     if (actionType === 'ban') {
       return '가입불가 사유';
+    }
+
+    return '';
+  }
+
+  function getActionTermLabel() {
+    if (actionType === 'kick') {
+      return '재가입 가능 날짜';
+    }
+
+    if (actionType === 'ban') {
+      return '가입불가 해제 날짜';
     }
 
     return '';
@@ -292,7 +305,8 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             reason: trimmedReason,
-            kickTerm: actionType === 'kick' && kickTerm ? kickTerm.toISOString() : null,
+            kickTerm: actionType === 'kick' && actionTerm ? actionTerm.toISOString() : null,
+            banTerm: actionType === 'ban' && actionTerm ? actionTerm.toISOString() : null,
           }),
         });
 
@@ -307,7 +321,7 @@ export default function Opt() {
       setSelectedUserIds([]);
       setActionType(null);
       setActionReason('');
-      setKickTerm(null);
+      setActionTerm(null);
       setSnackbarMessage(`${getActionTitle()} 처리되었습니다.`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -397,6 +411,7 @@ export default function Opt() {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 사유</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 해제일</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리자</TableCell>
                   </TableRow>
                 </TableHead>
@@ -416,13 +431,16 @@ export default function Opt() {
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.blockedAt ? formatDate(user.blockedAt) : ''}
                       </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.blockTerm ? formatDate(user.blockTerm) : ''}
+                      </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.blockedBy}</TableCell>
                     </TableRow>
                   ))}
 
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} align="center">
+                      <TableCell colSpan={6} align="center">
                         검색 결과가 없습니다.
                       </TableCell>
                     </TableRow>
@@ -458,13 +476,13 @@ export default function Opt() {
                       />
                     </Stack>
                   ) : null}
-                  {actionType === 'kick' ? (
+                  {actionType === 'kick' || actionType === 'ban' ? (
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
                       <Stack gap={1}>
-                        <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                        <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
                         <DatePicker
-                          value={kickTerm}
-                          onChange={setKickTerm}
+                          value={actionTerm}
+                          onChange={setActionTerm}
                           format="yyyy년 MM월 dd일"
                           disabled={isActionSubmitting}
                           slotProps={{
@@ -539,12 +557,12 @@ export default function Opt() {
                       />
                     </>
                   ) : null}
-                  {actionType === 'kick' ? (
+                  {actionType === 'kick' || actionType === 'ban' ? (
                     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                      <Typography variant="subtitle2">재가입 가능 날짜</Typography>
+                      <Typography variant="subtitle2">{getActionTermLabel()}</Typography>
                       <DatePicker
-                        value={kickTerm}
-                        onChange={setKickTerm}
+                        value={actionTerm}
+                        onChange={setActionTerm}
                         format="yyyy.MM.dd"
                         disabled={isActionSubmitting}
                         slotProps={{
