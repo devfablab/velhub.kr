@@ -2,6 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
@@ -16,13 +27,29 @@ type SiteProfileResponse = {
   error?: string;
 };
 
+type OwnerTransferItem = {
+  id: string;
+  created_at: string;
+};
+
+type OwnerTransferResponse = {
+  ok?: boolean;
+  transfer?: OwnerTransferItem | null;
+  error?: string;
+};
+
 export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const theme = useTheme();
+  const isMobile = !useMediaQuery(theme.breakpoints.up('lg'));
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
+  const [ownerTransfer, setOwnerTransfer] = useState<OwnerTransferItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isResponding, setIsResponding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [ownerTransferError, setOwnerTransferError] = useState('');
 
   useEffect(() => {
     async function loadSiteProfile() {
@@ -45,6 +72,18 @@ export default function FooterSite() {
         }
 
         setSiteInfo(result.siteInfo);
+
+        const transferResponse = await fetch(`/api/site/owner-transfer?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const transferResult = (await transferResponse.json()) as OwnerTransferResponse;
+
+        if (!transferResponse.ok) {
+          throw new Error(transferResult.error ?? '운영자 교체 요청을 불러오지 못했습니다.');
+        }
+
+        setOwnerTransfer(transferResult.transfer ?? null);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -65,26 +104,125 @@ export default function FooterSite() {
     void loadSiteProfile();
   }, [siteName]);
 
+  async function handleOwnerTransferDecision(decision: 'accepted' | 'rejected') {
+    if (!ownerTransfer || isResponding) {
+      return;
+    }
+
+    try {
+      setOwnerTransferError('');
+      setIsResponding(true);
+
+      const response = await fetch('/api/site/owner-transfer', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          transferId: ownerTransfer.id,
+          decision,
+        }),
+      });
+      const result = (await response.json()) as OwnerTransferResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '운영자 교체 요청을 처리하지 못했습니다.');
+      }
+
+      setOwnerTransfer(null);
+
+      if (decision === 'accepted') {
+        window.location.reload();
+      }
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setOwnerTransferError(unknownError.message || '운영자 교체 요청을 처리하지 못했습니다.');
+      } else {
+        setOwnerTransferError('운영자 교체 요청을 처리하지 못했습니다.');
+      }
+    } finally {
+      setIsResponding(false);
+    }
+  }
+
   if (isLoading || errorMessage || !siteInfo) {
     return null;
   }
 
   return (
-    <footer className={styles.footer}>
-      <div className="container">
-        <div className={`content ${styles.content}`}>
-          <div className={`${styles.loves} ${styles['loves-site']}`}>
-            <p className={styles.copyright}>
-              <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
-            </p>
-            <p className={styles.love}>
-              <Anchor href="/" style={{ color: 'hotpink' }}>
-                <FavoriteRoundedIcon /> <span>velhub</span>
-              </Anchor>
-            </p>
+    <>
+      <footer className={styles.footer}>
+        <div className="container">
+          <div className={`content ${styles.content}`}>
+            <div className={`${styles.loves} ${styles['loves-site']}`}>
+              <p className={styles.copyright}>
+                <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
+              </p>
+              <p className={styles.love}>
+                <Anchor href="/" style={{ color: 'hotpink' }}>
+                  <FavoriteRoundedIcon /> <span>velhub</span>
+                </Anchor>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+
+      {isMobile ? (
+        <Drawer anchor="bottom" open={Boolean(ownerTransfer)} className="VhiDrawer-bottom">
+          <h2>운영자 교체</h2>
+          <Stack gap={3}>
+            <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
+            {ownerTransferError ? <p className="alert error">{ownerTransferError}</p> : null}
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                onClick={() => void handleOwnerTransferDecision('rejected')}
+                disabled={isResponding}
+              >
+                거절
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleOwnerTransferDecision('accepted')}
+                disabled={isResponding}
+              >
+                수락
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={Boolean(ownerTransfer)} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>운영자 교체</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
+            {ownerTransferError ? <p className="alert error">{ownerTransferError}</p> : null}
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={() => void handleOwnerTransferDecision('rejected')}
+              disabled={isResponding}
+            >
+              거절
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleOwnerTransferDecision('accepted')}
+              disabled={isResponding}
+            >
+              수락
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </>
   );
 }

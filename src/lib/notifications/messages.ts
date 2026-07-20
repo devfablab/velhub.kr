@@ -149,6 +149,20 @@ export function getNotificationText(
     };
   }
 
+  if (notificationType === NOTIFICATION_TYPE.SITE_OWNER_TRANSFER_REQUESTED) {
+    return {
+      title: '운영자 교체',
+      message: `${siteLabel} 사이트에서 ${sendUserName} 님으로 부터 운영자 권한 요청이 도착했습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.SITE_OWNER_TRANSFER_REJECTED) {
+    return {
+      title: '운영자 교체 거부',
+      message: `${siteLabel} 사이트에서 당신이 ${targetUserName} 님에게 요청한 운영자 권한 요청이 거부되었습니다.`,
+    };
+  }
+
   if (notificationType === NOTIFICATION_TYPE.REPORT_RECEIVED) {
     return {
       title: '새로운 신고 접수',

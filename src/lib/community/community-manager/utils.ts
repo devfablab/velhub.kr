@@ -11,7 +11,9 @@ import {
 
 type RhizomeRow = {
   id: string;
+  owner_id: string;
   site_key: string;
+  site_label: string;
   site_type: string | null;
   plan_type: string | null;
 };
@@ -160,7 +162,7 @@ export async function getCommunityManagerAccess(
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_type, plan_type')
+    .select('id, owner_id, site_key, site_label, site_type, plan_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 

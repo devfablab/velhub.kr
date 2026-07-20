@@ -18,6 +18,8 @@ export const NOTIFICATION_TYPE = {
   BOARD_ASSISTANT_MANAGER_REMOVED: 'board_assistant_manager_removed',
   COMMUNITY_MANAGER_DELEGATED: 'community_manager_delegated',
   COMMUNITY_MANAGER_DISMISSED: 'community_manager_dismissed',
+  SITE_OWNER_TRANSFER_REQUESTED: 'site_owner_transfer_requested',
+  SITE_OWNER_TRANSFER_REJECTED: 'site_owner_transfer_rejected',
 
   REPORT_RECEIVED: 'report_received',
   REPORT_RESULT: 'report_result',

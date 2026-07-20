@@ -102,6 +102,12 @@ type ManagersResponse = {
     board_general_manager: number;
     board_assistant_manager: number;
   };
+  ownerTransfer?: {
+    canRequest: boolean;
+    hasPendingRequest: boolean;
+    requesterRole: 'owner' | 'community-manager' | null;
+    availableAt: string | null;
+  };
   error?: string;
 };
 
@@ -221,6 +227,7 @@ export default function Opt() {
   const [boards, setBoards] = useState<BoardItem[]>([]);
   const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>([]);
   const [limits, setLimits] = useState<ManagersResponse['limits'] | null>(null);
+  const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchedKeyword, setSearchedKeyword] = useState('');
@@ -243,7 +250,10 @@ export default function Opt() {
   const [isSubmittingNew, setIsSubmittingNew] = useState(false);
   const [isSubmittingDelete, setIsSubmittingDelete] = useState(false);
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
+  const [isSubmittingOwnerTransfer, setIsSubmittingOwnerTransfer] = useState(false);
+  const [searchMode, setSearchMode] = useState<'manager' | 'owner-transfer'>('manager');
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [isOwnerTransferConfirmOpen, setIsOwnerTransferConfirmOpen] = useState(false);
   const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
   const [isManagerEditOpen, setIsManagerEditOpen] = useState(false);
   const [targetIconId, setTargetIconId] = useState('');
@@ -412,6 +422,7 @@ export default function Opt() {
     setBoards(Array.isArray(result.boards) ? result.boards : []);
     setManagerIcons(Array.isArray(result.managerIcons) ? result.managerIcons : []);
     setLimits(result.limits ?? null);
+    setOwnerTransfer(result.ownerTransfer ?? null);
   }
 
   async function ensureManagerIcons() {
@@ -618,17 +629,20 @@ export default function Opt() {
     }
   }
 
-  function openSearchDialog() {
+  function openSearchDialog(mode: 'manager' | 'owner-transfer') {
+    setSearchMode(mode);
     setSearchDialogErrorMessage('');
     setIsSearchDialogOpen(true);
   }
 
   function closeSearchDialog() {
-    if (isSearching || isSubmittingNew || isSubmittingMove) {
+    if (isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer) {
       return;
     }
 
     setIsSearchDialogOpen(false);
+    setIsOwnerTransferConfirmOpen(false);
+    setSearchMode('manager');
     setSearchKeyword('');
     setSearchedKeyword('');
     setSearchResults([]);
@@ -658,10 +672,14 @@ export default function Opt() {
       setSearchDialogErrorMessage('');
       setIsSearching(true);
 
-      const response = await fetch(`/api/manage/join/managers/search?siteName=${siteName}&keyword=${trimmedKeyword}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const purposeQuery = searchMode === 'owner-transfer' ? '&purpose=owner-transfer' : '';
+      const response = await fetch(
+        `/api/manage/join/managers/search?siteName=${siteName}&keyword=${trimmedKeyword}${purposeQuery}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        },
+      );
 
       const result = (await response.json()) as SearchResponse;
 
@@ -680,6 +698,73 @@ export default function Opt() {
       }
     } finally {
       setIsSearching(false);
+    }
+  }
+
+  function handleSelectSearchMember(memberId: string) {
+    setSelectedSearchMemberId(memberId);
+    setSearchDialogErrorMessage('');
+  }
+
+  function closeOwnerTransferConfirm() {
+    if (isSubmittingOwnerTransfer) {
+      return;
+    }
+
+    setIsOwnerTransferConfirmOpen(false);
+    setSelectedSearchMemberId('');
+  }
+
+  async function handleRequestOwnerTransfer() {
+    if (!selectedSearchMember || isSubmittingOwnerTransfer) {
+      return;
+    }
+
+    try {
+      setSearchDialogErrorMessage('');
+      setIsSubmittingOwnerTransfer(true);
+
+      const response = await fetch('/api/manage/join/managers/owner-transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          siteName,
+          targetMemberId: selectedSearchMember.rhizomeStigmaId,
+        }),
+      });
+
+      const result = (await response.json()) as MutationResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '운영자 교체 요청에 실패했습니다.');
+      }
+
+      setOwnerTransfer((previous) =>
+        previous
+          ? { ...previous, canRequest: false, hasPendingRequest: true }
+          : {
+              canRequest: false,
+              hasPendingRequest: true,
+              requesterRole: null,
+              availableAt: null,
+            },
+      );
+      setSnackbarMessage('운영자 교체 요청을 보냈습니다.');
+      closeSearchDialog();
+    } catch (unknownError) {
+      setIsOwnerTransferConfirmOpen(false);
+      setSelectedSearchMemberId('');
+
+      if (unknownError instanceof Error) {
+        setSearchDialogErrorMessage(unknownError.message || '운영자 교체 요청에 실패했습니다.');
+      } else {
+        setSearchDialogErrorMessage('운영자 교체 요청에 실패했습니다.');
+      }
+    } finally {
+      setIsSubmittingOwnerTransfer(false);
     }
   }
 
@@ -1029,6 +1114,11 @@ export default function Opt() {
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           <Stack direction="row" gap={1} alignItems="center" justifyContent="flex-end" sx={{ p: 1 }}>
+            {ownerTransfer?.canRequest ? (
+              <button type="button" className="button small action" onClick={() => openSearchDialog('owner-transfer')}>
+                운영자 교체
+              </button>
+            ) : null}
             <button
               type="button"
               className="button small action"
@@ -1037,7 +1127,7 @@ export default function Opt() {
             >
               아이콘 변경
             </button>
-            <button type="button" className="button small action" onClick={openSearchDialog}>
+            <button type="button" className="button small action" onClick={() => openSearchDialog('manager')}>
               위임
             </button>
           </Stack>
@@ -1046,10 +1136,10 @@ export default function Opt() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>별명</TableCell>
-                  <TableCell>역할</TableCell>
-                  <TableCell>게시판</TableCell>
-                  <TableCell>선정일</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>역할</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>선정일</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1351,10 +1441,10 @@ export default function Opt() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>선택</TableCell>
-                          <TableCell>별명</TableCell>
-                          <TableCell>이메일</TableCell>
-                          <TableCell>현재 매니저</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>선택</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>매니저 역할</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1368,14 +1458,14 @@ export default function Opt() {
                               <TableCell>
                                 <Radio
                                   checked={selectedSearchMemberId === member.rhizomeStigmaId}
-                                  onChange={() => {
-                                    setSelectedSearchMemberId(member.rhizomeStigmaId);
-                                  }}
+                                  onChange={() => handleSelectSearchMember(member.rhizomeStigmaId)}
                                 />
                               </TableCell>
-                              <TableCell>{member.nickname || member.userName || member.email}</TableCell>
-                              <TableCell>{member.email}</TableCell>
-                              <TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                {member.nickname || member.userName || member.email}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.manageRoles.length > 0
                                   ? member.manageRoles
                                       .map((role) =>
@@ -1393,7 +1483,7 @@ export default function Opt() {
                     </Table>
                   </div>
 
-                  {selectedSearchMemberId ? (
+                  {selectedSearchMemberId && searchMode === 'manager' ? (
                     <>
                       <Stack direction="row" gap={1.5}>
                         <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
@@ -1514,6 +1604,18 @@ export default function Opt() {
                       </Stack>
                     </>
                   ) : null}
+
+                  {selectedSearchMemberId && searchMode === 'owner-transfer' ? (
+                    <Stack direction="column">
+                      <button
+                        type="button"
+                        className="button medium submit"
+                        onClick={() => setIsOwnerTransferConfirmOpen(true)}
+                      >
+                        운영자 교체
+                      </button>
+                    </Stack>
+                  ) : null}
                 </Stack>
               </Stack>
             </Drawer>
@@ -1555,10 +1657,10 @@ export default function Opt() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>선택</TableCell>
-                          <TableCell>별명</TableCell>
-                          <TableCell>이메일</TableCell>
-                          <TableCell>현재 매니저</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>선택</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>이메일</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>매니저 역할</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1572,14 +1674,14 @@ export default function Opt() {
                               <TableCell>
                                 <Radio
                                   checked={selectedSearchMemberId === member.rhizomeStigmaId}
-                                  onChange={() => {
-                                    setSelectedSearchMemberId(member.rhizomeStigmaId);
-                                  }}
+                                  onChange={() => handleSelectSearchMember(member.rhizomeStigmaId)}
                                 />
                               </TableCell>
-                              <TableCell>{member.nickname || member.userName || member.email}</TableCell>
-                              <TableCell>{member.email}</TableCell>
-                              <TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                {member.nickname || member.userName || member.email}
+                              </TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
+                              <TableCell sx={{ whiteSpace: 'nowrap' }}>
                                 {member.manageRoles.length > 0
                                   ? member.manageRoles
                                       .map((role) =>
@@ -1597,7 +1699,7 @@ export default function Opt() {
                     </Table>
                   </div>
 
-                  {selectedSearchMemberId ? (
+                  {selectedSearchMemberId && searchMode === 'manager' ? (
                     <Stack direction="row" gap={1.5}>
                       <Stack direction="column" gap={1} sx={{ flex: '1 0 0%' }}>
                         <Typography variant="subtitle2">매니저 구분</Typography>
@@ -1704,22 +1806,79 @@ export default function Opt() {
                     </Stack>
                   ) : null}
 
-                  <Stack direction="row" gap={1} justifyContent="flex-end">
-                    <button
-                      type="button"
-                      className="button medium submit"
-                      onClick={handleCreateManager}
-                      disabled={
-                        isSubmittingNew ||
-                        (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
-                        (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
-                      }
-                    >
-                      위임
-                    </button>
-                  </Stack>
+                  {searchMode === 'manager' ? (
+                    <Stack direction="row" gap={1} justifyContent="flex-end">
+                      <button
+                        type="button"
+                        className="button medium submit"
+                        onClick={handleCreateManager}
+                        disabled={
+                          isSubmittingNew ||
+                          (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
+                          (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
+                        }
+                      >
+                        위임
+                      </button>
+                    </Stack>
+                  ) : selectedSearchMemberId ? (
+                    <Stack direction="row" gap={1} justifyContent="flex-end">
+                      <button
+                        type="button"
+                        className="button medium submit"
+                        onClick={() => setIsOwnerTransferConfirmOpen(true)}
+                      >
+                        운영자 교체
+                      </button>
+                    </Stack>
+                  ) : null}
                 </Stack>
               </DialogContent>
+            </Dialog>
+          )}
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isOwnerTransferConfirmOpen}
+              onClose={closeOwnerTransferConfirm}
+              className="VhiDrawer-bottom"
+            >
+              <h2>운영자 교체</h2>
+              <Stack gap={3}>
+                <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleRequestOwnerTransfer()}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  확인
+                </button>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isOwnerTransferConfirmOpen}
+              onClose={closeOwnerTransferConfirm}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>운영자 교체</DialogTitle>
+              <DialogContent>
+                <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleRequestOwnerTransfer()}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  확인
+                </button>
+              </DialogActions>
             </Dialog>
           )}
 

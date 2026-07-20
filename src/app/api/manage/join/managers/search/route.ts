@@ -4,6 +4,7 @@ import {
   getBoardSummaries,
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
+import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
 import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {
@@ -11,12 +12,23 @@ export async function GET(request: Request) {
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
     const keyword = normalizeText(requestUrl.searchParams.get('keyword')).toLowerCase();
+    const purpose = normalizeText(requestUrl.searchParams.get('purpose'));
 
     if (!keyword) {
       return Response.json({ error: '검색어를 입력해주세요.' }, { status: 400 });
     }
 
     const access = await getCommunityManagerAccess(siteName);
+    const isOwnerTransfer = purpose === 'owner-transfer';
+
+    if (isOwnerTransfer) {
+      const availability = await getOwnerTransferAvailability(access);
+
+      if (!availability.canRequest) {
+        return Response.json({ error: '운영자 교체를 요청할 수 없습니다.' }, { status: 403 });
+      }
+    }
+
     const members = await getActiveMembers(access);
     const managerList = await buildCommunityManagerList(access);
     const boards = await getBoardSummaries(access);
@@ -33,7 +45,11 @@ export async function GET(request: Request) {
       const email = normalizeText(member.email).toLowerCase();
       const userName = normalizeText(member.userName).toLowerCase();
 
-      return nickname.includes(keyword) || email.includes(keyword) || userName.includes(keyword);
+      return (
+        (!isOwnerTransfer ||
+          (member.rhizomeStigmaId !== access.actor.rhizomeStigmaId && member.userId !== access.rhizome.owner_id)) &&
+        (nickname.includes(keyword) || email.includes(keyword) || userName.includes(keyword))
+      );
     });
 
     return Response.json({

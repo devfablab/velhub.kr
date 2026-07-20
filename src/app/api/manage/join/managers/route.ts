@@ -5,6 +5,7 @@ import {
   getBoardSummaries,
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
+import { getOwnerTransferAvailability } from '@/lib/community/ownerTransfers';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -199,6 +200,7 @@ export async function GET(request: Request) {
     const managers = await buildCommunityManagerList(access);
     const boards = await getBoardSummaries(access);
     const managerIcons = await getManagerIcons(access.rhizome.id);
+    const ownerTransfer = await getOwnerTransferAvailability(access);
 
     if (!managerIcons.ok) {
       return Response.json({ error: managerIcons.error }, { status: 500 });
@@ -217,6 +219,7 @@ export async function GET(request: Request) {
       boards,
       managerIcons: managerIcons.icons,
       managerIconRoles: MANAGER_ICON_ROLES,
+      ownerTransfer,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
