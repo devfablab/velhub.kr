@@ -157,6 +157,17 @@ async function createFailedPayment({
   if (subscriptionFailResult.error) {
     console.error(subscriptionFailResult.error);
   }
+
+  const siteShutdownResult = await supabaseAdmin
+    .from('rhizomes')
+    .update({
+      is_shutdown: true,
+    })
+    .eq('id', subscription.target_id);
+
+  if (siteShutdownResult.error) {
+    console.error(siteShutdownResult.error);
+  }
 }
 
 async function chargePlanBillingSubscription({
