@@ -51,6 +51,9 @@ type PostRow = {
 type ReportMessageRow = {
   id: string;
   message: string;
+  report_type: string;
+  report_id: string;
+  created_at: string;
 };
 
 function decryptUserName(value: string | null) {
@@ -194,7 +197,10 @@ export async function GET() {
           ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
           : Promise.resolve({ data: [], error: null }),
         reportMessageIds.length > 0
-          ? supabaseAdmin.from('report_messages').select('id, message').in('id', reportMessageIds)
+          ? supabaseAdmin
+              .from('report_messages')
+              .select('id, message, report_type, report_id, created_at')
+              .in('id', reportMessageIds)
           : Promise.resolve({ data: [], error: null }),
       ]);
 
@@ -237,6 +243,39 @@ export async function GET() {
       ]),
     );
 
+    const referencedReportMessages = (reportMessagesResult.data ?? []) as ReportMessageRow[];
+    const reportMessageKeys = new Set(
+      referencedReportMessages.map((reportMessage) => `${reportMessage.report_type}:${reportMessage.report_id}`),
+    );
+    const relatedReportMessagesResult =
+      referencedReportMessages.length > 0
+        ? await supabaseAdmin
+            .from('report_messages')
+            .select('id, message, report_type, report_id, created_at')
+            .in('report_id', [...new Set(referencedReportMessages.map((reportMessage) => reportMessage.report_id))])
+            .order('created_at', { ascending: true })
+        : { data: [], error: null };
+
+    if (relatedReportMessagesResult.error) {
+      console.error(relatedReportMessagesResult.error);
+      return Response.json({ error: '알림 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const reportMessageCountMap = new Map<string, number>();
+    const countByReportKey = new Map<string, number>();
+
+    for (const reportMessage of (relatedReportMessagesResult.data ?? []) as ReportMessageRow[]) {
+      const reportKey = `${reportMessage.report_type}:${reportMessage.report_id}`;
+
+      if (!reportMessageKeys.has(reportKey)) {
+        continue;
+      }
+
+      const nextCount = (countByReportKey.get(reportKey) ?? 0) + 1;
+      countByReportKey.set(reportKey, nextCount);
+      reportMessageCountMap.set(reportMessage.id, nextCount);
+    }
+
     const items = notifications.flatMap((notification) => {
       if (!isNotificationType(notification.notification_type)) {
         return [];
@@ -258,6 +297,7 @@ export async function GET() {
         seriesLabel: series?.series_label ?? null,
         postSubject: post?.subject ?? null,
         reportMessage: notification.target_id ? (reportMessageMap.get(notification.target_id) ?? null) : null,
+        reportMessageCount: notification.target_id ? (reportMessageCountMap.get(notification.target_id) ?? 0) : 0,
       });
 
       return [

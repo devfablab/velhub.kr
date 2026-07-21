@@ -25,6 +25,7 @@ export const NOTIFICATION_TYPE = {
   REPORT_RECEIVED: 'report_received',
   REPORT_RESULT: 'report_result',
   CONCIERGE_REPORT_MESSAGE: 'concierge_report_message',
+  CONCIERGE_SITE_BLOCKED: 'concierge_site_blocked',
   VELHUB_SITE_BLOCKED: 'velhub_site_blocked',
   VELHUB_SITE_UNBLOCKED: 'velhub_site_unblocked',
   SITE_MEMBER_BLOCKED: 'site_member_blocked',

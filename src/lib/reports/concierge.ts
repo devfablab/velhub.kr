@@ -33,6 +33,8 @@ export type ConciergeReportItem = {
   reporterUserId: string;
   reporterName: string;
   reportName: string;
+  reportUrl: string | null;
+  messageCount: number;
   status: ReportStatus;
   statusLabel: string;
   createdAt: string;
@@ -41,6 +43,8 @@ export type ConciergeReportItem = {
     id: string;
     name: string;
     href: string;
+    isBlocked: boolean;
+    isPlanTerminated: boolean;
   } | null;
   board: {
     id: string;

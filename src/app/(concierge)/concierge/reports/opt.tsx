@@ -41,6 +41,13 @@ type ReportsResponse = {
   error?: string;
 };
 
+type SiteAction = 'block' | 'unblock' | 'close';
+
+type SiteActionDialogState = {
+  report: ConciergeReportItem;
+  action: SiteAction;
+} | null;
+
 const cellSx = { whiteSpace: 'nowrap' } as const;
 
 const targetOptions: { value: ReportTargetType; label: string }[] = [
@@ -155,6 +162,7 @@ export default function Opt() {
 
   const [messageDialogReport, setMessageDialogReport] = useState<ConciergeReportItem | null>(null);
   const [message, setMessage] = useState('');
+  const [siteActionDialog, setSiteActionDialog] = useState<SiteActionDialogState>(null);
 
   const loadReports = useCallback(
     async function loadReports() {
@@ -323,6 +331,40 @@ export default function Opt() {
     }
   }
 
+  async function handleSiteAction(report: ConciergeReportItem, action: SiteAction) {
+    try {
+      setActionLoading(true);
+      const response = await fetch(`/api/concierge/reports/${report.reportType}/${report.id}/site`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const result = (await response.json().catch(() => ({ error: '사이트 처리 응답을 확인하지 못했습니다.' }))) as {
+        error?: string;
+      };
+
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '사이트를 처리하지 못했습니다.');
+        return;
+      }
+
+      setSnackbarMessage(
+        action === 'block'
+          ? '사이트를 차단했습니다.'
+          : action === 'unblock'
+            ? '사이트 차단을 해제했습니다.'
+            : '사이트를 폐쇄했습니다.',
+      );
+      setSiteActionDialog(null);
+      await loadReports();
+    } catch {
+      setErrorMessage('사이트를 처리하지 못했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   return (
     <Stack gap={2}>
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1}>
@@ -364,8 +406,10 @@ export default function Opt() {
                   <TableCell sx={cellSx}>게시판명</TableCell>
                   <TableCell sx={cellSx}>게시물 제목</TableCell>
                   <TableCell sx={cellSx}>댓글</TableCell>
+                  <TableCell sx={cellSx}>신고 주소</TableCell>
                   <TableCell sx={cellSx}>신고명(위반내용)</TableCell>
                   <TableCell sx={cellSx}>신고자(이름)</TableCell>
+                  <TableCell sx={cellSx}>메모 횟수</TableCell>
                   <TableCell sx={cellSx}>처리상태</TableCell>
                   <TableCell sx={cellSx}>처리상태 변경</TableCell>
                   <TableCell sx={cellSx}>신고일</TableCell>
@@ -403,6 +447,7 @@ export default function Opt() {
                       )}
                     </TableCell>
                     <TableCell sx={cellSx}>{report.comment ? truncate(report.comment.content, 150) : '-'}</TableCell>
+                    <TableCell sx={cellSx}>{report.reportUrl ?? '-'}</TableCell>
                     <TableCell sx={cellSx}>
                       <Stack direction="row" gap={1} alignItems="center">
                         <Chip label={report.reportTypeLabel} size="small" />
@@ -414,6 +459,7 @@ export default function Opt() {
                         {report.reporterName}
                       </button>
                     </TableCell>
+                    <TableCell sx={cellSx}>{report.messageCount.toLocaleString('ko-KR')}회</TableCell>
                     <TableCell sx={cellSx}>{report.statusLabel}</TableCell>
                     <TableCell sx={cellSx}>
                       <Stack direction="row" gap={1}>
@@ -447,6 +493,43 @@ export default function Opt() {
                             메모 보내기
                           </button>
                         ) : null}
+                        {report.reportType === 'rights' &&
+                        report.canSendMessage &&
+                        report.site &&
+                        report.messageCount >= 3 &&
+                        !report.site.isBlocked ? (
+                          <button
+                            type="button"
+                            className="button small warning"
+                            disabled={actionLoading}
+                            onClick={() => setSiteActionDialog({ report, action: 'block' })}
+                          >
+                            사이트 차단
+                          </button>
+                        ) : null}
+                        {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            disabled={actionLoading}
+                            onClick={() => setSiteActionDialog({ report, action: 'unblock' })}
+                          >
+                            차단 해제
+                          </button>
+                        ) : null}
+                        {report.reportType === 'rights' &&
+                        report.canSendMessage &&
+                        report.site?.isBlocked &&
+                        !report.site.isPlanTerminated ? (
+                          <button
+                            type="button"
+                            className="button small danger"
+                            disabled={actionLoading}
+                            onClick={() => setSiteActionDialog({ report, action: 'close' })}
+                          >
+                            사이트 폐쇄
+                          </button>
+                        ) : null}
                       </Stack>
                     </TableCell>
                     <TableCell sx={cellSx}>{formatDateTimeDetail(report.createdAt)}</TableCell>
@@ -455,7 +538,7 @@ export default function Opt() {
                 ))}
                 {reports.length === 0 ? (
                   <TableRow>
-                    <TableCell sx={cellSx} colSpan={10} align="center">
+                    <TableCell sx={cellSx} colSpan={12} align="center">
                       신고 내역이 없습니다.
                     </TableCell>
                   </TableRow>
@@ -518,6 +601,14 @@ export default function Opt() {
         <DialogTitle>메모 보내기</DialogTitle>
         <DialogContent dividers>
           <Stack gap={2}>
+            {messageDialogReport?.reportType === 'rights' &&
+            (messageDialogReport.targetType === 'site' || messageDialogReport.targetType === 'board') ? (
+              <p className="alert warning">
+                현재까지 메모를 {messageDialogReport.messageCount.toLocaleString('ko-KR')}회 보냈습니다. 메모를 3회 이상
+                보낸 뒤에도 문제가 해결되지 않으면 사이트를 차단할 수 있으며, 3회 이후에도 메시지는 계속 보낼 수
+                있습니다.
+              </p>
+            ) : null}
             {messageDialogReport?.messages.length ? (
               <Stack gap={1}>
                 <Typography variant="subtitle2">메모 이력</Typography>
@@ -557,6 +648,46 @@ export default function Opt() {
           </button>
           <button type="button" className="button medium action" disabled={actionLoading} onClick={handleSendMessage}>
             보내기
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(siteActionDialog)} onClose={() => setSiteActionDialog(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {siteActionDialog?.action === 'block'
+            ? '사이트 차단'
+            : siteActionDialog?.action === 'unblock'
+              ? '사이트 차단 해제'
+              : '사이트 폐쇄'}
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2">
+            {siteActionDialog?.action === 'block'
+              ? '진짜 사이트를 차단하시겠습니까?'
+              : siteActionDialog?.action === 'unblock'
+                ? '진짜 사이트 차단을 해제하시겠습니까?'
+                : '진짜 사이트를 폐쇄하시겠습니까? 환불 가능한 요금제는 환불 후 취소되며, 환불할 수 없으면 다음 결제가 취소됩니다.'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <button type="button" className="button" disabled={actionLoading} onClick={() => setSiteActionDialog(null)}>
+            취소
+          </button>
+          <button
+            type="button"
+            className={`button ${siteActionDialog?.action === 'unblock' ? 'action' : 'danger'}`}
+            disabled={actionLoading || !siteActionDialog}
+            onClick={() => {
+              if (siteActionDialog) {
+                void handleSiteAction(siteActionDialog.report, siteActionDialog.action);
+              }
+            }}
+          >
+            {siteActionDialog?.action === 'block'
+              ? '차단하기'
+              : siteActionDialog?.action === 'unblock'
+                ? '차단 해제'
+                : '사이트 폐쇄'}
           </button>
         </DialogActions>
       </Dialog>

@@ -9,6 +9,7 @@ export type NotificationMessageData = {
   seriesLabel?: string | null;
   postSubject?: string | null;
   reportMessage?: string | null;
+  reportMessageCount?: number | null;
 };
 
 export type NotificationText = {
@@ -31,6 +32,7 @@ export function getNotificationText(
   const seriesLabel = getText(data.seriesLabel, '연재');
   const postSubject = getText(data.postSubject, '글');
   const reportMessage = getText(data.reportMessage, '메시지 내용 없음');
+  const reportMessageCount = Math.max(0, Number(data.reportMessageCount ?? 0));
 
   if (notificationType === NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT) {
     return {
@@ -190,8 +192,15 @@ export function getNotificationText(
     return {
       title: '데브허브 컨시어지팀 메시지',
       message: data.boardLabel
-        ? `${siteLabel} 사이트의 ${boardLabel} 게시판에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다.`
-        : `${siteLabel} 사이트에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다.`,
+        ? `${siteLabel} 사이트의 ${boardLabel} 게시판에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. 현재까지 ${reportMessageCount}회 경고를 받았습니다.`
+        : `${siteLabel} 사이트에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. 현재까지 ${reportMessageCount}회 경고를 받았습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CONCIERGE_SITE_BLOCKED) {
+    return {
+      title: '사이트 차단',
+      message: `컨시어지팀에 의해 ${siteLabel} 사이트가 차단되었습니다. 이에 대해 운영자는 소명할 수 있습니다.`,
     };
   }
 
