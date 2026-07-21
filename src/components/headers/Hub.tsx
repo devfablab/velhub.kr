@@ -27,6 +27,7 @@ import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
@@ -383,6 +384,12 @@ export default function HeaderHub() {
                       <Anchor href="/hub/notifications">
                         <NotificationsOutlinedIcon fontSize="small" />
                         <span>알림내역</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="revenue" onClick={handleCloseProfileMenu}>
+                      <Anchor href="/hub/revenue">
+                        <PaymentsOutlinedIcon fontSize="small" />
+                        <span>수입/정산</span>
                       </Anchor>
                     </MenuItem>
                     <ListSubheader className={styles['VhiDrawer-subheader']}>라운지</ListSubheader>

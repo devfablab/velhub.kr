@@ -23,6 +23,11 @@ type RevenueErrorResponse = {
   error: string;
 };
 
+type RevenueSummaryProps = {
+  siteName?: string;
+  apiPath?: string;
+};
+
 function isRevenueErrorResponse(value: RevenueSummaryResponse | RevenueErrorResponse): value is RevenueErrorResponse {
   return 'error' in value;
 }
@@ -46,9 +51,12 @@ const summaryItems: {
   { key: 'todayRefundCount', label: '오늘 환불건', format: (value) => `${value.toLocaleString('ko-KR')} 건` },
 ];
 
-export default function RevenueSummary() {
+export default function RevenueSummary({
+  siteName: siteNameProp,
+  apiPath = '/api/revenue/summary',
+}: RevenueSummaryProps = {}) {
   const params = useParams();
-  const siteName = normalizeText(params.siteName);
+  const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
   const [summary, setSummary] = useState<RevenueSummaryResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -58,7 +66,10 @@ export default function RevenueSummary() {
         return;
       }
 
-      const response = await fetch(`/api/revenue/summary?siteName=${siteName}`, {
+      setSummary(null);
+      setErrorMessage('');
+
+      const response = await fetch(`${apiPath}?siteName=${encodeURIComponent(siteName)}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -74,7 +85,7 @@ export default function RevenueSummary() {
     }
 
     void loadSummary();
-  }, [siteName]);
+  }, [apiPath, siteName]);
 
   if (errorMessage) {
     return (

@@ -66,6 +66,8 @@ type RevenueListResponse = {
 
 type RevenueListPageProps = {
   type: RevenueListType;
+  siteName?: string;
+  apiBasePath?: string;
 };
 
 type RevenueErrorResponse = {
@@ -105,11 +107,15 @@ function getVisibleDateColumns(type: RevenueListType) {
   };
 }
 
-export default function RevenueList({ type }: RevenueListPageProps) {
+export default function RevenueList({
+  type,
+  siteName: siteNameProp,
+  apiBasePath = '/api/revenue',
+}: RevenueListPageProps) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const siteName = normalizeText(params.siteName);
+  const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
 
   const [responseData, setResponseData] = useState<RevenueListResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -134,7 +140,10 @@ export default function RevenueList({ type }: RevenueListPageProps) {
         return;
       }
 
-      const fetchResponse = await fetch(`/api/revenue/${type}?${queryString}`, {
+      setResponseData(null);
+      setErrorMessage('');
+
+      const fetchResponse = await fetch(`${apiBasePath}/${type}?${queryString}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -151,7 +160,7 @@ export default function RevenueList({ type }: RevenueListPageProps) {
     }
 
     void loadList();
-  }, [queryString, siteName, type]);
+  }, [apiBasePath, queryString, siteName, type]);
 
   function updateSearchParams(nextValues: Record<string, string | null>) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -199,7 +208,7 @@ export default function RevenueList({ type }: RevenueListPageProps) {
     nextSearchParams.set('siteName', siteName);
     nextSearchParams.set('type', type);
 
-    window.location.href = `/api/revenue/export?${nextSearchParams.toString()}`;
+    window.location.href = `${apiBasePath}/export?${nextSearchParams.toString()}`;
   }
 
   const totalPages = responseData ? Math.max(Math.ceil(responseData.total / responseData.pageSize), 1) : 1;

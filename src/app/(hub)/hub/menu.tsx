@@ -26,6 +26,7 @@ import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
@@ -309,6 +310,12 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 <Anchor href="/hub/notifications">
                   <NotificationsOutlinedIcon fontSize="small" />
                   <span>알림내역</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="revenue" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/revenue">
+                  <PaymentsOutlinedIcon fontSize="small" />
+                  <span>수입/정산</span>
                 </Anchor>
               </MenuItem>
 

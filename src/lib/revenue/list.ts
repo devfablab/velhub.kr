@@ -113,10 +113,6 @@ function uniqueIds(values: (string | null)[]) {
   return [...new Set(values.filter((value): value is string => !!value))];
 }
 
-function getPaymentId(payment: UnknownRecord | null) {
-  return getIdValue(payment, 'id');
-}
-
 function getPaymentBuyerId(payment: UnknownRecord | null) {
   return getIdValue(payment, 'buyer_user_id');
 }
@@ -219,26 +215,12 @@ async function getRowsByIds(context: RevenueContext, tableName: string, ids: str
   return (result.data ?? []) as UnknownRecord[];
 }
 
-async function getSiteSplitRows(context: RevenueContext) {
-  const result = await context.supabase
-    .from('payment_splits')
-    .select('*')
-    .eq('site_id', context.siteId)
-    .order('created_at', { ascending: false });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  return (result.data ?? []) as PaymentSplitRow[];
-}
-
 async function getSettlementSplitRows(context: RevenueContext) {
   const result = await context.supabase
     .from('payment_splits')
     .select('*')
     .eq('site_id', context.siteId)
-    .eq('receiver_user_id', context.stigmaId)
+    .in('receiver_user_id', context.recipientUserIds)
     .order('created_at', { ascending: false });
 
   if (result.error) {
@@ -248,7 +230,7 @@ async function getSettlementSplitRows(context: RevenueContext) {
   return (result.data ?? []) as PaymentSplitRow[];
 }
 
-async function getPaymentRowsByIdsForBuyer(context: RevenueContext, paymentIds: string[]) {
+async function getPaymentRowsByIds(context: RevenueContext, paymentIds: string[]) {
   if (paymentIds.length === 0) {
     return [];
   }
@@ -257,7 +239,6 @@ async function getPaymentRowsByIdsForBuyer(context: RevenueContext, paymentIds: 
     .from('payments')
     .select('*')
     .in('id', paymentIds)
-    .eq('buyer_user_id', context.particleId)
     .order('created_at', { ascending: false });
 
   if (result.error) {
@@ -300,18 +281,6 @@ async function getRhizomeStigmaRowsByStigmaIds(context: RevenueContext, stigmaId
   }
 
   return (result.data ?? []) as UnknownRecord[];
-}
-
-function getSplitMapByPaymentId(splitRows: PaymentSplitRow[]) {
-  const splitMap = new Map<string, PaymentSplitRow>();
-
-  splitRows.forEach((split) => {
-    if (split.payment_id && !splitMap.has(split.payment_id)) {
-      splitMap.set(split.payment_id, split);
-    }
-  });
-
-  return splitMap;
 }
 
 function mapRevenueListItem(params: {
@@ -440,14 +409,9 @@ async function hydrateRevenueListItems(params: {
 }
 
 async function getPaymentListItems(context: RevenueContext) {
-  const siteSplitRows = await getSiteSplitRows(context);
-  const sitePaymentIds = uniqueIds(siteSplitRows.map((split) => split.payment_id));
-  const paymentRows = await getPaymentRowsByIdsForBuyer(context, sitePaymentIds);
-  const paymentIds = uniqueIds(paymentRows.map((payment) => getPaymentId(payment)));
-  const splitMap = getSplitMapByPaymentId(siteSplitRows);
-  const splitRows = paymentIds
-    .map((paymentId) => splitMap.get(paymentId) ?? null)
-    .filter((split): split is PaymentSplitRow => Boolean(split));
+  const splitRows = await getSettlementSplitRows(context);
+  const paymentIds = uniqueIds(splitRows.map((split) => split.payment_id));
+  const paymentRows = await getPaymentRowsByIds(context, paymentIds);
 
   return hydrateRevenueListItems({
     context,
@@ -460,7 +424,7 @@ async function getPaymentListItems(context: RevenueContext) {
 async function getSettlementListItems(context: RevenueContext) {
   const splitRows = await getSettlementSplitRows(context);
   const paymentIds = uniqueIds(splitRows.map((split) => split.payment_id));
-  const paymentRows = await getRowsByIds(context, 'payments', paymentIds);
+  const paymentRows = await getPaymentRowsByIds(context, paymentIds);
 
   return hydrateRevenueListItems({
     context,

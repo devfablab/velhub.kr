@@ -70,7 +70,11 @@ function getRefundedAt(payment: UnknownRecord | null) {
 }
 
 export async function getRevenueSummary(context: RevenueContext): Promise<RevenueSummaryResponse> {
-  const splitResult = await context.supabase.from('payment_splits').select('payment_id').eq('site_id', context.siteId);
+  const splitResult = await context.supabase
+    .from('payment_splits')
+    .select('payment_id')
+    .eq('site_id', context.siteId)
+    .in('receiver_user_id', context.recipientUserIds);
 
   if (splitResult.error) {
     throw splitResult.error;
@@ -85,7 +89,6 @@ export async function getRevenueSummary(context: RevenueContext): Promise<Revenu
           .from('payments')
           .select('*')
           .in('id', sitePaymentIds)
-          .eq('buyer_user_id', context.particleId)
       : { data: [], error: null };
 
   if (paymentResult.error) {

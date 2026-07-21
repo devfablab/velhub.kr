@@ -26,6 +26,10 @@ const secondaryMenus = [
     href: '/hub/notifications',
     label: '알림내역',
   },
+  {
+    href: '/hub/revenue',
+    label: '수입/정산',
+  },
 ];
 
 export default function SecondaryMenu() {
