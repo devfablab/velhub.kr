@@ -6,6 +6,7 @@ import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import MemberStatusSites, { MemberStatusSiteRow } from '../shared/memberStatusSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
+import OwnedDonationPosts from '../shared/ownedDonationPosts';
 import styles from '@/app/hub.module.sass';
 
 type UserResponse = {
@@ -91,6 +92,7 @@ export default async function SectionJoinSites() {
           <Liked siteType="blog" />
           <PostHistory siteType="blog" type="saved" />
           <PostHistory siteType="blog" type="read" />
+          <OwnedDonationPosts siteType="blog" />
         </Content>
       </div>
     </Container>
