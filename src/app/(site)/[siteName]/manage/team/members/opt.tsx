@@ -628,7 +628,6 @@ export default function Opt() {
                               역할 변경
                             </button>
                           ) : null}
-                          {console.log('team.role: ', team.role)}
                           {team.role === 'member' || team.role === 'observer' ? (
                             <button
                               type="button"
