@@ -33,6 +33,31 @@ type HeaderSiteResponse = {
   error?: string;
 };
 
+type CommunityLinkService = 'toonation' | 'kakaotalk' | 'discord';
+
+type CommunityLink = {
+  id: string;
+  service: CommunityLinkService;
+  account: string;
+  image: string | null;
+  image_url: string;
+  sort_order: number;
+};
+
+type CommunityLinksResponse = {
+  links?: CommunityLink[];
+};
+
+const COMMUNITY_LINK_OPTIONS: {
+  value: CommunityLinkService;
+  label: string;
+  prefix: string;
+}[] = [
+  { value: 'toonation', label: '투네이션', prefix: 'https://toon.at/donate/' },
+  { value: 'kakaotalk', label: '카카오톡', prefix: 'https://open.kakao.com/o/' },
+  { value: 'discord', label: '디스코드', prefix: 'https://discord.com/invite/' },
+];
+
 function getSiteTypeLabel(siteType: string) {
   if (siteType === 'community') {
     return '커뮤니티';
@@ -78,6 +103,7 @@ export default function SiteInfo() {
   const siteName = normalizeText(params.siteName);
 
   const [siteInfo, setSiteInfo] = useState<SiteInfoData | null>(null);
+  const [communityLinks, setCommunityLinks] = useState<CommunityLink[]>([]);
   const [siteRole, setSiteRole] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -124,12 +150,32 @@ export default function SiteInfo() {
       setSiteRole(result.siteRole ?? null);
     }
 
+    async function loadCommunityLinks() {
+      try {
+        const response = await fetch(`/api/manage/design/community/links?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          setCommunityLinks([]);
+          return;
+        }
+
+        const result = (await response.json()) as CommunityLinksResponse;
+        setCommunityLinks(Array.isArray(result.links) ? result.links : []);
+      } catch {
+        setCommunityLinks([]);
+      }
+    }
+
     if (!siteName) {
       return;
     }
 
     void loadSiteInfo();
     void loadHeader();
+    void loadCommunityLinks();
   }, [siteName]);
 
   if (!siteInfo) {
@@ -174,6 +220,29 @@ export default function SiteInfo() {
           <div className={styles['info-site-name']}>
             <em>{getSiteTypeLabel(siteInfo.siteType)}</em> <strong>{siteInfo.siteLabel}</strong>
           </div>
+          {communityLinks.length > 0 ? (
+            <div className={styles['info-site-links']}>
+              {communityLinks.map((link) => {
+                const option = COMMUNITY_LINK_OPTIONS.find((item) => item.value === link.service);
+                const account = normalizeText(link.account);
+
+                if (!option || !account) {
+                  return null;
+                }
+
+                return (
+                  <Anchor
+                    key={link.id}
+                    href={`${option.prefix}${account}`}
+                    aria-label={option.label}
+                    title={option.label}
+                  >
+                    {link.image_url ? <img src={link.image_url} alt={option.label} /> : <span>{option.label}</span>}
+                  </Anchor>
+                );
+              })}
+            </div>
+          ) : null}
           <dl className={styles['info-site-detail']}>
             <div>
               <dt>커뮤니티 개설</dt>

@@ -656,6 +656,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       return [
         { href: `/${siteName}/manage/design/community/home`, label: '홈 설정' },
         { href: `/${siteName}/manage/design/community/menu`, label: '메뉴 설정' },
+        { href: `/${siteName}/manage/design/community/links`, label: '링크' },
       ];
     }
 
