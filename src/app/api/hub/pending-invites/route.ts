@@ -38,18 +38,6 @@ function isExpired(value: string | null) {
   return time < Date.now();
 }
 
-function getInvitePath(siteType: string, siteKey: string, token: string) {
-  if (siteType === 'community') {
-    return `/${siteKey}/invite-community/${token}`;
-  }
-
-  if (siteType === 'blog') {
-    return `/${siteKey}/invite-blog/${token}`;
-  }
-
-  return '';
-}
-
 function getSiteTypeLabel(siteType: string) {
   if (siteType === 'community') {
     return '커뮤니티';
@@ -212,9 +200,7 @@ export async function GET() {
         continue;
       }
 
-      const href = getInvitePath(rhizome.site_type, rhizome.site_key, invite.token);
-
-      if (!href) {
+      if (rhizome.site_type !== 'blog' && rhizome.site_type !== 'community') {
         continue;
       }
 
@@ -232,7 +218,7 @@ export async function GET() {
         siteTypeLabel: getSiteTypeLabel(rhizome.site_type),
         token: invite.token,
         expiresAt: invite.expires_at,
-        href,
+        href: `/${rhizome.site_key}`,
       });
     }
 

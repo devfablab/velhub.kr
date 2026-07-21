@@ -441,8 +441,6 @@ export async function GET(request: Request) {
     const sessionClaims = await getSessionClaims();
     const inviteEmail = normalizeText(sessionClaims?.email).toLowerCase();
 
-    let hasInvite = false;
-
     if (!membership && inviteEmail) {
       const nowIsoString = new Date().toISOString();
 
@@ -461,8 +459,6 @@ export async function GET(request: Request) {
       if (inviteResult.error) {
         return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
       }
-
-      hasInvite = (inviteResult.data?.length ?? 0) > 0;
     }
 
     let inviteHref: string | null = null;
@@ -513,6 +509,7 @@ export async function GET(request: Request) {
       nickname: membership?.is_approval === true ? normalizeText(membership.nickname) || null : null,
       isApproval,
       invite: Boolean(inviteHref),
+      inviteHref,
       join: Boolean(membership) || Boolean(inviteHref),
       sessionCase: session.case ?? null,
       siteLabel: site.site_label,

@@ -38,6 +38,11 @@ type OwnerTransferResponse = {
   error?: string;
 };
 
+type SiteHeaderResponse = {
+  invite?: boolean;
+  inviteHref?: string | null;
+};
+
 export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
@@ -46,6 +51,8 @@ export default function FooterSite() {
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [ownerTransfer, setOwnerTransfer] = useState<OwnerTransferItem | null>(null);
+  const [inviteHref, setInviteHref] = useState<string | null>(null);
+  const [isInvitePromptOpen, setIsInvitePromptOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isResponding, setIsResponding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -84,6 +91,22 @@ export default function FooterSite() {
         }
 
         setOwnerTransfer(transferResult.transfer ?? null);
+
+        const headerResponse = await fetch(`/api/header/site?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const headerResult = (await headerResponse.json()) as SiteHeaderResponse;
+
+        if (headerResponse.ok && headerResult.invite && headerResult.inviteHref) {
+          const currentPathname = window.location.pathname;
+          const isInvitePage =
+            currentPathname.startsWith(`/${siteName}/invite-blog/`) ||
+            currentPathname.startsWith(`/${siteName}/invite-community/`);
+
+          setInviteHref(headerResult.inviteHref);
+          setIsInvitePromptOpen(!isInvitePage);
+        }
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -220,6 +243,53 @@ export default function FooterSite() {
             >
               수락
             </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isInvitePromptOpen && !ownerTransfer}
+          onClose={() => setIsInvitePromptOpen(false)}
+          className="VhiDrawer-bottom"
+        >
+          <h2>가입</h2>
+          <Stack gap={3}>
+            <Typography variant="body2">초대에 응하시겠어요?</Typography>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={() => setIsInvitePromptOpen(false)}>
+                둘러보기
+              </button>
+              {inviteHref ? (
+                <Anchor className="button medium submit" href={inviteHref}>
+                  가입하기
+                </Anchor>
+              ) : null}
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isInvitePromptOpen && !ownerTransfer}
+          onClose={() => setIsInvitePromptOpen(false)}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>가입</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2">초대에 응하시겠어요?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={() => setIsInvitePromptOpen(false)}>
+              둘러보기
+            </button>
+            {inviteHref ? (
+              <Anchor className="button medium submit" href={inviteHref}>
+                가입하기
+              </Anchor>
+            ) : null}
           </DialogActions>
         </Dialog>
       )}

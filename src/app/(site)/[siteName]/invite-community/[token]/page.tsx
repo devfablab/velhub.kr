@@ -134,7 +134,12 @@ export default async function Page(context: RouteContext) {
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
               <Typography variant="subtitle2">회원가입</Typography>
-              {!hasSettlement && !isMinor ? <IdentityVerificationButton /> : null}
+              {!hasSettlement && !isMinor ? (
+                <>
+                  <Typography variant="body2">본인인증 및 정산정보를 입력하신 뒤에 이용해주세요.</Typography>
+                  <IdentityVerificationButton />
+                </>
+              ) : null}
               {isMinor ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
