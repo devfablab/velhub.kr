@@ -8,6 +8,7 @@ export type NotificationMessageData = {
   boardLabel?: string | null;
   seriesLabel?: string | null;
   postSubject?: string | null;
+  reportMessage?: string | null;
 };
 
 export type NotificationText = {
@@ -29,6 +30,7 @@ export function getNotificationText(
   const boardLabel = getText(data.boardLabel, '게시판');
   const seriesLabel = getText(data.seriesLabel, '연재');
   const postSubject = getText(data.postSubject, '글');
+  const reportMessage = getText(data.reportMessage, '메시지 내용 없음');
 
   if (notificationType === NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT) {
     return {
@@ -181,6 +183,15 @@ export function getNotificationText(
     return {
       title: '신고 처리 결과',
       message: `${siteLabel}의 ${boardLabel} 게시판 「${postSubject}」 글에 대한 신고 처리가 완료되었습니다.`,
+    };
+  }
+
+  if (notificationType === NOTIFICATION_TYPE.CONCIERGE_REPORT_MESSAGE) {
+    return {
+      title: '데브허브 컨시어지팀 메시지',
+      message: data.boardLabel
+        ? `${siteLabel} 사이트의 ${boardLabel} 게시판에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다.`
+        : `${siteLabel} 사이트에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다.`,
     };
   }
 

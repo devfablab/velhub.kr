@@ -1456,46 +1456,42 @@ export default function Opt() {
   }
 
   return (
-    <div className="container">
-      <div className="content">
-        <div className="paper">
-          {errorMessage ? (
-            <p className="alert error">
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
+    <div className="paper">
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
+
+      <Stack gap={3}>
+        {initialLegalType ? (
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              선택하신 신고 사유
+            </Typography>
+            <p className="alert warning">
+              <span>{getLegalTypeTitle(selectedLegalType)}</span>
             </p>
-          ) : null}
-
-          <Stack gap={3}>
-            {initialLegalType ? (
-              <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
-                <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
-                  선택하신 신고 사유
-                </Typography>
-                <p className="alert warning">
-                  <span>{getLegalTypeTitle(selectedLegalType)}</span>
-                </p>
-              </Stack>
-            ) : null}
-
-            {renderCommonFields()}
-            {renderTypeForm()}
-
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
-
-            <Stack direction="row" justifyContent="flex-end">
-              <button type="button" className="button medium submit" onClick={handleSubmit} disabled={submitting}>
-                {submitting ? '접수 중' : '신고 접수'}
-              </button>
-            </Stack>
           </Stack>
-        </div>
-      </div>
+        ) : null}
+
+        {renderCommonFields()}
+        {renderTypeForm()}
+
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
+
+        <Stack direction="row" justifyContent="flex-end">
+          <button type="button" className="button medium submit" onClick={handleSubmit} disabled={submitting}>
+            {submitting ? '접수 중' : '신고 접수'}
+          </button>
+        </Stack>
+      </Stack>
 
       <Snackbar
         open={snackbarOpen}

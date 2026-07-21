@@ -928,58 +928,53 @@ export default function Opt() {
   }
 
   return (
-    <div className="container">
-      <div className="content">
+    <div className="paper">
+      {errorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
+
+      <Stack gap={3}>
         <div className="paper">
-          {errorMessage ? (
-            <p className="alert error">
-              <ErrorOutlineRoundedIcon />
-              <span>{errorMessage}</span>
-            </p>
-          ) : null}
-
-          <Stack gap={3}>
-            <div className="paper">
-              <Typography variant="body2">
-                권리 침해 신고에 필요한 서류는{' '}
-                <Anchor href="/권리보호센터_위임장_단체.docx" className="link">
-                  단체 위임장
-                </Anchor>
-                과{' '}
-                <Anchor href="/권리보호센터_위임장_개인.docx" className="link">
-                  개인 위임장
-                </Anchor>
-                으로 미리 확인하실 수 있습니다.
-              </Typography>
-              <Typography variant="body2">
-                공개된 데브허브 서비스의 게시물로 인해 명예를 훼손 당한 경우 그 게시물을 임시로 게재 중단해 줄 것을
-                요청하실 수 있습니다.
-              </Typography>
-            </div>
-            {renderCommonFields()}
-            {renderReportCategoryGuide()}
-            {renderOwnerTypeField()}
-            {renderCopyrightFields()}
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
-            <Stack direction="row" justifyContent="flex-end">
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handleSubmit}
-                disabled={submitting || reporterLoading}
-              >
-                {submitting ? '접수 중' : '신고 접수'}
-              </button>
-            </Stack>
-          </Stack>
+          <Typography variant="body2">
+            권리 침해 신고에 필요한 서류는{' '}
+            <Anchor href="/권리보호센터_위임장_단체.docx" className="link">
+              단체 위임장
+            </Anchor>
+            과{' '}
+            <Anchor href="/권리보호센터_위임장_개인.docx" className="link">
+              개인 위임장
+            </Anchor>
+            으로 미리 확인하실 수 있습니다.
+          </Typography>
+          <Typography variant="body2">
+            공개된 데브허브 서비스의 게시물로 인해 명예를 훼손 당한 경우 그 게시물을 임시로 게재 중단해 줄 것을 요청하실
+            수 있습니다.
+          </Typography>
         </div>
-      </div>
-
+        {renderCommonFields()}
+        {renderReportCategoryGuide()}
+        {renderOwnerTypeField()}
+        {renderCopyrightFields()}
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
+        <Stack direction="row" justifyContent="flex-end">
+          <button
+            type="button"
+            className="button medium submit"
+            onClick={handleSubmit}
+            disabled={submitting || reporterLoading}
+          >
+            {submitting ? '접수 중' : '신고 접수'}
+          </button>
+        </Stack>
+      </Stack>
       <Snackbar
         open={snackbarOpen}
         message="신고가 접수되었습니다."

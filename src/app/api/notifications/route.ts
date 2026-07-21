@@ -1,6 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getNotificationText } from '@/lib/notifications/messages';
-import { isNotificationType } from '@/lib/notifications/types';
+import { isNotificationType, NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -46,6 +46,11 @@ type PostRow = {
   id: string;
   slug: number;
   subject: string | null;
+};
+
+type ReportMessageRow = {
+  id: string;
+  message: string;
 };
 
 function decryptUserName(value: string | null) {
@@ -162,27 +167,52 @@ export async function GET() {
       ),
     ];
 
-    const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult] = await Promise.all([
-      notificationUserIds.length > 0
-        ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
-        : Promise.resolve({ data: [], error: null }),
-      siteIds.length > 0
-        ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
-        : Promise.resolve({ data: [], error: null }),
-      boardIds.length > 0
-        ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
-        : Promise.resolve({ data: [], error: null }),
-      seriesIds.length > 0
-        ? supabaseAdmin.from('board_series').select('id, series_key, series_label').in('id', seriesIds)
-        : Promise.resolve({ data: [], error: null }),
-      postIds.length > 0
-        ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+    const reportMessageIds = [
+      ...new Set(
+        notifications
+          .filter((notification) => notification.notification_type === NOTIFICATION_TYPE.CONCIERGE_REPORT_MESSAGE)
+          .map((notification) => notification.target_id)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ];
 
-    if (stigmasResult.error || sitesResult.error || boardsResult.error || seriesResult.error || postsResult.error) {
+    const [stigmasResult, sitesResult, boardsResult, seriesResult, postsResult, reportMessagesResult] =
+      await Promise.all([
+        notificationUserIds.length > 0
+          ? supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', notificationUserIds)
+          : Promise.resolve({ data: [], error: null }),
+        siteIds.length > 0
+          ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds)
+          : Promise.resolve({ data: [], error: null }),
+        boardIds.length > 0
+          ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
+          : Promise.resolve({ data: [], error: null }),
+        seriesIds.length > 0
+          ? supabaseAdmin.from('board_series').select('id, series_key, series_label').in('id', seriesIds)
+          : Promise.resolve({ data: [], error: null }),
+        postIds.length > 0
+          ? supabaseAdmin.from('posts').select('id, slug, subject').in('id', postIds)
+          : Promise.resolve({ data: [], error: null }),
+        reportMessageIds.length > 0
+          ? supabaseAdmin.from('report_messages').select('id, message').in('id', reportMessageIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+    if (
+      stigmasResult.error ||
+      sitesResult.error ||
+      boardsResult.error ||
+      seriesResult.error ||
+      postsResult.error ||
+      reportMessagesResult.error
+    ) {
       console.error(
-        stigmasResult.error ?? sitesResult.error ?? boardsResult.error ?? seriesResult.error ?? postsResult.error,
+        stigmasResult.error ??
+          sitesResult.error ??
+          boardsResult.error ??
+          seriesResult.error ??
+          postsResult.error ??
+          reportMessagesResult.error,
       );
 
       return Response.json({ error: '알림 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -199,6 +229,13 @@ export async function GET() {
     const seriesMap = new Map(((seriesResult.data ?? []) as SeriesRow[]).map((series) => [series.id, series]));
 
     const postMap = new Map(((postsResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
+
+    const reportMessageMap = new Map(
+      ((reportMessagesResult.data ?? []) as ReportMessageRow[]).map((reportMessage) => [
+        reportMessage.id,
+        reportMessage.message,
+      ]),
+    );
 
     const items = notifications.flatMap((notification) => {
       if (!isNotificationType(notification.notification_type)) {
@@ -220,6 +257,7 @@ export async function GET() {
         boardLabel: board?.board_label ?? null,
         seriesLabel: series?.series_label ?? null,
         postSubject: post?.subject ?? null,
+        reportMessage: notification.target_id ? (reportMessageMap.get(notification.target_id) ?? null) : null,
       });
 
       return [

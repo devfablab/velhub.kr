@@ -65,6 +65,7 @@ type UserProfile = {
   email: string | null;
   avatarUrl: string | null;
   isLoggedIn: boolean;
+  globalRole: string | null;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
@@ -113,6 +114,7 @@ export default function Container({ children }: ContainerProps) {
     email: null,
     avatarUrl: null,
     isLoggedIn: false,
+    globalRole: null,
   });
 
   useEffect(() => {
@@ -157,6 +159,7 @@ export default function Container({ children }: ContainerProps) {
           email: null,
           avatarUrl: null,
           isLoggedIn: false,
+          globalRole: null,
         });
         return;
       }
@@ -166,6 +169,7 @@ export default function Container({ children }: ContainerProps) {
         email: result.email,
         avatarUrl: result.avatar,
         isLoggedIn: result.isLoggedIn,
+        globalRole: result.globalRole,
       });
     }
 
@@ -325,6 +329,14 @@ export default function Container({ children }: ContainerProps) {
                     <span>권리보호센터</span>
                   </Anchor>
                 </MenuItem>
+                {userProfile.globalRole === 'admin' ? (
+                  <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
+                    <Anchor href="/concierge/reports">
+                      <ReportOutlinedIcon fontSize="small" />
+                      <span>신고 내역</span>
+                    </Anchor>
+                  </MenuItem>
+                ) : null}
                 <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
                 {userProfile.isLoggedIn
                   ? [
@@ -377,7 +389,7 @@ export default function Container({ children }: ContainerProps) {
             </div>
           </div>
           <div className={styles.bottom}>
-            <SecondaryMenu />
+            <SecondaryMenu isAdmin={userProfile.globalRole === 'admin'} />
           </div>
         </header>
       ) : (

@@ -28,6 +28,7 @@ type HeaderResponse = {
   userName: string | null;
   avatar: string | null;
   themeMode: ThemeMode | null;
+  globalRole: string | null;
 };
 
 type UserProfile = {
@@ -35,6 +36,7 @@ type UserProfile = {
   email: string | null;
   avatarUrl: string | null;
   isLoggedIn: boolean;
+  globalRole: string | null;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
@@ -89,6 +91,7 @@ export default function HeaderConcierge() {
     email: null,
     avatarUrl: null,
     isLoggedIn: false,
+    globalRole: null,
   });
 
   useEffect(() => {
@@ -149,6 +152,7 @@ export default function HeaderConcierge() {
           email: null,
           avatarUrl: null,
           isLoggedIn: false,
+          globalRole: null,
         });
         return;
       }
@@ -158,6 +162,7 @@ export default function HeaderConcierge() {
         email: result.email,
         avatarUrl: result.avatar,
         isLoggedIn: result.isLoggedIn,
+        globalRole: result.globalRole,
       });
     }
 
@@ -275,7 +280,7 @@ export default function HeaderConcierge() {
                 </div>
               </div>
               <div className={styles.bottom}>
-                <SecondaryMenu />
+                <SecondaryMenu isAdmin={userProfile.globalRole === 'admin'} />
               </div>
             </div>
           </header>
@@ -291,7 +296,7 @@ export default function HeaderConcierge() {
                       <ServiceLogo />
                     </Anchor>
                   </h1>
-                  <SecondaryMenu />
+                  <SecondaryMenu isAdmin={userProfile.globalRole === 'admin'} />
                 </div>
 
                 <div className={styles.iconbuttons}>

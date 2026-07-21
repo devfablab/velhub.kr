@@ -7,6 +7,7 @@ type AccountRow = {
   email: string | null;
   user_name: string | null;
   avatar: string | null;
+  role: string | null;
 };
 
 function decryptValue(value: string | null | undefined) {
@@ -64,6 +65,7 @@ export async function GET() {
         email: null,
         userName: null,
         avatar: null,
+        globalRole: null,
       });
     }
 
@@ -71,7 +73,7 @@ export async function GET() {
 
     const accountResult = await supabaseAdmin
       .from('stigmas')
-      .select('email, user_name, avatar')
+      .select('email, user_name, avatar, role')
       .eq('user_id', session.authUserId)
       .maybeSingle();
 
@@ -86,6 +88,7 @@ export async function GET() {
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
       avatar: processAvatar(account.avatar),
+      globalRole: account.role,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

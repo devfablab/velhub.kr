@@ -24,14 +24,21 @@ const secondaryMenus = [
   },
 ];
 
-export default function SecondaryMenu() {
+type SecondaryMenuProps = {
+  isAdmin?: boolean;
+};
+
+export default function SecondaryMenu({ isAdmin = false }: SecondaryMenuProps) {
   const pathname = usePathname();
+  const visibleMenus = isAdmin
+    ? [...secondaryMenus, { href: '/concierge/reports', label: '신고 내역' }]
+    : secondaryMenus;
 
   return (
     <div className={styles.navigationbar}>
       <nav>
         <ol>
-          {secondaryMenus.map((menu) => {
+          {visibleMenus.map((menu) => {
             const isCurrent = menu.exact ? pathname === menu.href : pathname.startsWith(menu.href);
 
             return (

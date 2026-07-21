@@ -502,33 +502,74 @@ export async function POST(request: Request) {
     const uploadedCopyrightProofFiles = await uploadCopyrightProofFiles(reportId, copyrightProofFiles);
     const supabaseAdmin = getSupabaseAdmin();
 
-    const insertResult = await supabaseAdmin.from('report_rights').insert({
-      id: reportId,
+    const insertResult = await supabaseAdmin
+      .from('report_rights')
+      .insert({
+        id: reportId,
 
-      target_type: targetValues.targetType,
-      target_id: targetValues.targetId,
+        target_type: targetValues.targetType,
+        target_id: targetValues.targetId,
 
-      site_id: targetValues.siteId,
-      board_id: targetValues.boardId,
-      post_id: targetValues.postId,
-      comment_id: targetValues.commentId,
+        site_id: targetValues.siteId,
+        board_id: targetValues.boardId,
+        post_id: targetValues.postId,
+        comment_id: targetValues.commentId,
 
-      report_url: reportUrl,
-      reporter_user_id: sessionClaims.userId,
+        report_url: reportUrl,
+        reporter_user_id: sessionClaims.userId,
 
-      email,
-      phone,
+        email,
+        phone,
 
-      reason_type: reasonType,
-      rights_owner_type: isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null,
+        reason_type: reasonType,
+        rights_owner_type: isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null,
 
-      copyright_original_urls: copyrightOriginalUrls.length > 0 ? copyrightOriginalUrls : null,
-      copyright_proof_files: uploadedCopyrightProofFiles.length > 0 ? uploadedCopyrightProofFiles : null,
-    });
+        copyright_original_urls: copyrightOriginalUrls.length > 0 ? copyrightOriginalUrls : null,
+        copyright_proof_files: uploadedCopyrightProofFiles.length > 0 ? uploadedCopyrightProofFiles : null,
+      })
+      .select('id')
+      .single();
 
     if (insertResult.error) {
       console.error('[reports/rights/new] insert error', insertResult.error);
       return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
+    }
+
+    const now = new Date().toISOString();
+    const contentUpdateResult =
+      targetValues.targetType === 'post' && targetValues.postId
+        ? await supabaseAdmin
+            .from('posts')
+            .update({
+              is_closed: true,
+              is_locked: true,
+              closed_message: '권리침해 위반',
+              closed_by: sessionClaims.userId,
+              closed_at: now,
+            })
+            .eq('id', targetValues.postId)
+        : targetValues.targetType === 'comment' && targetValues.commentId
+          ? await supabaseAdmin
+              .from('post_comments')
+              .update({
+                is_deleted: true,
+                is_locked: true,
+                deleted_message: '권리침해 위반',
+                deleted_by: sessionClaims.userId,
+                deleted_at: now,
+              })
+              .eq('id', targetValues.commentId)
+          : null;
+
+    if (contentUpdateResult?.error) {
+      console.error('[reports/rights/new] content hide error', contentUpdateResult.error);
+      await supabaseAdmin.from('report_rights').delete().eq('id', reportId);
+
+      if (uploadedCopyrightProofFiles.length > 0) {
+        await supabaseAdmin.storage.from('report-rights').remove(uploadedCopyrightProofFiles.map((file) => file.path));
+      }
+
+      return Response.json({ error: '신고 대상을 숨김 처리하지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({ ok: true });
