@@ -312,7 +312,7 @@ export async function cancelMemberSiteSubscriptions({
     .eq('subscriber_user_id', authUserId)
     .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
     .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
-    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
+    .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
 
   if (subscriptionsResult.error) {
     throw new Error('멤버의 구독 정보를 확인하지 못했습니다.');

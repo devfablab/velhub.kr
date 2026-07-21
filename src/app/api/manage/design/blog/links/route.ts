@@ -20,10 +20,14 @@ function isAllowedService(value: string): value is ServiceValue {
   return ALLOWED_SERVICES.includes(value as ServiceValue);
 }
 
-async function checkAccess(siteName: string) {
+async function checkAccess(siteName: string, allowPublicRead = false) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+  const rhizome = await supabaseAdmin
+    .from('rhizomes')
+    .select('id, site_type, visibility_type, is_shutdown')
+    .eq('site_key', siteName)
+    .maybeSingle();
 
   if (rhizome.error || !rhizome.data) {
     return {
@@ -38,6 +42,26 @@ async function checkAccess(siteName: string) {
       ok: false,
       status: 403,
       error: '블로그 사이트만 접근할 수 있습니다.',
+    } as const;
+  }
+
+  if (allowPublicRead && rhizome.data.visibility_type === 'public' && !rhizome.data.is_shutdown) {
+    const blog = await supabaseAdmin.from('blogs').select('id').eq('site_id', rhizome.data.id).maybeSingle();
+
+    if (blog.error) {
+      return {
+        ok: false,
+        status: 500,
+        error: '소셜 링크를 불러오지 못했습니다.',
+      } as const;
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      siteId: rhizome.data.id,
+      blogId: blog.data?.id ?? null,
+      supabaseAdmin,
     } as const;
   }
 
@@ -91,7 +115,7 @@ export async function GET(request: Request) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    const access = await checkAccess(siteName);
+    const access = await checkAccess(siteName, true);
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });

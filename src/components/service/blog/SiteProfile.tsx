@@ -5,12 +5,20 @@ import { useParams, useRouter } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import PinterestIcon from '@mui/icons-material/Pinterest';
+import XIcon from '@mui/icons-material/X';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 import {
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Drawer,
+  IconButton,
   Snackbar,
   Stack,
   Typography,
@@ -37,6 +45,33 @@ type SiteProfileResponse = {
   profileLogoUrl?: string;
   error?: string;
 };
+
+type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
+
+type SocialLink = {
+  id: string;
+  service: ServiceValue;
+  account: string;
+};
+
+type SocialLinksResponse = {
+  links?: SocialLink[];
+};
+
+const SOCIAL_LINK_OPTIONS: {
+  value: ServiceValue;
+  label: string;
+  prefix: string;
+  Icon: typeof FacebookIcon;
+}[] = [
+  { value: 'Facebook', label: '페이스북', prefix: 'https://facebook.com/', Icon: FacebookIcon },
+  { value: 'GitHub', label: '깃헙', prefix: 'https://github.com/', Icon: GitHubIcon },
+  { value: 'Instagram', label: '인스타그램', prefix: 'https://instagram.com/', Icon: InstagramIcon },
+  { value: 'LinkedIn', label: '링크드인', prefix: 'https://linkedin.com/in/', Icon: LinkedInIcon },
+  { value: 'Pinterest', label: '핀터레스트', prefix: 'https://pinterest.com/', Icon: PinterestIcon },
+  { value: 'X', label: '엑스(트위터)', prefix: 'https://x.com/', Icon: XIcon },
+  { value: 'YouTube', label: '유튜브', prefix: 'https://youtube.com/@', Icon: YouTubeIcon },
+];
 
 type MembershipStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
@@ -153,6 +188,7 @@ export default function SiteProfile() {
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [profileLogoUrl, setProfileLogoUrl] = useState('');
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
@@ -238,6 +274,25 @@ export default function SiteProfile() {
       setIsDonationEnabled(Boolean(result.isEnabled));
     }
 
+    async function loadSocialLinks() {
+      try {
+        const response = await fetch(`/api/manage/design/blog/links?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          setSocialLinks([]);
+          return;
+        }
+
+        const result = (await response.json()) as SocialLinksResponse;
+        setSocialLinks(Array.isArray(result.links) ? result.links : []);
+      } catch {
+        setSocialLinks([]);
+      }
+    }
+
     async function loadSiteProfile() {
       try {
         setErrorMessage('');
@@ -262,7 +317,7 @@ export default function SiteProfile() {
         setProfilePictureUrl(normalizeText(result.profilePictureUrl));
         setProfileLogoUrl(normalizeText(result.profileLogoUrl));
 
-        await Promise.all([loadMembershipStatus(), loadDonationStatus()]);
+        await Promise.all([loadMembershipStatus(), loadDonationStatus(), loadSocialLinks()]);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -515,6 +570,34 @@ export default function SiteProfile() {
           {profileLogoUrl ? <img src={profileLogoUrl} alt="" /> : null}
           <strong>{siteInfo.site_label}</strong>
           {siteInfo.summary ? <p>{siteInfo.summary}</p> : null}
+          {socialLinks.length > 0 ? (
+            <Stack direction="row" gap={0.25} flexWrap="wrap" useFlexGap>
+              {socialLinks.map((link) => {
+                const option = SOCIAL_LINK_OPTIONS.find((item) => item.value === link.service);
+                const account = normalizeText(link.account);
+
+                if (!option || !account) {
+                  return null;
+                }
+
+                const ServiceIcon = option.Icon;
+
+                return (
+                  <IconButton
+                    key={link.id}
+                    component="a"
+                    href={`${option.prefix}${account}`}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    aria-label={`${option.label} 링크`}
+                    size="small"
+                  >
+                    <ServiceIcon sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                );
+              })}
+            </Stack>
+          ) : null}
         </div>
       </div>
 

@@ -14,10 +14,7 @@ import XIcon from '@mui/icons-material/X';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
   IconButton,
@@ -59,13 +56,13 @@ const SERVICE_OPTIONS: {
   prefix: string;
   Icon: typeof FacebookIcon;
 }[] = [
-  { value: 'Facebook', label: 'Facebook', prefix: 'https://facebook.com/', Icon: FacebookIcon },
-  { value: 'GitHub', label: 'GitHub', prefix: 'https://github.com/', Icon: GitHubIcon },
-  { value: 'Instagram', label: 'Instagram', prefix: 'https://instagram.com/', Icon: InstagramIcon },
-  { value: 'LinkedIn', label: 'LinkedIn', prefix: 'https://linkedin.com/in/', Icon: LinkedInIcon },
-  { value: 'Pinterest', label: 'Pinterest', prefix: 'https://pinterest.com/', Icon: PinterestIcon },
-  { value: 'X', label: 'X', prefix: 'https://x.com/', Icon: XIcon },
-  { value: 'YouTube', label: 'YouTube', prefix: 'https://youtube.com/@', Icon: YouTubeIcon },
+  { value: 'Facebook', label: '페이스북', prefix: 'https://facebook.com/', Icon: FacebookIcon },
+  { value: 'GitHub', label: '깃헙', prefix: 'https://github.com/', Icon: GitHubIcon },
+  { value: 'Instagram', label: '인스타그램', prefix: 'https://instagram.com/', Icon: InstagramIcon },
+  { value: 'LinkedIn', label: '링크드인', prefix: 'https://linkedin.com/in/', Icon: LinkedInIcon },
+  { value: 'Pinterest', label: '핀터레스트', prefix: 'https://pinterest.com/', Icon: PinterestIcon },
+  { value: 'X', label: '엑스(트위터)', prefix: 'https://x.com/', Icon: XIcon },
+  { value: 'YouTube', label: '유튜브', prefix: 'https://youtube.com/@', Icon: YouTubeIcon },
 ];
 
 function createLocalId() {
