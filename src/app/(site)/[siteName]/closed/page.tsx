@@ -1,31 +1,41 @@
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import Anchor from '@/components/Anchor';
+import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
+import { normalizeText } from '@/lib/utils';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
-export default function Page() {
+type PageProps = {
+  params: Promise<{
+    siteName: string;
+  }>;
+};
+
+export default async function Page({ params }: PageProps) {
+  const { siteName: rawSiteName } = await params;
+  const siteName = normalizeText(rawSiteName).toLowerCase();
+  const currentStigma = await getCurrentStigma();
+  const site = siteName ? await getSiteByName(siteName) : null;
+  const membership = currentStigma && site ? await getRhizomeStigma(site.id, currentStigma.stigmaId) : null;
+  const isOwner = membership?.role === 'owner';
+
   return (
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
           <div className="paper pape-error">
             <NearbyErrorRoundedIcon />
-            <h2>이용 제한</h2>
-            <p>운영시 약관 위반 또는 대한민국 법 위반 소지가 확인되어 제한되었습니다.</p>
-            <p>이의 신청 및 소명이 가능합니다.</p>
-            <div className="alerts">
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>chloe@dev1stud.io 이메일로 이의 신청 및 소명자료를 제출하세요.</span>
-              </p>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>
-                  본인이 누구(가입된 이메일 주소 및 데브허브 활동명, 사이트 별명)인지, 사이트 이름 및 주소를 반드시
-                  포함시켜 주세요.
-                </span>
-              </p>
-            </div>
+            <h2>운영 중단</h2>
+            <p>해당 사이트는 운영자의 사정에 의해 운영 중단되었습니다.</p>
+            {isOwner ? (
+              <Anchor href="/concierge/rights" className="button medium submit">
+                운영중단 해제요청
+              </Anchor>
+            ) : (
+              <Anchor href="/" className="button medium submit">
+                라운지로 이동
+              </Anchor>
+            )}
           </div>
         </div>
       </div>

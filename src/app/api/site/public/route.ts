@@ -40,7 +40,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked')
+      .select('id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked, is_closed')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -147,6 +147,7 @@ export async function GET(request: Request) {
         visibility_type: rhizome.data.visibility_type,
         is_shutdown: rhizome.data.is_shutdown,
         is_blocked: rhizome.data.is_blocked,
+        is_closed: rhizome.data.is_closed,
         purchase_available: purchaseAvailable,
       },
       menus: boardRows.map((board) => ({

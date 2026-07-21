@@ -28,6 +28,7 @@ type RhizomeStateResult = {
     visibility_type?: string | null;
     is_shutdown?: boolean | null;
     is_blocked?: boolean | null;
+    is_closed?: boolean | null;
     site_type?: string | null;
   };
 };
@@ -110,7 +111,10 @@ function isInviteOnlyPath(pathname: string, siteName: string) {
 
 function isSiteStatusPath(pathname: string, siteName: string) {
   return (
-    pathname === `/${siteName}/unpaid` || pathname === `/${siteName}/closed` || pathname === `/${siteName}/suspended`
+    pathname === `/${siteName}/unpaid` ||
+    pathname === `/${siteName}/blocking` ||
+    pathname === `/${siteName}/suspended` ||
+    pathname === `/${siteName}/closed`
   );
 }
 
@@ -380,7 +384,7 @@ function getShutdownRedirectPath({
   }
 
   if (isBlocked === true) {
-    return `/${siteName}/closed`;
+    return `/${siteName}/blocking`;
   }
 
   return `/${siteName}/unpaid`;
@@ -428,8 +432,24 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (isSitePath(pathname) && !isInvitePath(pathname)) {
+  if (isSitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+    const rhizomeState = await fetchRhizomeState(request, siteName);
+
+    if (rhizomeState.response.ok && rhizomeState.result?.siteInfo?.is_closed === true) {
+      const closedPath = `/${siteName}/closed`;
+
+      if (pathname !== closedPath) {
+        return redirectWithPath(request, closedPath);
+      }
+
+      return response;
+    }
+
+    if (isInvitePath(pathname)) {
+      return response;
+    }
+
     const member = await fetchSessionRoute(request, '/api/session/member', {
       siteName,
     });
@@ -441,8 +461,6 @@ export async function proxy(request: NextRequest) {
     const isRejoin = member.result?.isRejoin === true;
 
     if (siteName) {
-      const rhizomeState = await fetchRhizomeState(request, siteName);
-
       if (rhizomeState.response.ok && rhizomeState.result?.siteInfo) {
         if (
           rhizomeState.result.siteInfo.visibility_type === 'private' &&
