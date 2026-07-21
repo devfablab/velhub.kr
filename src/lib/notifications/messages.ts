@@ -79,6 +79,13 @@ export function getNotificationText(
     };
   }
 
+  if (notificationType === NOTIFICATION_TYPE.BLOG_MEMBER_CHANGED_TO_OBSERVER) {
+    return {
+      title: '블로그 팀원 자격 변경',
+      message: `${siteLabel} 사이트에서 회원님의 팀원 자격에 대해 자격 정지 임시 처분을 하였습니다.`,
+    };
+  }
+
   if (notificationType === NOTIFICATION_TYPE.COMMUNITY_MANAGER_ASSIGNED) {
     return {
       title: '커뮤니티 매니저 위임',

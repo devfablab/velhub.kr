@@ -137,6 +137,17 @@ export async function GET(request: Request) {
       );
     }
 
+    if (site.siteType === 'blog' && rhizomeStigma.role === 'observer') {
+      return Response.json(
+        {
+          ok: false,
+          status: 403,
+          error: '옵저버는 블로그 팀원 권한이 없습니다.',
+        },
+        { status: 403 },
+      );
+    }
+
     if (site.siteType !== 'community') {
       return Response.json({
         ok: true,

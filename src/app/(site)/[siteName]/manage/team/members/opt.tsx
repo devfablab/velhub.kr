@@ -32,7 +32,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
-type TeamRole = 'owner' | 'manager' | 'member';
+type TeamRole = 'owner' | 'manager' | 'member' | 'observer';
 
 type TeamRow = {
   id: string;
@@ -99,6 +99,10 @@ function getRoleLabel(role: string) {
     return '멤버';
   }
 
+  if (role === 'observer') {
+    return '옵저버';
+  }
+
   return role;
 }
 
@@ -143,7 +147,7 @@ export default function Opt() {
   const [targetTeam, setTargetTeam] = useState<TeamRow | null>(null);
   const [nextBlockState, setNextBlockState] = useState<boolean | null>(null);
   const [targetRoleTeam, setTargetRoleTeam] = useState<TeamRow | null>(null);
-  const [nextRole, setNextRole] = useState<'manager' | 'member' | null>(null);
+  const [nextRole, setNextRole] = useState<'manager' | 'member' | 'observer' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
@@ -262,6 +266,15 @@ export default function Opt() {
 
     setTargetRoleTeam(team);
     setNextRole(role);
+  }
+
+  function handleOpenObserverDialog(team: TeamRow) {
+    if (team.role !== 'member' && team.role !== 'observer') {
+      return;
+    }
+
+    setTargetRoleTeam(team);
+    setNextRole(team.role === 'observer' ? 'member' : 'observer');
   }
 
   function handleCloseRoleDialog() {
@@ -606,13 +619,23 @@ export default function Opt() {
                     <TableCell onClick={(event) => event.stopPropagation()}>
                       {!team.is_self ? (
                         <Stack direction="row" gap={1}>
-                          {team.role !== 'owner' ? (
+                          {getNextRole(team.role) ? (
                             <button
                               type="button"
                               className="button small action"
                               onClick={() => handleOpenRoleDialog(team)}
                             >
                               역할 변경
+                            </button>
+                          ) : null}
+                          {console.log('team.role: ', team.role)}
+                          {team.role === 'member' || team.role === 'observer' ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => handleOpenObserverDialog(team)}
+                            >
+                              {team.role === 'observer' ? '팀원으로 변경' : '옵저버 변경'}
                             </button>
                           ) : null}
                           <button
@@ -761,17 +784,39 @@ export default function Opt() {
               onClose={handleCloseRoleDialog}
               className="VhiDrawer-bottom"
             >
-              <h2>역할 변경</h2>
+              <h2>
+                {nextRole === 'observer'
+                  ? '옵저버로 변경'
+                  : targetRoleTeam?.role === 'observer'
+                    ? '팀원으로 변경'
+                    : '역할 변경'}
+              </h2>
               <button
                 className="close-button"
                 onClick={handleCloseRoleDialog}
-                airia-label="역할 변경 창 닫기"
+                aria-label="역할 변경 창 닫기"
                 disabled={isRoleSubmitting}
               >
                 <CloseRoundedIcon />
               </button>
               <Stack gap={2} sx={{ pt: 1 }}>
-                <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
+                <Typography>
+                  {nextRole === 'observer' ? (
+                    <>
+                      이 팀원을 옵저버로 변경합니다.
+                      <br />
+                      옵저버로 변경시 글을 읽을 수만 있습니다.
+                    </>
+                  ) : targetRoleTeam?.role === 'observer' ? (
+                    <>
+                      이 옵저버를 다시 팀원으로 변경합니다.
+                      <br />
+                      팀원으로 변경시 글 쓰기, 본인 글 수정이 가능합니다.
+                    </>
+                  ) : (
+                    <>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</>
+                  )}
+                </Typography>
 
                 <Stack direction="column" gap={1.5}>
                   <button
@@ -788,7 +833,7 @@ export default function Opt() {
                     onClick={handleSubmitRole}
                     disabled={isRoleSubmitting}
                   >
-                    역할 변경
+                    {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                   </button>
                 </Stack>
               </Stack>
@@ -801,7 +846,13 @@ export default function Opt() {
               maxWidth="xs"
               className="VhiDialog"
             >
-              <DialogTitle>역할 변경</DialogTitle>
+              <DialogTitle>
+                {nextRole === 'observer'
+                  ? '옵저버로 변경'
+                  : targetRoleTeam?.role === 'observer'
+                    ? '팀원으로 변경'
+                    : '역할 변경'}
+              </DialogTitle>
               <button
                 className="close-button"
                 onClick={handleCloseRoleDialog}
@@ -812,7 +863,23 @@ export default function Opt() {
               </button>
 
               <DialogContent>
-                <Typography>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</Typography>
+                <Typography>
+                  {nextRole === 'observer' ? (
+                    <>
+                      이 팀원을 옵저버로 변경합니다.
+                      <br />
+                      옵저버로 변경시 글을 읽을 수만 있습니다.
+                    </>
+                  ) : targetRoleTeam?.role === 'observer' ? (
+                    <>
+                      이 옵저버를 다시 팀원으로 변경합니다.
+                      <br />
+                      팀원으로 변경시 글 쓰기, 본인 글 수정이 가능합니다.
+                    </>
+                  ) : (
+                    <>해당 유저를 {nextRole ? getRoleLabel(nextRole) : ''}로 변경하시겠어요?</>
+                  )}
+                </Typography>
               </DialogContent>
               <DialogActions>
                 <button
@@ -829,7 +896,7 @@ export default function Opt() {
                   onClick={handleSubmitRole}
                   disabled={isRoleSubmitting}
                 >
-                  역할 변경
+                  {nextRole === 'observer' || targetRoleTeam?.role === 'observer' ? '변경' : '역할 변경'}
                 </button>
               </DialogActions>
             </Dialog>

@@ -8,11 +8,19 @@ type RequestBody = {
   siteName: string | null;
   teamId: string | null;
   isBlock?: boolean | null;
-  role?: 'manager' | 'member' | null;
+  role?: 'manager' | 'member' | 'observer' | null;
 };
 
-function isChangeableRole(value: string): value is 'manager' | 'member' {
-  return value === 'manager' || value === 'member';
+function isChangeableRole(value: string): value is 'manager' | 'member' | 'observer' {
+  return value === 'manager' || value === 'member' || value === 'observer';
+}
+
+function isAllowedRoleChange(currentRole: string, nextRole: 'manager' | 'member' | 'observer') {
+  return (
+    (currentRole === 'manager' && nextRole === 'member') ||
+    (currentRole === 'member' && (nextRole === 'manager' || nextRole === 'observer')) ||
+    (currentRole === 'observer' && nextRole === 'member')
+  );
 }
 
 async function checkAccess(siteName: string) {
@@ -180,6 +188,10 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '이미 같은 역할입니다.' }, { status: 400 });
       }
 
+      if (!isAllowedRoleChange(normalizeText(team.data.role), role)) {
+        return Response.json({ error: '허용되지 않은 역할 변경입니다.' }, { status: 400 });
+      }
+
       const updateTeam = await access.supabaseAdmin
         .from('rhizome_stigmas')
         .update({
@@ -205,7 +217,13 @@ export async function PATCH(request: Request) {
 
         const userId = particleIdMap.get(team.data.user_id);
 
-        if (userId) {
+        if (userId && team.data.role !== 'observer') {
+          const notificationType =
+            role === 'manager'
+              ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
+              : role === 'observer'
+                ? NOTIFICATION_TYPE.BLOG_MEMBER_CHANGED_TO_OBSERVER
+                : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER;
           const notificationResult = await access.supabaseAdmin.from('notifications').insert({
             user_id: userId,
             send_user_id: particleIdMap.get(access.session.stigmaId) ?? null,
@@ -213,10 +231,7 @@ export async function PATCH(request: Request) {
             send_board_id: null,
             send_series_id: null,
             send_post_id: null,
-            notification_type:
-              role === 'manager'
-                ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
-                : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER,
+            notification_type: notificationType,
             is_read: false,
           });
 

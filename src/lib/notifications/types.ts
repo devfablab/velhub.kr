@@ -7,6 +7,7 @@ export const NOTIFICATION_TYPE = {
 
   BLOG_MEMBER_PROMOTED_TO_MANAGER: 'blog_member_promoted_to_manager',
   BLOG_MANAGER_CHANGED_TO_MEMBER: 'blog_manager_changed_to_member',
+  BLOG_MEMBER_CHANGED_TO_OBSERVER: 'blog_member_changed_to_observer',
 
   COMMUNITY_MANAGER_ASSIGNED: 'community_manager_assigned',
   COMMUNITY_MANAGER_REMOVED: 'community_manager_removed',
