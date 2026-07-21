@@ -632,7 +632,6 @@ export async function proxy(request: NextRequest) {
     }
 
     const isRejoin = member.result?.isRejoin === true;
-    console.log('isRejoin: ', isRejoin);
 
     if (isRejoinPath(pathname)) {
       if (!isRejoin) {
