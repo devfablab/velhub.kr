@@ -1,4 +1,5 @@
 import { PAYMENT_PROVIDER, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -27,6 +28,38 @@ type BillingMethodRow = {
   created_at: string;
   updated_at: string | null;
 };
+
+type SubscriptionRow = {
+  id: string;
+  subscription_type: string;
+  target_type: string;
+  target_id: string;
+  subscriber_user_id: string | null;
+  billing_key: string | null;
+  previous_billing_method_id: string | null;
+  price: number;
+  status: string;
+  trial_started_at: string | null;
+  trial_ends_at: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  next_billing_at: string | null;
+  past_due_started_at: string | null;
+  canceled_at: string | null;
+  expired_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+function isSameCard(first: BillingMethodRow, second: BillingMethodRow) {
+  return (
+    first.provider === second.provider &&
+    first.card_company === second.card_company &&
+    first.card_number_masked === second.card_number_masked &&
+    first.owner_type === second.owner_type &&
+    first.card_type === second.card_type
+  );
+}
 
 export async function GET(request: Request) {
   try {
@@ -96,6 +129,9 @@ export async function GET(request: Request) {
           'subscription_type',
           'target_type',
           'target_id',
+          'subscriber_user_id',
+          'billing_key',
+          'previous_billing_method_id',
           'price',
           'status',
           'trial_started_at',
@@ -122,6 +158,8 @@ export async function GET(request: Request) {
 
       return Response.json({ error: '구독 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
+
+    const subscription = (subscriptionResult.data as unknown as SubscriptionRow | null) ?? null;
 
     const paymentsResult = await supabaseAdmin
       .from('payments')
@@ -160,31 +198,82 @@ export async function GET(request: Request) {
       return Response.json({ error: '결제 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const billingMethodsResult = await supabaseAdmin
-      .from('subscription_billing_methods')
-      .select(
-        [
-          'id',
-          'provider',
-          'card_company',
-          'card_number_masked',
-          'owner_type',
-          'card_type',
-          'is_default',
-          'created_at',
-          'updated_at',
-        ].join(', '),
-      )
-      .eq('user_id', session.authUserId)
-      .eq('provider', PAYMENT_PROVIDER.KPN)
-      .order('is_default', { ascending: false })
-      .order('created_at', { ascending: false });
+    const currentBillingMethodResult =
+      subscription?.subscriber_user_id && subscription.billing_key
+        ? await supabaseAdmin
+            .from('subscription_billing_methods')
+            .select(
+              [
+                'id',
+                'provider',
+                'card_company',
+                'card_number_masked',
+                'owner_type',
+                'card_type',
+                'is_default',
+                'created_at',
+                'updated_at',
+              ].join(', '),
+            )
+            .eq('user_id', subscription.subscriber_user_id)
+            .eq('billing_key', decrypt(subscription.billing_key))
+            .eq('provider', PAYMENT_PROVIDER.KPN)
+            .limit(1)
+        : { data: [], error: null };
 
-    if (billingMethodsResult.error) {
-      console.error(billingMethodsResult.error);
+    const previousBillingMethodResult = subscription?.previous_billing_method_id
+      ? await supabaseAdmin
+          .from('subscription_billing_methods')
+          .select(
+            [
+              'id',
+              'provider',
+              'card_company',
+              'card_number_masked',
+              'owner_type',
+              'card_type',
+              'is_default',
+              'created_at',
+              'updated_at',
+            ].join(', '),
+          )
+          .eq('id', subscription.previous_billing_method_id)
+          .limit(1)
+      : { data: [], error: null };
+
+    if (currentBillingMethodResult.error || previousBillingMethodResult.error) {
+      console.error(currentBillingMethodResult.error ?? previousBillingMethodResult.error);
 
       return Response.json({ error: '결제수단 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
+
+    const currentBillingMethod =
+      ((currentBillingMethodResult.data ?? [])[0] as unknown as BillingMethodRow | undefined) ?? null;
+    const previousBillingMethod =
+      ((previousBillingMethodResult.data ?? [])[0] as unknown as BillingMethodRow | undefined) ?? null;
+    const billingMethods = currentBillingMethod
+      ? [
+          {
+            ...currentBillingMethod,
+            is_default: true,
+          },
+          ...(previousBillingMethod && !isSameCard(currentBillingMethod, previousBillingMethod)
+            ? [
+                {
+                  ...previousBillingMethod,
+                  is_default: false,
+                },
+              ]
+            : []),
+        ]
+      : previousBillingMethod
+        ? [
+            {
+              ...previousBillingMethod,
+              is_default: false,
+            },
+          ]
+        : [];
 
     return Response.json({
       site: {
@@ -193,9 +282,28 @@ export async function GET(request: Request) {
         siteLabel: site.site_label,
       },
       plan,
-      subscription: subscriptionResult.data ?? null,
+      subscription: subscription
+        ? {
+            id: subscription.id,
+            subscription_type: subscription.subscription_type,
+            target_type: subscription.target_type,
+            target_id: subscription.target_id,
+            price: subscription.price,
+            status: subscription.status,
+            trial_started_at: subscription.trial_started_at,
+            trial_ends_at: subscription.trial_ends_at,
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end,
+            next_billing_at: subscription.next_billing_at,
+            past_due_started_at: subscription.past_due_started_at,
+            canceled_at: subscription.canceled_at,
+            expired_at: subscription.expired_at,
+            created_at: subscription.created_at,
+            updated_at: subscription.updated_at,
+          }
+        : null,
       payments: paymentsResult.data ?? [],
-      billingMethods: (billingMethodsResult.data ?? []) as unknown as BillingMethodRow[],
+      billingMethods,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

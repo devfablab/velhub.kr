@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 import {
   createMonthlyBillingPeriod,
@@ -62,6 +63,8 @@ type SubscriptionRow = {
   next_billing_at: string | null;
   canceled_at: string | null;
   expired_at: string | null;
+  subscriber_user_id: string | null;
+  billing_key: string | null;
 };
 
 type BillingMethodRow = {
@@ -212,7 +215,9 @@ export async function POST(request: NextRequest) {
 
     const latestSubscriptionResult = await supabaseAdmin
       .from('subscriptions')
-      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
+      .select(
+        'id, status, current_period_end, next_billing_at, canceled_at, expired_at, subscriber_user_id, billing_key',
+      )
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
       .eq('target_id', site.id)
@@ -355,9 +360,27 @@ export async function POST(request: NextRequest) {
         latestSubscription.status !== SUBSCRIPTION_STATUS.CANCELED &&
         latestSubscription.status !== SUBSCRIPTION_STATUS.EXPIRED
       ) {
+        const previousBillingMethodResult =
+          latestSubscription.subscriber_user_id && latestSubscription.billing_key
+            ? await supabaseAdmin
+                .from('subscription_billing_methods')
+                .select('id')
+                .eq('user_id', latestSubscription.subscriber_user_id)
+                .eq('provider', getCurrentPortOneProvider())
+                .eq('billing_key', decrypt(latestSubscription.billing_key))
+                .limit(1)
+                .maybeSingle()
+            : { data: null, error: null };
+
+        if (previousBillingMethodResult.error) {
+          console.error(previousBillingMethodResult.error);
+          return Response.json({ error: '현재 요금제 결제수단을 확인하지 못했습니다.' }, { status: 500 });
+        }
+
         const subscriptionBillingMethodUpdateResult = await supabaseAdmin
           .from('subscriptions')
           .update({
+            previous_billing_method_id: previousBillingMethodResult.data?.id ?? null,
             subscriber_user_id: session.authUserId,
             billing_key: encrypt(billingKey),
             customer_key: customerKey,
