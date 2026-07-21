@@ -806,7 +806,7 @@ export default function Opt() {
           </Typography>
         </div>
         <div className="paper">
-          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
             <Typography variant="subtitle2" sx={{ minWidth: 137 }}>
               불법정보
             </Typography>
@@ -855,7 +855,7 @@ export default function Opt() {
               </Typography>
             </Stack>
           </Stack>
-          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
             <Typography variant="subtitle2" sx={{ minWidth: 137 }}>
               허위조작정보
             </Typography>
@@ -942,8 +942,11 @@ export default function Opt() {
         ) : null}
 
         {requestType === 'false_manipulated_info' ? (
-          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
-            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <Typography
+              variant="subtitle2"
+              sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+            >
               허위조작 신고·요청 구분
             </Typography>
             <Stack>
@@ -965,7 +968,7 @@ export default function Opt() {
           </Stack>
         ) : null}
 
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography
             variant="subtitle2"
             sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
@@ -983,7 +986,7 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography
             variant="subtitle2"
             sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
@@ -1001,7 +1004,7 @@ export default function Opt() {
           />
         </Stack>
 
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography
             variant="subtitle2"
             sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
@@ -1152,7 +1155,7 @@ export default function Opt() {
             </p>
           </Stack>
         ) : null}
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
             신고·요청 구분
           </Typography>
@@ -1172,7 +1175,7 @@ export default function Opt() {
           </Stack>
         </Stack>
 
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
             신고·요청 사유
           </Typography>

@@ -474,6 +474,7 @@ export default function Opt() {
             선택하신 신고 사유
           </Typography>
           <p className="alert warning">
+            <WarningAmberRoundedIcon />
             <span>{getRightsReportCategoryTitle(reportCategory)}</span>
           </p>
         </Stack>
@@ -518,7 +519,12 @@ export default function Opt() {
 
     return (
       <>
-        <Typography variant="body2">{selectedReportCategoryOption.description}</Typography>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+            신고 설명
+          </Typography>
+          <Typography variant="body2">{selectedReportCategoryOption.description}</Typography>
+        </Stack>
         <div className={`paper ${styles.Accordion}`}>
           {reportCategory === 'rights_defamation' ||
           reportCategory === 'rights_personality_rights' ||
