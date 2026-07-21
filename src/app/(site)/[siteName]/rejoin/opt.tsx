@@ -30,7 +30,7 @@ export default function Opt({ siteName }: Props) {
       setIsSubmitting(true);
       setErrorMessage('');
 
-      const response = await fetch(`/api/users/${siteName}/[userId]/rejoin`, {
+      const response = await fetch(`/api/users/${siteName}/me/rejoin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -10,7 +10,16 @@ import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/aside.module.sass';
 
-type UserInfoStatus = 'guest' | 'not_joined' | 'invite_only' | 'pending_join' | 'pending_invite' | 'blocked' | 'active';
+type UserInfoStatus =
+  | 'guest'
+  | 'not_joined'
+  | 'invite_only'
+  | 'pending_join'
+  | 'pending_invite'
+  | 'blocked'
+  | 'kicked'
+  | 'banned'
+  | 'active';
 
 type ManagerRoleItem = {
   role: string;
@@ -84,7 +93,7 @@ export default function UserInfo() {
     try {
       setErrorMessage('');
 
-      const response = await fetch(`/api/users/${siteName}/[userId]`, {
+      const response = await fetch(`/api/users/${siteName}/me`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -97,10 +106,10 @@ export default function UserInfo() {
 
       setStatus(result.status);
       setInviteHref(result.inviteHref ?? '');
-      setUserInfo(result.userInfo ?? null);
+      setUserInfo(result.status === 'active' ? (result.userInfo ?? null) : null);
       setBlockReason(result.blockReason ?? '');
       setIsPlanBillingSubscriber(result.isPlanBillingSubscriber === true);
-      setNickname(result.userInfo?.nickname ?? '');
+      setNickname(result.status === 'active' ? (result.userInfo?.nickname ?? '') : '');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '사용자 정보를 불러오지 못했습니다.');
@@ -161,7 +170,7 @@ export default function UserInfo() {
       setWithdrawErrorMessage('');
       setIsWithdrawSubmitting(true);
 
-      const response = await fetch(`/api/users/${siteName}/[userId]`, {
+      const response = await fetch(`/api/users/${siteName}/me`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -205,7 +214,7 @@ export default function UserInfo() {
       setDialogErrorMessage('');
       setIsSubmitting(true);
 
-      const response = await fetch('/api/users/${siteName}/[userId]', {
+      const response = await fetch(`/api/users/${siteName}/me`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

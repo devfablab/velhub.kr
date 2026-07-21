@@ -301,6 +301,7 @@
           display: flex
           gap: ds.rem(7)
           align-items: center
+          flex-wrap: wrap
 
           img
             width: auto
@@ -321,6 +322,28 @@
             font-style: normal
             color: ds.$hex-white
             line-height: 1
+
+          small
+            display: inline-flex
+            border-radius: ds.rem(13)
+            padding: ds.rem(6) ds.rem(10)
+            @include ds.fw(pre, 600)
+            font-size: ds.rem(11)
+            line-height: 1
+            color: ds.$hex-secondary
+            background-color: rgba(ds.$rgb-tertiary, .12)
+
+            &.operation-normal
+              color: ds.$hex-action
+
+            &.operation-payment_failed, &.operation-blocked, &.operation-closed
+              color: ds.$hex-warning
+
+          em.member-block, em.member-kick, em.member-ban
+            background-color: ds.$hex-warning
+
+          em.member-rejoin
+            background-color: ds.$hex-action
 
         a
           padding: 0 ds.rem(12)
@@ -402,6 +425,11 @@
                 align-items: center
                 flex: none
                 height: ds.rem(22)
+
+      .member-status-message
+        @include ds.fw(pre, 500)
+        font-size: ds.rem(14)
+        color: ds.$hex-secondary
 
   h3
     @include ds.fw(neo, 600)

@@ -22,6 +22,8 @@ export type JoinSiteRow = {
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
   role: string;
+  operationalStatus: 'normal' | 'payment_failed' | 'shutdown' | 'blocked' | 'closed';
+  operationalStatusLabel: string;
   latestPosts: LatestPostRow[];
 };
 
@@ -74,6 +76,7 @@ export default function JoinSites({ siteType, joinSites }: Props) {
                   </>
                 )}
                 <em>{getRoleLabel(site.role)}</em>
+                <small className={styles[`operation-${site.operationalStatus}`]}>{site.operationalStatusLabel}</small>
               </div>
               <Anchor href={`/${site.site_key}`} className="button action small">
                 {getSectionTitle(siteType)} 이동

@@ -399,6 +399,51 @@ async function getSiteUserInfo(siteName: string) {
 
   const membership = membershipResult.data as MembershipRow;
 
+  if (membership.is_block) {
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        status: 'blocked',
+        isBlock: true,
+        blockReason: normalizeText(membership.block_reason),
+        blockedAt: membership.blocked_at,
+        blockTerm: membership.block_term,
+        blockCount: Number(membership.block_count ?? 0),
+      },
+    } as const;
+  }
+
+  if (site.siteType === 'community' && membership.kicked_at) {
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        status: 'kicked',
+        userInfo: {
+          kickedAt: membership.kicked_at,
+          kickReason: membership.kick_reason,
+          kickTerm: membership.kick_term,
+        },
+      },
+    } as const;
+  }
+
+  if (site.siteType === 'community' && membership.banned_at) {
+    return {
+      ok: true,
+      status: 200,
+      data: {
+        status: 'banned',
+        userInfo: {
+          bannedAt: membership.banned_at,
+          banReason: membership.ban_reason,
+          banTerm: membership.ban_term,
+        },
+      },
+    } as const;
+  }
+
   if (membership.withdrawn_at) {
     return {
       ok: true,
@@ -415,21 +460,6 @@ async function getSiteUserInfo(siteName: string) {
       status: 200,
       data: {
         status: 'pending_join',
-      },
-    } as const;
-  }
-
-  if (membership.is_block) {
-    return {
-      ok: true,
-      status: 200,
-      data: {
-        status: 'blocked',
-        isBlock: true,
-        blockReason: normalizeText(membership.block_reason),
-        blockedAt: membership.blocked_at,
-        blockTerm: membership.block_term,
-        blockCount: Number(membership.block_count ?? 0),
       },
     } as const;
   }

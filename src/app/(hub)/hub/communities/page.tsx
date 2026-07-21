@@ -2,6 +2,7 @@ import { cookies, headers } from 'next/headers';
 import Content from './tab';
 import Container from '../menu';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
+import MemberStatusSites, { MemberStatusSiteRow } from '../shared/memberStatusSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import styles from '@/app/hub.module.sass';
@@ -10,6 +11,7 @@ type UserResponse = {
   isLoggedIn: boolean;
   role: string | null;
   joinSites: JoinSiteRow[];
+  statusSites: MemberStatusSiteRow[];
   error?: string;
 };
 
@@ -69,12 +71,14 @@ export default async function SectionJoinSites() {
   }
 
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
+  const statusSites = Array.isArray(result.statusSites) ? result.statusSites : [];
   const hasCommunity = joinSites.some((site) => site.site_type === 'community');
 
   return (
     <Container pageTitle="커뮤니티 허브" pageBack="/hub">
       <div className="container">
         <Content>
+          <MemberStatusSites siteType="community" statusSites={statusSites} />
           {joinSites.length > 0 && hasCommunity ? (
             <JoinSites siteType="community" joinSites={joinSites} />
           ) : (

@@ -25,7 +25,7 @@ export default function InviteButton() {
 
     async function loadInvite() {
       try {
-        const response = await fetch(`/api/users/${siteName}/[userId]`, {
+        const response = await fetch(`/api/users/${siteName}/me`, {
           method: 'GET',
           credentials: 'include',
         });

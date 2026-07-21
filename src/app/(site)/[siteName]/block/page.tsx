@@ -16,6 +16,7 @@ import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
 type UserInfoResponse = {
+  status?: string;
   isBlock?: boolean;
   blockReason?: string | null;
   blockedAt?: string | null;
@@ -42,14 +43,14 @@ export default function Page() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/users/${siteName}/[userId]`, {
+        const response = await fetch(`/api/users/${siteName}/me`, {
           method: 'GET',
           credentials: 'include',
         });
 
         const result = (await response.json()) as UserInfoResponse;
 
-        if (!response.ok || result.isBlock !== true) {
+        if (!response.ok || result.status !== 'blocked' || result.isBlock !== true) {
           throw new Error(result.error ?? '차단 정보를 불러오지 못했습니다.');
         }
 

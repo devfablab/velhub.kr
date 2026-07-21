@@ -3,6 +3,7 @@ import Content from './tab';
 import Container from '../menu';
 import FavoriteBlogs from './favoriteBlogs';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
+import MemberStatusSites, { MemberStatusSiteRow } from '../shared/memberStatusSites';
 import Liked from '../shared/liked';
 import PostHistory from '../shared/postHistory';
 import styles from '@/app/hub.module.sass';
@@ -11,6 +12,7 @@ type UserResponse = {
   isLoggedIn: boolean;
   role: string | null;
   joinSites: JoinSiteRow[];
+  statusSites: MemberStatusSiteRow[];
   error?: string;
 };
 
@@ -70,12 +72,14 @@ export default async function SectionJoinSites() {
   }
 
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
+  const statusSites = Array.isArray(result.statusSites) ? result.statusSites : [];
   const hasBlog = joinSites.some((site) => site.site_type === 'blog');
 
   return (
     <Container pageTitle="블로그 허브" pageBack="/hub">
       <div className="container">
         <Content>
+          <MemberStatusSites siteType="blog" statusSites={statusSites} />
           {joinSites.length > 0 && hasBlog ? (
             <JoinSites siteType="blog" joinSites={joinSites} />
           ) : (

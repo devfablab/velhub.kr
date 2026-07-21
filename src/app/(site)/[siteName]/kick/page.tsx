@@ -16,6 +16,7 @@ type UserInfoData = {
 };
 
 type UserInfoResponse = {
+  status?: string;
   userInfo?: UserInfoData;
   error?: string;
 };
@@ -34,13 +35,13 @@ export default function Page() {
       try {
         setErrorMessage('');
 
-        const response = await fetch(`/api/users/${siteName}/[userId]`, {
+        const response = await fetch(`/api/users/${siteName}/me`, {
           method: 'GET',
           credentials: 'include',
         });
         const result = (await response.json()) as UserInfoResponse;
 
-        if (!response.ok || !result.userInfo) {
+        if (!response.ok || result.status !== 'kicked' || !result.userInfo) {
           throw new Error(result.error ?? '강제 탈퇴 정보를 불러오지 못했습니다.');
         }
 
