@@ -160,6 +160,7 @@ export default function Opt() {
   const [reporterName, setReporterName] = useState('');
   const [reporterReports, setReporterReports] = useState<ConciergeReportItem[]>([]);
 
+  const [detailDialogReport, setDetailDialogReport] = useState<ConciergeReportItem | null>(null);
   const [messageDialogReport, setMessageDialogReport] = useState<ConciergeReportItem | null>(null);
   const [message, setMessage] = useState('');
   const [siteActionDialog, setSiteActionDialog] = useState<SiteActionDialogState>(null);
@@ -408,6 +409,7 @@ export default function Opt() {
                   <TableCell sx={cellSx}>댓글</TableCell>
                   <TableCell sx={cellSx}>신고 주소</TableCell>
                   <TableCell sx={cellSx}>신고명(위반내용)</TableCell>
+                  <TableCell sx={cellSx}>신고 내용</TableCell>
                   <TableCell sx={cellSx}>신고자(이름)</TableCell>
                   <TableCell sx={cellSx}>메모 횟수</TableCell>
                   <TableCell sx={cellSx}>처리상태</TableCell>
@@ -453,6 +455,19 @@ export default function Opt() {
                         <Chip label={report.reportTypeLabel} size="small" />
                         <span>{report.reportName}</span>
                       </Stack>
+                    </TableCell>
+                    <TableCell sx={cellSx}>
+                      {report.reportType === 'legal' || report.reportType === 'rights' ? (
+                        <button
+                          type="button"
+                          className="button small"
+                          onClick={() => setDetailDialogReport(report)}
+                        >
+                          신고 내용
+                        </button>
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell sx={cellSx}>
                       <button type="button" className="button small" onClick={() => handleOpenReporterDialog(report)}>
@@ -538,7 +553,7 @@ export default function Opt() {
                 ))}
                 {reports.length === 0 ? (
                   <TableRow>
-                    <TableCell sx={cellSx} colSpan={12} align="center">
+                    <TableCell sx={cellSx} colSpan={13} align="center">
                       신고 내역이 없습니다.
                     </TableCell>
                   </TableRow>
@@ -592,6 +607,25 @@ export default function Opt() {
         </DialogContent>
         <DialogActions>
           <button type="button" className="button medium close" onClick={() => setReporterDialogOpen(false)}>
+            닫기
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(detailDialogReport)}
+        onClose={() => setDetailDialogReport(null)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          {detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
+        </DialogTitle>
+        <DialogContent dividers>
+          {detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}
+        </DialogContent>
+        <DialogActions>
+          <button type="button" className="button medium close" onClick={() => setDetailDialogReport(null)}>
             닫기
           </button>
         </DialogActions>

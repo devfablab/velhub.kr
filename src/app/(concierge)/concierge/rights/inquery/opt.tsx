@@ -279,6 +279,7 @@ export default function Opt() {
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [isSms, setIsSms] = useState<boolean | null>(null);
   const [rightsOwnerType, setRightsOwnerType] = useState<RightsOwnerType | ''>('');
   const [reporterCapacity, setReporterCapacity] = useState<ReporterCapacity | ''>('');
   const [rightsHolderName, setRightsHolderName] = useState('');
@@ -516,6 +517,10 @@ export default function Opt() {
       return '전화번호를 입력해 주세요.';
     }
 
+    if (isSms === null) {
+      return '처리결과 SMS 안내 수신 여부를 선택해 주세요.';
+    }
+
     if (isOwnerRequiredCategory(reportCategory) && !rightsOwnerType) {
       return '권리 소유자를 선택해 주세요.';
     }
@@ -605,6 +610,7 @@ export default function Opt() {
 
     formData.append('email', email.trim());
     formData.append('phone', phone.trim());
+    formData.append('isSms', String(isSms));
     formData.append('rightsOwnerType', rightsOwnerType);
 
     if (isOwnerDetailsCategory(reportCategory)) {
@@ -1014,6 +1020,21 @@ export default function Opt() {
             fullWidth
             size="small"
           />
+        </Stack>
+
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <RequiredFieldLabel isMobile={isMobile}>처리결과 SMS 안내</RequiredFieldLabel>
+          <RadioGroup
+            value={isSms === null ? '' : String(isSms)}
+            onChange={(changeEvent) => {
+              setIsSms(changeEvent.currentTarget.value === 'true');
+              setErrorMessage('');
+            }}
+            sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}
+          >
+            <FormControlLabel value="true" control={<Radio />} label="받음" />
+            <FormControlLabel value="false" control={<Radio />} label="안 받음" />
+          </RadioGroup>
         </Stack>
         {renderReportCategorySelect()}
       </Stack>

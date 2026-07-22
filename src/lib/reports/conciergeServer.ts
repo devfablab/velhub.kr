@@ -34,6 +34,7 @@ type RawReport = {
   report_url?: string | null;
   email?: string | null;
   phone?: string | null;
+  is_sms?: boolean | null;
   attachments?: unknown;
   request_type?: string | null;
   illegal_info_categories?: unknown;
@@ -180,6 +181,7 @@ const rightsColumns = [
   'report_url',
   'email',
   'phone',
+  'is_sms',
   'reason_type',
   'rights_owner_type',
   'reporter_capacity',
@@ -276,8 +278,7 @@ function getFileDetails(label: string, value: unknown): ReportDetail {
   };
 }
 
-function getLegalDetails(report: RawReport): ReportDetail[] {
-  const reportUrl = normalizeText(report.report_url);
+function getLegalDetails(report: RawReport, reportUrl: string | null): ReportDetail[] {
   const commonDetails: ReportDetail[] = [
     {
       label: '신고대상 URL',
@@ -323,9 +324,8 @@ function getLegalDetails(report: RawReport): ReportDetail[] {
   ];
 }
 
-function getRightsDetails(report: RawReport): ReportDetail[] {
+function getRightsDetails(report: RawReport, reportUrl: string | null): ReportDetail[] {
   const originalUrls = normalizeStringArray(report.copyright_original_urls);
-  const reportUrl = normalizeText(report.report_url);
   const isOrganization = report.rights_owner_type === 'organization';
   const delegationPeriod =
     report.delegation_started_on && report.delegation_ended_on
@@ -347,6 +347,17 @@ function getRightsDetails(report: RawReport): ReportDetail[] {
           getFileDetails('권리침해 증빙자료', report.infringement_evidence_file),
         ]
       : [];
+  const copyrightDetails: ReportDetail[] =
+    report.reason_type === 'copyright'
+      ? [
+          {
+            label: '저작물 원본 URL',
+            value: originalUrls.length > 0 ? null : '없음',
+            links: originalUrls.map((url) => ({ label: url, href: url })),
+          },
+          getFileDetails('원본 증명 PDF', report.copyright_proof_files),
+        ]
+      : [];
 
   return [
     {
@@ -356,24 +367,20 @@ function getRightsDetails(report: RawReport): ReportDetail[] {
     },
     { label: '이메일', value: report.email ?? null },
     { label: '전화번호', value: report.phone ?? null },
+    { label: '처리결과 SMS 안내', value: report.is_sms === true ? '받음' : report.is_sms === false ? '안 받음' : null },
     { label: '권리 소유자', value: getLabel(report.rights_owner_type) },
     ...ownerDetails,
-    {
-      label: '저작물 원본 URL',
-      value: originalUrls.length > 0 ? null : '없음',
-      links: originalUrls.map((url) => ({ label: url, href: url })),
-    },
-    getFileDetails('원본 증명 PDF', report.copyright_proof_files),
+    ...copyrightDetails,
   ];
 }
 
-function getDetails(report: UnifiedRawReport, targetType: ReportTargetType | null): ReportDetail[] {
+function getDetails(report: UnifiedRawReport, targetType: ReportTargetType | null, reportUrl: string | null): ReportDetail[] {
   if (report.reportType === 'legal') {
-    return getLegalDetails(report);
+    return getLegalDetails(report, reportUrl);
   }
 
   if (report.reportType === 'rights') {
-    return getRightsDetails(report);
+    return getRightsDetails(report, reportUrl);
   }
 
   return [
@@ -460,12 +467,14 @@ export async function loadConciergeReports({
   reporterUserId,
   page,
   pageSize,
+  origin,
 }: {
   reportType: ConciergeReportType | null;
   targetType: ReportTargetType | null;
   reporterUserId: string | null;
   page: number;
   pageSize: number;
+  origin: string;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
   const allReports = await loadRawReports({ reportType, targetType, reporterUserId });
@@ -624,6 +633,16 @@ export async function loadConciergeReports({
       subscription.status === 'expired' ||
       subscription.status === 'scheduled_cancel' ||
       Boolean(subscription.canceled_at && !subscription.next_billing_at);
+    const internalTargetPath =
+      site && board && post
+        ? `/${site.site_key}/${board.board_key}/${post.slug}`
+        : site && board
+          ? `/${site.site_key}/${board.board_key}`
+          : site
+            ? `/${site.site_key}`
+            : null;
+    const storedReportUrl = normalizeText(report.report_url) || null;
+    const resolvedReportUrl = storedReportUrl ?? (internalTargetPath ? new URL(internalTargetPath, origin).toString() : null);
 
     return {
       id: report.id,
@@ -634,7 +653,7 @@ export async function loadConciergeReports({
       reporterUserId: report.reporter_user_id,
       reporterName: getUserName(report.reporter_user_id),
       reportName: getReportName(report, targetTypeValue),
-      reportUrl: normalizeText(report.report_url) || null,
+      reportUrl: resolvedReportUrl,
       messageCount: messagesByReport.get(`${report.reportType}:${report.id}`)?.length ?? 0,
       status,
       statusLabel: reportStatusLabels[status],
@@ -671,7 +690,7 @@ export async function loadConciergeReports({
             content: comment.content ?? '',
           }
         : null,
-      details: getDetails(report, targetTypeValue),
+      details: getDetails(report, targetTypeValue, resolvedReportUrl),
       messages: messagesByReport.get(`${report.reportType}:${report.id}`) ?? [],
       canDismiss: isPending && isContentTarget && (report.reportType !== 'rights' || !hasThirtyDaysPassed),
       canComplete:

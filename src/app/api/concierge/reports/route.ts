@@ -6,6 +6,20 @@ import { normalizeText } from '@/lib/utils';
 
 const pageSize = 50;
 
+function getRequestOrigin(request: Request, requestUrl: URL) {
+  const forwardedProtocol = normalizeText(request.headers.get('x-forwarded-proto')).split(',')[0]?.trim();
+  const forwardedHost = normalizeText(request.headers.get('x-forwarded-host')).split(',')[0]?.trim();
+  const host = forwardedHost || normalizeText(request.headers.get('host'));
+
+  if (!host) {
+    return requestUrl.origin;
+  }
+
+  const protocol = forwardedProtocol || requestUrl.protocol.replace(':', '');
+
+  return `${protocol}://${host}`;
+}
+
 export async function GET(request: Request) {
   try {
     const session = await verifySession({ siteId: null });
@@ -15,6 +29,7 @@ export async function GET(request: Request) {
     }
 
     const requestUrl = new URL(request.url);
+    const origin = getRequestOrigin(request, requestUrl);
     const reportTypeValue = normalizeText(requestUrl.searchParams.get('reportType'));
     const targetTypeValue = normalizeText(requestUrl.searchParams.get('targetType'));
     const reportType = isConciergeReportType(reportTypeValue) ? reportTypeValue : null;
@@ -37,6 +52,7 @@ export async function GET(request: Request) {
       reporterUserId,
       page,
       pageSize,
+      origin,
     });
 
     return Response.json({

@@ -508,6 +508,8 @@ export async function POST(request: Request) {
     const reportUrl = getFormStringValue(formData, 'reportUrl');
     const email = getFormStringValue(formData, 'email');
     const phone = getFormStringValue(formData, 'phone');
+    const isSmsValue = getFormStringValue(formData, 'isSms');
+    const isSms = isSmsValue === 'true' ? true : isSmsValue === 'false' ? false : null;
     const rightsOwnerTypeValue = getFormStringValue(formData, 'rightsOwnerType');
     const reporterCapacityValue = getFormStringValue(formData, 'reporterCapacity');
     const rightsHolderName = getFormStringValue(formData, 'rightsHolderName');
@@ -543,6 +545,10 @@ export async function POST(request: Request) {
 
     if (!phone) {
       return Response.json({ error: '전화번호를 입력해 주세요.' }, { status: 400 });
+    }
+
+    if (isSms === null) {
+      return Response.json({ error: '처리결과 SMS 안내 수신 여부를 선택해 주세요.' }, { status: 400 });
     }
 
     if (isOwnerRequiredReasonType(reasonType) && !isRightsOwnerType(rightsOwnerTypeValue)) {
@@ -705,6 +711,7 @@ export async function POST(request: Request) {
 
         email,
         phone,
+        is_sms: isSms,
 
         reason_type: reasonType,
         rights_owner_type: isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null,
