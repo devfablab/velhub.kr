@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import HeaderSite from '@/components/headers/Site';
 import FooterSite from '@/components/footers/Site';
-// import '../globals.sass';
 
 export const metadata: Metadata = {
   title: 'Create Next App',
