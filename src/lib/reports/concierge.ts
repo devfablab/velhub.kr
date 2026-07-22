@@ -127,4 +127,6 @@ export const legalValueLabels: Record<string, string> = {
   other: '그 외',
   individual: '개인',
   organization: '단체',
+  direct: '본인',
+  proxy: '타인(대신 신고)',
 };

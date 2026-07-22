@@ -54,6 +54,15 @@ type RawReport = {
   privacy_request_reason?: string | null;
   reason_type?: string | null;
   rights_owner_type?: string | null;
+  reporter_capacity?: string | null;
+  rights_holder_name?: string | null;
+  rights_holder_phone?: string | null;
+  rights_holder_proof_file?: unknown;
+  delegation_started_on?: string | null;
+  delegation_ended_on?: string | null;
+  power_of_attorney_file?: unknown;
+  infringement_reason?: string | null;
+  infringement_evidence_file?: unknown;
   copyright_original_urls?: unknown;
   copyright_proof_files?: unknown;
 };
@@ -173,6 +182,15 @@ const rightsColumns = [
   'phone',
   'reason_type',
   'rights_owner_type',
+  'reporter_capacity',
+  'rights_holder_name',
+  'rights_holder_phone',
+  'rights_holder_proof_file',
+  'delegation_started_on',
+  'delegation_ended_on',
+  'power_of_attorney_file',
+  'infringement_reason',
+  'infringement_evidence_file',
   'copyright_original_urls',
   'copyright_proof_files',
 ].join(', ');
@@ -200,11 +218,15 @@ function normalizeStringArray(value: unknown) {
 }
 
 function normalizeFiles(value: unknown) {
-  if (!Array.isArray(value)) {
-    return [];
+  if (Array.isArray(value)) {
+    return value.filter((item): item is StoredFile => typeof item === 'object' && item !== null);
   }
 
-  return value.filter((item): item is StoredFile => typeof item === 'object' && item !== null);
+  if (typeof value === 'object' && value !== null) {
+    return [value as StoredFile];
+  }
+
+  return [];
 }
 
 function getStatus(value: string): ReportStatus {
@@ -304,6 +326,27 @@ function getLegalDetails(report: RawReport): ReportDetail[] {
 function getRightsDetails(report: RawReport): ReportDetail[] {
   const originalUrls = normalizeStringArray(report.copyright_original_urls);
   const reportUrl = normalizeText(report.report_url);
+  const isOrganization = report.rights_owner_type === 'organization';
+  const delegationPeriod =
+    report.delegation_started_on && report.delegation_ended_on
+      ? `${report.delegation_started_on} ~ ${report.delegation_ended_on}`
+      : null;
+  const ownerDetails: ReportDetail[] =
+    report.reason_type === 'defamation' || report.reason_type === 'personality_rights'
+      ? [
+          { label: isOrganization ? '피해단체 대표' : '피해자 정보', value: getLabel(report.reporter_capacity) },
+          { label: isOrganization ? '피해단체 이름' : '피해자 이름', value: report.rights_holder_name ?? null },
+          {
+            label: isOrganization ? '피해단체 전화번호' : '피해자 전화번호',
+            value: report.rights_holder_phone ?? null,
+          },
+          getFileDetails(isOrganization ? '단체 증빙서류' : '피해자 신분증', report.rights_holder_proof_file),
+          { label: '위임 기간', value: delegationPeriod },
+          getFileDetails('위임장', report.power_of_attorney_file),
+          { label: '권리침해 내용 및 신고 사유', value: report.infringement_reason ?? null },
+          getFileDetails('권리침해 증빙자료', report.infringement_evidence_file),
+        ]
+      : [];
 
   return [
     {
@@ -314,6 +357,7 @@ function getRightsDetails(report: RawReport): ReportDetail[] {
     { label: '이메일', value: report.email ?? null },
     { label: '전화번호', value: report.phone ?? null },
     { label: '권리 소유자', value: getLabel(report.rights_owner_type) },
+    ...ownerDetails,
     {
       label: '저작물 원본 URL',
       value: originalUrls.length > 0 ? null : '없음',

@@ -21,6 +21,7 @@ type RightsReasonType =
   | 'design_patent_utility';
 
 type RightsOwnerType = 'individual' | 'organization';
+type ReporterCapacity = 'direct' | 'proxy';
 
 type SiteRow = {
   id: string;
@@ -56,7 +57,10 @@ type UploadedCopyrightProofFile = {
   size: number;
 };
 
+type UploadedReportFile = UploadedCopyrightProofFile;
+
 const maxCopyrightProofFileSize = 2 * 1024 * 1024;
+const maxRightsReportFileSize = 10 * 1024 * 1024;
 
 const rightsReportCategoryToReasonType = {
   rights_defamation: 'defamation',
@@ -68,6 +72,7 @@ const rightsReportCategoryToReasonType = {
 } satisfies Record<RightsReportCategory, RightsReasonType>;
 
 const ownerRequiredReasonTypes = ['defamation', 'personality_rights', 'copyright'] as const;
+const ownerDetailsReasonTypes = ['defamation', 'personality_rights'] as const;
 
 function isRightsReportCategory(value: unknown): value is RightsReportCategory {
   return (
@@ -95,8 +100,16 @@ function isRightsOwnerType(value: unknown): value is RightsOwnerType {
   return value === 'individual' || value === 'organization';
 }
 
+function isReporterCapacity(value: unknown): value is ReporterCapacity {
+  return value === 'direct' || value === 'proxy';
+}
+
 function isOwnerRequiredReasonType(value: RightsReasonType) {
   return ownerRequiredReasonTypes.includes(value as (typeof ownerRequiredReasonTypes)[number]);
+}
+
+function isOwnerDetailsReasonType(value: RightsReasonType) {
+  return ownerDetailsReasonTypes.includes(value as (typeof ownerDetailsReasonTypes)[number]);
 }
 
 function getFormStringValue(formData: FormData, key: string) {
@@ -137,6 +150,14 @@ function getCopyrightProofFiles(formData: FormData) {
     .filter((value): value is File => value instanceof File && value.size > 0);
 }
 
+function getSingleFormFile(formData: FormData, key: string) {
+  const files = formData
+    .getAll(key)
+    .filter((value): value is File => value instanceof File && value.size > 0);
+
+  return files.length === 1 ? files[0] : null;
+}
+
 function getReasonType(formData: FormData): RightsReasonType | null {
   const reportCategory = getFormStringValue(formData, 'reportCategory');
 
@@ -173,6 +194,32 @@ function validateCopyrightProofFiles(files: File[]) {
   }
 
   return '';
+}
+
+function validateRightsReportFile(file: File | null, label: string) {
+  if (!file) {
+    return `${label}를 첨부해 주세요.`;
+  }
+
+  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+    return `${label}는 PDF 파일만 첨부할 수 있습니다.`;
+  }
+
+  if (file.size >= maxRightsReportFileSize) {
+    return `${label}는 10MB 미만의 PDF 파일만 첨부할 수 있습니다.`;
+  }
+
+  return '';
+}
+
+function isDateValue(value: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00Z`);
+
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 function inferTargetType({
@@ -417,6 +464,30 @@ async function uploadCopyrightProofFiles(reportId: string, files: File[]) {
   return uploadedFiles;
 }
 
+async function uploadRightsReportFile(reportId: string, directory: string, file: File) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const path = `${reportId}/${directory}/${randomUUID()}.pdf`;
+  const arrayBuffer = await file.arrayBuffer();
+
+  const uploadResult = await supabaseAdmin.storage.from('report-rights').upload(path, arrayBuffer, {
+    contentType: 'application/pdf',
+    upsert: false,
+  });
+
+  if (uploadResult.error) {
+    console.error('[reports/rights/new] upload error', uploadResult.error);
+    throw new Error('파일 업로드에 실패했습니다.');
+  }
+
+  return {
+    bucket: 'report-rights',
+    path,
+    name: file.name,
+    type: file.type || 'application/pdf',
+    size: file.size,
+  } satisfies UploadedReportFile;
+}
+
 export async function POST(request: Request) {
   try {
     const sessionClaims = await getSessionClaims();
@@ -438,6 +509,15 @@ export async function POST(request: Request) {
     const email = getFormStringValue(formData, 'email');
     const phone = getFormStringValue(formData, 'phone');
     const rightsOwnerTypeValue = getFormStringValue(formData, 'rightsOwnerType');
+    const reporterCapacityValue = getFormStringValue(formData, 'reporterCapacity');
+    const rightsHolderName = getFormStringValue(formData, 'rightsHolderName');
+    const rightsHolderPhone = getFormStringValue(formData, 'rightsHolderPhone');
+    const rightsHolderProofFile = getSingleFormFile(formData, 'rightsHolderProofFile');
+    const delegationStartedOn = getFormStringValue(formData, 'delegationStartedOn');
+    const delegationEndedOn = getFormStringValue(formData, 'delegationEndedOn');
+    const powerOfAttorneyFile = getSingleFormFile(formData, 'powerOfAttorneyFile');
+    const infringementReason = getFormStringValue(formData, 'infringementReason');
+    const infringementEvidenceFile = getSingleFormFile(formData, 'infringementEvidenceFile');
     const copyrightOriginalUrls = getFormStringArray(formData, 'copyrightOriginalUrls');
     const copyrightProofFiles = getCopyrightProofFiles(formData);
 
@@ -467,6 +547,76 @@ export async function POST(request: Request) {
 
     if (isOwnerRequiredReasonType(reasonType) && !isRightsOwnerType(rightsOwnerTypeValue)) {
       return Response.json({ error: '권리 소유자를 선택해 주세요.' }, { status: 400 });
+    }
+
+    const rightsOwnerType = isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null;
+    const reporterCapacity = isReporterCapacity(reporterCapacityValue) ? reporterCapacityValue : null;
+    const usesOwnerDetails = isOwnerDetailsReasonType(reasonType);
+
+    if (usesOwnerDetails && !reporterCapacity) {
+      return Response.json({ error: '신고자와 권리 소유자의 관계를 선택해 주세요.' }, { status: 400 });
+    }
+
+    const requiresRightsHolderDetails =
+      usesOwnerDetails &&
+      (rightsOwnerType === 'organization' || (rightsOwnerType === 'individual' && reporterCapacity === 'proxy'));
+
+    if (requiresRightsHolderDetails && !rightsHolderName) {
+      return Response.json(
+        { error: rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.' },
+        { status: 400 },
+      );
+    }
+
+    if (requiresRightsHolderDetails && !rightsHolderPhone) {
+      return Response.json(
+        {
+          error:
+            rightsOwnerType === 'organization'
+              ? '피해단체 전화번호를 입력해 주세요.'
+              : '피해자 전화번호를 입력해 주세요.',
+        },
+        { status: 400 },
+      );
+    }
+
+    if (requiresRightsHolderDetails) {
+      const proofFileError = validateRightsReportFile(
+        rightsHolderProofFile,
+        rightsOwnerType === 'organization' ? '단체 증빙서류' : '피해자 신분증',
+      );
+
+      if (proofFileError) {
+        return Response.json({ error: proofFileError }, { status: 400 });
+      }
+    }
+
+    if (usesOwnerDetails && reporterCapacity === 'proxy') {
+      if (!isDateValue(delegationStartedOn) || !isDateValue(delegationEndedOn)) {
+        return Response.json({ error: '위임 기간을 입력해 주세요.' }, { status: 400 });
+      }
+
+      if (delegationStartedOn! > delegationEndedOn!) {
+        return Response.json({ error: '위임 종료일은 시작일보다 빠를 수 없습니다.' }, { status: 400 });
+      }
+
+      const attorneyFileError = validateRightsReportFile(powerOfAttorneyFile, '위임장');
+
+      if (attorneyFileError) {
+        return Response.json({ error: attorneyFileError }, { status: 400 });
+      }
+    }
+
+    if (usesOwnerDetails && !infringementReason) {
+      return Response.json({ error: '권리침해 내용 및 신고 사유를 입력해 주세요.' }, { status: 400 });
+    }
+
+    const evidenceFileError = usesOwnerDetails
+      ? validateRightsReportFile(infringementEvidenceFile, '권리침해 증빙자료')
+      : '';
+
+    if (evidenceFileError) {
+      return Response.json({ error: evidenceFileError }, { status: 400 });
     }
 
     if (copyrightOriginalUrls.length > 10) {
@@ -501,6 +651,41 @@ export async function POST(request: Request) {
     const reportId = randomUUID();
     const uploadedCopyrightProofFiles = await uploadCopyrightProofFiles(reportId, copyrightProofFiles);
     const supabaseAdmin = getSupabaseAdmin();
+    const uploadedReportFiles: UploadedReportFile[] = [];
+    let uploadedRightsHolderProofFile: UploadedReportFile | null = null;
+    let uploadedPowerOfAttorneyFile: UploadedReportFile | null = null;
+    let uploadedInfringementEvidenceFile: UploadedReportFile | null = null;
+
+    try {
+      if (requiresRightsHolderDetails && rightsHolderProofFile) {
+        uploadedRightsHolderProofFile = await uploadRightsReportFile(reportId, 'rights-holder', rightsHolderProofFile);
+        uploadedReportFiles.push(uploadedRightsHolderProofFile);
+      }
+
+      if (usesOwnerDetails && reporterCapacity === 'proxy' && powerOfAttorneyFile) {
+        uploadedPowerOfAttorneyFile = await uploadRightsReportFile(
+          reportId,
+          'power-of-attorney',
+          powerOfAttorneyFile,
+        );
+        uploadedReportFiles.push(uploadedPowerOfAttorneyFile);
+      }
+
+      if (usesOwnerDetails && infringementEvidenceFile) {
+        uploadedInfringementEvidenceFile = await uploadRightsReportFile(
+          reportId,
+          'infringement-evidence',
+          infringementEvidenceFile,
+        );
+        uploadedReportFiles.push(uploadedInfringementEvidenceFile);
+      }
+    } catch (uploadError) {
+      if (uploadedReportFiles.length > 0) {
+        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
+      }
+
+      throw uploadError;
+    }
 
     const insertResult = await supabaseAdmin
       .from('report_rights')
@@ -523,6 +708,19 @@ export async function POST(request: Request) {
 
         reason_type: reasonType,
         rights_owner_type: isRightsOwnerType(rightsOwnerTypeValue) ? rightsOwnerTypeValue : null,
+        ...(usesOwnerDetails
+          ? {
+              reporter_capacity: reporterCapacity,
+              rights_holder_name: requiresRightsHolderDetails ? rightsHolderName : null,
+              rights_holder_phone: requiresRightsHolderDetails ? rightsHolderPhone : null,
+              rights_holder_proof_file: uploadedRightsHolderProofFile,
+              delegation_started_on: reporterCapacity === 'proxy' ? delegationStartedOn : null,
+              delegation_ended_on: reporterCapacity === 'proxy' ? delegationEndedOn : null,
+              power_of_attorney_file: uploadedPowerOfAttorneyFile,
+              infringement_reason: infringementReason,
+              infringement_evidence_file: uploadedInfringementEvidenceFile,
+            }
+          : {}),
 
         copyright_original_urls: copyrightOriginalUrls.length > 0 ? copyrightOriginalUrls : null,
         copyright_proof_files: uploadedCopyrightProofFiles.length > 0 ? uploadedCopyrightProofFiles : null,
@@ -532,6 +730,11 @@ export async function POST(request: Request) {
 
     if (insertResult.error) {
       console.error('[reports/rights/new] insert error', insertResult.error);
+
+      if (uploadedReportFiles.length > 0) {
+        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
+      }
+
       return Response.json({ error: '신고를 접수하지 못했습니다.' }, { status: 500 });
     }
 
@@ -567,6 +770,10 @@ export async function POST(request: Request) {
 
       if (uploadedCopyrightProofFiles.length > 0) {
         await supabaseAdmin.storage.from('report-rights').remove(uploadedCopyrightProofFiles.map((file) => file.path));
+      }
+
+      if (uploadedReportFiles.length > 0) {
+        await supabaseAdmin.storage.from('report-rights').remove(uploadedReportFiles.map((file) => file.path));
       }
 
       return Response.json({ error: '신고 대상을 숨김 처리하지 못했습니다.' }, { status: 500 });

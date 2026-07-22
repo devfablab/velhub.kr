@@ -226,11 +226,9 @@ function getBatches<T>(values: T[], size = 100) {
 }
 
 function addStoredReportFilePaths(pathSet: Set<string>, value: unknown) {
-  if (!Array.isArray(value)) {
-    return;
-  }
+  const values = Array.isArray(value) ? value : [value];
 
-  value.forEach((item) => {
+  values.forEach((item) => {
     if (!item || typeof item !== 'object') {
       return;
     }
@@ -578,7 +576,9 @@ export async function POST(request: Request, context: RouteContext) {
             supabaseAdmin.from('report_legals').select('attachments').in(reportTarget.column, idBatch),
             supabaseAdmin
               .from('report_rights')
-              .select('copyright_proof_files')
+              .select(
+                'copyright_proof_files, rights_holder_proof_file, power_of_attorney_file, infringement_evidence_file',
+              )
               .in(reportTarget.column, idBatch),
           ]);
 
@@ -592,6 +592,9 @@ export async function POST(request: Request, context: RouteContext) {
 
           (rightsReportsResult.data ?? []).forEach((report) => {
             addStoredReportFilePaths(rightsReportFilePaths, report.copyright_proof_files);
+            addStoredReportFilePaths(rightsReportFilePaths, report.rights_holder_proof_file);
+            addStoredReportFilePaths(rightsReportFilePaths, report.power_of_attorney_file);
+            addStoredReportFilePaths(rightsReportFilePaths, report.infringement_evidence_file);
           });
         }
       }

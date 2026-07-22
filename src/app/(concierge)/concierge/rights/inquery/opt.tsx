@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Accordion,
@@ -28,6 +28,11 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import type { SelectChangeEvent } from '@mui/material/Select';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format, isValid } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '@/components/Anchor';
@@ -44,6 +49,8 @@ type RightsReportCategory =
   | 'rights_design_patent_utility';
 
 type RightsOwnerType = 'individual' | 'organization';
+
+type ReporterCapacity = 'direct' | 'proxy';
 
 type SubmitResponse = {
   ok?: boolean;
@@ -79,6 +86,7 @@ const VisuallyHiddenInput = styled('input')({
 });
 
 const maxCopyrightProofFileSize = 2 * 1024 * 1024;
+const maxRightsReportFileSize = 10 * 1024 * 1024;
 
 const rightsReportCategoryOptions = [
   {
@@ -185,6 +193,10 @@ function isOwnerRequiredCategory(value: RightsReportCategory | '') {
   return value === 'rights_defamation' || value === 'rights_personality_rights' || value === 'rights_copyright';
 }
 
+function isOwnerDetailsCategory(value: RightsReportCategory | '') {
+  return value === 'rights_defamation' || value === 'rights_personality_rights';
+}
+
 function getRightsReportCategoryTitle(value: RightsReportCategory | '') {
   return rightsReportCategoryOptions.find((option) => option.value === value)?.label ?? '권리침해 신고';
 }
@@ -203,6 +215,32 @@ function getSingleCopyrightProofFileError(file: File, currentFiles: File[]) {
   }
 
   return '';
+}
+
+function getRightsReportFileError(file: File, label: string) {
+  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+    return `${label}는 PDF 파일만 첨부할 수 있습니다.`;
+  }
+
+  if (file.size >= maxRightsReportFileSize) {
+    return `${label}는 10MB 미만의 PDF 파일만 첨부할 수 있습니다.`;
+  }
+
+  return '';
+}
+
+function RequiredFieldLabel({ children, isMobile }: { children: ReactNode; isMobile: boolean }) {
+  return (
+    <Typography
+      variant="subtitle2"
+      sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+    >
+      {children}{' '}
+      <Box component="span" sx={{ color: 'error.main' }}>
+        *
+      </Box>
+    </Typography>
+  );
 }
 
 export default function Opt() {
@@ -242,6 +280,15 @@ export default function Opt() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [rightsOwnerType, setRightsOwnerType] = useState<RightsOwnerType | ''>('');
+  const [reporterCapacity, setReporterCapacity] = useState<ReporterCapacity | ''>('');
+  const [rightsHolderName, setRightsHolderName] = useState('');
+  const [rightsHolderPhone, setRightsHolderPhone] = useState('');
+  const [rightsHolderProofFile, setRightsHolderProofFile] = useState<File | null>(null);
+  const [delegationStartedOn, setDelegationStartedOn] = useState<Date | null>(null);
+  const [delegationEndedOn, setDelegationEndedOn] = useState<Date | null>(null);
+  const [powerOfAttorneyFile, setPowerOfAttorneyFile] = useState<File | null>(null);
+  const [infringementReason, setInfringementReason] = useState('');
+  const [infringementEvidenceFile, setInfringementEvidenceFile] = useState<File | null>(null);
 
   const [copyrightOriginalUrlInput, setCopyrightOriginalUrlInput] = useState('');
   const [copyrightOriginalUrls, setCopyrightOriginalUrls] = useState<string[]>([]);
@@ -254,6 +301,35 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const ownerDetailsComplete = (() => {
+    if (!isOwnerDetailsCategory(reportCategory)) {
+      return false;
+    }
+
+    if (!rightsOwnerType || !reporterCapacity) {
+      return false;
+    }
+
+    if (rightsOwnerType === 'individual' && reporterCapacity === 'direct') {
+      return true;
+    }
+
+    if (!rightsHolderName.trim() || !rightsHolderPhone.trim() || !rightsHolderProofFile) {
+      return false;
+    }
+
+    if (reporterCapacity === 'proxy') {
+      return Boolean(
+        delegationStartedOn &&
+        isValid(delegationStartedOn) &&
+        delegationEndedOn &&
+        isValid(delegationEndedOn) &&
+        powerOfAttorneyFile,
+      );
+    }
+
+    return true;
+  })();
 
   useEffect(() => {
     async function loadReporter() {
@@ -287,6 +363,15 @@ export default function Opt() {
 
   function resetCategoryFields() {
     setRightsOwnerType('');
+    setReporterCapacity('');
+    setRightsHolderName('');
+    setRightsHolderPhone('');
+    setRightsHolderProofFile(null);
+    setDelegationStartedOn(null);
+    setDelegationEndedOn(null);
+    setPowerOfAttorneyFile(null);
+    setInfringementReason('');
+    setInfringementEvidenceFile(null);
     setCopyrightOriginalUrlInput('');
     setCopyrightOriginalUrls([]);
     setCopyrightProofFiles([]);
@@ -303,8 +388,64 @@ export default function Opt() {
 
     if (value === 'individual' || value === 'organization') {
       setRightsOwnerType(value);
+      setReporterCapacity('');
+      setRightsHolderName('');
+      setRightsHolderPhone('');
+      setRightsHolderProofFile(null);
+      setDelegationStartedOn(null);
+      setDelegationEndedOn(null);
+      setPowerOfAttorneyFile(null);
+      setInfringementReason('');
+      setInfringementEvidenceFile(null);
       setErrorMessage('');
     }
+  }
+
+  function handleReporterCapacityChange(changeEvent: ChangeEvent<HTMLInputElement>) {
+    const value = changeEvent.currentTarget.value;
+
+    if (value !== 'direct' && value !== 'proxy') {
+      return;
+    }
+
+    setReporterCapacity(value);
+    setDelegationStartedOn(null);
+    setDelegationEndedOn(null);
+    setPowerOfAttorneyFile(null);
+    setInfringementReason('');
+    setInfringementEvidenceFile(null);
+
+    if (rightsOwnerType === 'individual') {
+      setRightsHolderName('');
+      setRightsHolderPhone('');
+      setRightsHolderProofFile(null);
+    }
+
+    setErrorMessage('');
+  }
+
+  function handleSinglePdfFileChange(
+    changeEvent: ChangeEvent<HTMLInputElement>,
+    label: string,
+    setFile: (file: File | null) => void,
+  ) {
+    const file = changeEvent.currentTarget.files?.[0] ?? null;
+
+    changeEvent.currentTarget.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    const fileError = getRightsReportFileError(file, label);
+
+    if (fileError) {
+      setErrorMessage(fileError);
+      return;
+    }
+
+    setFile(file);
+    setErrorMessage('');
   }
 
   function handleAddCopyrightOriginalUrl() {
@@ -379,6 +520,60 @@ export default function Opt() {
       return '권리 소유자를 선택해 주세요.';
     }
 
+    if (isOwnerDetailsCategory(reportCategory) && !reporterCapacity) {
+      return rightsOwnerType === 'organization'
+        ? '피해단체 대표자 정보를 선택해 주세요.'
+        : '피해자 정보를 선택해 주세요.';
+    }
+
+    const requiresRightsHolderDetails =
+      isOwnerDetailsCategory(reportCategory) &&
+      (rightsOwnerType === 'organization' || (rightsOwnerType === 'individual' && reporterCapacity === 'proxy'));
+
+    if (requiresRightsHolderDetails && !rightsHolderName.trim()) {
+      return rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.';
+    }
+
+    if (requiresRightsHolderDetails && !rightsHolderPhone.trim()) {
+      return rightsOwnerType === 'organization'
+        ? '피해단체 전화번호를 입력해 주세요.'
+        : '피해자 전화번호를 입력해 주세요.';
+    }
+
+    if (requiresRightsHolderDetails && !rightsHolderProofFile) {
+      return rightsOwnerType === 'organization' ? '단체 증빙서류를 첨부해 주세요.' : '피해자 신분증을 첨부해 주세요.';
+    }
+
+    if (
+      isOwnerDetailsCategory(reportCategory) &&
+      reporterCapacity === 'proxy' &&
+      (!delegationStartedOn || !isValid(delegationStartedOn) || !delegationEndedOn || !isValid(delegationEndedOn))
+    ) {
+      return '위임 기간을 입력해 주세요.';
+    }
+
+    if (
+      isOwnerDetailsCategory(reportCategory) &&
+      reporterCapacity === 'proxy' &&
+      delegationStartedOn &&
+      delegationEndedOn &&
+      delegationStartedOn.getTime() > delegationEndedOn.getTime()
+    ) {
+      return '위임 종료일은 시작일보다 빠를 수 없습니다.';
+    }
+
+    if (isOwnerDetailsCategory(reportCategory) && reporterCapacity === 'proxy' && !powerOfAttorneyFile) {
+      return '위임장을 첨부해 주세요.';
+    }
+
+    if (isOwnerDetailsCategory(reportCategory) && !infringementReason.trim()) {
+      return '권리침해 내용 및 신고 사유를 입력해 주세요.';
+    }
+
+    if (isOwnerDetailsCategory(reportCategory) && !infringementEvidenceFile) {
+      return '권리침해 증빙자료를 첨부해 주세요.';
+    }
+
     if (
       reportCategory === 'rights_copyright' &&
       copyrightOriginalUrls.length === 0 &&
@@ -411,6 +606,33 @@ export default function Opt() {
     formData.append('email', email.trim());
     formData.append('phone', phone.trim());
     formData.append('rightsOwnerType', rightsOwnerType);
+
+    if (isOwnerDetailsCategory(reportCategory)) {
+      formData.append('reporterCapacity', reporterCapacity);
+      formData.append('rightsHolderName', rightsHolderName.trim());
+      formData.append('rightsHolderPhone', rightsHolderPhone.trim());
+      formData.append(
+        'delegationStartedOn',
+        delegationStartedOn && isValid(delegationStartedOn) ? format(delegationStartedOn, 'yyyy-MM-dd') : '',
+      );
+      formData.append(
+        'delegationEndedOn',
+        delegationEndedOn && isValid(delegationEndedOn) ? format(delegationEndedOn, 'yyyy-MM-dd') : '',
+      );
+      formData.append('infringementReason', infringementReason.trim());
+
+      if (rightsHolderProofFile) {
+        formData.append('rightsHolderProofFile', rightsHolderProofFile);
+      }
+
+      if (powerOfAttorneyFile) {
+        formData.append('powerOfAttorneyFile', powerOfAttorneyFile);
+      }
+
+      if (infringementEvidenceFile) {
+        formData.append('infringementEvidenceFile', infringementEvidenceFile);
+      }
+    }
 
     copyrightOriginalUrls.forEach((url) => {
       formData.append('copyrightOriginalUrls', url);
@@ -805,12 +1027,7 @@ export default function Opt() {
 
     return (
       <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
-        <Typography
-          variant="subtitle2"
-          sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
-        >
-          권리 소유자
-        </Typography>
+        <RequiredFieldLabel isMobile={isMobile}>권리 소유자</RequiredFieldLabel>
         <RadioGroup
           value={rightsOwnerType}
           onChange={handleRightsOwnerTypeChange}
@@ -819,6 +1036,210 @@ export default function Opt() {
           <FormControlLabel value="individual" control={<Radio />} label="개인 (본인 ∙ 가족 ∙ 지인 등)" />
           <FormControlLabel value="organization" control={<Radio />} label="단체 (기업 ∙ 개인사업자 등)" />
         </RadioGroup>
+      </Stack>
+    );
+  }
+
+  function renderSinglePdfField({
+    label,
+    file,
+    setFile,
+    helper,
+  }: {
+    label: string;
+    file: File | null;
+    setFile: (file: File | null) => void;
+    helper?: ReactNode;
+  }) {
+    return (
+      <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+        <RequiredFieldLabel isMobile={isMobile}>{label}</RequiredFieldLabel>
+        <Stack gap={1} sx={{ width: '100%', pt: 1 }}>
+          {file ? (
+            <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+              <Typography variant="body2">{file.name}</Typography>
+              <button type="button" className="button small danger" onClick={() => setFile(null)}>
+                파일 삭제
+              </button>
+            </Stack>
+          ) : (
+            <Box>
+              <Button component="label" className="button small action">
+                파일 추가
+                <VisuallyHiddenInput
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={(changeEvent) => handleSinglePdfFileChange(changeEvent, label, setFile)}
+                />
+              </Button>
+            </Box>
+          )}
+          {helper}
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
+          </p>
+        </Stack>
+      </Stack>
+    );
+  }
+
+  function renderOwnerDetailsFields() {
+    if (!isOwnerDetailsCategory(reportCategory) || !rightsOwnerType) {
+      return null;
+    }
+
+    const isOrganization = rightsOwnerType === 'organization';
+    const requiresRightsHolderDetails = isOrganization || reporterCapacity === 'proxy';
+
+    return (
+      <Stack gap={2}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <RequiredFieldLabel isMobile={isMobile}>
+            {isOrganization ? '피해단체 대표' : '피해자 정보'}
+          </RequiredFieldLabel>
+          <RadioGroup
+            value={reporterCapacity}
+            onChange={handleReporterCapacityChange}
+            sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}
+          >
+            <FormControlLabel value="direct" control={<Radio />} label="본인" />
+            <FormControlLabel
+              value="proxy"
+              control={<Radio />}
+              label={isOrganization ? '타인(대표자 대신 신고)' : '타인(피해자 대신 신고)'}
+            />
+          </RadioGroup>
+        </Stack>
+
+        {requiresRightsHolderDetails ? (
+          <>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+              <RequiredFieldLabel isMobile={isMobile}>
+                {isOrganization ? '피해단체 이름' : '피해자 이름'}
+              </RequiredFieldLabel>
+              <TextField
+                value={rightsHolderName}
+                onChange={(changeEvent) => setRightsHolderName(changeEvent.currentTarget.value)}
+                fullWidth
+                size="small"
+              />
+            </Stack>
+
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+              <RequiredFieldLabel isMobile={isMobile}>
+                {isOrganization ? '피해단체 전화번호' : '피해자 전화번호'}
+              </RequiredFieldLabel>
+              <TextField
+                value={rightsHolderPhone}
+                onChange={(changeEvent) => setRightsHolderPhone(changeEvent.currentTarget.value)}
+                fullWidth
+                size="small"
+              />
+            </Stack>
+
+            {renderSinglePdfField({
+              label: isOrganization ? '단체 증빙서류' : '피해자 신분증',
+              file: rightsHolderProofFile,
+              setFile: setRightsHolderProofFile,
+              helper: isOrganization ? (
+                <Stack gap={0.5}>
+                  <Typography variant="body2">
+                    사업자등록증, 법인등록증 등 단체를 증빙할 수 있는 서류를 첨부해 주세요.
+                  </Typography>
+                  <Typography variant="body2" color="error">
+                    입력한 피해단체 이름과 첨부 자료의 단체명이 일치해야 합니다.
+                  </Typography>
+                </Stack>
+              ) : null,
+            })}
+          </>
+        ) : null}
+
+        {reporterCapacity === 'proxy' ? (
+          <>
+            <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+              <RequiredFieldLabel isMobile={isMobile}>위임 기간</RequiredFieldLabel>
+              <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center" sx={{ width: '100%' }}>
+                  <DatePicker
+                    value={delegationStartedOn}
+                    onChange={setDelegationStartedOn}
+                    format="yyyy년 MM월 dd일"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                      },
+                    }}
+                  />
+                  <Typography variant="body2">~</Typography>
+                  <DatePicker
+                    value={delegationEndedOn}
+                    onChange={setDelegationEndedOn}
+                    format="yyyy년 MM월 dd일"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: 'small',
+                      },
+                    }}
+                  />
+                </Stack>
+              </LocalizationProvider>
+            </Stack>
+
+            {renderSinglePdfField({
+              label: '위임장',
+              file: powerOfAttorneyFile,
+              setFile: setPowerOfAttorneyFile,
+              helper: (
+                <Typography variant="body2">
+                  <Anchor
+                    href={isOrganization ? '/권리보호센터_위임장_단체.docx' : '/권리보호센터_위임장_개인.docx'}
+                    className="link"
+                  >
+                    위임장 양식 받기
+                  </Anchor>
+                </Typography>
+              ),
+            })}
+          </>
+        ) : null}
+      </Stack>
+    );
+  }
+
+  function renderInfringementFields() {
+    if (!isOwnerDetailsCategory(reportCategory) || !ownerDetailsComplete) {
+      return null;
+    }
+
+    return (
+      <Stack gap={2}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <RequiredFieldLabel isMobile={isMobile}>권리침해 내용 및 신고 사유</RequiredFieldLabel>
+          <TextField
+            value={infringementReason}
+            onChange={(changeEvent) => setInfringementReason(changeEvent.currentTarget.value)}
+            placeholder="신고 사유와 소명 내용을 구체적으로 입력해 주세요."
+            fullWidth
+            multiline
+            minRows={6}
+            size="small"
+          />
+        </Stack>
+
+        {renderSinglePdfField({
+          label: '권리침해 증빙자료',
+          file: infringementEvidenceFile,
+          setFile: setInfringementEvidenceFile,
+          helper: (
+            <Typography variant="body2">
+              신고 대상 화면 캡처와 필요한 경우 판결문 등을 하나의 PDF로 첨부해 주세요.
+            </Typography>
+          ),
+        })}
       </Stack>
     );
   }
@@ -963,7 +1384,38 @@ export default function Opt() {
         {renderCommonFields()}
         {renderReportCategoryGuide()}
         {renderOwnerTypeField()}
+        {renderOwnerDetailsFields()}
+        {renderInfringementFields()}
         {renderCopyrightFields()}
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+            개인정보 수집 <br hidden={isMobile} />및 이용 안내
+          </Typography>
+          <Stack gap={1}>
+            <Typography variant="body2">
+              신고 접수 및 처리를 위해 개인정보보호법 제15조제1항제4호(계약 체결/이행)에 따라, 다음과 같은 개인정보를
+              수집・이용합니다.
+            </Typography>
+            <Stack>
+              <Typography variant="subtitle2">수집하는 개인정보 항목</Typography>
+              <Typography variant="body2">권리 소유자 정보</Typography>
+              <Typography variant="body2">
+                - 개인 : (권리소유자가 타인인 경우) 권리자 정보(이름, 전화번호, 신분증 사본), 위임장 정보
+              </Typography>
+              <Typography variant="body2">- 단체 : (권리소유자가 타인인 경우) 위임장 정보</Typography>
+              <Typography variant="body2">위임장 정보</Typography>
+              <Typography variant="body2">
+                - 개인 권리자인 경우 : 위임인 정보(이름, 생년월일, (휴대)전화번호, 주소), 대리인 정보(이름, 생년월일,
+                주소)
+              </Typography>
+              <Typography variant="body2">- 단체 권리자인 경우 : 대리인 정보(이름, 생년월일, 주소)</Typography>
+              <Typography variant="body2">
+                ※ 권리보호센터 신고/요청 유형에 따라 증빙에 필요한 서류를 추가로 수집할 수 있습니다.
+              </Typography>
+            </Stack>
+            <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해 주시기 바랍니다.</Typography>
+          </Stack>
+        </Stack>
         {errorMessage ? (
           <p className="alert error">
             <ErrorOutlineRoundedIcon />
