@@ -33,6 +33,10 @@ export function getNotificationText(
   const postSubject = getText(data.postSubject, '글');
   const reportMessage = getText(data.reportMessage, '메시지 내용 없음');
   const reportMessageCount = Math.max(0, Number(data.reportMessageCount ?? 0));
+  const reportWarningStatus =
+    reportMessageCount >= 3
+      ? `현재까지 ${reportMessageCount}회 경고를 받았습니다. 경고가 3회 이상 누적되어 컨시어지팀의 사이트 차단 조치 대상이 되었습니다.`
+      : `현재까지 ${reportMessageCount}회 경고를 받았습니다. 사이트 차단 조치까지 ${3 - reportMessageCount}회 남았습니다.`;
 
   if (notificationType === NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT) {
     return {
@@ -192,8 +196,8 @@ export function getNotificationText(
     return {
       title: '데브허브 컨시어지팀 메시지',
       message: data.boardLabel
-        ? `${siteLabel} 사이트의 ${boardLabel} 게시판에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. 현재까지 ${reportMessageCount}회 경고를 받았습니다.`
-        : `${siteLabel} 사이트에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. 현재까지 ${reportMessageCount}회 경고를 받았습니다.`,
+        ? `${siteLabel} 사이트의 ${boardLabel} 게시판에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. ${reportWarningStatus}`
+        : `${siteLabel} 사이트에 대해 「${reportMessage}」 메시지를 데브허브 컨시어지팀에서 보냈습니다. ${reportWarningStatus}`,
     };
   }
 
