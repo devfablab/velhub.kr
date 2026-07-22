@@ -91,11 +91,11 @@ const rightsReportCategoryOptions = [
     label: '초상권 ∙ 사생활 등 인격권',
     description: '특정인 사진 · 개인정보 무단 노출',
   },
-  {
-    value: 'rights_copyright',
-    label: '저작권',
-    description: '글 · 이미지 · 영상 등 저작물 무단 복제 · 공유',
-  },
+  // {
+  //   value: 'rights_copyright',
+  //   label: '저작권',
+  //   description: '글 · 이미지 · 영상 등 저작물 무단 복제 · 공유',
+  // },
   // {
   //   value: 'rights_trademark',
   //   label: '상표권',

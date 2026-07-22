@@ -14,7 +14,7 @@ export const legalReportCategories = ['legal_illegal_info', 'legal_illegal_filmi
 export const rightsReportCategories = [
   'rights_defamation',
   'rights_personality_rights',
-  'rights_copyright',
+  // 'rights_copyright',
   // 'rights_trademark',
   // 'rights_counterfeit',
   // 'rights_design_patent_utility',
@@ -125,15 +125,15 @@ function getRightsReportItems(): GuidelineReportItem[] {
         category: 'rights_personality_rights',
       },
     },
-    {
-      value: 'rights_copyright',
-      title: '저작권',
-      descriptions: ['글 · 이미지 · 영상 등 저작물 무단 복제 · 공유'],
-      report: {
-        kind: 'rights',
-        category: 'rights_copyright',
-      },
-    },
+    // {
+    //   value: 'rights_copyright',
+    //   title: '저작권',
+    //   descriptions: ['글 · 이미지 · 영상 등 저작물 무단 복제 · 공유'],
+    //   report: {
+    //     kind: 'rights',
+    //     category: 'rights_copyright',
+    //   },
+    // },
     // {
     //   value: 'rights_trademark',
     //   title: '상표권',
