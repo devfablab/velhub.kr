@@ -1227,7 +1227,7 @@ export default function Opt() {
           </Stack>
         </div>
 
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
+        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography
             variant="subtitle2"
             sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
