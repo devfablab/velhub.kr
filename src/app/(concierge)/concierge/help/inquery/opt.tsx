@@ -325,6 +325,13 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const resolvedPrivacyReportType = hasTargetParams
+    ? targetType === 'post' || targetType === 'comment'
+      ? targetType
+      : targetType
+        ? 'other'
+        : ''
+    : privacyReportType;
 
   useEffect(() => {
     async function loadReporter() {
@@ -513,7 +520,7 @@ export default function Opt() {
   }
 
   function validatePrivacyInputs() {
-    if (!privacyReportType) {
+    if (!resolvedPrivacyReportType) {
       return '신고유형을 선택해 주세요.';
     }
 
@@ -604,7 +611,7 @@ export default function Opt() {
     formData.append('filmingRequestConfirmed', String(filmingRequestConfirmed));
     formData.append('filmingNoticeConfirmed', String(filmingNoticeConfirmed));
 
-    formData.append('privacyReportType', privacyReportType);
+    formData.append('privacyReportType', resolvedPrivacyReportType);
     formData.append('exposedInformation', exposedInformation.trim());
     formData.append('privacyRequestReason', privacyRequestReason.trim());
 
@@ -1358,34 +1365,36 @@ export default function Opt() {
             </p>
           </Stack>
         ) : null}
-        <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
-          <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
-            신고유형
-          </Typography>
-          <Select
-            displayEmpty
-            value={privacyReportType}
-            onChange={handlePrivacyReportTypeChange}
-            fullWidth
-            size="small"
-            renderValue={(selected) => {
-              if (!selected) {
-                return '신고유형 선택';
-              }
+        {!hasTargetParams ? (
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+              신고유형
+            </Typography>
+            <Select
+              displayEmpty
+              value={privacyReportType}
+              onChange={handlePrivacyReportTypeChange}
+              fullWidth
+              size="small"
+              renderValue={(selected) => {
+                if (!selected) {
+                  return '신고유형 선택';
+                }
 
-              return privacyReportTypeOptions.find((option) => option.value === selected)?.label ?? '';
-            }}
-          >
-            <MenuItem value="" disabled>
-              신고유형 선택
-            </MenuItem>
-            {privacyReportTypeOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+                return privacyReportTypeOptions.find((option) => option.value === selected)?.label ?? '';
+              }}
+            >
+              <MenuItem value="" disabled>
+                신고유형 선택
               </MenuItem>
-            ))}
-          </Select>
-        </Stack>
+              {privacyReportTypeOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </Stack>
+        ) : null}
 
         <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>

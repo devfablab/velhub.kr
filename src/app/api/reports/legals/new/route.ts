@@ -542,6 +542,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '문제가 있는 링크를 입력해 주세요.' }, { status: 400 });
     }
 
+    if (legalType === 'privacy' && targetType) {
+      formData.set('privacyReportType', targetType === 'post' || targetType === 'comment' ? targetType : 'other');
+    }
+
     const email = getFormStringValue(formData, 'email');
     const phone = getFormStringValue(formData, 'phone');
 
