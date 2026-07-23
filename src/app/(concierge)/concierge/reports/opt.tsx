@@ -24,15 +24,17 @@ import {
   TableRow,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import type { ConciergeReportItem, ConciergeReportType } from '@/lib/reports/concierge';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import {
@@ -62,6 +64,50 @@ type SiteActionDialogState = {
   action: SiteAction;
 } | null;
 
+type StatusChangeDialogState = {
+  report: ConciergeReportItem;
+  status: 'dismissed' | 'completed';
+} | null;
+
+type AppealDecision = 'restore' | 'reject';
+
+type AppealTargetContentResponse = {
+  targetType: 'post' | 'comment';
+  board: {
+    type: 'basic' | 'gallery' | 'youtube' | 'feed';
+    markdownStatus: string | null;
+  };
+  post: {
+    subject: string | null;
+    summary: string | null;
+    content_html: string | null;
+    content_markdown: string | null;
+    content_simple: string | null;
+    thumbnail_image_url: string;
+    youtube_url: string | null;
+    images: {
+      path: string;
+      url: string;
+    }[];
+    poll: {
+      question: string;
+      anonymity: 'anonymous' | 'named';
+      endsAt: string;
+      options: {
+        id: number;
+        label: string;
+        image: {
+          url: string;
+        } | null;
+      }[];
+    } | null;
+  };
+  comment: {
+    content: string | null;
+  } | null;
+  error?: string;
+};
+
 const cellSx = { whiteSpace: 'nowrap' } as const;
 
 const targetOptions: { value: ReportTargetType; label: string }[] = [
@@ -85,6 +131,80 @@ function truncate(value: string, maximumLength: number) {
   }
 
   return `${characters.slice(0, maximumLength).join('')}…`;
+}
+
+function getYoutubeId(value: string | null) {
+  const normalizedValue = value?.trim() ?? '';
+  const match = normalizedValue.match(
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+  );
+
+  return match?.[1] ?? '';
+}
+
+function AppealTargetContent({ response }: { response: AppealTargetContentResponse }) {
+  const theme = useTheme();
+
+  if (response.targetType === 'comment') {
+    return (
+      <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+        {response.comment?.content || '댓글 내용이 없습니다.'}
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack gap={2}>
+      <Typography variant="h6">{response.post.subject || '제목 없음'}</Typography>
+      {response.board.type === 'youtube' && getYoutubeId(response.post.youtube_url) ? (
+        <YoutubeEmbed videoId={getYoutubeId(response.post.youtube_url)} />
+      ) : null}
+      {response.post.summary ? (
+        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{response.post.summary}</Typography>
+      ) : null}
+      {response.board.type === 'feed' && response.post.content_simple ? (
+        <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{response.post.content_simple}</Typography>
+      ) : null}
+      {response.post.content_html ? (
+        <EmbeddedContentHtml
+          contentHtml={response.post.content_html}
+          contentMarkdown={response.post.content_markdown}
+          markdownStatus={response.board.markdownStatus}
+          themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+          className="viewer"
+        />
+      ) : null}
+      {response.post.thumbnail_image_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={response.post.thumbnail_image_url} alt="" style={{ maxWidth: '100%', height: 'auto' }} />
+      ) : null}
+      {response.post.images.map((image) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={image.path} src={image.url} alt="" style={{ maxWidth: '100%', height: 'auto' }} />
+      ))}
+      {response.post.poll ? (
+        <div className="paper">
+          <Stack gap={1.5}>
+            <Typography variant="h6">투표</Typography>
+            <Typography variant="subtitle1">{response.post.poll.question}</Typography>
+            <Stack component="ol" gap={1} sx={{ m: 0, pl: 3 }}>
+              {response.post.poll.options.map((option) => (
+                <li key={option.id}>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    {option.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={option.image.url} alt="" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                    ) : null}
+                    <Typography>{option.label}</Typography>
+                  </Stack>
+                </li>
+              ))}
+            </Stack>
+          </Stack>
+        </div>
+      ) : null}
+    </Stack>
+  );
 }
 
 function renderTargetLinks(report: ConciergeReportItem) {
@@ -182,12 +302,17 @@ export default function Opt() {
 
   const [detailDialogReport, setDetailDialogReport] = useState<ConciergeReportItem | null>(null);
   const [appealDialogReport, setAppealDialogReport] = useState<ConciergeReportItem | null>(null);
+  const [appealTargetContent, setAppealTargetContent] = useState<AppealTargetContentResponse | null>(null);
+  const [appealTargetContentLoading, setAppealTargetContentLoading] = useState(false);
+  const [appealTargetContentError, setAppealTargetContentError] = useState('');
   const [submissionSummary, setSubmissionSummary] = useState('');
   const [deletionReason, setDeletionReason] = useState('');
   const [appealRequest, setAppealRequest] = useState('');
   const [messageDialogReport, setMessageDialogReport] = useState<ConciergeReportItem | null>(null);
   const [message, setMessage] = useState('');
   const [siteActionDialog, setSiteActionDialog] = useState<SiteActionDialogState>(null);
+  const [statusChangeDialog, setStatusChangeDialog] = useState<StatusChangeDialogState>(null);
+  const [appealDecisionDialog, setAppealDecisionDialog] = useState<AppealDecision | null>(null);
 
   const loadReports = useCallback(
     async function loadReports() {
@@ -277,17 +402,6 @@ export default function Opt() {
   }
 
   async function handleStatusChange(report: ConciergeReportItem, status: 'dismissed' | 'completed') {
-    const confirmationMessage =
-      status === 'completed'
-        ? '처리완료로 변경하고 신고 대상에 제재를 적용하시겠습니까?'
-        : report.reportType === 'rights'
-          ? '이상 없음으로 처리하고 숨김을 해제하시겠습니까?'
-          : '이상 없음으로 처리하시겠습니까?';
-
-    if (!window.confirm(confirmationMessage)) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const response = await fetch(`/api/concierge/reports/${report.reportType}/${report.id}`, {
@@ -306,6 +420,7 @@ export default function Opt() {
       }
 
       setSnackbarMessage(status === 'completed' ? '처리완료로 변경했습니다.' : '이상 없음으로 변경했습니다.');
+      setStatusChangeDialog(null);
       await loadReports();
     } catch {
       setErrorMessage('신고를 처리하지 못했습니다.');
@@ -319,15 +434,45 @@ export default function Opt() {
     setMessage('');
   }
 
-  function handleOpenAppealDialog(report: ConciergeReportItem) {
+  async function handleOpenAppealDialog(report: ConciergeReportItem) {
     setAppealDialogReport(report);
     setSubmissionSummary(report.appeal?.submissionSummary ?? '');
     setDeletionReason(report.appeal?.deletionReason ?? '');
     setAppealRequest(report.appeal?.appealRequest ?? '');
+    setAppealTargetContent(null);
+    setAppealTargetContentError('');
+
+    if (report.targetType !== 'post') {
+      return;
+    }
+
+    try {
+      setAppealTargetContentLoading(true);
+      const response = await fetch(`/api/concierge/appeals/content/${report.reportType}/${report.id}`, {
+        credentials: 'include',
+      });
+      const result = (await response
+        .json()
+        .catch(() => ({ error: '게시물 응답을 확인하지 못했습니다.' }))) as AppealTargetContentResponse;
+
+      if (!response.ok || result.error) {
+        setAppealTargetContentError(result.error ?? '게시물 내용을 불러오지 못했습니다.');
+        return;
+      }
+
+      setAppealTargetContent(result);
+    } catch {
+      setAppealTargetContentError('게시물 내용을 불러오지 못했습니다.');
+    } finally {
+      setAppealTargetContentLoading(false);
+    }
   }
 
   function handleCloseAppealDialog() {
     setAppealDialogReport(null);
+    setAppealTargetContent(null);
+    setAppealTargetContentLoading(false);
+    setAppealTargetContentError('');
     setSubmissionSummary('');
     setDeletionReason('');
     setAppealRequest('');
@@ -392,13 +537,6 @@ export default function Opt() {
       return;
     }
 
-    const confirmationMessage =
-      action === 'restore' ? '게시물 또는 댓글을 복구하시겠습니까?' : '소명을 반려하고 삭제 상태를 유지하시겠습니까?';
-
-    if (!window.confirm(confirmationMessage)) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const response = await fetch(
@@ -420,6 +558,7 @@ export default function Opt() {
       }
 
       handleCloseAppealDialog();
+      setAppealDecisionDialog(null);
       setSnackbarMessage(action === 'restore' ? '콘텐츠를 복구했습니다.' : '소명을 반려했습니다.');
       await loadReports();
     } catch {
@@ -664,7 +803,7 @@ export default function Opt() {
                             type="button"
                             className="button small action"
                             disabled={actionLoading}
-                            onClick={() => handleStatusChange(report, 'dismissed')}
+                            onClick={() => setStatusChangeDialog({ report, status: 'dismissed' })}
                           >
                             이상 없음
                           </button>
@@ -672,9 +811,9 @@ export default function Opt() {
                         {report.canComplete ? (
                           <button
                             type="button"
-                            className="button small action"
+                            className="button small danger"
                             disabled={actionLoading}
-                            onClick={() => handleStatusChange(report, 'completed')}
+                            onClick={() => setStatusChangeDialog({ report, status: 'completed' })}
                           >
                             처리완료
                           </button>
@@ -716,7 +855,7 @@ export default function Opt() {
                         !report.site.isBlocked ? (
                           <button
                             type="button"
-                            className="button small warning"
+                            className="button small danger"
                             disabled={actionLoading}
                             onClick={() => setSiteActionDialog({ report, action: 'block' })}
                           >
@@ -833,7 +972,7 @@ export default function Opt() {
         <DialogTitle>
           {detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
         </DialogTitle>
-        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
+        <button className="close-button" onClick={() => setDetailDialogReport(null)}>
           <CloseRoundedIcon />
         </button>
         <DialogContent>{detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}</DialogContent>
@@ -852,7 +991,7 @@ export default function Opt() {
         className="VhiDialog"
       >
         <DialogTitle>{appealDialogReport?.appeal ? '소명 요청서' : '소명 요청서 작성'}</DialogTitle>
-        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
+        <button className="close-button" onClick={handleCloseAppealDialog}>
           <CloseRoundedIcon />
         </button>
         <DialogContent>
@@ -862,6 +1001,22 @@ export default function Opt() {
                 <Typography variant="h6">신고 내용</Typography>
                 <div className="paper">
                   <ReportDetails report={appealDialogReport} />
+                </div>
+              </Stack>
+            ) : null}
+            {appealDialogReport?.targetType === 'post' ? (
+              <Stack gap={1}>
+                <Typography variant="h6">신고 대상 게시물</Typography>
+                <div className="paper">
+                  {appealTargetContentLoading ? (
+                    <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 160 }}>
+                      <LoadingIndicator />
+                    </Stack>
+                  ) : appealTargetContentError ? (
+                    <p className="alert danger">{appealTargetContentError}</p>
+                  ) : appealTargetContent ? (
+                    <AppealTargetContent response={appealTargetContent} />
+                  ) : null}
                 </div>
               </Stack>
             ) : null}
@@ -1013,7 +1168,7 @@ export default function Opt() {
                 type="button"
                 className="button medium danger"
                 disabled={actionLoading}
-                onClick={() => handleAppealDecision('reject')}
+                onClick={() => setAppealDecisionDialog('reject')}
               >
                 삭제 유지
               </button>
@@ -1021,7 +1176,7 @@ export default function Opt() {
                 type="button"
                 className="button medium action"
                 disabled={actionLoading}
-                onClick={() => handleAppealDecision('restore')}
+                onClick={() => setAppealDecisionDialog('restore')}
               >
                 복구
               </button>
@@ -1100,6 +1255,92 @@ export default function Opt() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={Boolean(statusChangeDialog)}
+        onClose={() => setStatusChangeDialog(null)}
+        maxWidth="sm"
+        fullWidth
+        className="VhiDialog"
+      >
+        <DialogTitle>{statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음'}</DialogTitle>
+        <button className="close-button" onClick={() => setStatusChangeDialog(null)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
+          <Typography variant="body2">
+            {statusChangeDialog?.status === 'completed'
+              ? '처리완료로 변경하고 신고 대상에 제재를 적용하시겠습니까?'
+              : statusChangeDialog?.report.reportType === 'rights'
+                ? '이상 없음으로 처리하고 삭제 상태를 해제하시겠습니까?'
+                : '이상 없음으로 처리하시겠습니까?'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={actionLoading}
+            onClick={() => setStatusChangeDialog(null)}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={`button medium ${statusChangeDialog?.status === 'completed' ? 'warning' : 'submit'}`}
+            disabled={actionLoading || !statusChangeDialog}
+            onClick={() => {
+              if (statusChangeDialog) {
+                void handleStatusChange(statusChangeDialog.report, statusChangeDialog.status);
+              }
+            }}
+          >
+            {statusChangeDialog?.status === 'completed' ? '처리완료' : '이상 없음'}
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(appealDecisionDialog)}
+        onClose={() => setAppealDecisionDialog(null)}
+        maxWidth="sm"
+        fullWidth
+        className="VhiDialog"
+      >
+        <DialogTitle>{appealDecisionDialog === 'restore' ? '복구' : '삭제 유지'}</DialogTitle>
+        <button className="close-button" onClick={() => setAppealDecisionDialog(null)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
+          <Typography variant="body2">
+            {appealDecisionDialog === 'restore'
+              ? '게시물 또는 댓글을 복구하시겠습니까?'
+              : '소명을 반려하고 삭제 상태를 유지하시겠습니까?'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={actionLoading}
+            onClick={() => setAppealDecisionDialog(null)}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={`button medium ${appealDecisionDialog === 'restore' ? 'submit' : 'warning'}`}
+            disabled={actionLoading || !appealDecisionDialog}
+            onClick={() => {
+              if (appealDecisionDialog) {
+                void handleAppealDecision(appealDecisionDialog);
+              }
+            }}
+          >
+            {appealDecisionDialog === 'restore' ? '복구' : '삭제 유지'}
+          </button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={Boolean(siteActionDialog)} onClose={() => setSiteActionDialog(null)} maxWidth="sm" fullWidth>
         <DialogTitle>
           {siteActionDialog?.action === 'block'
@@ -1128,7 +1369,7 @@ export default function Opt() {
           </button>
           <button
             type="button"
-            className={`button ${siteActionDialog?.action === 'unblock' ? 'submit' : 'danger'}`}
+            className={`button medium ${siteActionDialog?.action === 'unblock' ? 'submit' : 'warning'}`}
             disabled={actionLoading || !siteActionDialog}
             onClick={() => {
               if (siteActionDialog) {
@@ -1148,7 +1389,11 @@ export default function Opt() {
       <Snackbar
         open={Boolean(snackbarMessage)}
         message={snackbarMessage}
-        autoHideDuration={3000}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        autoHideDuration={2700}
         onClose={() => setSnackbarMessage('')}
       />
     </Stack>

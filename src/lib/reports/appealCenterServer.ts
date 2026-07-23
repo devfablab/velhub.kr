@@ -50,6 +50,7 @@ type PostRow = {
   subject: string | null;
   user_id: string;
   is_closed: boolean;
+  closed_message: string | null;
   updated_at: string | null;
   exp_at: string | null;
 };
@@ -62,6 +63,7 @@ type CommentRow = {
   user_id: string;
   content: string | null;
   is_deleted: boolean;
+  deleted_message: string | null;
   updated_at: string | null;
   exp_at: string | null;
 };
@@ -220,7 +222,7 @@ export async function loadAppealCenterItems({ authUserId, origin }: { authUserId
     supabaseAdmin.from('posts').select('id').eq('user_id', authUserId),
     supabaseAdmin
       .from('post_comments')
-      .select('id, site_id, board_id, post_id, user_id, content, is_deleted, updated_at, exp_at')
+      .select('id, site_id, board_id, post_id, user_id, content, is_deleted, deleted_message, updated_at, exp_at')
       .eq('user_id', authUserId),
   ]);
 
@@ -249,7 +251,7 @@ export async function loadAppealCenterItems({ authUserId, origin }: { authUserId
   const [postsResult, appealsResult] = await Promise.all([
     supabaseAdmin
       .from('posts')
-      .select('id, site_id, board_id, slug, subject, user_id, is_closed, updated_at, exp_at')
+      .select('id, site_id, board_id, slug, subject, user_id, is_closed, closed_message, updated_at, exp_at')
       .in('id', postIds),
     supabaseAdmin.from('report_appeals').select(appealColumns).in('report_id', reportIds),
   ]);
@@ -292,6 +294,15 @@ export async function loadAppealCenterItems({ authUserId, origin }: { authUserId
     const board = report.board_id ? boardById.get(report.board_id) : null;
 
     if (!post || !site || !board) {
+      return [];
+    }
+
+    const isDeletedForViolation =
+      report.target_type === 'post'
+        ? post.is_closed === true && Boolean(normalizeText(post.closed_message))
+        : comment?.is_deleted === true && Boolean(normalizeText(comment.deleted_message));
+
+    if (!isDeletedForViolation) {
       return [];
     }
 

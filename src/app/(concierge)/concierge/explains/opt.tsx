@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import {
+  Box,
+  Button,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,6 +14,7 @@ import {
   Select,
   Snackbar,
   Stack,
+  styled,
   Table,
   TableBody,
   TableCell,
@@ -27,9 +30,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import ToastEditor from '@/components/editor/ToastEditor';
@@ -60,6 +61,28 @@ type PostImage = {
   height?: number | null;
 };
 
+type PollOptionImage = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+type PollOption = {
+  id: number;
+  label: string;
+  image: PollOptionImage | null;
+};
+
+type PollData = {
+  question: string;
+  creator_id: string;
+  anonymity: 'anonymous' | 'named';
+  endType: 'absolute' | 'relative';
+  endsAt: string;
+  options: PollOption[];
+};
+
 type ContentResponse = {
   targetType: 'post' | 'comment';
   canEdit: boolean;
@@ -82,6 +105,7 @@ type ContentResponse = {
     youtube_url: string | null;
     youtube_created_at: string | null;
     images: PostImage[];
+    poll: PollData | null;
   };
   comment: {
     id: string;
@@ -100,8 +124,21 @@ type ContentForm = {
   youtubeCreatedAt: string;
   thumbnailImage: string;
   images: PostImage[];
+  poll: PollData | null;
   commentContent: string;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const cellSx = { whiteSpace: 'nowrap' } as const;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -117,6 +154,15 @@ function createContentForm(response: ContentResponse): ContentForm {
     youtubeCreatedAt: response.post.youtube_created_at ?? '',
     thumbnailImage: response.post.thumbnail_image ?? '',
     images: Array.isArray(response.post.images) ? response.post.images : [],
+    poll: response.post.poll
+      ? {
+          ...response.post.poll,
+          options: response.post.poll.options.map((option) => ({
+            ...option,
+            image: option.image ? { ...option.image } : null,
+          })),
+        }
+      : null,
     commentContent: response.comment?.content ?? '',
   };
 }
@@ -200,6 +246,27 @@ function ContentViewer({ response }: { response: ContentResponse }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img key={image.path} src={image.url} alt="" style={{ maxWidth: '100%', height: 'auto' }} />
       ))}
+      {response.post.poll ? (
+        <div className="paper">
+          <Stack gap={1.5}>
+            <Typography variant="h6">투표</Typography>
+            <Typography variant="subtitle2">{response.post.poll.question}</Typography>
+            <Stack component="ol" gap={1} sx={{ m: 0, pl: 3 }}>
+              {response.post.poll.options.map((option) => (
+                <li key={option.id}>
+                  <Stack direction="row" gap={1} alignItems="center">
+                    {option.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={option.image.url} alt="" style={{ width: 80, height: 80, objectFit: 'cover' }} />
+                    ) : null}
+                    <Typography>{option.label}</Typography>
+                  </Stack>
+                </li>
+              ))}
+            </Stack>
+          </Stack>
+        </div>
+      ) : null}
     </Stack>
   );
 }
@@ -230,6 +297,7 @@ function ContentEditor({
           multiline
           minRows={8}
           fullWidth
+          size="small"
         />
       </Stack>
     );
@@ -245,6 +313,7 @@ function ContentEditor({
             value={form.subject}
             onChange={(event) => update('subject', event.currentTarget.value)}
             fullWidth
+            size="small"
           />
         </Stack>
       ) : null}
@@ -258,6 +327,7 @@ function ContentEditor({
             multiline={response.board.type === 'youtube'}
             minRows={response.board.type === 'youtube' ? 4 : undefined}
             fullWidth
+            size="small"
           />
         </Stack>
       ) : null}
@@ -270,6 +340,7 @@ function ContentEditor({
               value={form.youtubeUrl}
               onChange={(event) => update('youtubeUrl', event.currentTarget.value)}
               fullWidth
+              size="small"
             />
           </Stack>
           <Stack gap={0.5}>
@@ -279,7 +350,7 @@ function ContentEditor({
                 value={parseDateValue(form.youtubeCreatedAt)}
                 onChange={(value) => update('youtubeCreatedAt', formatDateValue(value))}
                 format="yyyy년 MM월 dd일"
-                slotProps={{ textField: { fullWidth: true, 'aria-label': '유튜브 업로드 날짜' } }}
+                slotProps={{ textField: { fullWidth: true, size: 'small', 'aria-label': '유튜브 업로드 날짜' } }}
               />
             </LocalizationProvider>
           </Stack>
@@ -295,6 +366,7 @@ function ContentEditor({
             multiline
             minRows={10}
             fullWidth
+            size="small"
           />
         </Stack>
       ) : null}
@@ -345,6 +417,66 @@ function ContentEditor({
           </button>
         </Stack>
       ))}
+      {response.board.type === 'basic' && form.poll ? (
+        <div className="paper">
+          <Stack gap={1.5}>
+            <Typography variant="h6">투표</Typography>
+            <Stack gap={0.5}>
+              <Typography variant="subtitle2">투표 질문</Typography>
+              <TextField
+                aria-label="투표 질문"
+                value={form.poll.question}
+                onChange={(event) =>
+                  update('poll', form.poll ? { ...form.poll, question: event.currentTarget.value } : null)
+                }
+                fullWidth
+                size="small"
+              />
+            </Stack>
+            <Typography variant="body2">{form.poll.anonymity === 'named' ? '기명 투표' : '익명 투표'}</Typography>
+            <Typography variant="body2">{`${formatDateTimeDetail(form.poll.endsAt)} 종료`}</Typography>
+            {form.poll.options.map((option, optionIndex) => (
+              <Stack key={option.id} gap={0.5}>
+                <Typography variant="subtitle2">{`선택지 ${optionIndex + 1}`}</Typography>
+                <TextField
+                  aria-label={`선택지 ${optionIndex + 1}`}
+                  value={option.label}
+                  onChange={(event) => {
+                    const nextOptions = form.poll?.options.map((currentOption, currentIndex) =>
+                      currentIndex === optionIndex
+                        ? { ...currentOption, label: event.currentTarget.value }
+                        : currentOption,
+                    );
+
+                    update('poll', form.poll && nextOptions ? { ...form.poll, options: nextOptions } : null);
+                  }}
+                  fullWidth
+                  size="small"
+                />
+                {option.image ? (
+                  <Stack gap={1} alignItems="flex-start">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={option.image.url} alt="" style={{ maxWidth: 240, width: '100%', height: 'auto' }} />
+                    <button
+                      type="button"
+                      className="button small danger"
+                      onClick={() => {
+                        const nextOptions = form.poll?.options.map((currentOption, currentIndex) =>
+                          currentIndex === optionIndex ? { ...currentOption, image: null } : currentOption,
+                        );
+
+                        update('poll', form.poll && nextOptions ? { ...form.poll, options: nextOptions } : null);
+                      }}
+                    >
+                      선택지 이미지 삭제
+                    </button>
+                  </Stack>
+                ) : null}
+              </Stack>
+            ))}
+          </Stack>
+        </div>
+      ) : null}
     </Stack>
   );
 }
@@ -368,6 +500,7 @@ export default function Opt() {
   const [contentResponse, setContentResponse] = useState<ContentResponse | null>(null);
   const [contentForm, setContentForm] = useState<ContentForm | null>(null);
   const [contentLoading, setContentLoading] = useState(false);
+  const [editReviewDialogItem, setEditReviewDialogItem] = useState<AppealCenterItem | null>(null);
 
   const loadItems = useCallback(async () => {
     try {
@@ -564,10 +697,6 @@ export default function Opt() {
   }
 
   async function requestEditReview(item: AppealCenterItem) {
-    if (!window.confirm('수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?')) {
-      return;
-    }
-
     try {
       setActionLoading(true);
       const response = await fetch(`/api/concierge/appeals/content/${item.reportType}/${item.reportId}`, {
@@ -584,6 +713,7 @@ export default function Opt() {
       }
 
       setSnackbarMessage('수정 확인을 요청했습니다.');
+      setEditReviewDialogItem(null);
       closeContent();
       await loadItems();
     } catch {
@@ -658,15 +788,25 @@ export default function Opt() {
                   </TableCell>
                   <TableCell sx={cellSx}>
                     <Stack direction="row" gap={1}>
-                      <button type="button" className="button small" onClick={() => void openContent(item)}>
-                        {item.targetType === 'post' ? '게시물 보기' : '댓글 보기'}
+                      <button
+                        type="button"
+                        className={`button small ${item.canEditContent ? 'danger' : 'action'}`}
+                        onClick={() => void openContent(item)}
+                      >
+                        {item.targetType === 'post'
+                          ? item.canEditContent
+                            ? '게시물 수정'
+                            : '게시물 보기'
+                          : item.canEditContent
+                            ? '댓글 수정'
+                            : '댓글 보기'}
                       </button>
                       {item.canRequestEditReview ? (
                         <button
                           type="button"
-                          className="button small action"
+                          className="button small submit"
                           disabled={actionLoading}
-                          onClick={() => void requestEditReview(item)}
+                          onClick={() => setEditReviewDialogItem(item)}
                         >
                           수정 확인 요청
                         </button>
@@ -740,6 +880,7 @@ export default function Opt() {
                 <Select
                   displayEmpty
                   value={opinionPosition}
+                  size="small"
                   onChange={(event) => setOpinionPosition(event.target.value)}
                 >
                   <MenuItem value="" disabled>
@@ -762,6 +903,7 @@ export default function Opt() {
                   minRows={4}
                   fullWidth
                   required
+                  size="small"
                 />
               </Stack>
               {visibleOpinionFields.map((field) =>
@@ -769,10 +911,12 @@ export default function Opt() {
                   <FormControl key={field.key} fullWidth required>
                     <Select
                       displayEmpty
+                      size="small"
                       value={opinionValues[field.key] ?? ''}
-                      onChange={(event) =>
-                        setOpinionValues((current) => ({ ...current, [field.key]: event.target.value }))
-                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                      }}
                     >
                       <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
                       {field.options?.map((option) => (
@@ -790,13 +934,15 @@ export default function Opt() {
                       aria-label={field.label}
                       helperText={field.helperText}
                       value={opinionValues[field.key] ?? ''}
-                      onChange={(event) =>
-                        setOpinionValues((current) => ({ ...current, [field.key]: event.currentTarget.value }))
-                      }
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                      }}
                       multiline
                       minRows={4}
                       fullWidth
                       required
+                      size="small"
                     />
                   </Stack>
                 ),
@@ -804,6 +950,7 @@ export default function Opt() {
               <FormControl fullWidth required>
                 <Select
                   displayEmpty
+                  size="small"
                   value={contentRequest}
                   onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
                 >
@@ -828,17 +975,38 @@ export default function Opt() {
                     minRows={4}
                     fullWidth
                     required
+                    size="small"
                   />
                 </Stack>
               ) : null}
               <Stack gap={0.5}>
                 <Typography variant="subtitle2">첨부자료</Typography>
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  onChange={(event) => setOpinionFile(event.currentTarget.files?.[0] ?? null)}
-                />
-                <Typography variant="caption">10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</Typography>
+                {opinionFile ? (
+                  <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2">{opinionFile.name}</Typography>
+                    <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
+                      파일 삭제
+                    </button>
+                  </Stack>
+                ) : (
+                  <Box>
+                    <Button component="label" className="button small action">
+                      파일 추가
+                      <VisuallyHiddenInput
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={(event) => {
+                          setOpinionFile(event.currentTarget.files?.[0] ?? null);
+                          event.currentTarget.value = '';
+                        }}
+                      />
+                    </Button>
+                  </Box>
+                )}
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
+                </p>
               </Stack>
             </Stack>
           ) : null}
@@ -874,7 +1042,7 @@ export default function Opt() {
                 type="button"
                 className="button medium submit"
                 disabled={actionLoading}
-                onClick={() => requestEditReview(contentItem)}
+                onClick={() => setEditReviewDialogItem(contentItem)}
               >
                 수정 확인 요청
               </button>
@@ -890,7 +1058,7 @@ export default function Opt() {
           <Stack gap={3}>
             {contentBody}
             <Stack direction="column" spacing={1.5}>
-              <button type="button" className="button medium close" disabled={actionLoading} onClick={closeContent}>
+              <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeContent}>
                 닫기
               </button>
               {contentResponse?.canEdit ? (
@@ -903,7 +1071,7 @@ export default function Opt() {
                   type="button"
                   className="button medium submit"
                   disabled={actionLoading}
-                  onClick={() => requestEditReview(contentItem)}
+                  onClick={() => setEditReviewDialogItem(contentItem)}
                 >
                   수정 확인 요청
                 </button>
@@ -913,10 +1081,52 @@ export default function Opt() {
         </Drawer>
       )}
 
+      <Dialog
+        open={Boolean(editReviewDialogItem)}
+        onClose={() => setEditReviewDialogItem(null)}
+        maxWidth="sm"
+        fullWidth
+        className="VhiDialog"
+      >
+        <DialogTitle>수정 확인 요청</DialogTitle>
+        <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
+          <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={actionLoading}
+            onClick={() => setEditReviewDialogItem(null)}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className="button medium submit"
+            disabled={actionLoading || !editReviewDialogItem}
+            onClick={() => {
+              if (editReviewDialogItem) {
+                void requestEditReview(editReviewDialogItem);
+              }
+            }}
+          >
+            요청
+          </button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={Boolean(snackbarMessage)}
         message={snackbarMessage}
-        autoHideDuration={3000}
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        autoHideDuration={2700}
         onClose={() => setSnackbarMessage('')}
       />
     </Stack>

@@ -40,6 +40,7 @@ type PostRow = {
   youtube_url: string | null;
   youtube_created_at: string | null;
   images: unknown;
+  poll: unknown;
   updated_at: string | null;
   exp_at: string | null;
 };
@@ -63,7 +64,30 @@ type UpdateBody = {
   youtubeCreatedAt?: string | null;
   thumbnailImage?: string | null;
   images?: unknown;
+  poll?: unknown;
   commentContent?: string | null;
+};
+
+type PollOptionImage = {
+  path: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+};
+
+type PollOption = {
+  id: number;
+  label: string;
+  image: PollOptionImage | null;
+};
+
+type PollData = {
+  question: string;
+  creator_id: string;
+  anonymity: 'anonymous' | 'named';
+  endType: 'absolute' | 'relative';
+  endsAt: string;
+  options: PollOption[];
 };
 
 const reportTableByType = {
@@ -138,7 +162,7 @@ async function loadContext(reportType: 'legal' | 'rights', reportId: string) {
   const postResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, youtube_url, youtube_created_at, images, updated_at, exp_at',
+      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, youtube_url, youtube_created_at, images, poll, updated_at, exp_at',
     )
     .eq('id', postId)
     .maybeSingle();
@@ -198,6 +222,116 @@ function getPublicPostImageUrl(path: unknown) {
   return getSupabaseAdmin().storage.from('post').getPublicUrl(normalizedPath).data.publicUrl ?? '';
 }
 
+function normalizePoll(value: unknown): PollData | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const rawPoll = value as Record<string, unknown>;
+  const question = normalizeUnknownText(rawPoll.question);
+  const creatorId = normalizeUnknownText(rawPoll.creator_id);
+  const anonymity = rawPoll.anonymity === 'named' ? 'named' : 'anonymous';
+  const endType = rawPoll.endType === 'relative' ? 'relative' : rawPoll.endType === 'absolute' ? 'absolute' : null;
+  const endsAt = normalizeUnknownText(rawPoll.endsAt);
+  const rawOptions = Array.isArray(rawPoll.options) ? rawPoll.options : [];
+  const options = rawOptions.flatMap((value, index): PollOption[] => {
+    if (!value || typeof value !== 'object') {
+      return [];
+    }
+
+    const rawOption = value as Record<string, unknown>;
+    const label = normalizeUnknownText(rawOption.label);
+
+    if (!label) {
+      return [];
+    }
+
+    let image: PollOptionImage | null = null;
+
+    if (rawOption.image && typeof rawOption.image === 'object') {
+      const rawImage = rawOption.image as Record<string, unknown>;
+      const path = normalizeUnknownText(rawImage.path);
+
+      if (path) {
+        image = {
+          path,
+          url: normalizeUnknownText(rawImage.url) || getPublicPostImageUrl(path),
+          width: typeof rawImage.width === 'number' && Number.isFinite(rawImage.width) ? rawImage.width : null,
+          height: typeof rawImage.height === 'number' && Number.isFinite(rawImage.height) ? rawImage.height : null,
+        };
+      }
+    }
+
+    return [
+      {
+        id: typeof rawOption.id === 'number' && Number.isFinite(rawOption.id) ? rawOption.id : index,
+        label,
+        image,
+      },
+    ];
+  });
+
+  if (!question || !creatorId || !endType || !endsAt || options.length < 2) {
+    return null;
+  }
+
+  return {
+    question,
+    creator_id: creatorId,
+    anonymity,
+    endType,
+    endsAt,
+    options,
+  };
+}
+
+function normalizePollUpdate(currentPoll: PollData | null, value: unknown) {
+  if (!currentPoll || !value || typeof value !== 'object') {
+    return currentPoll;
+  }
+
+  const rawPoll = value as Record<string, unknown>;
+  const question = normalizeUnknownText(rawPoll.question);
+  const rawOptions = Array.isArray(rawPoll.options) ? rawPoll.options : [];
+
+  if (!question || rawOptions.length !== currentPoll.options.length) {
+    throw new Error('투표 내용을 확인해 주세요.');
+  }
+
+  const options = currentPoll.options.map((currentOption, index) => {
+    const rawOption = rawOptions[index];
+
+    if (!rawOption || typeof rawOption !== 'object') {
+      throw new Error('투표 선택지 내용을 확인해 주세요.');
+    }
+
+    const option = rawOption as Record<string, unknown>;
+    const label = normalizeUnknownText(option.label);
+
+    if (!label) {
+      throw new Error('투표 선택지 내용을 입력해 주세요.');
+    }
+
+    const submittedImage =
+      option.image && typeof option.image === 'object' ? (option.image as Record<string, unknown>) : null;
+    const submittedImagePath = normalizeUnknownText(submittedImage?.path);
+    const image =
+      currentOption.image && submittedImagePath === currentOption.image.path ? currentOption.image : null;
+
+    return {
+      ...currentOption,
+      label,
+      image,
+    };
+  });
+
+  return {
+    ...currentPoll,
+    question,
+    options,
+  };
+}
+
 export async function GET(_request: Request, context: ContentRouteContext) {
   try {
     const session = await verifySession({ siteId: null });
@@ -216,14 +350,15 @@ export async function GET(_request: Request, context: ContentRouteContext) {
 
     const result = await loadContext(reportType, reportId);
     const authorUserId = result.comment?.user_id ?? result.post.user_id;
+    const isAuthor = authorUserId === session.authUserId;
 
-    if (authorUserId !== session.authUserId) {
+    if (!isAuthor && session.case !== 'admin') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     return Response.json({
       targetType: result.report.target_type,
-      canEdit: canEdit(result.appeal),
+      canEdit: isAuthor && canEdit(result.appeal),
       site: {
         name: result.site.site_key,
         label: result.site.site_label || result.site.site_key,
@@ -237,6 +372,7 @@ export async function GET(_request: Request, context: ContentRouteContext) {
       post: {
         ...result.post,
         thumbnail_image_url: getPublicPostImageUrl(result.post.thumbnail_image),
+        poll: normalizePoll(result.post.poll),
         images: getImageRows(result.post.images).map((image) => ({
           ...image,
           path: normalizeUnknownText(image.path),
@@ -315,6 +451,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
     const requestedImages = getImageRows(body.images);
     const images = requestedImages.filter((image) => existingImagePaths.has(normalizeUnknownText(image.path)));
     const thumbnailImage = normalizeText(body.thumbnailImage);
+    const poll = normalizePollUpdate(normalizePoll(result.post.poll), body.poll);
     const updateResult = await supabaseAdmin
       .from('posts')
       .update({
@@ -331,6 +468,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
         youtube_created_at: boardType === 'youtube' ? normalizeText(body.youtubeCreatedAt) || null : null,
         thumbnail_image: thumbnailImage && thumbnailImage === result.post.thumbnail_image ? thumbnailImage : null,
         images: boardType === 'gallery' || boardType === 'feed' ? images : [],
+        poll: boardType === 'basic' ? poll : null,
         edited_at: now,
         updated_at: now,
       })

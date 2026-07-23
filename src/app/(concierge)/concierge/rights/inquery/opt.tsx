@@ -699,7 +699,7 @@ export default function Opt() {
       return (
         <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
-            선택하신 신고 사유
+            신고 사유
           </Typography>
           <p className="alert warning">
             <WarningAmberRoundedIcon />
