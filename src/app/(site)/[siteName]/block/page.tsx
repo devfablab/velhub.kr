@@ -8,7 +8,7 @@ import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 
 import { Stack, Typography } from '@mui/material';
 
-import Anchor from '@/components/Anchor';
+import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 
 import Container from '../menu';
@@ -33,6 +33,7 @@ export default function Page() {
   const [blockTerm, setBlockTerm] = useState<string | null>(null);
   const [blockReason, setBlockReason] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [messageOpen, setMessageOpen] = useState(false);
 
   useEffect(() => {
     if (!siteName) {
@@ -105,9 +106,18 @@ export default function Page() {
               </Stack>
             ) : null}
 
-            <Anchor href="/concierge/rights" className="button medium submit">
+            <button type="button" className="button medium submit" onClick={() => setMessageOpen(true)}>
               소명하기
-            </Anchor>
+            </button>
+
+            <MemberRestrictionMessageDialog
+              open={messageOpen}
+              endpoint={`/api/users/${siteName}/restriction-messages/block`}
+              ownSenderType="appellant"
+              inputPlaceholder="소명하세요"
+              successMessage="소명 메시지를 보냈습니다."
+              onClose={() => setMessageOpen(false)}
+            />
           </div>
         </div>
       </div>

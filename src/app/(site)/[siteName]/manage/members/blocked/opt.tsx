@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Checkbox,
@@ -30,6 +30,11 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import {
+  memberRestrictionMessageStatusLabels,
+  type MemberRestrictionMessageStatus,
+} from '@/lib/users/memberRestrictionMessages';
 import PlanBillingMemberPopup from '../planBillingMemberPopup';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -44,6 +49,7 @@ type BlockedUserRow = {
   blockedAt: string | null;
   blockTerm: string | null;
   blockedBy: string;
+  messageStatus: MemberRestrictionMessageStatus | null;
 };
 
 type PlanBillingSubscriberResponse = {
@@ -80,6 +86,7 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [messageUser, setMessageUser] = useState<BlockedUserRow | null>(null);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -100,7 +107,7 @@ export default function Opt() {
     return normalizeText(result.userId) || null;
   }
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/blocked?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
@@ -113,7 +120,7 @@ export default function Opt() {
     }
 
     setUsers(Array.isArray(result.users) ? result.users : []);
-  }
+  }, [siteName]);
 
   useEffect(() => {
     async function init() {
@@ -132,7 +139,7 @@ export default function Opt() {
     }
 
     void init();
-  }, [siteName]);
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     const keyword = normalizeText(appliedKeyword).toLowerCase();
@@ -413,6 +420,8 @@ export default function Opt() {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리일</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 해제일</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>활동정지 처리자</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -435,12 +444,28 @@ export default function Opt() {
                         {user.blockTerm ? formatDate(user.blockTerm) : ''}
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{user.blockedBy}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.messageStatus ? memberRestrictionMessageStatusLabels[user.messageStatus] : '도착 전'}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.messageStatus ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => setMessageUser(user)}
+                          >
+                            메시지 보기
+                          </button>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
 
                   {filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} align="center">
+                      <TableCell colSpan={8} align="center">
                         검색 결과가 없습니다.
                       </TableCell>
                     </TableRow>
@@ -607,6 +632,31 @@ export default function Opt() {
           <PlanBillingMemberPopup
             open={isPlanBillingMemberPopupOpen}
             onClose={() => setIsPlanBillingMemberPopupOpen(false)}
+          />
+
+          <MemberRestrictionMessageDialog
+            open={Boolean(messageUser)}
+            endpoint={
+              messageUser
+                ? `/api/manage/members/restriction-messages/${messageUser.userId}/block?siteName=${encodeURIComponent(siteName)}`
+                : ''
+            }
+            ownSenderType="staff"
+            inputPlaceholder="답변하세요"
+            successMessage="답변을 보냈습니다."
+            postBody={{ siteName }}
+            onClose={() => setMessageUser(null)}
+            onSent={() => {
+              if (!messageUser) {
+                return;
+              }
+
+              setUsers((current) =>
+                current.map((user) =>
+                  user.userId === messageUser.userId ? { ...user, messageStatus: 'staff_replied' } : user,
+                ),
+              );
+            }}
           />
 
           <Snackbar

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 
 import { useParams } from 'next/navigation';
 
@@ -35,6 +35,12 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import {
+  memberRestrictionMessageStatusLabels,
+  type MemberRestrictionMessageStatus,
+  type MemberRestrictionType,
+} from '@/lib/users/memberRestrictionMessages';
 import PlanBillingMemberPopup from '../planBillingMemberPopup';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -52,6 +58,8 @@ type WithdrawnUserRow = {
   type: string;
   kickTerm: string | null;
   banTerm: string | null;
+  restrictionType: Exclude<MemberRestrictionType, 'block'> | null;
+  messageStatus: MemberRestrictionMessageStatus | null;
 };
 
 type PlanBillingSubscriberResponse = {
@@ -103,6 +111,7 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [messageUser, setMessageUser] = useState<WithdrawnUserRow | null>(null);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -123,7 +132,7 @@ export default function Opt() {
     return normalizeText(result.userId) || null;
   }
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/withdrawn?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
@@ -136,7 +145,7 @@ export default function Opt() {
     }
 
     setUsers(Array.isArray(result.users) ? result.users : []);
-  }
+  }, [siteName]);
 
   useEffect(() => {
     async function init() {
@@ -156,7 +165,7 @@ export default function Opt() {
     }
 
     void init();
-  }, [siteName]);
+  }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
     const keyword = normalizeText(appliedKeyword).toLowerCase();
@@ -519,6 +528,8 @@ export default function Opt() {
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 사유</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 처리일 (처리자)</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>탈퇴 종류</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
                 </TableRow>
               </TableHead>
 
@@ -548,13 +559,33 @@ export default function Opt() {
                             ? `${user.type} (${formatDate(user.banTerm)} 재가입 가능)`
                             : user.type}
                       </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.restrictionType
+                          ? user.messageStatus
+                            ? memberRestrictionMessageStatusLabels[user.messageStatus]
+                            : '도착 전'
+                          : null}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {user.restrictionType && user.messageStatus ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => setMessageUser(user)}
+                          >
+                            메시지 보기
+                          </button>
+                        ) : user.restrictionType ? (
+                          '-'
+                        ) : null}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
 
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                      <TableCell colSpan={7}>
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />
                         <span>검색 결과가 없습니다.</span>
@@ -743,6 +774,31 @@ export default function Opt() {
       <PlanBillingMemberPopup
         open={isPlanBillingMemberPopupOpen}
         onClose={() => setIsPlanBillingMemberPopupOpen(false)}
+      />
+
+      <MemberRestrictionMessageDialog
+        open={Boolean(messageUser?.restrictionType)}
+        endpoint={
+          messageUser?.restrictionType
+            ? `/api/manage/members/restriction-messages/${messageUser.userId}/${messageUser.restrictionType}?siteName=${encodeURIComponent(siteName)}`
+            : ''
+        }
+        ownSenderType="staff"
+        inputPlaceholder="답변하세요"
+        successMessage="답변을 보냈습니다."
+        postBody={{ siteName }}
+        onClose={() => setMessageUser(null)}
+        onSent={() => {
+          if (!messageUser) {
+            return;
+          }
+
+          setUsers((current) =>
+            current.map((user) =>
+              user.userId === messageUser.userId ? { ...user, messageStatus: 'staff_replied' } : user,
+            ),
+          );
+        }}
       />
 
       <Snackbar

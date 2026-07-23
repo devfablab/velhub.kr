@@ -7,8 +7,11 @@ import {
   getStigmasByIds,
   getWithdrawnMemberships,
 } from '@/lib/users/utils';
+import { getStaffRestrictionMessageStatus } from '@/lib/users/memberRestrictionMessages';
+import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessagesServer';
 
 type MembershipRow = {
+  id: string;
   user_id: string;
   nickname: string | null;
   kicked_at?: string | null;
@@ -65,6 +68,10 @@ export async function GET(request: Request) {
     }
 
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
+    const lastSenderMap = await loadRestrictionLastSenderMap({
+      membershipIds: membershipResult.memberships.map((membership) => membership.id),
+      restrictionTypes: ['kick', 'ban'],
+    });
 
     return Response.json({
       ok: true,
@@ -85,6 +92,8 @@ export async function GET(request: Request) {
             processedAt: typedMembership.cleared_at,
             processedBy: getStigmaDisplayName(clearedByUser),
             type: '가입불가 해제됨',
+            restrictionType: null,
+            messageStatus: null,
           };
         }
 
@@ -99,6 +108,10 @@ export async function GET(request: Request) {
             processedBy: getStigmaDisplayName(bannedByUser),
             banTerm: typedMembership.ban_term ?? null,
             type: '가입불가',
+            restrictionType: 'ban',
+            messageStatus: getStaffRestrictionMessageStatus(
+              lastSenderMap.get(`${typedMembership.id}:ban`) ?? null,
+            ),
           };
         }
 
@@ -113,6 +126,10 @@ export async function GET(request: Request) {
             processedBy: getStigmaDisplayName(kickedByUser),
             kickTerm: typedMembership.kick_term ?? null,
             type: '강제탈퇴',
+            restrictionType: 'kick',
+            messageStatus: getStaffRestrictionMessageStatus(
+              lastSenderMap.get(`${typedMembership.id}:kick`) ?? null,
+            ),
           };
         }
 
@@ -123,6 +140,8 @@ export async function GET(request: Request) {
           processedAt: typedMembership.withdrawn_at ?? null,
           processedBy: nickname || email,
           type: '임의탈퇴',
+          restrictionType: null,
+          messageStatus: null,
         };
       }),
     });

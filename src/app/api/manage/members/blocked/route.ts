@@ -7,6 +7,8 @@ import {
   getStigmaDisplayName,
   getStigmasByIds,
 } from '@/lib/users/utils';
+import { getStaffRestrictionMessageStatus } from '@/lib/users/memberRestrictionMessages';
+import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessagesServer';
 
 type MembershipRow = {
   id: string;
@@ -57,6 +59,10 @@ export async function GET(request: Request) {
     }
 
     const stigmaMap = new Map(stigmaResult.stigmas.map((stigma) => [stigma.id, stigma]));
+    const lastSenderMap = await loadRestrictionLastSenderMap({
+      membershipIds: membershipResult.memberships.map((membership) => membership.id),
+      restrictionTypes: ['block'],
+    });
 
     return Response.json({
       ok: true,
@@ -72,6 +78,9 @@ export async function GET(request: Request) {
           blockedAt: typedMembership.blocked_at,
           blockTerm: typedMembership.block_term ?? null,
           blockedBy: getStigmaDisplayName(blockedByUser),
+          messageStatus: getStaffRestrictionMessageStatus(
+            lastSenderMap.get(`${typedMembership.id}:block`) ?? null,
+          ),
         };
       }),
     });

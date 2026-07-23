@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
 
 function isValidCronRequest(request: Request) {
   if (process.env.NEXT_PUBLIC_APP_ENV === 'test') {
@@ -41,6 +42,11 @@ export async function GET(request: Request) {
       console.error('[users/unkick] update error', updateResult.error);
       return Response.json({ error: '강제탈퇴 기간 만료 처리에 실패했습니다.' }, { status: 500 });
     }
+
+    await deleteMemberRestrictionMessages({
+      membershipIds: (updateResult.data ?? []).map((membership) => membership.id),
+      restrictionTypes: ['kick'],
+    });
 
     return Response.json({
       ok: true,

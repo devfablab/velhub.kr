@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
@@ -26,6 +27,7 @@ export default function Page() {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [messageOpen, setMessageOpen] = useState(false);
   const canRejoin = Boolean(userInfo?.banTerm && new Date(userInfo.banTerm).getTime() <= Date.now());
 
   useEffect(() => {
@@ -98,12 +100,21 @@ export default function Page() {
                     가입하기
                   </Anchor>
                 ) : (
-                  <Anchor href="/concierge/rights" className="button medium submit">
+                  <button type="button" className="button medium submit" onClick={() => setMessageOpen(true)}>
                     소명하기
-                  </Anchor>
+                  </button>
                 )}
               </>
             ) : null}
+
+            <MemberRestrictionMessageDialog
+              open={messageOpen}
+              endpoint={`/api/users/${siteName}/restriction-messages/ban`}
+              ownSenderType="appellant"
+              inputPlaceholder="소명하세요"
+              successMessage="소명 메시지를 보냈습니다."
+              onClose={() => setMessageOpen(false)}
+            />
           </div>
         </div>
       </div>

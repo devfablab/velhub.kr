@@ -4,6 +4,7 @@ import { createMemberStatusNotification } from '@/lib/notifications/createMember
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 import { isPlanBillingSubscriberStigma } from '@/lib/payments/planBillingSubscriber';
+import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
 
 type RouteContext = {
   params: Promise<{
@@ -97,6 +98,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '활동정지 처리에 실패했습니다.' }, { status: 500 });
     }
 
+    await deleteMemberRestrictionMessages({
+      membershipIds: [membershipResult.membership.id],
+      restrictionTypes: ['block'],
+    });
+
     await createMemberStatusNotification({
       supabaseAdmin: access.supabaseAdmin,
       recipientStigmaId: membershipResult.membership.user_id,
@@ -163,6 +169,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (updateResult.error) {
       return Response.json({ error: '활동정지 해제에 실패했습니다.' }, { status: 500 });
     }
+
+    await deleteMemberRestrictionMessages({
+      membershipIds: [membershipResult.membership.id],
+      restrictionTypes: ['block'],
+    });
 
     await createMemberStatusNotification({
       supabaseAdmin: access.supabaseAdmin,

@@ -5,6 +5,7 @@ import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 import { isPlanBillingSubscriberStigma } from '@/lib/payments/planBillingSubscriber';
+import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
 
 type RouteContext = {
   params: Promise<{
@@ -104,6 +105,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '강제탈퇴 처리에 실패했습니다.' }, { status: 500 });
     }
 
+    await deleteMemberRestrictionMessages({
+      membershipIds: [membershipResult.membership.id],
+      restrictionTypes: ['kick'],
+    });
+
     if (!access.session.stigmaId) {
       return Response.json({ error: '처리한 매니저 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
@@ -191,6 +197,11 @@ export async function DELETE(request: Request, context: RouteContext) {
     if (updateResult.error) {
       return Response.json({ error: '강제탈퇴 해제에 실패했습니다.' }, { status: 500 });
     }
+
+    await deleteMemberRestrictionMessages({
+      membershipIds: [membershipResult.membership.id],
+      restrictionTypes: ['kick'],
+    });
 
     await createMemberStatusNotification({
       supabaseAdmin: access.supabaseAdmin,
