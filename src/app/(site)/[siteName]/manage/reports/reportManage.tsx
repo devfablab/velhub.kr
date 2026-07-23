@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -14,12 +14,14 @@ import {
   FormControl,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
   useMediaQuery,
   useTheme,
@@ -28,9 +30,21 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import type { ReportManageTargetType, ReportStatus } from '@/lib/reports/manage';
+import {
+  reportHandlingResultLabels,
+  type ReportHandlingResult,
+  type ReportManageTargetType,
+  type ReportStatus,
+} from '@/lib/reports/manage';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
+import {
+  getGuidelineInitialMessageCreatedAt,
+  guidelineAppealMessageStatusLabels,
+  type GuidelineAppealMessage,
+  type GuidelineAppealMessageStatus,
+} from '@/lib/reports/guidelineAppeals';
+import { formatTimeAgo } from '@/lib/utils';
 
 type PostImage = {
   path: string;
@@ -57,12 +71,15 @@ type ReportItem = {
   id: string;
   targetType: ReportManageTargetType;
   status: ReportStatus;
+  handlingResult: ReportHandlingResult | null;
   createdAt: string;
   handledAt: string | null;
   reporterName: string;
   handlerName: string | null;
   reportCategory: string;
   reportCategoryLabel: string;
+  canAppeal: boolean;
+  appealMessageStatus: GuidelineAppealMessageStatus | null;
   board: {
     id: string;
     name: string;
@@ -81,6 +98,7 @@ type ReportItem = {
     thumbnailImage: string | null;
     images: PostImage[] | null;
     poll: PollData | null;
+    isClosed: boolean;
   } | null;
   comment: {
     id: string;
@@ -98,6 +116,13 @@ type ReportListResponse = {
 
 type ReportManageProps = {
   targetType: ReportManageTargetType;
+};
+
+type AppealMessagesResponse = {
+  siteName?: string;
+  deletionMessage?: string;
+  messages?: GuidelineAppealMessage[];
+  error?: string;
 };
 
 const statusLabels: Record<ReportStatus, string> = {
@@ -150,12 +175,79 @@ function getSubmitLabel(targetType: ReportManageTargetType, status: ReportStatus
   return '저장';
 }
 
+function getStatusLabel(report: ReportItem) {
+  if (report.targetType !== 'board' && (report.status === 'dismissed' || report.status === 'completed')) {
+    return '처리완료';
+  }
+
+  return statusLabels[report.status];
+}
+
+function getHandlingResultLabel(report: ReportItem) {
+  if (report.handlingResult) {
+    return reportHandlingResultLabels[report.handlingResult];
+  }
+
+  return report.status === 'dismissed' ? reportHandlingResultLabels.no_issue : null;
+}
+
+function canFinalize(report: ReportItem) {
+  if (report.status !== 'completed' || report.handlingResult) {
+    return false;
+  }
+
+  if (report.targetType === 'post') {
+    return report.post?.isClosed === true;
+  }
+
+  if (report.targetType === 'comment') {
+    return report.comment?.isDeleted === true;
+  }
+
+  return false;
+}
+
 function formatDate(value: string | null) {
   if (!value) {
     return '-';
   }
 
   return new Date(value).toLocaleString('ko-KR');
+}
+
+function MessageBubble({
+  senderName,
+  createdAt,
+  message,
+  isOwn,
+}: {
+  senderName: string | undefined;
+  createdAt: string;
+  message: string | undefined;
+  isOwn: boolean;
+}) {
+  return (
+    <Stack alignItems={isOwn ? 'flex-end' : 'flex-start'}>
+      <Stack
+        gap={0.5}
+        sx={{
+          width: 'fit-content',
+          maxWidth: { xs: '90%', md: '75%' },
+          px: 2,
+          py: 1.5,
+          borderRadius: 2,
+          backgroundColor: isOwn ? 'action.selected' : 'action.hover',
+          textAlign: isOwn ? 'right' : 'left',
+        }}
+      >
+        <Typography variant="subtitle2">{senderName}</Typography>
+        <Typography variant="body2">{formatTimeAgo(createdAt)}</Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {message}
+        </Typography>
+      </Stack>
+    </Stack>
+  );
 }
 
 function renderImageList(images: PostImage[] | null) {
@@ -343,10 +435,19 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [nextStatus, setNextStatus] = useState<ReportStatus | ''>('');
   const [saving, setSaving] = useState(false);
+  const [messageReport, setMessageReport] = useState<ReportItem | null>(null);
+  const [messageData, setMessageData] = useState<AppealMessagesResponse | null>(null);
+  const [messageText, setMessageText] = useState('');
+  const [messageOpenedAt, setMessageOpenedAt] = useState('');
+  const [messageLoading, setMessageLoading] = useState(false);
+  const [messageSaving, setMessageSaving] = useState(false);
+  const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
+  const [finalSaving, setFinalSaving] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const statusOptions = useMemo(() => getStatusOptions(targetType), [targetType]);
 
-  async function loadReports() {
+  const loadReports = useCallback(async () => {
     setLoading(true);
     setErrorMessage('');
 
@@ -373,7 +474,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
     }
 
     setReports(result.reports ?? []);
-  }
+  }, [showPast, siteName, targetType]);
 
   useEffect(() => {
     if (!siteName) {
@@ -382,7 +483,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadReports();
-  }, [siteName, targetType, showPast]);
+  }, [loadReports, siteName]);
 
   function handleOpen(report: ReportItem) {
     setSelectedReport(report);
@@ -403,6 +504,84 @@ export default function ReportManage({ targetType }: ReportManageProps) {
     setShowPast((currentValue) => !currentValue);
     setSelectedReport(null);
     setNextStatus('');
+  }
+
+  async function handleOpenMessages(report: ReportItem) {
+    setMessageReport(report);
+    setMessageData(null);
+    setMessageText('');
+    setMessageOpenedAt(new Date().toISOString());
+    setMessageLoading(true);
+    setErrorMessage('');
+
+    const searchParams = new URLSearchParams({ siteName });
+    const response = await fetch(
+      `/api/manage/reports/${report.id}/appeal-messages?${searchParams.toString()}`,
+      { credentials: 'include' },
+    );
+    const result = (await response.json().catch(() => ({
+      error: '소명 메시지 응답을 확인하지 못했습니다.',
+    }))) as AppealMessagesResponse;
+
+    setMessageLoading(false);
+
+    if (!response.ok || result.error) {
+      setErrorMessage(result.error ?? '소명 메시지를 불러오지 못했습니다.');
+      setMessageReport(null);
+      return;
+    }
+
+    setMessageData(result);
+  }
+
+  function handleCloseMessages() {
+    if (messageSaving) {
+      return;
+    }
+
+    setMessageReport(null);
+    setMessageData(null);
+    setMessageText('');
+  }
+
+  async function handleSendReply() {
+    const message = messageText.trim();
+
+    if (!messageReport || !message) {
+      setErrorMessage('답변 내용을 입력해 주세요.');
+      return;
+    }
+
+    setMessageSaving(true);
+    setErrorMessage('');
+
+    const response = await fetch(`/api/manage/reports/${messageReport.id}/appeal-messages`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ siteName, message }),
+    });
+    const result = (await response.json().catch(() => ({
+      error: '답변 전송 응답을 확인하지 못했습니다.',
+    }))) as AppealMessagesResponse;
+
+    setMessageSaving(false);
+
+    if (!response.ok || result.error) {
+      setErrorMessage(result.error ?? '답변을 보내지 못했습니다.');
+      return;
+    }
+
+    setMessageData(result);
+    setMessageText('');
+    setReports((current) =>
+      current.map((report) =>
+        report.id === messageReport.id ? { ...report, appealMessageStatus: 'staff_replied' } : report,
+      ),
+    );
+    setSnackbarMessage('답변을 보냈습니다.');
   }
 
   function handleStatusChange(changeEvent: SelectChangeEvent) {
@@ -446,6 +625,51 @@ export default function ReportManage({ targetType }: ReportManageProps) {
     await loadReports();
   }
 
+  function handleOpenFinal(report: ReportItem) {
+    setFinalReport(report);
+    setErrorMessage('');
+  }
+
+  function handleCloseFinal() {
+    if (finalSaving) {
+      return;
+    }
+
+    setFinalReport(null);
+  }
+
+  async function handleFinalize(decision: 'keep_deleted' | 'restore') {
+    if (!finalReport) {
+      return;
+    }
+
+    setFinalSaving(true);
+    setErrorMessage('');
+
+    const response = await fetch(`/api/manage/reports/${finalReport.id}/finalize`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ siteName, decision }),
+    });
+    const result = (await response.json().catch(() => ({
+      error: '최종 판단 응답을 확인하지 못했습니다.',
+    }))) as { ok?: boolean; error?: string };
+
+    setFinalSaving(false);
+
+    if (!response.ok || result.error) {
+      setErrorMessage(result.error ?? '최종 판단을 저장하지 못했습니다.');
+      return;
+    }
+
+    setFinalReport(null);
+    setSnackbarMessage(decision === 'restore' ? '콘텐츠를 복구했습니다.' : '삭제 상태를 유지합니다.');
+    await loadReports();
+  }
+
   const detailContent = selectedReport ? (
     <Stack gap={3}>
       <Stack gap={2}>
@@ -462,7 +686,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
 
         <Box>
           <Typography variant="subtitle2">현재 처리상태</Typography>
-          <Typography variant="body2">{statusLabels[selectedReport.status]}</Typography>
+          <Typography variant="body2">{getStatusLabel(selectedReport)}</Typography>
         </Box>
       </Stack>
 
@@ -512,7 +736,13 @@ export default function ReportManage({ targetType }: ReportManageProps) {
 
       {showPast ? (
         <Stack gap={2}>
-          <Typography variant="h6">신고 괸리 내역</Typography>
+          <Typography variant="h6">신고 관리 내역</Typography>
+          {getHandlingResultLabel(selectedReport) ? (
+            <Box>
+              <Typography variant="subtitle2">최종 판단</Typography>
+              <Typography variant="body2">{getHandlingResultLabel(selectedReport)}</Typography>
+            </Box>
+          ) : null}
           <Box>
             <Typography variant="subtitle2">처리자</Typography>
             <Typography variant="body2">{selectedReport.handlerName ?? '-'}</Typography>
@@ -523,7 +753,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             <Typography variant="body2">{formatDate(selectedReport.handledAt)}</Typography>
           </Box>
         </Stack>
-      ) : (
+      ) : canFinalize(selectedReport) ? null : (
         <FormControl fullWidth>
           <Select
             displayEmpty
@@ -551,6 +781,46 @@ export default function ReportManage({ targetType }: ReportManageProps) {
       )}
     </Stack>
   ) : null;
+
+  const messageContent = (
+    <Stack gap={2}>
+      {messageLoading ? (
+        <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 220 }}>
+          <LoadingIndicator />
+        </Stack>
+      ) : messageData ? (
+        <>
+          <MessageBubble
+            senderName={messageData.siteName}
+            createdAt={getGuidelineInitialMessageCreatedAt(messageData.messages ?? [], messageOpenedAt)}
+            message={messageData.deletionMessage}
+            isOwn
+          />
+
+          {(messageData.messages ?? []).map((message) => (
+            <MessageBubble
+              key={message.id}
+              senderName={message.senderName}
+              createdAt={message.createdAt}
+              message={message.message}
+              isOwn={message.senderType === 'staff'}
+            />
+          ))}
+
+          <TextField
+            aria-label="답변 내용"
+            placeholder="답변하세요"
+            value={messageText}
+            onChange={(event) => setMessageText(event.currentTarget.value)}
+            multiline
+            minRows={4}
+            fullWidth
+            size="small"
+          />
+        </>
+      ) : null}
+    </Stack>
+  );
 
   return (
     <div className={`container ${styles.container}`}>
@@ -605,6 +875,9 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>신고자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>신고내용</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>처리상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>최종 판단</TableCell>
                   </TableRow>
                 ) : null}
 
@@ -616,6 +889,9 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>신고자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>신고내용</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>처리상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 상태</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>소명 메시지</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>최종 판단</TableCell>
                   </TableRow>
                 ) : null}
               </TableHead>
@@ -631,7 +907,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.board?.name ?? '-'}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reporterName}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reportCategoryLabel}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{statusLabels[report.status]}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getStatusLabel(report)}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>
                           <button type="button" className="button small action" onClick={() => handleOpen(report)}>
                             {showPast ? '보기' : '변경'}
@@ -652,7 +928,36 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                         </TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reporterName}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reportCategoryLabel}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{statusLabels[report.status]}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{getStatusLabel(report)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {report.canAppeal && report.appealMessageStatus
+                            ? guidelineAppealMessageStatusLabels[report.appealMessageStatus]
+                            : null}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {report.canAppeal ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => void handleOpenMessages(report)}
+                            >
+                              메시지 보기
+                            </button>
+                          ) : (
+                            '-'
+                          )}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {canFinalize(report) && !showPast ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => handleOpenFinal(report)}
+                            >
+                              최종 판단하기
+                            </button>
+                          ) : (getHandlingResultLabel(report) ?? '-')}
+                        </TableCell>
                       </TableRow>
                     );
                   }
@@ -668,7 +973,36 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reporterName}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{report.reportCategoryLabel}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{statusLabels[report.status]}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{getStatusLabel(report)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {report.canAppeal && report.appealMessageStatus
+                          ? guidelineAppealMessageStatusLabels[report.appealMessageStatus]
+                          : null}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {report.canAppeal ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => void handleOpenMessages(report)}
+                          >
+                            메시지 보기
+                          </button>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {canFinalize(report) && !showPast ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => handleOpenFinal(report)}
+                          >
+                            최종 판단하기
+                          </button>
+                        ) : (getHandlingResultLabel(report) ?? '-')}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -692,7 +1026,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                   닫기
                 </button>
 
-                {!showPast ? (
+                {!showPast && selectedReport && !canFinalize(selectedReport) ? (
                   <button
                     type="button"
                     className="button medium submit"
@@ -719,7 +1053,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                 닫기
               </button>
 
-              {!showPast ? (
+              {!showPast && selectedReport && !canFinalize(selectedReport) ? (
                 <button
                   type="button"
                   className="button medium submit"
@@ -732,6 +1066,130 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             </DialogActions>
           </Dialog>
         )}
+
+        {useDrawer ? (
+          <Drawer
+            anchor="bottom"
+            open={Boolean(messageReport)}
+            onClose={handleCloseMessages}
+            className="VhiDrawer-bottom"
+          >
+            <h2>소명 메시지</h2>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseMessages}
+              disabled={messageSaving}
+            >
+              <CloseRoundedIcon />
+            </button>
+
+            <Stack gap={3}>
+              {messageContent}
+
+              <Stack direction="column" spacing={1.5}>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={handleCloseMessages}
+                  disabled={messageSaving}
+                >
+                  닫기
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => void handleSendReply()}
+                  disabled={messageSaving || messageLoading || !messageText.trim()}
+                >
+                  보내기
+                </button>
+              </Stack>
+            </Stack>
+          </Drawer>
+        ) : (
+          <Dialog
+            open={Boolean(messageReport)}
+            onClose={handleCloseMessages}
+            fullWidth
+            maxWidth="lg"
+            className="VhiDialog"
+          >
+            <DialogTitle>소명 메시지</DialogTitle>
+            <button
+              type="button"
+              className="close-button"
+              onClick={handleCloseMessages}
+              disabled={messageSaving}
+            >
+              <CloseRoundedIcon />
+            </button>
+            <DialogContent>{messageContent}</DialogContent>
+            <DialogActions>
+              <button
+                type="button"
+                className="button medium close"
+                onClick={handleCloseMessages}
+                disabled={messageSaving}
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleSendReply()}
+                disabled={messageSaving || messageLoading || !messageText.trim()}
+              >
+                보내기
+              </button>
+            </DialogActions>
+          </Dialog>
+        )}
+
+        <Dialog
+          open={Boolean(finalReport)}
+          onClose={handleCloseFinal}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>최종 판단</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Typography variant="body2">선택하세요.</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseFinal} disabled={finalSaving}>
+              닫기
+            </button>
+            <button
+              type="button"
+              className="button medium warning"
+              onClick={() => void handleFinalize('keep_deleted')}
+              disabled={finalSaving}
+            >
+              삭제상태 유지
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleFinalize('restore')}
+              disabled={finalSaving}
+            >
+              복구하기
+            </button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={Boolean(snackbarMessage)}
+          autoHideDuration={2700}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          message={snackbarMessage}
+          onClose={() => setSnackbarMessage('')}
+        />
       </div>
     </div>
   );

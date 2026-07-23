@@ -11,6 +11,16 @@ export type ReportManageTargetType = (typeof reportManageTargetTypes)[number];
 
 export type ReportStatus = 'received' | 'reviewing' | 'dismissed' | 'completed';
 
+export const reportHandlingResults = ['no_issue', 'keep_deleted', 'restore'] as const;
+
+export type ReportHandlingResult = (typeof reportHandlingResults)[number];
+
+export const reportHandlingResultLabels: Record<ReportHandlingResult, string> = {
+  no_issue: '이상 없음',
+  keep_deleted: '삭제 상태 유지',
+  restore: '복구',
+};
+
 export const reportStatusLabels: Record<ReportStatus, string> = {
   received: '접수됨',
   reviewing: '확인 중',
@@ -24,6 +34,10 @@ export function isReportManageTargetType(value: unknown): value is ReportManageT
 
 export function isReportStatus(value: unknown): value is ReportStatus {
   return value === 'received' || value === 'reviewing' || value === 'dismissed' || value === 'completed';
+}
+
+export function isReportHandlingResult(value: unknown): value is ReportHandlingResult {
+  return reportHandlingResults.includes(value as ReportHandlingResult);
 }
 
 export function getAllowedReportStatuses(targetType: ReportManageTargetType) {

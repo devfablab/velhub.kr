@@ -30,6 +30,7 @@ export async function GET(request: Request) {
       .from('report_rights')
       .update({
         status: 'completed',
+        handling_result: 'keep_deleted',
         handled_at: nowIsoString,
         updated_at: nowIsoString,
       })

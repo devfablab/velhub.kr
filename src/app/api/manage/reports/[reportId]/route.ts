@@ -37,6 +37,7 @@ type ReportRow = {
   comment_id: string | null;
   report_category: GuidelineReportCategory;
   status: ReportStatus;
+  handling_result: string | null;
 };
 
 type PostRow = {
@@ -83,6 +84,7 @@ async function closePost({
     .from('posts')
     .update({
       is_closed: true,
+      is_locked: true,
       closed_by: handlerUserId,
       closed_at: new Date().toISOString(),
       closed_message: closedMessage,
@@ -104,7 +106,15 @@ async function closePost({
   }
 }
 
-async function closeComment({ comment, handlerUserId }: { comment: CommentRow; handlerUserId: string }) {
+async function closeComment({
+  comment,
+  handlerUserId,
+  deletedMessage,
+}: {
+  comment: CommentRow;
+  handlerUserId: string;
+  deletedMessage: string;
+}) {
   if (comment.is_deleted === true) {
     return;
   }
@@ -115,8 +125,10 @@ async function closeComment({ comment, handlerUserId }: { comment: CommentRow; h
     .from('post_comments')
     .update({
       is_deleted: true,
+      is_locked: true,
       deleted_by: handlerUserId,
       deleted_at: new Date().toISOString(),
+      deleted_message: deletedMessage,
     })
     .eq('id', comment.id);
 
@@ -170,7 +182,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const reportResult = await supabaseAdmin
       .from('report_guidelines')
-      .select('id, target_type, site_id, board_id, post_id, comment_id, report_category, status')
+      .select('id, target_type, site_id, board_id, post_id, comment_id, report_category, status, handling_result')
       .eq('id', normalizedReportId)
       .eq('site_id', site.id)
       .maybeSingle();
@@ -233,17 +245,28 @@ export async function PATCH(request: Request, context: RouteContext) {
       await closeComment({
         comment: commentResult.data as CommentRow,
         handlerUserId: sessionClaims.userId,
+        deletedMessage: getClosedMessage(report.target_type, report.report_category),
       });
     }
 
+    const storedStatus =
+      report.target_type !== 'board' && nextStatus === 'dismissed' ? ('completed' as const) : nextStatus;
+    const handlingResult =
+      report.target_type !== 'board' && nextStatus === 'dismissed'
+        ? ('no_issue' as const)
+        : report.target_type !== 'board' && nextStatus === 'completed'
+          ? null
+          : report.handling_result;
     const updatePayload =
-      nextStatus === 'reviewing'
+      storedStatus === 'reviewing'
         ? {
-            status: nextStatus,
+            status: storedStatus,
+            handling_result: handlingResult,
             updated_at: nowIsoString,
           }
         : {
-            status: nextStatus,
+            status: storedStatus,
+            handling_result: handlingResult,
             handler_user_id: sessionClaims.userId,
             handled_at: nowIsoString,
             updated_at: nowIsoString,
@@ -254,7 +277,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .update(updatePayload)
       .eq('id', report.id)
       .eq('site_id', site.id)
-      .select('id, status, handled_at, handler_user_id')
+      .select('id, status, handling_result, handled_at, handler_user_id')
       .maybeSingle();
 
     if (updateResult.error || !updateResult.data) {

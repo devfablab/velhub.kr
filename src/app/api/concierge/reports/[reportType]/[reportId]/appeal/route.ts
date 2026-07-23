@@ -380,6 +380,7 @@ export async function POST(request: Request, context: RouteContext) {
         .from(reportTable)
         .update({
           status: 'completed',
+          handling_result: 'keep_deleted',
           handler_user_id: session.authUserId,
           handled_at: now,
           updated_at: now,
@@ -486,6 +487,23 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (updateResult.error || !updateResult.data) {
       return Response.json({ error: '소명 처리 결과를 저장하지 못했습니다.' }, { status: 500 });
+    }
+
+    const reportUpdateResult = await supabaseAdmin
+      .from(reportTable)
+      .update({
+        status: 'completed',
+        handling_result: action === 'restore' ? 'restore' : 'keep_deleted',
+        handler_user_id: session.authUserId,
+        handled_at: now,
+        updated_at: now,
+      })
+      .eq('id', report.id)
+      .select('id')
+      .maybeSingle();
+
+    if (reportUpdateResult.error || !reportUpdateResult.data) {
+      return Response.json({ error: '신고 처리 결과를 저장하지 못했습니다.' }, { status: 500 });
     }
 
     await sendReporterResultNotification(report);

@@ -342,6 +342,21 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (isDeletionAgreed) {
+      const reportUpdateResult = await supabaseAdmin
+        .from(reportTable)
+        .update({
+          status: 'completed',
+          handling_result: 'keep_deleted',
+          updated_at: now,
+        })
+        .eq('id', report.id)
+        .select('id')
+        .maybeSingle();
+
+      if (reportUpdateResult.error || !reportUpdateResult.data) {
+        return Response.json({ error: '신고 처리 결과를 저장하지 못했습니다.' }, { status: 500 });
+      }
+
       await sendReporterResultNotification(report);
     }
 

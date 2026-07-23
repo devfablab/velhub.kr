@@ -6,10 +6,19 @@ import {
   getPostContentText,
   getReportCategoryTitle,
   isReportManageTargetType,
+  type ReportHandlingResult,
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
-import { isGuidelineReportCategory, type GuidelineReportCategory } from '@/lib/reports/guidelines';
+import {
+  guidelineReportCategories,
+  isGuidelineReportCategory,
+  type GuidelineReportCategory,
+} from '@/lib/reports/guidelines';
+import {
+  getStaffMessageStatus,
+  type GuidelineAppealSenderType,
+} from '@/lib/reports/guidelineAppeals';
 
 type PostImageRow = {
   path?: string | null;
@@ -44,6 +53,7 @@ type ReportRow = {
   created_at: string;
   handled_at: string | null;
   handler_user_id: string | null;
+  handling_result: ReportHandlingResult | null;
 };
 
 type BoardRow = {
@@ -70,6 +80,8 @@ type PostRow = {
   thumbnail_image: string | null;
   poll: JsonValue;
   images: JsonValue;
+  is_closed: boolean;
+  closed_message: string | null;
 };
 
 type CommentRow = {
@@ -79,6 +91,7 @@ type CommentRow = {
   content: string | null;
   created_at: string;
   is_deleted: boolean;
+  deleted_message: string | null;
 };
 
 type StigmaRow = {
@@ -221,7 +234,7 @@ function getStatusFilter(targetType: ReportManageTargetType, mode: 'current' | '
     return ['received', 'reviewing'];
   }
 
-  return ['received'];
+  return ['received', 'reviewing', 'completed'];
 }
 
 export async function GET(request: Request) {
@@ -275,10 +288,12 @@ export async function GET(request: Request) {
           'created_at',
           'handled_at',
           'handler_user_id',
+          'handling_result',
         ].join(', '),
       )
       .eq('site_id', site.id)
       .eq('target_type', targetType)
+      .in('report_category', [...guidelineReportCategories])
       .in('status', getStatusFilter(targetType, mode))
       .order('created_at', { ascending: false });
 
@@ -287,7 +302,36 @@ export async function GET(request: Request) {
       return Response.json({ error: '신고 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const reports = (reportsResult.data ?? []) as unknown as ReportRow[];
+    const reports = ((reportsResult.data ?? []) as unknown as ReportRow[]).filter((report) => {
+      if (report.target_type === 'board' || report.status !== 'completed') {
+        return true;
+      }
+
+      return mode === 'past' ? Boolean(report.handling_result) : !report.handling_result;
+    });
+    const reportIds = reports.map((report) => report.id);
+    const messagesResult = reportIds.length
+      ? await supabaseAdmin
+          .from('report_guideline_messages')
+          .select('id, report_id, sender_type, created_at')
+          .in('report_id', reportIds)
+          .order('created_at', { ascending: true })
+          .order('id', { ascending: true })
+      : { data: [], error: null };
+
+    if (messagesResult.error) {
+      console.error(messagesResult.error);
+      return Response.json({ error: '소명 메시지 상태를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const lastSenderByReport = new Map<string, GuidelineAppealSenderType>();
+
+    for (const message of (messagesResult.data ?? []) as {
+      report_id: string;
+      sender_type: GuidelineAppealSenderType;
+    }[]) {
+      lastSenderByReport.set(message.report_id, message.sender_type);
+    }
 
     const boardIds = Array.from(new Set(reports.map((report) => report.board_id).filter(Boolean))) as string[];
     const postIds = Array.from(new Set(reports.map((report) => report.post_id).filter(Boolean))) as string[];
@@ -306,7 +350,7 @@ export async function GET(request: Request) {
       targetType === 'comment' && commentIds.length
         ? await supabaseAdmin
             .from('post_comments')
-            .select('id, post_id, user_id, content, created_at, is_deleted')
+            .select('id, post_id, user_id, content, created_at, is_deleted, deleted_message')
             .in('id', commentIds)
         : { data: [], error: null };
 
@@ -338,6 +382,8 @@ export async function GET(request: Request) {
               'thumbnail_image',
               'poll',
               'images',
+              'is_closed',
+              'closed_message',
             ].join(', '),
           )
           .in('id', allPostIds)
@@ -372,6 +418,17 @@ export async function GET(request: Request) {
       const targetPost = post ?? commentPost ?? null;
       const targetBoard = board ?? (targetPost?.board_id ? boardById.get(targetPost.board_id) : null) ?? null;
       const boardType = targetBoard?.board_type ?? null;
+      const isGuidelineCategory = guidelineReportCategories.includes(
+        report.report_category as (typeof guidelineReportCategories)[number],
+      );
+      const hasAppealMessages = lastSenderByReport.has(report.id);
+      const isAppealAvailable =
+        report.status === 'completed' && isGuidelineCategory && report.target_type === 'post'
+          ? targetPost?.is_closed === true && Boolean(normalizeText(targetPost.closed_message))
+          : report.status === 'completed' && isGuidelineCategory && report.target_type === 'comment'
+            ? comment?.is_deleted === true && Boolean(normalizeText(comment.deleted_message))
+            : false;
+      const canAppeal = hasAppealMessages || isAppealAvailable;
 
       return {
         id: report.id,
@@ -380,12 +437,15 @@ export async function GET(request: Request) {
         statusLabel: report.status,
         createdAt: report.created_at,
         handledAt: report.handled_at,
+        handlingResult: report.handling_result,
         reporterName: userNameMap.get(report.reporter_user_id) ?? '사용자',
         handlerName: report.handler_user_id ? (userNameMap.get(report.handler_user_id) ?? '사용자') : null,
         reportCategory: report.report_category,
         reportCategoryLabel: isGuidelineReportCategory(report.report_category)
           ? getReportCategoryTitle(report.target_type, report.report_category)
           : report.report_category,
+        canAppeal,
+        appealMessageStatus: getStaffMessageStatus(lastSenderByReport.get(report.id) ?? null),
         board: targetBoard
           ? {
               id: targetBoard.id,
@@ -414,6 +474,7 @@ export async function GET(request: Request) {
               thumbnailImage: getPublicPostImageUrl(targetPost.thumbnail_image),
               images: normalizeImages(targetPost.images),
               poll: targetPost.poll,
+              isClosed: targetPost.is_closed === true,
             }
           : null,
         comment: comment

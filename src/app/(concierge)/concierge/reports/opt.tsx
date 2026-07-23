@@ -721,6 +721,7 @@ export default function Opt() {
                   <TableCell sx={cellSx}>신고자(이름)</TableCell>
                   <TableCell sx={cellSx}>메모 횟수</TableCell>
                   <TableCell sx={cellSx}>처리상태</TableCell>
+                  <TableCell sx={cellSx}>처리결과</TableCell>
                   <TableCell sx={cellSx}>소명 상태</TableCell>
                   <TableCell sx={cellSx}>처리상태 변경</TableCell>
                   <TableCell sx={cellSx}>신고일</TableCell>
@@ -789,6 +790,7 @@ export default function Opt() {
                     </TableCell>
                     <TableCell sx={cellSx}>{report.messageCount.toLocaleString('ko-KR')}회</TableCell>
                     <TableCell sx={cellSx}>{report.statusLabel}</TableCell>
+                    <TableCell sx={cellSx}>{report.handlingResultLabel ?? '-'}</TableCell>
                     <TableCell sx={cellSx}>
                       {report.appeal
                         ? report.appeal.adminStatusLabel

@@ -230,14 +230,15 @@ export async function PATCH(request: Request, context: RouteContext) {
     const updateResult = await supabaseAdmin
       .from(table)
       .update({
-        status: nextStatus,
+        status: 'completed',
+        handling_result: nextStatus === 'dismissed' ? 'no_issue' : 'keep_deleted',
         handler_user_id: session.authUserId,
         handled_at: now,
         updated_at: now,
       })
       .eq('id', report.id)
       .in('status', ['received', 'reviewing'])
-      .select('id, status, handled_at')
+      .select('id, status, handling_result, handled_at')
       .maybeSingle();
 
     if (updateResult.error || !updateResult.data) {

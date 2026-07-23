@@ -10,7 +10,15 @@ import {
   type ReportDetail,
   type ReportMessage,
 } from '@/lib/reports/concierge';
-import { getReportCategoryTitle, isReportStatus, reportStatusLabels, type ReportStatus } from '@/lib/reports/manage';
+import {
+  getReportCategoryTitle,
+  isReportHandlingResult,
+  isReportStatus,
+  reportHandlingResultLabels,
+  reportStatusLabels,
+  type ReportHandlingResult,
+  type ReportStatus,
+} from '@/lib/reports/manage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import {
   getReportAppealCategory,
@@ -31,6 +39,7 @@ type RawReport = {
   comment_id: string | null;
   reporter_user_id: string;
   status: string;
+  handling_result: string | null;
   created_at: string;
   handled_at: string | null;
   handler_user_id: string | null;
@@ -148,6 +157,7 @@ const commonColumns = [
   'comment_id',
   'reporter_user_id',
   'status',
+  'handling_result',
   'created_at',
   'handled_at',
   'handler_user_id',
@@ -650,6 +660,12 @@ export async function loadConciergeReports({
   const items: ConciergeReportItem[] = reports.map((report) => {
     const targetTypeValue = getTargetType(report.target_type);
     const status = getStatus(report.status);
+    const handlingResult: ReportHandlingResult | null = isReportHandlingResult(report.handling_result)
+      ? report.handling_result
+      : null;
+    const legacyHandlingResult: ReportHandlingResult | null =
+      !handlingResult && status === 'dismissed' ? 'no_issue' : null;
+    const resolvedHandlingResult = handlingResult ?? legacyHandlingResult;
     const site = report.site_id ? siteById.get(report.site_id) : null;
     const board = report.board_id ? boardById.get(report.board_id) : null;
     const comment = report.comment_id ? commentById.get(report.comment_id) : null;
@@ -697,7 +713,9 @@ export async function loadConciergeReports({
       reportUrl: resolvedReportUrl,
       messageCount: messagesByReport.get(`${report.reportType}:${report.id}`)?.length ?? 0,
       status,
-      statusLabel: reportStatusLabels[status],
+      statusLabel: status === 'dismissed' || status === 'completed' ? '처리완료' : reportStatusLabels[status],
+      handlingResult: resolvedHandlingResult,
+      handlingResultLabel: resolvedHandlingResult ? reportHandlingResultLabels[resolvedHandlingResult] : null,
       createdAt: report.created_at,
       handledAt: report.handled_at,
       site: site
@@ -736,7 +754,11 @@ export async function loadConciergeReports({
       appealCategory,
       appeal,
       canCreateAppealRequest:
-        Boolean(appealCategory) && isContentTarget && status !== 'dismissed' && appeal === null,
+        Boolean(appealCategory) &&
+        isContentTarget &&
+        status !== 'dismissed' &&
+        resolvedHandlingResult !== 'no_issue' &&
+        appeal === null,
       canDismiss: isPending && isContentTarget && (report.reportType !== 'rights' || !hasThirtyDaysPassed),
       canComplete:
         isPending &&

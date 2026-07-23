@@ -1,5 +1,6 @@
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
 import { getReportAppealCategory } from '@/lib/reports/appeals';
+import { guidelineReportCategories } from '@/lib/reports/guidelines';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -13,6 +14,8 @@ type ReportRow = {
   target_type: 'post' | 'comment';
   post_id: string | null;
   comment_id: string | null;
+  report_category?: string | null;
+  status?: string | null;
   legal_type?: string | null;
   reason_type?: string | null;
 };
@@ -41,6 +44,8 @@ type PostRow = {
   youtube_created_at: string | null;
   images: unknown;
   poll: unknown;
+  is_closed: boolean;
+  closed_message: string | null;
   updated_at: string | null;
   exp_at: string | null;
 };
@@ -50,6 +55,8 @@ type CommentRow = {
   post_id: string;
   user_id: string;
   content: string | null;
+  is_deleted: boolean;
+  deleted_message: string | null;
   updated_at: string | null;
   exp_at: string | null;
 };
@@ -91,6 +98,7 @@ type PollData = {
 };
 
 const reportTableByType = {
+  guideline: 'report_guidelines',
   legal: 'report_legals',
   rights: 'report_rights',
 } as const;
@@ -99,10 +107,12 @@ function normalizeUnknownText(value: unknown) {
   return typeof value === 'string' ? normalizeText(value) : '';
 }
 
-async function loadContext(reportType: 'legal' | 'rights', reportId: string) {
+async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const reportColumns =
-    reportType === 'legal'
+    reportType === 'guideline'
+      ? 'id, target_type, post_id, comment_id, report_category, status'
+      : reportType === 'legal'
       ? 'id, target_type, post_id, comment_id, legal_type'
       : 'id, target_type, post_id, comment_id, reason_type';
   const reportResult = await supabaseAdmin
@@ -116,22 +126,39 @@ async function loadContext(reportType: 'legal' | 'rights', reportId: string) {
   }
 
   const report = reportResult.data as unknown as ReportRow;
-  const category = getReportAppealCategory({
-    reportType,
-    legalType: report.legal_type,
-    reasonType: report.reason_type,
-  });
+  const category =
+    reportType === 'guideline'
+      ? normalizeText(report.report_category)
+      : getReportAppealCategory({
+          reportType,
+          legalType: report.legal_type,
+          reasonType: report.reason_type,
+        });
 
   if (!category || (report.target_type !== 'post' && report.target_type !== 'comment')) {
     throw new Error('소명 대상이 아닌 신고입니다.');
   }
 
-  const appealResult = await supabaseAdmin
-    .from('report_appeals')
-    .select('id, admin_status, appellant_status, content_request, edit_completed_at')
-    .eq('report_type', reportType)
-    .eq('report_id', report.id)
-    .maybeSingle();
+  if (
+    reportType === 'guideline' &&
+    !guidelineReportCategories.includes(category as (typeof guidelineReportCategories)[number])
+  ) {
+    throw new Error('가이드라인 소명 대상이 아닌 신고입니다.');
+  }
+
+  if (reportType === 'guideline' && report.status !== 'completed') {
+    throw new Error('처리완료된 신고가 아닙니다.');
+  }
+
+  const appealResult =
+    reportType === 'guideline'
+      ? { data: null, error: null }
+      : await supabaseAdmin
+          .from('report_appeals')
+          .select('id, admin_status, appellant_status, content_request, edit_completed_at')
+          .eq('report_type', reportType)
+          .eq('report_id', report.id)
+          .maybeSingle();
 
   if (appealResult.error) {
     throw new Error('소명 정보를 불러오지 못했습니다.');
@@ -143,7 +170,7 @@ async function loadContext(reportType: 'legal' | 'rights', reportId: string) {
   if (report.target_type === 'comment' && report.comment_id) {
     const commentResult = await supabaseAdmin
       .from('post_comments')
-      .select('id, post_id, user_id, content, updated_at, exp_at')
+      .select('id, post_id, user_id, content, is_deleted, deleted_message, updated_at, exp_at')
       .eq('id', report.comment_id)
       .maybeSingle();
 
@@ -162,7 +189,7 @@ async function loadContext(reportType: 'legal' | 'rights', reportId: string) {
   const postResult = await supabaseAdmin
     .from('posts')
     .select(
-      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, youtube_url, youtube_created_at, images, poll, updated_at, exp_at',
+      'id, site_id, board_id, slug, user_id, subject, summary, content_html, content_markdown, content_simple, thumbnail_image, youtube_url, youtube_created_at, images, poll, is_closed, closed_message, updated_at, exp_at',
     )
     .eq('id', postId)
     .maybeSingle();
@@ -344,7 +371,7 @@ export async function GET(_request: Request, context: ContentRouteContext) {
     const reportType = normalizeText(reportTypeParam);
     const reportId = normalizeText(reportIdParam);
 
-    if ((reportType !== 'legal' && reportType !== 'rights') || !reportId) {
+    if ((reportType !== 'guideline' && reportType !== 'legal' && reportType !== 'rights') || !reportId) {
       return Response.json({ error: '신고 정보가 올바르지 않습니다.' }, { status: 400 });
     }
 
@@ -354,6 +381,19 @@ export async function GET(_request: Request, context: ContentRouteContext) {
 
     if (!isAuthor && session.case !== 'admin') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (reportType === 'guideline') {
+      const deletionMessage =
+        result.report.target_type === 'comment'
+          ? normalizeText(result.comment?.deleted_message)
+          : normalizeText(result.post.closed_message);
+      const isDeleted =
+        result.report.target_type === 'comment' ? result.comment?.is_deleted === true : result.post.is_closed === true;
+
+      if (!isDeleted || !deletionMessage) {
+        return Response.json({ error: '소명할 수 있는 삭제 내역이 아닙니다.' }, { status: 403 });
+      }
     }
 
     return Response.json({

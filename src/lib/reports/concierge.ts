@@ -1,4 +1,4 @@
-import type { ReportStatus } from '@/lib/reports/manage';
+import type { ReportHandlingResult, ReportStatus } from '@/lib/reports/manage';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
 import type { ReportAppeal, ReportAppealCategory } from '@/lib/reports/appeals';
 
@@ -38,6 +38,8 @@ export type ConciergeReportItem = {
   messageCount: number;
   status: ReportStatus;
   statusLabel: string;
+  handlingResult: ReportHandlingResult | null;
+  handlingResultLabel: string | null;
   createdAt: string;
   handledAt: string | null;
   site: {
