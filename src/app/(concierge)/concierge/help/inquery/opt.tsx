@@ -927,8 +927,11 @@ export default function Opt() {
         </Stack>
 
         {requestType === 'illegal_info' ? (
-          <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
-            <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
+          <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+            <Typography
+              variant="subtitle2"
+              sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
+            >
               불법정보 신고·요청 구분
             </Typography>
             <Stack>

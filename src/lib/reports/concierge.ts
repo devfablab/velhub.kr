@@ -1,5 +1,6 @@
 import type { ReportStatus } from '@/lib/reports/manage';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
+import type { ReportAppeal, ReportAppealCategory } from '@/lib/reports/appeals';
 
 export const conciergeReportTypes = ['guideline', 'legal', 'rights'] as const;
 
@@ -62,6 +63,9 @@ export type ConciergeReportItem = {
   } | null;
   details: ReportDetail[];
   messages: ReportMessage[];
+  appealCategory: ReportAppealCategory | null;
+  appeal: ReportAppeal | null;
+  canCreateAppealRequest: boolean;
   canDismiss: boolean;
   canComplete: boolean;
   canSendMessage: boolean;

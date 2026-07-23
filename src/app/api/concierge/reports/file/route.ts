@@ -2,7 +2,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-const allowedBuckets = new Set(['report-legals', 'report-rights']);
+const allowedBuckets = new Set(['report-legals', 'report-rights', 'report-appeals']);
 
 export async function GET(request: Request) {
   try {

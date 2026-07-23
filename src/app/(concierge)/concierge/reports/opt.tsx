@@ -26,11 +26,25 @@ import {
   Typography,
 } from '@mui/material';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import type { ConciergeReportItem, ConciergeReportType } from '@/lib/reports/concierge';
 import type { ReportTargetType } from '@/lib/reports/guidelines';
+import {
+  getAppealTreatmentMessage,
+  reportAppealContentRequestLabels,
+  reportAppealDeletionReasonOptions,
+} from '@/lib/reports/appeals';
+import {
+  appealOpinionFields,
+  appealOpinionPositionOptions,
+  getAppealOpinionValueLabel,
+} from '@/lib/reports/appealOpinion';
 import { formatDateTimeDetail } from '@/lib/utils';
 
 type ReportsResponse = {
@@ -100,7 +114,7 @@ function ReportDetails({ report }: { report: ConciergeReportItem }) {
     <Stack gap={2}>
       {renderTargetLinks(report)}
 
-      {report.comment ? (
+      {report.comment?.content ? (
         <Stack gap={0.5}>
           <Typography variant="subtitle2">댓글</Typography>
           <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
@@ -109,21 +123,27 @@ function ReportDetails({ report }: { report: ConciergeReportItem }) {
         </Stack>
       ) : null}
 
-      {report.details.map((detail) => (
-        <Stack key={detail.label} gap={0.5}>
-          <Typography variant="subtitle2">{detail.label}</Typography>
-          {detail.value ? (
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              {detail.value}
-            </Typography>
-          ) : null}
-          {detail.links?.map((link) => (
-            <Anchor key={`${detail.label}-${link.href}`} href={link.href} className="link" target="_blank">
-              {link.label}
-            </Anchor>
-          ))}
-        </Stack>
-      ))}
+      {report.details.map((detail) => {
+        if (!detail.value && !detail.links?.length) {
+          return null;
+        }
+
+        return (
+          <Stack key={detail.label} gap={0.5}>
+            <Typography variant="subtitle2">{detail.label}</Typography>
+            {detail.value ? (
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                {detail.value}
+              </Typography>
+            ) : null}
+            {detail.links?.map((link) => (
+              <Anchor key={`${detail.label}-${link.href}`} href={link.href} className="link" target="_blank">
+                {link.label}
+              </Anchor>
+            ))}
+          </Stack>
+        );
+      })}
 
       {report.messages.length > 0 ? (
         <Stack gap={1}>
@@ -161,6 +181,10 @@ export default function Opt() {
   const [reporterReports, setReporterReports] = useState<ConciergeReportItem[]>([]);
 
   const [detailDialogReport, setDetailDialogReport] = useState<ConciergeReportItem | null>(null);
+  const [appealDialogReport, setAppealDialogReport] = useState<ConciergeReportItem | null>(null);
+  const [submissionSummary, setSubmissionSummary] = useState('');
+  const [deletionReason, setDeletionReason] = useState('');
+  const [appealRequest, setAppealRequest] = useState('');
   const [messageDialogReport, setMessageDialogReport] = useState<ConciergeReportItem | null>(null);
   const [message, setMessage] = useState('');
   const [siteActionDialog, setSiteActionDialog] = useState<SiteActionDialogState>(null);
@@ -295,6 +319,116 @@ export default function Opt() {
     setMessage('');
   }
 
+  function handleOpenAppealDialog(report: ConciergeReportItem) {
+    setAppealDialogReport(report);
+    setSubmissionSummary(report.appeal?.submissionSummary ?? '');
+    setDeletionReason(report.appeal?.deletionReason ?? '');
+    setAppealRequest(report.appeal?.appealRequest ?? '');
+  }
+
+  function handleCloseAppealDialog() {
+    setAppealDialogReport(null);
+    setSubmissionSummary('');
+    setDeletionReason('');
+    setAppealRequest('');
+  }
+
+  async function handleSubmitAppealRequest() {
+    if (!appealDialogReport || appealDialogReport.appeal) {
+      return;
+    }
+
+    if (!submissionSummary.trim()) {
+      setErrorMessage('제출 자료 요지를 입력해 주세요.');
+      return;
+    }
+
+    if (!deletionReason) {
+      setErrorMessage('삭제 사유를 선택해 주세요.');
+      return;
+    }
+
+    if (!appealRequest.trim()) {
+      setErrorMessage('소명 요청사항을 입력해 주세요.');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const response = await fetch(
+        `/api/concierge/reports/${appealDialogReport.reportType}/${appealDialogReport.id}/appeal`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            submissionSummary: submissionSummary.trim(),
+            deletionReason,
+            appealRequest: appealRequest.trim(),
+          }),
+        },
+      );
+      const result = (await response.json().catch(() => ({ error: '소명 요청서 응답을 확인하지 못했습니다.' }))) as {
+        error?: string;
+      };
+
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '소명 요청서를 제출하지 못했습니다.');
+        return;
+      }
+
+      handleCloseAppealDialog();
+      setSnackbarMessage('소명 요청서를 제출했습니다.');
+      await loadReports();
+    } catch {
+      setErrorMessage('소명 요청서를 제출하지 못했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleAppealDecision(action: 'restore' | 'reject') {
+    if (!appealDialogReport?.appeal) {
+      return;
+    }
+
+    const confirmationMessage =
+      action === 'restore' ? '게시물 또는 댓글을 복구하시겠습니까?' : '소명을 반려하고 삭제 상태를 유지하시겠습니까?';
+
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      const response = await fetch(
+        `/api/concierge/reports/${appealDialogReport.reportType}/${appealDialogReport.id}/appeal`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        },
+      );
+      const result = (await response.json().catch(() => ({ error: '소명 처리 응답을 확인하지 못했습니다.' }))) as {
+        error?: string;
+      };
+
+      if (!response.ok || result.error) {
+        setErrorMessage(result.error ?? '소명을 처리하지 못했습니다.');
+        return;
+      }
+
+      handleCloseAppealDialog();
+      setSnackbarMessage(action === 'restore' ? '콘텐츠를 복구했습니다.' : '소명을 반려했습니다.');
+      await loadReports();
+    } catch {
+      setErrorMessage('소명을 처리하지 못했습니다.');
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleSendMessage() {
     if (!messageDialogReport || !message.trim()) {
       setErrorMessage('메모 내용을 입력해 주세요.');
@@ -366,6 +500,36 @@ export default function Opt() {
     }
   }
 
+  const appealDeletionOptions = appealDialogReport?.appealCategory
+    ? reportAppealDeletionReasonOptions[appealDialogReport.appealCategory]
+    : [];
+  const appealTreatmentMessage =
+    appealDialogReport?.appealCategory &&
+    deletionReason &&
+    (appealDialogReport.targetType === 'post' || appealDialogReport.targetType === 'comment')
+      ? getAppealTreatmentMessage({
+          category: appealDialogReport.appealCategory,
+          deletionReason,
+          targetType: appealDialogReport.targetType,
+        })
+      : '';
+  const appealOpinionFieldList = appealDialogReport?.appealCategory
+    ? appealOpinionFields[appealDialogReport.appealCategory]
+    : [];
+  const appealOpinionPositionLabel =
+    appealDialogReport?.appealCategory && appealDialogReport.appeal?.opinionPosition
+      ? (appealOpinionPositionOptions[appealDialogReport.appealCategory].find(
+          (option) => option.value === appealDialogReport.appeal?.opinionPosition,
+        )?.label ?? appealDialogReport.appeal.opinionPosition)
+      : '';
+  const canHandleAppeal = Boolean(
+    appealDialogReport?.appeal &&
+    ((appealDialogReport.appeal.adminStatus === 'opinion_received' &&
+      appealDialogReport.appeal.contentRequest === 'restore_original') ||
+      (appealDialogReport.appeal.adminStatus === 'edit_review_requested' &&
+        appealDialogReport.appeal.contentRequest === 'edit_and_review')),
+  );
+
   return (
     <Stack gap={2}>
       <Stack direction={{ xs: 'column', md: 'row' }} gap={1}>
@@ -391,7 +555,12 @@ export default function Opt() {
         </FormControl>
       </Stack>
 
-      {errorMessage ? <p className="alert danger">{errorMessage}</p> : null}
+      {errorMessage ? (
+        <p className="alert warning">
+          <WarningAmberRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
 
       {loading ? (
         <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
@@ -413,6 +582,7 @@ export default function Opt() {
                   <TableCell sx={cellSx}>신고자(이름)</TableCell>
                   <TableCell sx={cellSx}>메모 횟수</TableCell>
                   <TableCell sx={cellSx}>처리상태</TableCell>
+                  <TableCell sx={cellSx}>소명 상태</TableCell>
                   <TableCell sx={cellSx}>처리상태 변경</TableCell>
                   <TableCell sx={cellSx}>신고일</TableCell>
                   <TableCell sx={cellSx}>처리일</TableCell>
@@ -460,28 +630,39 @@ export default function Opt() {
                       {report.reportType === 'legal' || report.reportType === 'rights' ? (
                         <button
                           type="button"
-                          className="button small"
+                          className="button small action"
                           onClick={() => setDetailDialogReport(report)}
                         >
-                          신고 내용
+                          보기
                         </button>
                       ) : (
                         '-'
                       )}
                     </TableCell>
                     <TableCell sx={cellSx}>
-                      <button type="button" className="button small" onClick={() => handleOpenReporterDialog(report)}>
-                        {report.reporterName}
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={() => handleOpenReporterDialog(report)}
+                      >
+                        {report.reporterName}님의 신고내역
                       </button>
                     </TableCell>
                     <TableCell sx={cellSx}>{report.messageCount.toLocaleString('ko-KR')}회</TableCell>
                     <TableCell sx={cellSx}>{report.statusLabel}</TableCell>
                     <TableCell sx={cellSx}>
+                      {report.appeal
+                        ? report.appeal.adminStatusLabel
+                        : report.appealCategory && (report.targetType === 'post' || report.targetType === 'comment')
+                          ? '소명 요청서 제출 전'
+                          : '-'}
+                    </TableCell>
+                    <TableCell sx={cellSx}>
                       <Stack direction="row" gap={1}>
                         {report.canDismiss ? (
                           <button
                             type="button"
-                            className="button small"
+                            className="button small action"
                             disabled={actionLoading}
                             onClick={() => handleStatusChange(report, 'dismissed')}
                           >
@@ -491,11 +672,31 @@ export default function Opt() {
                         {report.canComplete ? (
                           <button
                             type="button"
-                            className="button small danger"
+                            className="button small action"
                             disabled={actionLoading}
                             onClick={() => handleStatusChange(report, 'completed')}
                           >
                             처리완료
+                          </button>
+                        ) : null}
+                        {report.canCreateAppealRequest ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            disabled={actionLoading}
+                            onClick={() => handleOpenAppealDialog(report)}
+                          >
+                            소명 요청서 작성
+                          </button>
+                        ) : null}
+                        {report.appeal ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            disabled={actionLoading}
+                            onClick={() => handleOpenAppealDialog(report)}
+                          >
+                            {report.appeal.opinionSubmittedAt ? '소명 의견서' : '소명 요청서'}
                           </button>
                         ) : null}
                         {report.canSendMessage ? (
@@ -553,7 +754,7 @@ export default function Opt() {
                 ))}
                 {reports.length === 0 ? (
                   <TableRow>
-                    <TableCell sx={cellSx} colSpan={13} align="center">
+                    <TableCell sx={cellSx} colSpan={14} align="center">
                       신고 내역이 없습니다.
                     </TableCell>
                   </TableRow>
@@ -572,16 +773,26 @@ export default function Opt() {
         </>
       )}
 
-      <Dialog open={reporterDialogOpen} onClose={() => setReporterDialogOpen(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={reporterDialogOpen}
+        onClose={() => setReporterDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        className="VhiDialog"
+      >
         <DialogTitle>{reporterName} 님의 신고 내역</DialogTitle>
-        <DialogContent dividers>
+        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
+          <CloseRoundedIcon />
+        </button>
+
+        <DialogContent>
           {reporterLoading ? (
             <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 180 }}>
               <LoadingIndicator />
             </Stack>
           ) : (
             <Stack gap={2}>
-              <Typography variant="subtitle1">
+              <Typography variant="subtitle2">
                 총 {reporterReports.length.toLocaleString('ko-KR')}건 신고했습니다.
               </Typography>
               <Box>
@@ -591,8 +802,8 @@ export default function Opt() {
                       <Stack direction={{ xs: 'column', md: 'row' }} gap={1} alignItems={{ md: 'center' }}>
                         <Chip label={report.reportTypeLabel} size="small" />
                         <Typography variant="subtitle2">{report.reportName}</Typography>
-                        <Typography variant="caption">
-                          {report.targetTypeLabel} · {report.statusLabel} · {formatDateTimeDetail(report.createdAt)}
+                        <Typography variant="body2">
+                          {report.targetTypeLabel} / {report.statusLabel} / {formatDateTimeDetail(report.createdAt)}
                         </Typography>
                       </Stack>
                     </AccordionSummary>
@@ -617,13 +828,15 @@ export default function Opt() {
         onClose={() => setDetailDialogReport(null)}
         maxWidth="lg"
         fullWidth
+        className="VhiDialog"
       >
         <DialogTitle>
           {detailDialogReport ? `${detailDialogReport.reportTypeLabel} 신고 내용` : '신고 내용'}
         </DialogTitle>
-        <DialogContent dividers>
-          {detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}
-        </DialogContent>
+        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>{detailDialogReport ? <ReportDetails report={detailDialogReport} /> : null}</DialogContent>
         <DialogActions>
           <button type="button" className="button medium close" onClick={() => setDetailDialogReport(null)}>
             닫기
@@ -631,16 +844,214 @@ export default function Opt() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(messageDialogReport)} onClose={() => setMessageDialogReport(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={Boolean(appealDialogReport)}
+        onClose={handleCloseAppealDialog}
+        maxWidth="lg"
+        fullWidth
+        className="VhiDialog"
+      >
+        <DialogTitle>{appealDialogReport?.appeal ? '소명 요청서' : '소명 요청서 작성'}</DialogTitle>
+        <button className="close-button" onClick={() => setReporterDialogOpen(false)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
+          <Stack gap={2}>
+            {appealDialogReport ? (
+              <Stack gap={1}>
+                <Typography variant="h6">신고 내용</Typography>
+                <div className="paper">
+                  <ReportDetails report={appealDialogReport} />
+                </div>
+              </Stack>
+            ) : null}
+            <Stack gap={1}>
+              <Typography variant="h6">소명 요청서 작성 내용</Typography>
+              <div className="paper">
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">제출 자료 요지 *</Typography>
+                  <TextField
+                    aria-label="제출 자료 요지"
+                    helperText="신고자가 제출한 자료가 어떤 사실을 뒷받침하기 위한 자료인지 개인정보를 제외하고 작성해 주세요."
+                    value={submissionSummary}
+                    onChange={(event) => setSubmissionSummary(event.currentTarget.value)}
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    required
+                    size="small"
+                    slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
+                  />
+                </Stack>
+                <FormControl fullWidth required>
+                  <Select
+                    displayEmpty
+                    value={deletionReason}
+                    disabled={Boolean(appealDialogReport?.appeal)}
+                    size="small"
+                    onChange={(event) => setDeletionReason(event.target.value)}
+                  >
+                    <MenuItem value="" disabled>
+                      삭제 사유 선택
+                    </MenuItem>
+                    {appealDeletionOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {appealTreatmentMessage ? (
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>{appealTreatmentMessage}</span>
+                  </p>
+                ) : null}
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">소명 요청사항 *</Typography>
+                  <TextField
+                    aria-label="소명 요청사항"
+                    helperText="신고 내용 중 소명인이 설명하거나 자료를 제출해야 하는 사항을 구체적으로 작성해 주세요."
+                    value={appealRequest}
+                    onChange={(event) => setAppealRequest(event.currentTarget.value)}
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    required
+                    size="small"
+                    slotProps={{ input: { readOnly: Boolean(appealDialogReport?.appeal) } }}
+                  />
+                </Stack>
+                {appealDialogReport?.appeal?.opinionSubmittedAt ? (
+                  <Stack gap={2}>
+                    <Typography variant="h6">소명 의견서</Typography>
+                    <Stack gap={0.5}>
+                      <Typography variant="subtitle2">소명 입장</Typography>
+                      <Typography variant="body2">{appealOpinionPositionLabel}</Typography>
+                    </Stack>
+                    <Stack gap={0.5}>
+                      <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분</Typography>
+                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                        {appealDialogReport.appeal.disputedParts}
+                      </Typography>
+                    </Stack>
+                    {appealOpinionFieldList.map((field) => {
+                      const value = appealDialogReport.appeal?.opinionData?.[field.key];
+
+                      if (typeof value !== 'string' || !value) {
+                        return null;
+                      }
+
+                      return (
+                        <Stack key={field.key} gap={0.5}>
+                          <Typography variant="subtitle2">{field.label}</Typography>
+                          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                            {getAppealOpinionValueLabel(field, value)}
+                          </Typography>
+                        </Stack>
+                      );
+                    })}
+                    {appealDialogReport.appeal.contentRequest ? (
+                      <Stack gap={0.5}>
+                        <Typography variant="subtitle2">게시물·댓글 처리 요청</Typography>
+                        <Typography variant="body2">
+                          {reportAppealContentRequestLabels[appealDialogReport.appeal.contentRequest]}
+                        </Typography>
+                      </Stack>
+                    ) : null}
+                    {appealDialogReport.appeal.modificationContent ? (
+                      <Stack gap={0.5}>
+                        <Typography variant="subtitle2">수정 예정 내용</Typography>
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                          {appealDialogReport.appeal.modificationContent}
+                        </Typography>
+                      </Stack>
+                    ) : null}
+                    {appealDialogReport.appeal.opinionFile ? (
+                      <Stack gap={0.5}>
+                        <Typography variant="subtitle2">첨부자료</Typography>
+                        <Anchor
+                          href={`/api/concierge/reports/file?${new URLSearchParams({
+                            bucket: appealDialogReport.appeal.opinionFile.bucket,
+                            path: appealDialogReport.appeal.opinionFile.path,
+                          }).toString()}`}
+                          className="link"
+                          target="_blank"
+                        >
+                          {appealDialogReport.appeal.opinionFile.name}
+                        </Anchor>
+                      </Stack>
+                    ) : null}
+                  </Stack>
+                ) : null}
+              </div>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={actionLoading}
+            onClick={handleCloseAppealDialog}
+          >
+            {appealDialogReport?.appeal ? '닫기' : '취소'}
+          </button>
+          {!appealDialogReport?.appeal ? (
+            <button
+              type="button"
+              className="button medium submit"
+              disabled={actionLoading}
+              onClick={handleSubmitAppealRequest}
+            >
+              제출
+            </button>
+          ) : null}
+          {canHandleAppeal ? (
+            <>
+              <button
+                type="button"
+                className="button medium danger"
+                disabled={actionLoading}
+                onClick={() => handleAppealDecision('reject')}
+              >
+                삭제 유지
+              </button>
+              <button
+                type="button"
+                className="button medium action"
+                disabled={actionLoading}
+                onClick={() => handleAppealDecision('restore')}
+              >
+                복구
+              </button>
+            </>
+          ) : null}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(messageDialogReport)}
+        onClose={() => setMessageDialogReport(null)}
+        maxWidth="sm"
+        fullWidth
+        className="VhiDialog"
+      >
         <DialogTitle>메모 보내기</DialogTitle>
-        <DialogContent dividers>
+        <button className="close-button" onClick={() => setMessageDialogReport(null)}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
           <Stack gap={2}>
             {messageDialogReport?.reportType === 'rights' &&
             (messageDialogReport.targetType === 'site' || messageDialogReport.targetType === 'board') ? (
               <p className="alert warning">
-                현재까지 메모를 {messageDialogReport.messageCount.toLocaleString('ko-KR')}회 보냈습니다. 메모를 3회 이상
-                보낸 뒤에도 문제가 해결되지 않으면 사이트를 차단할 수 있으며, 3회 이후에도 메시지는 계속 보낼 수
-                있습니다.
+                <WarningAmberRoundedIcon />
+                <span>
+                  현재까지 메모를 {messageDialogReport.messageCount.toLocaleString('ko-KR')}회 보냈습니다. 메모를 3회
+                  이상 보낸 뒤에도 문제가 해결되지 않으면 사이트를 차단할 수 있으며, 3회 이후에도 메시지는 계속 보낼 수
+                  있습니다.
+                </span>
               </p>
             ) : null}
             {messageDialogReport?.messages.length ? (
@@ -661,14 +1072,17 @@ export default function Opt() {
             ) : (
               <Typography variant="body2">아직 보낸 메모가 없습니다.</Typography>
             )}
-            <TextField
-              label="메모 내용"
-              value={message}
-              onChange={(event) => setMessage(event.currentTarget.value)}
-              multiline
-              minRows={4}
-              fullWidth
-            />
+            <Stack gap={0.5}>
+              <Typography variant="subtitle2">메모 내용</Typography>
+              <TextField
+                aria-label="메모 내용"
+                value={message}
+                onChange={(event) => setMessage(event.currentTarget.value)}
+                multiline
+                minRows={4}
+                fullWidth
+              />
+            </Stack>
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -680,7 +1094,7 @@ export default function Opt() {
           >
             취소
           </button>
-          <button type="button" className="button medium action" disabled={actionLoading} onClick={handleSendMessage}>
+          <button type="button" className="button medium submit" disabled={actionLoading} onClick={handleSendMessage}>
             보내기
           </button>
         </DialogActions>
@@ -694,7 +1108,7 @@ export default function Opt() {
               ? '사이트 차단 해제'
               : '사이트 폐쇄'}
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent>
           <Typography variant="body2">
             {siteActionDialog?.action === 'block'
               ? '진짜 사이트를 차단하시겠습니까?'
@@ -704,12 +1118,17 @@ export default function Opt() {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <button type="button" className="button" disabled={actionLoading} onClick={() => setSiteActionDialog(null)}>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={actionLoading}
+            onClick={() => setSiteActionDialog(null)}
+          >
             취소
           </button>
           <button
             type="button"
-            className={`button ${siteActionDialog?.action === 'unblock' ? 'action' : 'danger'}`}
+            className={`button ${siteActionDialog?.action === 'unblock' ? 'submit' : 'danger'}`}
             disabled={actionLoading || !siteActionDialog}
             onClick={() => {
               if (siteActionDialog) {

@@ -317,6 +317,12 @@ export default function Container({ children }: ContainerProps) {
                     <span>자주하는 질문</span>
                   </Anchor>
                 </MenuItem>
+                <MenuItem key="guideline" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/guideline">
+                    <ReportOutlinedIcon fontSize="small" />
+                    <span>가이드라인</span>
+                  </Anchor>
+                </MenuItem>
                 <MenuItem key="help" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/help">
                     <ReportOutlinedIcon fontSize="small" />
@@ -327,6 +333,12 @@ export default function Container({ children }: ContainerProps) {
                   <Anchor href="/concierge/rights">
                     <ReportOutlinedIcon fontSize="small" />
                     <span>권리보호센터</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="explains" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/explains">
+                    <ReportOutlinedIcon fontSize="small" />
+                    <span>소명센터</span>
                   </Anchor>
                 </MenuItem>
                 {userProfile.globalRole === 'admin' ? (

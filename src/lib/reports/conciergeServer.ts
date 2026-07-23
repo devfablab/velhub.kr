@@ -12,6 +12,12 @@ import {
 } from '@/lib/reports/concierge';
 import { getReportCategoryTitle, isReportStatus, reportStatusLabels, type ReportStatus } from '@/lib/reports/manage';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
+import {
+  getReportAppealCategory,
+  normalizeReportAppeal,
+  type ReportAppeal,
+  type ReportAppealDatabaseRow,
+} from '@/lib/reports/appeals';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -249,7 +255,15 @@ function getArrayLabel(value: unknown) {
 }
 
 function getBooleanLabel(value: boolean | null | undefined) {
-  return value === true ? '확인함' : '확인하지 않음';
+  if (value === true) {
+    return '확인함';
+  }
+
+  if (value === false) {
+    return '확인하지 않음';
+  }
+
+  return '';
 }
 
 function getFileDetails(label: string, value: unknown): ReportDetail {
@@ -273,7 +287,7 @@ function getFileDetails(label: string, value: unknown): ReportDetail {
 
   return {
     label,
-    value: links.length > 0 ? null : '없음',
+    value: null,
     links,
   };
 }
@@ -282,7 +296,7 @@ function getLegalDetails(report: RawReport, reportUrl: string | null): ReportDet
   const commonDetails: ReportDetail[] = [
     {
       label: '신고대상 URL',
-      value: reportUrl ? null : '없음',
+      value: null,
       links: reportUrl ? [{ label: reportUrl, href: reportUrl }] : [],
     },
     { label: '이메일', value: report.email ?? null },
@@ -352,7 +366,7 @@ function getRightsDetails(report: RawReport, reportUrl: string | null): ReportDe
       ? [
           {
             label: '저작물 원본 URL',
-            value: originalUrls.length > 0 ? null : '없음',
+            value: null,
             links: originalUrls.map((url) => ({ label: url, href: url })),
           },
           getFileDetails('원본 증명 PDF', report.copyright_proof_files),
@@ -362,7 +376,7 @@ function getRightsDetails(report: RawReport, reportUrl: string | null): ReportDe
   return [
     {
       label: '신고대상 URL',
-      value: reportUrl ? null : '없음',
+      value: null,
       links: reportUrl ? [{ label: reportUrl, href: reportUrl }] : [],
     },
     { label: '이메일', value: report.email ?? null },
@@ -495,7 +509,7 @@ export async function loadConciergeReports({
   ];
   const reportKeys = new Set(reports.map((report) => `${report.reportType}:${report.id}`));
 
-  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, subscriptionsResult] =
+  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, subscriptionsResult, appealsResult] =
     await Promise.all([
       siteIds.length
         ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
@@ -528,6 +542,17 @@ export async function loadConciergeReports({
             .in('target_id', siteIds)
             .order('created_at', { ascending: false })
         : Promise.resolve({ data: [], error: null }),
+      reports.length
+        ? supabaseAdmin
+            .from('report_appeals')
+            .select(
+              'id, report_type, report_id, admin_status, appellant_status, submission_summary, deletion_reason, appeal_request, request_submitted_at, opinion_position, disputed_parts, opinion_data, opinion_file, content_request, modification_content, opinion_submitted_at, edit_completed_at, final_decision, final_handled_at, created_at, updated_at',
+            )
+            .in(
+              'report_id',
+              reports.map((report) => report.id),
+            )
+        : Promise.resolve({ data: [], error: null }),
     ]);
 
   const firstError =
@@ -536,7 +561,8 @@ export async function loadConciergeReports({
     postsResult.error ??
     commentsResult.error ??
     messagesResult.error ??
-    subscriptionsResult.error;
+    subscriptionsResult.error ??
+    appealsResult.error;
 
   if (firstError) {
     console.error('[concierge/reports] related data error', firstError);
@@ -546,6 +572,15 @@ export async function loadConciergeReports({
   const messages = ((messagesResult.data ?? []) as MessageRow[]).filter((message) =>
     reportKeys.has(`${message.report_type}:${message.report_id}`),
   );
+  const appealsByReport = new Map<string, ReportAppeal>();
+
+  for (const row of (appealsResult.data ?? []) as ReportAppealDatabaseRow[]) {
+    const appeal = normalizeReportAppeal(row);
+
+    if (appeal && reportKeys.has(`${appeal.reportType}:${appeal.reportId}`)) {
+      appealsByReport.set(`${appeal.reportType}:${appeal.reportId}`, appeal);
+    }
+  }
   const userIds = [
     ...new Set(
       [
@@ -643,6 +678,12 @@ export async function loadConciergeReports({
             : null;
     const storedReportUrl = normalizeText(report.report_url) || null;
     const resolvedReportUrl = storedReportUrl ?? (internalTargetPath ? new URL(internalTargetPath, origin).toString() : null);
+    const appealCategory = getReportAppealCategory({
+      reportType: report.reportType,
+      legalType: report.legal_type,
+      reasonType: report.reason_type,
+    });
+    const appeal = appealsByReport.get(`${report.reportType}:${report.id}`) ?? null;
 
     return {
       id: report.id,
@@ -692,11 +733,16 @@ export async function loadConciergeReports({
         : null,
       details: getDetails(report, targetTypeValue, resolvedReportUrl),
       messages: messagesByReport.get(`${report.reportType}:${report.id}`) ?? [],
+      appealCategory,
+      appeal,
+      canCreateAppealRequest:
+        Boolean(appealCategory) && isContentTarget && status !== 'dismissed' && appeal === null,
       canDismiss: isPending && isContentTarget && (report.reportType !== 'rights' || !hasThirtyDaysPassed),
       canComplete:
         isPending &&
         isContentTarget &&
-        (report.reportType === 'legal' || (report.reportType === 'guideline' && hasThreeDaysPassed)),
+        ((report.reportType === 'legal' && !appealCategory) ||
+          (report.reportType === 'guideline' && hasThreeDaysPassed)),
       canSendMessage: targetTypeValue === 'site' || targetTypeValue === 'board',
     };
   });

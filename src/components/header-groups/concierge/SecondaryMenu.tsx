@@ -15,12 +15,20 @@ const secondaryMenus = [
     label: '자주하는 질문',
   },
   {
+    href: '/concierge/guideline',
+    label: '가이드라인',
+  },
+  {
     href: '/concierge/help',
     label: '신고센터',
   },
   {
     href: '/concierge/rights',
     label: '권리보호센터',
+  },
+  {
+    href: '/concierge/explains',
+    label: '소명센터',
   },
 ];
 
