@@ -11,6 +11,60 @@
     flex-direction: column
     gap: ds.rem(27)
 
+    .legals
+      display: flex
+
+      @include ds.mq(maxExtraSmall)
+        flex-direction: column
+        gap: ds.rem(27)
+
+      dl
+        display: flex
+        flex-direction: column
+        justify-content: flex-end
+        gap: ds.rem(2)
+
+        @include ds.mq(minSmall)
+          width: 50%
+
+        > div
+          display: flex
+          flex-direction: column
+          gap: ds.rem(2)
+
+          @include ds.mq(minMedium)
+            flex-direction: row
+            gap: ds.rem(23)
+
+          div
+            display: flex
+            flex-direction: row
+            gap: ds.rem(7)
+            font-size: ds.rem(12)
+
+            .hidden
+              @include ds.screen-reader-only
+
+            dt
+              color: ds.$hex-light
+              opacity: .5
+
+            dd
+              color: ds.$hex-bright
+              opacity: .7
+
+      > div
+        @include ds.col
+        display: flex
+        flex-direction: column
+        gap: ds.rem(7)
+
+        p
+          font-size: ds.rem(12)
+          color: ds.$hex-light
+          opacity: .7
+          line-height: 1.5
+
     .pages
       display: flex
 
@@ -22,7 +76,9 @@
         display: flex
         flex-direction: column
         gap: ds.rem(2)
-        width: 50%
+
+        @include ds.mq(minSmall)
+          width: 50%
 
         i
           margin-bottom: ds.rem(17)
