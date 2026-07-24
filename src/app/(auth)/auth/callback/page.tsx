@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Metadata } from 'next';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Dialog,
@@ -44,6 +45,11 @@ function wait(delay: number) {
     window.setTimeout(resolve, delay);
   });
 }
+
+export const metadata: Metadata = {
+  title: '인증',
+  description: '인증 페이지',
+};
 
 export default function Page() {
   const router = useRouter();

@@ -1,17 +1,35 @@
-import type { Metadata } from 'next';
-import { originTitle, Seo } from '@/lib/seo';
+import type { Metadata, Viewport } from 'next';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const timestamp = Date.now();
+export const metadata: Metadata = {
+  applicationName: '데브허브',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '데브허브',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon.ico', rel: 'shortcut icon' },
+    ],
+    apple: '/favicon/apple-touch-icon.png',
+  },
+  manifest: '/favicon/manifest.json',
+};
 
-  return Seo({
-    pageTitles: `사이트 개설 - ${originTitle}`,
-    pageTitle: `사이트 개설`,
-    pageDescription: `사이트를 개설합니다.`,
-    pageImg: `https://velhub.xyz/og.webp?ts=${timestamp}`,
-    pagePath: '/new',
-  });
-}
+export const viewport: Viewport = {
+  themeColor: '#EEB400',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: 'cover',
+  userScalable: false,
+  colorScheme: 'light',
+};
 
 export default function RootLayout({
   children,

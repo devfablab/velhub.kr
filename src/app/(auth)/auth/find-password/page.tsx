@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type JSX } from 'react';
+import { Metadata } from 'next';
 import { Box, Stack, TextField } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Anchor from '@/components/Anchor';
@@ -10,6 +11,11 @@ import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
+
+export const metadata: Metadata = {
+  title: '비밀번호 찾기',
+  description: '비밀번호 찾기 페이지',
+};
 
 export default function Page() {
   const supabase = getSupabaseBrowser();

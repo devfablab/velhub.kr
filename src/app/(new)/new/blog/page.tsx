@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return Seo({
     pageTitles: `블로그 개설 - ${originTitle}`,
     pageTitle: `블로그 개설`,
-    pageDescription: `블로그를 개설합니다.`,
+    pageDescription: `블로그를 개설할 수 있어요`,
     pageImg: `https://velhub.xyz/og-blog.webp?ts=${timestamp}`,
     pagePath: '/new/blog',
   });

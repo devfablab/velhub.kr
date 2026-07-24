@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Metadata } from 'next';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -13,6 +14,11 @@ import Anchor from '@/components/Anchor';
 import styles from '@/app/auth.module.sass';
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+
+export const metadata: Metadata = {
+  title: '데브허브 시작하기',
+  description: '데브허브 시작하기',
+};
 
 function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'light' || value === 'system' || value === 'dark';

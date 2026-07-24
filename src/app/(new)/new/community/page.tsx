@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return Seo({
     pageTitles: `커뮤니티 개설 - ${originTitle}`,
     pageTitle: `커뮤니티 개설`,
-    pageDescription: `커뮤니티를 개설합니다.`,
+    pageDescription: `커뮤니티를 개설할 수 있어요`,
     pageImg: `https://velhub.xyz/og-community.webp?ts=${timestamp}`,
     pagePath: '/new/community',
   });

@@ -1,9 +1,23 @@
+import { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { originTitle, Seo } from '@/lib/seo';
 import Container from '../../menu';
 import Aside from '../aside';
 import Slick from '../slick';
 import List from '../list';
 import styles from '@/app/page.module.sass';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `커뮤니티 허브 - ${originTitle}`,
+    pageTitle: `커뮤니티 허브`,
+    pageDescription: `커뮤니티를 구경해보세요`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/lounge/community',
+  });
+}
 
 export default async function BlogHub() {
   const headerList = await headers();

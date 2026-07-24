@@ -2,17 +2,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Metadata } from 'next';
 import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import { originTitle, Seo } from '@/lib/seo';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/new.module.sass';
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `사이트 개설 - ${originTitle}`,
+    pageTitle: `사이트 개설`,
+    pageDescription: `사이트를 개설할 수 있어요`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/new',
+  });
+}
 
 function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'light' || value === 'system' || value === 'dark';
