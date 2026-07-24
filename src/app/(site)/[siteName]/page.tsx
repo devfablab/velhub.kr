@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPostList, type PostListItem } from '@/lib/board/getPostList';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Blog from './blog';
 import Community from './community';
@@ -39,6 +40,16 @@ function getBoardContentSize(boardType: BoardType) {
   }
 
   return 3;
+}
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName } = await context.params;
+
+  return getSitePageMetadata({
+    siteName,
+    pagePath: '/',
+    isMain: true,
+  });
 }
 
 export default async function Page(context: RouteContext) {

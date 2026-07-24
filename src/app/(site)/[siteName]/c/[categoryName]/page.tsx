@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getPostList } from '@/lib/board/getPostList';
+import { getCategoryPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -43,6 +44,16 @@ function getPageNumber(value: string | undefined) {
   }
 
   return pageNumber;
+}
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName, categoryName } = await context.params;
+
+  return getCategoryPageMetadata({
+    siteName,
+    categoryName,
+    pagePath: `/c/${categoryName}`,
+  });
 }
 
 export default async function Page(context: RouteContext) {

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -41,6 +42,16 @@ function getCategoryImageUrl(path: string | null) {
   const publicUrl = supabaseAdmin.storage.from('category').getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
+}
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName } = await context.params;
+
+  return getSitePageMetadata({
+    siteName,
+    pageTitle: '카테고리',
+    pagePath: '/c',
+  });
 }
 
 export default async function Page(context: RouteContext) {

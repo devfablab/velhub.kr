@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
@@ -7,9 +8,18 @@ import Container from '../menu';
 type RouteContext = {
   params: Promise<{
     siteName: string;
-    boardName: string;
   }>;
 };
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName } = await context.params;
+
+  return getSitePageMetadata({
+    siteName,
+    pageTitle: '최근글 보기',
+    pagePath: '/board',
+  });
+}
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;

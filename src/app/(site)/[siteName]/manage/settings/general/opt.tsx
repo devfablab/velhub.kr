@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -40,6 +41,7 @@ type EditableField =
   | 'profile_picture'
   | 'profile_logo'
   | 'summary'
+  | 'og_image'
   | 'visibility_type'
   | 'theme_type'
   | 'is_shutdown';
@@ -53,6 +55,7 @@ type SiteInfoInfo = {
   profile_picture: string | null;
   profile_logo: string | null;
   summary: string | null;
+  og_image: string | null;
   site_type: string;
   visibility_type: string;
   theme_type: string;
@@ -79,6 +82,8 @@ type SiteLabelCheckResponse = {
 };
 
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
+const MAX_SITE_OG_FILE_SIZE = 1024 * 1024;
+const SITE_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -118,6 +123,7 @@ const VisuallyHiddenInput = styled('input')({
 export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const logoInputReference = useRef<HTMLInputElement | null>(null);
+  const siteOgInputReference = useRef<HTMLInputElement | null>(null);
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -128,11 +134,13 @@ export default function Opt() {
   const [draftValue, setDraftValue] = useState<string | boolean>('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [profileLogoUrl, setProfileLogoUrl] = useState('');
+  const [siteOgImageUrl, setSiteOgImageUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingSiteOg, setIsUploadingSiteOg] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
@@ -168,6 +176,7 @@ export default function Opt() {
         applyColorSet(result.siteInfo.theme_type);
         setProfilePictureUrl(result.profilePictureUrl ?? '');
         setProfileLogoUrl(result.profileLogoUrl ?? '');
+        setSiteOgImageUrl(result.siteOgImageUrl ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -411,11 +420,12 @@ export default function Opt() {
     applyColorSet(result.siteInfo.theme_type);
     setProfilePictureUrl(result.profilePictureUrl ?? '');
     setProfileLogoUrl(result.profileLogoUrl ?? '');
+    setSiteOgImageUrl(result.siteOgImageUrl ?? '');
   }
 
   async function saveField(field: EditableField, value?: string | boolean) {
     if (!siteInfo || isSubmitting) {
-      return;
+      return false;
     }
 
     const nextValue = value ?? draftValue;
@@ -426,7 +436,7 @@ export default function Opt() {
       if (!isSiteKeyAvailable || checkedSiteKey !== normalizedSiteKey) {
         setErrorMessage('사이트 식별자 중복 확인을 해주세요.');
         setSuccessMessage('');
-        return;
+        return false;
       }
     }
 
@@ -436,7 +446,7 @@ export default function Opt() {
       if (trimmedSiteLabel && (!isSiteLabelAvailable || checkedSiteLabel !== trimmedSiteLabel)) {
         setErrorMessage('사이트명 중복 확인을 해주세요.');
         setSuccessMessage('');
-        return;
+        return false;
       }
     }
 
@@ -467,19 +477,21 @@ export default function Opt() {
 
       if (field === 'site_key' && typeof result.siteName === 'string') {
         window.location.href = `/${result.siteName}/manage/settings/general`;
-        return;
+        return true;
       }
 
       setEditingField(null);
       resetSiteKeyCheck();
       resetSiteLabelCheck();
       setSuccessMessage('저장되었습니다.');
+      return true;
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '사이트 정보 수정에 실패했습니다.');
       } else {
         setErrorMessage('사이트 정보 수정에 실패했습니다.');
       }
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -617,6 +629,139 @@ export default function Opt() {
     }
 
     logoInputReference.current?.click();
+  }
+
+  async function deleteSiteOgImage(path: string) {
+    const response = await fetch('/api/attachment/delete/site-og', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        siteName,
+        path,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error ?? '오픈그래프 이미지 삭제에 실패했습니다.');
+    }
+  }
+
+  function handleClickSiteOgUpload() {
+    if (isUploadingSiteOg) {
+      return;
+    }
+
+    siteOgInputReference.current?.click();
+  }
+
+  async function handleSiteOgFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || !siteInfo || isUploadingSiteOg) {
+      inputElement.value = '';
+      return;
+    }
+
+    if (!SITE_OG_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
+      setErrorMessage('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.');
+      setSuccessMessage('');
+      inputElement.value = '';
+      return;
+    }
+
+    if (selectedFile.size >= MAX_SITE_OG_FILE_SIZE) {
+      setErrorMessage('오픈그래프 이미지는 1MB 미만만 업로드할 수 있습니다.');
+      setSuccessMessage('');
+      inputElement.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsUploadingSiteOg(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('siteName', siteName);
+
+      const uploadResponse = await fetch('/api/attachment/add/site-og', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploadResult.error ?? '오픈그래프 이미지 업로드에 실패했습니다.');
+      }
+
+      const nextPath = normalizeText(uploadResult.path);
+
+      if (!nextPath) {
+        throw new Error('업로드된 오픈그래프 이미지 정보를 확인하지 못했습니다.');
+      }
+
+      const previousPath = normalizeText(siteInfo.og_image);
+      const isSaved = await saveField('og_image', nextPath);
+
+      if (!isSaved) {
+        await deleteSiteOgImage(nextPath).catch(() => undefined);
+        return;
+      }
+
+      if (previousPath && previousPath !== nextPath) {
+        await deleteSiteOgImage(previousPath).catch(() => undefined);
+      }
+
+      setSuccessMessage('오픈그래프 이미지가 저장되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '오픈그래프 이미지 저장에 실패했습니다.');
+      } else {
+        setErrorMessage('오픈그래프 이미지 저장에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingSiteOg(false);
+      inputElement.value = '';
+    }
+  }
+
+  async function handleRemoveSiteOgImage() {
+    const previousPath = normalizeText(siteInfo?.og_image);
+
+    if (!previousPath || isUploadingSiteOg) {
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsUploadingSiteOg(true);
+
+    try {
+      const isSaved = await saveField('og_image', '');
+
+      if (!isSaved) {
+        return;
+      }
+
+      await deleteSiteOgImage(previousPath);
+      setSuccessMessage('오픈그래프 이미지가 삭제되었습니다.');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '오픈그래프 이미지 삭제에 실패했습니다.');
+      } else {
+        setErrorMessage('오픈그래프 이미지 삭제에 실패했습니다.');
+      }
+    } finally {
+      setIsUploadingSiteOg(false);
+    }
   }
 
   useEffect(() => {
@@ -924,6 +1069,62 @@ export default function Opt() {
                 </button>
               </Stack>
             )}
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">오픈그래프 이미지</Typography>
+            {siteOgImageUrl ? (
+              <Box
+                component="img"
+                src={siteOgImageUrl}
+                alt={`${siteInfo.site_label ?? siteInfo.site_key} 오픈그래프 이미지`}
+                sx={{
+                  width: '100%',
+                  maxWidth: '100%',
+                  aspectRatio: '1280 / 630',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>등록된 오픈그래프 이미지가 없습니다.</span>
+              </p>
+            )}
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>1MB 미만의 PNG, JPEG, WEBP 이미지를 등록할 수 있습니다.</span>
+            </p>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>1280 : 630 비율로 올리시는 것을 추천합니다.</span>
+            </p>
+
+            <VisuallyHiddenInput
+              ref={siteOgInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+              onChange={handleSiteOgFileChange}
+            />
+            <Stack direction="row" gap={1} justifyContent="flex-end">
+              {siteOgImageUrl ? (
+                <button
+                  type="button"
+                  className="button small danger"
+                  onClick={() => void handleRemoveSiteOgImage()}
+                  disabled={isUploadingSiteOg}
+                >
+                  삭제
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="button small action"
+                onClick={handleClickSiteOgUpload}
+                disabled={isUploadingSiteOg}
+              >
+                {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
+              </button>
+            </Stack>
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">테마</Typography>

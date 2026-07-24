@@ -1,0 +1,126 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import { useParams } from 'next/navigation';
+
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+
+import { Stack, Typography } from '@mui/material';
+
+import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import { formatDate, normalizeText } from '@/lib/utils';
+
+import Container from '../menu';
+
+import styles from '@/app/board.module.sass';
+
+type UserInfoResponse = {
+  status?: string;
+  isBlock?: boolean;
+  blockReason?: string | null;
+  blockedAt?: string | null;
+  blockTerm?: string | null;
+  blockCount?: number;
+  error?: string;
+};
+
+export default function Opt() {
+  const params = useParams();
+  const siteName = normalizeText(params.siteName).toLowerCase();
+
+  const [blockedAt, setBlockedAt] = useState<string | null>(null);
+  const [blockTerm, setBlockTerm] = useState<string | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [messageOpen, setMessageOpen] = useState(false);
+
+  useEffect(() => {
+    if (!siteName) {
+      return;
+    }
+
+    async function loadUserInfo() {
+      try {
+        setErrorMessage('');
+
+        const response = await fetch(`/api/users/${siteName}/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const result = (await response.json()) as UserInfoResponse;
+
+        if (!response.ok || result.status !== 'blocked' || result.isBlock !== true) {
+          throw new Error(result.error ?? '차단 정보를 불러오지 못했습니다.');
+        }
+
+        setBlockedAt(result.blockedAt ?? null);
+        setBlockTerm(result.blockTerm ?? null);
+        setBlockReason(normalizeText(result.blockReason) || '등록된 사유가 없습니다.');
+      } catch (unknownError) {
+        if (unknownError instanceof Error) {
+          setErrorMessage(unknownError.message || '차단 정보를 불러오지 못했습니다.');
+        } else {
+          setErrorMessage('차단 정보를 불러오지 못했습니다.');
+        }
+      }
+    }
+
+    void loadUserInfo();
+  }, [siteName]);
+
+  return (
+    <Container>
+      <div className="container">
+        <div className={`${styles.content} content`}>
+          <div className="paper pape-error">
+            <NearbyErrorRoundedIcon />
+
+            <h2>활동 정지</h2>
+
+            {errorMessage ? (
+              <p className="alert error">
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
+
+            {!errorMessage ? (
+              <Stack direction="column" gap={1}>
+                <div className="paper">
+                  <Typography variant="subtitle2">활동 정지일</Typography>
+                  <Typography variant="body2">{formatDate(blockedAt)}</Typography>
+                </div>
+
+                <div className="paper">
+                  <Typography variant="subtitle2">활동 정지 사유</Typography>
+                  <Typography variant="body2">{blockReason}</Typography>
+                </div>
+
+                {blockTerm ? (
+                  <div className="paper">
+                    <Typography variant="subtitle2">활동 정지 해제일</Typography>
+                    <Typography variant="body2">{formatDate(blockTerm)}</Typography>
+                  </div>
+                ) : null}
+              </Stack>
+            ) : null}
+
+            <button type="button" className="button medium submit" onClick={() => setMessageOpen(true)}>
+              소명하기
+            </button>
+
+            <MemberRestrictionMessageDialog
+              open={messageOpen}
+              endpoint={`/api/users/${siteName}/restriction-messages/block`}
+              ownSenderType="appellant"
+              inputPlaceholder="소명하세요"
+              successMessage="소명 메시지를 보냈습니다."
+              onClose={() => setMessageOpen(false)}
+            />
+          </div>
+        </div>
+      </div>
+    </Container>
+  );
+}

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Chip } from '@mui/material';
+import { getSeriesPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -66,6 +67,16 @@ function getPageNumber(value: string | undefined) {
   }
 
   return pageNumber;
+}
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName, seriesName } = await context.params;
+
+  return getSeriesPageMetadata({
+    siteName,
+    seriesName,
+    pagePath: `/s/${seriesName}`,
+  });
 }
 
 export default async function Page(context: RouteContext) {

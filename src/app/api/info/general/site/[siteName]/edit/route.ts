@@ -15,6 +15,7 @@ type UpdateField =
   | 'profile_picture'
   | 'profile_logo'
   | 'summary'
+  | 'og_image'
   | 'visibility_type'
   | 'theme_type'
   | 'is_shutdown';
@@ -72,6 +73,10 @@ function formatLogMessage(
     return `요약 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
 
+  if (field === 'og_image') {
+    return `오픈그래프 이미지 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+  }
+
   if (field === 'visibility_type') {
     return `공개 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
@@ -99,7 +104,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, site_type, visibility_type, theme_type, is_shutdown',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -221,6 +226,7 @@ export async function POST(request: Request, context: RouteContext) {
       'profile_picture',
       'profile_logo',
       'summary',
+      'og_image',
       'visibility_type',
       'theme_type',
       'is_shutdown',

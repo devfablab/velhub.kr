@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -42,6 +43,16 @@ function getSeriesImageUrl(path: string | null) {
   const publicUrl = supabaseAdmin.storage.from('series').getPublicUrl(normalizedPath);
 
   return publicUrl.data.publicUrl ?? '';
+}
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName } = await context.params;
+
+  return getSitePageMetadata({
+    siteName,
+    pageTitle: '연재물',
+    pagePath: '/s',
+  });
 }
 
 export default async function Page(context: RouteContext) {

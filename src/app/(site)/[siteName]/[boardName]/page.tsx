@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
@@ -9,6 +10,16 @@ type RouteContext = {
     boardName: string;
   }>;
 };
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName, boardName } = await context.params;
+
+  return getBoardPageMetadata({
+    siteName,
+    boardName,
+    pagePath: `/${boardName}`,
+  });
+}
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;

@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 import Container from '../menu';
@@ -110,6 +111,16 @@ type BlogInfoResponse = {
   canEditMyMemberGeneral?: boolean;
   error?: string;
 };
+
+export async function generateMetadata(context: RouteContext) {
+  const { siteName } = await context.params;
+
+  return getSitePageMetadata({
+    siteName,
+    pageTitle: '블로그 소개',
+    pagePath: '/info-blog',
+  });
+}
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
