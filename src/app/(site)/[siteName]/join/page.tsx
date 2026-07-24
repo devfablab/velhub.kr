@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { Typography } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -144,10 +145,17 @@ export default async function Page(context: RouteContext) {
     <Container pageBack={`/${siteName}`} pageTitle="가입하기">
       <div className="container">
         <div className="content" style={{ maxWidth: 572 }}>
-          <h2>커뮤니티 가입</h2>
+          <Typography variant="h6" component="h2" sx={{ marginBottom: 2 }}>
+            커뮤니티 가입
+          </Typography>
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
-              {!hasSettlement && !isMinor ? <IdentityVerificationButton /> : null}
+              {!hasSettlement && !isMinor ? (
+                <>
+                  <Typography variant="body2">본인인증 및 정산정보를 입력하신 뒤에 이용해주세요.</Typography>
+                  <IdentityVerificationButton />
+                </>
+              ) : null}
               {isMinor ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />

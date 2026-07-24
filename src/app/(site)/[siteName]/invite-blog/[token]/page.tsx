@@ -130,7 +130,9 @@ export default async function Page(context: RouteContext) {
           <SiteProfile />
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
-              <Typography variant="subtitle2">팀원되기</Typography>
+              <Typography variant="h6" component="h2" sx={{ marginBottom: 2 }}>
+                팀원되기
+              </Typography>
               {!hasSettlement && !isMinor ? (
                 <>
                   <Typography variant="body2">본인인증 및 정산정보를 입력하신 뒤에 이용해주세요.</Typography>
