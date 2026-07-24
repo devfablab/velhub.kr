@@ -23,6 +23,52 @@ function isExpired(value: string | null) {
   return time < Date.now();
 }
 
+async function getNextAutoNickname(params: { siteId: string; stigmaId: string; baseNickname: string }) {
+  const { siteId, stigmaId, baseNickname } = params;
+  const supabaseAdmin = getSupabaseAdmin();
+
+  const exactResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('id, nickname, user_id')
+    .eq('site_id', siteId)
+    .eq('nickname', baseNickname);
+
+  if (exactResult.error) {
+    throw new Error('닉네임을 확인하지 못했습니다.');
+  }
+
+  const hasExactDuplicate = (exactResult.data ?? []).some((row) => row.user_id !== stigmaId);
+
+  if (!hasExactDuplicate) {
+    return baseNickname;
+  }
+
+  const likeResult = await supabaseAdmin
+    .from('rhizome_stigmas')
+    .select('nickname, user_id')
+    .eq('site_id', siteId)
+    .like('nickname', `${baseNickname}%`);
+
+  if (likeResult.error) {
+    throw new Error('닉네임을 확인하지 못했습니다.');
+  }
+
+  const usedNicknameSet = new Set(
+    (likeResult.data ?? [])
+      .filter((row) => row.user_id !== stigmaId)
+      .map((row) => normalizeText(row.nickname))
+      .filter(Boolean),
+  );
+
+  let nextNumber = 2;
+
+  while (usedNicknameSet.has(`${baseNickname}${nextNumber}`)) {
+    nextNumber += 1;
+  }
+
+  return `${baseNickname}${nextNumber}`;
+}
+
 export async function GET(request: Request, context: RouteContext) {
   try {
     const { token } = await context.params;
@@ -163,6 +209,10 @@ export async function POST(request: Request, context: RouteContext) {
     const normalizedToken = normalizeText(token);
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const requestBody = (await request.json()) as {
+      nickname?: string | null;
+    };
+    const nickname = normalizeText(requestBody.nickname);
 
     if (!normalizedToken) {
       return Response.json({ error: 'token이 유효하지 않습니다.' }, { status: 400 });
@@ -217,7 +267,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const stigma = await supabaseAdmin
       .from('stigmas')
-      .select('id, email')
+      .select('id, email, user_name')
       .eq('user_id', sessionClaims.userId)
       .maybeSingle();
 
@@ -229,6 +279,45 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!currentEmail || currentEmail.trim().toLowerCase() !== invite.data.email.trim().toLowerCase()) {
       return Response.json({ error: '초대받은 이메일과 현재 계정 이메일이 일치하지 않습니다.' }, { status: 403 });
+    }
+
+    const fallbackNickname = stigma.data.user_name ? decrypt(stigma.data.user_name) : '';
+    const isAutoNickname = !nickname;
+    let finalNickname = nickname || fallbackNickname || null;
+
+    if (finalNickname) {
+      if (isAutoNickname) {
+        try {
+          finalNickname = await getNextAutoNickname({
+            siteId: invite.data.site_id,
+            stigmaId: stigma.data.id,
+            baseNickname: finalNickname,
+          });
+        } catch (error) {
+          if (error instanceof Error) {
+            return Response.json({ error: error.message }, { status: 500 });
+          }
+
+          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+        }
+      } else {
+        const duplicateNicknameResult = await supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', invite.data.site_id)
+          .eq('nickname', finalNickname)
+          .neq('user_id', stigma.data.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (duplicateNicknameResult.error) {
+          return Response.json({ error: '닉네임을 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        if (duplicateNicknameResult.data) {
+          return Response.json({ error: '이미 사용 중인 닉네임입니다.' }, { status: 400 });
+        }
+      }
     }
 
     const currentRhizomeStigma = await supabaseAdmin
@@ -256,6 +345,7 @@ export async function POST(request: Request, context: RouteContext) {
           approval_at: joinedAt,
           is_block: false,
           block_count: 0,
+          nickname: finalNickname,
           last_checkin_at: joinedAt,
         })
         .eq('id', currentRhizomeStigma.data.id);
@@ -275,6 +365,7 @@ export async function POST(request: Request, context: RouteContext) {
           is_block: false,
           block_count: 0,
           blocked_at: null,
+          nickname: finalNickname,
           post_count: 0,
           comment_count: 0,
           checkin_count: 0,
