@@ -38,7 +38,13 @@ type PlanBillingSubscriptionRow = {
   last_payment_id: string | null;
   next_billing_at: string;
   billing_anchor_day: number;
+  status: string;
+  past_due_started_at: string | null;
 };
+
+const AUTOMATIC_FAILURE_STAGE = 'plan_billing_check';
+const AUTOMATIC_RETRY_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const MAX_AUTOMATIC_PAYMENT_ATTEMPTS = 3;
 
 function isValidCronRequest(request: Request) {
   if (process.env.NEXT_PUBLIC_APP_ENV === 'test') {
@@ -97,14 +103,56 @@ async function getLastPaymentRawStatus({
   return typeof status === 'string' ? normalizeText(status).toUpperCase() : '';
 }
 
+async function getAutomaticFailureState({
+  supabaseAdmin,
+  subscription,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  subscription: PlanBillingSubscriptionRow;
+}) {
+  if (subscription.status !== SUBSCRIPTION_STATUS.PAST_DUE || !subscription.past_due_started_at) {
+    return {
+      failureCount: 0,
+      lastFailedAt: null,
+    };
+  }
+
+  const failedPaymentsResult = await supabaseAdmin
+    .from('payments')
+    .select('failure_stage, created_at')
+    .eq('subscription_id', subscription.id)
+    .eq('payment_type', PAYMENT_TYPE.PLAN_BILLING)
+    .eq('status', PAYMENT_STATUS.FAILED)
+    .gte('created_at', subscription.past_due_started_at)
+    .order('created_at', { ascending: true });
+
+  if (failedPaymentsResult.error) {
+    throw new Error('자동결제 실패 횟수를 확인하지 못했습니다.');
+  }
+
+  const failedPayments = failedPaymentsResult.data ?? [];
+  const automaticFailureCount = failedPayments.filter(
+    (payment) => payment.failure_stage === AUTOMATIC_FAILURE_STAGE,
+  ).length;
+  const hasLegacyInitialFailure =
+    failedPayments.length > 0 && failedPayments[0].failure_stage !== AUTOMATIC_FAILURE_STAGE;
+  const lastFailedAt = failedPayments.at(-1)?.created_at ?? subscription.past_due_started_at;
+
+  return {
+    failureCount: automaticFailureCount + (hasLegacyInitialFailure ? 1 : 0),
+    lastFailedAt,
+  };
+}
+
 async function createFailedPayment({
   supabaseAdmin,
   subscription,
   orderNo,
   failureCode,
   failureMessage,
-  failureStage,
   rawData,
+  previousFailureCount,
+  now,
   nowIso,
 }: {
   supabaseAdmin: SupabaseAdminClient;
@@ -112,10 +160,14 @@ async function createFailedPayment({
   orderNo: string;
   failureCode: string | null;
   failureMessage: string;
-  failureStage: string;
   rawData: unknown;
+  previousFailureCount: number;
+  now: Date;
   nowIso: string;
 }) {
+  const failureCount = previousFailureCount + 1;
+  const shouldShutdown = failureCount >= MAX_AUTOMATIC_PAYMENT_ATTEMPTS;
+  const nextRetryAt = new Date(now.getTime() + AUTOMATIC_RETRY_INTERVAL_MS).toISOString();
   const failedPaymentResult = await supabaseAdmin.from('payments').insert({
     provider: getCurrentPortOneProvider(),
     payment_key: null,
@@ -133,7 +185,7 @@ async function createFailedPayment({
     subscription_id: subscription.id,
     failure_code: failureCode,
     failure_message: failureMessage,
-    failure_stage: failureStage,
+    failure_stage: AUTOMATIC_FAILURE_STAGE,
     refund_policy: REFUND_POLICY.SEVEN_DAYS,
     refundable_until: null,
     approved_at: null,
@@ -149,7 +201,8 @@ async function createFailedPayment({
     .from('subscriptions')
     .update({
       status: SUBSCRIPTION_STATUS.PAST_DUE,
-      past_due_started_at: nowIso,
+      past_due_started_at: subscription.past_due_started_at ?? nowIso,
+      next_billing_at: shouldShutdown ? null : nextRetryAt,
       updated_at: nowIso,
     })
     .eq('id', subscription.id);
@@ -161,7 +214,7 @@ async function createFailedPayment({
   const siteShutdownResult = await supabaseAdmin
     .from('rhizomes')
     .update({
-      is_shutdown: true,
+      is_shutdown: shouldShutdown,
     })
     .eq('id', subscription.target_id);
 
@@ -181,6 +234,36 @@ async function chargePlanBillingSubscription({
   now: Date;
   nowIso: string;
 }) {
+  const failureState = await getAutomaticFailureState({
+    supabaseAdmin,
+    subscription,
+  });
+
+  if (subscription.status === SUBSCRIPTION_STATUS.PAST_DUE && failureState.lastFailedAt) {
+    const lastFailedAtTime = new Date(failureState.lastFailedAt).getTime();
+    const canRetryAt = lastFailedAtTime + AUTOMATIC_RETRY_INTERVAL_MS;
+
+    if (Number.isFinite(lastFailedAtTime) && canRetryAt > now.getTime()) {
+      if (failureState.failureCount < MAX_AUTOMATIC_PAYMENT_ATTEMPTS) {
+        const siteOpenResult = await supabaseAdmin
+          .from('rhizomes')
+          .update({
+            is_shutdown: false,
+          })
+          .eq('id', subscription.target_id);
+
+        if (siteOpenResult.error) {
+          console.error(siteOpenResult.error);
+        }
+      }
+
+      return {
+        ok: null,
+        subscriptionId: subscription.id,
+      };
+    }
+  }
+
   const orderNo = createPaymentOrderNo('PLAN');
   const paymentKey = createPortOnePaymentKey(orderNo);
   let payment: PortOnePayment;
@@ -224,8 +307,9 @@ async function chargePlanBillingSubscription({
       orderNo,
       failureCode,
       failureMessage,
-      failureStage: unknownError instanceof PortOneApiError ? 'request_portone_billing_payment' : 'assert_paid_payment',
       rawData,
+      previousFailureCount: failureState.failureCount,
+      now,
       nowIso,
     });
 
@@ -348,13 +432,16 @@ export async function GET(request: Request) {
           'last_payment_id',
           'next_billing_at',
           'billing_anchor_day',
+          'status',
+          'past_due_started_at',
         ].join(', '),
       )
       .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
       .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
-      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE])
+      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
       .is('canceled_at', null)
       .is('expired_at', null)
+      .not('next_billing_at', 'is', null)
       .lte('next_billing_at', nowIso)
       .order('next_billing_at', { ascending: true })
       .limit(20);
@@ -379,15 +466,18 @@ export async function GET(request: Request) {
     );
 
     const charged = results.filter((result) => result.ok).map((result) => result.subscriptionId);
-    const failed = results.filter((result) => !result.ok).map((result) => result.subscriptionId);
+    const failed = results.filter((result) => result.ok === false).map((result) => result.subscriptionId);
+    const waiting = results.filter((result) => result.ok === null).map((result) => result.subscriptionId);
 
     return Response.json({
       ok: true,
       checkedCount: subscriptions.length,
       chargedCount: charged.length,
       failedCount: failed.length,
+      waitingCount: waiting.length,
       charged,
       failed,
+      waiting,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

@@ -2,6 +2,7 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
+import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 
 type RouteContext = {
   params: Promise<{
@@ -337,13 +338,24 @@ export async function POST(request: Request, context: RouteContext) {
 
     const currentRhizomeStigma = await supabaseAdmin
       .from('rhizome_stigmas')
-      .select('id')
+      .select('id, is_approval')
       .eq('site_id', invite.data.site_id)
       .eq('user_id', stigma.data.id)
       .maybeSingle();
 
     if (currentRhizomeStigma.error) {
       return Response.json({ error: '초대 처리에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (currentRhizomeStigma.data?.is_approval !== true) {
+      const memberLimit = await getSiteMemberLimitStatus(invite.data.site_id);
+
+      if (memberLimit.currentCount >= memberLimit.limit) {
+        return Response.json(
+          { error: '현재 요금제의 회원 수 제한에 도달하여 가입할 수 없습니다.' },
+          { status: 400 },
+        );
+      }
     }
 
     let rhizomeStigmaId = '';

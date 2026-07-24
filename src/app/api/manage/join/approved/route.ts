@@ -3,6 +3,7 @@ import { getCommunityManagerAccess } from '@/lib/community/community-manager/uti
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 
 type RequestBody = {
   siteName?: string | null;
@@ -376,6 +377,27 @@ export async function PATCH(request: Request) {
     const nowIsoString = new Date().toISOString();
 
     if (action === 'approve') {
+      const approvalCountResult = await access.supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('*', { count: 'exact', head: true })
+        .eq('site_id', access.rhizome.id)
+        .eq('is_approval', false)
+        .in('user_id', userIds);
+
+      if (approvalCountResult.error) {
+        return Response.json({ error: '가입 승인 대상을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const approvalCount = approvalCountResult.count ?? 0;
+      const memberLimit = await getSiteMemberLimitStatus(access.rhizome.id);
+
+      if (memberLimit.currentCount + approvalCount > memberLimit.limit) {
+        return Response.json(
+          { error: '현재 요금제의 회원 수 제한을 초과하여 가입을 승인할 수 없습니다.' },
+          { status: 400 },
+        );
+      }
+
       const levelOneResult = await access.supabaseAdmin
         .from('community_levels')
         .select('id, lv')

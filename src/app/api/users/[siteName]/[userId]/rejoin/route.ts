@@ -1,6 +1,8 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 
 type RouteContext = {
   params: Promise<{
@@ -269,6 +271,40 @@ async function deleteRowsByIds({
   }
 }
 
+async function getPaymentProtectedPostIds({
+  supabaseAdmin,
+  postIds,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  postIds: string[];
+}) {
+  const protectedPostIds = new Set<string>();
+
+  for (const postIdBatch of getBatches(postIds)) {
+    const paymentResult = await supabaseAdmin
+      .from('payments')
+      .select('target_id')
+      .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+      .in('target_id', postIdBatch)
+      .in('payment_type', [PAYMENT_TYPE.PURCHASE_POST, PAYMENT_TYPE.DONATION_POST])
+      .in('status', [PAYMENT_STATUS.PAID, PAYMENT_STATUS.PARTIALLY_REFUNDED, PAYMENT_STATUS.REFUNDED]);
+
+    if (paymentResult.error) {
+      throw new Error('기존 글의 결제 내역을 확인하지 못했습니다.');
+    }
+
+    (paymentResult.data ?? []).forEach((payment) => {
+      const postId = normalizeText(payment.target_id);
+
+      if (postId) {
+        protectedPostIds.add(postId);
+      }
+    });
+  }
+
+  return protectedPostIds;
+}
+
 async function getUserInfo(siteName: string) {
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
@@ -436,6 +472,15 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: '재가입할 수 없는 상태입니다.' }, { status: 403 });
     }
 
+    const memberLimit = await getSiteMemberLimitStatus(siteResult.data.id);
+
+    if (memberLimit.currentCount >= memberLimit.limit) {
+      return Response.json(
+        { error: '현재 요금제의 회원 수 제한에 도달하여 재가입할 수 없습니다.' },
+        { status: 400 },
+      );
+    }
+
     if (mode === 'restore') {
       const restorePostsResult = await supabaseAdmin
         .from('posts')
@@ -472,6 +517,8 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
+    let retainedPostCount = 0;
+
     if (mode === 'reset') {
       const postsResult = await supabaseAdmin
         .from('posts')
@@ -486,8 +533,35 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '기존 글을 불러오지 못했습니다.' }, { status: 500 });
       }
 
-      const posts = (postsResult.data ?? []) as PostRow[];
+      const resetCandidatePosts = (postsResult.data ?? []) as PostRow[];
+      const protectedPostIds = await getPaymentProtectedPostIds({
+        supabaseAdmin,
+        postIds: resetCandidatePosts.map((post) => post.id),
+      });
+      const protectedPosts = resetCandidatePosts.filter((post) => protectedPostIds.has(post.id));
+      const posts = resetCandidatePosts.filter((post) => !protectedPostIds.has(post.id));
       const postIds = posts.map((post) => post.id);
+      retainedPostCount = protectedPosts.length;
+
+      for (const protectedPostIdBatch of getBatches(protectedPosts.map((post) => post.id))) {
+        const restoreProtectedPostsResult = await supabaseAdmin
+          .from('posts')
+          .update({
+            is_closed: false,
+            is_locked: false,
+            closed_by: null,
+            closed_at: null,
+            closed_message: null,
+          })
+          .in('id', protectedPostIdBatch)
+          .eq('site_id', siteResult.data.id)
+          .eq('user_id', normalizedUserId);
+
+        if (restoreProtectedPostsResult.error) {
+          return Response.json({ error: '결제 내역이 있는 기존 글을 복구하지 못했습니다.' }, { status: 500 });
+        }
+      }
+
       const commentMap = new Map<string, ResetCommentRow>();
       const postImagePaths = new Set<string>();
       const ogImagePaths = new Set<string>();
@@ -725,7 +799,7 @@ export async function POST(request: Request, context: RouteContext) {
         is_approval: true,
         ...(mode === 'reset'
           ? {
-              post_count: 0,
+              post_count: retainedPostCount,
               comment_count: 0,
               like_count: 0,
             }

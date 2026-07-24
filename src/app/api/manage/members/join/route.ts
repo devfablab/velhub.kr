@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 
 type RequestBody = {
   siteName: string | null;
@@ -411,6 +412,15 @@ export async function POST(request: Request) {
 
     if (existingMembership?.is_approval === true) {
       return Response.json({ error: '이미 가입된 사용자입니다.' }, { status: 400 });
+    }
+
+    const memberLimit = await getSiteMemberLimitStatus(rhizome.data.id);
+
+    if (memberLimit.currentCount >= memberLimit.limit) {
+      return Response.json(
+        { error: '현재 요금제의 회원 수 제한에 도달하여 가입할 수 없습니다.' },
+        { status: 400 },
+      );
     }
 
     const joinQuestionStatus = normalizeText(community.data.join_question_status);
