@@ -731,7 +731,7 @@ export default function Opt() {
             </MenuItem>
             {rightsReportCategoryOptions.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {option.label} - {option.description}
+                {option.label} ({option.description})
               </MenuItem>
             ))}
           </Select>
