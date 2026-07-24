@@ -1,3 +1,4 @@
+import { decrypt } from '@/lib/encryption/decrypt';
 import {
   PAYMENT_STATUS,
   PAYMENT_TARGET_TYPE,
@@ -69,6 +70,7 @@ type MembershipPaymentStats = {
 type StigmaRow = {
   id: string;
   user_id: string;
+  user_name: string | null;
 };
 
 type RhizomeStigmaRow = {
@@ -86,18 +88,29 @@ function getNickname({
   subscriberUserId,
   stigmaIdByParticleId,
   nicknameByStigmaId,
+  activityNameByParticleId,
 }: {
   subscriberUserId: string;
   stigmaIdByParticleId: Map<string, string>;
   nicknameByStigmaId: Map<string, string>;
+  activityNameByParticleId: Map<string, string>;
 }) {
   const stigmaId = stigmaIdByParticleId.get(subscriberUserId);
+  const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
 
-  if (!stigmaId) {
-    return '매칭 실패';
+  return nickname || activityNameByParticleId.get(subscriberUserId) || '사용자';
+}
+
+function decryptUserName(value: string | null) {
+  if (!value) {
+    return '';
   }
 
-  return nicknameByStigmaId.get(stigmaId) ?? '매칭 실패';
+  try {
+    return normalizeText(decrypt(value));
+  } catch {
+    return '';
+  }
 }
 
 async function getSiteAndSession(siteName: string) {
@@ -305,7 +318,7 @@ export async function GET(request: Request) {
     }
 
     const stigmasResult = subscriberUserIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_id').in('user_id', subscriberUserIds)
+      ? await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', subscriberUserIds)
       : { data: [], error: null };
 
     if (stigmasResult.error) {
@@ -316,6 +329,9 @@ export async function GET(request: Request) {
 
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
     const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
+    const activityNameByParticleId = new Map(
+      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name)]),
+    );
     const subscriberStigmaIds = stigmas.map((stigma) => stigma.id);
 
     const rhizomeStigmasResult = subscriberStigmaIds.length
@@ -367,6 +383,7 @@ export async function GET(request: Request) {
             subscriberUserId: subscription.subscriber_user_id,
             stigmaIdByParticleId,
             nicknameByStigmaId,
+            activityNameByParticleId,
           }),
           status: getMembershipStatus(subscription.status),
           activeMonths: paymentStats?.activeMonths ?? 0,

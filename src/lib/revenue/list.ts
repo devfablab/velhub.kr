@@ -29,7 +29,6 @@ type PaymentSplitRow = UnknownRecord & {
 export type RevenueListItem = {
   id: string;
   buyerName: string | null;
-  buyerEmail: string | null;
   boardName: string | null;
   seriesName: string | null;
   postTitle: string | null;
@@ -197,10 +196,6 @@ function getBuyerName(params: { stigma: UnknownRecord | null; rhizomeStigma: Unk
   return getStringValue(params.rhizomeStigma, 'nickname') ?? decryptValue(getStringValue(params.stigma, 'user_name'));
 }
 
-function getBuyerEmail(stigma: UnknownRecord | null) {
-  return decryptValue(getStringValue(stigma, 'payment_email'));
-}
-
 async function getRowsByIds(context: RevenueContext, tableName: string, ids: string[]) {
   if (ids.length === 0) {
     return [];
@@ -255,7 +250,7 @@ async function getStigmaRowsByParticleIds(context: RevenueContext, particleIds: 
 
   const result = await context.supabase
     .from('stigmas')
-    .select('id, user_id, user_name, payment_email')
+    .select('id, user_id, user_name')
     .in('user_id', particleIds);
 
   if (result.error) {
@@ -305,7 +300,6 @@ function mapRevenueListItem(params: {
       stigma: params.stigma,
       rhizomeStigma: params.rhizomeStigma,
     }),
-    buyerEmail: getBuyerEmail(params.stigma),
     boardName: getBoardName(params.board),
     seriesName: getSeriesName(params.series),
     postTitle: getPostTitle(params.post),

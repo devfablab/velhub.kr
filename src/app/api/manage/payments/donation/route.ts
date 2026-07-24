@@ -1,3 +1,4 @@
+import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -31,6 +32,7 @@ type DonationPaymentRow = {
 type StigmaRow = {
   id: string;
   user_id: string;
+  user_name: string | null;
 };
 
 type RhizomeStigmaRow = {
@@ -44,6 +46,18 @@ const DONATION_PAYMENT_TYPES = [
   PAYMENT_TYPE.DONATION_POST,
   PAYMENT_TYPE.DONATION_SERIES,
 ];
+
+function decryptUserName(value: string | null) {
+  if (!value) {
+    return '';
+  }
+
+  try {
+    return normalizeText(decrypt(value));
+  } catch {
+    return '';
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -126,7 +140,7 @@ export async function GET(request: Request) {
     const donorParticleIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
 
     const stigmasResult = donorParticleIds.length
-      ? await supabaseAdmin.from('stigmas').select('id, user_id').in('user_id', donorParticleIds)
+      ? await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', donorParticleIds)
       : { data: [], error: null };
 
     if (stigmasResult.error) {
@@ -137,6 +151,9 @@ export async function GET(request: Request) {
 
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
     const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
+    const activityNameByParticleId = new Map(
+      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name)]),
+    );
     const donorStigmaIds = stigmas.map((stigma) => stigma.id);
 
     const rhizomeStigmasResult = donorStigmaIds.length
@@ -172,14 +189,15 @@ export async function GET(request: Request) {
       },
       donations: donations.map((donation) => {
         const stigmaId = stigmaIdByParticleId.get(donation.buyer_user_id);
-        const nickname = stigmaId ? nicknameByStigmaId.get(stigmaId) : '';
+        const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
+        const buyerName = nickname || activityNameByParticleId.get(donation.buyer_user_id) || '사용자';
 
         return {
           id: donation.id,
           orderNo: donation.order_no,
           buyerUserId: donation.buyer_user_id,
-          stigmaId: stigmaId ?? 'stigma 매칭 실패',
-          nickname: nickname || 'nickname 매칭 실패',
+          stigmaId: stigmaId ?? null,
+          nickname: buyerName,
           amount: donation.amount,
           currency: donation.currency,
           status: donation.status,

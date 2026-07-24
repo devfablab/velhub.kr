@@ -30,7 +30,6 @@ type RevenueRangeType = 'all' | 'year' | 'quarter' | 'half' | 'custom';
 type RevenueListItem = {
   id: string;
   buyerName: string | null;
-  buyerEmail: string | null;
   boardName: string | null;
   seriesName: string | null;
   postTitle: string | null;
@@ -394,7 +393,6 @@ export default function RevenueList({
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>구매자</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>결제 이메일</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판 이름</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>연재 이름</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>포스팅 제목</TableCell>
@@ -418,7 +416,6 @@ export default function RevenueList({
                     {responseData.items.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.buyerName || ''}</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.buyerEmail || ''}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.boardName || ''}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.seriesName || ''}</TableCell>
                         <TableCell sx={{ whiteSpace: 'nowrap' }}>{item.postTitle || ''}</TableCell>

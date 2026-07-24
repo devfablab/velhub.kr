@@ -10,7 +10,6 @@ type RevenueExportColumn = {
 
 type RevenueExportRow = {
   buyerName: string;
-  buyerEmail: string;
   boardName: string;
   seriesName: string;
   postTitle: string;
@@ -34,7 +33,6 @@ type RevenueExportRow = {
 
 const columns: RevenueExportColumn[] = [
   { header: '구매자', key: 'buyerName', width: 20, type: 'text' },
-  { header: '구매자 이메일', key: 'buyerEmail', width: 28, type: 'text' },
   { header: '게시판 이름', key: 'boardName', width: 20, type: 'text' },
   { header: '연재 이름', key: 'seriesName', width: 20, type: 'text' },
   { header: '포스팅 제목', key: 'postTitle', width: 36, type: 'text' },
@@ -77,7 +75,6 @@ function getExcelKstDate(value: string | null) {
 function getRevenueExportRow(item: RevenueListItem): RevenueExportRow {
   return {
     buyerName: getTextCellValue(item.buyerName),
-    buyerEmail: getTextCellValue(item.buyerEmail),
     boardName: getTextCellValue(item.boardName),
     seriesName: getTextCellValue(item.seriesName),
     postTitle: getTextCellValue(item.postTitle),
