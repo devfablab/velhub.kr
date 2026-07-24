@@ -1,4 +1,6 @@
+import { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { mainTitle, Seo } from '@/lib/seo';
 import Container from './menu';
 import Aside from './lounge/aside';
 import Slick from './lounge/slick';
@@ -126,6 +128,17 @@ type sitesHitsResponse = {
 type PostsResponse = {
   posts: PostItem[];
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: mainTitle,
+    pageTitle: mainTitle,
+    pageImg: `https://velhub.xyz/og.webp?ts=${timestamp}`,
+    pagePath: '/',
+  });
+}
 
 export type SlickProps = {
   sitesData?: SitesResponse;

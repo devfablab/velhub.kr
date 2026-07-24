@@ -1,6 +1,8 @@
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import { originTitle, Seo } from '@/lib/seo';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
@@ -23,6 +25,18 @@ type SettlementResponse = {
     settlement_type: 'individual' | 'business';
   } | null;
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `커뮤니티 개설 - ${originTitle}`,
+    pageTitle: `커뮤니티 개설`,
+    pageDescription: `커뮤니티를 개설합니다.`,
+    pageImg: `https://velhub.xyz/og-community.webp?ts=${timestamp}`,
+    pagePath: '/new/community',
+  });
+}
 
 function onlyDigits(value: string | null | undefined) {
   return String(value ?? '').replace(/\D/g, '');
