@@ -160,10 +160,35 @@ export default function Opt() {
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [canAddPage, setCanAddPage] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+
+  useEffect(() => {
+    async function checkPageLimit() {
+      try {
+        const statusResponse = await fetch(`/api/manage/contents/pages/status?siteName=${siteName}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        const statusResult = await statusResponse.json();
+
+        if (statusResponse.ok && statusResult.canAddPage === false) {
+          setCanAddPage(false);
+          setErrorMessage('더 이상 새 페이지를 추가하실 수 없습니다');
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (siteName) {
+      void checkPageLimit();
+    }
+  }, [siteName]);
 
   useEffect(() => {
     return () => {
@@ -412,7 +437,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting) {
+    if (isSubmitting || !canAddPage) {
       return;
     }
 
@@ -529,126 +554,137 @@ export default function Opt() {
           ) : null}
 
           <div className={`paper ${styles.paper}`}>
-            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
-              <Stack gap={1}>
-                <Typography variant="subtitle2">페이지 식별자 *</Typography>
-                <TextField
-                  placeholder="페이지 식별자 (필수)"
-                  value={slug}
-                  onChange={handleSlugChange}
-                  fullWidth
-                  size="medium"
-                  helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          {baseUrl}/{siteName}/p/
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => void handleCheckSlug()}
-                            disabled={isCheckingSlug}
-                          >
-                            중복 확인
-                          </button>
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-                {slugMessage ? (
-                  <p className={`alert ${isSlugAvailable ? 'info' : 'error'}`}>
-                    {isSlugAvailable ? <InfoOutlineRoundedIcon /> : <ErrorOutlineRoundedIcon />}
-                    {slugMessage}
-                  </p>
-                ) : null}
-              </Stack>
-
-              <Stack gap={1}>
-                <Typography variant="subtitle2">페이지 제목 *</Typography>
-                <TextField
-                  placeholder="페이지 제목 (필수)"
-                  value={subject}
-                  onChange={handleSubjectChange}
-                  fullWidth
-                  size="small"
-                />
-              </Stack>
-
-              <Stack gap={1}>
-                <Typography variant="subtitle2">페이지 부제목</Typography>
-                <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
-              </Stack>
-
-              <Stack direction="column">
-                <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2">오픈그래프 이미지</Typography>
-
-                  <VisuallyHiddenInput
-                    ref={fileInputReference}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleOgImageFileChange}
+            {!canAddPage ? (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>더 이상 새 페이지를 추가하실 수 없습니다</span>
+              </p>
+            ) : (
+              <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">페이지 식별자 *</Typography>
+                  <TextField
+                    placeholder="페이지 식별자 (필수)"
+                    value={slug}
+                    onChange={handleSlugChange}
+                    fullWidth
+                    size="medium"
+                    helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            {baseUrl}/{siteName}/p/
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => void handleCheckSlug()}
+                              disabled={isCheckingSlug}
+                            >
+                              중복 확인
+                            </button>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
-
-                  <button
-                    type="button"
-                    className="button small action"
-                    onClick={handleClickOgImageUpload}
-                    disabled={isUploadingOgImage}
-                  >
-                    {ogImageUrl ? '이미지 교체' : '이미지 추가'}
-                  </button>
+                  {slugMessage ? (
+                    <p className={`alert ${isSlugAvailable ? 'info' : 'error'}`}>
+                      {isSlugAvailable ? <InfoOutlineRoundedIcon /> : <ErrorOutlineRoundedIcon />}
+                      {slugMessage}
+                    </p>
+                  ) : null}
                 </Stack>
-                {ogImageUrl ? (
-                  <Box
-                    component="img"
-                    src={ogImageUrl}
-                    alt="오픈그래프 이미지"
-                    sx={{ maxWidth: '100%', height: 'auto', display: 'block', mb: 1.5 }}
+
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">페이지 제목 *</Typography>
+                  <TextField
+                    placeholder="페이지 제목 (필수)"
+                    value={subject}
+                    onChange={handleSubjectChange}
+                    fullWidth
+                    size="small"
                   />
-                ) : null}
-              </Stack>
+                </Stack>
 
-              <Stack gap={2}>
-                <Typography variant="subtitle2">페이지 내용 *</Typography>
-                <ToastEditor
-                  initialValue={contentHtml}
-                  initialMarkdown={contentMarkdown}
-                  initialEditType="wysiwyg"
-                  themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
-                  markdownStatus={markdownStatus}
-                  hideModeSwitch
-                  onHtmlChange={setContentHtml}
-                  onMarkdownChange={setContentMarkdown}
-                  onUploadImage={handleUploadEditorImage}
-                />
-              </Stack>
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">페이지 부제목</Typography>
+                  <TextField value={summary} onChange={handleSummaryChange} fullWidth size="small" />
+                </Stack>
 
-              <Stack direction="row" gap={1.5} justifyContent="flex-end">
-                <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/pages`}>
-                  취소
-                </Anchor>
-                {isMobile ? (
-                  <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
+                <Stack direction="column">
+                  <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
+                    <Typography variant="subtitle2">오픈그래프 이미지</Typography>
+
+                    <VisuallyHiddenInput
+                      ref={fileInputReference}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleOgImageFileChange}
+                    />
+
+                    <button
+                      type="button"
+                      className="button small action"
+                      onClick={handleClickOgImageUpload}
+                      disabled={isUploadingOgImage}
+                    >
+                      {ogImageUrl ? '이미지 교체' : '이미지 추가'}
+                    </button>
+                  </Stack>
+                  {ogImageUrl ? (
+                    <Box
+                      component="img"
+                      src={ogImageUrl}
+                      alt="오픈그래프 이미지"
+                      sx={{ maxWidth: '100%', height: 'auto', display: 'block', mb: 1.5 }}
+                    />
+                  ) : null}
+                </Stack>
+
+                <Stack gap={2}>
+                  <Typography variant="subtitle2">페이지 내용 *</Typography>
+                  <ToastEditor
+                    initialValue={contentHtml}
+                    initialMarkdown={contentMarkdown}
+                    initialEditType="wysiwyg"
+                    themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
+                    markdownStatus={markdownStatus}
+                    hideModeSwitch
+                    onHtmlChange={setContentHtml}
+                    onMarkdownChange={setContentMarkdown}
+                    onUploadImage={handleUploadEditorImage}
+                  />
+                </Stack>
+
+                <Stack direction="row" gap={1.5} justifyContent="flex-end">
+                  <Anchor className="button medium cancel" href={`/${siteName}/manage/contents/pages`}>
+                    취소
+                  </Anchor>
+                  {isMobile ? (
+                    <div className={styles['button-top']}>
+                      <button
+                        type="submit"
+                        className={`button ${styles.button}`}
+                        disabled={isSubmitting || !canAddPage}
+                      >
+                        저장
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="submit" className="button medium submit" disabled={isSubmitting || !canAddPage}>
                       저장
                     </button>
-                  </div>
-                ) : (
-                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
-                    저장
-                  </button>
-                )}
-              </Stack>
+                  )}
+                </Stack>
 
-              {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-            </Stack>
+                {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+              </Stack>
+            )}
           </div>
         </div>
       </div>

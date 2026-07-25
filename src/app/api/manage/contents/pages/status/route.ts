@@ -1,6 +1,7 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSitePageLimitStatus } from '@/lib/sitePageLimit';
 
 export async function GET(request: Request) {
   try {
@@ -27,13 +28,16 @@ export async function GET(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const board = await supabaseAdmin
-      .from('boards')
-      .select('id, board_key')
-      .eq('site_id', rhizome.data.id)
-      .eq('board_key', 'p')
-      .eq('board_type', 'page')
-      .maybeSingle();
+    const [board, pageLimit] = await Promise.all([
+      supabaseAdmin
+        .from('boards')
+        .select('id, board_key')
+        .eq('site_id', rhizome.data.id)
+        .eq('board_key', 'p')
+        .eq('board_type', 'page')
+        .maybeSingle(),
+      getSitePageLimitStatus(rhizome.data.id),
+    ]);
 
     if (board.error) {
       return Response.json({ error: '페이지 게시판 상태를 불러오지 못했습니다.' }, { status: 500 });
@@ -44,6 +48,9 @@ export async function GET(request: Request) {
       boardName: board.data?.board_key ?? null,
       boardId: board.data?.id ?? null,
       siteId: rhizome.data.id,
+      canAddPage: pageLimit.canAddPage,
+      currentPageCount: pageLimit.currentCount,
+      limitSubpageCount: pageLimit.limit,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

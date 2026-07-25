@@ -76,6 +76,7 @@ export default function Opt() {
 
   const [pages, setPages] = useState<PageRow[]>([]);
   const [boardName, setBoardName] = useState<string | null>(null);
+  const [canAddPage, setCanAddPage] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -94,6 +95,10 @@ export default function Opt() {
 
         if (!statusResponse.ok) {
           throw new Error(statusResult.error ?? '페이지 상태를 확인하지 못했습니다.');
+        }
+
+        if (typeof statusResult.canAddPage === 'boolean') {
+          setCanAddPage(statusResult.canAddPage);
         }
 
         if (!statusResult.hasBoard || !statusResult.boardName) {
@@ -212,11 +217,13 @@ export default function Opt() {
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage`} menu="contents">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
-          <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
-            <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button small submit">
-              페이지 추가
-            </Anchor>
-          </Stack>
+          {canAddPage ? (
+            <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
+              <Anchor href={`/${siteName}/manage/contents/pages/new`} className="button small submit">
+                페이지 추가
+              </Anchor>
+            </Stack>
+          ) : null}
 
           {pages.length === 0 ? (
             <div className={`paper paper-error ${styles.paper}`}>페이지가 아직 없습니다</div>

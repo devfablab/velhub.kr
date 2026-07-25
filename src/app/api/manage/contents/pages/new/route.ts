@@ -1,6 +1,7 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSitePageLimitStatus } from '@/lib/sitePageLimit';
 
 type RequestBody = {
   siteName: string | null;
@@ -66,6 +67,12 @@ export async function POST(request: Request) {
 
     if (!session.authUserId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const pageLimit = await getSitePageLimitStatus(rhizome.data.id);
+
+    if (!pageLimit.canAddPage) {
+      return Response.json({ error: '더 이상 새 페이지를 추가하실 수 없습니다.' }, { status: 400 });
     }
 
     const page = await supabaseAdmin.rpc('create_page_with_board', {
