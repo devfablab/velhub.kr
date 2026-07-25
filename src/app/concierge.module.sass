@@ -44,3 +44,144 @@
           @include ds.fw(pre, 700)
           font-size: ds.rem(14)
           color: ds.$hex-warning!important
+
+.faq-categories
+  display: flex
+  flex-wrap: wrap
+  gap: ds.rem(7)
+
+  li
+    display: inline-flex
+
+  button
+    padding: ds.rem(7) ds.rem(12)
+    border: 0
+    border-radius: ds.rem(17)
+    color: ds.$hex-secondary
+    @include ds.fw(pre, 700)
+    font-size: ds.rem(14)
+    transition: all .4s cubic-bezier(.4,0,.2,1)
+
+    &:not(.current)
+      background-color: rgba(ds.$rgb-tertiary, .2)
+
+      html[data-theme="yellow-dark"] &
+        background-color: rgba(ds.$rgb-tertiary, .5)
+        color: ds.$hex-light
+
+    &:hover, &:focus-visible, &.current
+      background-color: ds.$hex-accent
+      color: ds.$hex-white
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-black
+
+.faq-list
+  margin-top: ds.rem(34)
+
+.concierge-home
+  display: flex
+  flex-direction: column
+
+.concierge-intro
+  padding: ds.rem(17) 0 ds.rem(23)
+
+  h1
+    padding-bottom: ds.rem(12)!important
+    font-size: ds.rem(32)!important
+    line-height: 1.2
+
+    @include ds.mq(maxSmall)
+      font-size: ds.rem(25)!important
+
+  p
+    color: rgba(ds.$rgb-secondary, .75)
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$rgb-light, .75)
+
+.concierge-section
+  margin-top: ds.rem(34)
+
+  > h2
+    margin-bottom: ds.rem(14)
+    font-size: ds.rem(20)
+
+.concierge-card-grid
+  display: grid
+  gap: ds.rem(17)
+
+  &.guide-cards
+    grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  &.support-cards
+    grid-template-columns: repeat(3, minmax(0, 1fr))
+
+  @include ds.mq(maxMedium)
+    &.guide-cards, &.support-cards
+      grid-template-columns: 1fr
+
+.concierge-card
+  display: grid
+  grid-template-columns: ds.rem(68) minmax(0, 1fr) ds.rem(22)
+  align-items: center
+  gap: ds.rem(20)
+  overflow: hidden
+  min-height: ds.rem(144)
+  border: 1px solid rgba(ds.$rgb-tertiary, .18)
+  color: ds.$hex-primary
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-tertiary, .5)
+    color: ds.$hex-bright
+
+  &:hover, &:focus-visible
+    border-color: ds.$hex-accent
+    box-shadow: 0 ds.rem(8) ds.rem(30) 0 rgba(ds.$rgb-primary, .12)
+    transform: translateY(ds.rem(-2))
+
+  .support-cards &
+    grid-template-columns: ds.rem(54) minmax(0, 1fr) ds.rem(20)
+    gap: ds.rem(15)
+
+  @include ds.mq(maxSmall)
+    grid-template-columns: ds.rem(45) minmax(0, 1fr) ds.rem(20)!important
+    gap: ds.rem(12)
+    min-height: ds.rem(120)
+
+.concierge-card-icon
+  display: inline-flex
+  justify-content: center
+  align-items: center
+  color: ds.$hex-accent
+
+  svg
+    width: ds.rem(54)
+    height: ds.rem(54)
+
+    .support-cards &
+      width: ds.rem(44)
+      height: ds.rem(44)
+
+    @include ds.mq(maxSmall)
+      width: ds.rem(38)!important
+      height: ds.rem(38)!important
+
+.concierge-card-copy
+  min-width: 0
+
+  h3
+    @include ds.fw(neo, 800)
+    font-size: ds.rem(17)
+
+  p
+    line-height: 1.5
+    color: rgba(ds.$rgb-secondary, .72)
+
+    html[data-theme="yellow-dark"] &
+      color: rgba(ds.$rgb-light, .72)
+
+.concierge-card-arrow
+  width: ds.rem(22)
+  height: ds.rem(22)

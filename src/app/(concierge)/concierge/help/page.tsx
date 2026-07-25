@@ -201,7 +201,7 @@ export default function Page() {
                 </Anchor>
               </AccordionActions>
             </Accordion>
-            <Accordion defaultExpanded>
+            <Accordion>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls={`${id}-panel3-content`}
