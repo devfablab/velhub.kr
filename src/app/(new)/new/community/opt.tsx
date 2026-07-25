@@ -707,10 +707,38 @@ export default function Opt() {
                   key={planRow.id}
                   value={planRow.id}
                   control={<Radio />}
-                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()}원)`}
+                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()} 원)`}
                 />
               ))}
             </RadioGroup>
+            <Stack gap={1}>
+              <div className="paper">
+                <Typography variant="subtitle2">베이직</Typography>
+                <Stack gap={1}>
+                  <Typography variant="body2">- ₩ 59,000</Typography>
+                  <Typography variant="body2">- 1개 페이지</Typography>
+                  <Typography variant="body2">- 최대 5개 게시판</Typography>
+                  <Typography variant="body2">- 최대 1,000명 멤버</Typography>
+                  <Typography variant="body2">- 최대 5명 커뮤니티 매니저</Typography>
+                  <Typography variant="body2">- 최대 5명 전체 게시판 매니저</Typography>
+                  <Typography variant="body2">- 최대 5명 개별 게시판 총괄 매니저</Typography>
+                  <Typography variant="body2">- 최대 게시판당 3명 개별 게시판 부 매니저</Typography>
+                </Stack>
+              </div>
+              <div className="paper">
+                <Typography variant="subtitle2">프리미엄</Typography>
+                <Stack gap={1}>
+                  <Typography variant="body2">- ₩ 79,000</Typography>
+                  <Typography variant="body2">- 1개 페이지</Typography>
+                  <Typography variant="body2">- 최대 20개 게시판</Typography>
+                  <Typography variant="body2">- 최대 10,000명 멤버</Typography>
+                  <Typography variant="body2">- 최대 10명 커뮤니티 매니저</Typography>
+                  <Typography variant="body2">- 최대 10명 전체 게시판 매니저</Typography>
+                  <Typography variant="body2">- 최대 20명 개별 게시판 총괄 매니저</Typography>
+                  <Typography variant="body2">- 최대 게시판당 5명 개별 게시판 부 매니저</Typography>
+                </Stack>
+              </div>
+            </Stack>
           </Stack>
 
           <Stack gap={1}>
@@ -719,6 +747,9 @@ export default function Opt() {
               <FormControlLabel value="open" control={<Radio />} label="오픈가입" />
               <FormControlLabel value="invite" control={<Radio />} label="초대가입" />
             </RadioGroup>
+            <div className="paper">
+              <Typography variant="body2">초대가입으로 설정하시면 초대장 받은 유저만 가입이 가능합니다.</Typography>
+            </div>
           </Stack>
 
           <Stack gap={1}>
@@ -805,6 +836,11 @@ export default function Opt() {
               }
               label={visibilityType === 'public' ? '공개' : '비공개'}
             />
+            <div className="paper">
+              <Typography variant="body2">
+                비공개로 설정하시면 운영자, 매니저, 멤버만 커뮤니티 글을 읽을 수 있습니다.
+              </Typography>
+            </div>
           </Stack>
           {errorMessage ? (
             <p className="alert error">

@@ -675,20 +675,38 @@ export default function Opt() {
                   key={planRow.id}
                   value={planRow.id}
                   control={<Radio />}
-                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()}원)`}
+                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()} 원)`}
                 />
               ))}
             </RadioGroup>
+            <div className="paper">
+              <Typography variant="subtitle2">팀 블로그</Typography>
+              <Stack gap={1}>
+                <Typography variant="body2">- ₩ 19,000</Typography>
+                <Typography variant="body2">- 1개 페이지</Typography>
+                <Typography variant="body2">- 최대 100명까지 팀원 초대 가능 (운영자, 매니저 수 포함)</Typography>
+                <Typography variant="body2">- 최대 3명 매니저</Typography>
+              </Stack>
+            </div>
           </Stack>
 
           <Stack gap={1}>
             <Typography variant="subtitle2">댓글 방식 (댓글 서비스 제공자)</Typography>
             <RadioGroup value={commentProvider} onChange={handleCommentProviderChange}>
-              <FormControlLabel value="velhub" control={<Radio />} label="velhub (데브허브 회원 전용)" />
-              <FormControlLabel value="disqus" control={<Radio />} label="disqus" />
-              <FormControlLabel value="giscus" control={<Radio />} label="giscus" />
+              <FormControlLabel value="velhub" control={<Radio />} label="데브허브 댓글" />
+              <FormControlLabel value="disqus" control={<Radio />} label="Disqus" />
+              <FormControlLabel value="giscus" control={<Radio />} label="Giscus" />
               <FormControlLabel value="none" control={<Radio />} label="댓글 사용 안함" />
             </RadioGroup>
+            <div className="paper">
+              <Typography variant="body2">
+                - 데브허브 댓글 방식은 로그인한 모든 유저가 댓글에 참여할 수 있는 방식입니다.
+              </Typography>
+              <Typography variant="body2">- Disqus 댓글 방식은 Disqus 댓글을 사용하는 방식입니다.</Typography>
+              <Typography variant="body2">
+                - Giscus 댓글 방식은 GitHub Discussions 기반 댓글댓글을 사용하는 방식입니다.
+              </Typography>
+            </div>
           </Stack>
 
           <Stack direction="column" gap={1}>
@@ -699,7 +717,13 @@ export default function Opt() {
               }
               label={visibilityType === 'public' ? '공개' : '비공개'}
             />
+            <div className="paper">
+              <Typography variant="body2">
+                비공개로 설정하시면 운영자, 매니저, 팀원만 블로그 글을 읽을 수 있습니다.
+              </Typography>
+            </div>
           </Stack>
+
           {errorMessage ? (
             <p className="alert error">
               <ErrorOutlineRoundedIcon />

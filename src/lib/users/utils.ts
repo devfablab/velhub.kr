@@ -142,13 +142,13 @@ export async function getPublicMembersAccess(siteName: string) {
     } as const;
   }
 
-  if (site.visibility_type !== 'public' || site.is_shutdown === true) {
-    return {
-      ok: false,
-      status: 403,
-      error: '조회할 수 없습니다.',
-    } as const;
-  }
+  // if (site.visibility_type !== 'public' || site.is_shutdown === true) {
+  //   return {
+  //     ok: false,
+  //     status: 403,
+  //     error: '조회할 수 없습니다.',
+  //   } as const;
+  // }
 
   return {
     ok: true,
@@ -368,10 +368,7 @@ export async function getSiteMembership(siteId: string, userId: string) {
   } as const;
 }
 
-export async function isCommunityStaffMembership(
-  siteId: string,
-  membership: Pick<MembershipRow, 'id' | 'role'>,
-) {
+export async function isCommunityStaffMembership(siteId: string, membership: Pick<MembershipRow, 'id' | 'role'>) {
   const baseRole = normalizeText(membership.role);
 
   if (baseRole === 'owner' || baseRole === 'manager') {
@@ -379,11 +376,7 @@ export async function isCommunityStaffMembership(
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const communityResult = await supabaseAdmin
-    .from('communities')
-    .select('id')
-    .eq('site_id', siteId)
-    .maybeSingle();
+  const communityResult = await supabaseAdmin.from('communities').select('id').eq('site_id', siteId).maybeSingle();
 
   if (communityResult.error || !communityResult.data) {
     throw new Error('커뮤니티 정보를 불러오지 못했습니다.');

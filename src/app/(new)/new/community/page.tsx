@@ -136,11 +136,15 @@ export default async function Page() {
 
           {(!hasSettlement && !isMinor) || isMinor ? (
             <div className="paper">
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>본인인증 하시면 커뮤니티를 개설하실 수 있습니다.</span>
-              </p>
-              {!hasSettlement && !isMinor ? <IdentityVerificationButton /> : null}
+              {!hasSettlement && !isMinor ? (
+                <>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>본인인증 하시면 커뮤니티를 개설하실 수 있습니다.</span>
+                  </p>
+                  <IdentityVerificationButton />
+                </>
+              ) : null}
               {isMinor ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />

@@ -31,6 +31,18 @@ type TabItems = {
   startsWith?: boolean;
 };
 
+function canAccessAllManageMenus(siteType: string, siteRole: string | null) {
+  if (siteType === 'blog') {
+    return siteRole === 'owner' || siteRole === 'manager';
+  }
+
+  if (siteType === 'community') {
+    return siteRole === 'owner' || siteRole === 'community-manager';
+  }
+
+  return false;
+}
+
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -44,6 +56,7 @@ export default function Opt() {
   const [ownerName, setOwnerName] = useState('');
   const [memberCount, setMemberCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
+  const [siteRole, setSiteRole] = useState(null);
 
   useEffect(() => {
     async function loadData() {
@@ -61,11 +74,13 @@ export default function Opt() {
           throw new Error(result.error ?? '정보를 불러오지 못했습니다.');
         }
 
-        setSiteAvatar(result.site?.avatar ?? null);
-        setSiteNameText(result.site?.name ?? '');
-        setSiteType(result.site?.siteType ?? '');
-        setSiteCreatedAt(result.site?.createdAt ?? null);
-        setOwnerName(result.site?.ownerName ?? '');
+        if (result.site) {
+          setSiteAvatar(result.site.avatar ?? null);
+          setSiteNameText(result.site.name ?? '');
+          setSiteType(result.site.siteType);
+          setSiteCreatedAt(result.site.createdAt ?? null);
+          setOwnerName(result.site.ownerName ?? '');
+        }
         setMemberCount(result.stats?.memberCount ?? 0);
         setPostCount(result.stats?.postCount ?? 0);
       } catch (unknownError) {
@@ -79,6 +94,22 @@ export default function Opt() {
       }
     }
 
+    async function loadManager() {
+      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !('isLoggedIn' in result)) {
+        setSiteRole(null);
+        return;
+      }
+
+      setSiteRole(result.siteRole);
+    }
+
     if (!siteName) {
       setErrorMessage('siteName이 유효하지 않습니다.');
       setIsLoading(false);
@@ -86,26 +117,44 @@ export default function Opt() {
     }
 
     void loadData();
+    void loadManager();
   }, [siteName]);
 
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+
   const tabItems: TabItems[] = [
-    { label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보', href: `/${siteName}/manage/settings` },
-    ...(siteType === 'community' ? [{ label: '가입 관리', href: `/${siteName}/manage/join` }] : []),
-    {
-      label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-      href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
-    },
+    ...(showAllManageMenus
+      ? [{ label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보', href: `/${siteName}/manage/settings` }]
+      : []),
+    ...(showAllManageMenus && siteType === 'community'
+      ? [{ label: '가입 관리', href: `/${siteName}/manage/join` }]
+      : []),
+    ...(showAllManageMenus
+      ? [
+          {
+            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
+            href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
+          },
+        ]
+      : []),
     { label: '콘텐츠 관리', href: `/${siteName}/manage/contents` },
-    { label: '신고 관리', href: `/${siteName}/manage/reports` },
-    {
-      label: '디자인',
-      href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`,
-    },
-    {
-      label: '결제',
-      href: `/${siteName}/manage/payments/billing`,
-    },
-    { label: '통계', href: `/${siteName}/manage/stats` },
+    ...(showAllManageMenus
+      ? [
+          { label: '신고 관리', href: `/${siteName}/manage/reports` },
+          {
+            label: '디자인',
+            href:
+              siteType === 'blog'
+                ? `/${siteName}/manage/design/blog/fonts`
+                : `/${siteName}/manage/design/community/home`,
+          },
+          {
+            label: '결제',
+            href: `/${siteName}/manage/payments/billing`,
+          },
+          { label: '통계', href: `/${siteName}/manage/stats` },
+        ]
+      : []),
   ];
 
   if (isLoading) {

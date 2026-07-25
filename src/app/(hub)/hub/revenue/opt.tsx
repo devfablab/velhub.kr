@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Alert, FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RevenueList from '@/app/(site)/[siteName]/payments/RevenueList';
 import RevenueSummary from '@/app/(site)/[siteName]/payments/RevenueSummary';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -124,10 +126,18 @@ export default function RevenueHub() {
           </div>
         ) : null}
 
-        {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage}</span>
+          </p>
+        ) : null}
 
         {!isLoading && !errorMessage && sites.length === 0 ? (
-          <Alert severity="info">수입 또는 정산 내역이 있는 사이트가 없습니다.</Alert>
+          <p className="alert warning">
+            <WarningAmberRoundedIcon />
+            <span>수입 또는 정산 내역이 있는 사이트가 없습니다.</span>
+          </p>
         ) : null}
 
         {!isLoading && !errorMessage && selectedSiteName ? (
