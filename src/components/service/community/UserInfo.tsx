@@ -405,7 +405,7 @@ export default function UserInfo() {
               </div>
             </dl>
           </div>
-          <div className={styles['drawer-dialog-actions']}>
+          <div className="drawer-dialog-actions">
             <button type="button" onClick={handleCloseDialog} disabled={isSubmitting} className="button medium cancel">
               취소
             </button>
@@ -504,7 +504,7 @@ export default function UserInfo() {
             )}
           </div>
 
-          <div className={styles['drawer-dialog-actions']}>
+          <div className="drawer-dialog-actions">
             {isWithdrawBlocked ? (
               <button type="button" className="button medium submit" onClick={handleCloseWithdrawDialog}>
                 {withdrawBlockedButtonText}

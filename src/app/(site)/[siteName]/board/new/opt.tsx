@@ -2176,7 +2176,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                 </div>
               ) : null}
             </div>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               <button type="button" onClick={closeThumbnailDialog} className="button medium cancel">
                 취소
               </button>
@@ -2314,7 +2314,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                 </div>
               ) : null}
             </div>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               <button type="button" onClick={closeGalleryDialog} className="button medium cancel">
                 취소
               </button>
@@ -2607,7 +2607,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                 </div>
               ) : null}
             </div>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               {isPollEnabled ? (
                 <button type="button" onClick={removePoll} className="button medium danger">
                   투표 삭제
@@ -2908,7 +2908,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                 </div>
               ) : null}
             </div>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               {isDrawEnabled ? (
                 <>
                   <button type="button" onClick={removeDraw} className="button medium danger">
@@ -3049,7 +3049,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
               <CloseRoundedIcon />
             </button>
             <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               {accessDialog.cancelLabel ? (
                 <button type="button" onClick={accessDialog.onCancel} className="button medium cancel">
                   {accessDialog.cancelLabel}
@@ -3095,7 +3095,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
               <CloseRoundedIcon />
             </button>
             <p>{alertMessage}</p>
-            <div className={styles['drawer-dialog-actions']}>
+            <div className="drawer-dialog-actions">
               <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
                 확인
               </button>

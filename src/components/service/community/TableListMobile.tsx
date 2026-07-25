@@ -261,7 +261,7 @@ export default function TableListMobile({
             <CloseRoundedIcon />
           </button>
           <p>{alertMessage}</p>
-          <div className={styles['drawer-dialog-actions']}>
+          <div className="drawer-dialog-actions">
             <button type="button" onClick={() => setAlertMessage('')} className="button medium cancel">
               확인
             </button>

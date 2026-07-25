@@ -397,7 +397,7 @@ export default function CommentItem({
             <CloseRoundedIcon />
           </button>
           <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{confirmDialog.content}</p>
-          <div className={styles['drawer-dialog-actions']}>
+          <div className="drawer-dialog-actions">
             <button type="button" onClick={() => setConfirmAction(null)} className="button medium cancel">
               취소
             </button>
