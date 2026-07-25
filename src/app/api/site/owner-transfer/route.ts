@@ -133,10 +133,6 @@ export async function GET(request: Request) {
 
     const { supabaseAdmin, site } = await getSite(siteName);
 
-    if (site.site_type !== 'community') {
-      return Response.json({ transfer: null });
-    }
-
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId || !session.rhizomeStigmaId) {
@@ -180,10 +176,6 @@ export async function PATCH(request: Request) {
     }
 
     const { supabaseAdmin, site } = await getSite(siteName);
-
-    if (site.site_type !== 'community') {
-      return Response.json({ error: '커뮤니티만 사용할 수 있습니다.' }, { status: 400 });
-    }
 
     const session = await verifySession({ siteId: site.id });
 
@@ -276,10 +268,12 @@ export async function PATCH(request: Request) {
           .maybeSingle(),
         supabaseAdmin.from('stigmas').select('id, user_id').in('id', [transfer.previous_owner_id, session.stigmaId]),
         supabaseAdmin.from('sites').select('id, owner_id').eq('site_id', site.id).maybeSingle(),
-        supabaseAdmin
-          .from('community_manage_role')
-          .select('id, created_at, manager_id, board_id, community_id, role, selected_at')
-          .eq('manager_id', transfer.target_member_id),
+        site.site_type === 'community'
+          ? supabaseAdmin
+              .from('community_manage_role')
+              .select('id, created_at, manager_id, board_id, community_id, role, selected_at')
+              .eq('manager_id', transfer.target_member_id)
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
     if (

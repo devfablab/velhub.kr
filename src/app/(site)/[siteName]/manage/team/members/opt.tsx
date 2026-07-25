@@ -24,9 +24,6 @@ import {
   useTheme,
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
@@ -59,6 +56,11 @@ type InviteRow = {
 
 type TeamResponse = {
   teams: TeamRow[];
+  ownerTransfer: {
+    canRequest: boolean;
+    hasPendingRequest: boolean;
+    availableAt: string | null;
+  };
 };
 
 type InviteResponse = {
@@ -149,6 +151,11 @@ export default function Opt() {
   const [targetRoleTeam, setTargetRoleTeam] = useState<TeamRow | null>(null);
   const [nextRole, setNextRole] = useState<'manager' | 'member' | 'observer' | null>(null);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
+  const [ownerTransferTargetId, setOwnerTransferTargetId] = useState('');
+  const [canRequestOwnerTransfer, setCanRequestOwnerTransfer] = useState(false);
+  const [hasPendingOwnerTransfer, setHasPendingOwnerTransfer] = useState(false);
+  const [isOwnerTransferOpen, setIsOwnerTransferOpen] = useState(false);
+  const [isOwnerTransferSubmitting, setIsOwnerTransferSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
   const [isLoading, setIsLoading] = useState(true);
@@ -180,7 +187,15 @@ export default function Opt() {
       );
     }
 
-    setTeams('teams' in result && Array.isArray(result.teams) ? result.teams : []);
+    if ('teams' in result && Array.isArray(result.teams)) {
+      setTeams(result.teams);
+      setCanRequestOwnerTransfer(result.ownerTransfer?.canRequest === true);
+      setHasPendingOwnerTransfer(result.ownerTransfer?.hasPendingRequest === true);
+    } else {
+      setTeams([]);
+      setCanRequestOwnerTransfer(false);
+      setHasPendingOwnerTransfer(false);
+    }
   }
 
   async function loadInvites() {
@@ -318,6 +333,61 @@ export default function Opt() {
 
   function handleCloseInviteListDialog() {
     setIsInviteListDialogOpen(false);
+  }
+
+  function handleOpenOwnerTransfer() {
+    setOwnerTransferTargetId('');
+    setIsOwnerTransferOpen(true);
+  }
+
+  function handleCloseOwnerTransfer() {
+    if (isOwnerTransferSubmitting) {
+      return;
+    }
+
+    setIsOwnerTransferOpen(false);
+    setOwnerTransferTargetId('');
+  }
+
+  async function handleSubmitOwnerTransfer() {
+    if (!ownerTransferTargetId || isOwnerTransferSubmitting) {
+      return;
+    }
+
+    try {
+      setIsOwnerTransferSubmitting(true);
+      setErrorMessage('');
+
+      const response = await fetch('/api/manage/team/members/owner-transfer', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          siteName,
+          targetMemberId: ownerTransferTargetId,
+        }),
+      });
+      const result = (await response.json()) as { ok?: boolean; error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error || '운영자 교체 요청에 실패했습니다.');
+      }
+
+      setCanRequestOwnerTransfer(false);
+      setHasPendingOwnerTransfer(true);
+      setIsOwnerTransferOpen(false);
+      setOwnerTransferTargetId('');
+    } catch (unknownError) {
+      if (unknownError instanceof Error) {
+        setErrorMessage(unknownError.message || '운영자 교체 요청에 실패했습니다.');
+      } else {
+        setErrorMessage('운영자 교체 요청에 실패했습니다.');
+      }
+    } finally {
+      setIsOwnerTransferSubmitting(false);
+    }
   }
 
   async function handleSubmitRole() {
@@ -575,8 +645,16 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          {hasPendingOwnerTransfer ? (
+            <div className={`paper paper-error ${styles.paper}`}>운영자 교체 응답 전</div>
+          ) : null}
 
           <Stack direction="row" justifyContent="flex-end" gap={1} sx={{ p: 2, pb: 0 }}>
+            {canRequestOwnerTransfer ? (
+              <button type="button" className="button small action" onClick={handleOpenOwnerTransfer}>
+                운영자 교체
+              </button>
+            ) : null}
             <button
               type="button"
               className="button small cancel"
@@ -652,6 +730,132 @@ export default function Opt() {
               </TableBody>
             </Table>
           </div>
+
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isOwnerTransferOpen}
+              onClose={handleCloseOwnerTransfer}
+              className="VhiDrawer-bottom"
+            >
+              <h2>운영자 교체</h2>
+              <button
+                className="close-button"
+                onClick={handleCloseOwnerTransfer}
+                aria-label="운영자 교체 창 닫기"
+                disabled={isOwnerTransferSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <Stack gap={2} sx={{ pt: 1 }}>
+                <Typography variant="body2">
+                  선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
+                </Typography>
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">새 운영자</Typography>
+                  <TextField
+                    select
+                    value={ownerTransferTargetId}
+                    onChange={(event) => setOwnerTransferTargetId(event.target.value)}
+                    size="small"
+                    fullWidth
+                  >
+                    {sortedTeams
+                      .filter(
+                        (team) => !team.is_self && !team.is_block && team.role !== 'owner' && team.role !== 'observer',
+                      )
+                      .map((team) => (
+                        <MenuItem key={team.id} value={team.id}>
+                          {team.name}
+                        </MenuItem>
+                      ))}
+                  </TextField>
+                </Stack>
+                <Stack direction="column" gap={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={handleCloseOwnerTransfer}
+                    disabled={isOwnerTransferSubmitting}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className="button medium submit"
+                    onClick={handleSubmitOwnerTransfer}
+                    disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
+                  >
+                    요청하기
+                  </button>
+                </Stack>
+              </Stack>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isOwnerTransferOpen}
+              onClose={handleCloseOwnerTransfer}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
+              <DialogTitle>운영자 교체</DialogTitle>
+              <button
+                className="close-button"
+                onClick={handleCloseOwnerTransfer}
+                aria-label="운영자 교체 창 닫기"
+                disabled={isOwnerTransferSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <Stack gap={2}>
+                  <Typography variant="body2">
+                    선택한 팀원이 수락하면 운영자 권한이 이전되고 현재 운영자는 일반 팀원이 됩니다.
+                  </Typography>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">새 운영자</Typography>
+                    <TextField
+                      select
+                      value={ownerTransferTargetId}
+                      onChange={(event) => setOwnerTransferTargetId(event.target.value)}
+                      size="small"
+                      fullWidth
+                    >
+                      {sortedTeams
+                        .filter(
+                          (team) =>
+                            !team.is_self && !team.is_block && team.role !== 'owner' && team.role !== 'observer',
+                        )
+                        .map((team) => (
+                          <MenuItem key={team.id} value={team.id}>
+                            {team.name}
+                          </MenuItem>
+                        ))}
+                    </TextField>
+                  </Stack>
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={handleCloseOwnerTransfer}
+                  disabled={isOwnerTransferSubmitting}
+                >
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={handleSubmitOwnerTransfer}
+                  disabled={!ownerTransferTargetId || isOwnerTransferSubmitting}
+                >
+                  요청하기
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
 
           {isMobile ? (
             <Drawer

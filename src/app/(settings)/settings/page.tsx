@@ -4,6 +4,7 @@ import Headline from './headline';
 import PasswordChange from './passwordChange';
 import TotpSetup from './totpSetup';
 import LogoutActions from './logoutActions';
+import WithdrawalActions from './withdrawalActions';
 import PasswordSetup from './passwordSetup';
 import LoginMethod from './loginMethod';
 import UserInfo from './info';
@@ -27,6 +28,7 @@ export default async function Page() {
             <LoginMethod />
             <TotpSetup />
             <LogoutActions />
+            <WithdrawalActions />
           </Grid>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import ThemeProviderClient from './themeProvider';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
+import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
 import './globals.sass';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -76,7 +77,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <AuthStateProvider>
             <AppRouterCacheProvider>
               <ThemeProviderClient>
-                <TotpGuard>{children}</TotpGuard>
+                <WithdrawalGuard>
+                  <TotpGuard>{children}</TotpGuard>
+                </WithdrawalGuard>
               </ThemeProviderClient>
             </AppRouterCacheProvider>
           </AuthStateProvider>

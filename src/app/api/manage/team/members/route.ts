@@ -4,6 +4,8 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
+const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
+
 type RequestBody = {
   siteName: string | null;
   teamId: string | null;
@@ -90,6 +92,52 @@ export async function GET(request: Request) {
       return Response.json({ error: '팀블로그 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const currentTeam = (team.data ?? []).find((item) => item.id === access.session.rhizomeStigmaId);
+    const isOwner = currentTeam?.role === 'owner';
+    const [pendingOwnerTransfer, firstOwnerTransfer, acceptedOwnerTransfer] = isOwner
+      ? await Promise.all([
+          access.supabaseAdmin
+            .from('owner_transfers')
+            .select('id')
+            .eq('site_id', access.siteId)
+            .eq('status', 'pending')
+            .limit(1)
+            .maybeSingle(),
+          access.supabaseAdmin
+            .from('owner_transfers')
+            .select('previous_owner_id')
+            .eq('site_id', access.siteId)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle(),
+          access.supabaseAdmin
+            .from('owner_transfers')
+            .select('responded_at')
+            .eq('site_id', access.siteId)
+            .eq('target_member_id', currentTeam.id)
+            .eq('status', 'accepted')
+            .order('responded_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ])
+      : [
+          { data: null, error: null },
+          { data: null, error: null },
+          { data: null, error: null },
+        ];
+
+    if (pendingOwnerTransfer.error || firstOwnerTransfer.error || acceptedOwnerTransfer.error) {
+      return Response.json({ error: '운영자 교체 가능 여부를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const isOriginalOwner = !firstOwnerTransfer.data || firstOwnerTransfer.data.previous_owner_id === currentTeam?.user_id;
+    const availableAt = !isOriginalOwner && acceptedOwnerTransfer.data?.responded_at
+      ? new Date(
+          new Date(acceptedOwnerTransfer.data.responded_at as string).getTime() + OWNER_TRANSFER_WAIT_MS,
+        ).toISOString()
+      : null;
+    const hasPendingOwnerTransfer = Boolean(pendingOwnerTransfer.data);
+
     const stigmaIdList = Array.from(new Set((team.data ?? []).map((item) => item.user_id).filter(Boolean)));
 
     const stigmas = stigmaIdList.length
@@ -112,6 +160,14 @@ export async function GET(request: Request) {
     );
 
     return Response.json({
+      ownerTransfer: {
+        canRequest:
+          isOwner &&
+          !hasPendingOwnerTransfer &&
+          (!availableAt || new Date(availableAt).getTime() <= Date.now()),
+        hasPendingRequest: hasPendingOwnerTransfer,
+        availableAt,
+      },
       teams: (team.data ?? []).map((item) => {
         const stigma = stigmaMap.get(item.user_id as string);
 
