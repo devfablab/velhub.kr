@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/session';
+import { normalizeText } from '@/lib/utils';
 
 type CommunityManageRole =
   | 'owner'
@@ -30,8 +31,38 @@ type RhizomeStateResult = {
     is_blocked?: boolean | null;
     is_closed?: boolean | null;
     site_type?: string | null;
+    join_accept_status?: string | null;
+    join_accept_start_day?: string | null;
+    join_accept_end_day?: string | null;
   };
 };
+
+function isJoinClosed(
+  joinAcceptStatus: string | null | undefined,
+  joinAcceptStartDay: string | null | undefined,
+  joinAcceptEndDay: string | null | undefined,
+) {
+  const normalizedStatus = normalizeText(joinAcceptStatus);
+
+  if (normalizedStatus === 'disabled') {
+    return true;
+  }
+
+  if (normalizedStatus === 'period') {
+    const startDay = normalizeText(joinAcceptStartDay);
+    const endDay = normalizeText(joinAcceptEndDay);
+    const today = new Date();
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    if (startDay && endDay && todayValue >= startDay && todayValue <= endDay) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 function isManagePath(pathname: string) {
   if (pathname.startsWith('/api')) {
@@ -611,10 +642,6 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    if (!isLoggedIn) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
     const rhizomeState = await fetchRhizomeState(request, siteName);
 
     if (!rhizomeState.response.ok || !rhizomeState.result?.siteInfo) {
@@ -623,6 +650,22 @@ export async function proxy(request: NextRequest) {
 
     if (rhizomeState.result.siteInfo.site_type !== 'community') {
       return redirectWithPath(request, `/${siteName}`);
+    }
+
+    if (isJoinPath(pathname)) {
+      if (
+        isJoinClosed(
+          rhizomeState.result.siteInfo.join_accept_status,
+          rhizomeState.result.siteInfo.join_accept_start_day,
+          rhizomeState.result.siteInfo.join_accept_end_day,
+        )
+      ) {
+        return redirectWithPath(request, `/${siteName}`);
+      }
+    }
+
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
     }
 
     const member = await fetchSessionRoute(request, '/api/session/member', {

@@ -139,6 +139,24 @@ export async function GET(request: Request) {
       }
     }
 
+    let joinAcceptStatus: string | null = null;
+    let joinAcceptStartDay: string | null = null;
+    let joinAcceptEndDay: string | null = null;
+
+    if (rhizome.data.site_type === 'community') {
+      const community = await supabaseAdmin
+        .from('communities')
+        .select('join_accept_status, join_accept_start_day, join_accept_end_day')
+        .eq('site_id', rhizome.data.id)
+        .maybeSingle();
+
+      if (!community.error && community.data) {
+        joinAcceptStatus = community.data.join_accept_status;
+        joinAcceptStartDay = community.data.join_accept_start_day;
+        joinAcceptEndDay = community.data.join_accept_end_day;
+      }
+    }
+
     return Response.json({
       siteInfo: {
         site_key: rhizome.data.site_key,
@@ -149,6 +167,9 @@ export async function GET(request: Request) {
         is_blocked: rhizome.data.is_blocked,
         is_closed: rhizome.data.is_closed,
         purchase_available: purchaseAvailable,
+        join_accept_status: joinAcceptStatus,
+        join_accept_start_day: joinAcceptStartDay,
+        join_accept_end_day: joinAcceptEndDay,
       },
       menus: boardRows.map((board) => ({
         id: board.id,

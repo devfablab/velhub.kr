@@ -13,6 +13,7 @@ import styles from '@/app/aside.module.sass';
 type UserInfoStatus =
   | 'guest'
   | 'not_joined'
+  | 'not_recruiting'
   | 'invite_only'
   | 'pending_join'
   | 'pending_invite'
@@ -275,6 +276,14 @@ export default function UserInfo() {
         <Anchor href={`/${siteName}/join`} className="button">
           가입하러 가기
         </Anchor>
+      </div>
+    );
+  }
+
+  if (status === 'not_recruiting') {
+    return (
+      <div className={`${styles['user-status']} paper`}>
+        <p>현재 회원모집 기간이 아닙니다</p>
       </div>
     );
   }

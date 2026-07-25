@@ -138,6 +138,37 @@ function getManagerIconUrl(value: string | null | undefined) {
   return publicUrl.data.publicUrl ?? '';
 }
 
+function isCommunityJoinClosed(communityData?: {
+  join_accept_status?: string | null;
+  join_accept_start_day?: string | null;
+  join_accept_end_day?: string | null;
+} | null) {
+  if (!communityData) {
+    return false;
+  }
+
+  const joinAcceptStatus = normalizeText(communityData.join_accept_status) || 'enabled';
+
+  if (joinAcceptStatus === 'disabled') {
+    return true;
+  }
+
+  if (joinAcceptStatus === 'period') {
+    const startDay = normalizeText(communityData.join_accept_start_day);
+    const endDay = normalizeText(communityData.join_accept_end_day);
+    const today = new Date();
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    if (startDay && endDay && todayValue >= startDay && todayValue <= endDay) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function isCommunityManagerRole(value: string): value is CommunityManagerRole {
   return COMMUNITY_MANAGER_ROLE_PRIORITY.includes(value as CommunityManagerRole);
 }
@@ -265,6 +296,24 @@ async function getSiteUserInfo(siteName: string) {
   });
 
   if (!session.authUserId) {
+    if (site.siteType === 'community') {
+      const communityResult = await supabaseAdmin
+        .from('communities')
+        .select('join_accept_status, join_accept_start_day, join_accept_end_day')
+        .eq('site_id', site.id)
+        .maybeSingle();
+
+      if (!communityResult.error && isCommunityJoinClosed(communityResult.data)) {
+        return {
+          ok: true,
+          status: 200,
+          data: {
+            status: 'not_recruiting',
+          },
+        } as const;
+      }
+    }
+
     return {
       ok: true,
       status: 200,
@@ -365,7 +414,7 @@ async function getSiteUserInfo(siteName: string) {
     if (site.siteType === 'community') {
       const communityResult = await supabaseAdmin
         .from('communities')
-        .select('join_type')
+        .select('join_type, join_accept_status, join_accept_start_day, join_accept_end_day')
         .eq('site_id', site.id)
         .maybeSingle();
 
@@ -383,6 +432,16 @@ async function getSiteUserInfo(siteName: string) {
           status: 200,
           data: {
             status: 'invite_only',
+          },
+        } as const;
+      }
+
+      if (isCommunityJoinClosed(communityResult.data)) {
+        return {
+          ok: true,
+          status: 200,
+          data: {
+            status: 'not_recruiting',
           },
         } as const;
       }
@@ -445,6 +504,24 @@ async function getSiteUserInfo(siteName: string) {
   }
 
   if (membership.withdrawn_at) {
+    if (site.siteType === 'community') {
+      const communityResult = await supabaseAdmin
+        .from('communities')
+        .select('join_accept_status, join_accept_start_day, join_accept_end_day')
+        .eq('site_id', site.id)
+        .maybeSingle();
+
+      if (!communityResult.error && isCommunityJoinClosed(communityResult.data)) {
+        return {
+          ok: true,
+          status: 200,
+          data: {
+            status: 'not_recruiting',
+          },
+        } as const;
+      }
+    }
+
     return {
       ok: true,
       status: 200,
