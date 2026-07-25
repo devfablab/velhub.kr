@@ -696,10 +696,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     }
 
     if (menu === 'team') {
-      return [
-        { href: `/${siteName}/manage/team/members`, label: '팀원 목록' },
-        { href: `/${siteName}/manage/team/info`, label: '팀원 정보', startsWith: true },
-      ];
+      return [{ href: `/${siteName}/manage/team/members`, label: '팀원 목록' }];
     }
 
     if (menu === 'stats') {

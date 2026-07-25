@@ -338,10 +338,10 @@ a, button, select, input
       max-width: ds.rem(170)
 
       @include ds.mq(minSmall)
-        max-width: ds.rem(270)
+        max-width: ds.rem(170)
 
     > p
-      @include ds.fw(neo, 800)
+      @include ds.fw(pre, 600)
       font-size: ds.rem(14)
 
       @include ds.mq(minSmall)
@@ -858,8 +858,11 @@ main
     color: ds.$hex-bright
 
   h2
-    @include ds.fw(neo, 700)
-    font-size: ds.rem(24)
+    @include ds.fw(neo, 800)
+    font-size: ds.rem(20)
+
+    @include ds.mq(minSmall)
+      font-size: ds.rem(24)
 
 .container
   display: flex
