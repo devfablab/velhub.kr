@@ -10,12 +10,18 @@ import PendingInvite from './pendingInvite';
 import PendingJoin from './pendingJoin';
 import MemberStatusSites, { type MemberStatusSiteRow } from './shared/memberStatusSites';
 import styles from '@/app/hub.module.sass';
+import { Metadata } from 'next';
 
 type AccountRow = {
   email: string | null;
   user_name: string | null;
   bio: string | null;
   avatar: string | null;
+};
+
+export const metadata: Metadata = {
+  title: '마이허브 - 데브허브',
+  description: '마이허브',
 };
 
 function decryptValue(value: string | null | undefined) {

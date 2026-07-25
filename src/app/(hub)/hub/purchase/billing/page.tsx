@@ -1,9 +1,15 @@
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Content from '../tab';
 import Container from '../../menu';
 import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
 import styles from '@/app/hub.module.sass';
+
+export const metadata: Metadata = {
+  title: '구입내역 - 마이허브 - 데브허브',
+  description: '구입내역',
+};
 
 type BillingPayment = {
   id: string;

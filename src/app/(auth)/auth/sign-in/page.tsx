@@ -3,7 +3,7 @@ import Container from '../container';
 import EmailSignIn from './email';
 
 export const metadata: Metadata = {
-  title: '로그인',
+  title: '로그인 - 데브허브',
   description: '로그인 페이지',
 };
 

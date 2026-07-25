@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import Content from './tab';
 import Container from '../menu';
@@ -15,6 +16,11 @@ type UserResponse = {
   joinSites: JoinSiteRow[];
   statusSites: MemberStatusSiteRow[];
   error?: string;
+};
+
+export const metadata: Metadata = {
+  title: '블로그 허브 - 마이허브 - 데브허브',
+  description: '블로그 허브',
 };
 
 async function getUserJoinSites() {

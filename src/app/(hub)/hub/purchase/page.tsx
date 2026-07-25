@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Anchor from '@/components/Anchor';
@@ -10,6 +11,11 @@ type PurchaseSummaryItem = {
   paymentType: string;
   label: string;
   amount: number;
+};
+
+export const metadata: Metadata = {
+  title: '구입내역 - 마이허브 - 데브허브',
+  description: '구입내역',
 };
 
 export type BillingMethod = {
