@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-
 import Opt from './opt';
 
 type RouteContext = {

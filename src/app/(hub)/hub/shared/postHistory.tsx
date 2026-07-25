@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
-
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 

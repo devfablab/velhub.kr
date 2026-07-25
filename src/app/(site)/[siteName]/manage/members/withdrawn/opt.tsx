@@ -1,9 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
-
 import { useParams } from 'next/navigation';
-
 import {
   Checkbox,
   Dialog,
@@ -23,7 +21,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';

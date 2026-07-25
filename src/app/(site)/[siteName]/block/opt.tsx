@@ -1,18 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
 import { useParams } from 'next/navigation';
-
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-
 import { Stack, Typography } from '@mui/material';
-
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import { formatDate, normalizeText } from '@/lib/utils';
-
 import Container from '../menu';
-
 import styles from '@/app/board.module.sass';
 
 type UserInfoResponse = {
