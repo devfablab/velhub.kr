@@ -464,7 +464,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
         {isMobile ? (
           <>
             {pageBack ? (
-              <div className={styles.location}>
+              <div className={styles.location} style={{ marginLeft: '-12px' }}>
                 <IconButton href={pageBack} aria-label="이전화면으로 이동">
                   <ArrowBackIosNewRoundedIcon />
                 </IconButton>
@@ -479,7 +479,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                     <img src={profileLogoUrl} alt={siteLabel} aria-hidden="true" />
                   ) : (
                     <>
-                      {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl || null} alt="" size={52} /> : null}
+                      {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl || null} alt="" size={18} /> : null}
                       {siteLabel}
                     </>
                   )}

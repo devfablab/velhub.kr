@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type JSX, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useMediaQuery, useTheme } from '@mui/material';
+import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
@@ -627,6 +627,12 @@ export default function Opt({ isCommunity }: Props) {
               </button>
             ) : null}
           </nav>
+        ) : null}
+        {isMobile ? (
+          <Stack direction="row" gap={1} justifyContent="space-between" sx={{ pt: 3 }}>
+            <SiteInfo />
+            <UserInfo />
+          </Stack>
         ) : null}
       </div>
       <FabNew />

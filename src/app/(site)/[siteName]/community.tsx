@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { useMediaQuery, useTheme } from '@mui/material';
+import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
 import SiteInfo from '@/components/service/community/SiteInfo';
@@ -205,8 +206,9 @@ export default function Community({ siteName, homeBoards }: Props) {
 
         <div className={`content ${styles.content} ${styles['home-content']} `}>
           {homeBoards.length === 0 ? (
-            <div className="paper">
-              <p>매니저가 홈을 꾸미기 전입니다. 😭</p>
+            <div className="paper pape-error">
+              <WarningAmberRoundedIcon />
+              <span>매니저가 홈을 꾸미기 전입니다</span>
             </div>
           ) : (
             homeBoards.map((homeBoard) => (
@@ -231,6 +233,12 @@ export default function Community({ siteName, homeBoards }: Props) {
               </div>
             ))
           )}
+          {isMobile ? (
+            <Stack direction="row" gap={1} justifyContent="space-between">
+              <SiteInfo />
+              <UserInfo />
+            </Stack>
+          ) : null}
         </div>
 
         {!isMobile ? (

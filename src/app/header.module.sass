@@ -540,10 +540,22 @@ header.header
     span
       @include ds.screen-reader-only
 
+      & ~ strong
+        max-width: calc(100vw - ds.rem(270))
+
     strong
+      display: inline-flex
+      align-items: center
+      gap: ds.rem(5)
       @include ds.fw(neo, 800)
       font-size: ds.rem(18)
       line-height: 1
+      max-width: calc(100vw - ds.rem(240))
+      overflow: hidden
+      letter-spacing: -.05em
+
+      > img
+        max-width: calc(100vw - ds.rem(240))
 
 .VhiDrawer
   div[tabindex="-1"]
@@ -697,6 +709,9 @@ header.header
           line-height: 1.2
           @include ds.ellipsis
           color: ds.$hex-secondary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-light
 
         em
           @include ds.fw(neo, 800)
