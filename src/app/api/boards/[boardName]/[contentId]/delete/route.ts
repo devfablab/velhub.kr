@@ -3,6 +3,7 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE, ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
 
 type RouteContext = {
   params: Promise<{
@@ -218,6 +219,28 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (post.data.is_closed !== true) {
       return Response.json({ error: '삭제된 게시물이 아닙니다.' }, { status: 400 });
+    }
+
+    if (
+      post.data.closed_message === ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE ||
+      post.data.closed_message === '데브허브 탈퇴 신청으로 인한 삭제'
+    ) {
+      return Response.json({ error: '탈퇴 신청 및 탈퇴 완료된 회원의 게시물은 복구할 수 없습니다.' }, { status: 400 });
+    }
+
+    if (post.data.user_id) {
+      const authorStigmaResult = await supabaseAdmin
+        .from('stigmas')
+        .select('withdrawal_status')
+        .eq('id', post.data.user_id)
+        .maybeSingle();
+
+      if (
+        authorStigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
+        authorStigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED
+      ) {
+        return Response.json({ error: '탈퇴 신청 및 탈퇴 완료된 회원의 게시물은 복구할 수 없습니다.' }, { status: 400 });
+      }
     }
 
     const isSelfDeleted = post.data.closed_by === post.data.user_id;

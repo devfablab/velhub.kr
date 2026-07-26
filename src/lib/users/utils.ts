@@ -2,6 +2,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
 
 type SiteType = 'community';
 
@@ -59,6 +60,7 @@ type StigmaRow = {
   payment_email: string | null;
   avatar: string | null;
   user_name?: string | null;
+  withdrawal_status?: string | null;
 };
 
 type LevelRow = {
@@ -142,14 +144,6 @@ export async function getPublicMembersAccess(siteName: string) {
     } as const;
   }
 
-  // if (site.visibility_type !== 'public' || site.is_shutdown === true) {
-  //   return {
-  //     ok: false,
-  //     status: 403,
-  //     error: '조회할 수 없습니다.',
-  //   } as const;
-  // }
-
   return {
     ok: true,
     supabaseAdmin,
@@ -214,7 +208,8 @@ export async function getPublicActiveMemberships(siteId: string) {
     .eq('is_approval', true)
     .eq('is_block', false)
     .is('kicked_at', null)
-    .is('banned_at', null);
+    .is('banned_at', null)
+    .is('withdrawn_at', null);
 
   if (membershipResult.error) {
     return {
@@ -223,9 +218,29 @@ export async function getPublicActiveMemberships(siteId: string) {
     } as const;
   }
 
+  const memberships = (membershipResult.data ?? []) as MembershipRow[];
+  const userIds = [...new Set(memberships.map((m) => m.user_id))];
+
+  if (userIds.length === 0) {
+    return { ok: true, memberships: [] as MembershipRow[] } as const;
+  }
+
+  const stigmaResult = await getStigmasByIds(userIds);
+  if (!stigmaResult.ok) {
+    return { ok: false, error: stigmaResult.error } as const;
+  }
+
+  const withdrawnStigmaIds = new Set(
+    stigmaResult.stigmas
+      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING || s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
+      .map((s) => s.id),
+  );
+
+  const activeMemberships = memberships.filter((m) => !withdrawnStigmaIds.has(m.user_id));
+
   return {
     ok: true,
-    memberships: (membershipResult.data ?? []) as MembershipRow[],
+    memberships: activeMemberships,
   } as const;
 }
 
@@ -239,6 +254,7 @@ export async function getBlockedMemberships(siteId: string) {
     .eq('is_block', true)
     .is('kicked_at', null)
     .is('banned_at', null)
+    .is('withdrawn_at', null)
     .order('blocked_at', { ascending: false });
 
   if (membershipResult.error) {
@@ -248,9 +264,29 @@ export async function getBlockedMemberships(siteId: string) {
     } as const;
   }
 
+  const memberships = (membershipResult.data ?? []) as MembershipRow[];
+  const userIds = [...new Set(memberships.map((m) => m.user_id))];
+
+  if (userIds.length === 0) {
+    return { ok: true, memberships: [] as MembershipRow[] } as const;
+  }
+
+  const stigmaResult = await getStigmasByIds(userIds);
+  if (!stigmaResult.ok) {
+    return { ok: false, error: stigmaResult.error } as const;
+  }
+
+  const completedStigmaIds = new Set(
+    stigmaResult.stigmas
+      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
+      .map((s) => s.id),
+  );
+
+  const activeMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
+
   return {
     ok: true,
-    memberships: (membershipResult.data ?? []) as MembershipRow[],
+    memberships: activeMemberships,
   } as const;
 }
 
@@ -271,9 +307,29 @@ export async function getWithdrawnMemberships(siteId: string) {
     } as const;
   }
 
+  const memberships = (membershipResult.data ?? []) as MembershipRow[];
+  const userIds = [...new Set(memberships.map((m) => m.user_id))];
+
+  if (userIds.length === 0) {
+    return { ok: true, memberships: [] as MembershipRow[] } as const;
+  }
+
+  const stigmaResult = await getStigmasByIds(userIds);
+  if (!stigmaResult.ok) {
+    return { ok: false, error: stigmaResult.error } as const;
+  }
+
+  const completedStigmaIds = new Set(
+    stigmaResult.stigmas
+      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
+      .map((s) => s.id),
+  );
+
+  const filteredMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
+
   return {
     ok: true,
-    memberships: (membershipResult.data ?? []) as MembershipRow[],
+    memberships: filteredMemberships,
   } as const;
 }
 
@@ -294,9 +350,29 @@ export async function getBannedMemberships(siteId: string) {
     } as const;
   }
 
+  const memberships = (membershipResult.data ?? []) as MembershipRow[];
+  const userIds = [...new Set(memberships.map((m) => m.user_id))];
+
+  if (userIds.length === 0) {
+    return { ok: true, memberships: [] as MembershipRow[] } as const;
+  }
+
+  const stigmaResult = await getStigmasByIds(userIds);
+  if (!stigmaResult.ok) {
+    return { ok: false, error: stigmaResult.error } as const;
+  }
+
+  const completedStigmaIds = new Set(
+    stigmaResult.stigmas
+      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
+      .map((s) => s.id),
+  );
+
+  const activeMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
+
   return {
     ok: true,
-    memberships: (membershipResult.data ?? []) as MembershipRow[],
+    memberships: activeMemberships,
   } as const;
 }
 
@@ -312,6 +388,7 @@ export async function getPublicActiveMembership(siteId: string, userId: string) 
     .eq('is_block', false)
     .is('kicked_at', null)
     .is('banned_at', null)
+    .is('withdrawn_at', null)
     .maybeSingle();
 
   if (membershipResult.error) {
@@ -327,6 +404,23 @@ export async function getPublicActiveMembership(siteId: string, userId: string) 
       ok: false,
       status: 404,
       error: '멤버 정보를 찾을 수 없습니다.',
+    } as const;
+  }
+
+  const stigmaResult = await supabaseAdmin
+    .from('stigmas')
+    .select('withdrawal_status')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (
+    stigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
+    stigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED
+  ) {
+    return {
+      ok: false,
+      status: 404,
+      error: '탈퇴한 회원입니다.',
     } as const;
   }
 
@@ -407,7 +501,7 @@ export async function getStigmasByIds(userIds: string[]) {
 
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
-    .select('id, email, payment_email, avatar, user_name')
+    .select('id, email, payment_email, avatar, user_name, withdrawal_status')
     .in('id', userIds);
 
   if (stigmaResult.error) {

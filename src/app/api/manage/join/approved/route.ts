@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
+import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
 
 type RequestBody = {
   siteName?: string | null;
@@ -30,6 +31,7 @@ type StigmaRow = {
   id: string;
   email: string | null;
   user_name: string | null;
+  withdrawal_status?: string | null;
 };
 
 type LevelRow = {
@@ -295,6 +297,7 @@ export async function GET(request: Request) {
       .select('id, user_id, nickname, created_at, answered_questions, rejected_at, rejected_by, is_re_approval')
       .eq('site_id', access.rhizome.id)
       .eq('is_approval', false)
+      .is('withdrawn_at', null)
       .order('created_at', { ascending: false });
 
     if (membershipResult.error) {
@@ -310,7 +313,7 @@ export async function GET(request: Request) {
 
     const stigmaResult =
       stigmaIds.length > 0
-        ? await access.supabaseAdmin.from('stigmas').select('id, email, user_name').in('id', stigmaIds)
+        ? await access.supabaseAdmin.from('stigmas').select('id, email, user_name, withdrawal_status').in('id', stigmaIds)
         : { data: [], error: null };
 
     if (stigmaResult.error) {
@@ -319,9 +322,18 @@ export async function GET(request: Request) {
 
     const stigmaMap = new Map(((stigmaResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.id, stigma]));
 
+    const activeMemberships = memberships.filter((membership) => {
+      const stigma = stigmaMap.get(membership.user_id);
+      if (!stigma) return false;
+      if (stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING || stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED) {
+        return false;
+      }
+      return true;
+    });
+
     return Response.json({
       ok: true,
-      users: memberships.map((membership) => {
+      users: activeMemberships.map((membership) => {
         const stigma = stigmaMap.get(membership.user_id) ?? null;
         const rejectedByStigma = membership.rejected_by ? (stigmaMap.get(membership.rejected_by) ?? null) : null;
 

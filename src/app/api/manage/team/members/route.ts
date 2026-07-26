@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
 
 const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -86,6 +87,7 @@ export async function GET(request: Request) {
       .from('rhizome_stigmas')
       .select('id, user_id, nickname, role, is_block, blocked_at, block_count, approval_at')
       .eq('site_id', access.siteId)
+      .is('withdrawn_at', null)
       .order('approval_at', { ascending: true });
 
     if (team.error) {
@@ -141,7 +143,10 @@ export async function GET(request: Request) {
     const stigmaIdList = Array.from(new Set((team.data ?? []).map((item) => item.user_id).filter(Boolean)));
 
     const stigmas = stigmaIdList.length
-      ? await access.supabaseAdmin.from('stigmas').select('id, user_id, email, user_name').in('id', stigmaIdList)
+      ? await access.supabaseAdmin
+          .from('stigmas')
+          .select('id, user_id, email, user_name, withdrawal_status')
+          .in('id', stigmaIdList)
       : { data: [], error: null };
 
     if (stigmas.error) {
@@ -155,9 +160,19 @@ export async function GET(request: Request) {
           authUserId: item.user_id as string | null,
           email: item.email ? decrypt(item.email as string) : '',
           userName: (item.user_name as string | null) ?? '',
+          withdrawalStatus: item.withdrawal_status as string | null,
         },
       ]),
     );
+
+    const activeTeams = (team.data ?? []).filter((item) => {
+      const stigma = stigmaMap.get(item.user_id as string);
+      if (!stigma) return false;
+      if (stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.PENDING || stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED) {
+        return false;
+      }
+      return true;
+    });
 
     return Response.json({
       ownerTransfer: {
@@ -168,7 +183,7 @@ export async function GET(request: Request) {
         hasPendingRequest: hasPendingOwnerTransfer,
         availableAt,
       },
-      teams: (team.data ?? []).map((item) => {
+      teams: activeTeams.map((item) => {
         const stigma = stigmaMap.get(item.user_id as string);
 
         return {

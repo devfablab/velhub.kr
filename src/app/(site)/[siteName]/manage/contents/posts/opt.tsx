@@ -979,13 +979,19 @@ export default function Opt() {
                       </TableCell>
                       <TableCell align="right">
                         {post.is_closed ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => handleOpenRestoreDialog(post)}
-                          >
-                            복구
-                          </button>
+                          post.closed_message === '데브허브 탈퇴 신청으로 인한 삭제' ? (
+                            <button type="button" className="button small action" disabled>
+                              복구 불가
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => handleOpenRestoreDialog(post)}
+                            >
+                              복구
+                            </button>
+                          )
                         ) : (
                           <button
                             type="button"
