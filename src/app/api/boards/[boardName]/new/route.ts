@@ -1035,7 +1035,7 @@ export async function POST(request: Request, context: RouteContext) {
         siteId: rhizomeData.id,
         boardId: board.data.id,
         postId: insertPost.data.id,
-        authorUserId: session.authUserId,
+        authorUserId: session.stigmaId,
       });
     }
 
@@ -1046,7 +1046,7 @@ export async function POST(request: Request, context: RouteContext) {
         boardId: board.data.id,
         seriesId,
         postId: insertPost.data.id,
-        authorUserId: session.authUserId,
+        authorUserId: session.stigmaId,
       });
     }
 
