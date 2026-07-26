@@ -963,7 +963,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: target.data.siteId,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요한 서비스입니다.' }, { status: 401 });
     }
 
@@ -1009,7 +1009,7 @@ export async function POST(request: Request, context: RouteContext) {
         site_id: target.data.siteId,
         board_id: target.data.boardId,
         post_id: target.data.postId,
-        user_id: session.authUserId,
+        user_id: session.stigmaId,
         parent_id: resolvedParentId,
         reply_to_id: replyToId,
         content,

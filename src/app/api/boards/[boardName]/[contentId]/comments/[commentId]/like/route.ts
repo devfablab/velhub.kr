@@ -112,7 +112,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: targetComment.siteId,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -121,11 +121,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const userStigmaId = session.stigmaId;
 
     const existingResult = await supabaseAdmin
       .from('comment_likes')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', userStigmaId)
       .eq('site_id', targetComment.siteId)
       .eq('board_id', targetComment.boardId)
       .eq('post_id', targetComment.postId)
@@ -142,7 +143,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const deleteResult = await supabaseAdmin
         .from('comment_likes')
         .delete()
-        .eq('user_id', session.authUserId)
+        .eq('user_id', userStigmaId)
         .eq('site_id', targetComment.siteId)
         .eq('board_id', targetComment.boardId)
         .eq('post_id', targetComment.postId)
@@ -153,7 +154,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     } else {
       const insertResult = await supabaseAdmin.from('comment_likes').insert({
-        user_id: session.authUserId,
+        user_id: userStigmaId,
         site_id: targetComment.siteId,
         board_id: targetComment.boardId,
         post_id: targetComment.postId,

@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     const page = await supabaseAdmin.rpc('create_page_with_board', {
       p_site_id: rhizome.data.id,
-      p_user_id: session.authUserId,
+      p_user_id: session.stigmaId,
       p_slug: slug,
       p_subject: subject,
       p_summary: summary || null,

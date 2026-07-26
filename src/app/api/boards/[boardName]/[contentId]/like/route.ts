@@ -95,7 +95,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: targetPost.siteId,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -104,11 +104,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const userStigmaId = session.stigmaId;
 
     const existingResult = await supabaseAdmin
       .from('post_likes')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', userStigmaId)
       .eq('site_id', targetPost.siteId)
       .eq('board_id', targetPost.boardId)
       .eq('post_id', targetPost.postId)
@@ -124,7 +125,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const deleteResult = await supabaseAdmin
         .from('post_likes')
         .delete()
-        .eq('user_id', session.authUserId)
+        .eq('user_id', userStigmaId)
         .eq('site_id', targetPost.siteId)
         .eq('board_id', targetPost.boardId)
         .eq('post_id', targetPost.postId);
@@ -134,7 +135,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     } else {
       const insertResult = await supabaseAdmin.from('post_likes').insert({
-        user_id: session.authUserId,
+        user_id: userStigmaId,
         site_id: targetPost.siteId,
         board_id: targetPost.boardId,
         post_id: targetPost.postId,
@@ -144,10 +145,10 @@ export async function PATCH(request: Request, context: RouteContext) {
         return NextResponse.json({ error: '좋아요를 저장하지 못했습니다.' }, { status: 500 });
       }
 
-      if (targetPost.postAuthorId !== session.authUserId) {
+      if (targetPost.postAuthorId !== userStigmaId) {
         const notificationResult = await supabaseAdmin.from('notifications').insert({
           user_id: targetPost.postAuthorId,
-          send_user_id: session.authUserId,
+          send_user_id: userStigmaId,
           send_site_id: targetPost.siteId,
           send_board_id: targetPost.boardId,
           send_series_id: null,

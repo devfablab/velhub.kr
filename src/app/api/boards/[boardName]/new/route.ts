@@ -647,11 +647,11 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: rhizomeData.id,
     });
 
-    if (!session.authUserId || (session.case !== 'staff' && session.case !== 'member')) {
+    if (!session.authUserId || !session.stigmaId || (session.case !== 'staff' && session.case !== 'member')) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    const poll = normalizePoll(requestBody.poll, session.authUserId);
+    const poll = normalizePoll(requestBody.poll, session.stigmaId);
 
     if (poll === 'INVALID_ANONYMITY') {
       return Response.json({ error: '투표 방식을 선택해주세요.' }, { status: 400 });
@@ -975,7 +975,7 @@ export async function POST(request: Request, context: RouteContext) {
         poll: finalPoll,
         hashtags,
         idx: nextIdx,
-        user_id: session.authUserId,
+        user_id: session.stigmaId,
         site_id: rhizomeData.id,
         board_id: board.data.id,
         is_closed: false,
@@ -1000,17 +1000,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (action === 'publish' || action === 'unknown') {
-      const stigmaResult = await supabaseAdmin
-        .from('stigmas')
-        .select('id')
-        .eq('user_id', session.authUserId)
-        .maybeSingle();
-
-      if (stigmaResult.error) {
-        console.error(stigmaResult.error);
-      }
-
-      const stigmaId = stigmaResult.data?.id;
+      const stigmaId = session.stigmaId;
 
       if (stigmaId) {
         const rhizomeStigmaResult = await supabaseAdmin

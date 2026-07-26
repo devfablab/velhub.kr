@@ -15,24 +15,6 @@ export async function deleteMemberContents({
   managerStigmaId,
   closedMessage,
 }: CloseMemberContentsParams) {
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('id, user_id')
-    .in('id', [memberStigmaId, managerStigmaId]);
-
-  if (stigmaResult.error) {
-    throw new Error('사용자 정보를 불러오지 못했습니다.');
-  }
-
-  const userIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-  const memberUserId = userIdMap.get(memberStigmaId);
-  const managerUserId = userIdMap.get(managerStigmaId);
-
-  if (!memberUserId || !managerUserId) {
-    throw new Error('사용자 정보를 불러오지 못했습니다.');
-  }
-
   const closedAt = new Date().toISOString();
 
   const [postsResult, commentsResult] = await Promise.all([
@@ -41,25 +23,24 @@ export async function deleteMemberContents({
       .update({
         is_closed: true,
         is_locked: true,
-        closed_by: managerUserId,
+        closed_by: managerStigmaId,
         closed_at: closedAt,
         closed_message: closedMessage,
       })
       .eq('site_id', siteId)
-      .eq('user_id', memberUserId),
+      .eq('user_id', memberStigmaId),
     supabaseAdmin
       .from('post_comments')
       .update({
         is_deleted: true,
         is_locked: true,
-        deleted_by: managerUserId,
+        deleted_by: managerStigmaId,
         deleted_at: closedAt,
         deleted_message: closedMessage,
       })
       .eq('site_id', siteId)
-      .eq('user_id', memberUserId),
+      .eq('user_id', memberStigmaId),
   ]);
-  console.log('postsResult: ', postsResult);
 
   if (postsResult.error) {
     throw new Error('작성한 글 삭제 처리에 실패했습니다.');

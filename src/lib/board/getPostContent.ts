@@ -21,6 +21,7 @@ type GetPostContentOptions = {
   countView: boolean;
   sessionCase: SessionCase;
   authUserId: string | null;
+  stigmaId?: string | null;
   requestCookie: string | null;
 };
 
@@ -101,7 +102,7 @@ async function getUserDisplayName(siteId: string, userId: string | null | undefi
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .select('user_name')
-    .eq('user_id', normalizedUserId)
+    .eq('id', normalizedUserId)
     .maybeSingle();
 
   if (!stigmaResult.error && stigmaResult.data?.user_name) {
@@ -125,6 +126,7 @@ export async function getPostContent({
   countView,
   sessionCase,
   authUserId,
+  stigmaId = null,
   requestCookie,
 }: GetPostContentOptions) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -151,7 +153,9 @@ export async function getPostContent({
     throw new BoardContentError('글을 찾을 수 없습니다.', 404);
   }
 
-  const isAuthor = Boolean(authUserId) && post.data.user_id === authUserId;
+  const isAuthor =
+    (Boolean(authUserId) && post.data.user_id === authUserId) ||
+    (Boolean(stigmaId) && post.data.user_id === stigmaId);
 
   if (post.data.published_status === 'draft' && !isAuthor) {
     throw new BoardContentError('접근 권한이 없습니다.', 403);

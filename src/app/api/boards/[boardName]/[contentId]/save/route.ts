@@ -90,7 +90,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: targetPost.siteId,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -99,11 +99,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const userStigmaId = session.stigmaId;
 
     const existingResult = await supabaseAdmin
       .from('post_saves')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', userStigmaId)
       .eq('site_id', targetPost.siteId)
       .eq('board_id', targetPost.boardId)
       .eq('post_id', targetPost.postId)
@@ -119,7 +120,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       const deleteResult = await supabaseAdmin
         .from('post_saves')
         .delete()
-        .eq('user_id', session.authUserId)
+        .eq('user_id', userStigmaId)
         .eq('site_id', targetPost.siteId)
         .eq('board_id', targetPost.boardId)
         .eq('post_id', targetPost.postId);
@@ -135,7 +136,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const insertResult = await supabaseAdmin.from('post_saves').insert({
-      user_id: session.authUserId,
+      user_id: userStigmaId,
       site_id: targetPost.siteId,
       board_id: targetPost.boardId,
       post_id: targetPost.postId,

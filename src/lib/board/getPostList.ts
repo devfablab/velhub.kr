@@ -394,7 +394,7 @@ export async function getPostList({
 
   const stigmaResult =
     userIds.length > 0
-      ? await supabaseAdmin.from('stigmas').select('user_id, user_name').in('user_id', userIds)
+      ? await supabaseAdmin.from('stigmas').select('id, user_name').in('id', userIds)
       : { data: [], error: null };
 
   if (stigmaResult.error) {
@@ -452,7 +452,7 @@ export async function getPostList({
         decryptedUserName = '';
       }
 
-      return [row.user_id as string, decryptedUserName];
+      return [row.id as string, decryptedUserName];
     }),
   );
 

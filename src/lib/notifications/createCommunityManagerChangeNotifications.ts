@@ -12,11 +12,6 @@ type MembershipRow = {
   user_id: string;
 };
 
-type StigmaRow = {
-  id: string;
-  user_id: string;
-};
-
 function getNotificationType(action: ManagerChangeAction) {
   return action === 'assigned'
     ? NOTIFICATION_TYPE.COMMUNITY_MANAGER_DELEGATED
@@ -82,48 +77,24 @@ export async function createCommunityManagerChangeNotifications({
   const ownerMemberships = (ownerMembershipResult.data ?? []) as MembershipRow[];
   const managerMemberships = (managerMembershipResult.data ?? []) as MembershipRow[];
   const targetMembership = targetMembershipResult.data as MembershipRow;
+
   const recipientStigmaIds = [
-    ...new Set([...ownerMemberships, ...managerMemberships].map((membership) => membership.user_id)),
-  ];
-  const stigmaIds = [...new Set([...recipientStigmaIds, targetMembership.user_id])];
-
-  if (stigmaIds.length === 0) {
-    return;
-  }
-
-  const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-  if (stigmaResult.error) {
-    console.error(stigmaResult.error);
-    return;
-  }
-
-  const particleIdMap = new Map(
-    ((stigmaResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.id, stigma.user_id]),
-  );
-  const targetUserId = particleIdMap.get(targetMembership.user_id);
-
-  if (!targetUserId) {
-    return;
-  }
-
-  const recipientUserIds = [
     ...new Set(
-      recipientStigmaIds
-        .map((stigmaId) => particleIdMap.get(stigmaId))
-        .filter((userId): userId is string => Boolean(userId) && userId !== access.actor.authUserId),
+      [...ownerMemberships, ...managerMemberships]
+        .map((membership) => membership.user_id)
+        .filter((stigmaId): stigmaId is string => Boolean(stigmaId) && stigmaId !== access.actor.stigmaId),
     ),
   ];
 
-  if (recipientUserIds.length === 0) {
+  if (recipientStigmaIds.length === 0) {
     return;
   }
 
   const notificationResult = await access.supabaseAdmin.from('notifications').insert(
-    recipientUserIds.map((userId) => ({
-      user_id: userId,
-      send_user_id: access.actor.authUserId,
-      target_id: targetUserId,
+    recipientStigmaIds.map((stigmaId) => ({
+      user_id: stigmaId,
+      send_user_id: access.actor.stigmaId,
+      target_id: targetMembership.user_id,
       send_site_id: access.rhizome.id,
       send_board_id: null,
       send_series_id: null,
