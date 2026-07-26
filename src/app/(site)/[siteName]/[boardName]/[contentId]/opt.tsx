@@ -895,36 +895,40 @@ export default function Opt({ isCommunity }: Props) {
             anchor="bottom"
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
-            className="VhiDrawer-bottom"
+            className="VhiDrawer-bottom VhiDrawer-bottom-service"
           >
             <h2>글 삭제</h2>
             <button type="button" className="close-button" onClick={() => setDeleteDialogOpen(false)}>
               <CloseRoundedIcon />
             </button>
-            <Stack gap={3}>
+            <div className="VhiDrawer-bottom-content">
               <p>
                 정말로 글을 삭제하시겠습니까?
                 <br />
                 삭제된 글은 매니저만 복구할 수 있습니다.
               </p>
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
-              <Stack direction="row" spacing={1.5}>
-                <button type="button" className="button medium cancel" onClick={() => setDeleteDialogOpen(false)}>
-                  취소
-                </button>
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void deletePost()}
-                  disabled={isDeletingPost}
-                >
-                  삭제
-                </button>
-              </Stack>
-            </Stack>
+            </div>
+            <div className="drawer-dialog-actions">
+              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={() => void deletePost()}
+                disabled={isDeletingPost}
+                className="delete-button"
+              >
+                삭제
+              </button>
+            </div>
           </Drawer>
         ) : (
-          <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} className="VhiDialog">
+          <Dialog
+            open={deleteDialogOpen}
+            onClose={() => setDeleteDialogOpen(false)}
+            className="vh-dialog vh-alert-dialog"
+          >
             <DialogTitle>글 삭제</DialogTitle>
             <button className="close-button" onClick={() => setDeleteDialogOpen(false)}>
               <CloseRoundedIcon />
@@ -938,14 +942,14 @@ export default function Opt({ isCommunity }: Props) {
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
             </DialogContent>
             <DialogActions>
-              <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>
+              <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
                 취소
               </button>
               <button
                 type="button"
-                className="button medium submit"
                 onClick={() => void deletePost()}
                 disabled={isDeletingPost}
+                className="delete-button"
               >
                 삭제
               </button>

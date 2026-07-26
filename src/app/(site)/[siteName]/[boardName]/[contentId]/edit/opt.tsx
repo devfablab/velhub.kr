@@ -2383,15 +2383,10 @@ export default function Opt({ isCommunity }: Props) {
                 ) : null}
               </div>
               <div className="drawer-dialog-actions">
-                <button type="button" onClick={closeGalleryDialog} className="button medium cancel">
+                <button type="button" onClick={closeGalleryDialog} className="cancel-button">
                   취소
                 </button>
-                <button
-                  type="button"
-                  onClick={applyGalleryDialogImages}
-                  disabled={galleryDialogImageCount === 0}
-                  className="button medium submit"
-                >
+                <button type="button" onClick={applyGalleryDialogImages} disabled={galleryDialogImageCount === 0}>
                   이미지 업로드
                 </button>
               </div>

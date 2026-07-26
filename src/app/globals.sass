@@ -610,6 +610,18 @@ a, button, select, input
       color: ds.$hex-warning
 
 .vh-dialog
+  .close-button
+    background-color: transparent
+    position: absolute
+    top: ds.rem(20)
+    right: ds.rem(17)
+    width: ds.rem(20)
+    height: ds.rem(20)
+
+    svg
+      width: ds.rem(20)
+      height: ds.rem(20)
+
   .MuiDialog-paper
     border-radius: ds.rem(17)
     box-shadow: 0 ds.rem(2) ds.rem(27) 0 rgba(ds.$rgb-primary,.07)
@@ -686,6 +698,9 @@ a, button, select, input
           &.cancel-button
             background-color: transparent!important
             color: rgba(ds.$rgb-primary, .5)!important
+
+            html[data-theme="yellow-dark"] &
+              color: rgba(ds.$rgb-bright, .5)!important
 
           &.warning-button
             background-color: ds.$hex-warning
@@ -1272,6 +1287,42 @@ html[data-site-type='blog']
       flex-direction: column
       gap: ds.rem(12)
       padding-top: ds.rem(32)
+
+      button
+        display: flex
+        justify-content: center
+        align-items: center
+        padding: 0 ds.rem(17)
+        width: 100%
+        height: ds.rem(37)
+        border-radius: ds.rem(7)
+        @include ds.fw(pre, 700)
+        font-size: ds.rem(16)
+        background-color: ds.$hex-accent
+        white-space: nowrap
+        color: ds.$hex-bright
+        background-color: rgba(ds.$rgb-accent, .1)
+        color: ds.$hex-accent
+
+        &.delete-button
+          background-color: transparent!important
+          border: 1px solid ds.$hex-warning!important
+          color: ds.$hex-warning!important
+
+        &.cancel-button
+          background-color: transparent!important
+          color: rgba(ds.$rgb-primary, .5)!important
+
+          html[data-theme="yellow-dark"] &
+            color: rgba(ds.$rgb-bright, .5)!important
+
+        &.warning-button
+          background-color: ds.$hex-warning
+          color: ds.$hex-white
+
+        &:disabled
+          color: rgba(ds.$rgb-accent, .5)!important
+          background-color: rgba(ds.$rgb-accent, .1)!important
 
       .complex-button
         display: flex
