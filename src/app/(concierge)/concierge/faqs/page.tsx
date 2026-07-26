@@ -1,3 +1,5 @@
+import { Metadata } from 'next';
+import { originTitle, Seo } from '@/lib/seo';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Container from '../menu';
 import Faqs, { type FaqCategory } from './opt';
@@ -18,6 +20,18 @@ type FaqRow = {
   answer: string;
   sort_order: number | string;
 };
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `자주하는 질문 - ${originTitle}`,
+    pageTitle: `자주하는 질문`,
+    pageDescription: `데브허브 고객센터`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/concierge/faqs',
+  });
+}
 
 export default async function Page() {
   const supabaseAdmin = getSupabaseAdmin();

@@ -4,6 +4,20 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/concierge.module.sass';
+import { Metadata } from 'next';
+import { originTitle, Seo } from '@/lib/seo';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `권리보호센터 - ${originTitle}`,
+    pageTitle: `권리보호센터`,
+    pageDescription: `데브허브 고객센터`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/concierge/rights',
+  });
+}
 
 export default function Page() {
   const id = React.useId();

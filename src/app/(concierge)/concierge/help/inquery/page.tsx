@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Container from '../../menu';
@@ -9,6 +10,11 @@ type SettlementResponse = {
   settlement: {
     settlement_type: 'individual' | 'business';
   } | null;
+};
+
+export const metadata: Metadata = {
+  title: '신고하기 - 신고센터  - 데브허브',
+  description: '신고센터에서 신고하기',
 };
 
 async function getBaseUrl() {

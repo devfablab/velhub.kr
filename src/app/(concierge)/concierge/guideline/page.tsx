@@ -1,4 +1,5 @@
 import React from 'react';
+import { Metadata } from 'next';
 import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -6,8 +7,21 @@ import {
   isGuidelineReportCategory,
   type ReportTargetType,
 } from '@/lib/reports/guidelines';
+import { originTitle, Seo } from '@/lib/seo';
 import Container from '../menu';
 import styles from '@/app/concierge.module.sass';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `가이드라인 - ${originTitle}`,
+    pageTitle: `가이드라인`,
+    pageDescription: `데브허브 고객센터`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/concierge/guideline',
+  });
+}
 
 const targetSections: { targetType: ReportTargetType; label: string }[] = [
   { targetType: 'site', label: '사이트' },

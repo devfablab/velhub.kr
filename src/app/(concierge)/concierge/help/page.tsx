@@ -1,9 +1,23 @@
 import React from 'react';
+import { Metadata } from 'next';
 import { Accordion, AccordionActions, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/concierge.module.sass';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `신고센터 - ${originTitle}`,
+    pageTitle: `신고센터`,
+    pageDescription: `데브허브 고객센터`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/concierge/help',
+  });
+}
 
 export default function Page() {
   const id = React.useId();

@@ -1,8 +1,14 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import verifySession from '@/lib/session/verifySession';
 import Container from '../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
+
+export const metadata: Metadata = {
+  title: '신고내역보기',
+  description: '신고내역보기',
+};
 
 export default async function Page() {
   const session = await verifySession({ siteId: null });

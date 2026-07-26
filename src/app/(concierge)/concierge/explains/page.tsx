@@ -1,8 +1,14 @@
+import { Metadata } from 'next';
 import { Stack } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
+
+export const metadata: Metadata = {
+  title: '소명센터 - 데브허브',
+  description: '소명센터',
+};
 
 export default function Page() {
   return (

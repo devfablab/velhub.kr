@@ -487,6 +487,7 @@ export default function Opt() {
   const isDialog = useMediaQuery(theme.breakpoints.up('lg'));
   const [items, setItems] = useState<AppealCenterItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoginRequired, setIsLoginRequired] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -506,10 +507,18 @@ export default function Opt() {
   const loadItems = useCallback(async () => {
     try {
       setLoading(true);
+      setIsLoginRequired(false);
       const response = await fetch('/api/concierge/appeals', { credentials: 'include' });
       const result = (await response
         .json()
         .catch(() => ({ error: '소명 내역 응답을 확인하지 못했습니다.' }))) as ItemsResponse;
+
+      if (response.status === 401) {
+        setItems([]);
+        setErrorMessage('');
+        setIsLoginRequired(true);
+        return;
+      }
 
       if (!response.ok || result.error) {
         setItems([]);
@@ -518,9 +527,11 @@ export default function Opt() {
       }
 
       setItems(result.items ?? []);
+      setIsLoginRequired(false);
       setErrorMessage('');
     } catch {
       setItems([]);
+      setIsLoginRequired(false);
       setErrorMessage('소명 내역을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
@@ -738,17 +749,22 @@ export default function Opt() {
 
   return (
     <Stack gap={2}>
-      {errorMessage ? (
-        <p className="alert warning">
+      {isLoginRequired ? (
+        <div className="paper page-info">
+          <WarningAmberRoundedIcon />
+          <span>로그인이 필요합니다.</span>
+        </div>
+      ) : errorMessage ? (
+        <div className="paper page-error">
           <WarningAmberRoundedIcon />
           <span>{errorMessage}</span>
-        </p>
+        </div>
       ) : null}
       {loading ? (
         <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
           <LoadingIndicator />
         </Stack>
-      ) : items.length === 0 ? (
+      ) : isLoginRequired ? null : items.length === 0 ? (
         <div className="paper page-info">
           <InfoOutlineRoundedIcon />
           <p>소명내역이 없습니다.</p>

@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { Stack, Typography } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
@@ -5,9 +6,22 @@ import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
 import Container from './menu';
 import styles from '@/app/concierge.module.sass';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const timestamp = Date.now();
+
+  return Seo({
+    pageTitles: `컨시어지 - ${originTitle}`,
+    pageTitle: `컨시어지`,
+    pageDescription: `데브허브 고객센터`,
+    pageImg: `https://velhub.xyz/og-etc.webp?ts=${timestamp}`,
+    pagePath: '/concierge',
+  });
+}
 
 const guideItems = [
   {
