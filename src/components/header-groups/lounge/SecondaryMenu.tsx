@@ -19,7 +19,7 @@ const secondaryMenus = [
     label: '커뮤니티 허브',
   },
   {
-    href: '/home/moments',
+    href: '/lounge/moments',
     label: '모먼트',
   },
 ];

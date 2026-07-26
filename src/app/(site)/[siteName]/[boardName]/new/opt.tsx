@@ -3089,8 +3089,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
               onClose={accessDialog.onCancel}
               className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['poll-dialog']}`}
             >
-              <h2>투표 설정</h2>
-              <button className="close-button" onClick={accessDialog.onCancel} aria-label="투표 설정 닫기">
+              <h2>{accessDialog.title}</h2>
+              <button className="close-button" onClick={accessDialog.onCancel}>
                 <CloseRoundedIcon />
               </button>
               <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{accessDialog.content}</p>
@@ -3109,6 +3109,9 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
           ) : (
             <Dialog open={accessDialog.open} onClose={accessDialog.onCancel} className="vh-dialog">
               <DialogTitle>{accessDialog.title}</DialogTitle>
+              <button className="close-button" onClick={accessDialog.onCancel}>
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <DialogContentText sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                   {accessDialog.content}

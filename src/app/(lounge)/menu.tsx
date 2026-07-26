@@ -320,7 +320,7 @@ export default function Container({ children }: ContainerProps) {
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="moments" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/home/moments">
+                  <Anchor href="/lounge/moments">
                     <SellOutlinedIcon fontSize="small" />
                     <span>모먼트</span>
                   </Anchor>

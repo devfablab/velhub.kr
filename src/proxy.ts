@@ -114,6 +114,7 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'new' ||
     firstSegment === 'concierge' ||
     firstSegment === 'hub' ||
+    firstSegment === 'lounge' ||
     firstSegment === 'dummy.webp' ||
     firstSegment === 'together.webp' ||
     firstSegment === 'favicon'
