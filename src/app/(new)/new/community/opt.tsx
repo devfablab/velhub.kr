@@ -128,7 +128,7 @@ export default function Opt() {
   const [siteKeyStatusMessage, setSiteKeyStatusMessage] = useState('');
   const [siteLabel, setSiteLabel] = useState('');
   const [siteLabelStatusMessage, setSiteLabelStatusMessage] = useState('');
-  const [profilePicture, setProfilePicture] = useState('');
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [summary, setSummary] = useState('');
   const [visibilityType, setVisibilityType] = useState<VisibilityType>('public');
@@ -141,7 +141,6 @@ export default function Opt() {
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
   const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -229,6 +228,14 @@ export default function Opt() {
   useEffect(() => {
     document.documentElement.setAttribute('data-colorset', themeType);
   }, [themeType]);
+
+  useEffect(() => {
+    return () => {
+      if (profilePictureUrl) {
+        URL.revokeObjectURL(profilePictureUrl);
+      }
+    };
+  }, [profilePictureUrl]);
 
   function openErrorDialog(message: string) {
     setErrorMessage(message);
@@ -421,88 +428,49 @@ export default function Opt() {
     }
   }
 
-  async function handleProfilePictureFileChange(event: InputChangeEvent) {
+  function handleProfilePictureFileChange(event: InputChangeEvent) {
     const inputElement = event.currentTarget;
     const selectedFile = inputElement.files?.[0];
 
-    if (!selectedFile || isUploadingAvatar) {
+    if (!selectedFile) {
       inputElement.value = '';
+      return;
+    }
+
+    const extension = selectedFile.name.split('.').pop()?.toLowerCase();
+    const isAllowedFile =
+      (extension === 'png' && selectedFile.type === 'image/png') ||
+      ((extension === 'jpg' || extension === 'jpeg') && selectedFile.type === 'image/jpeg') ||
+      (extension === 'webp' && selectedFile.type === 'image/webp') ||
+      (extension === 'svg' && selectedFile.type === 'image/svg+xml');
+
+    inputElement.value = '';
+
+    if (!isAllowedFile) {
+      openErrorDialog('PNG, JPG, WEBP, SVG 파일만 선택할 수 있습니다.');
       return;
     }
 
     setErrorMessage('');
-    setSuccessMessage('');
-    setIsUploadingAvatar(true);
-
-    try {
-      if (profilePicture) {
-        const deleteResponse = await fetch('/api/attachment/delete/avatar/site', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            path: profilePicture,
-          }),
-        });
-
-        const deleteResult = await deleteResponse.json();
-
-        if (!deleteResponse.ok) {
-          throw new Error(deleteResult.error ?? '기존 프로필 이미지 삭제에 실패했습니다.');
-        }
-      }
-
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      const addResponse = await fetch('/api/attachment/add/avatar/site', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      const addResult = await addResponse.json();
-
-      if (!addResponse.ok) {
-        throw new Error(addResult.error ?? '프로필 이미지 업로드에 실패했습니다.');
-      }
-
-      const nextProfilePicture =
-        typeof addResult.avatar === 'string' && addResult.avatar.trim() ? addResult.avatar.trim() : '';
-
-      if (!nextProfilePicture) {
-        throw new Error('업로드된 프로필 이미지 정보를 확인하지 못했습니다.');
-      }
-
-      setProfilePicture(nextProfilePicture);
-      setProfilePictureUrl(typeof addResult.url === 'string' ? addResult.url : '');
-      setSuccessMessage('프로필 이미지가 업로드되었습니다.');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '프로필 이미지 업로드에 실패했습니다.');
-      } else {
-        openErrorDialog('프로필 이미지 업로드에 실패했습니다.');
-      }
-    } finally {
-      setIsUploadingAvatar(false);
-      inputElement.value = '';
-    }
+    setProfilePictureFile(selectedFile);
+    setProfilePictureUrl(URL.createObjectURL(selectedFile));
+    setSuccessMessage('프로필 이미지를 선택했습니다.');
   }
 
   function handleClickProfilePictureUpload() {
-    if (isUploadingAvatar) {
-      return;
-    }
-
     fileInputReference.current?.click();
+  }
+
+  function handleDeleteProfilePicture() {
+    setProfilePictureFile(null);
+    setProfilePictureUrl('');
+    setSuccessMessage('프로필 이미지를 삭제했습니다.');
   }
 
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans) {
+    if (isSubmitting || isCheckingSiteKey || isLoadingPlans) {
       return;
     }
 
@@ -533,25 +501,26 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
+      const formData = new FormData();
+      formData.append('siteKey', normalizedSiteKey);
+      formData.append('siteLabel', trimmedSiteLabel);
+      formData.append('summary', trimmedSummary);
+      formData.append('visibilityType', visibilityType);
+      formData.append('themeType', themeType);
+      formData.append('planType', planType);
+      formData.append('isShutdown', 'true');
+      formData.append('joinType', joinType);
+      formData.append('policyPost', policyPost);
+      formData.append('policyComment', policyComment);
+
+      if (profilePictureFile) {
+        formData.append('profilePicture', profilePictureFile);
+      }
+
       const response = await fetch('/api/site/community/new', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         credentials: 'include',
-        body: JSON.stringify({
-          siteKey: normalizedSiteKey,
-          siteLabel: trimmedSiteLabel,
-          profilePicture,
-          summary: trimmedSummary,
-          visibilityType,
-          themeType,
-          planType,
-          isShutdown: true,
-          joinType,
-          policyPost,
-          policyComment,
-        }),
+        body: formData,
       });
 
       const result = await response.json();
@@ -673,9 +642,15 @@ export default function Opt() {
             <VisuallyHiddenInput
               ref={fileInputReference}
               type="file"
-              accept="image/*"
+              accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
               onChange={handleProfilePictureFileChange}
             />
+
+            {profilePictureFile ? (
+              <button type="button" className="button small danger" onClick={handleDeleteProfilePicture}>
+                이미지 삭제
+              </button>
+            ) : null}
           </Stack>
 
           <Stack gap={1}>
@@ -857,7 +832,7 @@ export default function Opt() {
         <button
           type="submit"
           className="button medium submit"
-          disabled={isSubmitting || isCheckingSiteKey || isUploadingAvatar || isLoadingPlans}
+          disabled={isSubmitting || isCheckingSiteKey || isLoadingPlans}
         >
           커뮤니티 개설
         </button>

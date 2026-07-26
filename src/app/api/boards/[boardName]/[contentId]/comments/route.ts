@@ -973,7 +973,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await assertCommunityCommentWritePolicy({
       siteId: target.data.siteId,
-      stigmaId: session.stigmaId,
+      authUserId: session.authUserId,
       sessionCase: session.case,
     });
 
@@ -1042,7 +1042,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await increaseCommunityCommentCount({
       siteId: target.data.siteId,
-      stigmaId: session.stigmaId,
+      authUserId: session.authUserId,
     });
 
     if (target.data.postAuthorId !== session.stigmaId) {
@@ -1079,7 +1079,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: target.data.siteId,
       boardId: target.data.boardId,
       postAuthorId: target.data.postAuthorId,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       canManageComment,
       pollChoiceMap: new Map(),
       commentLikeCountMap: new Map(),

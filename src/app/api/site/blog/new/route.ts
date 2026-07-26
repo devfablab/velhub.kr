@@ -1,3 +1,6 @@
+import crypto from 'crypto';
+import path from 'path';
+import sharp from 'sharp';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -6,17 +9,7 @@ type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
-type RequestBody = {
-  siteKey: string | null;
-  siteLabel: string | null;
-  profilePicture: string | null;
-  summary: string | null;
-  visibilityType: VisibilityType | null;
-  themeType: ThemeType | null;
-  planType: string | null;
-  isShutdown: boolean | null;
-  commentProvider: CommentProvider | null;
-};
+const AVATAR_BUCKET = 'avatar';
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -43,6 +36,55 @@ function isThemeType(value: unknown): value is ThemeType {
 
 function isCommentProvider(value: unknown): value is CommentProvider {
   return value === 'none' || value === 'giscus' || value === 'disqus' || value === 'velhub';
+}
+
+function getFormText(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === 'string' ? value : '';
+}
+
+function isAllowedProfilePictureFile(file: File) {
+  const extension = path.extname(file.name).toLowerCase();
+
+  return (
+    (extension === '.png' && file.type === 'image/png') ||
+    ((extension === '.jpg' || extension === '.jpeg') && file.type === 'image/jpeg') ||
+    (extension === '.webp' && file.type === 'image/webp') ||
+    (extension === '.svg' && file.type === 'image/svg+xml')
+  );
+}
+
+async function uploadProfilePicture({
+  supabaseAdmin,
+  authUserId,
+  file,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  authUserId: string;
+  file: File;
+}) {
+  if (!isAllowedProfilePictureFile(file)) {
+    throw new Error('PNG, JPG, WEBP, SVG 파일만 업로드할 수 있습니다.');
+  }
+
+  const inputBuffer = Buffer.from(await file.arrayBuffer());
+  const extension = path.extname(file.name).toLowerCase();
+  const shouldConvertToWebp = extension === '.png' || extension === '.jpg' || extension === '.jpeg';
+  const uploadBuffer = shouldConvertToWebp ? await sharp(inputBuffer).webp({ lossless: true }).toBuffer() : inputBuffer;
+  const contentType = shouldConvertToWebp ? 'image/webp' : file.type;
+  const outputExtension = shouldConvertToWebp ? '.webp' : extension;
+  const storagePath = `site/${authUserId}/${crypto.randomUUID()}${outputExtension}`;
+
+  const uploadResult = await supabaseAdmin.storage.from(AVATAR_BUCKET).upload(storagePath, uploadBuffer, {
+    contentType,
+    upsert: false,
+  });
+
+  if (uploadResult.error) {
+    throw new Error(uploadResult.error.message || '프로필 이미지 업로드에 실패했습니다.');
+  }
+
+  return storagePath;
 }
 
 async function resolveUniqueSiteLabel(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, baseLabel: string) {
@@ -93,18 +135,21 @@ export async function POST(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const requestBody = (await request.json()) as RequestBody;
+    const formData = await request.formData();
+    const profilePictureFile = formData.get('profilePicture');
 
-    const normalizedSiteKey = normalizeSiteKey(requestBody.siteKey?.trim() ?? '');
-    const trimmedSiteLabel = normalizeText(requestBody.siteLabel);
-    const trimmedProfilePicture = requestBody.profilePicture?.trim() ?? '';
-    const trimmedSummary = requestBody.summary?.trim() ?? '';
-    const trimmedPlanType = requestBody.planType?.trim() ?? '';
+    const normalizedSiteKey = normalizeSiteKey(getFormText(formData, 'siteKey').trim());
+    const trimmedSiteLabel = normalizeText(getFormText(formData, 'siteLabel'));
+    const trimmedSummary = getFormText(formData, 'summary').trim();
+    const trimmedPlanType = getFormText(formData, 'planType').trim();
+    const visibilityValue = getFormText(formData, 'visibilityType');
+    const themeValue = getFormText(formData, 'themeType');
+    const commentProviderValue = getFormText(formData, 'commentProvider');
 
-    const visibilityType = isVisibilityType(requestBody.visibilityType) ? requestBody.visibilityType : 'public';
-    const themeType = isThemeType(requestBody.themeType) ? requestBody.themeType : 'default';
-    const isShutdown = typeof requestBody.isShutdown === 'boolean' ? requestBody.isShutdown : true;
-    const commentProvider = isCommentProvider(requestBody.commentProvider) ? requestBody.commentProvider : 'disqus';
+    const visibilityType = isVisibilityType(visibilityValue) ? visibilityValue : 'public';
+    const themeType = isThemeType(themeValue) ? themeValue : 'default';
+    const isShutdown = getFormText(formData, 'isShutdown') === 'true';
+    const commentProvider = isCommentProvider(commentProviderValue) ? commentProviderValue : 'disqus';
 
     if (!normalizedSiteKey) {
       return Response.json({ error: '사이트 식별자를 입력해주세요.' }, { status: 400 });
@@ -217,12 +262,29 @@ export async function POST(request: Request) {
       finalSiteLabel = await resolveUniqueSiteLabel(supabaseAdmin, normalizedSiteKey);
     }
 
+    let uploadedProfilePicture = '';
+
+    if (profilePictureFile instanceof File) {
+      try {
+        uploadedProfilePicture = await uploadProfilePicture({
+          supabaseAdmin,
+          authUserId: sessionClaims.userId,
+          file: profilePictureFile,
+        });
+      } catch (uploadError) {
+        return Response.json(
+          { error: uploadError instanceof Error ? uploadError.message : '프로필 이미지 업로드에 실패했습니다.' },
+          { status: 400 },
+        );
+      }
+    }
+
     const rpcResult = await supabaseAdmin.rpc('create_blog_site', {
       p_owner_particle_id: particlesResult.data.id,
       p_owner_stigma_id: stigmaResult.data.id,
       p_site_key: normalizedSiteKey,
       p_site_label: finalSiteLabel,
-      p_profile_picture: trimmedProfilePicture,
+      p_profile_picture: uploadedProfilePicture,
       p_summary: trimmedSummary,
       p_visibility_type: visibilityType,
       p_theme_type: themeType,
@@ -232,6 +294,10 @@ export async function POST(request: Request) {
     });
 
     if (rpcResult.error || !rpcResult.data) {
+      if (uploadedProfilePicture) {
+        await supabaseAdmin.storage.from(AVATAR_BUCKET).remove([uploadedProfilePicture]);
+      }
+
       console.error('create_blog_site rpc 실패:', rpcResult.error);
       return Response.json({ error: rpcResult.error?.message || '블로그 개설에 실패했습니다.' }, { status: 500 });
     }
