@@ -41,6 +41,12 @@ type MembershipRow = {
 
 type CommunityManageRoleRow = {
   role: string | null;
+  board_id: string | null;
+};
+
+type BoardRow = {
+  id: string;
+  board_label: string | null;
 };
 
 type CheckinRow = {
@@ -109,6 +115,58 @@ function decryptValue(value: string | null | undefined) {
 
 function isSiteType(value: string | null | undefined): value is SiteType {
   return value === 'blog' || value === 'community';
+}
+
+function getCommunityRolePriority(role: string) {
+  if (role === 'community-manager') {
+    return 4;
+  }
+
+  if (role === 'board-manager') {
+    return 3;
+  }
+
+  if (role === 'board-general-manager') {
+    return 2;
+  }
+
+  if (role === 'board-assistant-manager') {
+    return 1;
+  }
+
+  return 0;
+}
+
+function getSiteRoleLabel(role: string, boardLabel: string | null = null) {
+  if (role === 'owner') {
+    return '운영자';
+  }
+
+  if (role === 'manager') {
+    return '매니저';
+  }
+
+  if (role === 'community-manager') {
+    return '커뮤니티 매니저';
+  }
+
+  if (role === 'board-manager') {
+    return '전체 게시판 매니저';
+  }
+
+  if (role === 'board-general-manager') {
+    return boardLabel ? `${boardLabel} 게시판 총괄 매니저` : '개별 게시판 총괄 매니저';
+  }
+
+  if (role === 'board-assistant-manager') {
+    return boardLabel ? `${boardLabel} 게시판 부 매니저` : '개별 게시판 부 매니저';
+  }
+
+  if (role === 'member') {
+    return '멤버';
+  }
+
+  return role;
 }
 
 function getForwardedIp(value: string | null) {
@@ -329,6 +387,7 @@ export async function GET(request: Request) {
         avatar: null,
         globalRole: null,
         siteRole: null,
+        siteRoleLabels: [],
         nickname: null,
         isApproval: null,
         invite: false,
@@ -398,17 +457,20 @@ export async function GET(request: Request) {
     }
 
     let siteRole: string | null = null;
+    let siteRoleLabels: string[] = [];
 
     if (membership?.is_approval === true) {
       const membershipRole = normalizeText(membership.role).toLowerCase();
 
       if (siteType === 'blog') {
         siteRole = membershipRole || null;
+        siteRoleLabels = siteRole ? [getSiteRoleLabel(siteRole)] : [];
       }
 
       if (siteType === 'community') {
         if (membershipRole === 'owner') {
           siteRole = 'owner';
+          siteRoleLabels = [getSiteRoleLabel(siteRole)];
         } else if (session.rhizomeStigmaId) {
           const communityResult = await supabaseAdmin
             .from('communities')
@@ -422,18 +484,49 @@ export async function GET(request: Request) {
 
           const communityManageRoleResult = await supabaseAdmin
             .from('community_manage_role')
-            .select('role')
+            .select('role, board_id')
             .eq('community_id', communityResult.data.id)
-            .eq('manager_id', session.rhizomeStigmaId)
-            .maybeSingle();
+            .eq('manager_id', session.rhizomeStigmaId);
 
           if (communityManageRoleResult.error) {
             return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
           }
 
-          const communityManageRole = (communityManageRoleResult.data ?? null) as CommunityManageRoleRow | null;
+          const communityManageRoles = (communityManageRoleResult.data ?? []) as CommunityManageRoleRow[];
+          const boardIds = communityManageRoles
+            .map((communityManageRole) => normalizeText(communityManageRole.board_id))
+            .filter(Boolean);
+          const boardsResult = boardIds.length
+            ? await supabaseAdmin
+                .from('boards')
+                .select('id, board_label')
+                .eq('site_id', site.id)
+                .in('id', boardIds)
+            : { data: [], error: null };
 
-          siteRole = normalizeText(communityManageRole?.role).toLowerCase() || 'member';
+          if (boardsResult.error) {
+            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+          }
+
+          const boardLabelMap = new Map(
+            ((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, normalizeText(board.board_label)]),
+          );
+          const roles = communityManageRoles
+            .map((communityManageRole) => ({
+              role: normalizeText(communityManageRole.role).toLowerCase(),
+              boardLabel: boardLabelMap.get(normalizeText(communityManageRole.board_id)) || null,
+            }))
+            .filter(({ role }) => Boolean(role));
+          const primaryRole = [...roles].sort(
+            (firstRole, secondRole) => getCommunityRolePriority(secondRole.role) - getCommunityRolePriority(firstRole.role),
+          )[0];
+
+          siteRole = primaryRole?.role || 'member';
+          siteRoleLabels = roles.map(({ role, boardLabel }) => getSiteRoleLabel(role, boardLabel));
+
+          if (siteRoleLabels.length === 0) {
+            siteRoleLabels = [getSiteRoleLabel(siteRole)];
+          }
         }
       }
     }
@@ -506,6 +599,7 @@ export async function GET(request: Request) {
       avatar: processAvatar(account.avatar),
       globalRole: normalizeText(account.role).toLowerCase() || null,
       siteRole,
+      siteRoleLabels,
       nickname: membership?.is_approval === true ? normalizeText(membership.nickname) || null : null,
       isApproval,
       invite: Boolean(inviteHref),

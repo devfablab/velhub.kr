@@ -72,6 +72,7 @@ type HeaderResponse = {
   avatar: string | null;
   globalRole: string | null;
   siteRole: string | null;
+  siteRoleLabels: string[];
   nickname: string | null;
   isApproval: boolean | null;
   invite: boolean;
@@ -86,6 +87,7 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   siteRole: string | null;
+  siteRoleLabels: string[];
   nickname: string | null;
   isApproval: boolean | null;
   invite: boolean;
@@ -204,38 +206,6 @@ function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'light' || value === 'system' || value === 'dark';
 }
 
-function getSiteRoleLabel(role: string) {
-  if (role === 'owner') {
-    return '운영자';
-  }
-
-  if (role === 'manager') {
-    return '매니저';
-  }
-
-  if (role === 'community-manager') {
-    return '커뮤니티 매니저';
-  }
-
-  if (role === 'board-manager') {
-    return '전체 게시판 매니저';
-  }
-
-  if (role === 'board-general-manager') {
-    return '개별 게시판 총괄 매니저';
-  }
-
-  if (role === 'board-assistant-manager') {
-    return '개별 게시판 부 매니저';
-  }
-
-  if (role === 'member') {
-    return '멤버';
-  }
-
-  return role;
-}
-
 function getStoredThemeMode() {
   if (typeof window === 'undefined') {
     return 'system' as ThemeMode;
@@ -293,6 +263,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
     isLoggedIn: false,
     globalRole: null,
     siteRole: null,
+    siteRoleLabels: [],
     nickname: null,
     isApproval: null,
     invite: false,
@@ -351,6 +322,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
           isLoggedIn: false,
           globalRole: null,
           siteRole: null,
+          siteRoleLabels: [],
           nickname: null,
           isApproval: null,
           invite: false,
@@ -373,6 +345,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
+        siteRoleLabels: Array.isArray(result.siteRoleLabels) ? result.siteRoleLabels : [],
         nickname: result.nickname,
         isApproval: result.isApproval,
         invite: result.invite,
@@ -620,8 +593,8 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                                 : userProfile.invite
                                   ? '초대에 응해 주세요'
                                   : null}{' '}
-                            {userProfile.isApproval === true && userProfile.siteRole ? (
-                              <>({getSiteRoleLabel(userProfile.siteRole)})</>
+                            {userProfile.isApproval === true && userProfile.siteRoleLabels.length > 0 ? (
+                              <>({userProfile.siteRoleLabels.join(', ')})</>
                             ) : null}
                           </span>
                         </div>

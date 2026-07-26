@@ -57,6 +57,7 @@ type HeaderResponse = {
   avatar: string | null;
   globalRole: string | null;
   siteRole: string | null;
+  siteRoleLabels: string[];
   nickname: string | null;
   isApproval: boolean | null;
   invite: boolean;
@@ -71,6 +72,7 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   siteRole: string | null;
+  siteRoleLabels: string[];
   nickname: string | null;
   isApproval: boolean | null;
   invite: boolean;
@@ -241,6 +243,7 @@ export default function HeaderSite() {
     isLoggedIn: false,
     globalRole: null,
     siteRole: null,
+    siteRoleLabels: [],
     nickname: null,
     isApproval: null,
     invite: false,
@@ -332,6 +335,7 @@ export default function HeaderSite() {
           isLoggedIn: false,
           globalRole: null,
           siteRole: null,
+          siteRoleLabels: [],
           nickname: null,
           isApproval: null,
           invite: false,
@@ -354,6 +358,7 @@ export default function HeaderSite() {
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
+        siteRoleLabels: Array.isArray(result.siteRoleLabels) ? result.siteRoleLabels : [],
         nickname: result.nickname,
         isApproval: result.isApproval,
         invite: result.invite,
@@ -378,38 +383,6 @@ export default function HeaderSite() {
 
   function handleCloseThemeModeMenu() {
     setThemeModeAnchorElement(null);
-  }
-
-  function getSiteRoleLabel(role: string) {
-    if (role === 'owner') {
-      return '운영자';
-    }
-
-    if (role === 'manager') {
-      return '매니저';
-    }
-
-    if (role === 'community-manager') {
-      return '커뮤니티 매니저';
-    }
-
-    if (role === 'board-manager') {
-      return '전체 게시판 매니저';
-    }
-
-    if (role === 'board-general-manager') {
-      return '개별 게시판 총괄 매니저';
-    }
-
-    if (role === 'board-assistant-manager') {
-      return '개별 게시판 부 매니저';
-    }
-
-    if (role === 'member') {
-      return '멤버';
-    }
-
-    return role;
   }
 
   function handleSelectThemeMode(nextThemeMode: ThemeMode) {
@@ -635,9 +608,9 @@ export default function HeaderSite() {
                           ? '초대에 응해 주세요'
                           : null}
                   </span>
-                  {userProfile.isApproval === true && userProfile.siteRole ? (
-                    <span>{getSiteRoleLabel(userProfile.siteRole)}</span>
-                  ) : null}
+                  {userProfile.isApproval === true
+                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => <span key={siteRoleLabel}>{siteRoleLabel}</span>)
+                    : null}
                 </div>
               </li>
             ) : null}
@@ -647,9 +620,9 @@ export default function HeaderSite() {
                 <div className={styles['VhiMenu-profile-info']}>
                   <em>{siteLabel}</em>
                   <span>가입해 주세요</span>
-                  {userProfile.isApproval === true && userProfile.siteRole ? (
-                    <span>{getSiteRoleLabel(userProfile.siteRole)}</span>
-                  ) : null}
+                  {userProfile.isApproval === true
+                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => <span key={siteRoleLabel}>{siteRoleLabel}</span>)
+                    : null}
                 </div>
               </li>
             ) : null}
