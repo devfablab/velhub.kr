@@ -538,7 +538,7 @@ export default function IdentityVerificationButton() {
 
   if (isUnauthenticated) {
     return (
-      <div className="paper page-info">
+      <div className="paper page-warning">
         <WarningAmberRoundedIcon />
         <p>로그인이 필요한 화면입니다.</p>
       </div>
