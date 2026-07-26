@@ -1343,7 +1343,13 @@ export default function Opt() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(siteActionDialog)} onClose={() => setSiteActionDialog(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={Boolean(siteActionDialog)}
+        onClose={() => setSiteActionDialog(null)}
+        maxWidth="sm"
+        fullWidth
+        className="VhiDialog"
+      >
         <DialogTitle>
           {siteActionDialog?.action === 'block'
             ? '사이트 차단'
@@ -1351,6 +1357,9 @@ export default function Opt() {
               ? '사이트 차단 해제'
               : '사이트 폐쇄'}
         </DialogTitle>
+        <button className="close-button" onClick={() => setSiteActionDialog(null)}>
+          <CloseRoundedIcon />
+        </button>
         <DialogContent>
           <Typography variant="body2">
             {siteActionDialog?.action === 'block'

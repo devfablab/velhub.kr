@@ -3120,7 +3120,6 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                     {accessDialog.cancelLabel}
                   </button>
                 ) : null}
-
                 <button type="button" onClick={accessDialog.onConfirm}>
                   {accessDialog.confirmLabel}
                 </button>

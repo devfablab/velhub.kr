@@ -488,8 +488,23 @@ export default function Opt() {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={Boolean(targetInvite)} onClose={handleCloseCancelDialog} fullWidth maxWidth="xs">
+            <Dialog
+              open={Boolean(targetInvite)}
+              onClose={handleCloseCancelDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
               <DialogTitle>초대 취소</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={handleCloseCancelDialog}
+                aria-label="멤버 초대 닫기"
+                disabled={isCancelSubmitting}
+              >
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <Typography variant="subtitle2">
                   정말로 초대를 취소하시겠습니까?

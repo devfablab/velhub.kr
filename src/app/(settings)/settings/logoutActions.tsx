@@ -6,16 +6,19 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Grid,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import styles from '@/app/settings.module.sass';
@@ -29,6 +32,10 @@ export default function LogoutActions() {
   const [isLoggingOutCurrentDevice, setIsLoggingOutCurrentDevice] = useState(false);
   const [isLoggingOutAllDevices, setIsLoggingOutAllDevices] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);
@@ -162,30 +169,63 @@ export default function LogoutActions() {
         </AccordionDetails>
       </Accordion>
 
-      <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs">
-        <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
-        <DialogContent>
-          <Typography>모든 디바이스에서 로그아웃하시겠어요?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button small cancel"
-            onClick={handleCloseConfirm}
-            disabled={isLoggingOutAllDevices}
-          >
-            취소
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
+          <h2>모든 디바이스 로그아웃</h2>
+          <button className="close-button" onClick={handleCloseConfirm}>
+            <CloseRoundedIcon />
           </button>
-          <button
-            type="button"
-            className="button small danger"
-            onClick={handleLogoutAllDevices}
-            disabled={isLoggingOutAllDevices}
-          >
-            로그아웃
+          <Stack gap={3}>
+            <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button small cancel"
+                onClick={handleCloseConfirm}
+                disabled={isLoggingOutAllDevices}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button small danger"
+                onClick={handleLogoutAllDevices}
+                disabled={isLoggingOutAllDevices}
+              >
+                로그아웃
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>모든 디바이스 로그아웃</DialogTitle>
+          <button className="close-button" onClick={handleCloseConfirm}>
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <DialogContent>
+            <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button small close"
+              onClick={handleCloseConfirm}
+              disabled={isLoggingOutAllDevices}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button small danger"
+              onClick={handleLogoutAllDevices}
+              disabled={isLoggingOutAllDevices}
+            >
+              로그아웃
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Grid>
   );
 }

@@ -1211,7 +1211,13 @@ export default function Opt() {
             </Stack>
           </Drawer>
         ) : (
-          <Dialog open={dialogMode === 'restore'} onClose={handleCloseDeleteDialog} fullWidth maxWidth="xs">
+          <Dialog
+            open={dialogMode === 'restore'}
+            onClose={handleCloseDeleteDialog}
+            fullWidth
+            maxWidth="xs"
+            className="VhiDialog"
+          >
             <DialogTitle>게시물 복구</DialogTitle>
             <button className="close-button" onClick={handleCloseDeleteDialog} disabled={isDeleting} aria-label="닫기">
               <CloseRoundedIcon />
