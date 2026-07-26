@@ -135,7 +135,7 @@ const permissionMap: Record<CommunityManageRoleType, CommunityManagePermissionMa
     all_board_post_pin: false,
 
     managed_board_post_move: false,
-    managed_board_post_form_edit: false,
+    managed_board_post_form_edit: true,
     managed_board_post_delete: true,
     managed_board_comment_delete: true,
     managed_board_post_pin: true,

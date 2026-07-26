@@ -97,6 +97,12 @@ type HeaderSiteResponse = {
 
 type BoardsResponse = {
   boards: BoardRow[];
+  manageContents?: {
+    canCreateBoard: boolean;
+    canOrderBoards: boolean;
+    canEditAllBoards: boolean;
+    editableBoardIds: string[];
+  } | null;
 };
 
 type StatusResponse = {
@@ -174,9 +180,20 @@ function isStaffRole(role: string | null) {
   return role === 'owner' || role === 'manager';
 }
 
-function SortableBoardRow({ board, siteName }: { board: BoardRow; siteName: string }) {
+function SortableBoardRow({
+  board,
+  siteName,
+  canEditBoard,
+  canOrderBoards,
+}: {
+  board: BoardRow;
+  siteName: string;
+  canEditBoard: boolean;
+  canOrderBoards: boolean;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: board.id,
+    disabled: !canOrderBoards,
   });
 
   const style = {
@@ -192,18 +209,20 @@ function SortableBoardRow({ board, siteName }: { board: BoardRow; siteName: stri
       style={style}
     >
       <TableCell>
-        <Box
-          {...attributes}
-          {...listeners}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            cursor: 'grab',
-            width: 'fit-content',
-          }}
-        >
-          <DragIndicatorIcon />
-        </Box>
+        {canOrderBoards ? (
+          <Box
+            {...attributes}
+            {...listeners}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'grab',
+              width: 'fit-content',
+            }}
+          >
+            <DragIndicatorIcon />
+          </Box>
+        ) : null}
       </TableCell>
 
       <TableCell>
@@ -215,9 +234,11 @@ function SortableBoardRow({ board, siteName }: { board: BoardRow; siteName: stri
       <TableCell>{formatDate(board.created_at ?? '')}</TableCell>
 
       <TableCell align="right">
-        <Anchor className="button medium action" href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}>
-          수정
-        </Anchor>
+        {canEditBoard ? (
+          <Anchor className="button medium action" href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}>
+            수정
+          </Anchor>
+        ) : null}
       </TableCell>
     </TableRow>
   );
@@ -239,6 +260,9 @@ export default function Opt() {
   const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [boards, setBoards] = useState<BoardRow[]>([]);
+  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<BoardsResponse['manageContents']> | null>(
+    null,
+  );
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [board, setBoard] = useState<BoardRow | null>(null);
   const [boardName, setBoardName] = useState<string | null>(null);
@@ -402,7 +426,7 @@ export default function Opt() {
         setTotalPage(1);
         setCurrentFilter('all');
 
-        const boardsResponse = await fetch(`/api/boards?siteName=${siteName}`, {
+        const boardsResponse = await fetch(`/api/boards?siteName=${siteName}&manageContents=true`, {
           method: 'GET',
           credentials: 'include',
         });
@@ -418,6 +442,7 @@ export default function Opt() {
         }
 
         setBoards(boardsResult.boards.filter(isVisibleCommunityBoard));
+        setCommunityManageContents(boardsResult.manageContents ?? null);
         setIsBoardOrderChanged(false);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -753,12 +778,14 @@ export default function Opt() {
 
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pt: 0, pb: 0 }}>
             <Stack direction="row" justifyContent="flex-end" sx={{ width: '100%', p: 1, pt: 0, pb: 2 }}>
-              <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/new`}>
-                게시판 만들기
-              </Anchor>
+              {communityManageContents?.canCreateBoard ? (
+                <Anchor className="button small action" href={`/${siteName}/manage/contents/posts/c/new`}>
+                  게시판 만들기
+                </Anchor>
+              ) : null}
             </Stack>
 
-            {isBoardOrderChanged ? (
+            {communityManageContents?.canOrderBoards && isBoardOrderChanged ? (
               <button
                 type="button"
                 className="button small submit"
@@ -774,7 +801,7 @@ export default function Opt() {
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          {isBoardOrderChanged ? (
+          {communityManageContents?.canOrderBoards && isBoardOrderChanged ? (
             <p className="alert warning" style={{ marginBottom: 16, paddingLeft: 17 }}>
               <WarningAmberRoundedIcon />
               <span>순서를 변경하시면 반드시 저장을 눌러주세요</span>
@@ -801,7 +828,16 @@ export default function Opt() {
 
                     <TableBody>
                       {boards.map((board) => (
-                        <SortableBoardRow key={board.id} board={board} siteName={siteName} />
+                        <SortableBoardRow
+                          key={board.id}
+                          board={board}
+                          siteName={siteName}
+                          canOrderBoards={communityManageContents?.canOrderBoards === true}
+                          canEditBoard={
+                            communityManageContents?.canEditAllBoards === true ||
+                            communityManageContents?.editableBoardIds.includes(board.id) === true
+                          }
+                        />
                       ))}
                     </TableBody>
                   </Table>

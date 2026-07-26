@@ -81,6 +81,9 @@ type BoardResponse = {
   totalCount?: number;
   totalPage?: number;
   filter?: 'all' | 'deleted';
+  actions?: {
+    canManageBoardSettings?: boolean;
+  };
 };
 
 type ErrorResponse = {
@@ -130,6 +133,7 @@ export default function Opt() {
   const isMobile = !isNotMobile;
 
   const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
+  const [canManageBoardSettings, setCanManageBoardSettings] = useState(false);
   const [contents, setContents] = useState<ContentRow[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
@@ -176,7 +180,7 @@ export default function Opt() {
         setErrorMessage('');
 
         const response = await fetch(
-          `/api/boards/${boardName}?siteName=${siteName}&page=${currentPage}${
+          `/api/boards/${boardName}?siteName=${siteName}&manageContents=true&page=${currentPage}${
             sizeParam ? `&size=${sizeParam}` : ''
           }${filterParam ? `&filter=${filterParam}` : ''}`,
           {
@@ -198,6 +202,7 @@ export default function Opt() {
         }
 
         setBoard(result.board);
+        setCanManageBoardSettings(result.actions?.canManageBoardSettings === true);
         setContents(Array.isArray(result.contents) ? result.contents : []);
         setTotalPage(typeof result.totalPage === 'number' && result.totalPage > 0 ? result.totalPage : 1);
         setCurrentFilter(result.filter === 'deleted' ? 'deleted' : 'all');
@@ -493,7 +498,7 @@ export default function Opt() {
                   말머리 관리
                 </Anchor>
               ) : null}
-              {board?.post_type === 'series' ? (
+              {board?.post_type === 'series' && canManageBoardSettings ? (
                 <Anchor
                   className="button small action"
                   href={`/${siteName}/manage/contents/posts/c/${boardName}/series`}

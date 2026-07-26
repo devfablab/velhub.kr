@@ -236,6 +236,7 @@ type ContentResponse = {
   draw?: DrawInfo | null;
   isAuthor: boolean;
   isStaff: boolean;
+  canManageContent?: boolean;
   error?: string;
 };
 
@@ -353,6 +354,7 @@ export default function Opt({ isCommunity }: Props) {
   const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>([]);
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
+  const [canManageContent, setCanManageContent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -557,6 +559,7 @@ export default function Opt({ isCommunity }: Props) {
         setSeriesContents(Array.isArray(result.seriesContents) ? result.seriesContents : []);
         setIsAuthor(result.isAuthor === true);
         setIsStaff(result.isStaff === true);
+        setCanManageContent(result.canManageContent === true);
         setDraw(result.draw ?? null);
         setIsLiked(result.postActions?.isLiked === true);
         setIsSaved(result.postActions?.isSaved === true);
@@ -747,8 +750,8 @@ export default function Opt({ isCommunity }: Props) {
     );
   }
 
-  const canEdit = (isAuthor && !content.is_closed) || (isStaff && !content.is_locked);
-  const canDelete = (isAuthor || isStaff) && !content.is_closed && !content.is_locked;
+  const canEdit = (isAuthor && !content.is_closed) || (canManageContent && !content.is_locked);
+  const canDelete = (isAuthor || canManageContent) && !content.is_closed && !content.is_locked;
   const isBasicBoard = board.board_type === 'basic';
   const isGalleryBoard = board.board_type === 'gallery';
   const isYoutubeBoard = board.board_type === 'youtube';

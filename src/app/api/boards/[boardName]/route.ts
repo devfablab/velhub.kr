@@ -1,4 +1,9 @@
 import verifySession from '@/lib/session/verifySession';
+import {
+  canManageCommunityBoardContents,
+  canManageCommunityBoardSettings,
+  getCommunityManagerAccess,
+} from '@/lib/community/community-manager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -457,6 +462,23 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardData = board.data as BoardRow;
     const canWritePost = canWriteBlogPost(rhizome.data.site_type, session.case);
+    const isManageContentsRequest = requestUrl.searchParams.get('manageContents') === 'true';
+    let canManageContents = session.case === 'staff' || session.case === 'admin';
+    let canManageBoardSettings = session.case === 'staff' || session.case === 'admin';
+
+    if (isManageContentsRequest && rhizome.data.site_type === 'community') {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageContents = canManageCommunityBoardContents(access.actor, boardData.id);
+        canManageBoardSettings = canManageCommunityBoardSettings(access.actor, boardData.id);
+      } catch {
+        canManageContents = false;
+      }
+
+      if (!canManageContents) {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
 
     if (boardData.board_key === 'p' && boardData.board_type === 'page') {
       const pageResult = await supabaseAdmin
@@ -502,8 +524,9 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({
         board: boardData,
         actions: {
-          canPinPost: session.case === 'staff',
+          canPinPost: canManageContents,
           canWritePost,
+          canManageBoardSettings,
         },
         selectedSeries: null,
       });
@@ -517,7 +540,7 @@ export async function GET(request: Request, context: RouteContext) {
     const includePin = parseIncludePin(requestUrl.searchParams.get('includePin'));
 
     const postListSessionCase =
-      session.case === 'admin' || session.case === 'staff' ? 'staff' : session.case === 'member' ? 'member' : 'guest';
+      canManageContents ? 'staff' : session.case === 'member' ? 'member' : 'guest';
 
     const result = selectedSeries
       ? await getSeriesFilteredPostList({
@@ -581,8 +604,9 @@ export async function GET(request: Request, context: RouteContext) {
     return Response.json({
       board: boardData,
       actions: {
-        canPinPost: session.case === 'staff',
+        canPinPost: canManageContents,
         canWritePost,
+        canManageBoardSettings,
       },
       selectedSeries: selectedSeries
         ? {

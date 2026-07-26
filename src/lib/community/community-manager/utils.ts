@@ -109,6 +109,7 @@ export type CommunityManagerActor = {
   communityRoles: CommunityManageRoleType[];
   permissions: CommunityManagePermissionMap;
   managedBoardIds: string[];
+  managedBoardGeneralIds: string[];
   canManageCommunityManager: boolean;
   canManageBoardManager: boolean;
 };
@@ -125,6 +126,29 @@ export type CommunityManagerAccess = {
     boardAssistantManagerLimit: number;
   };
 };
+
+export function canManageAllCommunityBoardContents(actor: CommunityManagerActor) {
+  return actor.permissions.all_board_post_delete || actor.permissions.all_board_post_form_edit;
+}
+
+export function canManageCommunityBoardContents(actor: CommunityManagerActor, boardId: string) {
+  if (canManageAllCommunityBoardContents(actor)) {
+    return true;
+  }
+
+  return (
+    actor.managedBoardIds.includes(boardId) &&
+    (actor.permissions.managed_board_post_delete || actor.permissions.managed_board_post_form_edit)
+  );
+}
+
+export function canManageCommunityBoardSettings(actor: CommunityManagerActor, boardId: string) {
+  return (
+    actor.communityRoles.includes('owner') ||
+    actor.communityRoles.includes('community-manager') ||
+    actor.managedBoardGeneralIds.includes(boardId)
+  );
+}
 
 function decryptNullable(value: string | null | undefined) {
   const normalizedValue = normalizeText(value);
@@ -236,6 +260,14 @@ export async function getCommunityManagerAccess(
         .filter(Boolean),
     ),
   ];
+  const managedBoardGeneralIds = [
+    ...new Set(
+      actorManageRoleRows
+        .filter((row) => normalizeText(row.role) === 'board-general-manager')
+        .map((row) => normalizeText(row.board_id))
+        .filter(Boolean),
+    ),
+  ];
 
   const canManageCommunityManager = uniqueRoles.includes('owner');
   const canManageBoardManager = uniqueRoles.includes('owner') || uniqueRoles.includes('community-manager');
@@ -267,6 +299,7 @@ export async function getCommunityManagerAccess(
       communityRoles: uniqueRoles,
       permissions,
       managedBoardIds,
+      managedBoardGeneralIds,
       canManageCommunityManager,
       canManageBoardManager,
     },

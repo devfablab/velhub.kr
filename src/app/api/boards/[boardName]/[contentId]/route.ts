@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
@@ -1044,6 +1048,16 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     const boardData = board.data;
+    let canManageContent = isStaff || session.case === 'admin';
+
+    if (rhizomeData.site_type === 'community' && !canManageContent) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageContent = canManageCommunityBoardContents(access.actor, boardData.id);
+      } catch {
+        canManageContent = false;
+      }
+    }
 
     if (boardData.board_type === 'page') {
       const page = await supabaseAdmin
@@ -1117,11 +1131,11 @@ export async function GET(request: Request, context: RouteContext) {
       return NextResponse.json({ error: '삭제된 글입니다.' }, { status: 400 });
     }
 
-    if (postData.is_closed === true && !isStaff) {
+    if (postData.is_closed === true && !canManageContent) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (postData.published_status === 'draft' && !isAuthor) {
+    if (postData.published_status === 'draft' && !isAuthor && !canManageContent) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -1157,7 +1171,7 @@ export async function GET(request: Request, context: RouteContext) {
         })
       : null;
 
-    const canViewPaidContent = isAuthor || isStaff || paidContentAccess.can_view_paid_content;
+    const canViewPaidContent = isAuthor || canManageContent || paidContentAccess.can_view_paid_content;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);
@@ -1197,7 +1211,7 @@ export async function GET(request: Request, context: RouteContext) {
           ? Boolean(drawEndsAt && isPastDateTime(drawEndsAt) && drawCount > 0)
           : false;
 
-    const canViewDraws = isAuthor || isStaff;
+    const canViewDraws = isAuthor || canManageContent;
 
     const drawWinners = drawType
       ? await getDrawWinners({
@@ -1419,6 +1433,7 @@ export async function GET(request: Request, context: RouteContext) {
         : null,
       isAuthor,
       isStaff,
+      canManageContent,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

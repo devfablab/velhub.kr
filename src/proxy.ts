@@ -161,12 +161,7 @@ function startsWithAny(pathname: string, paths: string[]) {
 }
 
 function isCommunityManagerRestrictedPath(pathname: string, siteName: string) {
-  const segments = pathname.split('/').filter(Boolean);
-
-  const isBlogPostManagePath = pathname.startsWith(`/${siteName}/manage/contents/posts/`) && segments[4] !== 'c';
-
   return (
-    isBlogPostManagePath ||
     startsWithAny(pathname, [
       `/${siteName}/manage/team`,
       `/${siteName}/manage/design/blog`,
@@ -209,9 +204,9 @@ function isCommunityAssistantRoleRestrictedPath(pathname: string, siteName: stri
   return (
     isBoardEditPath ||
     startsWithAny(pathname, [
-      `/${siteName}/manage/contents/posts/c/only-donation/series`,
-      `/${siteName}/manage/contents/posts/c/only-donation/prefix`,
+      `/${siteName}/manage/contents/posts/category`,
     ])
+    || (pathname.startsWith(`/${siteName}/manage/contents/posts/c/`) && segments[6] === 'series')
   );
 }
 

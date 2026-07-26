@@ -1,4 +1,8 @@
 import verifySession from '@/lib/session/verifySession';
+import {
+  canManageCommunityBoardSettings,
+  getCommunityManagerAccess,
+} from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -113,10 +117,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
     const currentBoard = await supabaseAdmin
       .from('boards')
       .select('id, board_key, board_type, post_type, post_per_page, write_permission')
@@ -130,6 +130,21 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!currentBoard.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    let canEditBoard = session.case === 'staff' || session.case === 'admin';
+
+    if (!canEditBoard) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canEditBoard = canManageCommunityBoardSettings(access.actor, currentBoard.data.id);
+      } catch {
+        canEditBoard = false;
+      }
+    }
+
+    if (!canEditBoard) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();

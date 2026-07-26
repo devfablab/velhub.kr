@@ -1,4 +1,8 @@
 import verifySession from '@/lib/session/verifySession';
+import {
+  canManageCommunityBoardContents,
+  getCommunityManagerAccess,
+} from '@/lib/community/community-manager/utils';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -162,6 +166,16 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const isAuthor = post.data.user_id === sessionClaims.userId;
+    let canManageContent = isStaff || session.case === 'admin';
+
+    if (rhizome.data.site_type === 'community' && !canManageContent) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageContent = canManageCommunityBoardContents(access.actor, board.data.id);
+      } catch {
+        canManageContent = false;
+      }
+    }
 
     if (action === 'close') {
       if (rhizome.data.site_type === 'blog') {
@@ -169,7 +183,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
       } else {
-        if (!isStaff) {
+        if (!canManageContent) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
       }
@@ -178,7 +192,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         return Response.json({ error: '이미 삭제된 게시물입니다.' }, { status: 400 });
       }
 
-      if (isStaff && closedMessage.length < 10) {
+      if (canManageContent && closedMessage.length < 10) {
         return Response.json({ error: '삭제 사유를 10자 이상 입력해주세요.' }, { status: 400 });
       }
 
@@ -188,7 +202,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           is_closed: true,
           closed_by: sessionClaims.userId,
           closed_at: new Date().toISOString(),
-          closed_message: isStaff ? closedMessage : null,
+          closed_message: canManageContent ? closedMessage : null,
           series_idx: null,
         })
         .eq('id', post.data.id)
@@ -213,7 +227,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       });
     }
 
-    if (!isStaff) {
+    if (!canManageContent) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
