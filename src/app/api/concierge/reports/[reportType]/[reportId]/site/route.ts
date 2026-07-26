@@ -134,7 +134,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       const notificationResult = await supabaseAdmin.from('notifications').insert({
         user_id: ownerAuthUserId,
-        send_user_id: session.authUserId,
+        send_user_id: session.stigmaId,
         target_id: null,
         send_site_id: report.site_id,
         send_board_id: null,

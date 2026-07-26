@@ -1263,7 +1263,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       .update({
         is_deleted: true,
         is_locked: false,
-        deleted_by: session.authUserId,
+        deleted_by: session.stigmaId,
         deleted_at: deletedAt,
         deleted_message: isStaff ? '매니저에 의한 삭제' : '작성자에 의한 삭제',
       })

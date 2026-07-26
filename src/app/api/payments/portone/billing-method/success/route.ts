@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         .from('subscriptions')
         .update({
           previous_billing_method_id: previousBillingMethodResult.data?.id ?? null,
-          subscriber_user_id: session.authUserId,
+          subscriber_user_id: session.stigmaId,
           billing_key: encrypt(billingKey),
           customer_key: customerKey,
           updated_at: new Date().toISOString(),
@@ -210,8 +210,12 @@ export async function POST(request: NextRequest) {
       return Response.json({ ok: true });
     }
 
+    if (!session.stigmaId) {
+      return Response.json({ error: '로그인 정보가 올바르지 않습니다.' }, { status: 401 });
+    }
+
     const billingMethodInsertResult = await supabaseAdmin.from('subscription_billing_methods').insert({
-      user_id: session.authUserId,
+      user_id: session.stigmaId,
       provider: getCurrentPortOneProvider(),
       customer_key: customerKey,
       billing_key: billingKey,

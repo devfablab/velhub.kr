@@ -381,7 +381,7 @@ export async function POST(request: Request, context: RouteContext) {
         .update({
           status: 'completed',
           handling_result: 'keep_deleted',
-          handler_user_id: session.authUserId,
+          handler_user_id: session.stigmaId,
           handled_at: now,
           updated_at: now,
         })
@@ -494,7 +494,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .update({
         status: 'completed',
         handling_result: action === 'restore' ? 'restore' : 'keep_deleted',
-        handler_user_id: session.authUserId,
+        handler_user_id: session.stigmaId,
         handled_at: now,
         updated_at: now,
       })

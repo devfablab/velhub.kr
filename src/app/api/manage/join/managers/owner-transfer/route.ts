@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       .from('owner_transfers')
       .insert({
         site_id: access.rhizome.id,
-        requester_user_id: access.actor.authUserId,
+        requester_user_id: access.actor.stigmaId,
         requester_role: availability.requesterRole,
         previous_owner_id: access.rhizome.owner_id,
         target_member_id: targetMembership.id,
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
 
     const notificationResult = await access.supabaseAdmin.from('notifications').insert({
       user_id: targetStigma.user_id,
-      send_user_id: access.actor.authUserId,
+      send_user_id: access.actor.stigmaId,
       target_id: targetStigma.user_id,
       send_site_id: access.rhizome.id,
       send_board_id: null,

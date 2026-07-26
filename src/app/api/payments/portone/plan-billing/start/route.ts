@@ -340,7 +340,7 @@ export async function POST(request: NextRequest) {
       const subscriptionInsertResult = await supabaseAdmin
         .from('subscriptions')
         .insert({
-          subscriber_user_id: session.authUserId,
+          subscriber_user_id: session.stigmaId,
           subscription_type: SUBSCRIPTION_TYPE.PLAN_BILLING,
           target_type: PAYMENT_TARGET_TYPE.PLAN,
           target_id: site.id,
@@ -415,7 +415,7 @@ export async function POST(request: NextRequest) {
         order_no: orderNo,
         tx_no: null,
         transaction_no: getPortOnePaymentTransactionNo(payment),
-        buyer_user_id: session.authUserId,
+        buyer_user_id: session.stigmaId,
         amount: plan.price,
         refunded_amount: 0,
         currency: 'KRW',
@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
     const subscriptionInsertResult = await supabaseAdmin
       .from('subscriptions')
       .insert({
-        subscriber_user_id: session.authUserId,
+        subscriber_user_id: session.stigmaId,
         subscription_type: SUBSCRIPTION_TYPE.PLAN_BILLING,
         target_type: PAYMENT_TARGET_TYPE.PLAN,
         target_id: site.id,

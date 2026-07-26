@@ -232,7 +232,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .update({
         status: 'completed',
         handling_result: nextStatus === 'dismissed' ? 'no_issue' : 'keep_deleted',
-        handler_user_id: session.authUserId,
+        handler_user_id: session.stigmaId,
         handled_at: now,
         updated_at: now,
       })

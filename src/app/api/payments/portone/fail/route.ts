@@ -875,7 +875,7 @@ export async function POST(request: Request) {
         provider: getCurrentPortOneProvider(),
         payment_key: null,
         order_no: orderNo,
-        buyer_user_id: session.authUserId,
+        buyer_user_id: session.stigmaId,
         amount: failInfo.amount,
         refunded_amount: 0,
         currency: 'KRW',

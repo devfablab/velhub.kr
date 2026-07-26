@@ -160,7 +160,7 @@ export async function POST(request: Request) {
       .from('owner_transfers')
       .insert({
         site_id: siteResult.data.id,
-        requester_user_id: session.authUserId,
+        requester_user_id: session.stigmaId,
         requester_role: 'owner',
         previous_owner_id: siteResult.data.owner_id,
         target_member_id: targetMembership.id,
@@ -181,7 +181,7 @@ export async function POST(request: Request) {
 
     const notificationResult = await supabaseAdmin.from('notifications').insert({
       user_id: targetStigmaResult.data.user_id,
-      send_user_id: session.authUserId,
+      send_user_id: session.stigmaId,
       target_id: targetStigmaResult.data.user_id,
       send_site_id: siteResult.data.id,
       send_board_id: null,

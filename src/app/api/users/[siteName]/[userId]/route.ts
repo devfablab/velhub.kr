@@ -903,7 +903,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
         .update({
           is_closed: true,
           is_locked: true,
-          closed_by: session.authUserId,
+          closed_by: session.stigmaId,
           closed_at: closedAt,
           closed_message: '커뮤니티 탈퇴로 인한 삭제',
         })
@@ -914,7 +914,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
         .update({
           is_deleted: true,
           is_locked: true,
-          deleted_by: session.authUserId,
+          deleted_by: session.stigmaId,
           deleted_at: closedAt,
           deleted_message: '커뮤니티 탈퇴로 인한 삭제',
         })

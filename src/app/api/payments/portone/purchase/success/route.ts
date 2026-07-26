@@ -495,7 +495,7 @@ export async function POST(request: NextRequest) {
         order_no: confirmResult.orderId,
         tx_no: txNo,
         transaction_no: confirmResult.transactionId ?? null,
-        buyer_user_id: session.authUserId,
+        buyer_user_id: session.stigmaId,
         amount: confirmResult.totalAmount,
         refunded_amount: 0,
         currency: confirmResult.currency,

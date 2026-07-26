@@ -24,11 +24,11 @@ async function getAuthorizedContext(reportId: string, siteName: string) {
 
   const session = await verifySession({ siteId: context.site.id });
 
-  if (session.case !== 'staff' || !session.authUserId) {
+  if (session.case !== 'staff' || !session.authUserId || !session.stigmaId) {
     throw new Error('ACCESS_DENIED');
   }
 
-  return { context, authUserId: session.authUserId };
+  return { context, authUserId: session.authUserId, stigmaId: session.stigmaId };
 }
 
 export async function GET(request: Request, routeContext: RouteContext) {
@@ -83,12 +83,12 @@ export async function POST(request: Request, routeContext: RouteContext) {
       return Response.json({ error: '답변 내용을 입력해 주세요.' }, { status: 400 });
     }
 
-    const { context, authUserId } = await getAuthorizedContext(reportId, siteName);
+    const { context, stigmaId } = await getAuthorizedContext(reportId, siteName);
     const insertResult = await getSupabaseAdmin()
       .from('report_guideline_messages')
       .insert({
         report_id: context.report.id,
-        sender_user_id: authUserId,
+        sender_user_id: stigmaId,
         sender_type: 'staff',
         message,
       })
@@ -99,14 +99,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
       return Response.json({ error: '답변을 보내지 못했습니다.' }, { status: 500 });
     }
 
-    const messages = await loadGuidelineAppealMessages(context);
-
-    return Response.json({
-      ok: true,
-      siteName: context.site.site_label || context.site.site_key,
-      deletionMessage: context.deletionMessage,
-      messages,
-    });
+    return Response.json({ ok: true });
   } catch (unknownError) {
     if (unknownError instanceof Error && unknownError.message === 'ACCESS_DENIED') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });

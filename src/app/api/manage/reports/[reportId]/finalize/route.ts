@@ -134,7 +134,7 @@ export async function PATCH(request: Request, routeContext: RouteContext) {
       .from('report_guidelines')
       .update({
         handling_result: decision,
-        handler_user_id: session.authUserId,
+        handler_user_id: session.stigmaId,
         handled_at: now,
         updated_at: now,
       })

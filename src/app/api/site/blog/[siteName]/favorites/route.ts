@@ -146,7 +146,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
       }
     } else {
       const insertResult = await supabaseAdmin.from('blog_favorites').insert({
-        user_id: session.authUserId,
+        user_id: session.stigmaId,
         site_id: targetBlog.siteId,
       });
 

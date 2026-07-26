@@ -427,7 +427,7 @@ export async function POST(request: Request) {
         tx_no: null,
         transaction_no: portOnePaymentResult.transactionId ?? null,
         order_no: orderNo,
-        buyer_user_id: session.authUserId,
+        buyer_user_id: session.stigmaId,
         amount: setting.price,
         refunded_amount: 0,
         currency: 'KRW',
@@ -459,7 +459,7 @@ export async function POST(request: Request) {
     const subscriptionInsertResult = await supabaseAdmin
       .from('subscriptions')
       .insert({
-        subscriber_user_id: session.authUserId,
+        subscriber_user_id: session.stigmaId,
         subscription_type: SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
         target_type: PAYMENT_TARGET_TYPE.SITE,
         target_id: site.id,

@@ -98,7 +98,7 @@ export async function POST(request: Request, context: RouteContext) {
         target_type: report.target_type,
         site_id: report.site_id,
         board_id: report.board_id,
-        sender_user_id: session.authUserId,
+        sender_user_id: session.stigmaId,
         recipient_user_id: recipientUserId,
         message,
       })
@@ -112,7 +112,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const notificationResult = await supabaseAdmin.from('notifications').insert({
       user_id: recipientUserId,
-      send_user_id: session.authUserId,
+      send_user_id: session.stigmaId,
       target_id: insertResult.data.id,
       send_site_id: report.site_id,
       send_board_id: report.board_id,

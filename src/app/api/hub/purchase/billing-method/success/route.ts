@@ -109,8 +109,12 @@ export async function GET(request: Request) {
         return Response.redirect(getPurchaseRedirectUrl(request, 'fail', '결제수단을 갱신하지 못했습니다.'));
       }
     } else {
+      if (!session.stigmaId) {
+        return Response.redirect(getPurchaseRedirectUrl(request, 'fail', '로그인 정보가 올바르지 않습니다.'));
+      }
+
       const billingMethodInsertResult = await supabaseAdmin.from('subscription_billing_methods').insert({
-        user_id: session.authUserId,
+        user_id: session.stigmaId,
         provider,
         customer_key: customerKey,
         billing_key: billingKey,

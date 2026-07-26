@@ -35,11 +35,11 @@ function getBatches<T>(values: T[], size = 100) {
   return batches;
 }
 
-async function getWithdrawalPostIds(supabaseAdmin: SupabaseAdminClient, authUserId: string) {
+async function getWithdrawalPostIds(supabaseAdmin: SupabaseAdminClient, stigmaId: string) {
   const postsResult = await supabaseAdmin
     .from('posts')
     .select('id')
-    .eq('user_id', authUserId)
+    .eq('user_id', stigmaId)
     .eq('is_closed', false)
     .eq('is_locked', false);
 
@@ -173,7 +173,7 @@ export async function requestAccountWithdrawal(authUserId: string) {
   });
 
   const nowIso = new Date().toISOString();
-  const withdrawalPostIds = await getWithdrawalPostIds(supabaseAdmin, authUserId);
+  const withdrawalPostIds = await getWithdrawalPostIds(supabaseAdmin, stigma.id);
 
   for (const postIdBatch of getBatches(withdrawalPostIds)) {
     const postsResult = await supabaseAdmin
@@ -181,12 +181,12 @@ export async function requestAccountWithdrawal(authUserId: string) {
       .update({
         is_closed: true,
         is_locked: true,
-        closed_by: authUserId,
+        closed_by: stigma.id,
         closed_at: nowIso,
         closed_message: ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE,
       })
       .in('id', postIdBatch)
-      .eq('user_id', authUserId)
+      .eq('user_id', stigma.id)
       .eq('is_closed', false)
       .eq('is_locked', false);
 
@@ -200,11 +200,11 @@ export async function requestAccountWithdrawal(authUserId: string) {
     .update({
       is_deleted: true,
       is_locked: true,
-      deleted_by: authUserId,
+      deleted_by: stigma.id,
       deleted_at: nowIso,
       deleted_message: ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE,
     })
-    .eq('user_id', authUserId)
+    .eq('user_id', stigma.id)
     .eq('is_deleted', false)
     .eq('is_locked', false);
 
@@ -240,8 +240,8 @@ export async function cancelAccountWithdrawal(authUserId: string) {
           closed_at: null,
           closed_message: null,
         })
-        .eq('user_id', authUserId)
-        .eq('closed_by', authUserId)
+        .eq('user_id', stigma.id)
+        .eq('closed_by', stigma.id)
         .eq('closed_message', ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE)
         .in('site_id', activeSiteIds),
       supabaseAdmin
@@ -253,8 +253,8 @@ export async function cancelAccountWithdrawal(authUserId: string) {
           deleted_at: null,
           deleted_message: null,
         })
-        .eq('user_id', authUserId)
-        .eq('deleted_by', authUserId)
+        .eq('user_id', stigma.id)
+        .eq('deleted_by', stigma.id)
         .eq('deleted_message', ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE)
         .in('site_id', activeSiteIds),
     ]);
@@ -309,6 +309,7 @@ export async function completeAccountWithdrawal({
     }
   }
 
+  // 1. Mark stigma as completed
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .update({
@@ -319,5 +320,19 @@ export async function completeAccountWithdrawal({
 
   if (stigmaResult.error) {
     throw new Error('계정 탈퇴 확정 처리에 실패했습니다.');
+  }
+
+  // 2. Delete row from public.particles table
+  const particleDeleteResult = await supabaseAdmin.from('particles').delete().eq('id', authUserId);
+
+  if (particleDeleteResult.error) {
+    console.error('[account-withdrawal] particle delete error', particleDeleteResult.error);
+  }
+
+  // 3. Delete user from Supabase Auth (auth.users)
+  const authDeleteResult = await supabaseAdmin.auth.admin.deleteUser(authUserId);
+
+  if (authDeleteResult.error) {
+    console.error('[account-withdrawal] supabase auth delete error', authDeleteResult.error);
   }
 }

@@ -86,7 +86,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
       .from('report_guideline_messages')
       .insert({
         report_id: context.report.id,
-        sender_user_id: session.authUserId,
+        sender_user_id: session.stigmaId,
         sender_type: 'appellant',
         message,
       })
