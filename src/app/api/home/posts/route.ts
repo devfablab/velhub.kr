@@ -91,13 +91,13 @@ export async function GET(request: NextRequest) {
       const stigmasResult = await supabaseAdmin
         .from('stigmas')
         .select('id, user_id, user_name, avatar')
-        .in('user_id', userIds);
+        .in('id', userIds);
 
       if (!stigmasResult.error && stigmasResult.data) {
         const stigmaIds: string[] = [];
 
         stigmasResult.data.forEach((stigma) => {
-          stigmasMap.set(stigma.user_id, stigma);
+          stigmasMap.set(stigma.id, stigma);
           if (stigma.id) {
             stigmaIds.push(stigma.id);
           }

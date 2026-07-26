@@ -67,10 +67,6 @@
             border: 1px solid rgba(ds.$rgb-tertiary, .2)
             background-color: ds.$hex-white
 
-            html[data-theme="yellow-dark"] &
-              border: 1px solid rgba(ds.$rgb-tertiary, .5)
-              background-color: ds.$hex-black
-
             em
               @include ds.fw(pre, 700)
               font-size: ds.rem(12)
@@ -85,9 +81,6 @@
               border-radius: ds.rem(23)
               border: 1px solid ds.$hex-accent
               color: rgba(ds.$rgb-secondary, .9)
-
-              html[data-theme="yellow-dark"] &
-                color: rgba(ds.$rgb-light, .9)
 
               @include ds.mq(maxExtraSmall)
                 @include ds.screen-reader-only
@@ -111,9 +104,6 @@
 
             p, time
               color: ds.$hex-secondary
-
-              html[data-theme="yellow-dark"] &
-                color: ds.$hex-light
 
             p
               font-size: ds.rem(14)
@@ -152,9 +142,6 @@
               border: 1px solid ds.$hex-accent
               color: rgba(ds.$rgb-light, .9)
 
-              html[data-theme="yellow-dark"] &
-                color: rgba(ds.$rgb-secondary, .9)
-
               @include ds.mq(maxExtraSmall)
                 padding-right: 0
 
@@ -169,14 +156,8 @@
               padding-right: ds.rem(70)
               color: ds.$hex-bright
 
-              html[data-theme="yellow-dark"] &
-                color: ds.$hex-primary
-
             p, span
               color: ds.$hex-light
-
-              html[data-theme="yellow-dark"] &
-                color: ds.$hex-secondary
 
             p
               font-size: ds.rem(14)
@@ -326,6 +307,9 @@
             background-color: ds.$hex-white
             border-radius: ds.rem(17) ds.rem(17) 0 0
             padding: ds.rem(17)
+
+            html[data-theme="yellow-dark"] &
+              background-color: ds.$hex-black
 
           .tail
             .tail-site
