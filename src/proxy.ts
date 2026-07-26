@@ -484,13 +484,11 @@ export async function proxy(request: NextRequest) {
       return response;
     }
 
-    const member = await fetchSessionRoute(request, '/api/session/member', {
-      siteName,
-    });
-
-    if (member.response.status === 401) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
+    const member = isLoggedIn
+      ? await fetchSessionRoute(request, '/api/session/member', {
+          siteName,
+        })
+      : { response: { status: 401, ok: false }, result: null };
 
     const isRejoin = member.result?.isRejoin === true;
 
