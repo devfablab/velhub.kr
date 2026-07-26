@@ -100,7 +100,7 @@ export async function GET() {
       siteId: null,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -111,7 +111,7 @@ export async function GET() {
       .select(
         'id, created_at, user_id, send_user_id, target_id, send_site_id, send_board_id, send_series_id, send_post_id, notification_type, is_read',
       )
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .order('created_at', { ascending: false });
 
     if (notificationsResult.error) {

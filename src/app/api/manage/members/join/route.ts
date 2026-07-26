@@ -178,12 +178,12 @@ async function createJoinRequestNotifications({
   supabaseAdmin,
   communityId,
   siteId,
-  applicantParticleId,
+  applicantStigmaId,
 }: {
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   communityId: string;
   siteId: string;
-  applicantParticleId: string;
+  applicantStigmaId: string;
 }) {
   const [ownerResult, communityManagerResult] = await Promise.all([
     supabaseAdmin
@@ -240,25 +240,10 @@ async function createJoinRequestNotifications({
     return;
   }
 
-  const recipientResult = await supabaseAdmin.from('stigmas').select('user_id').in('id', recipientStigmaIds);
-
-  if (recipientResult.error) {
-    console.error(recipientResult.error);
-    return;
-  }
-
-  const recipientParticleIds = [
-    ...new Set((recipientResult.data ?? []).map((recipient) => normalizeText(recipient.user_id)).filter(Boolean)),
-  ];
-
-  if (recipientParticleIds.length === 0) {
-    return;
-  }
-
   const notificationResult = await supabaseAdmin.from('notifications').insert(
-    recipientParticleIds.map((recipientParticleId) => ({
-      user_id: recipientParticleId,
-      send_user_id: applicantParticleId,
+    recipientStigmaIds.map((recipientStigmaId) => ({
+      user_id: recipientStigmaId,
+      send_user_id: applicantStigmaId,
       send_site_id: siteId,
       send_board_id: null,
       send_series_id: null,
@@ -506,7 +491,7 @@ export async function POST(request: Request) {
         supabaseAdmin,
         communityId: community.data.id,
         siteId: rhizome.data.id,
-        applicantParticleId: stigma.data.user_id,
+        applicantStigmaId: stigma.data.id,
       });
 
       return Response.json({
@@ -550,7 +535,7 @@ export async function POST(request: Request) {
       supabaseAdmin,
       communityId: community.data.id,
       siteId: rhizome.data.id,
-      applicantParticleId: stigma.data.user_id,
+      applicantStigmaId: stigma.data.id,
     });
 
     return Response.json({

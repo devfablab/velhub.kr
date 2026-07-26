@@ -268,7 +268,7 @@ export async function POST(request: Request) {
     const latestSubscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId ?? '')
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
@@ -305,7 +305,7 @@ export async function POST(request: Request) {
     const existingDefaultBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .maybeSingle();
@@ -319,7 +319,7 @@ export async function POST(request: Request) {
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKeyResult.billingKey)
       .maybeSingle();

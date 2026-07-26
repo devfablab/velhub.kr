@@ -612,7 +612,7 @@ async function buildCommentItem({
   siteId,
   boardId,
   postAuthorId,
-  authUserId,
+  stigmaId,
   canManageComment,
   pollChoiceMap,
   commentLikeCountMap,
@@ -624,7 +624,7 @@ async function buildCommentItem({
   siteId: string;
   boardId: string;
   postAuthorId: string;
-  authUserId: string | null;
+  stigmaId: string | null;
   canManageComment: boolean;
   pollChoiceMap: Map<string, PollChoice>;
   commentLikeCountMap: Map<string, number>;
@@ -656,7 +656,7 @@ async function buildCommentItem({
 
   const isDeleted = comment.is_deleted === true;
   const isBlinded = comment.is_blinded === true;
-  const isMe = Boolean(authUserId) && comment.user_id === authUserId;
+  const isMe = Boolean(stigmaId) && comment.user_id === stigmaId;
 
   let content = comment.content;
 
@@ -825,7 +825,7 @@ export async function GET(request: Request, context: RouteContext) {
 
         commentLikeCountMap.set(commentId, (commentLikeCountMap.get(commentId) ?? 0) + 1);
 
-        if (session.authUserId && userId === session.authUserId) {
+        if (session.stigmaId && userId === session.stigmaId) {
           likedCommentIdSet.add(commentId);
         }
       });
@@ -853,7 +853,7 @@ export async function GET(request: Request, context: RouteContext) {
 
         pollChoiceMap.set(voterId, pollChoice);
 
-        if (session.authUserId && voterId === session.authUserId) {
+        if (session.stigmaId && voterId === session.stigmaId) {
           myPollChoice = pollChoice;
         }
       });
@@ -868,7 +868,7 @@ export async function GET(request: Request, context: RouteContext) {
           siteId: target.data.siteId,
           boardId: target.data.boardId,
           postAuthorId: target.data.postAuthorId,
-          authUserId: session.authUserId ?? null,
+          stigmaId: session.stigmaId ?? null,
           canManageComment,
           pollChoiceMap,
           commentLikeCountMap,
@@ -973,7 +973,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await assertCommunityCommentWritePolicy({
       siteId: target.data.siteId,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       sessionCase: session.case,
     });
 
@@ -1035,17 +1035,17 @@ export async function POST(request: Request, context: RouteContext) {
       boardId: target.data.boardId,
       postId: target.data.postId,
       commentId: insertResult.data.id,
-      userId: session.authUserId,
+      userId: session.stigmaId,
       drawType: target.data.drawType,
       drawLimit: target.data.drawLimit,
     });
 
     await increaseCommunityCommentCount({
       siteId: target.data.siteId,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
     });
 
-    if (target.data.postAuthorId !== session.authUserId) {
+    if (target.data.postAuthorId !== session.stigmaId) {
       const notificationResult = await supabaseAdmin.from('notifications').insert({
         user_id: target.data.postAuthorId,
         send_user_id: session.stigmaId,

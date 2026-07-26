@@ -391,14 +391,14 @@ function createPaidContentPreviewHtml(value: string | null) {
 
 async function getPaidContentAccess({
   supabaseAdmin,
-  authUserId,
+  stigmaId,
   siteId,
   boardId,
   seriesId,
   postId,
 }: {
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
-  authUserId: string | null;
+  stigmaId: string | null;
   siteId: string;
   boardId: string;
   seriesId: string | null;
@@ -464,7 +464,7 @@ async function getPaidContentAccess({
   const setting = subscriptionSettingResult.data as SeriesSubscriptionSettingRow;
   const postPurchasePrice = getPostPurchasePrice(setting.price);
 
-  if (!authUserId) {
+  if (!stigmaId) {
     return {
       is_purchase_required: true,
       purchase_post_price: postPurchasePrice,
@@ -478,7 +478,7 @@ async function getPaidContentAccess({
   const boardSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
     .eq('target_id', boardId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
@@ -507,7 +507,7 @@ async function getPaidContentAccess({
   const seriesSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .eq('target_id', seriesId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
@@ -536,7 +536,7 @@ async function getPaidContentAccess({
   const postPurchaseResult = await supabaseAdmin
     .from('payments')
     .select('id')
-    .eq('buyer_user_id', authUserId)
+    .eq('buyer_user_id', stigmaId)
     .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
     .eq('target_type', PAYMENT_TARGET_TYPE.POST)
     .eq('target_id', postId)
@@ -1075,7 +1075,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, page.data.user_id);
-      const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
+      const isAuthor = Boolean(session.stigmaId) && page.data.user_id === session.stigmaId;
 
       return NextResponse.json({
         board: boardData,
@@ -1125,7 +1125,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postData = post.data;
 
-    const isAuthor = Boolean(session.authUserId) && postData.user_id === session.authUserId;
+    const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
 
     if (postData.is_closed === true && isAuthor) {
       return NextResponse.json({ error: '삭제된 글입니다.' }, { status: 400 });
@@ -1153,7 +1153,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const paidContentAccess = await getPaidContentAccess({
       supabaseAdmin,
-      authUserId: session.authUserId ?? null,
+      stigmaId: session.stigmaId,
       siteId: rhizomeData.id,
       boardId: boardData.id,
       seriesId: postData.series_id,

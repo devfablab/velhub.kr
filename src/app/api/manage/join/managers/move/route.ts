@@ -96,31 +96,17 @@ async function createManagerNotifications({
 
   const membershipMap = new Map((membershipResult.data ?? []).map((membership) => [membership.id, membership.user_id]));
 
-  const stigmaIds = [...new Set([...Array.from(membershipMap.values()), access.actor.stigmaId])];
-
-  const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-  if (stigmaResult.error) {
-    console.error(stigmaResult.error);
-    return;
-  }
-
-  const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-  const sendUserId = particleIdMap.get(access.actor.stigmaId) ?? null;
-
   const insertRows = notifications.flatMap((notification) => {
     const stigmaId = membershipMap.get(notification.managerId);
-    const userId = stigmaId ? particleIdMap.get(stigmaId) : null;
 
-    if (!userId) {
+    if (!stigmaId) {
       return [];
     }
 
     return [
       {
-        user_id: userId,
-        send_user_id: sendUserId,
+        user_id: stigmaId,
+        send_user_id: access.actor.stigmaId,
         send_site_id: access.rhizome.id,
         send_board_id: notification.boardId,
         send_series_id: null,

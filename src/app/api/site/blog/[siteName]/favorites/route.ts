@@ -80,7 +80,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const favoriteResult = await supabaseAdmin
       .from('blog_favorites')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('site_id', targetBlog.siteId)
       .limit(1);
 
@@ -124,7 +124,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
     const existingResult = await supabaseAdmin
       .from('blog_favorites')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('site_id', targetBlog.siteId)
       .limit(1);
 
@@ -138,7 +138,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
       const deleteResult = await supabaseAdmin
         .from('blog_favorites')
         .delete()
-        .eq('user_id', session.authUserId)
+        .eq('user_id', session.stigmaId ?? '')
         .eq('site_id', targetBlog.siteId);
 
       if (deleteResult.error) {

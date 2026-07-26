@@ -148,11 +148,11 @@ export async function POST(request: Request) {
 
     const targetStigmaResult = await supabaseAdmin
       .from('stigmas')
-      .select('user_id')
+      .select('id')
       .eq('id', targetMembership.user_id)
       .maybeSingle();
 
-    if (targetStigmaResult.error || !targetStigmaResult.data?.user_id) {
+    if (targetStigmaResult.error || !targetStigmaResult.data?.id) {
       throw new Error('팀원 계정 정보를 확인하지 못했습니다.');
     }
 
@@ -180,9 +180,9 @@ export async function POST(request: Request) {
     }
 
     const notificationResult = await supabaseAdmin.from('notifications').insert({
-      user_id: targetStigmaResult.data.user_id,
+      user_id: targetStigmaResult.data.id,
       send_user_id: session.stigmaId,
-      target_id: targetStigmaResult.data.user_id,
+      target_id: targetStigmaResult.data.id,
       send_site_id: siteResult.data.id,
       send_board_id: null,
       send_series_id: null,

@@ -62,11 +62,11 @@ function isSupportedSubscription(subscription: SubscriptionRow) {
 async function getLastPayment({
   supabaseAdmin,
   subscription,
-  authUserId,
+  stigmaId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
-  authUserId: string;
+  stigmaId: string;
 }) {
   if (subscription.last_payment_id) {
     const paymentResult = await supabaseAdmin
@@ -87,7 +87,7 @@ async function getLastPayment({
   const paymentResult = await supabaseAdmin
     .from('payments')
     .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-    .eq('buyer_user_id', authUserId)
+    .eq('buyer_user_id', stigmaId)
     .eq('payment_type', paymentType)
     .eq('target_type', subscription.target_type)
     .eq('target_id', subscription.target_id)
@@ -172,12 +172,12 @@ async function scheduleCancellation({
 async function cancelSubscription({
   supabaseAdmin,
   subscription,
-  authUserId,
+  stigmaId,
   now,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
-  authUserId: string;
+  stigmaId: string;
   now: Date;
 }) {
   if (subscription.canceled_at && subscription.next_billing_at === null) {
@@ -188,7 +188,7 @@ async function cancelSubscription({
   const payment = await getLastPayment({
     supabaseAdmin,
     subscription,
-    authUserId,
+    stigmaId,
   });
 
   if (!payment || subscription.status === SUBSCRIPTION_STATUS.TRIALING) {
@@ -266,6 +266,13 @@ export async function cancelAccountRecurringPayments({
   supabaseAdmin: SupabaseAdminClient;
   authUserId: string;
 }) {
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', authUserId).maybeSingle();
+
+  if (stigmaResult.error || !stigmaResult.data) {
+    throw new Error('구독 사용자 정보를 확인하지 못했습니다.');
+  }
+
+  const stigmaId = stigmaResult.data.id;
   const subscriptionsResult = await supabaseAdmin
     .from('subscriptions')
     .select(
@@ -280,7 +287,7 @@ export async function cancelAccountRecurringPayments({
         'canceled_at',
       ].join(', '),
     )
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .in('subscription_type', [
       SUBSCRIPTION_TYPE.PLAN_BILLING,
       SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
@@ -302,7 +309,7 @@ export async function cancelAccountRecurringPayments({
     await cancelSubscription({
       supabaseAdmin,
       subscription,
-      authUserId,
+      stigmaId,
       now,
     });
   }

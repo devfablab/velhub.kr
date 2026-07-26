@@ -157,7 +157,7 @@ export async function GET(request: Request) {
 
     const session = await verifySession({ siteId: site.id });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({
         isEnabled: true,
         price: setting.price,
@@ -190,7 +190,7 @@ export async function GET(request: Request) {
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId)
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)

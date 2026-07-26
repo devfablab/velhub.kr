@@ -47,12 +47,12 @@ async function getLastPayment({
   supabaseAdmin,
   subscription,
   siteId,
-  authUserId,
+  stigmaId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
   siteId: string;
-  authUserId: string;
+  stigmaId: string;
 }) {
   if (subscription.last_payment_id) {
     const paymentResult = await supabaseAdmin
@@ -71,7 +71,7 @@ async function getLastPayment({
   const paymentResult = await supabaseAdmin
     .from('payments')
     .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-    .eq('buyer_user_id', authUserId)
+    .eq('buyer_user_id', stigmaId)
     .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
     .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
     .eq('target_id', siteId)
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
           'expired_at',
         ].join(', '),
       )
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId ?? '')
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
       supabaseAdmin,
       subscription,
       siteId: site.id,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId ?? '',
     });
 
     if (!payment) {

@@ -14,7 +14,7 @@ type TargetMembershipRow = {
 };
 
 type StigmaRow = {
-  user_id: string;
+  id: string;
 };
 
 export async function POST(request: Request) {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     const targetStigmaResult = await access.supabaseAdmin
       .from('stigmas')
-      .select('user_id')
+      .select('id')
       .eq('id', targetMembership.user_id)
       .maybeSingle();
 
@@ -95,9 +95,9 @@ export async function POST(request: Request) {
     }
 
     const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-      user_id: targetStigma.user_id,
+      user_id: targetStigma.id,
       send_user_id: access.actor.stigmaId,
-      target_id: targetStigma.user_id,
+      target_id: targetStigma.id,
       send_site_id: access.rhizome.id,
       send_board_id: null,
       send_series_id: null,

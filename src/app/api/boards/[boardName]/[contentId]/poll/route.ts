@@ -254,7 +254,7 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: target.data.siteId,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요한 서비스입니다.' }, { status: 401 });
     }
 
@@ -272,7 +272,7 @@ export async function POST(request: Request, context: RouteContext) {
       .from('post_polls')
       .select('id')
       .eq('post_id', target.data.postId)
-      .eq('voter_id', session.authUserId)
+      .eq('voter_id', session.stigmaId)
       .maybeSingle();
 
     if (existingPoll.error) {
@@ -285,7 +285,7 @@ export async function POST(request: Request, context: RouteContext) {
         .insert({
           post_id: target.data.postId,
           creator_id: target.data.creatorId,
-          voter_id: session.authUserId,
+          voter_id: session.stigmaId,
           option_index: optionIndex,
         })
         .select('id')

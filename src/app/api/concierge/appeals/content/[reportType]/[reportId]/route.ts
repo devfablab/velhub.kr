@@ -449,7 +449,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
     const result = await loadContext(reportType, reportId);
     const authorUserId = result.comment?.user_id ?? result.post.user_id;
 
-    if (authorUserId !== session.authUserId || !canEdit(result.appeal)) {
+    if (authorUserId !== session.stigmaId || !canEdit(result.appeal)) {
       return Response.json({ error: '현재 콘텐츠를 수정할 수 없습니다.' }, { status: 403 });
     }
 
@@ -468,7 +468,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
         .from('post_comments')
         .update({ content, updated_at: now })
         .eq('id', result.comment.id)
-        .eq('user_id', session.authUserId)
+        .eq('user_id', session.stigmaId ?? '')
         .select('id')
         .maybeSingle();
 
@@ -513,7 +513,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
         updated_at: now,
       })
       .eq('id', result.post.id)
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .select('id')
       .maybeSingle();
 

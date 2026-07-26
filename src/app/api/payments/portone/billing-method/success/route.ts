@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     const session = await verifySession({ siteId: siteId || null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKey)
       .maybeSingle();
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         is_default: false,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true);
 

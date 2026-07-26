@@ -195,7 +195,7 @@ export async function POST(request: Request) {
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
       .eq('site_id', site.id)
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId ?? '')
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)

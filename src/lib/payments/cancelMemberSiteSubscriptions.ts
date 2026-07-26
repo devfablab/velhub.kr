@@ -8,6 +8,7 @@ import {
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -76,11 +77,11 @@ function getSubscriptionLabel(subscription: SubscriptionRow) {
 async function getLastPayment({
   supabaseAdmin,
   subscription,
-  authUserId,
+  stigmaId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
-  authUserId: string;
+  stigmaId: string;
 }) {
   if (subscription.last_payment_id) {
     const paymentResult = await supabaseAdmin
@@ -99,7 +100,7 @@ async function getLastPayment({
   const paymentResult = await supabaseAdmin
     .from('payments')
     .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-    .eq('buyer_user_id', authUserId)
+    .eq('buyer_user_id', stigmaId)
     .eq('payment_type', getPaymentType(subscription))
     .eq('target_type', subscription.target_type)
     .eq('target_id', subscription.target_id)
@@ -165,13 +166,13 @@ async function finishRefundedSubscription({
 async function cancelSubscription({
   supabaseAdmin,
   subscription,
-  authUserId,
+  stigmaId,
   actionLabel,
   now,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
-  authUserId: string;
+  stigmaId: string;
   actionLabel: string;
   now: Date;
 }): Promise<MemberSiteSubscriptionCancellationResult> {
@@ -187,7 +188,7 @@ async function cancelSubscription({
   const payment = await getLastPayment({
     supabaseAdmin,
     subscription,
-    authUserId,
+    stigmaId,
   });
 
   if (!payment) {
@@ -295,7 +296,7 @@ export async function cancelMemberSiteSubscriptions({
     throw new Error('멤버의 구독 사용자 정보를 확인하지 못했습니다.');
   }
 
-  const authUserId = (stigmaResult.data as StigmaRow).user_id;
+  const stigmaId = normalizeText(memberStigmaId);
   const subscriptionsResult = await supabaseAdmin
     .from('subscriptions')
     .select(
@@ -309,7 +310,7 @@ export async function cancelMemberSiteSubscriptions({
         'canceled_at',
       ].join(', '),
     )
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
     .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
     .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
@@ -353,7 +354,7 @@ export async function cancelMemberSiteSubscriptions({
       await cancelSubscription({
         supabaseAdmin,
         subscription,
-        authUserId,
+        stigmaId,
         actionLabel,
         now,
       }),

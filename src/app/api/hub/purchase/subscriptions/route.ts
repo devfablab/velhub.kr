@@ -220,7 +220,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -247,7 +247,7 @@ export async function GET() {
           'failure_message',
         ].join(', '),
       )
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId)
       .in('payment_type', SUBSCRIPTION_PAYMENT_TYPES)
       .order('created_at', { ascending: false });
 
@@ -306,7 +306,7 @@ export async function GET() {
                 'created_at',
               ].join(', '),
             )
-            .eq('subscriber_user_id', session.authUserId)
+            .eq('subscriber_user_id', session.stigmaId)
             .in('id', subscriptionIds)
         : { data: [], error: null },
     ]);
@@ -362,7 +362,7 @@ export async function GET() {
               'created_at',
             ].join(', '),
           )
-          .eq('subscriber_user_id', session.authUserId)
+          .eq('subscriber_user_id', session.stigmaId)
           .in('target_id', subscriptionTargetIds)
           .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
           .order('created_at', { ascending: false })

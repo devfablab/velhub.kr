@@ -277,18 +277,7 @@ export async function PATCH(request: Request) {
         return Response.json({ error: '역할 변경에 실패했습니다.' }, { status: 500 });
       }
 
-      const stigmaIds = [...new Set([team.data.user_id, access.session.stigmaId])];
-
-      const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-      if (stigmaResult.error) {
-        console.error(stigmaResult.error);
-      } else {
-        const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-        const userId = particleIdMap.get(team.data.user_id);
-
-        if (userId && team.data.role !== 'observer') {
+      if (team.data.role !== 'observer') {
           const notificationType =
             role === 'manager'
               ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
@@ -296,8 +285,8 @@ export async function PATCH(request: Request) {
                 ? NOTIFICATION_TYPE.BLOG_MEMBER_CHANGED_TO_OBSERVER
                 : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER;
           const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-            user_id: userId,
-            send_user_id: particleIdMap.get(access.session.stigmaId) ?? null,
+            user_id: team.data.user_id,
+            send_user_id: access.session.stigmaId,
             send_site_id: access.siteId,
             send_board_id: null,
             send_series_id: null,
@@ -309,7 +298,6 @@ export async function PATCH(request: Request) {
           if (notificationResult.error) {
             console.error(notificationResult.error);
           }
-        }
       }
 
       return Response.json({
@@ -343,32 +331,20 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '차단 상태 변경에 실패했습니다.' }, { status: 500 });
     }
 
-    const stigmaIds = [...new Set([team.data.user_id, access.session.stigmaId])];
-
-    const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-    if (stigmaResult.error) {
-      console.error(stigmaResult.error);
-    } else {
-      const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-      const userId = particleIdMap.get(team.data.user_id);
-
-      if (userId) {
-        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-          user_id: userId,
-          send_user_id: particleIdMap.get(access.session.stigmaId) ?? null,
+    {
+      const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+          user_id: team.data.user_id,
+          send_user_id: access.session.stigmaId,
           send_site_id: access.siteId,
           send_board_id: null,
           send_series_id: null,
           send_post_id: null,
           notification_type: isBlock ? NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED : NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED,
           is_read: false,
-        });
+      });
 
-        if (notificationResult.error) {
-          console.error(notificationResult.error);
-        }
+      if (notificationResult.error) {
+        console.error(notificationResult.error);
       }
     }
 

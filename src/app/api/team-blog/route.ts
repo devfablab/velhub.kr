@@ -24,20 +24,20 @@ type TeamMemberRow = {
 async function getUpdatedByName(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   siteId: string,
-  particleId: string,
+  stigmaId: string,
 ) {
   const nickname = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('nickname')
     .eq('site_id', siteId)
-    .eq('user_id', particleId)
+    .eq('user_id', stigmaId)
     .maybeSingle();
 
   if (nickname.data?.nickname) {
     return nickname.data.nickname;
   }
 
-  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('user_id', particleId).maybeSingle();
+  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('id', stigmaId).maybeSingle();
 
   if (stigmaUser.data?.user_name) {
     return decrypt(stigmaUser.data.user_name);

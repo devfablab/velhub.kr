@@ -431,7 +431,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const normalizedStigmaId = normalizeText(userResult.id);
-    const normalizedUserId = normalizeText(userResult.authUserId);
+    const normalizedAuthUserId = normalizeText(userResult.authUserId);
 
     if (mode !== 'restore' && mode !== 'reset') {
       return Response.json({ error: '재가입 방식을 선택해주세요.' }, { status: 400 });
@@ -492,7 +492,7 @@ export async function POST(request: Request, context: RouteContext) {
           closed_message: null,
         })
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', normalizedUserId)
+        .eq('user_id', normalizedStigmaId)
         .eq('is_locked', true);
 
       if (restorePostsResult.error) {
@@ -509,7 +509,7 @@ export async function POST(request: Request, context: RouteContext) {
           deleted_message: null,
         })
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', normalizedUserId)
+        .eq('user_id', normalizedStigmaId)
         .eq('is_locked', true);
 
       if (restoreCommentsResult.error) {
@@ -524,7 +524,7 @@ export async function POST(request: Request, context: RouteContext) {
         .from('posts')
         .select('*')
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', normalizedUserId)
+        .eq('user_id', normalizedStigmaId)
         .eq('is_locked', true);
 
       console.log('postsResult: ', postsResult);
@@ -555,7 +555,7 @@ export async function POST(request: Request, context: RouteContext) {
           })
           .in('id', protectedPostIdBatch)
           .eq('site_id', siteResult.data.id)
-          .eq('user_id', normalizedUserId);
+          .eq('user_id', normalizedStigmaId);
 
         if (restoreProtectedPostsResult.error) {
           return Response.json({ error: '결제 내역이 있는 기존 글을 복구하지 못했습니다.' }, { status: 500 });
@@ -569,9 +569,9 @@ export async function POST(request: Request, context: RouteContext) {
       const rightsReportFilePaths = new Set<string>();
 
       posts.forEach((post) => {
-        addStructuredPostImagePaths(postImagePaths, post, normalizedUserId);
-        addEditorPostImagePaths(postImagePaths, post.content_html, normalizedUserId);
-        addEditorPostImagePaths(postImagePaths, post.content_markdown, normalizedUserId);
+        addStructuredPostImagePaths(postImagePaths, post, normalizedAuthUserId);
+        addEditorPostImagePaths(postImagePaths, post.content_html, normalizedAuthUserId);
+        addEditorPostImagePaths(postImagePaths, post.content_markdown, normalizedAuthUserId);
         addOgImagePath(ogImagePaths, post.og_image);
       });
 
@@ -579,7 +579,7 @@ export async function POST(request: Request, context: RouteContext) {
         .from('post_comments')
         .select('id, parent_id, post_id')
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', normalizedUserId)
+        .eq('user_id', normalizedStigmaId)
         .eq('is_locked', true);
 
       if (ownCommentsResult.error) {

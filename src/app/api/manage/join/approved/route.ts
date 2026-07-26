@@ -219,39 +219,16 @@ async function createJoinRejectedNotifications({
   recipientStigmaIds: string[];
   actorStigmaId: string;
 }) {
-  const stigmaIds = [...new Set([...recipientStigmaIds, actorStigmaId])];
-
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-  if (stigmaResult.error) {
-    console.error(stigmaResult.error);
-    return;
-  }
-
-  const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-  const sendUserId = particleIdMap.get(actorStigmaId) ?? null;
-
-  const notifications = recipientStigmaIds.flatMap((stigmaId) => {
-    const userId = particleIdMap.get(stigmaId);
-
-    if (!userId) {
-      return [];
-    }
-
-    return [
-      {
-        user_id: userId,
-        send_user_id: sendUserId,
+  const notifications = recipientStigmaIds.map((stigmaId) => ({
+        user_id: stigmaId,
+        send_user_id: actorStigmaId,
         send_site_id: siteId,
         send_board_id: null,
         send_series_id: null,
         send_post_id: null,
         notification_type: NOTIFICATION_TYPE.COMMUNITY_JOIN_REJECTED,
         is_read: false,
-      },
-    ];
-  });
+      }));
 
   if (notifications.length === 0) {
     return;

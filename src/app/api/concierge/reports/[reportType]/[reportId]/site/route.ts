@@ -21,7 +21,7 @@ type RightsReportRow = {
   site_id: string | null;
 };
 
-async function getOwnerAuthUserId(siteId: string) {
+async function getOwnerStigmaId(siteId: string) {
   const supabaseAdmin = getSupabaseAdmin();
   const ownerResult = await supabaseAdmin
     .from('rhizome_stigmas')
@@ -35,17 +35,7 @@ async function getOwnerAuthUserId(siteId: string) {
     return null;
   }
 
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('user_id')
-    .eq('id', ownerResult.data.user_id)
-    .maybeSingle();
-
-  if (stigmaResult.error || !stigmaResult.data?.user_id) {
-    return null;
-  }
-
-  return stigmaResult.data.user_id as string;
+  return ownerResult.data.user_id as string;
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -115,9 +105,9 @@ export async function PATCH(request: Request, context: RouteContext) {
         return Response.json({ error: '이미 차단된 사이트입니다.' }, { status: 409 });
       }
 
-      const ownerAuthUserId = await getOwnerAuthUserId(report.site_id);
+      const ownerStigmaId = await getOwnerStigmaId(report.site_id);
 
-      if (!ownerAuthUserId) {
+      if (!ownerStigmaId) {
         return Response.json({ error: '사이트 운영자 계정을 찾을 수 없습니다.' }, { status: 404 });
       }
 
@@ -133,7 +123,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
 
       const notificationResult = await supabaseAdmin.from('notifications').insert({
-        user_id: ownerAuthUserId,
+        user_id: ownerStigmaId,
         send_user_id: session.stigmaId,
         target_id: null,
         send_site_id: report.site_id,

@@ -166,14 +166,14 @@ async function getSubscriptionTarget({
 async function getLastPayment({
   supabaseAdmin,
   subscription,
-  authUserId,
+  stigmaId,
   paymentType,
   paymentTargetType,
   targetId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
-  authUserId: string;
+  stigmaId: string;
   paymentType: string;
   paymentTargetType: string;
   targetId: string;
@@ -195,7 +195,7 @@ async function getLastPayment({
   const paymentResult = await supabaseAdmin
     .from('payments')
     .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-    .eq('buyer_user_id', authUserId)
+    .eq('buyer_user_id', stigmaId)
     .eq('payment_type', paymentType)
     .eq('target_type', paymentTargetType)
     .eq('target_id', targetId)
@@ -291,7 +291,7 @@ export async function POST(request: Request) {
           'expired_at',
         ].join(', '),
       )
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId ?? '')
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)
@@ -318,7 +318,7 @@ export async function POST(request: Request) {
     const payment = await getLastPayment({
       supabaseAdmin,
       subscription,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId ?? '',
       paymentType,
       paymentTargetType,
       targetId: subscriptionTarget.targetId,

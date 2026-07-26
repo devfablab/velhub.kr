@@ -236,7 +236,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -263,7 +263,7 @@ export async function GET() {
             'failure_message',
           ].join(', '),
         )
-        .eq('buyer_user_id', session.authUserId)
+        .eq('buyer_user_id', session.stigmaId)
         .order('created_at', { ascending: false })
         .limit(100),
       supabaseAdmin
@@ -281,7 +281,7 @@ export async function GET() {
             'updated_at',
           ].join(', '),
         )
-        .eq('user_id', session.authUserId)
+        .eq('user_id', session.stigmaId)
         .order('is_default', { ascending: false })
         .order('updated_at', { ascending: false }),
     ]);

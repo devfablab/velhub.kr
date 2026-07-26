@@ -87,13 +87,13 @@ function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
 
 async function hasActiveSubscription({
   supabaseAdmin,
-  authUserId,
+  stigmaId,
   targetType,
   targetId,
   subscriptionType,
 }: {
   supabaseAdmin: SupabaseAdminClient;
-  authUserId: string;
+  stigmaId: string;
   targetType: string;
   targetId: string;
   subscriptionType: string;
@@ -101,7 +101,7 @@ async function hasActiveSubscription({
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .eq('target_type', targetType)
     .eq('target_id', targetId)
     .eq('subscription_type', subscriptionType)
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest) {
 
     const hasBoardSubscription = await hasActiveSubscription({
       supabaseAdmin,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       targetType: PAYMENT_TARGET_TYPE.BOARD,
       targetId: board.id,
       subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
 
     const hasSeriesSubscription = await hasActiveSubscription({
       supabaseAdmin,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       targetType: PAYMENT_TARGET_TYPE.SERIES,
       targetId: post.series_id,
       subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
     const existingPurchaseResult = await supabaseAdmin
       .from('payments')
       .select('id')
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId)
       .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
       .eq('target_type', PAYMENT_TARGET_TYPE.POST)
       .eq('target_id', post.id)

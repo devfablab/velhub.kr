@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.redirect(getPurchaseRedirectUrl(request, 'fail', '로그인이 필요합니다.'));
     }
 
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('provider', provider)
       .eq('billing_key', billingKey)
       .maybeSingle();
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         is_default: false,
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('provider', provider)
       .eq('is_default', true);
 
@@ -139,7 +139,7 @@ export async function GET(request: Request) {
         customer_key: customerKey,
         updated_at: nowText,
       })
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId)
       .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
       .is('expired_at', null);
 

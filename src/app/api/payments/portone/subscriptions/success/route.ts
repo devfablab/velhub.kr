@@ -347,13 +347,13 @@ async function getSubscriptionTarget({
 
 async function cancelSeriesSubscriptionsInBoard({
   supabaseAdmin,
-  authUserId,
+  stigmaId,
   siteId,
   boardId,
   now,
 }: {
   supabaseAdmin: SupabaseAdminClient;
-  authUserId: string;
+  stigmaId: string;
   siteId: string;
   boardId: string;
   now: Date;
@@ -386,7 +386,7 @@ async function cancelSeriesSubscriptionsInBoard({
       canceled_at: canceledAt,
       expired_at: canceledAt,
     })
-    .eq('subscriber_user_id', authUserId)
+    .eq('subscriber_user_id', stigmaId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
     .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('target_id', seriesIds)
@@ -507,7 +507,7 @@ export async function POST(request: Request) {
     const latestSubscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId ?? '')
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
       .eq('target_id', subscriptionTarget.targetId)
@@ -544,7 +544,7 @@ export async function POST(request: Request) {
     const existingDefaultBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .maybeSingle();
@@ -558,7 +558,7 @@ export async function POST(request: Request) {
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKeyResult.billingKey)
       .maybeSingle();
@@ -743,7 +743,7 @@ export async function POST(request: Request) {
     if (targetType === 'board') {
       await cancelSeriesSubscriptionsInBoard({
         supabaseAdmin,
-        authUserId: session.authUserId,
+        stigmaId: session.stigmaId ?? '',
         siteId: site.id,
         boardId: subscriptionTarget.boardId,
         now,

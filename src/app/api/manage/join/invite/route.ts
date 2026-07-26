@@ -334,8 +334,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (invitedUserResult.data?.id) {
+      const invitedStigmaResult = await access.supabaseAdmin
+        .from('stigmas')
+        .select('id')
+        .eq('user_id', invitedUserResult.data.id)
+        .maybeSingle();
+
+      if (invitedStigmaResult.error) {
+        console.error(invitedStigmaResult.error);
+      }
+
+      if (invitedStigmaResult.data?.id) {
       const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-        user_id: invitedUserResult.data.id,
+        user_id: invitedStigmaResult.data.id,
         send_user_id: null,
         send_site_id: access.siteId,
         send_board_id: null,
@@ -347,6 +358,7 @@ export async function POST(request: NextRequest) {
 
       if (notificationResult.error) {
         console.error(notificationResult.error);
+      }
       }
     }
 

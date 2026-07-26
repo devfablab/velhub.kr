@@ -7,7 +7,7 @@ export async function PATCH() {
       siteId: null,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -18,7 +18,7 @@ export async function PATCH() {
       .update({
         is_read: true,
       })
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('is_read', false);
 
     if (updateResult.error) {

@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { isGuidelineReportCategory, isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -360,6 +361,12 @@ export async function POST(request: Request) {
     return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
   }
 
+  const currentStigma = await getCurrentStigma();
+
+  if (!currentStigma) {
+    return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
   const body = (await request.json()) as ReportRequestBody;
 
   if (!isReportTargetType(body.targetType)) {
@@ -450,7 +457,7 @@ export async function POST(request: Request) {
     board_id: targetValues.board_id,
     post_id: targetValues.post_id,
     comment_id: targetValues.comment_id,
-    reporter_user_id: sessionClaims.userId,
+    reporter_user_id: currentStigma.stigmaId,
     report_category: body.reportCategory,
   });
 

@@ -21,7 +21,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
       siteId: null,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -31,7 +31,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
       .from('notifications')
       .select('id, is_read')
       .eq('id', notificationId)
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .maybeSingle();
 
     if (notificationResult.error) {
@@ -51,7 +51,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
           is_read: true,
         })
         .eq('id', notificationId)
-        .eq('user_id', session.authUserId);
+        .eq('user_id', session.stigmaId);
 
       if (updateResult.error) {
         console.error(updateResult.error);

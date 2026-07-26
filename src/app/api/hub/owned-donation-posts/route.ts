@@ -119,7 +119,7 @@ export async function GET(request: Request) {
     const paymentsResult = await supabaseAdmin
       .from('payments')
       .select('target_id, payment_type, status, amount, refunded_amount, approved_at, created_at')
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId ?? '')
       .eq('target_type', PAYMENT_TARGET_TYPE.POST)
       .in('payment_type', [PAYMENT_TYPE.PURCHASE_POST, PAYMENT_TYPE.DONATION_POST])
       .order('created_at', { ascending: false });

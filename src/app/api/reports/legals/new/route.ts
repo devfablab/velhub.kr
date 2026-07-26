@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
@@ -515,6 +516,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
     const formData = await request.formData();
 
     const legalType = getFormStringValue(formData, 'legalType');
@@ -598,7 +605,7 @@ export async function POST(request: Request) {
       post_id: targetValues.postId,
       comment_id: targetValues.commentId,
 
-      reporter_user_id: sessionClaims.userId,
+      reporter_user_id: currentStigma.stigmaId,
 
       report_url: reportUrl,
 

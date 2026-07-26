@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
         'id, buyer_user_id, payment_key, payment_type, target_type, target_id, order_no, amount, refunded_amount, status, refundable_until',
       )
       .eq('id', paymentId)
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId ?? '')
       .maybeSingle();
 
     if (paymentResult.error) {
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         raw_data: cancelResult,
       })
       .eq('id', payment.id)
-      .eq('buyer_user_id', session.authUserId);
+      .eq('buyer_user_id', session.stigmaId ?? '');
 
     if (updateResult.error) {
       console.error(updateResult.error);

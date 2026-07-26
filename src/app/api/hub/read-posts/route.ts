@@ -147,7 +147,7 @@ export async function GET(request: Request) {
     const readsResult = await supabaseAdmin
       .from('post_reads')
       .select('id, read_at, site_id, board_id, post_id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .order('read_at', { ascending: false })
       .limit(50);
 

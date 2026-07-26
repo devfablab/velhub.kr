@@ -261,17 +261,24 @@ export async function loadGuidelineAppealItems({
   origin: string;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', authUserId).maybeSingle();
+
+  if (stigmaResult.error || !stigmaResult.data) {
+    throw new Error('사용자 정보를 확인하지 못했습니다.');
+  }
+
+  const stigmaId = stigmaResult.data.id;
   const [postsResult, commentsResult] = await Promise.all([
     supabaseAdmin
       .from('posts')
       .select('id, site_id, board_id, slug, user_id, subject, is_closed, closed_message')
-      .eq('user_id', authUserId)
+      .eq('user_id', stigmaId)
       .eq('is_closed', true)
       .not('closed_message', 'is', null),
     supabaseAdmin
       .from('post_comments')
       .select('id, site_id, board_id, post_id, user_id, is_deleted, deleted_message')
-      .eq('user_id', authUserId)
+      .eq('user_id', stigmaId)
       .eq('is_deleted', true)
       .not('deleted_message', 'is', null),
   ]);

@@ -180,13 +180,13 @@ export async function GET(request: Request) {
       supabaseAdmin
         .from('post_likes')
         .select('id, created_at, site_id, board_id, post_id')
-        .eq('user_id', session.authUserId)
+        .eq('user_id', session.stigmaId ?? '')
         .order('created_at', { ascending: false })
         .limit(50),
       supabaseAdmin
         .from('comment_likes')
         .select('id, created_at, site_id, board_id, post_id, comment_id')
-        .eq('user_id', session.authUserId)
+        .eq('user_id', session.stigmaId ?? '')
         .order('created_at', { ascending: false })
         .limit(50),
     ]);

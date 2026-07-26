@@ -48,7 +48,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ blogs: [] });
     }
 
@@ -57,7 +57,7 @@ export async function GET() {
     const favoritesResult = await supabaseAdmin
       .from('blog_favorites')
       .select('id, created_at, site_id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .order('created_at', { ascending: false })
       .limit(50);
 

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
@@ -496,6 +497,12 @@ export async function POST(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
     const formData = await request.formData();
 
     const reasonType = getReasonType(formData);
@@ -707,7 +714,7 @@ export async function POST(request: Request) {
         comment_id: targetValues.commentId,
 
         report_url: reportUrl,
-        reporter_user_id: sessionClaims.userId,
+        reporter_user_id: currentStigma.stigmaId,
 
         email,
         phone,
@@ -754,7 +761,7 @@ export async function POST(request: Request) {
               is_closed: true,
               is_locked: true,
               closed_message: '권리침해 위반',
-              closed_by: sessionClaims.userId,
+              closed_by: currentStigma.stigmaId,
               closed_at: now,
             })
             .eq('id', targetValues.postId)
@@ -765,7 +772,7 @@ export async function POST(request: Request) {
                 is_deleted: true,
                 is_locked: true,
                 deleted_message: '권리침해 위반',
-                deleted_by: sessionClaims.userId,
+                deleted_by: currentStigma.stigmaId,
                 deleted_at: now,
               })
               .eq('id', targetValues.commentId)

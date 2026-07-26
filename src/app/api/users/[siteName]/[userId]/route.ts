@@ -908,7 +908,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
           closed_message: '커뮤니티 탈퇴로 인한 삭제',
         })
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', session.authUserId),
+        .eq('user_id', session.stigmaId ?? ''),
       supabaseAdmin
         .from('post_comments')
         .update({
@@ -919,7 +919,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
           deleted_message: '커뮤니티 탈퇴로 인한 삭제',
         })
         .eq('site_id', siteResult.data.id)
-        .eq('user_id', session.authUserId),
+        .eq('user_id', session.stigmaId ?? ''),
     ]);
 
     console.log('commentsResult: ', commentsResult);

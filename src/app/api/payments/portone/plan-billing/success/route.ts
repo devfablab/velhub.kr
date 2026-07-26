@@ -263,7 +263,7 @@ export async function POST(request: NextRequest) {
     const existingDefaultBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .maybeSingle();
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKey)
       .maybeSingle();
@@ -301,7 +301,7 @@ export async function POST(request: NextRequest) {
           updated_at: now.toISOString(),
         })
         .eq('id', existingDefaultBillingMethodResult.data.id)
-        .eq('user_id', session.authUserId);
+        .eq('user_id', session.stigmaId ?? '');
 
       if (previousDefaultBillingMethodUpdateResult.error) {
         console.error(previousDefaultBillingMethodUpdateResult.error);

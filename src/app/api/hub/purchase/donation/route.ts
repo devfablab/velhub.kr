@@ -252,7 +252,7 @@ export async function GET() {
           'failure_message',
         ].join(', '),
       )
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId ?? '')
       .in('payment_type', DONATION_PAYMENT_TYPES)
       .order('created_at', { ascending: false });
 

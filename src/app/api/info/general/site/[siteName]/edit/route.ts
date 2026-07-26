@@ -88,16 +88,6 @@ function formatLogMessage(
   return `중단 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
 }
 
-async function getCommunityUpdatedByParticleId(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, stigmaId: string) {
-  const stigma = await supabaseAdmin.from('stigmas').select('user_id').eq('id', stigmaId).maybeSingle();
-
-  if (stigma.error || !stigma.data?.user_id) {
-    return null;
-  }
-
-  return stigma.data.user_id as string;
-}
-
 async function checkAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -129,21 +119,11 @@ async function checkAccess(siteName: string) {
         } as const;
       }
 
-      const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
-
-      if (!updatedByParticleId) {
-        return {
-          ok: false,
-          status: 403,
-          error: '수정자 정보를 확인할 수 없습니다.',
-        } as const;
-      }
-
       return {
         ok: true,
         status: 200,
         rhizome: rhizome.data,
-        updatedByParticleId,
+        updatedByStigmaId: access.actor.stigmaId,
         supabaseAdmin,
       } as const;
     } catch (unknownError) {
@@ -190,21 +170,11 @@ async function checkAccess(siteName: string) {
     } as const;
   }
 
-  const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, membership.data.user_id);
-
-  if (!updatedByParticleId) {
-    return {
-      ok: false,
-      status: 403,
-      error: '수정자 정보를 확인할 수 없습니다.',
-    } as const;
-  }
-
   return {
     ok: true,
     status: 200,
     rhizome: rhizome.data,
-    updatedByParticleId,
+    updatedByStigmaId: membership.data.user_id as string,
     supabaseAdmin,
   } as const;
 }
@@ -335,7 +305,7 @@ export async function POST(request: Request, context: RouteContext) {
       .from('sites')
       .update({
         updated_at: nowIsoString,
-        updated_by: access.updatedByParticleId,
+        updated_by: access.updatedByStigmaId,
         log: logMessage,
       })
       .eq('site_id', access.rhizome.id);

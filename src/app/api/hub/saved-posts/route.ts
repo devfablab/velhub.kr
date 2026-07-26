@@ -147,7 +147,7 @@ export async function GET(request: Request) {
     const savesResult = await supabaseAdmin
       .from('post_saves')
       .select('id, created_at, site_id, board_id, post_id')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .order('created_at', { ascending: false })
       .limit(50);
 

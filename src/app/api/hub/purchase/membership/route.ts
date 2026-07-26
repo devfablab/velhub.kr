@@ -131,7 +131,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -156,7 +156,7 @@ export async function GET() {
           'failure_message',
         ].join(', '),
       )
-      .eq('buyer_user_id', session.authUserId)
+      .eq('buyer_user_id', session.stigmaId)
       .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .order('created_at', { ascending: false });
@@ -203,7 +203,7 @@ export async function GET() {
               ].join(', '),
             )
             .in('id', subscriptionIds)
-            .eq('subscriber_user_id', session.authUserId)
+            .eq('subscriber_user_id', session.stigmaId)
             .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
             .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
         : { data: [], error: null },
@@ -224,7 +224,7 @@ export async function GET() {
                 'created_at',
               ].join(', '),
             )
-            .eq('subscriber_user_id', session.authUserId)
+            .eq('subscriber_user_id', session.stigmaId)
             .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
             .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
             .in('target_id', siteIds)

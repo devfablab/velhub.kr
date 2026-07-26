@@ -116,7 +116,7 @@ export async function GET() {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -184,7 +184,7 @@ export async function GET() {
       supabaseAdmin
         .from('payments')
         .select('*')
-        .eq('buyer_user_id', session.authUserId)
+        .eq('buyer_user_id', session.stigmaId)
         .eq('payment_type', PAYMENT_TYPE.PLAN_BILLING)
         .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
         .in('target_id', siteIds)
@@ -194,7 +194,7 @@ export async function GET() {
         .select(
           'id, target_id, status, price, current_period_start, current_period_end, next_billing_at, canceled_at, expired_at, created_at',
         )
-        .eq('subscriber_user_id', session.authUserId)
+        .eq('subscriber_user_id', session.stigmaId)
         .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
         .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
         .in('target_id', siteIds)

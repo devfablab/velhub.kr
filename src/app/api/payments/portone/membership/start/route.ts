@@ -236,7 +236,7 @@ export async function POST(request: Request) {
 
     const session = await verifySession({ siteId: site.id });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -272,7 +272,7 @@ export async function POST(request: Request) {
     const latestSubscriptionResult = await supabaseAdmin
       .from('subscriptions')
       .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
-      .eq('subscriber_user_id', session.authUserId)
+      .eq('subscriber_user_id', session.stigmaId)
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .eq('target_id', site.id)
@@ -331,7 +331,7 @@ export async function POST(request: Request) {
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, customer_key, billing_key')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .limit(1);

@@ -1,5 +1,6 @@
 import { redis } from '@/lib/redis';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type ThemeMode = 'light' | 'system' | 'dark';
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
 
     const profileResult = await supabaseAdmin
       .from('profiles')
@@ -43,7 +49,7 @@ export async function POST(request: Request) {
         theme_mode: requestBody.theme_mode,
         auto_login: requestBody.auto_login,
       })
-      .eq('user_id', sessionClaims.userId);
+      .eq('user_id', currentStigma.stigmaId);
 
     if (profileResult.error) {
       return Response.json({ error: '추가 설정 수정에 실패했습니다.' }, { status: 500 });

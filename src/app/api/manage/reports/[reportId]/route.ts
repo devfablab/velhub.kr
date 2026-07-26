@@ -1,5 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { reorderSeriesIdx } from '@/lib/board/seriesIdx';
@@ -165,6 +166,12 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const siteResult = await supabaseAdmin.from('rhizomes').select('id').eq('site_key', siteName).maybeSingle();
@@ -221,7 +228,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       await closePost({
         post: postResult.data as PostRow,
-        handlerUserId: sessionClaims.userId,
+        handlerUserId: currentStigma.stigmaId,
         closedMessage: getClosedMessage(report.target_type, report.report_category),
       });
     }
@@ -244,7 +251,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
       await closeComment({
         comment: commentResult.data as CommentRow,
-        handlerUserId: sessionClaims.userId,
+        handlerUserId: currentStigma.stigmaId,
         deletedMessage: getClosedMessage(report.target_type, report.report_category),
       });
     }
@@ -267,7 +274,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         : {
             status: storedStatus,
             handling_result: handlingResult,
-            handler_user_id: sessionClaims.userId,
+            handler_user_id: currentStigma.stigmaId,
             handled_at: nowIsoString,
             updated_at: nowIsoString,
           };

@@ -322,19 +322,31 @@ export async function POST(request: NextRequest) {
     }
 
     if (invitedUserResult.data?.id) {
-      const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-        user_id: invitedUserResult.data.id,
-        send_user_id: null,
-        send_site_id: access.siteId,
-        send_board_id: null,
-        send_series_id: null,
-        send_post_id: null,
-        notification_type: NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT,
-        is_read: false,
-      });
+      const invitedStigmaResult = await access.supabaseAdmin
+        .from('stigmas')
+        .select('id')
+        .eq('user_id', invitedUserResult.data.id)
+        .maybeSingle();
 
-      if (notificationResult.error) {
-        console.error(notificationResult.error);
+      if (invitedStigmaResult.error) {
+        console.error(invitedStigmaResult.error);
+      }
+
+      if (invitedStigmaResult.data?.id) {
+        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+          user_id: invitedStigmaResult.data.id,
+          send_user_id: null,
+          send_site_id: access.siteId,
+          send_board_id: null,
+          send_series_id: null,
+          send_post_id: null,
+          notification_type: NOTIFICATION_TYPE.BLOG_TEAM_INVITATION_SENT,
+          is_read: false,
+        });
+
+        if (notificationResult.error) {
+          console.error(notificationResult.error);
+        }
       }
     }
 

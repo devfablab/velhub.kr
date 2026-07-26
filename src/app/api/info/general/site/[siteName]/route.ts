@@ -13,36 +13,26 @@ type RouteContext = {
 async function getUpdatedByName(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   siteId: string,
-  particleId: string,
+  stigmaId: string,
 ) {
   const nickname = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('nickname')
     .eq('site_id', siteId)
-    .eq('user_id', particleId)
+    .eq('user_id', stigmaId)
     .maybeSingle();
 
   if (nickname.data?.nickname) {
     return nickname.data.nickname;
   }
 
-  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('user_id', particleId).maybeSingle();
+  const stigmaUser = await supabaseAdmin.from('stigmas').select('user_name').eq('id', stigmaId).maybeSingle();
 
   if (stigmaUser.data?.user_name) {
     return decrypt(stigmaUser.data.user_name);
   }
 
   return '';
-}
-
-async function getCommunityUpdatedByParticleId(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, stigmaId: string) {
-  const stigma = await supabaseAdmin.from('stigmas').select('user_id').eq('id', stigmaId).maybeSingle();
-
-  if (stigma.error || !stigma.data?.user_id) {
-    return null;
-  }
-
-  return stigma.data.user_id as string;
 }
 
 async function checkAccess(siteName: string) {
@@ -76,21 +66,10 @@ async function checkAccess(siteName: string) {
         } as const;
       }
 
-      const updatedByParticleId = await getCommunityUpdatedByParticleId(supabaseAdmin, access.actor.stigmaId);
-
-      if (!updatedByParticleId) {
-        return {
-          ok: false,
-          status: 403,
-          error: '수정자 정보를 확인할 수 없습니다.',
-        } as const;
-      }
-
       return {
         ok: true,
         status: 200,
         rhizome: rhizome.data,
-        updatedByParticleId,
         supabaseAdmin,
       } as const;
     } catch (unknownError) {
@@ -115,7 +94,6 @@ async function checkAccess(siteName: string) {
       ok: true,
       status: 200,
       rhizome: rhizome.data,
-      updatedByParticleId: '',
       supabaseAdmin,
     } as const;
   }
@@ -143,7 +121,6 @@ async function checkAccess(siteName: string) {
     ok: true,
     status: 200,
     rhizome: rhizome.data,
-    updatedByParticleId: membership.data.user_id as string,
     supabaseAdmin,
   } as const;
 }

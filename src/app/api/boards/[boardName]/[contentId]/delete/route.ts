@@ -4,6 +4,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
@@ -47,6 +48,12 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!sessionClaims) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const currentStigma = await getCurrentStigma();
+
+    if (!currentStigma) {
+      return Response.json({ error: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     const requestBody = (await request.json()) as PatchRequestBody;
@@ -111,7 +118,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           .from('pages')
           .update({
             is_closed: true,
-            closed_by: sessionClaims.userId,
+            closed_by: currentStigma.stigmaId,
             closed_at: new Date().toISOString(),
             closed_message: null,
           })
@@ -165,7 +172,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const isAuthor = post.data.user_id === sessionClaims.userId;
+    const isAuthor = post.data.user_id === currentStigma.stigmaId;
     let canManageContent = isStaff || session.case === 'admin';
 
     if (rhizome.data.site_type === 'community' && !canManageContent) {
@@ -200,7 +207,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         .from('posts')
         .update({
           is_closed: true,
-          closed_by: sessionClaims.userId,
+          closed_by: currentStigma.stigmaId,
           closed_at: new Date().toISOString(),
           closed_message: canManageContent ? closedMessage : null,
           series_idx: null,

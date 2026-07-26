@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
     const billingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, customer_key, billing_key')
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
       .limit(1);

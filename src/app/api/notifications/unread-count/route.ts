@@ -7,7 +7,7 @@ export async function GET() {
       siteId: null,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({
         count: 0,
       });
@@ -21,7 +21,7 @@ export async function GET() {
         count: 'exact',
         head: true,
       })
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .eq('is_read', false);
 
     if (countResult.error) {

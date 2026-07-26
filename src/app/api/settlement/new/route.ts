@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSettlementProfileUpdatePayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
 
@@ -68,11 +69,16 @@ export async function POST(request: NextRequest) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+  const currentStigma = await getCurrentStigma();
+
+  if (!currentStigma) {
+    return NextResponse.json({ message: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
     .select('user_id, identity_verified_at, settlement_type')
-    .eq('user_id', sessionClaims.userId)
+    .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
 
@@ -130,7 +136,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabaseAdmin
       .from('chorogons')
       .update(createSettlementProfileUpdatePayload(validatedInput.data))
-      .eq('user_id', sessionClaims.userId);
+      .eq('user_id', currentStigma.stigmaId);
 
     if (error) {
       return NextResponse.json({ message: '정산 정보 등록에 실패했습니다.' }, { status: 500 });

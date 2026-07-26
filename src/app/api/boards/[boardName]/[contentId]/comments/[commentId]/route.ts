@@ -1112,7 +1112,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: siteResult.data.id,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -1129,7 +1129,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (commentResult.data.user_id !== session.authUserId) {
+    if (commentResult.data.user_id !== session.stigmaId) {
       return Response.json({ error: '댓글을 수정할 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -1143,7 +1143,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         content,
       })
       .eq('id', normalizedCommentId)
-      .eq('user_id', session.authUserId)
+      .eq('user_id', session.stigmaId)
       .select('id, content')
       .maybeSingle();
 
@@ -1224,7 +1224,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       siteId: siteResult.data.id,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -1241,7 +1241,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '댓글을 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const isCommentAuthor = commentResult.data.user_id === session.authUserId;
+    const isCommentAuthor = commentResult.data.user_id === session.stigmaId;
     const isStaff = session.case === 'staff' || session.case === 'admin';
 
     if (!isCommentAuthor && !isStaff) {

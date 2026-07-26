@@ -69,26 +69,9 @@ async function createAssignedNotification({
     return;
   }
 
-  const stigmaIds = [...new Set([membershipResult.data.user_id, access.actor.stigmaId])];
-
-  const stigmaResult = await access.supabaseAdmin.from('stigmas').select('id, user_id').in('id', stigmaIds);
-
-  if (stigmaResult.error) {
-    console.error(stigmaResult.error);
-    return;
-  }
-
-  const particleIdMap = new Map((stigmaResult.data ?? []).map((stigma) => [stigma.id, stigma.user_id]));
-
-  const userId = particleIdMap.get(membershipResult.data.user_id);
-
-  if (!userId) {
-    return;
-  }
-
   const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-    user_id: userId,
-    send_user_id: particleIdMap.get(access.actor.stigmaId) ?? null,
+    user_id: membershipResult.data.user_id,
+    send_user_id: access.actor.stigmaId,
     send_site_id: access.rhizome.id,
     send_board_id: boardId,
     send_series_id: null,

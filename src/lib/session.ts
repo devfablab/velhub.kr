@@ -100,8 +100,17 @@ function shouldTouchLastActive(lastActiveAt: number) {
 
 async function getUserAutoLogin(userId: string) {
   const supabaseAdmin = getSupabaseAdmin();
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', userId).maybeSingle();
 
-  const profileResult = await supabaseAdmin.from('profiles').select('auto_login').eq('user_id', userId).maybeSingle();
+  if (stigmaResult.error || !stigmaResult.data) {
+    return DEFAULT_AUTO_LOGIN;
+  }
+
+  const profileResult = await supabaseAdmin
+    .from('profiles')
+    .select('auto_login')
+    .eq('user_id', stigmaResult.data.id)
+    .maybeSingle();
 
   if (profileResult.error) {
     return DEFAULT_AUTO_LOGIN;

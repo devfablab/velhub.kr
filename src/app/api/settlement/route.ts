@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { serializeSettlementProfile, SettlementProfileRow } from '@/lib/settlement/profile';
 
@@ -12,6 +13,11 @@ export async function GET() {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+  const currentStigma = await getCurrentStigma();
+
+  if (!currentStigma) {
+    return NextResponse.json({ message: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
 
   const [settlementResult, paymentEmailResult] = await Promise.all([
     supabaseAdmin
@@ -34,7 +40,7 @@ export async function GET() {
           'company_name',
         ].join(', '),
       )
-      .eq('user_id', sessionClaims.userId)
+      .eq('user_id', currentStigma.stigmaId)
       .maybeSingle(),
     supabaseAdmin.from('stigmas').select('payment_email').eq('user_id', sessionClaims.userId).maybeSingle(),
   ]);
