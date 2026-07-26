@@ -1855,7 +1855,7 @@ export default function Opt({ isCommunity }: Props) {
       <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{errorMessage}</p>
             </div>
@@ -1870,7 +1870,7 @@ export default function Opt({ isCommunity }: Props) {
       <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>페이지를 찾을 수 없어요! 🥹</p>
             </div>
@@ -1887,7 +1887,7 @@ export default function Opt({ isCommunity }: Props) {
       <Container pageBack={`/${siteName}/${boardName}/${contentId}`} pageTitle="글 수정" pageFin>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>접근권한이 없어요 🥹</p>
             </div>

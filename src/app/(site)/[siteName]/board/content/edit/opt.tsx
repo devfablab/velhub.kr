@@ -1847,7 +1847,7 @@ export default function Opt({ isCommunity }: Props) {
               <ListAltOutlinedIcon />
               <span>글 수정</span>
             </h2>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{errorMessage}</p>
             </div>

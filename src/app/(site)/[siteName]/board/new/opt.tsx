@@ -1792,7 +1792,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <ListAltOutlinedIcon />
             <span>새글 쓰기</span>
           </h2>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <p>글을 작성할 수 있는 게시판이 없습니다.</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>
@@ -1818,7 +1818,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <ListAltOutlinedIcon />
             <span>새글 쓰기</span>
           </h2>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <p>{writePolicyMessage}</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>

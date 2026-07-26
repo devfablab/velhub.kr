@@ -480,7 +480,7 @@ export default function Opt({ isCommunity }: Props) {
       >
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{errorMessage}</p>
             </div>

@@ -1808,7 +1808,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             </aside>
           ) : null}
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>페이지를 찾을 수 없어요! 🥹</p>
               <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
@@ -1832,7 +1832,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             </aside>
           ) : null}
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>글을 작성할 수 있는 게시판이 없습니다.</p>
               <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
@@ -1856,7 +1856,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             </aside>
           ) : null}
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{writePolicyMessage}</p>
               <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>

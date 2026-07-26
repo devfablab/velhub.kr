@@ -23,7 +23,7 @@ export default async function Page({ params }: PageProps) {
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <h2>운영 중단</h2>
             <p>해당 사이트는 운영자의 사정에 의해 운영 중단되었습니다.</p>

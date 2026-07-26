@@ -9,7 +9,7 @@ export default function Page() {
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <Typography variant="h6" component="h2" sx={{ marginBottom: 2 }}>
               초대 전용 사이트

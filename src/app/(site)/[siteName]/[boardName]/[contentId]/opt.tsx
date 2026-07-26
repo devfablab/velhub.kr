@@ -752,7 +752,7 @@ export default function Opt({ isCommunity }: Props) {
       <main>
         <div className="container">
           <div className={`${styles.content} content`}>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
             </div>

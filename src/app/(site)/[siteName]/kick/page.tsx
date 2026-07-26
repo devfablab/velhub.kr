@@ -64,7 +64,7 @@ export default function Page() {
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <h2>강제 탈퇴</h2>
 

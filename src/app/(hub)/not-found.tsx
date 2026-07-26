@@ -7,7 +7,7 @@ export default function NotFound() {
     <main>
       <div className="container">
         <div className="content">
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <h2>NOT FOUND PAGE</h2>
             <p>삭제되었거나 존재하지 않는 페이지입니다.</p>

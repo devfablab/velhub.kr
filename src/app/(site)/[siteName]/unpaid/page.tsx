@@ -8,7 +8,7 @@ export default function Page() {
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
             <h2>요금제 결제 필요</h2>
             <p>요금제 결제를 진행하셔야 사이트를 운영하실 수 있습니다.</p>

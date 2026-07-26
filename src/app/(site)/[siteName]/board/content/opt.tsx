@@ -692,7 +692,7 @@ export default function Opt({ isCommunity }: Props) {
               <ListAltOutlinedIcon />
               <span>글 보기</span>
             </h2>
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
             </div>

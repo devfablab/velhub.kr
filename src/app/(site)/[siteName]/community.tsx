@@ -206,7 +206,7 @@ export default function Community({ siteName, homeBoards }: Props) {
 
         <div className={`content ${styles.content} ${styles['home-content']} `}>
           {homeBoards.length === 0 ? (
-            <div className="paper pape-error">
+            <div className="paper page-error">
               <WarningAmberRoundedIcon />
               <span>매니저가 홈을 꾸미기 전입니다</span>
             </div>

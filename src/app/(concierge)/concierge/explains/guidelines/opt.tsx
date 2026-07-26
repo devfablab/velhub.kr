@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -413,8 +414,9 @@ export default function Opt() {
           <LoadingIndicator />
         </Stack>
       ) : items.length === 0 ? (
-        <div className="paper">
-          <Typography variant="body2">가이드라인 소명내역이 없습니다.</Typography>
+        <div className="paper page-info">
+          <InfoOutlineRoundedIcon />
+          <p>가이드라인 소명내역이 없습니다.</p>
         </div>
       ) : (
         <div className="paper">

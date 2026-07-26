@@ -322,11 +322,16 @@ a, button, select, input
     @include ds.fw(neo, 700)
     text-align: center
 
-  &.pape-error
+  &.page-error
+    color: ds.$hex-warning
+
+  &.page-info
+    color: ds.$hex-accent
+
+  &.page-error, &.page-info
     align-items: center
     padding-top: ds.rem(27)
     padding-bottom: ds.rem(27)
-    color: ds.$hex-warning
 
     @include ds.mq(minSmall)
       padding-top: ds.rem(53)

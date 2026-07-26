@@ -250,7 +250,7 @@ export default function Opt() {
 
   if (errorMessage === '멤버십은 블로그에서만 사용할 수 있습니다.') {
     return (
-      <div className="paper pape-error">
+      <div className="paper page-error">
         <NearbyErrorRoundedIcon />
         <p>{errorMessage}</p>
       </div>

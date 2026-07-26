@@ -68,7 +68,7 @@ export default function Opt() {
     <Container>
       <div className="container">
         <div className={`${styles.content} content`}>
-          <div className="paper pape-error">
+          <div className="paper page-error">
             <NearbyErrorRoundedIcon />
 
             <h2>활동 정지</h2>

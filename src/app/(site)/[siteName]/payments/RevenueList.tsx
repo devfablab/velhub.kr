@@ -383,7 +383,7 @@ export default function RevenueList({
         {responseData ? (
           <>
             {responseData.items.length === 0 ? (
-              <div className="paper pape-error">
+              <div className="paper page-error">
                 <WarningAmberRoundedIcon />
                 <span>데이터가 없습니다</span>
               </div>
