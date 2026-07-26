@@ -39,12 +39,22 @@ export async function POST(request: NextRequest) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+  const { data: stigma, error: stigmaError } = await supabaseAdmin
+    .from('stigmas')
+    .select('id')
+    .eq('user_id', sessionClaims.userId)
+    .maybeSingle();
+
+  if (stigmaError || !stigma) {
+    return NextResponse.json({ message: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
   const now = new Date().toISOString();
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
     .select('user_id')
-    .eq('user_id', sessionClaims.userId)
+    .eq('user_id', stigma.id)
     .maybeSingle();
 
   if (findError) {
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (existingRow) {
-    const { error } = await supabaseAdmin.from('chorogons').update(payload).eq('user_id', sessionClaims.userId);
+    const { error } = await supabaseAdmin.from('chorogons').update(payload).eq('user_id', stigma.id);
 
     if (error) {
       return NextResponse.json({ message: '본인인증 정보 저장에 실패했습니다.' }, { status: 500 });
@@ -72,7 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { error } = await supabaseAdmin.from('chorogons').insert({
-    user_id: sessionClaims.userId,
+    user_id: stigma.id,
     ...payload,
   });
 

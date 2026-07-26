@@ -11,12 +11,20 @@ export async function GET() {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const targetUserId = sessionClaims.userId;
+  const { data: stigma, error: stigmaError } = await supabaseAdmin
+    .from('stigmas')
+    .select('id')
+    .eq('user_id', sessionClaims.userId)
+    .maybeSingle();
+
+  if (stigmaError || !stigma) {
+    return NextResponse.json({ message: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
 
   const { data, error } = await supabaseAdmin
     .from('chorogons')
     .select('name, birth_date, birth_date_dummy, gender, identity_verified_at')
-    .eq('user_id', targetUserId)
+    .eq('user_id', stigma.id)
     .maybeSingle();
 
   if (error) {
