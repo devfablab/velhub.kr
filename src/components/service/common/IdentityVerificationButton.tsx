@@ -21,6 +21,8 @@ import {
 } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import { normalizeText } from '@/lib/utils';
 
@@ -256,6 +258,8 @@ export default function IdentityVerificationButton() {
   const [accountHolder, setAccountHolder] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [isUnauthenticated, setIsUnauthenticated] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const isEditing = Boolean(settlement);
   const isVerified = Boolean(identity);
@@ -294,6 +298,8 @@ export default function IdentityVerificationButton() {
 
   const loadStatus = async () => {
     setIsLoading(true);
+    setIsUnauthenticated(false);
+    setLoadError(null);
 
     try {
       const identityStatus = await getJson<IdentityStatusResponse>('/api/identity/portone/status');
@@ -307,7 +313,12 @@ export default function IdentityVerificationButton() {
       const settlementStatus = await getJson<SettlementResponse>('/api/settlement');
       setSettlement(settlementStatus.settlement);
     } catch (error) {
-      showSnackbar(getMessage(error));
+      const message = getMessage(error);
+      if (message === '로그인이 필요합니다.') {
+        setIsUnauthenticated(true);
+      } else {
+        setLoadError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -524,6 +535,24 @@ export default function IdentityVerificationButton() {
       setIsProcessing(false);
     }
   };
+
+  if (isUnauthenticated) {
+    return (
+      <div className="paper page-info">
+        <WarningAmberRoundedIcon />
+        <p>로그인이 필요한 화면입니다.</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="paper page-error">
+        <ErrorOutlineRoundedIcon />
+        <p>{loadError}</p>
+      </div>
+    );
+  }
 
   return (
     <>
