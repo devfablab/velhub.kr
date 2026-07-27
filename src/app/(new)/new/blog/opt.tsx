@@ -615,9 +615,11 @@ export default function Opt() {
             />
 
             {profilePictureFile ? (
-              <button type="button" className="button small danger" onClick={handleDeleteProfilePicture}>
-                이미지 삭제
-              </button>
+              <Stack direction="row">
+                <button type="button" className="button small danger" onClick={handleDeleteProfilePicture}>
+                  이미지 삭제
+                </button>
+              </Stack>
             ) : null}
           </Stack>
 
