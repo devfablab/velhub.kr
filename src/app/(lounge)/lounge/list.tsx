@@ -214,12 +214,24 @@ export default function List({ postsData, orderType }: ListProps) {
               )}
               {post.board_type === 'feed' && (
                 <div className={styles.thumbnail}>
-                  {post.image ? <img src={post.image} alt="" /> : <div className={styles.dummy} />}
+                  {post.image ? (
+                    <img src={post.image} alt="" />
+                  ) : post.promotion_image ? (
+                    <img src={post.promotion_image} alt="" />
+                  ) : (
+                    <div className={styles.dummy} />
+                  )}
                 </div>
               )}
               {(post.board_type === 'basic' || post.board_type === 'blog') && (
                 <div className={styles.thumbnail}>
-                  {post.thumbnail_image ? <img src={post.thumbnail_image} alt="" /> : <div className={styles.dummy} />}
+                  {post.thumbnail_image ? (
+                    <img src={post.thumbnail_image} alt="" />
+                  ) : post.promotion_image ? (
+                    <img src={post.promotion_image} alt="" />
+                  ) : (
+                    <div className={styles.dummy} />
+                  )}
                 </div>
               )}
               <div className={styles['description-item']}>

@@ -16,6 +16,7 @@ type UpdateField =
   | 'profile_logo'
   | 'summary'
   | 'og_image'
+  | 'promotion_image'
   | 'visibility_type'
   | 'theme_type'
   | 'is_shutdown';
@@ -77,6 +78,10 @@ function formatLogMessage(
     return `오픈그래프 이미지 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
 
+  if (field === 'promotion_image') {
+    return `프로모션 이미지 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+  }
+
   if (field === 'visibility_type') {
     return `공개 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
@@ -94,7 +99,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -147,6 +152,16 @@ async function checkAccess(siteName: string) {
     siteId: rhizome.data.id,
   });
 
+  if (session.case === 'admin' && session.stigmaId) {
+    return {
+      ok: true,
+      status: 200,
+      rhizome: rhizome.data,
+      updatedByStigmaId: session.stigmaId,
+      supabaseAdmin,
+    } as const;
+  }
+
   if (session.case !== 'staff' || !session.stigmaId || !session.rhizomeStigmaId) {
     return {
       ok: false,
@@ -197,6 +212,7 @@ export async function POST(request: Request, context: RouteContext) {
       'profile_logo',
       'summary',
       'og_image',
+      'promotion_image',
       'visibility_type',
       'theme_type',
       'is_shutdown',

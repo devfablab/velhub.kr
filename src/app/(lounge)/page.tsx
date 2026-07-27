@@ -14,6 +14,7 @@ type SiteItem = {
   summary: string | null;
   site_type: string;
   profile_logo: string | null;
+  promotion_image: string | null;
   created_at: string;
 };
 
@@ -32,6 +33,7 @@ type SitesHitsData = {
   summary: string | null;
   site_type: string;
   profile_logo: string | null;
+  promotion_image: string | null;
   post_count: number | null;
   member_count: number | null;
 };
@@ -41,6 +43,7 @@ type GalleryPost = {
   site_label: string;
   site_type: string;
   profile_picture: string | null;
+  promotion_image: string | null;
   slug: string;
   board_key: string;
   board_type: 'gallery';
@@ -60,6 +63,7 @@ type YoutubePost = {
   site_label: string;
   site_type: string;
   profile_picture: string | null;
+  promotion_image: string | null;
   slug: string;
   board_key: string;
   board_type: 'youtube';
@@ -87,6 +91,7 @@ type FeedPost = {
   board_type: 'feed';
   author_name: string;
   author_avatar: string | null;
+  promotion_image: string | null;
   published_at: string;
 
   content_simple: string;
@@ -104,6 +109,7 @@ type BasicOrBlogPost = {
   board_type: 'basic' | 'blog';
   author_name: string;
   author_avatar: string | null;
+  promotion_image: string | null;
   published_at: string;
   thumbnail_image: string | null;
   subject: string;

@@ -42,6 +42,7 @@ type EditableField =
   | 'profile_logo'
   | 'summary'
   | 'og_image'
+  | 'promotion_image'
   | 'visibility_type'
   | 'theme_type'
   | 'is_shutdown';
@@ -56,6 +57,7 @@ type SiteInfoInfo = {
   profile_logo: string | null;
   summary: string | null;
   og_image: string | null;
+  promotion_image: string | null;
   site_type: string;
   visibility_type: string;
   theme_type: string;
@@ -84,6 +86,8 @@ type SiteLabelCheckResponse = {
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
 const MAX_SITE_OG_FILE_SIZE = 1024 * 1024;
 const SITE_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const MAX_PROMOTION_FILE_SIZE = 1024 * 1024;
+const PROMOTION_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -124,6 +128,7 @@ export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const logoInputReference = useRef<HTMLInputElement | null>(null);
   const siteOgInputReference = useRef<HTMLInputElement | null>(null);
+  const promotionInputReference = useRef<HTMLInputElement | null>(null);
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -135,12 +140,14 @@ export default function Opt() {
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [profileLogoUrl, setProfileLogoUrl] = useState('');
   const [siteOgImageUrl, setSiteOgImageUrl] = useState('');
+  const [promotionImageUrl, setPromotionImageUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingSiteOg, setIsUploadingSiteOg] = useState(false);
+  const [isUploadingPromotion, setIsUploadingPromotion] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
@@ -177,6 +184,7 @@ export default function Opt() {
         setProfilePictureUrl(result.profilePictureUrl ?? '');
         setProfileLogoUrl(result.profileLogoUrl ?? '');
         setSiteOgImageUrl(result.siteOgImageUrl ?? '');
+        setPromotionImageUrl(result.promotionImageUrl ?? '');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -421,6 +429,7 @@ export default function Opt() {
     setProfilePictureUrl(result.profilePictureUrl ?? '');
     setProfileLogoUrl(result.profileLogoUrl ?? '');
     setSiteOgImageUrl(result.siteOgImageUrl ?? '');
+    setPromotionImageUrl(result.promotionImageUrl ?? '');
   }
 
   async function saveField(field: EditableField, value?: string | boolean) {
@@ -657,6 +666,120 @@ export default function Opt() {
     }
 
     siteOgInputReference.current?.click();
+  }
+
+  async function deletePromotionImage(path: string) {
+    const response = await fetch('/api/attachment/delete/promotion-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ siteName, path }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error ?? '프로모션 이미지 삭제에 실패했습니다.');
+    }
+  }
+
+  function handleClickPromotionUpload() {
+    if (!isUploadingPromotion) {
+      promotionInputReference.current?.click();
+    }
+  }
+
+  async function handlePromotionFileChange(event: InputChangeEvent) {
+    const inputElement = event.currentTarget;
+    const selectedFile = inputElement.files?.[0];
+
+    if (!selectedFile || !siteInfo || isUploadingPromotion) {
+      inputElement.value = '';
+      return;
+    }
+
+    if (!PROMOTION_IMAGE_TYPES.has(selectedFile.type.toLowerCase())) {
+      setErrorMessage('PNG, JPEG, WEBP 이미지만 업로드할 수 있습니다.');
+      setSuccessMessage('');
+      inputElement.value = '';
+      return;
+    }
+
+    if (selectedFile.size >= MAX_PROMOTION_FILE_SIZE) {
+      setErrorMessage('프로모션 이미지는 1MB 미만만 업로드할 수 있습니다.');
+      setSuccessMessage('');
+      inputElement.value = '';
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsUploadingPromotion(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('siteName', siteName);
+      const uploadResponse = await fetch('/api/attachment/add/promotion-image', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      const uploadResult = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploadResult.error ?? '프로모션 이미지 업로드에 실패했습니다.');
+      }
+
+      const nextPath = normalizeText(uploadResult.path);
+      if (!nextPath) {
+        throw new Error('업로드된 프로모션 이미지 정보를 확인하지 못했습니다.');
+      }
+
+      const previousPath = normalizeText(siteInfo.promotion_image);
+      const isSaved = await saveField('promotion_image', nextPath);
+
+      if (!isSaved) {
+        await deletePromotionImage(nextPath).catch(() => undefined);
+        return;
+      }
+
+      if (previousPath && previousPath !== nextPath) {
+        await deletePromotionImage(previousPath).catch(() => undefined);
+      }
+
+      setPromotionImageUrl(uploadResult.url ?? '');
+      setSuccessMessage('프로모션 이미지가 저장되었습니다.');
+    } catch (unknownError) {
+      setErrorMessage(unknownError instanceof Error ? unknownError.message || '프로모션 이미지 저장에 실패했습니다.' : '프로모션 이미지 저장에 실패했습니다.');
+    } finally {
+      setIsUploadingPromotion(false);
+      inputElement.value = '';
+    }
+  }
+
+  async function handleRemovePromotionImage() {
+    const previousPath = normalizeText(siteInfo?.promotion_image);
+    if (!previousPath || isUploadingPromotion) {
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+    setIsUploadingPromotion(true);
+
+    try {
+      const isSaved = await saveField('promotion_image', '');
+      if (!isSaved) {
+        return;
+      }
+
+      await deletePromotionImage(previousPath);
+      setPromotionImageUrl('');
+      setSuccessMessage('프로모션 이미지가 삭제되었습니다.');
+    } catch (unknownError) {
+      setErrorMessage(unknownError instanceof Error ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.' : '프로모션 이미지 삭제에 실패했습니다.');
+    } finally {
+      setIsUploadingPromotion(false);
+    }
   }
 
   async function handleSiteOgFileChange(event: InputChangeEvent) {
@@ -1123,6 +1246,65 @@ export default function Opt() {
                 disabled={isUploadingSiteOg}
               >
                 {siteOgImageUrl ? '이미지 교체' : '이미지 추가'}
+              </button>
+            </Stack>
+          </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">프로모션 이미지</Typography>
+            {promotionImageUrl ? (
+              <Box
+                component="img"
+                src={promotionImageUrl}
+                alt={`${siteInfo.site_label ?? siteInfo.site_key} 프로모션 이미지`}
+                sx={{
+                  width: '100%',
+                  maxWidth: '358px',
+                  aspectRatio: '358 / 170',
+                  objectFit: 'cover',
+                }}
+              />
+            ) : (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>등록된 프로모션 이미지가 없습니다.</span>
+              </p>
+            )}
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>이 이미지는 메인에 공개되는 이미지입니다.</span>
+            </p>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>가로 358 세로 170의 PNG, JPG, WEBP 이미지 1장이 필요합니다.</span>
+            </p>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>이미지는 1MB 미만만 업로드할 수 있습니다.</span>
+            </p>
+            <VisuallyHiddenInput
+              ref={promotionInputReference}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+              onChange={handlePromotionFileChange}
+            />
+            <Stack direction="row" gap={1} justifyContent="flex-end">
+              {promotionImageUrl ? (
+                <button
+                  type="button"
+                  className="button small danger"
+                  onClick={() => void handleRemovePromotionImage()}
+                  disabled={isUploadingPromotion}
+                >
+                  삭제
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="button small action"
+                onClick={handleClickPromotionUpload}
+                disabled={isUploadingPromotion}
+              >
+                {promotionImageUrl ? '이미지 교체' : '이미지 추가'}
               </button>
             </Stack>
           </div>

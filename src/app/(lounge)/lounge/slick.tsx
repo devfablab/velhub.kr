@@ -93,7 +93,12 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
         <Slider {...settings}>
           {sitesHitsData.sites.map((site) => (
             <div key={site.site_key}>
-              <Anchor href={`/${site.site_key}`} style={{ background: 'url(/dummy.webp) no-repeat center / cover' }}>
+              <Anchor
+                href={`/${site.site_key}`}
+                style={{
+                  background: `${site.promotion_image ? `url(${site.promotion_image})` : 'url(/dummy.webp)'} no-repeat center / cover`,
+                }}
+              >
                 <strong>{site.site_label}</strong>
                 <p>{site.summary}</p>
                 {site.site_type === 'blog' ? (
@@ -137,7 +142,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
                       ? `url(${post.image}) no-repeat center / cover`
                       : post.board_type === 'youtube'
                         ? `url(${post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[0])})  no-repeat center / cover`
-                        : 'url(/dummy.webp) no-repeat center / cover',
+                        : `${post.promotion_image ? `url(${post.promotion_image})` : 'url(/dummy.webp)'} no-repeat center / cover`,
                 }}
               >
                 {isHub ? null : <em>{post.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>}

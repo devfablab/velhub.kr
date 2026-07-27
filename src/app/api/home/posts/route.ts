@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     let rhizomesQuery = supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type, profile_picture')
+      .select('id, site_key, site_label, site_type, profile_picture, promotion_image')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false)
       .or('is_blocked.eq.false,is_blocked.is.null');
@@ -150,6 +150,7 @@ export async function GET(request: NextRequest) {
         site_label: rhizome?.site_label,
         site_type: rhizome?.site_type,
         profile_picture: getPublicImageUrl('avatar', rhizome?.profile_picture),
+        promotion_image: getPublicImageUrl('promotion-image', rhizome?.promotion_image),
         slug: post.slug,
         board_key: boardKey,
         board_type: boardType,

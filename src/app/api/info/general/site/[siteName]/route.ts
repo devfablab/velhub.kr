@@ -41,7 +41,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -178,11 +178,20 @@ export async function GET(_request: Request, context: RouteContext) {
       siteOgImageUrl = publicUrl.data.publicUrl ?? '';
     }
 
+    const rawPromotionImage = normalizeText(access.rhizome.promotion_image);
+    let promotionImageUrl = '';
+
+    if (rawPromotionImage) {
+      const publicUrl = access.supabaseAdmin.storage.from('promotion-image').getPublicUrl(rawPromotionImage);
+      promotionImageUrl = publicUrl.data.publicUrl ?? '';
+    }
+
     return Response.json({
       siteInfo: access.rhizome,
       profilePictureUrl,
       profileLogoUrl,
       siteOgImageUrl,
+      promotionImageUrl,
       sites: {
         updated_at: sites.data.updated_at,
         updated_by: sites.data.updated_by,
