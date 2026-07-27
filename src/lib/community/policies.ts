@@ -1,5 +1,4 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -55,20 +54,12 @@ function canBypassCommunityPolicy(sessionCase: SessionCase, role: string | null 
 async function getRhizomeStigmaForPolicy({
   supabaseAdmin,
   siteId,
-  authUserId,
+  stigmaId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   siteId: string;
-  authUserId: string;
+  stigmaId: string;
 }) {
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', authUserId).maybeSingle();
-
-  if (stigmaResult.error) {
-    throw new Error('회원 정보를 확인하지 못했습니다.');
-  }
-
-  const stigmaId = normalizeText(stigmaResult.data?.id) || authUserId;
-
   const rhizomeStigmaResult = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('id, role, comment_count, approval_at')
@@ -85,11 +76,11 @@ async function getRhizomeStigmaForPolicy({
 
 export async function assertCommunityPostWritePolicy({
   siteId,
-  authUserId,
+  stigmaId,
   sessionCase,
 }: {
   siteId: string;
-  authUserId: string;
+  stigmaId: string;
   sessionCase: SessionCase;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -111,7 +102,7 @@ export async function assertCommunityPostWritePolicy({
   const rhizomeStigma = await getRhizomeStigmaForPolicy({
     supabaseAdmin,
     siteId,
-    authUserId,
+    stigmaId,
   });
 
   if (!rhizomeStigma) {
@@ -132,11 +123,11 @@ export async function assertCommunityPostWritePolicy({
 
 export async function assertCommunityCommentWritePolicy({
   siteId,
-  authUserId,
+  stigmaId,
   sessionCase,
 }: {
   siteId: string;
-  authUserId: string;
+  stigmaId: string;
   sessionCase: SessionCase;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -164,7 +155,7 @@ export async function assertCommunityCommentWritePolicy({
   const rhizomeStigma = await getRhizomeStigmaForPolicy({
     supabaseAdmin,
     siteId,
-    authUserId,
+    stigmaId,
   });
 
   if (!rhizomeStigma) {
@@ -192,13 +183,13 @@ export async function assertCommunityCommentWritePolicy({
   }
 }
 
-export async function increaseCommunityCommentCount({ siteId, authUserId }: { siteId: string; authUserId: string }) {
+export async function increaseCommunityCommentCount({ siteId, stigmaId }: { siteId: string; stigmaId: string }) {
   const supabaseAdmin = getSupabaseAdmin();
 
   const rhizomeStigma = await getRhizomeStigmaForPolicy({
     supabaseAdmin,
     siteId,
-    authUserId,
+    stigmaId,
   });
 
   if (!rhizomeStigma) {

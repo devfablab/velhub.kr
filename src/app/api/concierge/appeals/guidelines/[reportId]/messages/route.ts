@@ -14,10 +14,10 @@ type RequestBody = {
   message?: string | null;
 };
 
-async function getAuthorizedContext(reportId: string, authUserId: string) {
+async function getAuthorizedContext(reportId: string, stigmaId: string) {
   const context = await loadGuidelineAppealContext(reportId);
 
-  if (context.authorUserId !== authUserId) {
+  if (context.authorStigmaId !== stigmaId) {
     throw new Error('ACCESS_DENIED');
   }
 
@@ -28,7 +28,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -39,7 +39,7 @@ export async function GET(_request: Request, routeContext: RouteContext) {
       return Response.json({ error: '신고 정보가 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const context = await getAuthorizedContext(reportId, session.authUserId);
+    const context = await getAuthorizedContext(reportId, session.stigmaId);
     const messages = await loadGuidelineAppealMessages(context);
 
     return Response.json({
@@ -64,7 +64,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -81,7 +81,7 @@ export async function POST(request: Request, routeContext: RouteContext) {
       return Response.json({ error: '소명 내용을 입력해 주세요.' }, { status: 400 });
     }
 
-    const context = await getAuthorizedContext(reportId, session.authUserId);
+    const context = await getAuthorizedContext(reportId, session.stigmaId);
     const insertResult = await getSupabaseAdmin()
       .from('report_guideline_messages')
       .insert({

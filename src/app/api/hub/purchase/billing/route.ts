@@ -125,7 +125,7 @@ export async function GET() {
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
       .select('id, user_id')
-      .eq('user_id', session.authUserId)
+      .eq('id', session.stigmaId)
       .maybeSingle();
 
     if (stigmaResult.error) {

@@ -20,8 +20,7 @@ type GetPostContentOptions = {
   contentId: string;
   countView: boolean;
   sessionCase: SessionCase;
-  authUserId: string | null;
-  stigmaId?: string | null;
+  stigmaId: string | null;
   requestCookie: string | null;
 };
 
@@ -125,8 +124,7 @@ export async function getPostContent({
   contentId,
   countView,
   sessionCase,
-  authUserId,
-  stigmaId = null,
+  stigmaId,
   requestCookie,
 }: GetPostContentOptions) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -153,9 +151,7 @@ export async function getPostContent({
     throw new BoardContentError('글을 찾을 수 없습니다.', 404);
   }
 
-  const isAuthor =
-    (Boolean(authUserId) && post.data.user_id === authUserId) ||
-    (Boolean(stigmaId) && post.data.user_id === stigmaId);
+  const isAuthor = Boolean(stigmaId) && post.data.user_id === stigmaId;
 
   if (post.data.published_status === 'draft' && !isAuthor) {
     throw new BoardContentError('접근 권한이 없습니다.', 403);

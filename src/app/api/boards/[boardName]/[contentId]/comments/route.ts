@@ -363,32 +363,24 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
   };
 }
 
-async function getCommentAccess(siteId: string, boardId: string, userId: string | null, sessionCase: string) {
+async function getCommentAccess(siteId: string, boardId: string, stigmaId: string | null, sessionCase: string) {
   if (sessionCase === 'staff' || sessionCase === 'admin') {
     return true;
   }
 
-  const normalizedUserId = normalizeText(userId);
+  const normalizedStigmaId = normalizeText(stigmaId);
 
-  if (!normalizedUserId) {
+  if (!normalizedStigmaId) {
     return false;
   }
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  const stigmaByAuthIdResult = await supabaseAdmin
-    .from('stigmas')
-    .select('id')
-    .eq('user_id', normalizedUserId)
-    .maybeSingle();
-
-  const stigmaId = normalizeText(stigmaByAuthIdResult.data?.id) || normalizedUserId;
-
   const membershipResult = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('id, role')
     .eq('site_id', siteId)
-    .eq('user_id', stigmaId)
+    .eq('user_id', normalizedStigmaId)
     .maybeSingle();
 
   if (membershipResult.error || !membershipResult.data) {
@@ -759,7 +751,7 @@ export async function GET(request: Request, context: RouteContext) {
     const canManageComment = await getCommentAccess(
       target.data.siteId,
       target.data.boardId,
-      session.authUserId ?? null,
+      session.stigmaId ?? null,
       session.case,
     );
 
@@ -767,11 +759,11 @@ export async function GET(request: Request, context: RouteContext) {
 
     let mySelfAvatarUrl = '';
 
-    if (session.authUserId) {
+    if (session.stigmaId) {
       const stigmaResult = await supabaseAdmin
         .from('stigmas')
         .select('avatar')
-        .eq('user_id', session.authUserId)
+        .eq('id', session.stigmaId)
         .maybeSingle();
 
       if (!stigmaResult.error && stigmaResult.data?.avatar) {
@@ -880,18 +872,18 @@ export async function GET(request: Request, context: RouteContext) {
     let canWriteReason: 'guest' | 'policy' | 'hidden' | null = null;
 
     let canWrite = Boolean(
-      session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed,
+      session.authUserId && session.stigmaId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed,
     );
 
     if (!session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
       canWriteReason = 'guest';
     }
 
-    if (session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
+    if (session.authUserId && session.stigmaId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
       try {
         await assertCommunityCommentWritePolicy({
           siteId: target.data.siteId,
-          authUserId: session.authUserId,
+          stigmaId: session.stigmaId,
           sessionCase: session.case,
         });
       } catch {
@@ -973,7 +965,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await assertCommunityCommentWritePolicy({
       siteId: target.data.siteId,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       sessionCase: session.case,
     });
 
@@ -1042,7 +1034,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await increaseCommunityCommentCount({
       siteId: target.data.siteId,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
     });
 
     if (target.data.postAuthorId !== session.stigmaId) {
@@ -1065,7 +1057,7 @@ export async function POST(request: Request, context: RouteContext) {
     const canManageComment = await getCommentAccess(
       target.data.siteId,
       target.data.boardId,
-      session.authUserId,
+      session.stigmaId,
       session.case,
     );
 

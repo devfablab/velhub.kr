@@ -40,13 +40,13 @@ export default async function Page(context: RouteContext) {
       siteId: rhizomeResult.data.id,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       writePolicyMessage = '로그인 후 글을 작성할 수 있습니다.';
     } else {
       try {
         await assertCommunityPostWritePolicy({
           siteId: rhizomeResult.data.id,
-          authUserId: session.authUserId,
+          stigmaId: session.stigmaId,
           sessionCase: session.case,
         });
       } catch (unknownError) {

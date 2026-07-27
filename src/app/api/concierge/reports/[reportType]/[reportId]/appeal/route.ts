@@ -273,7 +273,7 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (session.case !== 'admin' || !session.authUserId) {
+    if (session.case !== 'admin' || !session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -372,7 +372,7 @@ export async function POST(request: Request, context: RouteContext) {
       await deleteContent({
         report,
         reportType,
-        handlerUserId: session.authUserId,
+        handlerUserId: session.stigmaId,
         now,
       });
 

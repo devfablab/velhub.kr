@@ -19,13 +19,13 @@ export async function GET(request: Request) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
     const requestUrl = new URL(request.url);
     const items = await loadGuidelineAppealItems({
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       origin: getRequestOrigin(request, requestUrl),
     });
 

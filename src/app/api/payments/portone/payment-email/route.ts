@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       .update({
         payment_email: encrypt(paymentEmail),
       })
-      .eq('user_id', session.authUserId)
+      .eq('id', session.stigmaId)
       .select('id')
       .maybeSingle();
 

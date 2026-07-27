@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { encrypt } from '@/lib/encryption/encrypt';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -94,7 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const postCount = typeof post.data.post_count === 'number' ? Number(post.data.post_count) : 0;
-    const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
+    const isAuthor = Boolean(session.stigmaId) && post.data.user_id === session.stigmaId;
 
     if (
       isAuthor ||

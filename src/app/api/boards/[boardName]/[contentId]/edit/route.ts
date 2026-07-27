@@ -668,7 +668,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: rhizomeData.id,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -704,7 +704,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const isStaff = session.case === 'staff';
-    const isAuthor = currentPost.data.user_id === session.authUserId;
+    const isAuthor = currentPost.data.user_id === session.stigmaId;
     let canManageContent = isStaff || session.case === 'admin';
 
     if (rhizomeData.site_type === 'community' && !canManageContent) {
@@ -797,7 +797,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       resolvedIsComment = blog.data.comment_provider === 'none' ? false : resolvedIsComment;
     }
 
-    const poll = normalizePoll(requestBody.poll, session.authUserId);
+    const poll = normalizePoll(requestBody.poll, session.stigmaId);
 
     if (poll === 'INVALID_QUESTION') {
       return Response.json({ error: '투표 질문을 입력해주세요.' }, { status: 400 });
@@ -871,7 +871,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
         }
 
-        if (session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
+        if (session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {
           return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
         }
 

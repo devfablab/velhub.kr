@@ -98,7 +98,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -219,7 +219,26 @@ export async function GET(request: Request) {
             .eq('billing_key', decrypt(subscription.billing_key))
             .eq('provider', PAYMENT_PROVIDER.KPN)
             .limit(1)
-        : { data: [], error: null };
+        : await supabaseAdmin
+            .from('subscription_billing_methods')
+            .select(
+              [
+                'id',
+                'provider',
+                'card_company',
+                'card_number_masked',
+                'owner_type',
+                'card_type',
+                'is_default',
+                'created_at',
+                'updated_at',
+              ].join(', '),
+            )
+            .eq('user_id', session.stigmaId)
+            .eq('provider', PAYMENT_PROVIDER.KPN)
+            .order('is_default', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1);
 
     const previousBillingMethodResult = subscription?.previous_billing_method_id
       ? await supabaseAdmin

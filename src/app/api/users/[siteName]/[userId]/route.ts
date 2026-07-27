@@ -295,7 +295,7 @@ async function getSiteUserInfo(siteName: string) {
     siteId: site.id,
   });
 
-  if (!session.authUserId) {
+  if (!session.authUserId || !session.stigmaId) {
     if (site.siteType === 'community') {
       const communityResult = await supabaseAdmin
         .from('communities')
@@ -327,12 +327,12 @@ async function getSiteUserInfo(siteName: string) {
     supabaseAdmin,
     siteId: site.id,
   });
-  const isPlanBillingSubscriber = planBillingSubscriberUserId === session.authUserId;
+  const isPlanBillingSubscriber = planBillingSubscriberUserId === session.stigmaId;
 
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .select('id, user_id, user_name, avatar')
-    .eq('user_id', session.authUserId)
+    .eq('id', session.stigmaId)
     .maybeSingle();
 
   if (stigmaResult.error || !stigmaResult.data) {
@@ -621,8 +621,8 @@ async function getSiteUserInfo(siteName: string) {
   }
 
   const [postCount, commentCount] = await Promise.all([
-    getPostCount(site.id, session.authUserId),
-    getCommentCount(site.id, session.authUserId),
+    getPostCount(site.id, session.stigmaId),
+    getCommentCount(site.id, session.stigmaId),
   ]);
 
   return {
@@ -731,7 +731,7 @@ export async function PATCH(request: Request) {
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('id', session.stigmaId)
       .maybeSingle();
 
     if (stigmaResult.error || !stigmaResult.data) {
@@ -844,7 +844,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       siteId: siteResult.data.id,
     });
 
-    if (planBillingSubscriberUserId === session.authUserId) {
+    if (planBillingSubscriberUserId === session.stigmaId) {
       return Response.json(
         { error: '이용자님은 요금제를 월결제하시는 분입니다. 탈퇴하실 수 없어요.' },
         { status: 403 },
@@ -854,7 +854,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
       .select('id')
-      .eq('user_id', session.authUserId)
+      .eq('id', session.stigmaId)
       .maybeSingle();
 
     if (stigmaResult.error || !stigmaResult.data) {

@@ -357,7 +357,7 @@ async function getUserInfo(siteName: string) {
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .select('id, user_id, user_name, avatar')
-    .eq('user_id', session.authUserId)
+    .eq('id', session.stigmaId)
     .maybeSingle();
 
   if (stigmaResult.error || !stigmaResult.data) {

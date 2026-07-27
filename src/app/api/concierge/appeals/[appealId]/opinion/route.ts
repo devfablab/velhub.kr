@@ -186,7 +186,7 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -264,7 +264,7 @@ export async function POST(request: Request, context: RouteContext) {
     const report = reportResult.data as unknown as ReportRow;
     const authorUserId = await getContentAuthorId(report);
 
-    if (!authorUserId || authorUserId !== session.authUserId) {
+    if (!authorUserId || authorUserId !== session.stigmaId) {
       return Response.json({ error: '이 소명 의견서를 작성할 권한이 없습니다.' }, { status: 403 });
     }
 

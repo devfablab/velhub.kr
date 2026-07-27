@@ -773,7 +773,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       const author = await getUserDisplayInfo(rhizomeData.id, board.data.id, page.data.user_id);
-      const isAuthor = Boolean(session.authUserId) && page.data.user_id === session.authUserId;
+      const isAuthor = Boolean(session.stigmaId) && page.data.user_id === session.stigmaId;
 
       return NextResponse.json({
         board: board.data,
@@ -815,7 +815,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const postData = post.data;
 
-    const isAuthor = Boolean(session.authUserId) && post.data.user_id === session.authUserId;
+    const isAuthor = Boolean(session.stigmaId) && post.data.user_id === session.stigmaId;
 
     if (post.data.published_status === 'draft' && !isAuthor) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });

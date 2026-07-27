@@ -214,7 +214,7 @@ export async function GET(request: Request, context: RouteContext) {
     const result = await buildPollResult({
       postId: target.data.postId,
       poll: target.data.poll,
-      voterId: session.authUserId ?? null,
+      voterId: session.stigmaId ?? null,
     });
 
     return Response.json({
@@ -299,7 +299,7 @@ export async function POST(request: Request, context: RouteContext) {
     const result = await buildPollResult({
       postId: target.data.postId,
       poll: target.data.poll,
-      voterId: session.authUserId,
+      voterId: session.stigmaId,
     });
 
     return Response.json({

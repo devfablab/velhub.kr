@@ -76,32 +76,32 @@ function decryptValue(value: string | null | undefined) {
   }
 }
 
-async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
+async function getAuthorNameMap(siteIds: string[], stigmaIds: string[]) {
   const supabaseAdmin = getSupabaseAdmin();
   const uniqueSiteIds = Array.from(new Set(siteIds.map((siteId) => normalizeText(siteId)).filter(Boolean)));
-  const uniqueAuthUserIds = Array.from(new Set(authUserIds.map((userId) => normalizeText(userId)).filter(Boolean)));
+  const uniqueStigmaIds = Array.from(new Set(stigmaIds.map((userId) => normalizeText(userId)).filter(Boolean)));
   const authorMap = new Map<string, string>();
 
-  if (uniqueSiteIds.length === 0 || uniqueAuthUserIds.length === 0) {
+  if (uniqueSiteIds.length === 0 || uniqueStigmaIds.length === 0) {
     return authorMap;
   }
 
-  const stigmasResult = await supabaseAdmin.from('stigmas').select('id, user_id, user_name').in('user_id', uniqueAuthUserIds);
+  const stigmasResult = await supabaseAdmin.from('stigmas').select('id, user_name').in('id', uniqueStigmaIds);
 
   if (stigmasResult.error) {
     throw new Error('작성자 정보를 불러오지 못했습니다.');
   }
 
   const stigmaRows = (stigmasResult.data ?? []) as StigmaRow[];
-  const stigmaIds = stigmaRows.map((stigma) => stigma.id);
+  const resolvedStigmaIds = stigmaRows.map((stigma) => stigma.id);
 
   const membersResult =
-    stigmaIds.length > 0
+    resolvedStigmaIds.length > 0
       ? await supabaseAdmin
           .from('rhizome_stigmas')
           .select('site_id, user_id, nickname')
           .in('site_id', uniqueSiteIds)
-          .in('user_id', stigmaIds)
+          .in('user_id', resolvedStigmaIds)
       : { data: [], error: null };
 
   if (membersResult.error) {
@@ -112,15 +112,9 @@ async function getAuthorNameMap(siteIds: string[], authUserIds: string[]) {
   const memberMap = new Map(memberRows.map((member) => [`${member.site_id}:${member.user_id}`, normalizeText(member.nickname)]));
 
   stigmaRows.forEach((stigma) => {
-    const authUserId = normalizeText(stigma.user_id);
-
-    if (!authUserId) {
-      return;
-    }
-
     const nickname = uniqueSiteIds.map((siteId) => memberMap.get(`${siteId}:${stigma.id}`)).find((value) => Boolean(value));
 
-    authorMap.set(authUserId, nickname || decryptValue(stigma.user_name));
+    authorMap.set(stigma.id, nickname || decryptValue(stigma.user_name));
   });
 
   return authorMap;

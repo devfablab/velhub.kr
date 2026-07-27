@@ -119,7 +119,7 @@ export async function GET(request: Request) {
             size: getBoardContentSize(board.board_type),
             filter: 'all',
             sessionCase: postListSessionCase,
-            authUserId: session.authUserId ?? null,
+            stigmaId: session.stigmaId ?? null,
             sort: 'latest',
             includePin: false,
           });

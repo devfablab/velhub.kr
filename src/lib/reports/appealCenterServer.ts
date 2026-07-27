@@ -216,15 +216,8 @@ async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[
   return [...reportMap.values()].sort((first, second) => second.created_at.localeCompare(first.created_at));
 }
 
-export async function loadAppealCenterItems({ authUserId, origin }: { authUserId: string; origin: string }) {
+export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: string; origin: string }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', authUserId).maybeSingle();
-
-  if (stigmaResult.error || !stigmaResult.data) {
-    throw new Error('사용자 정보를 확인하지 못했습니다.');
-  }
-
-  const stigmaId = stigmaResult.data.id;
   const [ownPostsResult, ownCommentsResult] = await Promise.all([
     supabaseAdmin.from('posts').select('id').eq('user_id', stigmaId),
     supabaseAdmin

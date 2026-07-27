@@ -83,7 +83,7 @@ export async function GET(request: Request) {
       size,
       filter,
       sessionCase: postListSessionCase,
-      authUserId: session.authUserId ?? null,
+      stigmaId: session.stigmaId ?? null,
       keyword,
       sort,
       includePin,

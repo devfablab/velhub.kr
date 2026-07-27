@@ -28,7 +28,7 @@ async function getAuthorizedContext(reportId: string, siteName: string) {
     throw new Error('ACCESS_DENIED');
   }
 
-  return { context, authUserId: session.authUserId, stigmaId: session.stigmaId };
+  return { context, stigmaId: session.stigmaId };
 }
 
 export async function GET(request: Request, routeContext: RouteContext) {

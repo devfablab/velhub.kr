@@ -74,7 +74,7 @@ export type GuidelineAppealContext = {
   comment: CommentRow | null;
   site: SiteRow;
   board: BoardRow;
-  authorUserId: string;
+  authorStigmaId: string;
   deletionMessage: string;
 };
 
@@ -94,16 +94,16 @@ function decryptName(value: string | null | undefined) {
 
 export async function getGuidelineAppealAuthorName({
   siteId,
-  authUserId,
+  stigmaId,
 }: {
   siteId: string;
-  authUserId: string;
+  stigmaId: string;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .select('id, user_name')
-    .eq('user_id', authUserId)
+    .eq('id', stigmaId)
     .maybeSingle();
 
   if (stigmaResult.error || !stigmaResult.data) {
@@ -218,7 +218,7 @@ export async function loadGuidelineAppealContext(reportId: string): Promise<Guid
     comment,
     site: siteResult.data as SiteRow,
     board: boardResult.data as BoardRow,
-    authorUserId: comment?.user_id ?? post.user_id,
+    authorStigmaId: comment?.user_id ?? post.user_id,
     deletionMessage,
   };
 }
@@ -238,7 +238,7 @@ export async function loadGuidelineAppealMessages(context: GuidelineAppealContex
 
   const authorName = await getGuidelineAppealAuthorName({
     siteId: context.site.id,
-    authUserId: context.authorUserId,
+    stigmaId: context.authorStigmaId,
   });
   const siteName = context.site.site_label || context.site.site_key;
 
@@ -254,20 +254,13 @@ export async function loadGuidelineAppealMessages(context: GuidelineAppealContex
 }
 
 export async function loadGuidelineAppealItems({
-  authUserId,
+  stigmaId,
   origin,
 }: {
-  authUserId: string;
+  stigmaId: string;
   origin: string;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('user_id', authUserId).maybeSingle();
-
-  if (stigmaResult.error || !stigmaResult.data) {
-    throw new Error('사용자 정보를 확인하지 못했습니다.');
-  }
-
-  const stigmaId = stigmaResult.data.id;
   const [postsResult, commentsResult] = await Promise.all([
     supabaseAdmin
       .from('posts')

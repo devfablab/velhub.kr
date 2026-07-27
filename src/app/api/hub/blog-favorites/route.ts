@@ -78,7 +78,7 @@ export async function GET() {
         .select('id, site_key, site_label, profile_picture, profile_logo, visibility_type, is_shutdown')
         .in('id', siteIds)
         .eq('site_type', 'blog'),
-      supabaseAdmin.from('stigmas').select('id').eq('user_id', session.authUserId).maybeSingle(),
+      supabaseAdmin.from('stigmas').select('id').eq('id', session.stigmaId).maybeSingle(),
     ]);
 
     if (sitesResult.error || stigmaResult.error) {

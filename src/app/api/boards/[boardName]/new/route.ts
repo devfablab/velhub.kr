@@ -787,7 +787,7 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
       }
 
-      if (session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.authUserId) {
+      if (session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {
         return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
       }
 
@@ -952,7 +952,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     await assertCommunityPostWritePolicy({
       siteId: rhizomeData.id,
-      authUserId: session.authUserId,
+      stigmaId: session.stigmaId,
       sessionCase: session.case,
     });
 

@@ -363,7 +363,7 @@ export async function GET(_request: Request, context: ContentRouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -377,7 +377,7 @@ export async function GET(_request: Request, context: ContentRouteContext) {
 
     const result = await loadContext(reportType, reportId);
     const authorUserId = result.comment?.user_id ?? result.post.user_id;
-    const isAuthor = authorUserId === session.authUserId;
+    const isAuthor = authorUserId === session.stigmaId;
 
     if (!isAuthor && session.case !== 'admin') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
@@ -434,7 +434,7 @@ export async function PATCH(request: Request, context: ContentRouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -535,7 +535,7 @@ export async function POST(_request: Request, context: ContentRouteContext) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -550,7 +550,7 @@ export async function POST(_request: Request, context: ContentRouteContext) {
     const result = await loadContext(reportType, reportId);
     const authorUserId = result.comment?.user_id ?? result.post.user_id;
 
-    if (authorUserId !== session.authUserId || !canEdit(result.appeal) || !result.appeal) {
+    if (authorUserId !== session.stigmaId || !canEdit(result.appeal) || !result.appeal) {
       return Response.json({ error: '수정 확인을 요청할 수 없습니다.' }, { status: 403 });
     }
 

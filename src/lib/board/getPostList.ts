@@ -13,7 +13,7 @@ type GetPostListOptions = {
   size: number;
   filter: 'all' | 'deleted';
   sessionCase: SessionCase;
-  authUserId: string | null;
+  stigmaId: string | null;
   keyword?: string | null;
   sort?: PostListSort;
   includePin?: boolean;
@@ -246,7 +246,7 @@ export async function getPostList({
   size,
   filter,
   sessionCase,
-  authUserId,
+  stigmaId,
   keyword = null,
   sort = 'latest',
   includePin = true,
@@ -306,19 +306,19 @@ export async function getPostList({
 
     if (!isStaff) {
       postsQuery = postsQuery.eq('is_closed', false);
-    } else if (authUserId) {
-      postsQuery = postsQuery.or(`is_closed.eq.false,user_id.neq.${authUserId}`);
+    } else if (stigmaId) {
+      postsQuery = postsQuery.or(`is_closed.eq.false,user_id.neq.${stigmaId}`);
     }
 
     const nowIsoString = new Date().toISOString();
 
-    if (authUserId) {
+    if (stigmaId) {
       postsQuery = postsQuery.or(
         [
           'published_status.eq.published',
           `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`,
-          `and(published_status.eq.draft,user_id.eq.${authUserId})`,
-          `and(published_status.eq.unknown,user_id.eq.${authUserId})`,
+          `and(published_status.eq.draft,user_id.eq.${stigmaId})`,
+          `and(published_status.eq.unknown,user_id.eq.${stigmaId})`,
         ].join(','),
       );
     } else {

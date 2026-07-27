@@ -72,7 +72,7 @@ export async function GET() {
     const accountResult = await supabaseAdmin
       .from('stigmas')
       .select('email, user_name, avatar')
-      .eq('user_id', session.authUserId)
+      .eq('id', session.stigmaId)
       .maybeSingle();
 
     if (accountResult.error || !accountResult.data) {

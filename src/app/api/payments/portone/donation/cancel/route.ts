@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '후원 결제가 아닙니다.' }, { status: 400 });
     }
 
-    if (payment.buyer_user_id !== session.authUserId) {
+    if (payment.buyer_user_id !== session.stigmaId) {
       return Response.json({ error: '본인의 후원 결제만 취소할 수 있습니다.' }, { status: 403 });
     }
 

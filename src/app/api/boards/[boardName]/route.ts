@@ -252,7 +252,6 @@ async function getSeriesFilteredPostList({
   size,
   filter,
   sessionCase,
-  authUserId,
   keyword,
   sort,
   includePin,
@@ -264,7 +263,6 @@ async function getSeriesFilteredPostList({
   size: number;
   filter: 'all' | 'deleted';
   sessionCase: 'staff' | 'member' | 'guest';
-  authUserId: string | null;
   keyword: string;
   sort: 'latest' | 'post_count';
   includePin: boolean;
@@ -550,7 +548,6 @@ export async function GET(request: Request, context: RouteContext) {
           size,
           filter,
           sessionCase: postListSessionCase,
-          authUserId: session.authUserId ?? null,
           keyword,
           sort,
           includePin,
@@ -564,7 +561,7 @@ export async function GET(request: Request, context: RouteContext) {
           size,
           filter,
           sessionCase: postListSessionCase,
-          authUserId: session.authUserId ?? null,
+          stigmaId: session.stigmaId ?? null,
           keyword,
           sort,
           includePin,

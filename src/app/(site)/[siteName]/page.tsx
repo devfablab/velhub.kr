@@ -138,7 +138,7 @@ export default async function Page(context: RouteContext) {
       size: 10,
       filter: 'all',
       sessionCase: 'guest',
-      authUserId: null,
+      stigmaId: null,
       sort: 'latest',
       includePin: false,
     });
@@ -214,7 +214,7 @@ export default async function Page(context: RouteContext) {
               size: getBoardContentSize(board.board_type),
               filter: 'all',
               sessionCase: 'guest',
-              authUserId: null,
+              stigmaId: null,
               sort: 'latest',
               includePin: false,
             });
