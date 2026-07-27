@@ -563,12 +563,15 @@ export default function SiteProfile() {
   return (
     <div className={styles['site-profile']}>
       <div className={styles['site-profile-container']}>
-        <div className={styles['site-profile-avatar']}>
-          <AppIconAvatar src={profilePictureUrl || null} alt={siteInfo.site_label || ''} size={72} />
-        </div>
         <div className={styles['site-profile-info']}>
-          {profileLogoUrl ? <img src={profileLogoUrl} alt="" /> : null}
-          <strong>{siteInfo.site_label}</strong>
+          {profileLogoUrl ? (
+            <img src={profileLogoUrl} alt="" />
+          ) : (
+            <div className={styles['site-profile-avatar']}>
+              <AppIconAvatar src={profilePictureUrl || null} alt={siteInfo.site_label || ''} size={20} />
+              <strong>{siteInfo.site_label}</strong>
+            </div>
+          )}
           {siteInfo.summary ? <p>{siteInfo.summary}</p> : null}
           {socialLinks.length > 0 ? (
             <Stack direction="row" gap={0.25} flexWrap="wrap" useFlexGap>

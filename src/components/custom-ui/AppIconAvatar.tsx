@@ -33,6 +33,7 @@ export default function AppIconAvatar({ site, size, src, alt = '' }: AppIconAvat
       role={alt ? 'img' : undefined}
       aria-label={alt || undefined}
       aria-hidden={alt ? undefined : true}
+      style={{ width: size, height: size }}
     >
       <defs>
         <clipPath id={clipId}>
@@ -46,7 +47,6 @@ export default function AppIconAvatar({ site, size, src, alt = '' }: AppIconAvat
         ) : (
           <>
             <rect width={size} height={size} fill="currentColor" opacity="0.08" />
-
             <foreignObject x={iconPosition} y={iconPosition} width={iconSize} height={iconSize}>
               {site === 'blog' ? (
                 <ArticleOutlinedIcon

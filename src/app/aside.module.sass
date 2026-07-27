@@ -527,15 +527,28 @@
     align-items: center
 
   .site-profile-avatar
-    width: ds.rem(72)
-    height: ds.rem(72)
+    display: flex
+    gap: ds.rem(5)
+    align-items: center
+
+    svg
+      width: ds.rem(72)
+      height: ds.rem(72)
 
   .site-profile-info
     display: flex
     flex-direction: column
     justify-content: center
-    gap: ds.rem(3)
+    gap: ds.rem(10)
     @include ds.col
+    max-width: ds.rem(270)
+
+    @include ds.mq(maxExtraSmall)
+      align-items: center
+      text-align: center
+
+      img
+        max-width: 70%
 
     strong
       @include ds.fw(neo, 800)
