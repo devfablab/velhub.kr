@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     const policyComment = isPolicyComment(policyCommentValue) ? policyCommentValue : 'estimate_0';
 
     if (!normalizedSiteKey) {
-      return Response.json({ error: '사이트 식별자를 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '사이트 주소를 입력해주세요.' }, { status: 400 });
     }
 
     if (hasInvalidCharacters(normalizedSiteKey)) {
@@ -133,11 +133,19 @@ export async function POST(request: Request) {
     }
 
     if (/^\d/.test(normalizedSiteKey)) {
-      return Response.json({ error: '사이트 식별자는 숫자로 시작할 수 없습니다.' }, { status: 400 });
+      return Response.json({ error: '사이트 주소는 숫자로 시작할 수 없습니다.' }, { status: 400 });
     }
 
     if (normalizedSiteKey.length < 5 || normalizedSiteKey.length > 15) {
-      return Response.json({ error: '사이트 식별자는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
+      return Response.json({ error: '사이트 주소는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
+    }
+
+    if (trimmedSiteLabel && (trimmedSiteLabel.length < 4 || trimmedSiteLabel.length > 10)) {
+      return Response.json({ error: '사이트명은 4자 이상 10자 이하여야 합니다.' }, { status: 400 });
+    }
+
+    if (trimmedSummary.length > 52) {
+      return Response.json({ error: '사이트 설명은 52자 이하여야 합니다.' }, { status: 400 });
     }
 
     if (normalizedSiteKey.includes('--')) {
@@ -179,11 +187,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (denylistResult.error) {
-      return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '사이트 주소 확인에 실패했습니다.' }, { status: 500 });
     }
 
     if (denylistResult.data) {
-      return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
+      return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
     }
 
     const rhizomeResult = await supabaseAdmin
@@ -193,11 +201,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (rhizomeResult.error) {
-      return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '사이트 주소 확인에 실패했습니다.' }, { status: 500 });
     }
 
     if (rhizomeResult.data) {
-      return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
+      return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
     }
 
     const planResult = await supabaseAdmin

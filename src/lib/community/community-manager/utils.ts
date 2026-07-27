@@ -53,6 +53,7 @@ type BoardRow = {
 type StigmaRow = {
   id: string;
   email: string | null;
+  payment_email: string | null;
   user_name: string | null;
 };
 
@@ -362,7 +363,7 @@ export async function getActiveMembers(access: CommunityManagerAccess) {
 
   const stigmaResult =
     userIds.length > 0
-      ? await access.supabaseAdmin.from('stigmas').select('id, email, user_name').in('id', userIds)
+      ? await access.supabaseAdmin.from('stigmas').select('id, email, payment_email, user_name').in('id', userIds)
       : { data: [], error: null };
 
   if (stigmaResult.error) {
@@ -378,7 +379,7 @@ export async function getActiveMembers(access: CommunityManagerAccess) {
       rhizomeStigmaId: member.id,
       userId: member.user_id,
       nickname: normalizeText(member.nickname),
-      email: decryptNullable(stigma?.email),
+      email: decryptNullable(stigma?.payment_email) || decryptNullable(stigma?.email),
       userName: decryptNullable(stigma?.user_name),
     };
   });

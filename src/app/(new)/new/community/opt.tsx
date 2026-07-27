@@ -248,7 +248,7 @@ export default function Opt() {
   }
 
   function handleSiteKeyChange(event: InputChangeEvent) {
-    const normalizedValue = normalizeSiteKeyInput(event.currentTarget.value);
+    const normalizedValue = normalizeSiteKeyInput(event.currentTarget.value).slice(0, 15);
 
     setSiteKey(normalizedValue);
     setSiteKeyStatusMessage('');
@@ -257,11 +257,11 @@ export default function Opt() {
   }
 
   function handleSiteLabelChange(event: InputChangeEvent) {
-    setSiteLabel(event.currentTarget.value);
+    setSiteLabel(event.currentTarget.value.slice(0, 10));
   }
 
   function handleSummaryChange(event: TextAreaChangeEvent | InputChangeEvent) {
-    setSummary(event.currentTarget.value);
+    setSummary(event.currentTarget.value.slice(0, 52));
   }
 
   function handleThemeTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -335,7 +335,7 @@ export default function Opt() {
     setSiteKeyStatusMessage('');
 
     if (!normalizedSiteKey) {
-      openErrorDialog('사이트 식별자를 입력해주세요.');
+      openErrorDialog('사이트 주소를 입력해주세요.');
       return;
     }
 
@@ -365,15 +365,15 @@ export default function Opt() {
       }
 
       if (!response.ok) {
-        throw new Error(result.error ?? '사이트 식별자 확인에 실패했습니다.');
+        throw new Error(result.error ?? '사이트 주소 확인에 실패했습니다.');
       }
 
-      setSiteKeyStatusMessage('사용 가능한 사이트 식별자입니다.');
+      setSiteKeyStatusMessage('사용 가능한 사이트 주소입니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        openErrorDialog(unknownError.message || '사이트 식별자 확인에 실패했습니다.');
+        openErrorDialog(unknownError.message || '사이트 주소 확인에 실패했습니다.');
       } else {
-        openErrorDialog('사이트 식별자 확인에 실패했습니다.');
+        openErrorDialog('사이트 주소 확인에 실패했습니다.');
       }
     } finally {
       setIsCheckingSiteKey(false);
@@ -484,7 +484,7 @@ export default function Opt() {
     setSiteKeyStatusMessage('');
 
     if (!normalizedSiteKey) {
-      openErrorDialog('사이트 식별자를 입력해주세요.');
+      openErrorDialog('사이트 주소를 입력해주세요.');
       return;
     }
 
@@ -566,8 +566,9 @@ export default function Opt() {
               value={siteKey}
               onChange={handleSiteKeyChange}
               fullWidth
-              helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+              helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
               size="small"
+              inputProps={{ maxLength: 15 }}
               slotProps={{
                 input: {
                   startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
@@ -602,7 +603,8 @@ export default function Opt() {
               onChange={handleSiteLabelChange}
               fullWidth
               size="small"
-              helperText="입력하지 않으면 커뮤니티 주소 기준으로 자동 생성됩니다."
+              helperText={`입력하지 않으면 커뮤니티 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`}
+              inputProps={{ maxLength: 10 }}
               slotProps={{
                 input: {
                   endAdornment: siteLabel.trim() ? (
@@ -657,7 +659,16 @@ export default function Opt() {
 
           <Stack gap={1}>
             <Typography variant="subtitle2">커뮤니티 간단설명</Typography>
-            <TextField size="small" value={summary} onChange={handleSummaryChange} fullWidth multiline minRows={4} />
+            <TextField
+              size="small"
+              value={summary}
+              onChange={handleSummaryChange}
+              fullWidth
+              multiline
+              minRows={4}
+              helperText={`${summary.length} / 52`}
+              inputProps={{ maxLength: 52 }}
+            />
           </Stack>
 
           <Stack gap={1}>

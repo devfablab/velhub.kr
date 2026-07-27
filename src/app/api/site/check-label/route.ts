@@ -28,6 +28,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (normalizedSiteLabel.length < 4 || normalizedSiteLabel.length > 10) {
+      return Response.json(
+        {
+          ok: false,
+          normalizedSiteLabel,
+          error: '사이트명은 4자 이상 10자 이하여야 합니다.',
+        },
+        { status: 400 },
+      );
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const siteResult = await supabaseAdmin

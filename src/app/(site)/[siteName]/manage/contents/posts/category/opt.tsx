@@ -1056,7 +1056,7 @@ export default function Opt() {
               <Stack gap={3.5}>
                 <Stack gap={2} sx={{ pt: 1 }}>
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">사이트 식별자</Typography>
+                    <Typography variant="subtitle2">사이트 주소</Typography>
                     <TextField
                       value={categoryKey}
                       onChange={handleCategoryKeyChange}
@@ -1221,7 +1221,7 @@ export default function Opt() {
               <DialogContent>
                 <Stack gap={2} sx={{ pt: 1, pb: 1 }}>
                   <Stack gap={1}>
-                    <Typography variant="subtitle2">사이트 식별자</Typography>
+                    <Typography variant="subtitle2">사이트 주소</Typography>
                     <TextField
                       value={categoryKey}
                       onChange={handleCategoryKeyChange}

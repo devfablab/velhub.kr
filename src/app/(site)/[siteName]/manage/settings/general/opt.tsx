@@ -243,11 +243,11 @@ export default function Opt() {
   }
 
   function handleTextChange(event: InputChangeEvent | TextAreaChangeEvent) {
-    setDraftValue(event.currentTarget.value);
+    setDraftValue(event.currentTarget.value.slice(0, editingField === 'summary' ? 52 : 10));
   }
 
   function handleSiteKeyChange(event: InputChangeEvent) {
-    const normalizedValue = normalizeSiteKey(event.currentTarget.value);
+    const normalizedValue = normalizeSiteKey(event.currentTarget.value).slice(0, 15);
 
     setDraftValue(normalizedValue);
     setErrorMessage('');
@@ -256,7 +256,7 @@ export default function Opt() {
   }
 
   function handleSiteLabelChange(event: InputChangeEvent) {
-    setDraftValue(event.currentTarget.value);
+    setDraftValue(event.currentTarget.value.slice(0, 10));
     setErrorMessage('');
     setSuccessMessage('');
     resetSiteLabelCheck();
@@ -286,7 +286,7 @@ export default function Opt() {
     resetSiteKeyCheck();
 
     if (!normalizedSiteKey) {
-      setErrorMessage('사이트 식별자를 입력해주세요.');
+      setErrorMessage('사이트 주소를 입력해주세요.');
       return;
     }
 
@@ -298,7 +298,7 @@ export default function Opt() {
     if (normalizedSiteKey === siteInfo.site_key) {
       setCheckedSiteKey(normalizedSiteKey);
       setIsSiteKeyAvailable(true);
-      setSiteKeyCheckMessage('현재 사용 중인 사이트 식별자입니다.');
+      setSiteKeyCheckMessage('현재 사용 중인 사이트 주소입니다.');
       return;
     }
 
@@ -325,18 +325,18 @@ export default function Opt() {
       if (!response.ok || !result.ok) {
         setCheckedSiteKey(result.normalizedSiteKey ?? normalizedSiteKey);
         setIsSiteKeyAvailable(false);
-        setErrorMessage(result.error ?? '사용할 수 없는 사이트 식별자입니다.');
+        setErrorMessage(result.error ?? '사용할 수 없는 사이트 주소입니다.');
         return;
       }
 
       setCheckedSiteKey(result.normalizedSiteKey ?? normalizedSiteKey);
       setIsSiteKeyAvailable(true);
-      setSiteKeyCheckMessage('사용 가능한 사이트 식별자입니다.');
+      setSiteKeyCheckMessage('사용 가능한 사이트 주소입니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트 식별자 확인에 실패했습니다.');
+        setErrorMessage(unknownError.message || '사이트 주소 확인에 실패했습니다.');
       } else {
-        setErrorMessage('사이트 식별자 확인에 실패했습니다.');
+        setErrorMessage('사이트 주소 확인에 실패했습니다.');
       }
       resetSiteKeyCheck();
     } finally {
@@ -443,7 +443,7 @@ export default function Opt() {
       const normalizedSiteKey = normalizeSiteKey(String(nextValue));
 
       if (!isSiteKeyAvailable || checkedSiteKey !== normalizedSiteKey) {
-        setErrorMessage('사이트 식별자 중복 확인을 해주세요.');
+        setErrorMessage('사이트 주소 중복 확인을 해주세요.');
         setSuccessMessage('');
         return false;
       }
@@ -749,7 +749,11 @@ export default function Opt() {
       setPromotionImageUrl(uploadResult.url ?? '');
       setSuccessMessage('프로모션 이미지가 저장되었습니다.');
     } catch (unknownError) {
-      setErrorMessage(unknownError instanceof Error ? unknownError.message || '프로모션 이미지 저장에 실패했습니다.' : '프로모션 이미지 저장에 실패했습니다.');
+      setErrorMessage(
+        unknownError instanceof Error
+          ? unknownError.message || '프로모션 이미지 저장에 실패했습니다.'
+          : '프로모션 이미지 저장에 실패했습니다.',
+      );
     } finally {
       setIsUploadingPromotion(false);
       inputElement.value = '';
@@ -776,7 +780,11 @@ export default function Opt() {
       setPromotionImageUrl('');
       setSuccessMessage('프로모션 이미지가 삭제되었습니다.');
     } catch (unknownError) {
-      setErrorMessage(unknownError instanceof Error ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.' : '프로모션 이미지 삭제에 실패했습니다.');
+      setErrorMessage(
+        unknownError instanceof Error
+          ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.'
+          : '프로모션 이미지 삭제에 실패했습니다.',
+      );
     } finally {
       setIsUploadingPromotion(false);
     }
@@ -1013,7 +1021,7 @@ export default function Opt() {
             </Stack>
           </div>
           <div className={`paper ${styles.paper}`}>
-            <Typography variant="subtitle2">사이트 식별자</Typography>
+            <Typography variant="subtitle2">사이트 주소</Typography>
             {editingField === 'site_key' ? (
               <>
                 <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
@@ -1022,7 +1030,8 @@ export default function Opt() {
                     onChange={handleSiteKeyChange}
                     fullWidth
                     size="small"
-                    helperText="영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다."
+                    helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
+                    inputProps={{ maxLength: 15 }}
                     slotProps={{
                       input: {
                         startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
@@ -1092,6 +1101,8 @@ export default function Opt() {
                     onChange={handleSiteLabelChange}
                     fullWidth
                     size="small"
+                    helperText={`${String(draftValue).length} / 10`}
+                    inputProps={{ maxLength: 10 }}
                     slotProps={{
                       input: {
                         endAdornment: (
@@ -1158,6 +1169,8 @@ export default function Opt() {
                   multiline
                   size="small"
                   minRows={4}
+                  helperText={`${String(draftValue).length} / 52`}
+                  inputProps={{ maxLength: 52 }}
                 />
                 <Stack
                   direction="row"
@@ -1213,6 +1226,10 @@ export default function Opt() {
                 <span>등록된 오픈그래프 이미지가 없습니다.</span>
               </p>
             )}
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>이 이미지는 카카오톡, 라인, 트위터, 페이스북 등에 링크 공유시 미리보기에 나오는 이미지입니다.</span>
+            </p>
             <p className="alert info">
               <InfoOutlineRoundedIcon />
               <span>1MB 미만의 PNG, JPEG, WEBP 이미지를 등록할 수 있습니다.</span>

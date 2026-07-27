@@ -62,7 +62,7 @@ export async function GET(request: Request) {
         const typedMembership = membership as MembershipRow;
         const bannedUser = stigmaMap.get(typedMembership.user_id) ?? null;
         const bannedByUser = typedMembership.banned_by ? (stigmaMap.get(typedMembership.banned_by) ?? null) : null;
-        const email = decryptNullable(bannedUser?.email ?? null) || '';
+        const email = decryptNullable(bannedUser?.payment_email ?? null) || decryptNullable(bannedUser?.email ?? null) || '';
         const nickname = normalizeText(typedMembership.nickname);
         const displayName = nickname ? `${email} (${nickname})` : email;
 

@@ -555,7 +555,7 @@ export function buildMemberResponse(
   const level = membership.lv ? (levelMap.get(membership.lv) ?? null) : null;
 
   return {
-    email: decryptNullable(stigma?.email ?? null),
+    email: decryptNullable(stigma?.payment_email ?? null) || decryptNullable(stigma?.email ?? null),
     avatar: stigma?.avatar ?? null,
     membership,
     level: level
@@ -577,5 +577,5 @@ export function getStigmaDisplayName(stigma: StigmaRow | null | undefined) {
     return userName;
   }
 
-  return decryptNullable(stigma?.email ?? null) || '';
+  return decryptNullable(stigma?.payment_email ?? null) || decryptNullable(stigma?.email ?? null) || '';
 }

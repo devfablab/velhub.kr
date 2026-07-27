@@ -28,6 +28,7 @@ type SiteVisitRow = {
 
 type AccountRow = {
   email: string;
+  payment_email: string | null;
   user_name: string;
   avatar: string | null;
   role: string | null;
@@ -432,7 +433,7 @@ export async function GET(request: Request) {
 
     const accountResult = await supabaseAdmin
       .from('stigmas')
-      .select('email, user_name, avatar, role')
+      .select('email, payment_email, user_name, avatar, role')
       .eq('id', session.stigmaId)
       .maybeSingle();
 
@@ -591,7 +592,7 @@ export async function GET(request: Request) {
       themeType: site.theme_type,
       blogFontSettings,
       isLoggedIn: true,
-      email: decryptValue(account.email),
+      email: decryptValue(account.payment_email) || decryptValue(account.email),
       userName: decryptValue(account.user_name),
       avatar: processAvatar(account.avatar),
       globalRole: normalizeText(account.role).toLowerCase() || null,

@@ -30,6 +30,7 @@ type MembershipRow = {
 type StigmaRow = {
   id: string;
   email: string | null;
+  payment_email: string | null;
   user_name: string | null;
   withdrawal_status?: string | null;
 };
@@ -79,8 +80,12 @@ function decryptNullable(value: string | null | undefined) {
   }
 }
 
-function getDisplayName(userName: string | null | undefined, email: string | null | undefined) {
-  return decryptNullable(userName) || decryptNullable(email) || '';
+function getDisplayName(
+  userName: string | null | undefined,
+  email: string | null | undefined,
+  paymentEmail: string | null | undefined,
+) {
+  return decryptNullable(userName) || decryptNullable(paymentEmail) || decryptNullable(email) || '';
 }
 
 function getApplicantNickname(nickname: string | null | undefined, userName: string | null | undefined) {
@@ -290,7 +295,7 @@ export async function GET(request: Request) {
 
     const stigmaResult =
       stigmaIds.length > 0
-        ? await access.supabaseAdmin.from('stigmas').select('id, email, user_name, withdrawal_status').in('id', stigmaIds)
+        ? await access.supabaseAdmin.from('stigmas').select('id, email, payment_email, user_name, withdrawal_status').in('id', stigmaIds)
         : { data: [], error: null };
 
     if (stigmaResult.error) {
@@ -316,12 +321,12 @@ export async function GET(request: Request) {
 
         return {
           userId: membership.user_id,
-          email: decryptNullable(stigma?.email) || '',
+          email: decryptNullable(stigma?.payment_email) || decryptNullable(stigma?.email) || '',
           userName: decryptNullable(stigma?.user_name) || '',
           nickname: getApplicantNickname(membership.nickname, stigma?.user_name),
           createdAt: membership.created_at,
           rejectedAt: membership.rejected_at,
-          rejectedBy: getDisplayName(rejectedByStigma?.user_name, rejectedByStigma?.email),
+          rejectedBy: getDisplayName(rejectedByStigma?.user_name, rejectedByStigma?.email, rejectedByStigma?.payment_email),
           isReApproval: membership.is_re_approval === true,
           answeredQuestions: normalizeAnsweredQuestions(membership.answered_questions, questionMap),
         };

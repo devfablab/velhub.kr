@@ -145,7 +145,7 @@ export async function GET(request: Request) {
     const stigmas = stigmaIdList.length
       ? await access.supabaseAdmin
           .from('stigmas')
-          .select('id, user_id, email, user_name, withdrawal_status')
+          .select('id, user_id, email, payment_email, user_name, withdrawal_status')
           .in('id', stigmaIdList)
       : { data: [], error: null };
 
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
         item.id,
         {
           authUserId: item.user_id as string | null,
-          email: item.email ? decrypt(item.email as string) : '',
+          email: item.payment_email ? decrypt(item.payment_email as string) : item.email ? decrypt(item.email as string) : '',
           userName: (item.user_name as string | null) ?? '',
           withdrawalStatus: item.withdrawal_status as string | null,
         },

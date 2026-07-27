@@ -55,7 +55,7 @@ function formatLogMessage(
   nextValue: string | boolean | null,
 ) {
   if (field === 'site_key') {
-    return `사이트 식별자 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+    return `사이트 주소 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
 
   if (field === 'site_label') {
@@ -236,7 +236,7 @@ export async function POST(request: Request, context: RouteContext) {
       const normalizedValue = normalizeSiteKey(rawValue);
 
       if (!normalizedValue) {
-        return Response.json({ error: '사이트 식별자를 입력해주세요.' }, { status: 400 });
+        return Response.json({ error: '사이트 주소를 입력해주세요.' }, { status: 400 });
       }
 
       if (hasInvalidCharacters(normalizedValue)) {
@@ -244,11 +244,11 @@ export async function POST(request: Request, context: RouteContext) {
       }
 
       if (/^\d/.test(normalizedValue)) {
-        return Response.json({ error: '사이트 식별자는 숫자로 시작할 수 없습니다.' }, { status: 400 });
+        return Response.json({ error: '사이트 주소는 숫자로 시작할 수 없습니다.' }, { status: 400 });
       }
 
       if (normalizedValue.length < 5 || normalizedValue.length > 15) {
-        return Response.json({ error: '사이트 식별자는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
+        return Response.json({ error: '사이트 주소는 5자 이상 15자 이하여야 합니다.' }, { status: 400 });
       }
 
       const denylist = await access.supabaseAdmin
@@ -258,11 +258,11 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (denylist.error) {
-        return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '사이트 주소 확인에 실패했습니다.' }, { status: 500 });
       }
 
       if (denylist.data) {
-        return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
+        return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
       }
 
       const duplicateSiteKey = await access.supabaseAdmin
@@ -273,14 +273,30 @@ export async function POST(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (duplicateSiteKey.error) {
-        return Response.json({ error: '사이트 식별자 확인에 실패했습니다.' }, { status: 500 });
+        return Response.json({ error: '사이트 주소 확인에 실패했습니다.' }, { status: 500 });
       }
 
       if (duplicateSiteKey.data) {
-        return Response.json({ error: '사용할 수 없는 사이트 식별자입니다.' }, { status: 400 });
+        return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
       }
 
       nextValue = normalizedValue;
+    } else if (requestBody.field === 'site_label') {
+      const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
+
+      if (normalizedValue && (normalizedValue.length < 4 || normalizedValue.length > 10)) {
+        return Response.json({ error: '사이트명은 4자 이상 10자 이하여야 합니다.' }, { status: 400 });
+      }
+
+      nextValue = normalizedValue || null;
+    } else if (requestBody.field === 'summary') {
+      const normalizedValue = typeof requestBody.value === 'string' ? requestBody.value.trim() : '';
+
+      if (normalizedValue.length > 52) {
+        return Response.json({ error: '사이트 설명은 52자 이하여야 합니다.' }, { status: 400 });
+      }
+
+      nextValue = normalizedValue || null;
     } else if (requestBody.field === 'visibility_type') {
       if (requestBody.value !== 'public' && requestBody.value !== 'private') {
         return Response.json({ error: '공개 여부 값이 올바르지 않습니다.' }, { status: 400 });

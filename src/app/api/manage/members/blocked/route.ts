@@ -73,7 +73,11 @@ export async function GET(request: Request) {
 
         return {
           userId: typedMembership.user_id,
-          nickname: normalizeText(typedMembership.nickname) || decryptNullable(blockedUser?.email ?? null) || '',
+          nickname:
+            normalizeText(typedMembership.nickname) ||
+            decryptNullable(blockedUser?.payment_email ?? null) ||
+            decryptNullable(blockedUser?.email ?? null) ||
+            '',
           blockReason: normalizeText(typedMembership.block_reason) || '',
           blockedAt: typedMembership.blocked_at,
           blockTerm: typedMembership.block_term ?? null,
