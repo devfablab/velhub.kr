@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       siteId: rhizome.data.id,
     });
 
-    if (session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

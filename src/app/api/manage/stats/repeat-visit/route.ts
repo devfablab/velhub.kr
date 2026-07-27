@@ -316,7 +316,7 @@ async function getStatsAccess(siteName: string) {
   const rhizome = rhizomeResult.data as RhizomeRow;
   const session = await verifySession({ siteId: rhizome.id });
 
-  if (session.case !== 'staff') {
+  if (session.case !== 'admin' && session.case !== 'staff') {
     return {
       ok: false,
       status: 403,

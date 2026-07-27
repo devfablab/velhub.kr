@@ -46,7 +46,7 @@ export async function getSiteOgAccess(siteName: string) {
       siteId: rhizome.data.id,
     });
 
-    if (session.case !== 'staff' || !session.rhizomeStigmaId) {
+    if ((session.case !== 'admin' && session.case !== 'staff') || !session.rhizomeStigmaId) {
       return {
         ok: false,
         status: 403,

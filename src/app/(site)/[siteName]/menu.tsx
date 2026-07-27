@@ -424,7 +424,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
 
   const home = pathname === `/${siteName}` ? true : false;
 
-  const isSiteStaff = isStaffRole(userProfile.siteRole);
+  const isSiteStaff = userProfile.globalRole === 'admin' || isStaffRole(userProfile.siteRole);
   const isBlog = siteType === 'blog' ? true : false;
 
   if (!isMounted || !isReady) {
@@ -669,6 +669,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                           siteName={siteName}
                           siteType={siteType}
                           siteRole={userProfile.siteRole}
+                          globalRole={userProfile.globalRole}
                           onClose={handleCloseProfileDrawer}
                         />
                       </>

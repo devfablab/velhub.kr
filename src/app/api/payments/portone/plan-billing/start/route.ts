@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     const session = await verifySession({ siteId });
 
-    if (session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

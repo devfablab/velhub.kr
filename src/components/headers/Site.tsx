@@ -427,7 +427,7 @@ export default function HeaderSite() {
     return <SettingsBrightnessIcon />;
   }
 
-  const isSiteStaff = isStaffRole(userProfile.siteRole);
+  const isSiteStaff = userProfile.globalRole === 'admin' || isStaffRole(userProfile.siteRole);
   const isBlog = siteType === 'blog' ? true : false;
 
   if (!isMounted || !isReady) {
@@ -487,6 +487,7 @@ export default function HeaderSite() {
                     siteType={siteType}
                     isSiteStaff={isSiteStaff}
                     siteRole={userProfile.siteRole}
+                    globalRole={userProfile.globalRole}
                   />
                 ) : isPaymentPage ? (
                   <NavPayments />
@@ -521,6 +522,7 @@ export default function HeaderSite() {
                       siteType={siteType}
                       isSiteStaff={isSiteStaff}
                       siteRole={userProfile.siteRole}
+                      globalRole={userProfile.globalRole}
                     />
                   ) : isPaymentPage ? (
                     <NavPayments />

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     }
 
     if (rhizome.data.site_type === 'blog') {
-      if (session.case !== 'staff' && session.case !== 'member') {
+      if (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member') {
         return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
       }
 
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
       });
     }
 
-    if (session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

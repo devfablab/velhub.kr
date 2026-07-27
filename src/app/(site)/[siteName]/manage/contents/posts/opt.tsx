@@ -92,6 +92,7 @@ type SitePublicResponse = {
 };
 
 type HeaderSiteResponse = {
+  globalRole: string | null;
   siteRole: string | null;
 };
 
@@ -176,7 +177,11 @@ function isVisibleCommunityBoard(board: BoardRow) {
   return board.board_key !== 'b' && board.board_key !== 'p';
 }
 
-function isStaffRole(role: string | null) {
+function isStaffRole(role: string | null, globalRole: string | null) {
+  if (globalRole === 'admin') {
+    return true;
+  }
+
   return role === 'owner' || role === 'manager';
 }
 
@@ -345,7 +350,9 @@ export default function Opt() {
 
         const headerResult = (await headerResponse.json()) as HeaderSiteResponse | ErrorResponse;
         const nextIsStaff =
-          headerResponse.ok && 'siteRole' in headerResult ? isStaffRole(headerResult.siteRole) : false;
+          headerResponse.ok && 'siteRole' in headerResult
+            ? isStaffRole(headerResult.siteRole, 'globalRole' in headerResult ? headerResult.globalRole : null)
+            : false;
 
         setIsStaff(nextIsStaff);
 

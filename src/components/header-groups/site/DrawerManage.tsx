@@ -18,10 +18,15 @@ type Props = {
   siteName: string;
   siteType: SiteType | null;
   siteRole: string | null;
+  globalRole: string | null;
   onClose: () => void;
 };
 
-function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | null) {
+function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | null, globalRole: string | null) {
+  if (globalRole === 'admin') {
+    return true;
+  }
+
   if (siteType === 'blog') {
     return siteRole === 'owner' || siteRole === 'manager';
   }
@@ -33,8 +38,8 @@ function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | n
   return false;
 }
 
-export default function DrawerManage({ siteName, siteType, siteRole, onClose }: Props) {
-  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+export default function DrawerManage({ siteName, siteType, siteRole, globalRole, onClose }: Props) {
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   return (
     <>

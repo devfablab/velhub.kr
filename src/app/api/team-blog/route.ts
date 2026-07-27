@@ -209,7 +209,7 @@ export async function GET(request: Request) {
       memberProjects: attachMemberInfo(memberProjects.data ?? [], teamMemberMap, session.rhizomeStigmaId),
       memberCareers: attachMemberInfo(memberCareers.data ?? [], teamMemberMap, session.rhizomeStigmaId),
       canEditMyMemberGeneral: Boolean(
-        session.rhizomeStigmaId && (session.case === 'staff' || session.case === 'member'),
+        session.rhizomeStigmaId && (session.case === 'admin' || session.case === 'staff' || session.case === 'member'),
       ),
       sites: {
         updated_at: sites.data.updated_at,

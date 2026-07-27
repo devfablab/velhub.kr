@@ -536,7 +536,7 @@ export async function proxy(request: NextRequest) {
           if (isLoggedIn) {
             const staff = await fetchSessionRoute(request, '/api/session/staff', { siteName });
 
-            isSiteOwner = staff.response.ok && staff.result?.role === 'owner';
+            isSiteOwner = staff.response.ok && (staff.result?.role === 'owner' || staff.result?.role === 'admin');
           }
 
           if (

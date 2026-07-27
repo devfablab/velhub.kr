@@ -24,7 +24,7 @@ async function getAuthorizedContext(reportId: string, siteName: string) {
 
   const session = await verifySession({ siteId: context.site.id });
 
-  if (session.case !== 'staff' || !session.authUserId || !session.stigmaId) {
+  if ((session.case !== 'admin' && session.case !== 'staff') || !session.authUserId || !session.stigmaId) {
     throw new Error('ACCESS_DENIED');
   }
 

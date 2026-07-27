@@ -563,7 +563,7 @@ export default function Opt() {
       return;
     }
 
-    if (!hasBoard && authority !== 'staff') {
+    if (!hasBoard && authority !== 'admin' && authority !== 'staff') {
       setErrorMessage('최초 글은 스텝만 작성 가능합니다');
       return;
     }
@@ -658,7 +658,7 @@ export default function Opt() {
     );
   }
 
-  if (!hasBoard && authority !== 'staff') {
+  if (!hasBoard && authority !== 'admin' && authority !== 'staff') {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>

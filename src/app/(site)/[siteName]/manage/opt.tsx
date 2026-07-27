@@ -31,7 +31,11 @@ type TabItems = {
   startsWith?: boolean;
 };
 
-function canAccessAllManageMenus(siteType: string, siteRole: string | null) {
+function canAccessAllManageMenus(siteType: string, siteRole: string | null, globalRole: string | null) {
+  if (globalRole === 'admin') {
+    return true;
+  }
+
   if (siteType === 'blog') {
     return siteRole === 'owner' || siteRole === 'manager';
   }
@@ -56,7 +60,8 @@ export default function Opt() {
   const [ownerName, setOwnerName] = useState('');
   const [memberCount, setMemberCount] = useState(0);
   const [postCount, setPostCount] = useState(0);
-  const [siteRole, setSiteRole] = useState(null);
+  const [siteRole, setSiteRole] = useState<string | null>(null);
+  const [globalRole, setGlobalRole] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -104,10 +109,12 @@ export default function Opt() {
 
       if (!response.ok || !('isLoggedIn' in result)) {
         setSiteRole(null);
+        setGlobalRole(null);
         return;
       }
 
       setSiteRole(result.siteRole);
+      setGlobalRole(result.globalRole);
     }
 
     if (!siteName) {
@@ -120,7 +127,7 @@ export default function Opt() {
     void loadManager();
   }, [siteName]);
 
-  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   const tabItems: TabItems[] = [
     ...(showAllManageMenus

@@ -213,14 +213,31 @@ export async function getCommunityManagerAccess(
   const community = communityResult.data as CommunityRow;
   const session = await verifySession({ siteId: rhizome.id });
 
-  if (!session.authUserId || !session.stigmaId || !session.rhizomeStigmaId) {
+  let actorRhizomeStigmaId = session.rhizomeStigmaId;
+
+  if (session.case === 'admin' && session.stigmaId) {
+    const ownerMembershipResult = await supabaseAdmin
+      .from('rhizome_stigmas')
+      .select('id')
+      .eq('site_id', rhizome.id)
+      .eq('role', 'owner')
+      .maybeSingle();
+
+    if (ownerMembershipResult.error || !ownerMembershipResult.data) {
+      throw new Error('운영자 정보를 확인하지 못했습니다.');
+    }
+
+    actorRhizomeStigmaId = ownerMembershipResult.data.id;
+  }
+
+  if (!session.authUserId || !session.stigmaId || !actorRhizomeStigmaId) {
     throw new Error('접근 권한이 없습니다.');
   }
 
   const actorRhizomeStigmaResult = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('id, role')
-    .eq('id', session.rhizomeStigmaId)
+    .eq('id', actorRhizomeStigmaId)
     .eq('site_id', rhizome.id)
     .maybeSingle();
 
@@ -234,7 +251,7 @@ export async function getCommunityManagerAccess(
     .from('community_manage_role')
     .select('role, board_id')
     .eq('community_id', community.id)
-    .eq('manager_id', session.rhizomeStigmaId);
+      .eq('manager_id', actorRhizomeStigmaId);
 
   if (actorManageRoleResult.error) {
     throw new Error('접근 권한이 없습니다.');
@@ -295,7 +312,7 @@ export async function getCommunityManagerAccess(
     actor: {
       authUserId: session.authUserId,
       stigmaId: session.stigmaId,
-      rhizomeStigmaId: session.rhizomeStigmaId,
+      rhizomeStigmaId: actorRhizomeStigmaId,
       communityRoles: uniqueRoles,
       permissions,
       managedBoardIds,

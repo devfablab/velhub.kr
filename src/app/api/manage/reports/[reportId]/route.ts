@@ -183,7 +183,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const site = siteResult.data as SiteRow;
     const session = await verifySession({ siteId: site.id });
 
-    if (session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

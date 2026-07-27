@@ -10,6 +10,7 @@ type NavManageProps = {
   siteName: string;
   siteType: SiteType;
   siteRole: string | null;
+  globalRole: string | null;
   isSiteStaff: boolean;
 };
 
@@ -27,7 +28,11 @@ function isCurrentPath(pathname: string, item: StaffNavItem) {
   return pathname === item.href;
 }
 
-function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null) {
+function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null, globalRole: string | null) {
+  if (globalRole === 'admin') {
+    return true;
+  }
+
   if (siteType === 'blog') {
     return siteRole === 'owner' || siteRole === 'manager';
   }
@@ -35,14 +40,14 @@ function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null) {
   return siteRole === 'owner' || siteRole === 'community-manager';
 }
 
-export default function NavManage({ siteName, siteType, siteRole, isSiteStaff }: NavManageProps) {
+export default function NavManage({ siteName, siteType, siteRole, globalRole, isSiteStaff }: NavManageProps) {
   const pathname = usePathname();
 
   if (!isSiteStaff) {
     return null;
   }
 
-  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole);
+  const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   const navItems: StaffNavItem[] = [
     ...(showAllManageMenus

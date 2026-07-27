@@ -107,6 +107,16 @@ async function checkAccess(siteName: string) {
     siteId: rhizome.data.id,
   });
 
+  if (session.case === 'admin' && session.stigmaId) {
+    return {
+      ok: true,
+      status: 200,
+      supabaseAdmin,
+      siteId: rhizome.data.id,
+      updatedByStigmaId: session.stigmaId,
+    } as const;
+  }
+
   if (session.case !== 'staff' || !session.stigmaId || !session.rhizomeStigmaId) {
     return {
       ok: false,

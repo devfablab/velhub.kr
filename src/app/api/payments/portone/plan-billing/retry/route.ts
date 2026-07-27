@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    if (session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

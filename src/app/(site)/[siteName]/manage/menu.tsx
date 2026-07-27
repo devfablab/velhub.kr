@@ -633,7 +633,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     window.location.href = '/';
   }
 
-  const isSiteStaff = isStaffRole(userProfile.siteRole);
+  const isSiteStaff = userProfile.globalRole === 'admin' || isStaffRole(userProfile.siteRole);
   const isBlog = siteType === 'blog' ? true : false;
   function getTabMenuItems(menu: ContainerProps['menu'], siteName: string, isBlog: boolean): TabMenuItem[] {
     if (menu === 'contents') {
@@ -879,6 +879,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                           siteName={siteName}
                           siteType={siteType}
                           siteRole={userProfile.siteRole}
+                          globalRole={userProfile.globalRole}
                           onClose={handleCloseProfileDrawer}
                         />
                       </>

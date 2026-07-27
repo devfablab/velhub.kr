@@ -1027,7 +1027,7 @@ export async function GET(request: Request, context: RouteContext) {
       siteId: rhizomeData.id,
     });
 
-    const isStaff = session.case === 'staff';
+    const isStaff = session.case === 'staff' || session.case === 'admin';
     const isAuth = session.case === 'admin' || session.case === 'staff' || session.case === 'member';
 
     if (rhizomeData.visibility_type !== 'public' || rhizomeData.is_shutdown !== false) {

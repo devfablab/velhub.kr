@@ -125,7 +125,7 @@ async function getSiteAndSession(siteName: string) {
     siteId: site.id,
   });
 
-  if (session.case !== 'staff') {
+  if (session.case !== 'admin' && session.case !== 'staff') {
     return {
       response: Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 }),
       site: null,
