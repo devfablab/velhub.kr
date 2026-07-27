@@ -39,6 +39,7 @@ import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NavPayments from '../header-groups/site/NavPayments';
 import AppIconAvatar from '../custom-ui/AppIconAvatar';
 import NotificationButton from '../service/common/NotificationButton';
+import { ServiceLogo } from '../Svgs';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -445,25 +446,38 @@ export default function HeaderSite() {
               <div className={styles.top}>
                 <div className={styles.gnb}>
                   <h1>
-                    <Anchor href={`/${siteName}`} aria-label={profileLogoUrl ? siteLabel : undefined}>
-                      {profileLogoUrl ? (
-                        <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
-                      ) : (
+                    <Anchor
+                      href={siteLabel ? `/${siteName}` : '/'}
+                      aria-label={profileLogoUrl ? siteLabel : '데브허브 velhub'}
+                    >
+                      {siteLabel ? (
                         <>
-                          {profilePictureUrl ? (
-                            <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
-                          ) : null}
-                          <span>{siteLabel}</span>
+                          {profileLogoUrl ? (
+                            <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
+                          ) : (
+                            <>
+                              {profilePictureUrl ? (
+                                <AppIconAvatar src={profilePictureUrl || null} alt="" size={40} />
+                              ) : null}
+                              <span>{siteLabel}</span>
+                            </>
+                          )}
                         </>
+                      ) : (
+                        <ServiceLogo />
                       )}
                     </Anchor>
                   </h1>
-                  <PrimaryMenu siteName={siteName} isBlog={isBlog} isSiteStaff={isSiteStaff} />
-                  {siteType === 'blog' ? (
-                    <BlogSearch siteName={siteName} isBlog={isBlog} />
-                  ) : (
-                    <CommunitySearch siteName={siteName} isBlog={isBlog} />
-                  )}
+                  {siteLabel ? (
+                    <>
+                      <PrimaryMenu siteName={siteName} isBlog={isBlog} isSiteStaff={isSiteStaff} />
+                      {siteType === 'blog' ? (
+                        <BlogSearch siteName={siteName} isBlog={isBlog} />
+                      ) : (
+                        <CommunitySearch siteName={siteName} isBlog={isBlog} />
+                      )}
+                    </>
+                  ) : null}
                 </div>
 
                 <div className={styles.iconbuttons}>
@@ -480,42 +494,8 @@ export default function HeaderSite() {
                   </IconButton>
                 </div>
               </div>
-              <div className={styles.bottom}>
-                {isManagePage && siteType ? (
-                  <NavManage
-                    siteName={siteName}
-                    siteType={siteType}
-                    isSiteStaff={isSiteStaff}
-                    siteRole={userProfile.siteRole}
-                    globalRole={userProfile.globalRole}
-                  />
-                ) : isPaymentPage ? (
-                  <NavPayments />
-                ) : (
-                  <NavMenu siteName={siteName} isBlog={isBlog} />
-                )}
-              </div>
-            </div>
-          </header>
-          <header
-            className={`${styles.header} ${styles['header-mini']} ${isUpScroll ? styles['header-mini-visible'] : ''}`}
-            inert={isUpScroll ? undefined : true}
-          >
-            <div className={styles.container}>
-              <div className={styles.top}>
-                <div className={styles.gnb}>
-                  <h1>
-                    <Anchor href={`/${siteName}`} aria-label={profileLogoUrl ? siteLabel : undefined}>
-                      {profileLogoUrl ? (
-                        <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
-                      ) : (
-                        <>
-                          <AppIconAvatar src={profilePictureUrl || null} alt="" size={24} />
-                          <span>{siteLabel}</span>
-                        </>
-                      )}
-                    </Anchor>
-                  </h1>
+              {siteLabel ? (
+                <div className={styles.bottom}>
                   {isManagePage && siteType ? (
                     <NavManage
                       siteName={siteName}
@@ -529,6 +509,57 @@ export default function HeaderSite() {
                   ) : (
                     <NavMenu siteName={siteName} isBlog={isBlog} />
                   )}
+                </div>
+              ) : null}
+            </div>
+          </header>
+          <header
+            className={`${styles.header} ${styles['header-mini']} ${isUpScroll ? styles['header-mini-visible'] : ''}`}
+            inert={isUpScroll ? undefined : true}
+          >
+            <div className={styles.container}>
+              <div className={styles.top}>
+                <div className={styles.gnb}>
+                  <h1>
+                    <Anchor
+                      href={siteLabel ? `/${siteName}` : '/'}
+                      aria-label={profileLogoUrl ? siteLabel : '데브허브 velhub'}
+                    >
+                      {siteLabel ? (
+                        <>
+                          {profileLogoUrl ? (
+                            <Box component="img" src={profileLogoUrl} alt="" aria-hidden="true" />
+                          ) : (
+                            <>
+                              {profilePictureUrl ? (
+                                <AppIconAvatar src={profilePictureUrl || null} alt="" size={24} />
+                              ) : null}
+                              <span>{siteLabel}</span>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <ServiceLogo />
+                      )}
+                    </Anchor>
+                  </h1>
+                  {siteLabel ? (
+                    <>
+                      {isManagePage && siteType ? (
+                        <NavManage
+                          siteName={siteName}
+                          siteType={siteType}
+                          isSiteStaff={isSiteStaff}
+                          siteRole={userProfile.siteRole}
+                          globalRole={userProfile.globalRole}
+                        />
+                      ) : isPaymentPage ? (
+                        <NavPayments />
+                      ) : (
+                        <NavMenu siteName={siteName} isBlog={isBlog} />
+                      )}
+                    </>
+                  ) : null}
                 </div>
 
                 <div className={styles.iconbuttons}>
@@ -611,7 +642,9 @@ export default function HeaderSite() {
                           : null}
                   </span>
                   {userProfile.isApproval === true
-                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => <span key={siteRoleLabel}>{siteRoleLabel}</span>)
+                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => (
+                        <span key={siteRoleLabel}>{siteRoleLabel}</span>
+                      ))
                     : null}
                 </div>
               </li>
@@ -623,7 +656,9 @@ export default function HeaderSite() {
                   <em>{siteLabel}</em>
                   <span>가입해 주세요</span>
                   {userProfile.isApproval === true
-                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => <span key={siteRoleLabel}>{siteRoleLabel}</span>)
+                    ? userProfile.siteRoleLabels.map((siteRoleLabel) => (
+                        <span key={siteRoleLabel}>{siteRoleLabel}</span>
+                      ))
                     : null}
                 </div>
               </li>

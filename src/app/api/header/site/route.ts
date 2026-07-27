@@ -361,7 +361,7 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (siteResult.error || !siteResult.data) {
-      return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 404 });
+      return Response.json({ error: 'PAGE NOT FOUND' }, { status: 404 });
     }
 
     const site = siteResult.data as SiteRow;
@@ -497,11 +497,7 @@ export async function GET(request: Request) {
             .map((communityManageRole) => normalizeText(communityManageRole.board_id))
             .filter(Boolean);
           const boardsResult = boardIds.length
-            ? await supabaseAdmin
-                .from('boards')
-                .select('id, board_label')
-                .eq('site_id', site.id)
-                .in('id', boardIds)
+            ? await supabaseAdmin.from('boards').select('id, board_label').eq('site_id', site.id).in('id', boardIds)
             : { data: [], error: null };
 
           if (boardsResult.error) {
@@ -518,7 +514,8 @@ export async function GET(request: Request) {
             }))
             .filter(({ role }) => Boolean(role));
           const primaryRole = [...roles].sort(
-            (firstRole, secondRole) => getCommunityRolePriority(secondRole.role) - getCommunityRolePriority(firstRole.role),
+            (firstRole, secondRole) =>
+              getCommunityRolePriority(secondRole.role) - getCommunityRolePriority(firstRole.role),
           )[0];
 
           siteRole = primaryRole?.role || 'member';
