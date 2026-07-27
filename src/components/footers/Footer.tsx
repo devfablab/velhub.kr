@@ -27,7 +27,7 @@ export default function Footer() {
                     <Anchor href="/concierge">고객센터</Anchor>
                   </li>
                   <li>
-                    <Anchor href="/luvelhub/b/notice">공지사항</Anchor>
+                    <Anchor href="/luvelhub/c/notice">공지사항</Anchor>
                   </li>
                 </ul>
               </li>
