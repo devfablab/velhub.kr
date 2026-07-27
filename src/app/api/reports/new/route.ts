@@ -314,7 +314,7 @@ async function createReportNotifications({
 
   const reporterStigmaResult = await supabase
     .from('stigmas')
-    .select('user_id')
+    .select('id')
     .eq('user_id', reporterAuthUserId)
     .maybeSingle();
 
@@ -324,7 +324,7 @@ async function createReportNotifications({
 
   const recipientStigmaResult = await supabase
     .from('stigmas')
-    .select('id, user_id')
+    .select('id')
     .in('id', [...recipientStigmaIds]);
 
   if (recipientStigmaResult.error) {
@@ -333,8 +333,8 @@ async function createReportNotifications({
   }
 
   const notificationRows = (recipientStigmaResult.data ?? []).map((stigma) => ({
-    user_id: stigma.user_id,
-    send_user_id: reporterStigmaResult.data?.user_id ?? null,
+    user_id: stigma.id,
+    send_user_id: reporterStigmaResult.data?.id ?? null,
     send_site_id: siteId,
     send_board_id: boardId,
     send_series_id: null,
