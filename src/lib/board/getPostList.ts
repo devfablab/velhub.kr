@@ -250,6 +250,7 @@ export async function getPostList({
   keyword = null,
   sort = 'latest',
   includePin = true,
+  categoryId = null,
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
@@ -278,6 +279,10 @@ export async function getPostList({
         .order('created_at', { ascending: false });
     }
 
+    if (categoryId) {
+      pinnedQuery = pinnedQuery.contains('categories', [categoryId]);
+    }
+
     if (searchKeyword) {
       pinnedQuery = applySearchFilter(pinnedQuery, searchKeyword);
     }
@@ -295,6 +300,10 @@ export async function getPostList({
 
   if (boardId) {
     postsQuery = postsQuery.eq('board_id', boardId);
+  }
+
+  if (categoryId) {
+    postsQuery = postsQuery.contains('categories', [categoryId]);
   }
 
   if (filter === 'deleted') {
