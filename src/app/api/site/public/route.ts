@@ -52,25 +52,10 @@ export async function GET(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const rhizomeStigmas = await supabaseAdmin
-      .from('rhizome_stigmas')
-      .select('id, user_id')
-      .eq('site_id', rhizome.data.id)
-      .eq('role', 'owner')
-      .maybeSingle();
-
-    if (rhizomeStigmas.error) {
-      return Response.json({ error: '사이트 유저 정보를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    if (!rhizomeStigmas.data) {
-      return Response.json({ error: '사이트 유저를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
     const owner = await supabaseAdmin
       .from('stigmas')
-      .select('user_id')
-      .eq('id', rhizomeStigmas.data?.user_id)
+      .select('id')
+      .eq('id', rhizome.data.owner_id)
       .maybeSingle();
 
     if (owner.error) {
@@ -79,11 +64,11 @@ export async function GET(request: Request) {
 
     let purchaseAvailable = false;
 
-    if (owner.data?.user_id) {
+    if (owner.data?.id) {
       const chorogon = await supabaseAdmin
         .from('chorogons')
         .select('birth_date, birth_date_dummy, identity_verified_at')
-        .eq('user_id', owner.data.user_id)
+        .eq('user_id', owner.data.id)
         .maybeSingle();
 
       if (chorogon.error) {

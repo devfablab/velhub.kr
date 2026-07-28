@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import styles from '@/app/board.module.sass';
+import PaymentTerms from './PaymentTerms';
 
 type DonationTargetType = 'site' | 'series' | 'board' | 'post';
 
@@ -395,6 +396,8 @@ export default function DonationButton(props: Props) {
             },
           }}
         />
+
+        <PaymentTerms type="donation" disabled={isProcessing} />
 
         <Snackbar
           open={Boolean(errorMessage)}

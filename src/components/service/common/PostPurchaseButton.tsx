@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import PortOne from '@portone/browser-sdk/v2';
 import {
-  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
@@ -18,6 +17,7 @@ import {
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import styles from '@/app/board.module.sass';
+import PaymentTerms from './PaymentTerms';
 
 type PostPurchaseStartResponse = {
   ok?: boolean;
@@ -87,9 +87,6 @@ function isAdult(birthDate: string | null | undefined) {
   return age >= 19;
 }
 
-const PURCHASE_CONSENT_TEXT =
-  '결제 즉시 디지털 콘텐츠 제공이 시작되며, 이에 따라 청약철회가 제한될 수 있음에 동의합니다.';
-
 function getSuccessUrl({ siteName, boardName, contentId, successUrl }: Props) {
   if (successUrl) {
     return successUrl;
@@ -112,7 +109,6 @@ export default function PostPurchaseButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [isPurchaseConsentChecked, setIsPurchaseConsentChecked] = useState(false);
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
@@ -180,7 +176,6 @@ export default function PostPurchaseButton(props: Props) {
 
   function handleOpenConfirm() {
     setErrorMessage('');
-    setIsPurchaseConsentChecked(false);
     setIsConfirmOpen(true);
   }
 
@@ -195,11 +190,6 @@ export default function PostPurchaseButton(props: Props) {
   async function handlePurchase() {
     try {
       setErrorMessage('');
-
-      if (!isPurchaseConsentChecked) {
-        setErrorMessage('디지털 콘텐츠 제공 및 청약철회 제한에 동의해 주세요.');
-        return;
-      }
 
       updateProcessing(true);
 
@@ -264,19 +254,10 @@ export default function PostPurchaseButton(props: Props) {
 
   function renderPurchaseConsent() {
     return (
-      <Stack direction="row">
-        <Checkbox
-          checked={isPurchaseConsentChecked}
-          onChange={(event) => setIsPurchaseConsentChecked(event.target.checked)}
-          disabled={isProcessing}
-          size="small"
-          id="Purchase"
-        />
-        <label htmlFor="Purchase" style={{ marginTop: 20, fontSize: 14 }}>
-          {PURCHASE_CONSENT_TEXT}
-        </label>
-        ;
-      </Stack>
+      <PaymentTerms
+        type="purchase"
+        disabled={isProcessing}
+      />
     );
   }
 
@@ -294,7 +275,7 @@ export default function PostPurchaseButton(props: Props) {
             type="button"
             className={popup ? 'button medium submit' : styles.button}
             onClick={handlePurchase}
-            disabled={disabled || isProcessing || !isPurchaseConsentChecked}
+            disabled={disabled || isProcessing}
           >
             {popup ? null : <SellOutlinedIcon />}
             <strong>포스팅 소장</strong>
@@ -338,7 +319,7 @@ export default function PostPurchaseButton(props: Props) {
                 type="button"
                 className="button medium submit"
                 onClick={handlePurchase}
-                disabled={disabled || isProcessing || !isPurchaseConsentChecked}
+                disabled={disabled || isProcessing}
               >
                 결제하기
               </button>
@@ -372,7 +353,7 @@ export default function PostPurchaseButton(props: Props) {
               type="button"
               className="button medium submit"
               onClick={handlePurchase}
-              disabled={disabled || isProcessing || !isPurchaseConsentChecked}
+              disabled={disabled || isProcessing}
             >
               결제하기
             </button>

@@ -19,6 +19,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
 import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
 import styles from '@/app/board.module.sass';
+import PaymentTerms from './PaymentTerms';
 
 type BoardInfo = {
   id: string;
@@ -645,6 +646,7 @@ export default function SubscriptionButton({
             <Typography variant="body2">
               {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
             </Typography>
+            <PaymentTerms type="subscription" disabled={isProcessing} />
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -686,6 +688,7 @@ export default function SubscriptionButton({
             <Typography variant="body2">
               {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
             </Typography>
+            <PaymentTerms type="subscription" disabled={isProcessing} />
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
