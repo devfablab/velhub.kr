@@ -635,7 +635,7 @@ export default function Opt({ isCommunity }: Props) {
           </Stack>
         ) : null}
       </div>
-      <FabNew />
+      <FabNew isCommunity={isCommunity} />
 
       {isCommunity && !isTablet ? (
         <aside>

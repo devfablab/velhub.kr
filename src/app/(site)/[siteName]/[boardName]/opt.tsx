@@ -1140,7 +1140,7 @@ export default function Opt({ isCommunity }: Props) {
 
           {canWritePost ? (
             isMobile ? (
-              <FabNew isBlog={true} />
+              <FabNew isCommunity={isCommunity} />
             ) : (
               <div className={styles['button-group']}>
                 <Anchor href={`/${siteName}/manage/contents/posts/new`} className={`${styles.submit} button`}>
@@ -1149,9 +1149,9 @@ export default function Opt({ isCommunity }: Props) {
               </div>
             )
           ) : (
-            <FabNew />
+            <FabNew isCommunity={isCommunity} />
           )}
-          {isMobile ? (
+          {isCommunity && isMobile ? (
             <Stack direction="row" gap={1} justifyContent="space-between" sx={{ pt: 3 }}>
               <SiteInfo />
               <UserInfo />

@@ -1789,7 +1789,7 @@ export default function Opt({ isCommunity }: Props) {
       }
 
       if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${result.contentId}`);
+        router.replace(`/${siteName}/board/content/edit?boardName=${boardName}&contentId=${result.slug}`);
         return;
       }
 

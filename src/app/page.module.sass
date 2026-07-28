@@ -17,6 +17,14 @@
     position: relative
     z-index: 1
 
+  .auth
+    display: flex
+    flex-direction: column
+    gap: ds.rem(12)
+
+    @include ds.mq(minSmall)
+      flex-direction: row
+
   .slider
     margin-top: ds.rem(-32)
     padding-top: ds.rem(38)

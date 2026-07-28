@@ -4,10 +4,10 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { normalizeText } from '@/lib/utils';
 
 type Props = {
-  isBlog?: boolean;
+  isCommunity: boolean;
 };
 
-export default function FabNew({ isBlog }: Props) {
+export default function FabNew({ isCommunity }: Props) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
@@ -15,8 +15,10 @@ export default function FabNew({ isBlog }: Props) {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
+  console.log('fab isCommunity: ', isCommunity);
+
   if (!isMobile) return null;
-  const href = isBlog
+  const href = !isCommunity
     ? `/${siteName}/manage/contents/posts/new?t=i`
     : boardName
       ? `/${siteName}/${boardName}/new`

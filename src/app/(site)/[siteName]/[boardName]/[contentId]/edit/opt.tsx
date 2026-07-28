@@ -710,6 +710,7 @@ export default function Opt({ isCommunity }: Props) {
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
   const [pollDialog, setPollDialog] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogMessage, setPollDialogMessage] = useState('');
+  const pollDialogFilesReference = useRef<Record<number, File>>({});
   const [isDrawEnabled, setIsDrawEnabled] = useState(false);
   const [draw, setDraw] = useState<DrawState>(() => createEmptyDraw());
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
@@ -1230,6 +1231,7 @@ export default function Opt({ isCommunity }: Props) {
 
   function closePollDialog() {
     revokeUnusedPollPreviewUrls(pollDialog, poll);
+    pollDialogFilesReference.current = {};
     setPollDialog(clonePollState(poll));
     setPollDialogMessage('');
     setPollDialogOpen(false);
@@ -1249,7 +1251,19 @@ export default function Opt({ isCommunity }: Props) {
         return;
       }
 
-      const filledOptions = pollDialog.options
+      const optionsWithFiles = pollDialog.options.map((option, index) => {
+        const selectedFile = pollDialogFilesReference.current[index];
+
+        return selectedFile && !option.imageFile
+          ? {
+              ...option,
+              imageFile: selectedFile,
+              imagePreviewUrl: option.imagePreviewUrl || URL.createObjectURL(selectedFile),
+            }
+          : option;
+      });
+
+      const filledOptions = optionsWithFiles
         .map((option) => ({
           ...option,
           label: normalizeText(option.label),
@@ -1275,7 +1289,7 @@ export default function Opt({ isCommunity }: Props) {
       const nextPoll: PollState = {
         ...pollDialog,
         question: normalizedQuestion,
-        options: pollDialog.options.map((option) => ({
+        options: optionsWithFiles.map((option) => ({
           ...option,
           label: normalizeText(option.label),
           imagePath: pollDialog.useOptionThumbnail ? option.imagePath : '',
@@ -1307,6 +1321,7 @@ export default function Opt({ isCommunity }: Props) {
   function removePoll() {
     revokeUnusedPollPreviewUrls(poll, createEmptyPoll());
     revokeUnusedPollPreviewUrls(pollDialog, createEmptyPoll());
+    pollDialogFilesReference.current = {};
     setPoll(createEmptyPoll());
     setPollDialog(createEmptyPoll());
     setIsPollEnabled(false);
@@ -1383,6 +1398,8 @@ export default function Opt({ isCommunity }: Props) {
       return;
     }
 
+    pollDialogFilesReference.current[index] = selectedFile;
+
     setPollDialog((previousPoll) => {
       const previousOption = previousPoll.options[index];
 
@@ -1419,6 +1436,7 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   function removePollOptionImage(index: number) {
+    delete pollDialogFilesReference.current[index];
     setPollDialog((previousPoll) => {
       const previousOption = previousPoll.options[index];
 

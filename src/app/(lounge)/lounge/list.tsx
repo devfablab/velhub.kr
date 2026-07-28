@@ -14,20 +14,18 @@ export default function List({ postsData, orderType }: ListProps) {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const YOUTUBE_THUMBNAIL_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault', 'mqdefault', 'default'];
-
-  function getYoutubeThumbnailUrl(videoId: string, quality: string) {
-    return `https://i.ytimg.com/vi_webp/${videoId}/${quality}.webp`;
+  function getYoutubeThumbnailUrl(videoId: string) {
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
   }
 
-  function stripHtmlTags(html: string): string {
-    return html
+  function stripHtmlTags(html: string | null | undefined): string {
+    return (html ?? '')
       .replace(/<[^>]*>/g, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
 
-  function getDescriptionFromHTML(html: string): string {
+  function getDescriptionFromHTML(html: string | null | undefined): string {
     const text = stripHtmlTags(html);
     return text.slice(0, 160);
   }
@@ -92,7 +90,7 @@ export default function List({ postsData, orderType }: ListProps) {
                         src={
                           post.thumbnail_image
                             ? post.thumbnail_image
-                            : getYoutubeThumbnailUrl(post.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[0])
+                            : getYoutubeThumbnailUrl(post.youtube_id)
                         }
                         alt=""
                       />
@@ -148,7 +146,7 @@ export default function List({ postsData, orderType }: ListProps) {
                           src={
                             post.thumbnail_image
                               ? post.thumbnail_image
-                              : getYoutubeThumbnailUrl(post.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[0])
+                            : getYoutubeThumbnailUrl(post.youtube_id)
                           }
                           alt=""
                         />
@@ -206,7 +204,7 @@ export default function List({ postsData, orderType }: ListProps) {
                     src={
                       post.thumbnail_image
                         ? post.thumbnail_image
-                        : getYoutubeThumbnailUrl(post.youtube_id, YOUTUBE_THUMBNAIL_QUALITIES[0])
+                        : getYoutubeThumbnailUrl(post.youtube_id)
                     }
                     alt=""
                   />

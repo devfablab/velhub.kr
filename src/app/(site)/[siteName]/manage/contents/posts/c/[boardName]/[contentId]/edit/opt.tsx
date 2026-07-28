@@ -95,6 +95,7 @@ type ContentResponse = {
   }>;
   isAuthor: boolean;
   isStaff: boolean;
+  canManageContent?: boolean;
   error?: string;
 };
 
@@ -374,7 +375,7 @@ export default function Opt() {
         setPostType(nextPostType);
         setMarkdownStatus(nextMarkdownStatus);
         setIsAuthor(contentResult.isAuthor);
-        setIsStaff(contentResult.isStaff);
+        setIsStaff(contentResult.isStaff || contentResult.canManageContent === true);
         setIsClosed(nextContent.is_closed);
         setIsLocked(nextContent.is_locked);
         setSubject(nextContent.subject ?? '');
@@ -815,13 +816,17 @@ export default function Opt() {
         throw new Error(result.error ?? '글 수정에 실패했습니다.');
       }
 
-      if (!result.contentId) {
-        throw new Error('글 수정에 실패했습니다.');
+      if (action === 'draft') {
+        if (!result.slug) {
+          throw new Error('글 수정에 실패했습니다.');
+        }
+
+        router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.slug}/edit`);
+        return;
       }
 
-      if (result.publishedStatus === 'draft') {
-        router.replace(`/${siteName}/manage/contents/posts/c/${boardName}/${result.contentId}/edit`);
-        return;
+      if (!result.contentId) {
+        throw new Error('글 수정에 실패했습니다.');
       }
 
       if (!result.slug) {
@@ -900,7 +905,11 @@ export default function Opt() {
             ) : null}
 
             <div className={`paper ${styles.paper}`}>
-              <Stack component="form" gap={2.5} onSubmit={(event) => void handleSubmit('update', event)}>
+              <Stack
+                component="form"
+                gap={2.5}
+                onSubmit={(event) => void handleSubmit(publishedStatus === 'draft' ? 'publish' : 'update', event)}
+              >
                 {!isFeedBoard ? (
                   <Stack gap={1}>
                     <Typography variant="subtitle2">제목 *</Typography>

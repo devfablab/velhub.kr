@@ -266,7 +266,7 @@ export default function Opt() {
                 <Stack direction="row" gap={2} alignItems="center">
                   <Typography variant="h6" component="h3">
                     {content.prefix_label ? `[${content.prefix_label}] ` : null}
-                    {typeof content.series_idx === 'number' ? `{content.series_idx}. ` : null}
+                    {typeof content.series_idx === 'number' ? `${content.series_idx}. ` : null}
 
                     {series?.series_label ? `[${series.series_label}] ` : null}
                     {content.subject}

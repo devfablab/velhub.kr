@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { originTitle, Seo } from '@/lib/seo';
 import Container from '../../menu';
+import AuthSection from '../auth';
 import Aside from '../aside';
 import Slick from '../slick';
 import List from '../list';
@@ -54,6 +55,7 @@ export default async function BlogHub() {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
+          <AuthSection />
           <section>
             <h2>핫한 커뮤니티를 모았어요 💃</h2>
             <Slick sitesHitsData={sitesHitsData} />

@@ -20,6 +20,17 @@ function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   return publicUrl.data.publicUrl ?? null;
 }
 
+function extractYoutubeId(value: string | null | undefined) {
+  const normalizedValue = normalizeText(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  const matched = normalizedValue.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^?&#/]+)/i);
+  return matched?.[1] ?? null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -69,7 +80,7 @@ export async function GET(request: NextRequest) {
     const postsResult = await supabaseAdmin
       .from('posts')
       .select(
-        'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_created_at, published_at, post_count, board_id, user_id',
+        'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, board_id, user_id',
       )
       .eq('is_closed', false)
       .not('published_at', 'is', null)
@@ -181,7 +192,7 @@ export async function GET(request: NextRequest) {
           thumbnail_image: getPublicImageUrl('post', post.thumbnail_image),
           thumbnail_width: post.thumbnail_width,
           thumbnail_height: post.thumbnail_height,
-          youtube_id: post.youtube_id,
+          youtube_id: post.youtube_id || extractYoutubeId(post.youtube_url),
           youtube_created_at: post.youtube_created_at,
         };
       }

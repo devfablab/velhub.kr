@@ -52,7 +52,7 @@ export default function Page() {
                   </Typography>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
@@ -84,7 +84,7 @@ export default function Page() {
                   </Typography>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
@@ -110,7 +110,7 @@ export default function Page() {
                   </Typography>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
@@ -137,7 +137,7 @@ export default function Page() {
                   </Typography>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
@@ -183,7 +183,7 @@ export default function Page() {
                   </Stack>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
@@ -259,7 +259,7 @@ export default function Page() {
                   </Stack>
                 </Stack>
               </AccordionDetails>
-              <AccordionActions>
+              <AccordionActions className={styles.AccordionActions}>
                 <Anchor href="/concierge/rights/inquery" className="button medium action">
                   신고하기
                 </Anchor>
