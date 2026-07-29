@@ -28,6 +28,7 @@ import {
   Drawer,
   Snackbar,
   Stack,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -1019,10 +1020,8 @@ export default function Opt({ isCommunity }: Props) {
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
-            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
-            <Stack direction="column" spacing={1.5}>
-              <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
-            </Stack>
+            <Typography variant="body2">더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</Typography>
+            <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
           </Stack>
         </Drawer>
       ) : (
@@ -1031,10 +1030,8 @@ export default function Opt({ isCommunity }: Props) {
           <button type="button" className="close-button" onClick={closePurchasePrompt}>
             <CloseRoundedIcon />
           </button>
-          <DialogContent className={styles['dialog-content']}>
-            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
-          </DialogContent>
-          <DialogActions>
+          <Stack gap={3} className={styles['dialog-content']}>
+            <Typography variant="body2">더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</Typography>
             <PostPurchaseButton
               siteName={siteName}
               boardName={boardName}
@@ -1042,7 +1039,7 @@ export default function Opt({ isCommunity }: Props) {
               buttonText="구매"
               popup={true}
             />
-          </DialogActions>
+          </Stack>
         </Dialog>
       )}
     </div>

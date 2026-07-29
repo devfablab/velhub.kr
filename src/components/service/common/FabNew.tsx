@@ -15,11 +15,9 @@ export default function FabNew({ isCommunity }: Props) {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  console.log('fab isCommunity: ', isCommunity);
-
   if (!isMobile) return null;
   const href = !isCommunity
-    ? `/${siteName}/manage/contents/posts/new?t=i`
+    ? `/${siteName}/manage/contents/posts/new`
     : boardName
       ? `/${siteName}/${boardName}/new`
       : `/${siteName}/board/new`;

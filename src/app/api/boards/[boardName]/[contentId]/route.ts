@@ -1172,6 +1172,11 @@ export async function GET(request: Request, context: RouteContext) {
       : null;
 
     const canViewPaidContent = isAuthor || canManageContent || paidContentAccess.can_view_paid_content;
+    let isGallerySubscriptionPreview =
+      boardData.board_type === 'gallery' &&
+      (boardData.is_subscription === true ||
+        paidContentAccess.has_subscription_board ||
+        paidContentAccess.has_subscription_series);
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);
@@ -1294,6 +1299,10 @@ export async function GET(request: Request, context: RouteContext) {
 
       series = seriesResult.data ?? null;
 
+      if (series?.is_subscription === true && boardData.board_type === 'gallery') {
+        isGallerySubscriptionPreview = true;
+      }
+
       if (series) {
         const seriesContentsResult = await supabaseAdmin
           .from('posts')
@@ -1398,7 +1407,11 @@ export async function GET(request: Request, context: RouteContext) {
         closed_by_name: closedBy.name,
         prefix_label: prefixLabel,
         thumbnail_image_url: thumbnailImageUrl,
-        images: canViewPaidContent ? normalizeImages(postData.images) : [],
+        images: canViewPaidContent
+          ? normalizeImages(postData.images)
+          : isGallerySubscriptionPreview
+            ? normalizeImages(postData.images).slice(0, 1)
+            : [],
         post_count: postCount,
         comment_provider: commentProvider,
         giscus_settings: giscusSettings,

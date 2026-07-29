@@ -820,7 +820,12 @@ export default function Opt({ isCommunity }: Props) {
                         </span>
                         <small>{`${imageCount}개 이미지`}</small>
                         {thumbnail ? (
-                          <Image src={thumbnail.url} width={thumbnail.width} height={thumbnail.height} alt="" />
+                          <img
+                            src={thumbnail.url}
+                            width={thumbnail.width}
+                            height={thumbnail.height}
+                            alt=""
+                          />
                         ) : null}
                       </div>
                       <div className={styles.info}>
@@ -1148,9 +1153,7 @@ export default function Opt({ isCommunity }: Props) {
                 </Anchor>
               </div>
             )
-          ) : (
-            <FabNew isCommunity={isCommunity} />
-          )}
+          ) : null}
           {isCommunity && isMobile ? (
             <Stack direction="row" gap={1} justifyContent="space-between" sx={{ pt: 3 }}>
               <SiteInfo />

@@ -253,12 +253,7 @@ export default function PostPurchaseButton(props: Props) {
   }
 
   function renderPurchaseConsent() {
-    return (
-      <PaymentTerms
-        type="purchase"
-        disabled={isProcessing}
-      />
-    );
+    return <PaymentTerms type="purchase" disabled={isProcessing} />;
   }
 
   if (!purchaseAvailable) {
@@ -268,19 +263,20 @@ export default function PostPurchaseButton(props: Props) {
   return (
     <>
       {popup ? (
-        <Stack gap={2}>
+        <>
           {renderPurchaseConsent()}
-
-          <button
-            type="button"
-            className={popup ? 'button medium submit' : styles.button}
-            onClick={handlePurchase}
-            disabled={disabled || isProcessing}
-          >
-            {popup ? null : <SellOutlinedIcon />}
-            <strong>포스팅 소장</strong>
-          </button>
-        </Stack>
+          <Stack gap={1.5}>
+            <button
+              type="button"
+              className={popup ? 'button medium submit' : styles.button}
+              onClick={handlePurchase}
+              disabled={disabled || isProcessing}
+            >
+              {popup ? null : <SellOutlinedIcon />}
+              <strong>포스팅 소장</strong>
+            </button>
+          </Stack>
+        </>
       ) : (
         <button
           type="button"

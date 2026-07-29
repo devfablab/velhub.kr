@@ -282,7 +282,10 @@
   dl
     border-radius: ds.rem(7)
     padding: ds.rem(12)
-    border: 1px solid rgba(ds.$rgb-tertiary, .1)
+    border: 1px solid rgba(ds.$rgb-tertiary, .2)
+
+    html[data-theme="yellow-dark"] &
+      border: 1px solid rgba(ds.$rgb-tertiary, .5)
 
   .info-site-detail
     display: flex
@@ -298,9 +301,15 @@
         font-size: ds.rem(12)
         color: rgba(ds.$rgb-primary, .6)
 
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-bright, .6)
+
       dd
         font-size: ds.rem(14)
         color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
 
   .info-site-managers
     display: flex
@@ -316,9 +325,15 @@
         font-size: ds.rem(12)
         color: rgba(ds.$rgb-primary, .6)
 
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-bright, .6)
+
       dd
         font-size: ds.rem(14)
         color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
 
         ul
           padding-left: ds.rem(17)
@@ -338,6 +353,9 @@
               height: ds.rem(5)
               margin-top: ds.rem(7)
               margin-left: ds.rem(-12)
+
+              html[data-theme="yellow-dark"] &
+                background-color: ds.$hex-light
 
   .form-group
     display: flex
@@ -393,9 +411,15 @@
         font-size: ds.rem(12)
         color: rgba(ds.$rgb-primary, .6)
 
+        html[data-theme="yellow-dark"] &
+          color: rgba(ds.$rgb-bright, .6)
+
       dd
         font-size: ds.rem(14)
         color: ds.$hex-secondary
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
 
 .post-count-list
   display: flex
@@ -497,7 +521,10 @@
       height: ds.rem(38)
       background-color: ds.$hex-accent
       border-radius: 100%
-      color: ds.$hex-white
+      color: ds.$hex-black
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-white
 
       svg
         width: ds.rem(20)

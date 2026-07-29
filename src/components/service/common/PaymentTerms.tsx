@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 export type PaymentTermsType = 'donation' | 'subscription' | 'purchase';
@@ -57,35 +67,61 @@ type Props = {
 export default function PaymentTerms({ type, disabled = false }: Props) {
   const [open, setOpen] = useState(false);
   const terms = TERMS[type];
+  const theme = useTheme();
+  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = !isNotMobile;
 
   return (
     <>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={0.5}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={0.5} pt={isMobile ? undefined : 1}>
         <Typography variant="body2">유의사항에 동의 합니다</Typography>
         <button type="button" className="button-term" onClick={() => setOpen(true)} disabled={disabled}>
           안내보기
         </button>
       </Stack>
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" className="VhiDialog">
-        <DialogTitle>{terms.title}</DialogTitle>
-        <button type="button" className="close-button" onClick={() => setOpen(false)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Stack gap={1.25}>
-            {terms.items.map((item, index) => (
-              <Typography key={item} variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                {index + 1}. {item}
-              </Typography>
-            ))}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" onClick={() => setOpen(false)}>
-            닫기
+      {isMobile ? (
+        <Drawer anchor="bottom" open={open} onClose={() => setOpen(false)} className="VhiDrawer-bottom">
+          <h2>{terms.title}</h2>
+          <button className="close-button" onClick={() => setOpen(false)}>
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <Stack gap={3}>
+            <Stack gap={1.25}>
+              {terms.items.map((item, index) => (
+                <Typography key={item} variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {index + 1}. {item}
+                </Typography>
+              ))}
+            </Stack>
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" onClick={() => setOpen(false)}>
+                닫기
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm" className="VhiDialog">
+          <DialogTitle>{terms.title}</DialogTitle>
+          <button type="button" className="close-button" onClick={() => setOpen(false)}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Stack gap={1.25}>
+              {terms.items.map((item, index) => (
+                <Typography key={item} variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {index + 1}. {item}
+                </Typography>
+              ))}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={() => setOpen(false)}>
+              닫기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }

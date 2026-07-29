@@ -915,9 +915,12 @@
     .basic-board
       .basic
         display: grid
-        grid-template-columns: repeat(2, 1fr)
+        grid-template-columns: repeat(1, 1fr)
         gap: ds.rem(3) 0
         margin: ds.rem(7) 0 ds.rem(12)
+
+        @include ds.mq(minSmall)
+          grid-template-columns: repeat(2, 1fr)
 
         & > li
           display: flex
@@ -990,9 +993,10 @@
             display: flex
             align-items: center
             border-radius: ds.rem(3)
-            padding: 0 ds.rem(7)
-            height: ds.rem(20)
+            padding: ds.rem(3) ds.rem(7)
+            max-width: calc(100% - ds.rem(14))
             font-size: ds.rem(12)
+            line-height: 1.2
             color: ds.$hex-white
 
     .youtube-board
