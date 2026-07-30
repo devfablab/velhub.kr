@@ -12,7 +12,7 @@ export default function PrimaryMenu() {
         </Anchor>
       </li>
       <li>
-        <Anchor href="/heart2hearts">이용안내</Anchor>
+        <Anchor href="/luvelhub">이용안내</Anchor>
       </li>
     </ol>
   );

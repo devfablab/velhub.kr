@@ -368,7 +368,7 @@ export default function Container({ children }: ContainerProps) {
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="heart2hearts" onClick={handleCloseProfileDrawer}>
-                  <Anchor href="/heart2hearts">
+                  <Anchor href="/luvelhub">
                     <LightbulbOutlinedIcon fontSize="small" />
                     <span>이용안내</span>
                   </Anchor>
