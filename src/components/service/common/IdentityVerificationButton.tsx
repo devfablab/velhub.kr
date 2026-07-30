@@ -25,16 +25,13 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import { normalizeText } from '@/lib/utils';
+import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 
 type Identity = {
   name: string;
   birth_date: string;
   gender: string;
   identity_verified_at: string;
-};
-
-type PaymentEmailResponse = {
-  paymentEmail: string | null;
 };
 
 type SettlementType = 'individual' | 'business';
@@ -245,6 +242,8 @@ export default function IdentityVerificationButton() {
 
   const [typeDialogOpen, setTypeDialogOpen] = useState(false);
   const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [identityAgreementOpen, setIdentityAgreementOpen] = useState(false);
+  const [settlementAgreementOpen, setSettlementAgreementOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<SettlementType | ''>('');
 
   const [residentSuffix, setResidentSuffix] = useState('');
@@ -390,13 +389,32 @@ export default function IdentityVerificationButton() {
     }
   };
 
-  const handleMainButtonClick = () => {
-    if (!identity) {
-      void handleVerify();
-      return;
-    }
+  const saveAgreement = async (type: 'identity' | 'settlement') => {
+    await sendJson('/api/identity/agreement', 'POST', { type });
+  };
 
-    if (!canSettle) {
+  const handleIdentityAgreementConfirm = async () => {
+    try {
+      await saveAgreement('identity');
+      setIdentityAgreementOpen(false);
+      await handleVerify();
+    } catch (error) {
+      showSnackbar(getMessage(error));
+    }
+  };
+
+  const handleSettlementAgreementConfirm = async () => {
+    try {
+      await saveAgreement('settlement');
+      setSettlementAgreementOpen(false);
+      openSettlementInput();
+    } catch (error) {
+      showSnackbar(getMessage(error));
+    }
+  };
+
+  const openSettlementInput = () => {
+    if (!identity || !canSettle) {
       return;
     }
 
@@ -408,6 +426,19 @@ export default function IdentityVerificationButton() {
 
     setSelectedType('');
     setTypeDialogOpen(true);
+  };
+
+  const handleMainButtonClick = () => {
+    if (!identity) {
+      setIdentityAgreementOpen(true);
+      return;
+    }
+
+    if (!canSettle) {
+      return;
+    }
+
+    setSettlementAgreementOpen(true);
   };
 
   const handleTypeNext = () => {
@@ -571,6 +602,21 @@ export default function IdentityVerificationButton() {
           {isProcessing ? '처리 중' : buttonText}
         </button>
       )}
+
+      <IdentityAgreement
+        key={`identity-${identityAgreementOpen ? 'open' : 'closed'}`}
+        type="identity"
+        open={identityAgreementOpen}
+        onClose={() => setIdentityAgreementOpen(false)}
+        onConfirm={() => void handleIdentityAgreementConfirm()}
+      />
+      <IdentityAgreement
+        key={`settlement-${settlementAgreementOpen ? 'open' : 'closed'}`}
+        type="settlement"
+        open={settlementAgreementOpen}
+        onClose={() => setSettlementAgreementOpen(false)}
+        onConfirm={() => void handleSettlementAgreementConfirm()}
+      />
 
       {isMobile ? (
         <Drawer

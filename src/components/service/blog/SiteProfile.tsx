@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import DonationButton from '@/components/service/common/DonationButton';
+import PaymentTerms from '@/components/service/common/PaymentTerms';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import IdentityVerificationButton from '../common/IdentityVerificationButton';
@@ -725,6 +726,7 @@ export default function SiteProfile() {
             <Typography variant="body2">
               월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
             </Typography>
+            <PaymentTerms type="subscription" disabled={isMembershipProcessing} />
 
             {membershipErrorMessage ? (
               <p className="alert error">
@@ -770,6 +772,7 @@ export default function SiteProfile() {
             <Typography variant="body2">
               월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
             </Typography>
+            <PaymentTerms type="subscription" disabled={isMembershipProcessing} />
 
             {membershipErrorMessage ? (
               <p className="alert error">

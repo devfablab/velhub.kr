@@ -7,6 +7,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/auth.module.sass';
+import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -35,6 +36,7 @@ export default function EmailSignUp() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
+  const { canSubmit, isAgreeTerm, isAgreeChild, isAgreePrivacy } = useSignupAgreements();
 
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
@@ -149,6 +151,11 @@ export default function EmailSignUp() {
       return;
     }
 
+    if (!canSubmit) {
+      setErrorMessage('필수 동의 항목에 모두 동의해 주세요.');
+      return;
+    }
+
     if (password !== passwordConfirm) {
       setErrorMessage('비밀번호가 일치하지 않습니다.');
       return;
@@ -186,6 +193,9 @@ export default function EmailSignUp() {
           authUserId: authUser.id,
           email: authUser.email ?? trimmedEmail,
           userName: trimmedUserName,
+          isAgreeTerm,
+          isAgreeChild,
+          isAgreePrivacy,
           bypassEmailConfirm: isDevelopment ? bypassEmailConfirm : false,
         }),
       });
@@ -311,6 +321,8 @@ export default function EmailSignUp() {
           fullWidth
           size="small"
         />
+
+        <SignupAgreementFields />
 
         {isDevelopment ? (
           <FormControlLabel

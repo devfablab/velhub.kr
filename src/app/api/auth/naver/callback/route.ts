@@ -188,6 +188,27 @@ async function getSupabaseServer() {
   });
 }
 
+async function findExistingNaverAuthUserId(naverEmail: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const particleResult = await supabaseAdmin.from('particles').select('id').eq('email', naverEmail).maybeSingle();
+
+  if (particleResult.error) {
+    throw new Error('네이버 계정 정보를 확인하지 못했습니다.');
+  }
+
+  if (particleResult.data?.id) {
+    return particleResult.data.id as string;
+  }
+
+  const usersResult = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+
+  if (usersResult.error) {
+    throw new Error(usersResult.error.message || '네이버 계정 정보를 확인하지 못했습니다.');
+  }
+
+  return usersResult.data.users.find((user) => user.email?.toLowerCase() === naverEmail)?.id ?? null;
+}
+
 async function getOrCreateNaverAuthUser(naverId: string, naverEmail: string, userName: string, avatar: string | null) {
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -206,6 +227,12 @@ async function getOrCreateNaverAuthUser(naverId: string, naverEmail: string, use
     return electronsResult.data.user_id as string;
   }
 
+  const existingAuthUserId = await findExistingNaverAuthUserId(naverEmail);
+
+  if (existingAuthUserId) {
+    return existingAuthUserId;
+  }
+
   const naverPassword = createNaverPassword(naverId);
 
   const createUserResult = await supabaseAdmin.auth.admin.createUser({
@@ -216,10 +243,19 @@ async function getOrCreateNaverAuthUser(naverId: string, naverEmail: string, use
       provider: 'naver',
       name: userName,
       avatar_url: avatar,
+      naver_id: naverId,
     },
   });
 
   if (createUserResult.error || !createUserResult.data.user) {
+    if (createUserResult.error?.message === 'A user with this email address has already been registered') {
+      const existingAuthUserIdAfterConflict = await findExistingNaverAuthUserId(naverEmail);
+
+      if (existingAuthUserIdAfterConflict) {
+        return existingAuthUserIdAfterConflict;
+      }
+    }
+
     throw new Error(createUserResult.error?.message || '네이버 사용자 생성에 실패했습니다.');
   }
 
@@ -410,6 +446,11 @@ export async function GET(request: NextRequest) {
     console.error('네이버 로그인 처리 실패:', unknownError);
 
     signInUrl.searchParams.set('error', 'naver_callback_failed');
+
+    if (process.env.NODE_ENV !== 'production') {
+      const errorMessage = unknownError instanceof Error ? unknownError.message : '알 수 없는 오류';
+      signInUrl.searchParams.set('errorDescription', errorMessage);
+    }
 
     const response = NextResponse.redirect(signInUrl);
     response.cookies.delete('velhub-naver-state');

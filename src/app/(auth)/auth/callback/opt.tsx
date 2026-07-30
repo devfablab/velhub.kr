@@ -21,6 +21,7 @@ import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import styles from '@/app/auth.module.sass';
 
 type ProcessingState = 'idle' | 'processing' | 'confirm' | 'failed';
+type SocialProvider = 'kakao' | 'google' | 'github';
 
 type PendingSocialSave = {
   authUserId: string;
@@ -57,6 +58,7 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmMessage, setConfirmMessage] = useState('');
   const [pendingSocialSave, setPendingSocialSave] = useState<PendingSocialSave | null>(null);
+  const [failedProvider, setFailedProvider] = useState<SocialProvider | null>(null);
 
   const [returnPath, setReturnPath] = useState<string | null>(null);
 
@@ -66,6 +68,26 @@ export default function Opt() {
 
   useEffect(() => {
     let isCancelled = false;
+
+    const authError = searchParams.get('error');
+    const authErrorDescription = searchParams.get('error_description') ?? '';
+
+    if (
+      authError === 'server_error' &&
+      authErrorDescription.includes('Multiple accounts with the same email address in the same linking domain')
+    ) {
+      const selectedProvider = sessionStorage.getItem('auth:social-provider');
+
+      if (selectedProvider === 'kakao' || selectedProvider === 'google' || selectedProvider === 'github') {
+        setFailedProvider(selectedProvider);
+      }
+
+      setErrorMessage('같은 이메일로 이미 가입된 계정입니다. 기존에 사용하던 소셜 로그인으로 로그인해 주세요.');
+      setProcessingState('failed');
+      return () => {
+        isCancelled = true;
+      };
+    }
 
     async function waitForSession() {
       const supabase = getSupabaseBrowser();
@@ -212,6 +234,8 @@ export default function Opt() {
         const supabase = getSupabaseBrowser();
         const authSession = await waitForSession();
 
+        sessionStorage.removeItem('auth:social-provider');
+
         if (isCancelled) {
           return;
         }
@@ -268,6 +292,7 @@ export default function Opt() {
           credentials: 'include',
           body: JSON.stringify({
             email: nextPendingSocialSave.email,
+            authUserId: nextPendingSocialSave.authUserId,
           }),
         });
 
@@ -285,6 +310,11 @@ export default function Opt() {
           setPendingSocialSave(nextPendingSocialSave);
           setConfirmMessage(socialCheckResult.message);
           setProcessingState('confirm');
+          return;
+        }
+
+        if (socialCheckResult.needsSignup) {
+          router.replace('/auth/social-sign-up');
           return;
         }
 
@@ -459,7 +489,9 @@ export default function Opt() {
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
-                <SocialLoginButtons />
+                <SocialLoginButtons
+                  excludeProviders={failedProvider ? [failedProvider] : []}
+                />
               </Stack>
             ) : null}
           </div>

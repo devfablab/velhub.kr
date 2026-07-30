@@ -10,7 +10,13 @@ import VhiNaver from '../icons/VhiNaver';
 import VhiKakao from '../icons/VhiKakao';
 import styles from '@/app/auth.module.sass';
 
-export default function SocialLoginButtons() {
+type SocialProvider = 'kakao' | 'google' | 'github';
+
+type SocialLoginButtonsProps = {
+  excludeProviders?: SocialProvider[];
+};
+
+export default function SocialLoginButtons({ excludeProviders = [] }: SocialLoginButtonsProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowser();
@@ -24,6 +30,11 @@ export default function SocialLoginButtons() {
 
   const actionText = pathname === '/auth/sign-up' ? '시작하기' : '계속하기';
   const naverAuth = pathname === '/auth/sign-up' || pathname === '/auth/sign-in';
+  const excludedProviderSet = new Set(excludeProviders);
+
+  function rememberSelectedProvider(provider: SocialProvider) {
+    sessionStorage.setItem('auth:social-provider', provider);
+  }
 
   async function handleGoogleLogin() {
     if (isSubmitting) {
@@ -32,6 +43,7 @@ export default function SocialLoginButtons() {
 
     setErrorMessage('');
     setIsSubmitting(true);
+    rememberSelectedProvider('google');
 
     try {
       const currentOrigin = window.location.origin;
@@ -77,6 +89,7 @@ export default function SocialLoginButtons() {
 
     setErrorMessage('');
     setIsSubmitting(true);
+    rememberSelectedProvider('github');
 
     try {
       const currentOrigin = window.location.origin;
@@ -122,6 +135,7 @@ export default function SocialLoginButtons() {
 
     setErrorMessage('');
     setIsSubmitting(true);
+    rememberSelectedProvider('kakao');
 
     try {
       const currentOrigin = window.location.origin;
@@ -167,7 +181,6 @@ export default function SocialLoginButtons() {
 
     setErrorMessage('');
     setIsSubmitting(true);
-
     const naverLoginUrl = new URL('/api/auth/naver/start', window.location.origin);
 
     if (inviteToken) {
@@ -199,35 +212,41 @@ export default function SocialLoginButtons() {
         </button>
       ) : null}
 
-      <button
-        type="button"
-        className={`button medium submit ${styles.button} ${styles.kakao}`}
-        onClick={handleKakaoLogin}
-        disabled={isSubmitting}
-      >
-        <VhiKakao />
-        <span>카카오 아이디로 {actionText}</span>
-      </button>
+      {!excludedProviderSet.has('kakao') ? (
+        <button
+          type="button"
+          className={`button medium submit ${styles.button} ${styles.kakao}`}
+          onClick={handleKakaoLogin}
+          disabled={isSubmitting}
+        >
+          <VhiKakao />
+          <span>카카오 아이디로 {actionText}</span>
+        </button>
+      ) : null}
 
-      <button
-        type="button"
-        className={`button medium submit ${styles.button} ${styles.google}`}
-        onClick={handleGoogleLogin}
-        disabled={isSubmitting}
-      >
-        <GoogleIcon />
-        <span>Google 아이디로 {actionText}</span>
-      </button>
+      {!excludedProviderSet.has('google') ? (
+        <button
+          type="button"
+          className={`button medium submit ${styles.button} ${styles.google}`}
+          onClick={handleGoogleLogin}
+          disabled={isSubmitting}
+        >
+          <GoogleIcon />
+          <span>Google 아이디로 {actionText}</span>
+        </button>
+      ) : null}
 
-      <button
-        type="button"
-        className={`button medium submit ${styles.button} ${styles.github}`}
-        onClick={handleGithubLogin}
-        disabled={isSubmitting}
-      >
-        <GitHubIcon />
-        <span>GitHub 아이디로 {actionText}</span>
-      </button>
+      {!excludedProviderSet.has('github') ? (
+        <button
+          type="button"
+          className={`button medium submit ${styles.button} ${styles.github}`}
+          onClick={handleGithubLogin}
+          disabled={isSubmitting}
+        >
+          <GitHubIcon />
+          <span>GitHub 아이디로 {actionText}</span>
+        </button>
+      ) : null}
 
       {errorMessage ? (
         <p className="alert error">

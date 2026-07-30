@@ -43,6 +43,7 @@ export default function EmailSignIn() {
   const inviteToken = searchParams.get('inviteToken')?.trim() ?? '';
   const inviteSiteName = searchParams.get('siteName')?.trim().toLowerCase() ?? '';
   const inviteType = searchParams.get('inviteType')?.trim().toLowerCase() ?? '';
+  const callbackErrorDescription = searchParams.get('errorDescription')?.trim() ?? '';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +60,12 @@ export default function EmailSignIn() {
   useEffect(() => {
     setReturnPath(sessionStorage.getItem('route:returnPath'));
   }, []);
+
+  useEffect(() => {
+    if (callbackErrorDescription) {
+      setErrorMessage(callbackErrorDescription);
+    }
+  }, [callbackErrorDescription]);
 
   function handleEmailChange(event: InputChangeEvent) {
     setEmail(event.currentTarget.value);

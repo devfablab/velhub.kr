@@ -12,6 +12,9 @@ type SocialRequestBody = {
   accessToken: string | null;
   refreshToken: string | null;
   tokenExpiresAt: number | null;
+  isAgreeTerm?: boolean | null;
+  isAgreeChild?: boolean | null;
+  isAgreePrivacy?: boolean | null;
 };
 
 function getSafeUserName(userName: string | null, email: string) {
@@ -48,6 +51,9 @@ export async function POST(request: Request) {
     const accessToken = requestBody.accessToken?.trim() ?? null;
     const refreshToken = requestBody.refreshToken?.trim() ?? null;
     const tokenExpiresAt = getTokenExpiresAtDateTime(requestBody.tokenExpiresAt);
+    const hasAgreementPayload = [requestBody.isAgreeTerm, requestBody.isAgreeChild, requestBody.isAgreePrivacy].some(
+      (value) => value !== undefined && value !== null,
+    );
 
     if (!authUserId) {
       return Response.json({ error: 'authUserId가 유효하지 않습니다.' }, { status: 400 });
@@ -59,6 +65,10 @@ export async function POST(request: Request) {
 
     if (!provider) {
       return Response.json({ error: 'provider가 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (hasAgreementPayload && (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true)) {
+      return Response.json({ error: '필수 동의 항목에 모두 동의해 주세요.' }, { status: 400 });
     }
 
     const safeUserName = getSafeUserName(requestBody.userName ?? null, email);
@@ -95,6 +105,10 @@ export async function POST(request: Request) {
       return Response.json({ error: 'stigmas 조회에 실패했습니다.' }, { status: 500 });
     }
 
+    const agreementPayload = hasAgreementPayload
+      ? { is_agree_term: true, is_agree_child: true, is_agree_privacy: true }
+      : {};
+
     if (stigmasSelectResult.data) {
       const stigmasUpdateResult = await supabaseAdmin
         .from('stigmas')
@@ -102,6 +116,7 @@ export async function POST(request: Request) {
           user_name: encryptedUserName,
           email: encryptedEmail,
           avatar,
+          ...agreementPayload,
         })
         .eq('user_id', authUserId);
 
@@ -118,6 +133,7 @@ export async function POST(request: Request) {
         avatar,
         role: 'user',
         email: encryptedEmail,
+        ...agreementPayload,
       });
 
       if (stigmasInsertResult.error) {

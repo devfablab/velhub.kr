@@ -7,6 +7,9 @@ type EmailSignUpRequestBody = {
   email: string | null;
   userName: string | null;
   bypassEmailConfirm?: boolean | null;
+  isAgreeTerm?: boolean | null;
+  isAgreeChild?: boolean | null;
+  isAgreePrivacy?: boolean | null;
 };
 
 function getSafeUserName(userName: string | null, email: string) {
@@ -31,6 +34,10 @@ export async function POST(request: Request) {
     const email = requestBody.email?.trim().toLowerCase() ?? '';
     const userName = requestBody.userName?.trim() ?? '';
     const bypassEmailConfirm = process.env.NODE_ENV === 'development' && requestBody.bypassEmailConfirm === true;
+
+    if (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true) {
+      return Response.json({ error: '필수 동의 항목에 모두 동의해 주세요.' }, { status: 400 });
+    }
 
     if (!authUserId) {
       return Response.json({ error: 'authUserId가 유효하지 않습니다.' }, { status: 400 });
@@ -91,6 +98,9 @@ export async function POST(request: Request) {
         .update({
           user_name: encryptedUserName,
           email: encryptedEmail,
+          is_agree_term: true,
+          is_agree_child: true,
+          is_agree_privacy: true,
         })
         .eq('user_id', authUserId);
 
@@ -108,6 +118,9 @@ export async function POST(request: Request) {
         user_id: authUserId,
         role: 'user',
         email: encryptedEmail,
+        is_agree_term: true,
+        is_agree_child: true,
+        is_agree_privacy: true,
       });
 
       if (stigmasInsertResult.error) {

@@ -28,6 +28,7 @@ import {
 import { formatDate, formatDateSimple, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
+import PaymentTerms from '@/components/service/common/PaymentTerms';
 import styles from '@/app/manage.module.sass';
 
 type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'scheduled_cancel' | 'canceled' | 'expired';
@@ -800,16 +801,21 @@ export default function Opt() {
           <Stack direction="row" gap={1} flexWrap="wrap">
             {shouldShowBillingAuthButton ? (
               hasBillingMethod ? (
-                <button
-                  type="button"
-                  className="button small submit"
-                  onClick={() => {
-                    void handleBillingAuth();
-                  }}
-                  disabled={isProcessing}
-                >
-                  {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
-                </button>
+                <Stack direction="column">
+                  <Stack direction="row">
+                    <button
+                      type="button"
+                      className="button small submit"
+                      onClick={() => {
+                        void handleBillingAuth();
+                      }}
+                      disabled={isProcessing}
+                    >
+                      {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
+                    </button>
+                  </Stack>
+                  <PaymentTerms type="plan" disabled={isProcessing} />
+                </Stack>
               ) : (
                 <BillingMethodButton siteId={billingData?.site?.id} />
               )

@@ -9,6 +9,7 @@ import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/auth.module.sass';
 import { ThemeMode } from '@/app/themeProvider';
+import { SignupAgreementsProvider } from '@/components/auth/SignupAgreements';
 
 type ContainerProps = {
   children: React.ReactNode;
@@ -38,7 +39,7 @@ export default function Container({ children }: ContainerProps) {
     return null;
   }
 
-  return (
+  const content = (
     <>
       <header className={`${styles.header} ${styles['auth-header']}`}>
         <div className={styles.container}>
@@ -70,7 +71,7 @@ export default function Container({ children }: ContainerProps) {
                   <h1>
                     {pathname === '/auth/sign-in'
                       ? '이어서 시작하기'
-                      : pathname === '/auth/sign-up'
+                      : pathname === '/auth/sign-up' || pathname === '/auth/social-sign-up'
                         ? '새로운 공간을 만들어보세요'
                         : pathname === '/auth/find-password'
                           ? '비밀번호 재설정'
@@ -95,4 +96,6 @@ export default function Container({ children }: ContainerProps) {
       </main>
     </>
   );
+
+  return <SignupAgreementsProvider>{content}</SignupAgreementsProvider>;
 }

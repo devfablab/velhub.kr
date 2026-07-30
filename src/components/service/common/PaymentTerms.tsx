@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
-export type PaymentTermsType = 'donation' | 'subscription' | 'purchase';
+export type PaymentTermsType = 'donation' | 'subscription' | 'purchase' | 'plan';
 
 const TERMS: Record<PaymentTermsType, { title: string; items: string[] }> = {
   donation: {
@@ -55,6 +55,21 @@ const TERMS: Record<PaymentTermsType, { title: string; items: string[] }> = {
       '유료 게시글 구매는 해당 게시글을 열람할 수 있는 권한만 제공하며, 저작권이나 복제·배포 권한을 제공하지 않습니다.',
       '만 19세 미만 회원이 법정대리인의 동의 없이 구매한 경우에는 법정대리인이 환불을 요청할 수 있습니다.',
       '유료 게시글을 처음 구매하는 계정은 본인인증이 필요합니다.',
+    ],
+  },
+  plan: {
+    title: '사이트 요금제 월결제 안내',
+    items: [
+      '사이트 개설 후 7일 동안 무료로 이용할 수 있으며, 무료 이용기간이 끝나면 등록한 결제수단으로 첫 요금이 결제됩니다.',
+      '요금제는 결제일을 기준으로 매월 자동 결제됩니다.',
+      '결제 후 24시간 이내에 환불하면 전액 환불되며 사이트 운영이 즉시 중단됩니다.',
+      '결제 후 24시간이 지난 시점부터 7일 이내에 환불하면 결제금액에서 이용일수에 해당하는 금액을 공제한 뒤 환불되며 사이트 운영이 즉시 중단됩니다.',
+      '공제액은 결제금액 × 이용일수 ÷ 30으로 계산하고 원 단위에서 올림합니다.',
+      '결제 후 7일이 지나면 환불되지 않으며, 월결제 취소만 가능합니다.',
+      '월결제를 취소하면 현재 결제한 이용기간까지 사이트를 운영할 수 있으며, 다음 결제일부터 요금이 청구되지 않습니다. 취소는 철회할 수 있습니다.',
+      '자동결제에 실패하면 사이트를 유지한 상태로 24시간 간격으로 두 차례 다시 결제를 시도합니다.',
+      '세 번째 결제까지 실패하면 자동결제를 더 이상 시도하지 않으며 사이트 운영이 중단됩니다.',
+      '운영이 중단되면 사이트를 이용할 수 없습니다. 다시 운영하려면 운영자, 매니저 또는 결제수단을 연결한 사용자가 요금제를 직접 결제해야 합니다.',
     ],
   },
 };

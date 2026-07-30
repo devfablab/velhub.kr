@@ -22,6 +22,7 @@ type SessionRouteResult = {
   invite?: boolean;
   inviteHref?: string | null;
   isRejoin?: boolean;
+  needsSocialSignUp?: boolean;
 };
 
 type RhizomeStateResult = {
@@ -161,13 +162,11 @@ function startsWithAny(pathname: string, paths: string[]) {
 }
 
 function isCommunityManagerRestrictedPath(pathname: string, siteName: string) {
-  return (
-    startsWithAny(pathname, [
-      `/${siteName}/manage/team`,
-      `/${siteName}/manage/design/blog`,
-      `/${siteName}/manage/invite-blog`,
-    ])
-  );
+  return startsWithAny(pathname, [
+    `/${siteName}/manage/team`,
+    `/${siteName}/manage/design/blog`,
+    `/${siteName}/manage/invite-blog`,
+  ]);
 }
 
 function isBlogManagerRestrictedPath(pathname: string, siteName: string) {
@@ -203,10 +202,8 @@ function isCommunityAssistantRoleRestrictedPath(pathname: string, siteName: stri
 
   return (
     isBoardEditPath ||
-    startsWithAny(pathname, [
-      `/${siteName}/manage/contents/posts/category`,
-    ])
-    || (pathname.startsWith(`/${siteName}/manage/contents/posts/c/`) && segments[6] === 'series')
+    startsWithAny(pathname, [`/${siteName}/manage/contents/posts/category`]) ||
+    (pathname.startsWith(`/${siteName}/manage/contents/posts/c/`) && segments[6] === 'series')
   );
 }
 
@@ -433,6 +430,25 @@ export async function proxy(request: NextRequest) {
     }
 
     return response;
+  }
+
+  if (
+    isLoggedIn &&
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/_next') &&
+    !pathname.startsWith('/favicon.ico') &&
+    !pathname.startsWith('/broken-image.jpg') &&
+    !pathname.startsWith('/dummy.webp') &&
+    !pathname.startsWith('/together.webp') &&
+    !pathname.startsWith('/favicon') &&
+    pathname !== '/auth/callback' &&
+    pathname !== '/auth/social-sign-up'
+  ) {
+    const socialSignUp = await fetchSessionRoute(request, '/api/session/social-sign-up', {});
+
+    if (socialSignUp.response.ok && socialSignUp.result?.needsSocialSignUp === true) {
+      return redirectWithPath(request, '/auth/social-sign-up');
+    }
   }
 
   if (isLoggedIn && isAal1 && hasTotp) {
