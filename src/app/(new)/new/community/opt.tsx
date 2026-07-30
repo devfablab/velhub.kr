@@ -537,7 +537,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       } else {
         openErrorDialog('커뮤니티 개설에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

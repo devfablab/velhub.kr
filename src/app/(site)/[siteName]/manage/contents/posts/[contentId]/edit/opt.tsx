@@ -748,7 +748,6 @@ export default function Opt() {
       } else {
         setErrorMessage('블로그 글 수정에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

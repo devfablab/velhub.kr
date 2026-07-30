@@ -203,7 +203,6 @@ export default function Opt() {
       } else {
         setDialogErrorMessage('페이지 삭제에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -242,7 +241,6 @@ export default function Opt() {
       } else {
         setDialogErrorMessage('페이지 복구에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

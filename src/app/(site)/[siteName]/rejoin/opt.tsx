@@ -55,7 +55,6 @@ export default function Opt({ siteName }: Props) {
       } else {
         setErrorMessage('재가입에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

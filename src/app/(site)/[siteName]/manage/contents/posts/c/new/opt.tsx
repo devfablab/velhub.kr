@@ -408,7 +408,6 @@ export default function Opt() {
       } else {
         setErrorMessage('게시판 개설에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

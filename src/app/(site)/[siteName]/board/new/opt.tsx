@@ -1748,7 +1748,6 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
       } else {
         setErrorMessage('글 작성에 실패했습니다.');
       }
-    } finally {
       setIsSubmittingDraft(false);
       setIsSubmittingPublish(false);
     }

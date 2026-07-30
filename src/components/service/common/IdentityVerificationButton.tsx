@@ -562,7 +562,6 @@ export default function IdentityVerificationButton() {
       window.location.reload();
     } catch (error) {
       showSnackbar(getMessage(error));
-    } finally {
       setIsProcessing(false);
     }
   };

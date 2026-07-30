@@ -115,7 +115,6 @@ export default function Opt() {
       } else {
         setErrorMessage('비밀번호 재설정 중 오류가 발생했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

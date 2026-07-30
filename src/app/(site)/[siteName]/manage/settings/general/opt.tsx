@@ -493,6 +493,7 @@ export default function Opt() {
       resetSiteKeyCheck();
       resetSiteLabelCheck();
       setSuccessMessage('저장되었습니다.');
+      setIsSubmitting(false);
       return true;
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -500,9 +501,8 @@ export default function Opt() {
       } else {
         setErrorMessage('사이트 정보 수정에 실패했습니다.');
       }
-      return false;
-    } finally {
       setIsSubmitting(false);
+      return false;
     }
   }
 

@@ -174,7 +174,6 @@ export default function Opt({ siteName, token }: Props) {
       } else {
         setErrorMessage('초대 처리에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

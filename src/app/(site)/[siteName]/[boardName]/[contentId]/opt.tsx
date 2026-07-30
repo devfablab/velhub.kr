@@ -589,7 +589,6 @@ export default function Opt({ isCommunity }: Props) {
       } else {
         setDeleteErrorMessage('글을 삭제하지 못했습니다.');
       }
-    } finally {
       setIsDeletingPost(false);
     }
   }

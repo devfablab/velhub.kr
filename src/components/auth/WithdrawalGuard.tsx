@@ -121,7 +121,6 @@ export default function WithdrawalGuard({ children }: { children: ReactNode }) {
       } else {
         setErrorMessage('로그아웃에 실패했습니다.');
       }
-    } finally {
       setIsLoggingOut(false);
     }
   }

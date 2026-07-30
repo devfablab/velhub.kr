@@ -125,7 +125,6 @@ export default function Opt() {
       } else {
         setErrorMessage('초대 처리에 실패했습니다.4');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

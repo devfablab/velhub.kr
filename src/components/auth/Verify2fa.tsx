@@ -173,7 +173,6 @@ export default function Verify2fa() {
       } else {
         setErrorMessage('2단계 인증 확인에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

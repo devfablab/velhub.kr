@@ -637,7 +637,6 @@ export default function Opt() {
       } else {
         setErrorMessage('블로그 글 개설에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

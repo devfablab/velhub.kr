@@ -152,7 +152,6 @@ export default function Opt() {
       router.replace('/');
     } catch (unknownError) {
       setErrorMessage(unknownError instanceof Error ? unknownError.message : '회원가입을 완료하지 못했습니다.');
-    } finally {
       setIsSubmitting(false);
     }
   }

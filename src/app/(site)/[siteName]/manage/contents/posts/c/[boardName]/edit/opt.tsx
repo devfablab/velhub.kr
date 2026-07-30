@@ -431,7 +431,6 @@ export default function Opt() {
       } else {
         setErrorMessage('게시판 수정에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

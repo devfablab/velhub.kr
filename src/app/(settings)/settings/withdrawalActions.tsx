@@ -75,7 +75,6 @@ export default function WithdrawalActions() {
         setErrorMessage('탈퇴 신청에 실패했습니다.');
       }
       setIsConfirmOpen(false);
-    } finally {
       setIsSubmitting(false);
     }
   }

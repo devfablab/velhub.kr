@@ -1804,7 +1804,6 @@ export default function Opt({ isCommunity }: Props) {
       } else {
         setErrorMessage('글 수정에 실패했습니다.');
       }
-    } finally {
       setIsSubmittingDraft(false);
       setIsSubmittingPublish(false);
     }

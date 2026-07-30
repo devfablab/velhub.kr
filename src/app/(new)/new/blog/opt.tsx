@@ -514,7 +514,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       } else {
         openErrorDialog('블로그 개설에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

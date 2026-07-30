@@ -65,7 +65,6 @@ export default function LogoutActions() {
       } else {
         setErrorMessage('이 디바이스 로그아웃 중 오류가 발생했습니다.');
       }
-    } finally {
       setIsLoggingOutCurrentDevice(false);
     }
   }
@@ -111,7 +110,6 @@ export default function LogoutActions() {
         setErrorMessage('모든 디바이스 로그아웃 중 오류가 발생했습니다.');
       }
       setIsConfirmOpen(false);
-    } finally {
       setIsLoggingOutAllDevices(false);
     }
   }

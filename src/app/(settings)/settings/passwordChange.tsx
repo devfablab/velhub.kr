@@ -173,7 +173,6 @@ export default function PasswordChange() {
       } else {
         setErrorMessage('비밀번호 변경 중 오류가 발생했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

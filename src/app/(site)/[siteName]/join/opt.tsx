@@ -460,7 +460,6 @@ export default function Opt({ siteName }: Props) {
       } else {
         setErrorMessage('가입에 실패했습니다.');
       }
-    } finally {
       setIsSubmitting(false);
     }
   }

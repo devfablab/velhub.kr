@@ -350,7 +350,6 @@ export default function Opt() {
       } else {
         setDialogErrorMessage('블로그 글 삭제에 실패했습니다.');
       }
-    } finally {
       setIsDeleting(false);
     }
   }

@@ -196,7 +196,6 @@ export default function UserInfo() {
       } else {
         setWithdrawErrorMessage('커뮤니티 탈퇴에 실패했습니다.');
       }
-    } finally {
       setIsWithdrawSubmitting(false);
     }
   }
