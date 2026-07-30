@@ -1284,6 +1284,11 @@ html[data-site-type='blog']
 
 .MuiButtonBase-root
   &.MuiRadio-root, &.MuiCheckbox-root
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
     &.Mui-checked
       color: ds.$hex-accent
 

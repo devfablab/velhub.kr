@@ -65,8 +65,10 @@ async function sendInviteEmail(params: {
         </tr>
         <tr>
           <td>
-            <div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;">
+            <div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;color:#181818;">
               <h1>커뮤니티 초대</h1>
+              <p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p>
+              <p>아래 정보를 확인하시고 가압해 주세요.</p>
               <table style="border-collapse:collapse;width:100%;border-style:none;margin-left:auto;margin-right:auto" border="0">
                 <tr>
                   <td style="background-color:#181818;color:#d7d7d7;height:53px;text-align:center;font-weight:bolder">사이트</td>
@@ -84,7 +86,8 @@ async function sendInviteEmail(params: {
                   <td style="background-color:#181818;height:1px"></td>
                 </tr>
               </table>
-              <p style="text-align:center"><a href="${inviteUrl}" style="background-color:#eeb400;color:#181818;display:inline-block;padding:12px 12px;font-weight:bolder;text-decoration:none">가입하러 가기</a></p>
+              <p style="text-align:center"><a href="${inviteUrl}" style="background-color:#eeb400;color:#181818;display:inline-block;padding:12px 23px;border-radius:12px;font-weight:bolder;text-decoration:none">가입하러 가기</a></p>
+              <p><strong style="font-size: 12px">Everyday, Everywhere, Everymoments - Velhub</strong></p>
             </div>
           </td>
         </tr>
