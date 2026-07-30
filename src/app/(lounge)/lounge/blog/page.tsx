@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function BlogHub() {
+export default async function Page() {
   const headerList = await headers();
   const host = headerList.get('host');
   const protocol = headerList.get('x-forwarded-proto') || 'http';
