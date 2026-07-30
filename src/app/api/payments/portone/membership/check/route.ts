@@ -25,6 +25,7 @@ import {
   requestPortOneBillingPayment,
 } from '@/lib/payments/portone';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getMailFrom, getResendClient } from '@/lib/resend';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -69,6 +70,36 @@ function isValidCronRequest(request: Request) {
 
 function createRefundableUntil(startedAt: Date) {
   return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
+}
+
+async function sendMembershipBillingEmail({
+  supabaseAdmin,
+  subscriberUserId,
+  siteId,
+  amount,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  subscriberUserId: string;
+  siteId: string;
+  amount: number;
+}) {
+  const [subscriberResult, siteResult] = await Promise.all([
+    supabaseAdmin.from('stigmas').select('email').eq('id', subscriberUserId).maybeSingle(),
+    supabaseAdmin.from('rhizomes').select('site_label').eq('id', siteId).maybeSingle(),
+  ]);
+  const email = typeof subscriberResult.data?.email === 'string' ? subscriberResult.data.email.trim() : '';
+  const siteLabel = typeof siteResult.data?.site_label === 'string' ? siteResult.data.site_label.trim() : '';
+
+  if (!email || !siteLabel) return;
+
+  const sendResult = await getResendClient().emails.send({
+    from: getMailFrom(),
+    to: email,
+    subject: '[데브허브] 멤버십 자동결제가 완료되었습니다',
+    html: `<table style="border-collapse:collapse;width:100%;border-style:none;margin-left:auto;margin-right:auto" border="0"><tr><td style="background-color:#181818"><div style="max-width:575px;width:100%;padding:23px;box-sizing:border-box;margin:0 auto"><img style="border-style:none" src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></div></td></tr><tr><td><div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','맑은 고딕',sans-serif;color:#181818"><h2>멤버십 자동결제가 완료되었습니다</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse"><tr><th style="width:150px;padding:12px 16px;background-color:#181818;color:#ffffff;text-align:left">사이트명</th><td style="padding:12px 16px;border:1px solid #d7d7d7">${siteLabel}</td></tr><tr><th style="width:150px;padding:12px 16px;background-color:#181818;color:#ffffff;text-align:left">결제 금액</th><td style="padding:12px 16px;border:1px solid #d7d7d7">${amount.toLocaleString('ko-KR')}원</td></tr></table><p>구독을 취소하면 현재 결제기간이 끝날 때까지 구독 혜택을 이용할 수 있으며, 다음 결제일부터 자동 결제되지 않습니다.</p><p>결제 후 7일이 지나면 환불되지 않으며, 다음 결제만 취소할 수 있습니다.</p><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - Velhub</strong></p></div></td></tr><tr><td style="background-color:#181818"><div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','맑은 고딕',sans-serif"><span style="color:#d7d7d7;font-size:12px">&copy; <img src="https://velhub.xyz/velhub-2-webmail.png" alt="데브런닷스튜디오" width="90" height="12"> All rights reserved. <strong style="color:#ff69b4;padding-left:12px">&hearts; velhub</strong></span></div></td></tr></table>`,
+  });
+
+  if (sendResult.error) throw new Error(sendResult.error.message);
 }
 
 async function requestPortOneBillingPaymentCompat({
@@ -313,6 +344,17 @@ async function chargeMembershipSubscription({
       ok: false,
       subscriptionId: subscription.id,
     };
+  }
+
+  try {
+    await sendMembershipBillingEmail({
+      supabaseAdmin,
+      subscriberUserId: subscription.subscriber_user_id,
+      siteId: subscription.target_id,
+      amount: paymentResult.totalAmount,
+    });
+  } catch (emailError) {
+    console.error('[payments/membership] automatic billing email error', emailError);
   }
 
   return {

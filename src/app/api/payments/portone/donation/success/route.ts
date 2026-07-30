@@ -23,6 +23,7 @@ import {
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getMailFrom, getResendClient } from '@/lib/resend';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -71,11 +72,13 @@ type PostRow = {
 type SeriesRow = {
   id: string;
   is_subscription: boolean | null;
+  series_label: string | null;
 };
 
 type StigmaRow = {
   id: string;
   user_id: string;
+  email?: string | null;
 };
 
 type ExistingPaymentRow = {
@@ -396,7 +399,7 @@ async function getSeriesById({
 }) {
   const seriesResult = await supabaseAdmin
     .from('board_series')
-    .select('id, is_subscription')
+    .select('id, is_subscription, series_label')
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('id', seriesId)
@@ -413,6 +416,70 @@ async function getSeriesById({
   }
 
   return seriesResult.data as SeriesRow;
+}
+
+async function sendDonationPaymentEmail({
+  email,
+  siteLabel,
+  boardLabel,
+  seriesLabel,
+  postSubject,
+  amount,
+}: {
+  email: string;
+  siteLabel: string;
+  boardLabel: string | null;
+  seriesLabel: string | null;
+  postSubject: string | null;
+  amount: number;
+}) {
+  const rows = [
+    ['사이트명', siteLabel],
+    ['게시판명', boardLabel],
+    ['연재명', seriesLabel],
+    ['게시물명', postSubject],
+    ['후원 금액', `${amount.toLocaleString('ko-KR')}원`],
+  ]
+    .filter(([, value]) => Boolean(normalizeText(value)))
+    .map(
+      ([label, value]) =>
+        `<tr><th style="width:150px;padding:12px 16px;background-color:#181818;color:#ffffff;text-align:left;font-weight:700">${label}</th><td style="padding:12px 16px;border:1px solid #d7d7d7;color:#181818">${value}</td></tr>`,
+    )
+    .join('');
+
+  const sendResult = await getResendClient().emails.send({
+    from: getMailFrom(),
+    to: email,
+    subject: '[데브허브] 후원 결제가 완료되었습니다',
+    html: `
+      <table style="border-collapse:collapse;width:100%;border-style:none;margin-left:auto;margin-right:auto" border="0">
+        <tr><td style="background-color:#181818"><div style="max-width:575px;width:100%;padding:23px;box-sizing:border-box;margin:0 auto"><img style="border-style:none" src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></div></td></tr>
+        <tr><td><div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;color:#181818;"><h2>후원 결제가 완료되었습니다</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse">${rows}</table><p>후원은 콘텐츠 구매나 구독이 아니며, 후원만으로 별도의 콘텐츠 열람 권한이나 혜택이 제공되지는 않습니다.</p><p>정상적으로 완료된 후원은 취소하거나 환불할 수 없습니다.</p><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - Velhub</strong></p></div></td></tr>
+        <tr><td style="background-color:#181818"><div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;"><span style="color:#d7d7d7;font-size:12px">&copy; <img src="https://velhub.xyz/velhub-2-webmail.png" alt="데브런닷스튜디오" width="90" height="12"> All rights reserved. <strong style="color:#ff69b4;padding-left:12px">&hearts; velhub</strong></span></div></td></tr>
+      </table>
+    `,
+  });
+
+  if (sendResult.error) {
+    throw new Error(sendResult.error.message || '후원 결제 완료 메일을 보내지 못했습니다.');
+  }
+}
+
+async function getStigmaEmail({
+  supabaseAdmin,
+  stigmaId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  stigmaId: string;
+}) {
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('email').eq('id', stigmaId).maybeSingle();
+
+  if (stigmaResult.error) {
+    console.error('[payments/donation] buyer email lookup error', stigmaResult.error);
+    return null;
+  }
+
+  return normalizeText((stigmaResult.data as StigmaRow | null)?.email);
 }
 
 async function getBoardSeriesCount({
@@ -484,7 +551,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const board = isBoardDonation
+    let board = isBoardDonation
       ? await getBoardById({
           supabaseAdmin,
           site,
@@ -504,7 +571,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '글 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
+    let series: SeriesRow | null = null;
+
     if (post) {
+      board = await getBoardById({
+        supabaseAdmin,
+        site,
+        boardId: post.board_id,
+      });
+
       const seriesCount = await getBoardSeriesCount({
         supabaseAdmin,
         siteId: site.id,
@@ -515,7 +590,7 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '연재가 2개 이상 있는 게시판의 연재 글만 후원할 수 있습니다.' }, { status: 400 });
       }
 
-      const series = await getSeriesById({
+      series = await getSeriesById({
         supabaseAdmin,
         siteId: site.id,
         boardId: post.board_id,
@@ -662,6 +737,28 @@ export async function POST(request: NextRequest) {
         siteOwnerUserId,
         amount: confirmResult.totalAmount,
       });
+    }
+
+    const buyerEmail = session.stigmaId
+      ? await getStigmaEmail({
+          supabaseAdmin,
+          stigmaId: session.stigmaId,
+        })
+      : null;
+
+    if (buyerEmail) {
+      try {
+        await sendDonationPaymentEmail({
+          email: buyerEmail,
+          siteLabel: site.site_label,
+          boardLabel: board?.board_label ?? null,
+          seriesLabel: series?.series_label ?? null,
+          postSubject: post?.subject ?? null,
+          amount: confirmResult.totalAmount,
+        });
+      } catch (emailError) {
+        console.error('[payments/donation] completion email error', emailError);
+      }
     }
 
     return Response.json({

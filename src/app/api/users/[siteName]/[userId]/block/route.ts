@@ -5,6 +5,7 @@ import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 import { isPlanBillingSubscriberStigma } from '@/lib/payments/planBillingSubscriber';
 import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
+import { getMailFrom, getResendClient } from '@/lib/resend';
 
 type RouteContext = {
   params: Promise<{
@@ -17,6 +18,11 @@ type RequestBody = {
   reason?: string | null;
   blockTerm?: string | null;
 };
+
+async function sendBlockEmail({ email, siteLabel, reason, blockedAt, releaseAt }: { email: string; siteLabel: string; reason: string; blockedAt: string; releaseAt: string | null }) {
+  const rows = [['사이트명', siteLabel], ['사유', reason], ['활동정지 날짜', blockedAt], ['풀리는 날짜', releaseAt]].filter(([, value]) => Boolean(value)).map(([label, value]) => `<tr><th style="padding:12px 16px;background:#181818;color:#fff;text-align:left">${label}</th><td style="padding:12px 16px;border:1px solid #d7d7d7">${value}</td></tr>`).join('');
+  await getResendClient().emails.send({ from: getMailFrom(), to: email, subject: `[데브허브] ${siteLabel} 활동정지 안내`, html: `<table style="width:100%;border-collapse:collapse"><tr><td style="background:#181818;padding:23px"><img src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></td></tr><tr><td style="padding:23px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:#181818"><h2>활동정지 안내</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse">${rows}</table><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - Velhub</strong></p></td></tr></table>` });
+}
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
@@ -110,6 +116,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: access.site.id,
       notificationType: NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED,
     });
+
+    const [emailResult, siteResult] = await Promise.all([
+      access.supabaseAdmin.from('stigmas').select('email').eq('id', membershipResult.membership.user_id).maybeSingle(),
+      access.supabaseAdmin.from('rhizomes').select('site_label').eq('id', access.site.id).maybeSingle(),
+    ]);
+    if (typeof emailResult.data?.email === 'string' && emailResult.data.email.trim()) {
+      try { await sendBlockEmail({ email: emailResult.data.email, siteLabel: siteResult.data?.site_label ?? siteName, reason, blockedAt: new Date().toISOString(), releaseAt: parsedBlockTerm?.toISOString() ?? null }); } catch (emailError) { console.error('[users/block] email error', emailError); }
+    }
 
     return Response.json({
       ok: true,

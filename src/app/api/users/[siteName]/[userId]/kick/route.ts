@@ -6,6 +6,7 @@ import { deleteMemberContents } from '@/lib/community/community-member/deleteMem
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
 import { isPlanBillingSubscriberStigma } from '@/lib/payments/planBillingSubscriber';
 import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
+import { getMailFrom, getResendClient } from '@/lib/resend';
 
 type RouteContext = {
   params: Promise<{
@@ -129,6 +130,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       siteId: access.site.id,
       notificationType: NOTIFICATION_TYPE.COMMUNITY_MEMBER_KICKED,
     });
+
+    const [emailResult, siteResult] = await Promise.all([
+      access.supabaseAdmin.from('stigmas').select('email').eq('id', membershipResult.membership.user_id).maybeSingle(),
+      access.supabaseAdmin.from('rhizomes').select('site_label').eq('id', access.site.id).maybeSingle(),
+    ]);
+    if (typeof emailResult.data?.email === 'string' && emailResult.data.email.trim()) {
+      const siteLabel = siteResult.data?.site_label ?? siteName;
+      const rows = [['사이트명', siteLabel], ['사유', reason], ['강제탈퇴 날짜', new Date().toISOString()], ['풀리는 날짜', parsedKickTerm?.toISOString() ?? null]].filter(([, value]) => Boolean(value)).map(([label, value]) => `<tr><th style="padding:12px 16px;background:#181818;color:#fff;text-align:left">${label}</th><td style="padding:12px 16px;border:1px solid #d7d7d7">${value}</td></tr>`).join('');
+      try { await getResendClient().emails.send({ from: getMailFrom(), to: emailResult.data.email, subject: `[데브허브] ${siteLabel} 강제탈퇴 안내`, html: `<table style="width:100%;border-collapse:collapse"><tr><td style="background:#181818;padding:23px"><img src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></td></tr><tr><td style="padding:23px;font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:#181818"><h2>강제탈퇴 안내</h2><p>콘텐츠에 가치를 더하는 복합 허브 서비스, 데브허브입니다.</p><table style="width:100%;border-collapse:collapse">${rows}</table><p><strong style="font-size:12px">Everyday, Everywhere, Everymoments - Velhub</strong></p></td></tr></table>` }); } catch (emailError) { console.error('[users/kick] email error', emailError); }
+    }
 
     return Response.json({
       ok: true,
