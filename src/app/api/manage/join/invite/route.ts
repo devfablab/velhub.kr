@@ -57,17 +57,43 @@ async function sendInviteEmail(params: {
     to: params.email,
     subject: `[${siteLabel}] 커뮤니티 초대`,
     html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-        <h2 style="margin: 0 0 16px;">커뮤니티 초대</h2>
-        <p style="margin: 0 0 8px;">사이트명: ${siteLabel}</p>
-        <p style="margin: 0 0 8px;">역할: 멤버</p>
-        <p style="margin: 0 0 16px;">유효시간: 24시간</p>
-        <p style="margin: 0 0 16px;">
-          <a href="${inviteUrl}" target="_blank" rel="noreferrer">초대 링크 열기</a>
-        </p>
-        <p style="margin: 0;">링크가 열리지 않으면 아래 주소를 복사해서 사용해주세요.</p>
-        <p style="margin: 8px 0 0; word-break: break-all;">${inviteUrl}</p>
-      </div>
+      <table style="border-collapse:collapse;width:100%;border-style:none;margin-left:auto;margin-right:auto" border="0">
+        <tr>
+          <td style="background-color:#181818">
+            <div style="max-width:575px;width:100%;padding:23px;box-sizing:border-box;margin:0 auto"><img style="border-style:none" src="https://velhub.xyz/velhub-1-webmail.png" alt="데브허브" width="106" height="24"></div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;">
+              <h1>커뮤니티 초대</h1>
+              <table style="border-collapse:collapse;width:100%;border-style:none;margin-left:auto;margin-right:auto" border="0">
+                <tr>
+                  <td style="background-color:#181818;color:#d7d7d7;height:53px;text-align:center;font-weight:bolder">사이트</td>
+                  <td style="background-color:#181818;color:#d7d7d7;text-align:center;font-weight:bolder">역할</td>
+                  <td style="background-color:#181818;color:#d7d7d7;text-align:center;font-weight:bolder">초대 유효시간</td>
+                </tr>
+                <tr>
+                  <td style="height:53px;text-align:center">${siteLabel}</td>
+                  <td style="height:53px;text-align:center">멤버</td>
+                  <td style="height:53px;text-align:center">24시간</td>
+                </tr>
+                <tr>
+                  <td style="background-color:#181818;height:1px"></td>
+                  <td style="background-color:#181818;height:1px"></td>
+                  <td style="background-color:#181818;height:1px"></td>
+                </tr>
+              </table>
+              <p style="text-align:center"><a href="${inviteUrl}" style="background-color:#eeb400;color:#181818;display:inline-block;padding:12px 12px;font-weight:bolder;text-decoration:none">가입하러 가기</a></p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#181818">
+            <div style="max-width:575px;width:100%;padding:23px;margin:0 auto;box-sizing:border-box;font-family:'Apple SD Gothic Neo', 'Noto Sans KR','Malgun Gothic', '맑은 고딕', sans-serif;"><span style="color:#d7d7d7;font-size:12px">&copy; <img src="https://velhub.xyz/velhub-2-webmail.png" alt="데브런닷스튜디오" width="90" height="12"> All rights reserved. <strong style="color:#ff69b4;padding-left:12px">&hearts; velhub</strong></span></div>
+          </td>
+        </tr>
+      </table>
     `,
   });
 }
@@ -219,10 +245,7 @@ export async function POST(request: NextRequest) {
     const memberLimit = await getSiteMemberLimitStatus(access.siteId);
 
     if (memberLimit.currentCount >= memberLimit.limit) {
-      return Response.json(
-        { error: '현재 요금제의 회원 수 제한에 도달하여 초대할 수 없습니다.' },
-        { status: 400 },
-      );
+      return Response.json({ error: '현재 요금제의 회원 수 제한에 도달하여 초대할 수 없습니다.' }, { status: 400 });
     }
 
     const particleResult = await access.supabaseAdmin.from('particles').select('id').eq('email', email).maybeSingle();
@@ -345,20 +368,20 @@ export async function POST(request: NextRequest) {
       }
 
       if (invitedStigmaResult.data?.id) {
-      const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-        user_id: invitedStigmaResult.data.id,
-        send_user_id: null,
-        send_site_id: access.siteId,
-        send_board_id: null,
-        send_series_id: null,
-        send_post_id: null,
-        notification_type: NOTIFICATION_TYPE.COMMUNITY_MEMBER_INVITATION_SENT,
-        is_read: false,
-      });
+        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+          user_id: invitedStigmaResult.data.id,
+          send_user_id: null,
+          send_site_id: access.siteId,
+          send_board_id: null,
+          send_series_id: null,
+          send_post_id: null,
+          notification_type: NOTIFICATION_TYPE.COMMUNITY_MEMBER_INVITATION_SENT,
+          is_read: false,
+        });
 
-      if (notificationResult.error) {
-        console.error(notificationResult.error);
-      }
+        if (notificationResult.error) {
+          console.error(notificationResult.error);
+        }
       }
     }
 
