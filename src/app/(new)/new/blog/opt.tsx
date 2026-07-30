@@ -23,6 +23,7 @@ import {
   useTheme,
 } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -118,7 +119,7 @@ function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
-export default function Opt() {
+export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
@@ -486,7 +487,7 @@ export default function Opt() {
       formData.append('visibilityType', visibilityType);
       formData.append('themeType', themeType);
       formData.append('planType', planType);
-      formData.append('isShutdown', 'true');
+      formData.append('isShutdown', isMinor ? 'false' : 'true');
       formData.append('commentProvider', commentProvider);
 
       if (profilePictureFile) {
@@ -663,14 +664,20 @@ export default function Opt() {
                   key={planRow.id}
                   value={planRow.id}
                   control={<Radio />}
-                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()} 원)`}
+                  label={`${planRow.plan_label} (${isMinor ? `청소년 무료` : `${planRow.price.toLocaleString()} 원`})`}
                 />
               ))}
             </RadioGroup>
+            {isMinor ? (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>만 19세가 된 날부터 요금제 월 결제가 필요합니다.</span>
+              </p>
+            ) : null}
             <div className="paper">
               <Typography variant="subtitle2">팀 블로그</Typography>
               <Stack gap={1}>
-                <Typography variant="body2">- ₩ 19,000</Typography>
+                <Typography variant="body2">- {isMinor ? '청소년 무료 (정상가 ₩ 19,000)' : '₩ 19,000'}</Typography>
                 <Typography variant="body2">- 1개 페이지</Typography>
                 <Typography variant="body2">- 최대 100명까지 팀원 초대 가능 (운영자, 매니저 수 포함)</Typography>
                 <Typography variant="body2">- 최대 3명 매니저</Typography>

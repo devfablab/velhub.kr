@@ -120,7 +120,7 @@ function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
-export default function Opt() {
+export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
@@ -508,7 +508,7 @@ export default function Opt() {
       formData.append('visibilityType', visibilityType);
       formData.append('themeType', themeType);
       formData.append('planType', planType);
-      formData.append('isShutdown', 'true');
+      formData.append('isShutdown', isMinor ? 'false' : 'true');
       formData.append('joinType', joinType);
       formData.append('policyPost', policyPost);
       formData.append('policyComment', policyComment);
@@ -695,15 +695,21 @@ export default function Opt() {
                   key={planRow.id}
                   value={planRow.id}
                   control={<Radio />}
-                  label={`${planRow.plan_label} (${planRow.price.toLocaleString()} 원)`}
+                  label={`${planRow.plan_label} (${isMinor ? `청소년 무료` : `${planRow.price.toLocaleString()} 원`})`}
                 />
               ))}
             </RadioGroup>
+            {isMinor ? (
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>만 19세가 된 날부터 요금제 월 결제가 필요합니다.</span>
+              </p>
+            ) : null}
             <Stack gap={1}>
               <div className="paper">
                 <Typography variant="subtitle2">베이직</Typography>
                 <Stack gap={1}>
-                  <Typography variant="body2">- ₩ 59,000</Typography>
+                  <Typography variant="body2">- {isMinor ? '청소년 무료 (정상가 ₩ 59,000)' : '₩ 59,000'}</Typography>
                   <Typography variant="body2">- 1개 페이지</Typography>
                   <Typography variant="body2">- 최대 5개 게시판</Typography>
                   <Typography variant="body2">- 최대 1,000명 멤버</Typography>
@@ -716,7 +722,7 @@ export default function Opt() {
               <div className="paper">
                 <Typography variant="subtitle2">프리미엄</Typography>
                 <Stack gap={1}>
-                  <Typography variant="body2">- ₩ 79,000</Typography>
+                  <Typography variant="body2">- {isMinor ? '청소년 무료 (정상가 ₩ 79,000)' : '₩ 79,000'}</Typography>
                   <Typography variant="body2">- 1개 페이지</Typography>
                   <Typography variant="body2">- 최대 20개 게시판</Typography>
                   <Typography variant="body2">- 최대 10,000명 멤버</Typography>

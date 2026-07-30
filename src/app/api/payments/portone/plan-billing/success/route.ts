@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
@@ -14,7 +13,6 @@ import {
   getPortOneBillingKeyInfo,
   getPortOnePaidAmount,
   getPortOnePaidAt,
-  getPortOnePaymentMethod,
   getPortOnePaymentTransactionNo,
   requestPortOneBillingPayment,
   type PortOnePayment,
@@ -34,6 +32,7 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { createCustomerKey } from '@/lib/payments/customer';
+import { getSiteOwnerAgeStatus } from '@/lib/payments/siteOwnerAge';
 
 type PlanBillingSuccessBody = {
   billingKey?: string;
@@ -45,6 +44,8 @@ type PlanBillingSuccessBody = {
 
 type SiteRow = {
   id: string;
+  owner_id: string;
+  created_at: string;
   site_key: string;
   site_label: string | null;
   plan_type: string | null;
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, plan_type')
+      .select('id, owner_id, created_at, site_key, site_label, plan_type')
       .eq('id', siteId)
       .maybeSingle();
 
@@ -190,6 +191,19 @@ export async function POST(request: NextRequest) {
     }
 
     const site = siteResult.data as SiteRow;
+
+    const ownerAgeStatus = await getSiteOwnerAgeStatus({
+      ownerStigmaId: site.owner_id,
+      siteCreatedAt: site.created_at,
+    });
+
+    if (ownerAgeStatus.isMinor && !ownerAgeStatus.canRegisterBillingMethod) {
+      return Response.json({ error: '만 19세가 되기 7일 전부터 결제수단을 등록할 수 있습니다.' }, { status: 403 });
+    }
+
+    if (ownerAgeStatus.isMinor && purpose !== 'billing_method') {
+      return Response.json({ error: '성년 전에는 결제수단만 등록할 수 있습니다.' }, { status: 400 });
+    }
 
     if (!site.plan_type) {
       return Response.json({ error: '사이트 요금제가 설정되지 않았습니다.' }, { status: 400 });
@@ -399,6 +413,38 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      if (ownerAgeStatus.isMinor && !latestSubscription && ownerAgeStatus.adultBillingAt) {
+        const adultBillingAt = ownerAgeStatus.adultBillingAt.toISOString();
+        const subscriptionInsertResult = await supabaseAdmin
+          .from('subscriptions')
+          .insert({
+            subscriber_user_id: session.stigmaId,
+            subscription_type: SUBSCRIPTION_TYPE.PLAN_BILLING,
+            target_type: PAYMENT_TARGET_TYPE.PLAN,
+            target_id: site.id,
+            owner_user_id: null,
+            price: plan.price,
+            status: SUBSCRIPTION_STATUS.TRIALING,
+            billing_key: encrypt(billingKey),
+            customer_key: customerKey,
+            last_payment_id: null,
+            trial_started_at: null,
+            trial_ends_at: adultBillingAt,
+            current_period_start: adultBillingAt,
+            current_period_end: adultBillingAt,
+            next_billing_at: adultBillingAt,
+            billing_anchor_day: getBillingAnchorDay(ownerAgeStatus.adultBillingAt),
+          })
+          .select('id')
+          .single();
+
+        if (subscriptionInsertResult.error) {
+          console.error(subscriptionInsertResult.error);
+
+          return Response.json({ error: '성년 전 결제수단 등록 정보를 저장하지 못했습니다.' }, { status: 500 });
+        }
+      }
+
       return Response.json({ ok: true });
     }
 
@@ -443,7 +489,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const shouldUseTrial = !latestSubscription;
+    const shouldUseTrial = !latestSubscription && !ownerAgeStatus.isFormerMinorSite;
 
     if (shouldUseTrial) {
       const billingPeriod = createMonthlyBillingPeriod({

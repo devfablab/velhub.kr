@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import {
@@ -8,7 +7,6 @@ import {
 } from '@/lib/payments/billingPeriod';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
-  assertPaidPayment,
   assertPortOnePaidPayment,
   createPortOnePaymentKey,
   getCurrentPortOneProvider,
@@ -17,12 +15,9 @@ import {
   getPortOnePaidAt,
   getPortOnePayment,
   getPortOnePaymentFromResponse,
-  getPortOnePaymentMethod,
   getPortOnePaymentTransactionNo,
   getPortOneStoreId,
   requestPortOneBillingPayment,
-  type PortOnePayment,
-  type PortOnePaymentResponse,
 } from '@/lib/payments/portone';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
@@ -38,6 +33,7 @@ import {
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteOwnerAgeStatus } from '@/lib/payments/siteOwnerAge';
 
 type PlanBillingStartBody = {
   siteId?: string;
@@ -49,6 +45,8 @@ type PlanBillingStartBody = {
 
 type SiteRow = {
   id: string;
+  owner_id: string;
+  created_at: string;
   site_key: string;
   site_label: string | null;
   plan_type: string | null;
@@ -161,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, plan_type')
+      .select('id, owner_id, created_at, site_key, site_label, plan_type')
       .eq('id', siteId)
       .maybeSingle();
 
@@ -176,6 +174,19 @@ export async function POST(request: NextRequest) {
     }
 
     const site = siteResult.data as SiteRow;
+
+    const ownerAgeStatus = await getSiteOwnerAgeStatus({
+      ownerStigmaId: site.owner_id,
+      siteCreatedAt: site.created_at,
+    });
+
+    if (ownerAgeStatus.isMinor && !ownerAgeStatus.canRegisterBillingMethod) {
+      return Response.json({ error: '만 19세가 되기 7일 전부터 결제수단을 등록할 수 있습니다.' }, { status: 403 });
+    }
+
+    if (ownerAgeStatus.isMinor && purpose !== 'billing_method') {
+      return Response.json({ error: '성년 전에는 결제수단만 등록할 수 있습니다.' }, { status: 400 });
+    }
 
     if (!site.plan_type) {
       return Response.json({ error: '사이트 요금제가 설정되지 않았습니다.' }, { status: 400 });
@@ -306,7 +317,7 @@ export async function POST(request: NextRequest) {
 
     const billingMethods = (billingMethodResult.data ?? []) as unknown as BillingMethodRow[];
     const billingMethod = billingMethods[0] ?? null;
-    const shouldUseTrial = !latestSubscription;
+    const shouldUseTrial = !latestSubscription && !ownerAgeStatus.isFormerMinorSite;
 
     if (!billingMethod) {
       successUrl.searchParams.set('siteId', site.id);

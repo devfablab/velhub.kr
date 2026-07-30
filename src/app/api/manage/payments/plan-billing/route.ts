@@ -3,9 +3,12 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteOwnerAgeStatus } from '@/lib/payments/siteOwnerAge';
 
 type SiteRow = {
   id: string;
+  owner_id: string;
+  created_at: string;
   site_key: string;
   site_label: string;
   plan_type: string;
@@ -74,7 +77,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, plan_type')
+      .select('id, owner_id, created_at, site_key, site_label, plan_type')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -100,6 +103,22 @@ export async function GET(request: Request) {
 
     if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+    }
+
+    const ownerAgeStatus = await getSiteOwnerAgeStatus({
+      ownerStigmaId: site.owner_id,
+      siteCreatedAt: site.created_at,
+    });
+
+    if (ownerAgeStatus.isMinor && !ownerAgeStatus.canRegisterBillingMethod) {
+      return Response.json(
+        {
+          code: 'MINOR_BILLING_METHOD_NOT_AVAILABLE',
+          error: '만 19세가 되기 7일 전부터 결제수단을 등록할 수 있습니다.',
+        adultBillingAt: ownerAgeStatus.adultBillingAt?.toISOString() ?? null,
+      },
+        { status: 403 },
+      );
     }
 
     const planResult = site.plan_type
@@ -219,26 +238,7 @@ export async function GET(request: Request) {
             .eq('billing_key', decrypt(subscription.billing_key))
             .eq('provider', PAYMENT_PROVIDER.KPN)
             .limit(1)
-        : await supabaseAdmin
-            .from('subscription_billing_methods')
-            .select(
-              [
-                'id',
-                'provider',
-                'card_company',
-                'card_number_masked',
-                'owner_type',
-                'card_type',
-                'is_default',
-                'created_at',
-                'updated_at',
-              ].join(', '),
-            )
-            .eq('user_id', session.stigmaId)
-            .eq('provider', PAYMENT_PROVIDER.KPN)
-            .order('is_default', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(1);
+        : { data: [], error: null };
 
     const previousBillingMethodResult = subscription?.previous_billing_method_id
       ? await supabaseAdmin
@@ -323,6 +323,12 @@ export async function GET(request: Request) {
         : null,
       payments: paymentsResult.data ?? [],
       billingMethods,
+      ownerBilling: {
+        isMinor: ownerAgeStatus.isMinor,
+        isPreparingPayment: ownerAgeStatus.isMinor && ownerAgeStatus.canRegisterBillingMethod,
+        isFormerMinorSite: ownerAgeStatus.isFormerMinorSite,
+        adultBillingAt: ownerAgeStatus.adultBillingAt?.toISOString() ?? null,
+      },
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

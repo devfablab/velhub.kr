@@ -16,6 +16,7 @@ export default async function Page(context: RouteContext) {
   if (!normalizedSiteName) {
     notFound();
   }
+
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>

@@ -25,6 +25,7 @@ import {
 } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteOwnerAgeStatusFromBirthDate } from '@/lib/payments/siteOwnerAge';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
@@ -40,6 +41,19 @@ type PlanBillingSubscriptionRow = {
   billing_anchor_day: number;
   status: string;
   past_due_started_at: string | null;
+};
+
+type SiteOwnerRow = {
+  id: string;
+  owner_id: string;
+  created_at: string;
+};
+
+type OwnerIdentityRow = {
+  user_id: string;
+  birth_date: string | null;
+  birth_date_dummy: string | null;
+  identity_verified_at: string | null;
 };
 
 const AUTOMATIC_FAILURE_STAGE = 'plan_billing_check';
@@ -419,6 +433,77 @@ export async function GET(request: Request) {
     const now = new Date();
     const nowIso = now.toISOString();
 
+    const [sitesResult, planSubscriptionTargetsResult] = await Promise.all([
+      supabaseAdmin.from('rhizomes').select('id, owner_id, created_at').not('plan_type', 'is', null),
+      supabaseAdmin
+        .from('subscriptions')
+        .select('target_id')
+        .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
+        .eq('target_type', PAYMENT_TARGET_TYPE.PLAN),
+    ]);
+
+    if (sitesResult.error || planSubscriptionTargetsResult.error) {
+      console.error(sitesResult.error ?? planSubscriptionTargetsResult.error);
+
+      return Response.json({ error: '성년 전환 대상 사이트를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const sites = (sitesResult.data ?? []) as unknown as SiteOwnerRow[];
+    const ownerStigmaIds = [...new Set(sites.map((site) => site.owner_id).filter(Boolean))];
+    const identitiesResult = ownerStigmaIds.length
+      ? await supabaseAdmin
+          .from('chorogons')
+          .select('user_id, birth_date, birth_date_dummy, identity_verified_at')
+          .in('user_id', ownerStigmaIds)
+      : { data: [], error: null };
+
+    if (identitiesResult.error) {
+      console.error(identitiesResult.error);
+
+      return Response.json({ error: '성년 전환 대상 운영자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const identityMap = new Map(
+      ((identitiesResult.data ?? []) as unknown as OwnerIdentityRow[]).map((identity) => [identity.user_id, identity]),
+    );
+    const planSubscriptionTargetIds = new Set(
+      (planSubscriptionTargetsResult.data ?? []).map((subscription) => subscription.target_id),
+    );
+    const sitesToShutdown = sites
+      .filter((site) => {
+        if (planSubscriptionTargetIds.has(site.id)) {
+          return false;
+        }
+
+        const identity = identityMap.get(site.owner_id);
+
+        if (!identity?.identity_verified_at || !identity.birth_date) {
+          return false;
+        }
+
+        const birthDate =
+          process.env.NEXT_PUBLIC_APP_ENV === 'test' && identity.birth_date_dummy
+            ? identity.birth_date_dummy
+            : decrypt(identity.birth_date);
+
+        return getSiteOwnerAgeStatusFromBirthDate({
+          birthDate,
+          siteCreatedAt: site.created_at,
+          now,
+        }).isFormerMinorSite;
+      })
+      .map((site) => site.id);
+
+    if (sitesToShutdown.length) {
+      const shutdownResult = await supabaseAdmin.from('rhizomes').update({ is_shutdown: true }).in('id', sitesToShutdown);
+
+      if (shutdownResult.error) {
+        console.error(shutdownResult.error);
+
+        return Response.json({ error: '결제수단 미등록 사이트를 중지하지 못했습니다.' }, { status: 500 });
+      }
+    }
+
     const subscriptionsResult = await supabaseAdmin
       .from('subscriptions')
       .select(
@@ -478,6 +563,7 @@ export async function GET(request: Request) {
       charged,
       failed,
       waiting,
+      shutdownWithoutBillingMethod: sitesToShutdown,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

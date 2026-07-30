@@ -2,6 +2,7 @@
 
 import { type KeyboardEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -86,6 +87,13 @@ type PlanBillingResponse = {
     created_at: string;
     updated_at: string | null;
   }[];
+  ownerBilling?: {
+    isMinor: boolean;
+    isPreparingPayment: boolean;
+    isFormerMinorSite: boolean;
+    adultBillingAt: string | null;
+  };
+  code?: 'MINOR_BILLING_METHOD_NOT_AVAILABLE';
   error?: string;
 };
 
@@ -117,6 +125,12 @@ type PlanBillingStartResponse =
   | {
       error: string;
     };
+
+type PortOneBillingKeyResponse = {
+  billingKey?: string;
+  code?: string;
+  message?: string;
+};
 
 type PlanBillingCancelResponse =
   | {
@@ -388,6 +402,7 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isMinorBillingBlocked, setIsMinorBillingBlocked] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [billingData, setBillingData] = useState<PlanBillingResponse | null>(null);
   const [billingDialogType, setBillingDialogType] = useState<BillingDialogType>(null);
@@ -396,6 +411,7 @@ export default function Opt() {
   const loadData = useCallback(async () => {
     try {
       setErrorMessage('');
+      setIsMinorBillingBlocked(false);
 
       const response = await fetch(`/api/manage/payments/plan-billing?siteName=${siteName}`, {
         method: 'GET',
@@ -405,6 +421,11 @@ export default function Opt() {
       const result = (await response.json()) as PlanBillingResponse;
 
       if (!response.ok) {
+        if (result.code === 'MINOR_BILLING_METHOD_NOT_AVAILABLE') {
+          setIsMinorBillingBlocked(true);
+          return false;
+        }
+
         throw new Error(result.error ?? '결제 정보를 불러오지 못했습니다.');
       }
 
@@ -444,6 +465,7 @@ export default function Opt() {
         throw new Error('사이트 정보가 없습니다.');
       }
 
+      const isPreparingPayment = billingData.ownerBilling?.isPreparingPayment === true;
       const response = await fetch('/api/payments/portone/plan-billing/start', {
         method: 'POST',
         credentials: 'include',
@@ -452,10 +474,12 @@ export default function Opt() {
         },
         body: JSON.stringify({
           siteId: billingData.site.id,
-          orderName: '데브허브 사이트 요금제 무료체험 시작',
+          orderName: isPreparingPayment
+            ? '데브허브 사이트 요금제 결제수단 등록'
+            : '데브허브 사이트 요금제 무료체험 시작',
           successUrl: `/${siteName}/manage/payments/billing/success`,
           failUrl: `/${siteName}/manage/payments/billing/fail`,
-          purpose: 'plan_subscription',
+          purpose: isPreparingPayment ? 'billing_method' : 'plan_subscription',
         }),
       });
 
@@ -469,10 +493,61 @@ export default function Opt() {
         throw new Error(result.error || '요금제 구독을 시작하지 못했습니다.');
       }
 
+      if (result.mode === 'billing_auth') {
+        const billingKeyResponse = (await PortOne.requestIssueBillingKey({
+          storeId: result.storeId,
+          channelKey: result.channelKey,
+          billingKeyMethod: 'CARD',
+          issueId: result.orderNo,
+          issueName: result.orderName,
+          customer: {
+            customerId: result.customerKey,
+            fullName: result.customerName,
+            email: result.customerName,
+          },
+          redirectUrl: result.successUrl,
+        })) as PortOneBillingKeyResponse | undefined;
+
+        if (!billingKeyResponse) {
+          throw new Error('결제수단 등록 응답이 없습니다.');
+        }
+
+        if (billingKeyResponse.code) {
+          throw new Error(billingKeyResponse.message || '결제수단 등록에 실패했습니다.');
+        }
+
+        if (!billingKeyResponse.billingKey) {
+          throw new Error('billingKey가 발급되지 않았습니다.');
+        }
+
+        const successResponse = await fetch('/api/payments/portone/plan-billing/success', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            billingKey: billingKeyResponse.billingKey,
+            customerKey: result.customerKey,
+            siteId: billingData.site.id,
+            orderNo: result.orderNo,
+            purpose: isPreparingPayment ? 'billing_method' : 'plan_subscription',
+          }),
+        });
+
+        const successResult = (await successResponse.json()) as { error?: string };
+
+        if (!successResponse.ok) {
+          throw new Error(successResult.error ?? '결제수단 등록을 완료하지 못했습니다.');
+        }
+      }
+
       const isLoaded = await loadData();
 
       if (isLoaded) {
-        if (result.mode === 'trial_started') {
+        if (isPreparingPayment) {
+          setSuccessMessage('결제수단이 등록되었습니다.');
+        } else if (result.mode === 'trial_started') {
           setSuccessMessage('무료체험이 시작되었습니다.');
         } else {
           setSuccessMessage('요금제 구독이 시작되었습니다.');
@@ -685,9 +760,33 @@ export default function Opt() {
     );
   }
 
-  const subscription = billingData?.subscription ?? null;
-  const payments = billingData?.payments ?? [];
-  const billingMethods = billingData?.billingMethods ?? [];
+  if (!billingData) {
+    return (
+      <div className={`paper ${styles.paper}`}>
+        {isMinorBillingBlocked ? (
+          <>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>운영자가 만 19세가 되기 7일 전부터 결제수단을 등록할 수 있습니다.</span>
+            </p>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>운영자가 만 19세가 된 이후부터 구독, 후원등을 설정하여 수익창출을 하실 수 있습니다.</span>
+            </p>
+          </>
+        ) : (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{errorMessage || '결제 정보를 불러오지 못했습니다.'}</span>
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const subscription = billingData.subscription ?? null;
+  const payments = billingData.payments ?? [];
+  const billingMethods = billingData.billingMethods ?? [];
 
   const latestPaidPayment =
     payments.find((payment) => payment.status === 'paid' || payment.status === 'partially_refunded') ?? null;
@@ -695,9 +794,16 @@ export default function Opt() {
     subscription?.status === 'scheduled_cancel' || (subscription?.canceled_at && !subscription.expired_at),
   );
   const hasBillingMethod = billingMethods.length > 0;
+  const isPreparingPayment = billingData?.ownerBilling?.isPreparingPayment === true;
+  const isMinorOwner = billingData?.ownerBilling?.isMinor === true;
+  const adultBillingAt = billingData?.ownerBilling?.adultBillingAt ?? null;
   const planSubscriptionGuideText = hasBillingMethod
-    ? '결제수단이 등록되어 있습니다. 무료체험을 시작하면 사이트가 오픈되고, 무료체험 종료 후 등록된 결제수단으로 자동결제됩니다.'
-    : '아직 결제수단이 등록되지 않았습니다. 결제수단을 등록하면 사이트가 오픈되고 무료체험이 적용됩니다.';
+    ? isPreparingPayment
+      ? '결제수단이 등록되어 있습니다. 만 19세가 된 날 요금제가 결제됩니다.'
+      : '결제수단이 등록되어 있습니다. 무료체험을 시작하면 사이트가 오픈되고, 무료체험 종료 후 등록된 결제수단으로 자동결제됩니다.'
+    : isPreparingPayment
+      ? '만 19세가 된 날까지 결제수단을 등록하지 않으면 사이트 운영이 중단됩니다.'
+      : '아직 결제수단이 등록되지 않았습니다. 결제수단을 등록하면 사이트가 오픈되고 무료체험이 적용됩니다.';
   const canRetryPayment = subscription?.status === 'past_due' && hasBillingMethod;
   const canAddBillingMethod = Boolean(
     subscription && subscription.status !== 'canceled' && subscription.status !== 'expired',
@@ -773,11 +879,15 @@ export default function Opt() {
 
             {subscription ? (
               <Stack>
-                <Typography variant="body2">
-                  {getSubscriptionStatusText(subscription.status)} (
-                  {formatDateSimple(subscription.current_period_start)} ~{' '}
-                  {formatDateSimple(subscription.current_period_end)})
-                </Typography>
+                {isMinorOwner && isPreparingPayment ? (
+                  <Typography variant="body2">성년 전 결제수단 등록이 완료되었습니다.</Typography>
+                ) : (
+                  <Typography variant="body2">
+                    {getSubscriptionStatusText(subscription.status)} (
+                    {formatDateSimple(subscription.current_period_start)} ~{' '}
+                    {formatDateSimple(subscription.current_period_end)})
+                  </Typography>
+                )}
                 {isScheduledCancel ? (
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
@@ -790,7 +900,7 @@ export default function Opt() {
                     <span>자동결제에 실패했습니다. 결제수단을 확인하거나 결제를 다시 시도해 주세요.</span>
                   </p>
                 ) : null}
-                {subscription.next_billing_at ? (
+                {subscription.next_billing_at && !isPreparingPayment ? (
                   <Typography variant="body2">{formatDate(subscription.next_billing_at)}에 결제됩니다.</Typography>
                 ) : null}
               </Stack>
@@ -798,6 +908,12 @@ export default function Opt() {
               <Typography variant="body2">{planSubscriptionGuideText}</Typography>
             )}
           </Stack>
+          {isPreparingPayment && !hasBillingMethod && adultBillingAt ? (
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>{formatDate(adultBillingAt)}까지 결제수단을 등록하지 않으면 사이트 운영이 중단됩니다.</span>
+            </p>
+          ) : null}
           <Stack direction="row" gap={1} flexWrap="wrap">
             {shouldShowBillingAuthButton ? (
               hasBillingMethod ? (
@@ -811,11 +927,24 @@ export default function Opt() {
                       }}
                       disabled={isProcessing}
                     >
-                      {getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
+                      {isPreparingPayment
+                        ? '결제수단 등록하기'
+                        : getPlanSubscriptionButtonText({ subscription, hasBillingMethod })}
                     </button>
                   </Stack>
                   <PaymentTerms type="plan" disabled={isProcessing} />
                 </Stack>
+              ) : isPreparingPayment ? (
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => {
+                    void handleBillingAuth();
+                  }}
+                  disabled={isProcessing}
+                >
+                  결제수단 등록하기
+                </button>
               ) : (
                 <BillingMethodButton siteId={billingData?.site?.id} />
               )

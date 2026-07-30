@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getSiteOwnerAgeStatus } from '@/lib/payments/siteOwnerAge';
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
@@ -205,6 +206,10 @@ export async function POST(request: Request) {
       return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
+    const ownerAgeStatus = await getSiteOwnerAgeStatus({
+      ownerStigmaId: stigmaResult.data.id,
+    });
+
     const denylistResult = await supabaseAdmin
       .from('denylist')
       .select('word')
@@ -297,7 +302,7 @@ export async function POST(request: Request) {
       p_visibility_type: visibilityType,
       p_theme_type: themeType,
       p_plan_type: trimmedPlanType,
-      p_is_shutdown: isShutdown,
+      p_is_shutdown: ownerAgeStatus.isMinor ? false : isShutdown,
       p_comment_provider: commentProvider,
     });
 

@@ -154,7 +154,7 @@ export default async function Page() {
             </div>
           ) : null}
 
-          {hasSettlement ? <Opt /> : null}
+          {hasSettlement || isMinor ? <Opt isMinor={isMinor} /> : null}
         </div>
       </div>
     </main>
