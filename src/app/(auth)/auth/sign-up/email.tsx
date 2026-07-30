@@ -165,22 +165,22 @@ export default function EmailSignUp() {
     setIsSubmitting(true);
 
     try {
-      const signUpResult = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
+      const emailResponse = await fetch('/api/notifications/email/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          type: 'signup',
+          email: trimmedEmail,
+          password,
+          bypassEmailConfirm: isDevelopment ? bypassEmailConfirm : false,
+        }),
       });
+      const emailResult = (await emailResponse.json()) as { authUserId?: string; error?: string };
 
-      if (signUpResult.error) {
-        throw new Error(signUpResult.error.message);
-      }
-
-      const authUser = signUpResult.data.user;
-
-      if (!authUser) {
-        throw new Error('회원 정보를 가져오지 못했습니다.');
+      if (!emailResponse.ok || !emailResult.authUserId) {
+        throw new Error(emailResult.error || '이메일 인증 메일을 보내지 못했습니다.');
       }
 
       const saveResponse = await fetch('/api/auth/email/sign-up', {
@@ -190,8 +190,8 @@ export default function EmailSignUp() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          authUserId: authUser.id,
-          email: authUser.email ?? trimmedEmail,
+          authUserId: emailResult.authUserId,
+          email: trimmedEmail,
           userName: trimmedUserName,
           isAgreeTerm,
           isAgreeChild,

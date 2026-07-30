@@ -266,12 +266,20 @@ export default function EmailSignIn() {
     setIsSubmitting(true);
 
     try {
-      const resetPasswordResult = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const resetPasswordResponse = await fetch('/api/notifications/email/password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'recovery',
+          email: trimmedEmail,
+        }),
       });
+      const resetPasswordResult = (await resetPasswordResponse.json()) as { error?: string };
 
-      if (resetPasswordResult.error) {
-        throw new Error(resetPasswordResult.error.message);
+      if (!resetPasswordResponse.ok) {
+        throw new Error(resetPasswordResult.error || '비밀번호 설정 메일을 보내지 못했습니다.');
       }
 
       setDecisionState('idle');

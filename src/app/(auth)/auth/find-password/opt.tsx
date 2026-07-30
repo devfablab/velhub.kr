@@ -4,7 +4,6 @@ import { useState, type JSX } from 'react';
 import { Box, Stack, TextField } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Anchor from '@/components/Anchor';
-import { getSupabaseBrowser } from '@/lib/supabase';
 import Container from '../container';
 import styles from '@/app/auth.module.sass';
 
@@ -12,8 +11,6 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
 export default function Opt() {
-  const supabase = getSupabaseBrowser();
-
   const [email, setEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -43,14 +40,20 @@ export default function Opt() {
     setIsSubmitting(true);
 
     try {
-      const currentOrigin = window.location.origin;
-
-      const resetPasswordResult = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-        redirectTo: `${currentOrigin}/reset-password`,
+      const resetPasswordResponse = await fetch('/api/notifications/email/password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'recovery',
+          email: trimmedEmail,
+        }),
       });
+      const resetPasswordResult = (await resetPasswordResponse.json()) as { error?: string };
 
-      if (resetPasswordResult.error) {
-        throw new Error(resetPasswordResult.error.message);
+      if (!resetPasswordResponse.ok) {
+        throw new Error(resetPasswordResult.error || '비밀번호 재설정 메일을 보내지 못했습니다.');
       }
 
       setSuccessMessage('비밀번호 재설정 메일을 보냈습니다. 메일함을 확인해주세요.');
