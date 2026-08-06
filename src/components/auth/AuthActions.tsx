@@ -98,6 +98,10 @@ export default function AuthActions() {
               <span>커뮤니티 개설하기</span>
               <AddRoundedIcon />
             </Anchor>
+            <Anchor href="/creator" className="button medium action">
+              <span>작가 신청하기</span>
+              <AddRoundedIcon />
+            </Anchor>
           </div>
         </div>
       </>

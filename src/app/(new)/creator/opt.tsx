@@ -340,7 +340,11 @@ export default function Opt() {
       <Stack gap={2}>
         <p className="alert info">
           <InfoOutlineRoundedIcon />
-          <span>{settlement.account_verified_at ? '정산정보 확인' : '작가 신청결과를 확인하는 중입니다.'}</span>
+          <span>
+            {settlement.account_verified_at
+              ? '정산정보가 확인되었습니다. 감사합니다.'
+              : '작가 신청결과를 확인하는 중입니다.'}
+          </span>
         </p>
         <Stack gap={2}>
           <Stack gap={1}>
