@@ -19,13 +19,6 @@ type IdentityStatusResponse = {
   identity: Identity | null;
 };
 
-type SettlementResponse = {
-  exists: boolean;
-  settlement: {
-    settlement_type: 'individual' | 'business';
-  } | null;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
   const timestamp = Date.now();
 
@@ -91,37 +84,19 @@ async function getIdentityStatus(baseUrl: string, cookieHeader: string) {
   return (await response.json().catch(() => null)) as IdentityStatusResponse | null;
 }
 
-async function getSettlementStatus(baseUrl: string, cookieHeader: string) {
-  const response = await fetch(`${baseUrl}/api/settlement`, {
-    method: 'GET',
-    headers: {
-      Cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return false;
-  }
-
-  const data = (await response.json().catch(() => null)) as SettlementResponse | null;
-
-  return Boolean(data?.exists && data.settlement);
-}
-
 export default async function Page() {
   const cookieStore = await cookies();
   const baseUrl = await getBaseUrl();
   const cookieHeader = cookieStore.toString();
 
-  let hasSettlement = false;
+  let hasIdentity = false;
   let isMinor = false;
 
   if (baseUrl) {
     const identityStatus = await getIdentityStatus(baseUrl, cookieHeader);
     const identity = identityStatus?.exists ? identityStatus.identity : null;
 
-    hasSettlement = await getSettlementStatus(baseUrl, cookieHeader);
+    hasIdentity = Boolean(identity);
 
     if (identity) {
       isMinor = !isAdult(identity.birth_date);
@@ -134,9 +109,9 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <h1>블로그 개설</h1>
 
-          {(!hasSettlement && !isMinor) || isMinor ? (
+          {(!hasIdentity && !isMinor) || isMinor ? (
             <div className="paper">
-              {!hasSettlement && !isMinor ? (
+              {!hasIdentity && !isMinor ? (
                 <>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
@@ -154,7 +129,7 @@ export default async function Page() {
             </div>
           ) : null}
 
-          {hasSettlement || isMinor ? <Opt isMinor={isMinor} /> : null}
+          {hasIdentity || isMinor ? <Opt isMinor={isMinor} /> : null}
         </div>
       </div>
     </main>

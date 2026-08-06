@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSettlementProfileUpdatePayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
+import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { decrypt } from '@/lib/encryption/decrypt';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 
 type ExistingSettlementRow = {
-  user_id: string;
+  id: string;
+  name: string | null;
   identity_verified_at: string | null;
+};
+
+type ExistingBanqueRow = {
+  id: string;
   settlement_type: string | null;
   business_license: string | null;
 };
@@ -78,7 +84,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
-    .select('user_id, identity_verified_at, settlement_type, business_license')
+    .select('id, name, identity_verified_at')
     .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
@@ -93,7 +99,19 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: '본인인증이 필요합니다.' }, { status: 403 });
   }
 
-  if (!settlementRow.settlement_type) {
+  const { data: existingBanqueRow, error: banqueFindError } = await supabaseAdmin
+    .from('chorogons_banque')
+    .select('id, settlement_type, business_license')
+    .eq('chorogon_id', settlementRow.id)
+    .maybeSingle();
+
+  if (banqueFindError) {
+    return NextResponse.json({ message: '정산 정보 확인에 실패했습니다.' }, { status: 500 });
+  }
+
+  const banqueRow = existingBanqueRow as ExistingBanqueRow | null;
+
+  if (!banqueRow?.settlement_type) {
     return NextResponse.json({ message: '등록된 정산 정보가 없습니다.' }, { status: 404 });
   }
 
@@ -110,11 +128,11 @@ export async function PATCH(request: NextRequest) {
 
     let businessLicense = '';
 
-    if (settlementType === 'business') {
+    if (settlementType === 'individual_business' || settlementType === 'corporation') {
       if (businessLicenseFile) {
         businessLicense = await uploadBusinessLicenseFile(sessionClaims.userId, businessLicenseFile);
-      } else if (settlementRow.business_license) {
-        businessLicense = settlementRow.business_license;
+      } else if (banqueRow.business_license) {
+        businessLicense = banqueRow.business_license;
       } else {
         return NextResponse.json({ message: '사업자등록증 PDF를 등록해 주세요.' }, { status: 400 });
       }
@@ -129,18 +147,20 @@ export async function PATCH(request: NextRequest) {
       bank_code: getString(formData, 'bank_code'),
       account_number: getString(formData, 'account_number'),
       account_holder: getString(formData, 'account_holder'),
+      company_name: getString(formData, 'company_name'),
     };
 
-    const validatedInput = validateSettlementProfileInput(input);
+    const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
+    const validatedInput = validateSettlementProfileInput(input, identityName);
 
     if (!validatedInput.ok) {
       return NextResponse.json({ message: validatedInput.message }, { status: 400 });
     }
 
     const { error } = await supabaseAdmin
-      .from('chorogons')
-      .update(createSettlementProfileUpdatePayload(validatedInput.data))
-      .eq('user_id', currentStigma.stigmaId);
+      .from('chorogons_banque')
+      .update(toSettlementPayload(validatedInput.data))
+      .eq('id', banqueRow.id);
 
     if (error) {
       return NextResponse.json({ message: '정산 정보 수정에 실패했습니다.' }, { status: 500 });

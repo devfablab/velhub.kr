@@ -29,3 +29,9 @@ export function encrypt(value: string) {
     encryptedBuffer.toString('hex'),
   ].join(':');
 }
+
+export function createLookupHash(value: string) {
+  const encryptionKey = getEncryptionKey();
+
+  return crypto.createHmac('sha256', encryptionKey).update(value).digest('hex');
+}

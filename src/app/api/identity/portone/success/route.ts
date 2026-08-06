@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
-import { encrypt } from '@/lib/encryption/encrypt';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { createLookupHash, encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -10,6 +11,54 @@ type SuccessRequestBody = {
 
 function isValidIdentityVerificationId(identityVerificationId: string, userId: string) {
   return identityVerificationId.startsWith(`identity-${userId}-`);
+}
+
+async function findExistingVerifiedAccount(
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  ciHash: string | null,
+  diHash: string | null,
+) {
+  const conditions = [ciHash ? `ci_hash.eq.${ciHash}` : '', diHash ? `di_hash.eq.${diHash}` : ''].filter(Boolean);
+
+  if (!conditions.length) {
+    return { exists: false, accountEmail: null, error: null };
+  }
+
+  const duplicateResult = await supabaseAdmin
+    .from('chorogons')
+    .select('user_id')
+    .neq('user_id', userId)
+    .or(conditions.join(','))
+    .maybeSingle();
+
+  if (duplicateResult.error) {
+    return { exists: false, accountEmail: null, error: duplicateResult.error };
+  }
+
+  if (!duplicateResult.data) {
+    return { exists: false, accountEmail: null, error: null };
+  }
+
+  const stigmaResult = await supabaseAdmin
+    .from('stigmas')
+    .select('email')
+    .eq('id', duplicateResult.data.user_id)
+    .maybeSingle();
+
+  if (stigmaResult.error) {
+    return { exists: true, accountEmail: null, error: stigmaResult.error };
+  }
+
+  try {
+    return {
+      exists: true,
+      accountEmail: stigmaResult.data?.email ? decrypt(String(stigmaResult.data.email)) : null,
+      error: null,
+    };
+  } catch {
+    return { exists: true, accountEmail: null, error: null };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -49,6 +98,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '계정 정보를 확인하지 못했습니다.' }, { status: 500 });
   }
 
+  const ciHash = verifiedIdentity.ci ? createLookupHash(verifiedIdentity.ci) : null;
+  const diHash = verifiedIdentity.di ? createLookupHash(verifiedIdentity.di) : null;
+  const duplicateIdentity = await findExistingVerifiedAccount(supabaseAdmin, stigma.id, ciHash, diHash);
+
+  if (duplicateIdentity.error) {
+    return NextResponse.json({ message: '중복 본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  if (duplicateIdentity.exists) {
+    return NextResponse.json(
+      {
+        message: duplicateIdentity.accountEmail
+          ? `이미 ${duplicateIdentity.accountEmail} 계정에서 본인인증을 완료했습니다.`
+          : '이미 다른 계정에서 본인인증을 완료했습니다.',
+      },
+      { status: 409 },
+    );
+  }
+
   const now = new Date().toISOString();
 
   const { data: existingRow, error: findError } = await supabaseAdmin
@@ -68,7 +136,8 @@ export async function POST(request: NextRequest) {
     birth_date: encrypt(verifiedIdentity.birthDate),
     gender: encrypt(verifiedIdentity.gender),
     identity_verified_at: now,
-    updated_at: now,
+    ...(ciHash ? { ci_hash: ciHash } : {}),
+    ...(diHash ? { di_hash: diHash } : {}),
   };
 
   if (existingRow) {

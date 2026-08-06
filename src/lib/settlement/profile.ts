@@ -1,13 +1,16 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
 
-export type SettlementType = 'individual' | 'business';
+export type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
 
-export type SettlementProfileRow = {
+export type IdentityProfileRow = {
   name: string | number | null;
   birth_date: string | number | null;
   gender: string | number | null;
   identity_verified_at: string | null;
+};
+
+export type SettlementProfileRow = {
   settlement_type: SettlementType | null;
   resident_registration_number: string | number | null;
   business_registration_number: string | number | null;
@@ -18,6 +21,7 @@ export type SettlementProfileRow = {
   account_holder: string | number | null;
   account_verified_at: string | null;
   company_name: string | null;
+  status: string | null;
 };
 
 type SettlementProfileInput = {
@@ -50,6 +54,10 @@ function normalizeText(value: unknown) {
 
 function normalizeDigits(value: unknown) {
   return normalizeText(value).replace(/\D/g, '');
+}
+
+function normalizeComparableText(value: unknown) {
+  return normalizeText(value).replace(/\s/g, '');
 }
 
 function decryptNullable(value: string | number | null) {
@@ -101,8 +109,11 @@ export function maskResidentRegistrationNumber(
   return `${birthDatePrefix}-${genderDigit}••••••`;
 }
 
-export function serializeSettlementProfile(row: SettlementProfileRow | null) {
-  if (!row) {
+export function serializeSettlementProfile(
+  identityRow: IdentityProfileRow | null,
+  settlementRow: SettlementProfileRow | null,
+) {
+  if (!identityRow) {
     return {
       exists: false,
       identity: null,
@@ -110,42 +121,43 @@ export function serializeSettlementProfile(row: SettlementProfileRow | null) {
     };
   }
 
-  const name = decryptNullable(row.name);
-  const birthDate = decryptNullable(row.birth_date);
-  const gender = decryptNullable(row.gender);
+  const name = decryptNullable(identityRow.name);
+  const birthDate = decryptNullable(identityRow.birth_date);
+  const gender = decryptNullable(identityRow.gender);
 
   return {
     exists: true,
     identity:
-      row.identity_verified_at && name && birthDate && gender
+      identityRow.identity_verified_at && name && birthDate && gender
         ? {
             name,
             birth_date: birthDate,
             gender,
-            identity_verified_at: row.identity_verified_at,
+            identity_verified_at: identityRow.identity_verified_at,
           }
         : null,
-    settlement: row.settlement_type
+    settlement: settlementRow?.settlement_type
       ? {
-          settlement_type: row.settlement_type,
+          settlement_type: settlementRow.settlement_type,
           resident_registration_number: maskResidentRegistrationNumber(
-            row.resident_registration_number,
-            row.birth_date,
+            settlementRow.resident_registration_number,
+            identityRow.birth_date,
           ),
-          company_name: decryptNullable(row.company_name),
-          business_registration_number: decryptNullable(row.business_registration_number),
-          business_license: row.business_license,
-          business_income_code: row.business_income_code,
-          bank_code: row.bank_code,
-          account_number: decryptNullable(row.account_number),
-          account_holder: decryptNullable(row.account_holder),
-          account_verified_at: row.account_verified_at,
+          company_name: decryptNullable(settlementRow.company_name),
+          business_registration_number: decryptNullable(settlementRow.business_registration_number),
+          business_license: settlementRow.business_license,
+          business_income_code: settlementRow.business_income_code,
+          bank_code: settlementRow.bank_code,
+          account_number: decryptNullable(settlementRow.account_number),
+          account_holder: decryptNullable(settlementRow.account_holder),
+          account_verified_at: settlementRow.account_verified_at,
+          status: settlementRow.status,
         }
       : null,
   };
 }
 
-export function validateSettlementProfileInput(value: unknown) {
+export function validateSettlementProfileInput(value: unknown, identityName?: string | null) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return {
       ok: false as const,
@@ -159,7 +171,11 @@ export function validateSettlementProfileInput(value: unknown) {
   const accountNumber = normalizeDigits(input.account_number);
   const accountHolder = normalizeText(input.account_holder);
 
-  if (settlementType !== 'individual' && settlementType !== 'business') {
+  if (
+    settlementType !== 'individual' &&
+    settlementType !== 'individual_business' &&
+    settlementType !== 'corporation'
+  ) {
     return {
       ok: false as const,
       message: '정산 유형이 올바르지 않습니다.',
@@ -167,13 +183,6 @@ export function validateSettlementProfileInput(value: unknown) {
   }
 
   const validSettlementType: SettlementType = settlementType;
-
-  if (settlementType !== 'individual' && settlementType !== 'business') {
-    return {
-      ok: false as const,
-      message: '정산 유형이 올바르지 않습니다.',
-    };
-  }
 
   if (!bankCode || !accountNumber || !accountHolder) {
     return {
@@ -200,6 +209,16 @@ export function validateSettlementProfileInput(value: unknown) {
       };
     }
 
+    if (
+      !identityName ||
+      normalizeComparableText(accountHolder) !== normalizeComparableText(identityName)
+    ) {
+      return {
+        ok: false as const,
+        message: '예금주는 본인인증한 성명과 일치해야 합니다.',
+      };
+    }
+
     return {
       ok: true as const,
       data: {
@@ -217,6 +236,7 @@ export function validateSettlementProfileInput(value: unknown) {
 
   const businessRegistrationNumber = normalizeDigits(input.business_registration_number);
   const businessLicense = normalizeText(input.business_license);
+  const companyName = normalizeText(input.company_name);
 
   if (businessRegistrationNumber.length !== 10) {
     return {
@@ -232,11 +252,28 @@ export function validateSettlementProfileInput(value: unknown) {
     };
   }
 
+  if (!companyName) {
+    return {
+      ok: false as const,
+      message: '단체/회사명을 입력해 주세요.',
+    };
+  }
+
+  if (
+    settlementType === 'corporation' &&
+    normalizeComparableText(accountHolder) !== normalizeComparableText(companyName)
+  ) {
+    return {
+      ok: false as const,
+      message: '법인 예금주는 단체/회사명과 일치해야 합니다.',
+    };
+  }
+
   return {
     ok: true as const,
     data: {
       settlement_type: validSettlementType,
-      company_name: input.company_name ? normalizeText(input.company_name) : null,
+      company_name: companyName,
       resident_registration_number: null,
       business_registration_number: businessRegistrationNumber,
       business_license: businessLicense,
@@ -248,7 +285,7 @@ export function validateSettlementProfileInput(value: unknown) {
   };
 }
 
-export function createSettlementProfileUpdatePayload(data: ValidatedSettlementProfileInput) {
+export function toSettlementPayload(data: ValidatedSettlementProfileInput) {
   return {
     settlement_type: data.settlement_type,
     resident_registration_number: data.resident_registration_number ? encrypt(data.resident_registration_number) : null,

@@ -27,7 +27,8 @@ type IdentityAgreementProps = {
   type: AgreementType;
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm?: () => void;
+  showAgreementCheck?: boolean;
 };
 
 function openLawWindow(url: string) {
@@ -150,7 +151,13 @@ function AgreementContent({ type }: { type: AgreementType }) {
   );
 }
 
-export default function IdentityAgreement({ type, open, onClose, onConfirm }: IdentityAgreementProps) {
+export default function IdentityAgreement({
+  type,
+  open,
+  onClose,
+  onConfirm,
+  showAgreementCheck = true,
+}: IdentityAgreementProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isAgreed, setIsAgreed] = useState(false);
@@ -158,7 +165,7 @@ export default function IdentityAgreement({ type, open, onClose, onConfirm }: Id
   const agreementLabel = type === 'identity' ? '[필수] 본인인증 이용안내 동의' : '[필수] 정산정보 수집·이용 동의';
   const closeClassName = isMobile ? 'button medium cancel' : 'button medium close';
 
-  const actions = (
+  const actions = showAgreementCheck ? (
     <>
       <button type="button" className={closeClassName} onClick={onClose}>
         취소
@@ -167,15 +174,21 @@ export default function IdentityAgreement({ type, open, onClose, onConfirm }: Id
         다음
       </button>
     </>
+  ) : (
+    <button type="button" className={closeClassName} onClick={onClose}>
+      확인
+    </button>
   );
 
   const content = (
     <Stack gap={3}>
       <AgreementContent type={type} />
-      <FormControlLabel
-        control={<Checkbox checked={isAgreed} onChange={(event) => setIsAgreed(event.target.checked)} />}
-        label={<Typography variant="body2">{agreementLabel}</Typography>}
-      />
+      {showAgreementCheck ? (
+        <FormControlLabel
+          control={<Checkbox checked={isAgreed} onChange={(event) => setIsAgreed(event.target.checked)} />}
+          label={<Typography variant="body2">{agreementLabel}</Typography>}
+        />
+      ) : null}
     </Stack>
   );
 
