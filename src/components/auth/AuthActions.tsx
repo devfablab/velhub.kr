@@ -88,20 +88,34 @@ export default function AuthActions() {
             </div>
           </div>
         </div>
-        <div className={`${styles['new-sites']} paper`}>
-          <div className={styles.buttons}>
-            <Anchor href="/new/blog" className="button medium submit">
-              <span>블로그 개설하기</span>
-              <AddRoundedIcon />
-            </Anchor>
-            <Anchor href="/new/community" className="button medium submit">
-              <span>커뮤니티 개설하기</span>
-              <AddRoundedIcon />
-            </Anchor>
-            <Anchor href="/creator" className="button medium action">
-              <span>작가 신청하기</span>
-              <AddRoundedIcon />
-            </Anchor>
+        <div className={styles['new-paper']}>
+          <div className={`${styles['new']} paper`}>
+            <div className={styles.buttons}>
+              <Anchor href="/new/blog" className="button medium submit">
+                <span>블로그 개설하기</span>
+                <AddRoundedIcon />
+              </Anchor>
+              <Anchor href="/new/community" className="button medium submit">
+                <span>커뮤니티 개설하기</span>
+                <AddRoundedIcon />
+              </Anchor>
+            </div>
+          </div>
+          <div className={`${styles['new']} paper`}>
+            <div className={styles.buttons}>
+              <Anchor href="/creator" className="button medium action">
+                <span>작가 신청하기</span>
+                <AddRoundedIcon />
+              </Anchor>
+              <Anchor href="/memberships/creator" className="button medium action">
+                <span>창작자 멤버십</span>
+                <AddRoundedIcon />
+              </Anchor>
+              <Anchor href="/memberships/user" className="button medium action">
+                <span>독자 멤버십</span>
+                <AddRoundedIcon />
+              </Anchor>
+            </div>
           </div>
         </div>
       </>

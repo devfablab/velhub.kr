@@ -1,0 +1,157 @@
+.membership-page
+  min-height: calc(100vh - ds.rem(64))
+  padding: ds.rem(53) ds.rem(17) ds.rem(80)
+
+.membership-container
+  max-width: ds.rem(1270)
+  margin: 0 auto
+
+.membership-type
+  display: inline-flex
+  align-items: center
+  width: fit-content
+  gap: ds.rem(7)
+  padding: 0
+  border: 0
+  background-color: transparent
+  color: inherit
+  text-align: left
+  cursor: pointer
+
+  &:disabled
+    cursor: not-allowed
+
+  span
+    font-size: ds.rem(18)
+    @include ds.fw(neo, 700)
+
+.membership-cards
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  align-items: stretch
+  gap: ds.rem(23)
+
+  @include ds.mq(maxMedium)
+    grid-template-columns: 1fr
+
+.membership-single-card
+  max-width: ds.rem(670)
+
+.membership-card,
+.membership-single-card
+  position: relative
+  min-width: 0
+  padding: ds.rem(29)
+  border: 1px solid rgba(ds.$rgb-primary, .15)
+  border-radius: ds.rem(17)
+  background-color: rgba(ds.$rgb-white, .72)
+  box-shadow: 0 ds.rem(8) ds.rem(30) rgba(ds.$rgb-primary, .06)
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .3)
+    background-color: rgba(ds.$rgb-black, .72)
+    box-shadow: none
+
+  &.membership-disabled
+    opacity: .55
+
+  > div
+    height: 100%
+
+.membership-all-in-one-card
+  grid-column: 1 / -1
+
+.membership-card-title
+  padding-bottom: ds.rem(17)
+  border-bottom: 1px solid rgba(ds.$rgb-primary, .12)
+  font-size: ds.rem(18)
+  @include ds.fw(neo, 700)
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .2)
+
+.membership-basic
+  width: 100%
+  padding: ds.rem(17)
+  border-radius: ds.rem(12)
+  background-color: rgba(ds.$rgb-accent, .1)
+
+  html[data-theme="yellow-dark"] &
+    background-color: rgba(ds.$rgb-accent, .14)
+
+.membership-feature, .membership-package
+  display: grid
+  grid-template-columns: auto minmax(0, 1fr) auto
+  align-items: center
+  width: 100%
+  gap: ds.rem(12)
+  min-height: ds.rem(64)
+  padding: ds.rem(12) ds.rem(17)
+  border: 1px solid rgba(ds.$rgb-primary, .15)
+  border-radius: ds.rem(12)
+  background-color: transparent
+  color: inherit
+  text-align: left
+  cursor: pointer
+  transition: border-color .2s ease, background-color .2s ease
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .3)
+
+  &:hover, &:focus-visible
+    border-color: ds.$hex-accent
+    background-color: rgba(ds.$rgb-accent, .08)
+
+  &:disabled
+    cursor: not-allowed
+
+  .MuiCheckbox-root
+    padding: 0
+
+  .MuiTypography-root:last-child
+    white-space: nowrap
+    color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+.membership-package
+  border-color: ds.$hex-accent !important
+  background-color: rgba(ds.$rgb-accent, .1)
+
+  > div
+    grid-column: 2 / -1
+
+  del
+    margin-right: ds.rem(7)
+    color: ds.$hex-secondary
+    opacity: .7
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+  strong
+    font-size: ds.rem(16)
+    @include ds.fw(neo, 800)
+    letter-spacing: -.02em
+    color: ds.$hex-accent
+
+.membership-all-in-one-features
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+
+  .membership-package
+    grid-column: 1 / -1
+
+  @include ds.mq(maxSmall)
+    grid-template-columns: 1fr
+
+.membership-actions
+  display: flex
+  justify-content: flex-end
+  gap: ds.rem(17)
+  padding-top: ds.rem(17)
+
+  @include ds.mq(maxSmall)
+    .button
+      width: 100%
