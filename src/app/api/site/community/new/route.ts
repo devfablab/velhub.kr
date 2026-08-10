@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
+import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -172,6 +173,31 @@ export async function POST(request: Request) {
 
     if (stigmaResult.error || !stigmaResult.data) {
       return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    try {
+      const hasUnlimitedSites = await hasMembershipFeature(stigmaResult.data.id, 'owner_unlimited_sites');
+
+      if (!hasUnlimitedSites) {
+        const siteCountResult = await supabaseAdmin
+          .from('rhizomes')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', stigmaResult.data.id)
+          .eq('site_type', 'community');
+
+        if (siteCountResult.error) {
+          return Response.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        if ((siteCountResult.count ?? 0) >= 1) {
+          return Response.json(
+            { error: '기본 오너 멤버십에서는 커뮤니티를 1개만 개설할 수 있습니다.' },
+            { status: 403 },
+          );
+        }
+      }
+    } catch {
+      return Response.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     const denylistResult = await supabaseAdmin

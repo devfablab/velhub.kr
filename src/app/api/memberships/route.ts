@@ -15,6 +15,7 @@ import {
 import { PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, REFUND_POLICY, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
+import { getMembershipFeatures } from '@/lib/memberships/features';
 import { createCustomerKey } from '@/lib/payments/customer';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -98,7 +99,7 @@ export async function GET() {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const [membershipResult, billingMethodResult] = await Promise.all([
+  const [membershipResult, billingMethodResult, membershipFeatures] = await Promise.all([
     supabaseAdmin
       .from('memberships')
       .select('id, created_at, updated_at, membership_type')
@@ -109,6 +110,7 @@ export async function GET() {
       .select('id, card_company, card_number_masked, card_type, owner_type, is_default')
       .eq('user_id', currentStigma.stigmaId)
       .order('is_default', { ascending: false }),
+    getMembershipFeatures(currentStigma.stigmaId),
   ]);
 
   if (membershipResult.error || billingMethodResult.error) {
@@ -178,6 +180,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
+    features: [...membershipFeatures],
     memberships: memberships.map((membership) => ({
       ...membership,
       itemLabels: itemLabelsByMembershipId.get(membership.id) ?? [],
