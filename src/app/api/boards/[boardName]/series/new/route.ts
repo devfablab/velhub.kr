@@ -4,6 +4,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -97,7 +98,7 @@ export async function POST(request: Request, context: RouteContext) {
     const seriesLabel = normalizeText(requestBody.seriesLabel);
     const summary = normalizeText(requestBody.summary);
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
-    const userId = normalizeText(requestBody.userId) || null;
+    let userId = normalizeText(requestBody.userId) || null;
 
     if (!siteName) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -157,6 +158,20 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!canManageSeries) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const soloBlog = await isSoloBlog({
+      supabaseAdmin,
+      siteId: rhizome.data.id,
+      siteType: rhizome.data.site_type,
+    });
+
+    if (soloBlog) {
+      userId = session.stigmaId;
+    }
+
+    if (!userId) {
+      return Response.json({ error: '연재 담당 작가를 선택해주세요.' }, { status: 400 });
     }
 
     const duplicatedSeriesKey = await supabaseAdmin

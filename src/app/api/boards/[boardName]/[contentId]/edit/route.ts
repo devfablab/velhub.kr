@@ -6,6 +6,7 @@ import {
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { isSoloBlog } from '@/lib/board/seriesAuthor';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
@@ -871,7 +872,20 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '완결된 연재는 선택할 수 없습니다.' }, { status: 400 });
         }
 
-        if (session.case !== 'admin' && session.case !== 'staff' && seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {
+        const soloBlog = await isSoloBlog({
+          supabaseAdmin,
+          siteId: rhizomeData.id,
+          siteType: rhizomeData.site_type,
+        });
+
+        if (!seriesResult.data.user_id && !soloBlog) {
+          return Response.json(
+            { error: '연재 담당 작가가 지정되지 않아 글을 작성할 수 없습니다.' },
+            { status: 400 },
+          );
+        }
+
+        if (seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {
           return Response.json({ error: '해당 연재를 선택할 권한이 없습니다.' }, { status: 403 });
         }
 

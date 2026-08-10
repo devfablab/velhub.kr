@@ -10,7 +10,7 @@ type RouteContext = {
 };
 
 type SearchRow = {
-  particleId: string;
+  stigmaId: string;
   email: string;
   userName: string;
   nickname: string;
@@ -96,7 +96,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
-      .select('id, user_id, email, user_name')
+      .select('id, email, user_name')
       .in('id', stigmaIds);
 
     if (stigmaResult.error) {
@@ -107,7 +107,7 @@ export async function GET(request: Request, context: RouteContext) {
       (stigmaResult.data ?? []).map((row) => [
         row.id as string,
         {
-          particleId: (row.user_id as string | null) ?? '',
+          stigmaId: row.id as string,
           email: row.email ? decrypt(row.email as string) : '',
           userName: row.user_name ? decrypt(row.user_name as string) : '',
         },
@@ -120,13 +120,13 @@ export async function GET(request: Request, context: RouteContext) {
         const stigma = stigmaMap.get(stigmaId);
 
         return {
-          particleId: stigma?.particleId ?? '',
+          stigmaId: stigma?.stigmaId ?? '',
           email: stigma?.email ?? '',
           userName: stigma?.userName ?? '',
           nickname: (row.nickname as string | null) ?? '',
         };
       })
-      .filter((row) => row.particleId)
+      .filter((row) => row.stigmaId)
       .filter((row) => {
         return (
           row.email.toLowerCase().includes(query) ||

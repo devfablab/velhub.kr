@@ -62,7 +62,7 @@ type SeriesRow = {
 };
 
 type SeriesUserSearchRow = {
-  particleId: string;
+  stigmaId: string;
   email: string;
   userName: string;
   nickname: string;
@@ -793,7 +793,7 @@ export default function Opt() {
         seriesLabel: nextSeriesLabel || null,
         summary,
         thumbnailImage,
-        userId: selectedUser?.particleId || null,
+        userId: selectedUser?.stigmaId || null,
         isCompleted,
       };
 
@@ -1124,7 +1124,7 @@ export default function Opt() {
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email || selectedUser.particleId}</Typography>
+                            <Typography variant="body2">{selectedUser.email || selectedUser.stigmaId}</Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1361,7 +1361,7 @@ export default function Opt() {
                         <Stack gap={0.5}>
                           <Box>
                             <Typography variant="subtitle2">이메일</Typography>
-                            <Typography variant="body2">{selectedUser.email || selectedUser.particleId}</Typography>
+                            <Typography variant="body2">{selectedUser.email || selectedUser.stigmaId}</Typography>
                           </Box>
                           {selectedUser.userName ? (
                             <Box>
@@ -1586,7 +1586,7 @@ export default function Opt() {
                       </TableHead>
                       <TableBody>
                         {searchedUsers.map((user) => (
-                          <TableRow key={user.particleId}>
+                          <TableRow key={user.stigmaId}>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>{user.userName}</TableCell>
                             <TableCell>{user.nickname}</TableCell>
@@ -1675,7 +1675,7 @@ export default function Opt() {
                       </TableHead>
                       <TableBody>
                         {searchedUsers.map((user) => (
-                          <TableRow key={user.particleId}>
+                          <TableRow key={user.stigmaId}>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>{user.userName}</TableCell>
                             <TableCell>{user.nickname}</TableCell>

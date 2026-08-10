@@ -68,7 +68,7 @@ export async function GET(request: Request, context: RouteContext) {
     }
 
     let selectedUser: {
-      particleId: string;
+      stigmaId: string;
       email: string;
       userName: string;
       nickname: string;
@@ -78,8 +78,8 @@ export async function GET(request: Request, context: RouteContext) {
       const [stigmaResult, memberResult] = await Promise.all([
         supabaseAdmin
           .from('stigmas')
-          .select('user_id, email, user_name')
-          .eq('user_id', seriesResult.data.user_id)
+          .select('id, email, user_name')
+          .eq('id', seriesResult.data.user_id)
           .maybeSingle(),
         supabaseAdmin
           .from('rhizome_stigmas')
@@ -98,7 +98,7 @@ export async function GET(request: Request, context: RouteContext) {
       }
 
       selectedUser = {
-        particleId: seriesResult.data.user_id,
+        stigmaId: seriesResult.data.user_id,
         email: stigmaResult.data?.email ? decrypt(stigmaResult.data.email as string) : '',
         userName: stigmaResult.data?.user_name ? decrypt(stigmaResult.data.user_name as string) : '',
         nickname: memberResult.data?.nickname ?? '',
