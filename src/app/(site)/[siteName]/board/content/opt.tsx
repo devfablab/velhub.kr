@@ -45,8 +45,7 @@ import UserInfo from '@/components/service/community/UserInfo';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
 import RecentTableList from '@/components/service/community/RecentTableList';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
-import SubscriptionButton, { type SubscriptionStatus } from '@/components/service/common/SubscriptionButton';
-import DonationButton from '@/components/service/common/DonationButton';
+import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
@@ -377,7 +376,6 @@ export default function Opt({ isCommunity }: Props) {
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
-  const [boardSubscriptionStatus, setBoardSubscriptionStatus] = useState<SubscriptionStatus>('none');
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -763,16 +761,10 @@ export default function Opt({ isCommunity }: Props) {
   const canPurchasePost =
     content.published_status === 'published' &&
     (content.is_purchase_required || isSubscriptionSeriesPost) &&
-    !content.has_subscription_board &&
     !content.has_subscription_series &&
     !content.has_purchase_post &&
     !isAuthor &&
     !isStaff;
-
-  const hasBoardSubscription =
-    boardSubscriptionStatus === 'active' ||
-    boardSubscriptionStatus === 'past_due' ||
-    boardSubscriptionStatus === 'scheduled_cancel';
 
   const seriesList =
     series && seriesContents.length > 0 ? (
@@ -942,38 +934,17 @@ export default function Opt({ isCommunity }: Props) {
 
   const subscriptionButtons =
     content.published_status === 'published' && content.is_purchase_required && !isStaff ? (
-      <>
+      series ? (
         <SubscriptionButton
           siteName={siteName}
           boardName={boardName}
           board={board}
-          selectedSeries={null}
-          onStatusChange={setBoardSubscriptionStatus}
+          selectedSeries={{
+            series_key: series.series_key,
+            series_label: series.series_label,
+          }}
         />
-
-        {series && !hasBoardSubscription ? (
-          <SubscriptionButton
-            siteName={siteName}
-            boardName={boardName}
-            board={board}
-            selectedSeries={{
-              series_key: series.series_key,
-              series_label: series.series_label,
-            }}
-          />
-        ) : null}
-      </>
-    ) : null;
-
-  const postDonationButton =
-    content.published_status === 'published' && content.is_post_donation_available && !content.is_purchase_required ? (
-      <DonationButton
-        targetType="post"
-        siteName={siteName}
-        boardName={boardName}
-        contentId={content.slug}
-        buttonText="포스팅 후원"
-      />
+      ) : null
     ) : null;
 
   const postPurchaseButton = canPurchasePost ? (
@@ -1028,11 +999,10 @@ export default function Opt({ isCommunity }: Props) {
   ) : null;
 
   const paidContentActionButtons =
-    subscriptionButtons || postPurchaseButton || postDonationButton ? (
+    subscriptionButtons || postPurchaseButton ? (
       <>
         {subscriptionButtons}
         {postPurchaseButton}
-        {postDonationButton}
       </>
     ) : null;
 

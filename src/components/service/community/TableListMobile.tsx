@@ -21,7 +21,6 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
 import ReportButton from '../common/ReportButton';
 import SubscriptionButton from '../common/SubscriptionButton';
-import DonationButton from '../common/DonationButton';
 import styles from '@/app/aside.module.sass';
 
 type BoardItem = {
@@ -225,15 +224,14 @@ export default function TableListMobile({
         </div>
         {boardName && board ? (
           <>
-            <SubscriptionButton
-              siteName={siteName}
-              boardName={boardName}
-              board={board}
-              selectedSeries={selectedSeries}
-              selectedBoard={true}
-            />
-            {isCommunity && board.board_type !== 'page' ? (
-              <DonationButton siteName={siteName} targetType="board" boardName={boardName} buttonText="게시판 후원" />
+            {selectedSeries ? (
+              <SubscriptionButton
+                siteName={siteName}
+                boardName={boardName}
+                board={board}
+                selectedSeries={selectedSeries}
+                selectedBoard={true}
+              />
             ) : null}
           </>
         ) : null}

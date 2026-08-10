@@ -6,13 +6,13 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type DonationTargetType = 'site' | 'series' | 'board' | 'post';
+type DonationTargetType = 'site' | 'series';
 
 type DonationStartBody = {
   siteName?: string;
   targetType?: DonationTargetType;
   boardName?: string;
-  contentId?: string;
+  seriesName?: string;
   amount?: number;
   successUrl?: string;
   failUrl?: string;

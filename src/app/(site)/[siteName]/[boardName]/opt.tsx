@@ -32,7 +32,6 @@ import SiteProfile from '@/components/service/blog/SiteProfile';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
-import DonationButton from '@/components/service/common/DonationButton';
 import ReportButton from '@/components/service/common/ReportButton';
 
 type Props = {
@@ -541,19 +540,13 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
-                  <SubscriptionButton
-                    siteName={siteName}
-                    boardName={boardName}
-                    board={board}
-                    selectedSeries={selectedSeries}
-                    selectedBoard={true}
-                  />
-                  {isCommunity && board && board.board_type !== 'page' ? (
-                    <DonationButton
+                  {selectedSeries ? (
+                    <SubscriptionButton
                       siteName={siteName}
-                      targetType="board"
                       boardName={boardName}
-                      buttonText="게시판 후원"
+                      board={board}
+                      selectedSeries={selectedSeries}
+                      selectedBoard={true}
                     />
                   ) : null}
                   <ReportButton targetType="board" siteName={siteName} boardName={boardName} />

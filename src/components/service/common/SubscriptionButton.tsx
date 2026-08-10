@@ -32,14 +32,14 @@ type SelectedSeries = {
   series_label: string;
 };
 
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'series';
 export type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type Props = {
   siteName: string;
   boardName: string;
   board: BoardInfo | null;
-  selectedSeries: SelectedSeries | null;
+  selectedSeries: SelectedSeries;
   selectedBoard?: boolean | null;
   onStatusChange?: (subscriptionStatus: SubscriptionStatus) => void;
 };
@@ -202,8 +202,8 @@ export default function SubscriptionButton({
 }: Props) {
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
 
-  const targetType: SubscriptionTargetType = selectedSeries ? 'series' : 'board';
-  const targetLabel = selectedSeries?.series_label ?? board?.board_label ?? '';
+  const targetType: SubscriptionTargetType = 'series';
+  const targetLabel = selectedSeries.series_label;
 
   const statusQueryString = useMemo(() => {
     const params = new URLSearchParams({
@@ -212,12 +212,10 @@ export default function SubscriptionButton({
       targetType,
     });
 
-    if (selectedSeries) {
-      params.set('seriesName', selectedSeries.series_key);
-    }
+    params.set('seriesName', selectedSeries.series_key);
 
     return params.toString();
-  }, [siteName, boardName, targetType, selectedSeries]);
+  }, [siteName, boardName, targetType, selectedSeries.series_key]);
   const [isEnabled, setIsEnabled] = useState(false);
 
   const [price, setPrice] = useState<number | null>(null);

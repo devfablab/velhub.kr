@@ -22,7 +22,7 @@ import { normalizeText } from '@/lib/utils';
 import styles from '@/app/board.module.sass';
 import PaymentTerms from './PaymentTerms';
 
-type DonationTargetType = 'site' | 'series' | 'board' | 'post';
+type DonationTargetType = 'site' | 'series';
 
 type DonationStartResponse = {
   storeId?: string;

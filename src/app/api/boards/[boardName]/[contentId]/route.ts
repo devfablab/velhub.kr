@@ -475,35 +475,6 @@ async function getPaidContentAccess({
     };
   }
 
-  const boardSubscriptionResult = await supabaseAdmin
-    .from('subscriptions')
-    .select('id')
-    .eq('subscriber_user_id', stigmaId)
-    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-    .in('status', ['trialing', 'active', 'past_due'])
-    .is('expired_at', null)
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (boardSubscriptionResult.error) {
-    throw new Error('게시판 구독 상태를 확인하지 못했습니다.');
-  }
-
-  const hasBoardSubscription = (boardSubscriptionResult.data ?? []).length > 0;
-
-  if (hasBoardSubscription) {
-    return {
-      is_purchase_required: true,
-      purchase_post_price: postPurchasePrice,
-      has_subscription_board: true,
-      has_subscription_series: false,
-      has_purchase_post: false,
-      can_view_paid_content: true,
-    };
-  }
-
   const seriesSubscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id')
@@ -1173,10 +1144,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const canViewPaidContent = isAuthor || canManageContent || paidContentAccess.can_view_paid_content;
     let isGallerySubscriptionPreview =
-      boardData.board_type === 'gallery' &&
-      (boardData.is_subscription === true ||
-        paidContentAccess.has_subscription_board ||
-        paidContentAccess.has_subscription_series);
+      boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);

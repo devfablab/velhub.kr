@@ -31,7 +31,7 @@ import { normalizeText } from '@/lib/utils';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'series';
 
 type SubscriptionStartBody = {
   siteName?: string;
@@ -48,6 +48,7 @@ type SiteRow = {
   site_key: string;
   site_label: string | null;
   owner_id: string;
+  site_type: string;
 };
 
 type OwnerStigmaRow = {
@@ -59,6 +60,7 @@ type BoardRow = {
   id: string;
   board_key: string;
   board_label: string | null;
+  board_type: string;
 };
 
 type SeriesRow = {
@@ -143,15 +145,12 @@ async function requestPortOneBillingPaymentCompat({
 }
 
 function createSubscriptionOrderNo(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return createPaymentOrderNo('SUBSCRIPTION_BOARD');
-  }
-
+  void targetType;
   return createPaymentOrderNo('SUBSCRIPTION_SERIES');
 }
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === 'series') {
     return value;
   }
 
@@ -159,26 +158,17 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
-  }
-
+  void targetType;
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
-  }
-
+  void targetType;
   return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TARGET_TYPE.BOARD;
-  }
-
+  void targetType;
   return PAYMENT_TARGET_TYPE.SERIES;
 }
 
@@ -208,7 +198,7 @@ function getRefundableUntil(startedAt: Date) {
 async function getSiteByName({ supabaseAdmin, siteName }: { supabaseAdmin: SupabaseAdminClient; siteName: string }) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, owner_id')
+    .select('id, site_key, site_label, owner_id, site_type')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -223,45 +213,24 @@ async function getSiteByName({ supabaseAdmin, siteName }: { supabaseAdmin: Supab
   return siteResult.data as SiteRow;
 }
 
-async function getSubscriptionEnabledSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesCountResult.error) {
-    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
 async function getSubscriptionTarget({
   supabaseAdmin,
   siteId,
+  siteType,
   boardName,
   targetType,
   seriesName,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   siteId: string;
+  siteType: string;
   boardName: string;
   targetType: SubscriptionTargetType;
   seriesName: string;
 }): Promise<SubscriptionTarget> {
   const boardResult = await supabaseAdmin
     .from('boards')
-    .select('id, board_key, board_label')
+    .select('id, board_key, board_label, board_type')
     .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
@@ -276,20 +245,8 @@ async function getSubscriptionTarget({
 
   const board = boardResult.data as BoardRow;
 
-  if (targetType === 'board') {
-    const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
-      supabaseAdmin,
-      siteId,
-      boardId: board.id,
-    });
-
-    return {
-      targetId: board.id,
-      targetLabel: board.board_label,
-      boardId: board.id,
-      seriesId: null,
-      isSubscriptionTarget: subscriptionEnabledSeriesCount >= 2,
-    };
+  if (siteType === 'community' && !['basic', 'gallery'].includes(board.board_type)) {
+    throw new Error('일반 또는 갤러리 게시판의 연재만 구독할 수 있습니다.');
   }
 
   if (!seriesName) {
@@ -405,59 +362,6 @@ async function hasActiveSubscription({
   return (existingActiveSubscriptionResult.data ?? []).length > 0;
 }
 
-async function cancelSeriesSubscriptionsInBoard({
-  supabaseAdmin,
-  stigmaId,
-  siteId,
-  boardId,
-  now,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  stigmaId: string;
-  siteId: string;
-  boardId: string;
-  now: Date;
-}) {
-  const canceledAt = now.toISOString();
-
-  const seriesResult = await supabaseAdmin
-    .from('board_series')
-    .select('id')
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesResult.error) {
-    throw new Error('게시판의 구독 연재를 확인하지 못했습니다.');
-  }
-
-  const seriesIds = (seriesResult.data ?? [])
-    .map((item) => normalizeText(item.id))
-    .filter((seriesId): seriesId is string => Boolean(seriesId));
-
-  if (seriesIds.length === 0) {
-    return;
-  }
-
-  const cancelResult = await supabaseAdmin
-    .from('subscriptions')
-    .update({
-      status: SUBSCRIPTION_STATUS.CANCELED,
-      canceled_at: canceledAt,
-      expired_at: canceledAt,
-    })
-    .eq('subscriber_user_id', stigmaId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
-    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
-    .in('target_id', seriesIds)
-    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
-    .is('expired_at', null);
-
-  if (cancelResult.error) {
-    throw new Error('기존 연재 구독을 취소하지 못했습니다.');
-  }
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SubscriptionStartBody;
@@ -496,6 +400,7 @@ export async function POST(request: Request) {
     const subscriptionTarget = await getSubscriptionTarget({
       supabaseAdmin,
       siteId: site.id,
+      siteType: site.site_type,
       boardName,
       targetType,
       seriesName,
@@ -678,16 +583,6 @@ export async function POST(request: Request) {
       console.error(paymentUpdateResult.error);
 
       return Response.json({ error: '결제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
-    }
-
-    if (targetType === 'board') {
-      await cancelSeriesSubscriptionsInBoard({
-        supabaseAdmin,
-        stigmaId: session.stigmaId ?? '',
-        siteId: site.id,
-        boardId: subscriptionTarget.boardId,
-        now,
-      });
     }
 
     await createOwnerPaymentSplits({
