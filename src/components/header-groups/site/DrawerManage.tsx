@@ -9,7 +9,6 @@ import ListOutlinedIcon from '@mui/icons-material/ListOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import Anchor from '@/components/Anchor';
 
 type SiteType = 'blog' | 'community';
@@ -107,13 +106,6 @@ export default function DrawerManage({ siteName, siteType, siteRole, globalRole,
             >
               <DesignServicesOutlinedIcon fontSize="small" />
               <span>디자인</span>
-            </Anchor>
-          </MenuItem>
-
-          <MenuItem onClick={onClose}>
-            <Anchor href={`/${siteName}/manage/payments/billing`}>
-              <SellOutlinedIcon fontSize="small" />
-              <span>결제</span>
             </Anchor>
           </MenuItem>
 

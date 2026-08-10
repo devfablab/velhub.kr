@@ -95,10 +95,6 @@ export default function NavManage({ siteName, siteType, siteRole, globalRole, is
             startsWith: true,
           },
           {
-            label: '결제',
-            href: `/${siteName}/manage/payments/billing`,
-          },
-          {
             label: '통계',
             href: `/${siteName}/manage/stats`,
             startsWith: true,
