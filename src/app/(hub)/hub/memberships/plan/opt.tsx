@@ -21,6 +21,8 @@ type MembershipResponse = {
     type: MembershipType;
     updatedAt: string | null;
     itemLabels: string[];
+    subscriptionStatus: string | null;
+    currentPeriodEnd: string | null;
   }>;
   billingMethods: BillingMethod[];
   message?: string;
@@ -120,7 +122,8 @@ export default function MembershipPlan() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CurrentMembership | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
+  const [refundTarget, setRefundTarget] = useState<CurrentMembership | null>(null);
+  const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -191,29 +194,57 @@ export default function MembershipPlan() {
     }
   }
 
-  async function handleCancel() {
-    if (!cancelTarget || isCancelling) {
+  async function handleSubscriptionChange(action: 'cancel' | 'resume') {
+    if (!cancelTarget || isChangingSubscription) {
       return;
     }
 
-    setIsCancelling(true);
+    setIsChangingSubscription(true);
     setErrorMessage('');
 
     try {
       const response = await fetch(`/api/memberships/${cancelTarget.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const result = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(result.error || '멤버십 구독 상태를 변경하지 못했습니다.');
+      }
+
+      window.location.replace('/hub/memberships/plan');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : '멤버십 구독 상태를 변경하지 못했습니다.');
+      setIsChangingSubscription(false);
+    }
+  }
+
+  async function handleRefund() {
+    if (!refundTarget || isChangingSubscription) {
+      return;
+    }
+
+    setIsChangingSubscription(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`/api/memberships/${refundTarget.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error || '멤버십 해지와 환불을 완료하지 못했습니다.');
+        throw new Error(result.error || '멤버십 환불을 완료하지 못했습니다.');
       }
 
       window.location.replace('/hub/memberships/plan');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : '멤버십 해지와 환불을 완료하지 못했습니다.');
-      setIsCancelling(false);
+      setErrorMessage(error instanceof Error ? error.message : '멤버십 환불을 완료하지 못했습니다.');
+      setIsChangingSubscription(false);
     }
   }
 
@@ -221,14 +252,26 @@ export default function MembershipPlan() {
     const membership = membershipByType.get(type);
 
     if (membership) {
-      return { label: '유료 기능 이용 중', membership, isDirectMembership: true };
+      const isCanceled = membership.subscriptionStatus === 'canceled';
+
+      return {
+        label: isCanceled ? '다음 결제 취소됨' : '유료 기능 이용 중',
+        membership,
+        isDirectMembership: true,
+        isCanceled,
+      };
     }
 
     if ((type === 'owner' || type === 'creator') && membershipByType.get('all_in_one')) {
-      return { label: '올인원 멤버십으로 이용 중', membership: membershipByType.get('all_in_one'), isDirectMembership: false };
+      return {
+        label: '올인원 멤버십으로 이용 중',
+        membership: membershipByType.get('all_in_one'),
+        isDirectMembership: false,
+        isCanceled: false,
+      };
     }
 
-    return { label: '기본 이용 중', membership: null, isDirectMembership: false };
+    return { label: '기본 이용 중', membership: null, isDirectMembership: false, isCanceled: false };
   }
 
   return (
@@ -267,9 +310,20 @@ export default function MembershipPlan() {
                           </Anchor>
                         ) : null}
                         {status.isDirectMembership && status.membership ? (
-                          <button type="button" className="button small danger" onClick={() => setCancelTarget(status.membership)}>
-                            해지
-                          </button>
+                          <Stack direction="row" gap={1} flexWrap="wrap">
+                            {status.isCanceled ? (
+                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership)}>
+                                취소 철회
+                              </button>
+                            ) : (
+                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership)}>
+                                구독 취소
+                              </button>
+                            )}
+                            <button type="button" className="button small danger" onClick={() => setRefundTarget(status.membership)}>
+                              환불
+                            </button>
+                          </Stack>
                         ) : null}
                       </Stack>
                     </div>
@@ -336,22 +390,16 @@ export default function MembershipPlan() {
             )}
           </Stack>
 
-          {selectedItems.length ? (
+          {selectedItems.length && selectedPrice > 0 ? (
             <div className={styles['membership-actions']}>
-              {selectedPrice === 0 ? (
-                <button type="button" className="button medium submit" onClick={() => window.location.replace('/hub/memberships/plan')}>
-                  무료로 이용하기
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={handlePayment}
-                  disabled={!selectedBillingMethodId || isSubmitting}
-                >
-                  {isSubmitting ? '결제 중' : `${formatMembershipPrice(selectedPrice)} 결제하기`}
-                </button>
-              )}
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={handlePayment}
+                disabled={!selectedBillingMethodId || isSubmitting}
+              >
+                {isSubmitting ? '결제 중' : `${formatMembershipPrice(selectedPrice)} 결제하기`}
+              </button>
             </div>
           ) : null}
         </Stack>
@@ -365,19 +413,43 @@ export default function MembershipPlan() {
         onClose={() => setErrorMessage('')}
       />
 
-      <Dialog open={Boolean(cancelTarget)} onClose={() => !isCancelling && setCancelTarget(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>멤버십 해지</DialogTitle>
+      <Dialog open={Boolean(cancelTarget)} onClose={() => !isChangingSubscription && setCancelTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{cancelTarget?.subscriptionStatus === 'canceled' ? '멤버십 구독 취소 철회' : '멤버십 구독 취소'}</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            해지하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를 공제한 금액이 환불됩니다.
+            {cancelTarget?.subscriptionStatus === 'canceled'
+              ? '다음 결제부터 다시 자동 결제됩니다.'
+              : '현재 이용 기간이 끝날 때까지 멤버십 기능을 이용할 수 있으며, 다음 결제일부터 자동 결제되지 않습니다.'}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <button type="button" className="button medium close" disabled={isCancelling} onClick={() => setCancelTarget(null)}>
+          <button type="button" className="button medium close" disabled={isChangingSubscription} onClick={() => setCancelTarget(null)}>
             닫기
           </button>
-          <button type="button" className="button medium warning" disabled={isCancelling} onClick={handleCancel}>
-            {isCancelling ? '해지 중' : '해지 및 환불'}
+          <button
+            type="button"
+            className="button medium submit"
+            disabled={isChangingSubscription}
+            onClick={() => void handleSubscriptionChange(cancelTarget?.subscriptionStatus === 'canceled' ? 'resume' : 'cancel')}
+          >
+            {isChangingSubscription ? '처리 중' : cancelTarget?.subscriptionStatus === 'canceled' ? '취소 철회' : '구독 취소'}
+          </button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(refundTarget)} onClose={() => !isChangingSubscription && setRefundTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>멤버십 환불</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            환불하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를 공제한 금액이 환불됩니다.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <button type="button" className="button medium close" disabled={isChangingSubscription} onClick={() => setRefundTarget(null)}>
+            닫기
+          </button>
+          <button type="button" className="button medium warning" disabled={isChangingSubscription} onClick={() => void handleRefund()}>
+            {isChangingSubscription ? '환불 중' : '환불'}
           </button>
         </DialogActions>
       </Dialog>

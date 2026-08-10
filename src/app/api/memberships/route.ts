@@ -130,8 +130,18 @@ export async function GET() {
   const membershipItemResult = membershipIds.length
     ? await supabaseAdmin.from('membership_items').select('membership_id, plan_id').in('membership_id', membershipIds)
     : { data: [], error: null };
+  const subscriptionResult = membershipIds.length
+    ? await supabaseAdmin
+        .from('subscriptions')
+        .select('target_id, status, current_period_end, created_at')
+        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+        .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
+        .in('target_id', membershipIds)
+        .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE, SUBSCRIPTION_STATUS.CANCELED])
+        .order('created_at', { ascending: false })
+    : { data: [], error: null };
 
-  if (membershipItemResult.error) {
+  if (membershipItemResult.error || subscriptionResult.error) {
     return NextResponse.json({ message: '멤버십 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 
@@ -146,6 +156,17 @@ export async function GET() {
 
   const planLabelById = new Map((planResult.data ?? []).map((plan) => [plan.id as string, plan.plan_label as string]));
   const itemLabelsByMembershipId = new Map<string, string[]>();
+  const subscriptionByMembershipId = new Map<string, { status: string; currentPeriodEnd: string | null }>();
+
+  for (const subscription of subscriptionResult.data ?? []) {
+    const membershipId = subscription.target_id as string;
+    if (!subscriptionByMembershipId.has(membershipId)) {
+      subscriptionByMembershipId.set(membershipId, {
+        status: subscription.status as string,
+        currentPeriodEnd: subscription.current_period_end as string | null,
+      });
+    }
+  }
 
   for (const item of membershipItemResult.data ?? []) {
     const membershipId = item.membership_id as string;
@@ -160,6 +181,8 @@ export async function GET() {
     memberships: memberships.map((membership) => ({
       ...membership,
       itemLabels: itemLabelsByMembershipId.get(membership.id) ?? [],
+      subscriptionStatus: subscriptionByMembershipId.get(membership.id)?.status ?? null,
+      currentPeriodEnd: subscriptionByMembershipId.get(membership.id)?.currentPeriodEnd ?? null,
     })),
     billingMethods: (billingMethodResult.data ?? []).map((billingMethod) => ({
       id: billingMethod.id as string,
@@ -191,7 +214,7 @@ export async function POST(request: Request) {
   }
 
   const hasAllInOne = normalizedPurchases.some((purchase) => purchase.type === 'all_in_one');
-  if (hasAllInOne && normalizedPurchases.length !== 1) {
+  if (hasAllInOne && normalizedPurchases.some((purchase) => purchase.type === 'owner' || purchase.type === 'creator')) {
     return NextResponse.json({ error: '올인원 멤버십은 다른 창작자 멤버십과 함께 선택할 수 없습니다.' }, { status: 400 });
   }
 

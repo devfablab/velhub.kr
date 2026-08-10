@@ -14,6 +14,107 @@ type RouteContext = {
   params: Promise<{ membershipId: string }>;
 };
 
+type MembershipAction = 'cancel' | 'resume';
+
+export async function PATCH(request: Request, { params }: RouteContext) {
+  const stigma = await getCurrentStigma();
+
+  if (!stigma) {
+    return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => null)) as { action?: MembershipAction } | null;
+
+  if (body?.action !== 'cancel' && body?.action !== 'resume') {
+    return NextResponse.json({ error: '요청을 처리할 수 없습니다.' }, { status: 400 });
+  }
+
+  const { membershipId } = await params;
+  const supabaseAdmin = getSupabaseAdmin();
+  const membershipResult = await supabaseAdmin
+    .from('memberships')
+    .select('id')
+    .eq('id', membershipId)
+    .eq('user_id', stigma.stigmaId)
+    .maybeSingle();
+
+  if (membershipResult.error) {
+    console.error(membershipResult.error);
+    return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  if (!membershipResult.data) {
+    return NextResponse.json({ error: '변경할 멤버십을 찾을 수 없습니다.' }, { status: 404 });
+  }
+
+  const subscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('id,status,current_period_end')
+    .eq('subscriber_user_id', stigma.stigmaId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+    .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
+    .eq('target_id', membershipId)
+    .in('status', [
+      SUBSCRIPTION_STATUS.TRIALING,
+      SUBSCRIPTION_STATUS.ACTIVE,
+      SUBSCRIPTION_STATUS.PAST_DUE,
+      SUBSCRIPTION_STATUS.CANCELED,
+    ])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (subscriptionResult.error) {
+    console.error(subscriptionResult.error);
+    return NextResponse.json({ error: '멤버십 구독 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  const subscription = subscriptionResult.data;
+
+  if (!subscription) {
+    return NextResponse.json({ error: '변경할 멤버십 구독을 찾을 수 없습니다.' }, { status: 404 });
+  }
+
+  const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+
+  if (!currentPeriodEnd || Number.isNaN(currentPeriodEnd.getTime()) || currentPeriodEnd <= new Date()) {
+    return NextResponse.json({ error: '현재 이용 기간이 끝난 멤버십입니다.' }, { status: 400 });
+  }
+
+  const now = new Date().toISOString();
+  const update =
+    body.action === 'cancel'
+      ? {
+          status: SUBSCRIPTION_STATUS.CANCELED,
+          canceled_at: now,
+          next_billing_at: null,
+          updated_at: now,
+        }
+      : {
+          status: SUBSCRIPTION_STATUS.ACTIVE,
+          canceled_at: null,
+          expired_at: null,
+          next_billing_at: subscription.current_period_end,
+          updated_at: now,
+        };
+
+  const updateResult = await supabaseAdmin.from('subscriptions').update(update).eq('id', subscription.id);
+
+  if (updateResult.error) {
+    console.error(updateResult.error);
+    return NextResponse.json(
+      { error: body.action === 'cancel' ? '멤버십 구독을 취소하지 못했습니다.' : '멤버십 구독 취소를 철회하지 못했습니다.' },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    status: body.action === 'cancel' ? SUBSCRIPTION_STATUS.CANCELED : SUBSCRIPTION_STATUS.ACTIVE,
+    currentPeriodEnd: subscription.current_period_end,
+  });
+}
+
 export async function DELETE(_request: Request, { params }: RouteContext) {
   const stigma = await getCurrentStigma();
 
@@ -41,12 +142,17 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
 
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
-    .select('id,last_payment_id')
+    .select('id,last_payment_id,current_period_end')
     .eq('subscriber_user_id', stigma.stigmaId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
     .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
     .eq('target_id', membershipId)
-    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+    .in('status', [
+      SUBSCRIPTION_STATUS.TRIALING,
+      SUBSCRIPTION_STATUS.ACTIVE,
+      SUBSCRIPTION_STATUS.PAST_DUE,
+      SUBSCRIPTION_STATUS.CANCELED,
+    ])
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
