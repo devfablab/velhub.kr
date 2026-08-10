@@ -424,26 +424,6 @@ export async function PATCH(request: Request) {
         return Response.json({ error: 'boardId는 사용할 수 없습니다.' }, { status: 400 });
       }
 
-      if (role === 'community-manager') {
-        const currentCount = managerRows.filter(
-          (row) => row.id !== sourceRow.id && normalizeText(row.role) === 'community-manager',
-        ).length;
-
-        if (currentCount >= access.planFeature.communityManagerLimit) {
-          return Response.json({ error: '커뮤니티 매니저 자리가 없습니다.' }, { status: 400 });
-        }
-      }
-
-      if (role === 'board-manager') {
-        const currentCount = managerRows.filter(
-          (row) => row.id !== sourceRow.id && normalizeText(row.role) === 'board-manager',
-        ).length;
-
-        if (currentCount >= access.planFeature.boardManagerLimit) {
-          return Response.json({ error: '전체 게시판 매니저 자리가 없습니다.' }, { status: 400 });
-        }
-      }
-
       if (role === 'board-assistant-manager') {
         const boardResult = await access.supabaseAdmin
           .from('boards')
@@ -456,16 +436,6 @@ export async function PATCH(request: Request) {
           return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
         }
 
-        const currentCount = managerRows.filter(
-          (row) =>
-            row.id !== sourceRow.id &&
-            normalizeText(row.role) === 'board-assistant-manager' &&
-            normalizeText(row.board_id) === boardId,
-        ).length;
-
-        if (currentCount >= access.planFeature.boardAssistantManagerLimit) {
-          return Response.json({ error: '해당 게시판의 부 매니저 자리가 꽉 찼습니다.' }, { status: 400 });
-        }
       }
 
       const duplicateRow = managerRows.find(

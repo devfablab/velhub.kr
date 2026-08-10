@@ -33,14 +33,12 @@ type PaymentRow = {
 };
 
 const SUBSCRIPTION_PAYMENT_TYPE = {
-  [SUBSCRIPTION_TYPE.PLAN_BILLING]: PAYMENT_TYPE.PLAN_BILLING,
   [SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG]: PAYMENT_TYPE.MEMBERSHIP_BLOG,
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD]: PAYMENT_TYPE.SUBSCRIPTION_BOARD,
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES]: PAYMENT_TYPE.SUBSCRIPTION_SERIES,
 } as const;
 
 const SUBSCRIPTION_LABEL = {
-  [SUBSCRIPTION_TYPE.PLAN_BILLING]: '요금제',
   [SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG]: '블로그 멤버십',
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD]: '게시판 구독',
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES]: '연재 구독',
@@ -48,8 +46,6 @@ const SUBSCRIPTION_LABEL = {
 
 function isSupportedSubscription(subscription: SubscriptionRow) {
   return (
-    (subscription.subscription_type === SUBSCRIPTION_TYPE.PLAN_BILLING &&
-      subscription.target_type === PAYMENT_TARGET_TYPE.PLAN) ||
     (subscription.subscription_type === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG &&
       subscription.target_type === PAYMENT_TARGET_TYPE.SITE) ||
     (subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD &&
@@ -127,16 +123,6 @@ async function finishCancellation({
     throw new Error('구독 취소 정보를 저장하지 못했습니다.');
   }
 
-  if (subscription.subscription_type === SUBSCRIPTION_TYPE.PLAN_BILLING) {
-    const shutdownResult = await supabaseAdmin
-      .from('rhizomes')
-      .update({ is_shutdown: true })
-      .eq('id', subscription.target_id);
-
-    if (shutdownResult.error) {
-      throw new Error('요금제 사이트를 닫지 못했습니다.');
-    }
-  }
 }
 
 async function scheduleCancellation({
@@ -148,20 +134,11 @@ async function scheduleCancellation({
   subscription: SubscriptionRow;
   nowIso: string;
 }) {
-  const updateValue =
-    subscription.subscription_type === SUBSCRIPTION_TYPE.PLAN_BILLING
-      ? {
-          status: 'scheduled_cancel',
-          next_billing_at: null,
-          canceled_at: nowIso,
-          expired_at: null,
-          updated_at: nowIso,
-        }
-      : {
-          next_billing_at: null,
-          canceled_at: nowIso,
-          updated_at: nowIso,
-        };
+  const updateValue = {
+    next_billing_at: null,
+    canceled_at: nowIso,
+    updated_at: nowIso,
+  };
   const subscriptionResult = await supabaseAdmin.from('subscriptions').update(updateValue).eq('id', subscription.id);
 
   if (subscriptionResult.error) {
@@ -289,7 +266,6 @@ export async function cancelAccountRecurringPayments({
     )
     .eq('subscriber_user_id', stigmaId)
     .in('subscription_type', [
-      SUBSCRIPTION_TYPE.PLAN_BILLING,
       SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
       SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
       SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,

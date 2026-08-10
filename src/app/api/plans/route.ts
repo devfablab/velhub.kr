@@ -2,7 +2,7 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type ProductType = 'service' | 'custom';
+type ProductType = 'service' | 'custom' | 'membership';
 
 type RequestBody = {
   categoryKey: string | null;
@@ -41,12 +41,12 @@ export async function GET() {
 
     const plans = await supabaseAdmin
       .from('plans')
-      .select('id, category_key, category_label, plan_key, plan_label, price, product_type, plan_features(id)')
+      .select('id, category_key, category_label, plan_key, plan_label, price, product_type')
       .order('sort_order', { ascending: true })
       .order('price', { ascending: true });
 
     if (plans.error) {
-      return Response.json({ error: '요금제 목록을 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -58,15 +58,14 @@ export async function GET() {
         plan_label: planRow.plan_label,
         price: planRow.price,
         product_type: planRow.product_type,
-        has_feature: Array.isArray(planRow.plan_features) ? planRow.plan_features.length > 0 : false,
       })),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '요금제 목록을 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '멤버십 상품 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '요금제 목록을 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '멤버십 상품 목록을 불러오지 못했습니다.' }, { status: 500 });
   }
 }
 
@@ -100,26 +99,26 @@ export async function POST(request: Request) {
     const productType = requestBody.productType;
 
     if (!categoryKey) {
-      return Response.json({ error: '요금제 카테고리 영문명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 카테고리 영문명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!categoryLabel) {
-      return Response.json({ error: '요금제 카테고리 한글명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 카테고리 한글명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!planKey) {
-      return Response.json({ error: '요금제 영문명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 영문명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!planLabel) {
-      return Response.json({ error: '요금제 한글명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 한글명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!Number.isFinite(price)) {
       return Response.json({ error: '가격을 입력해주세요.' }, { status: 400 });
     }
 
-    if (productType !== 'service' && productType !== 'custom') {
+    if (productType !== 'service' && productType !== 'custom' && productType !== 'membership') {
       return Response.json({ error: '상품 종류를 선택해주세요.' }, { status: 400 });
     }
 
@@ -131,11 +130,11 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (duplicatePlan.error) {
-      return Response.json({ error: '요금제 중복 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 중복 확인에 실패했습니다.' }, { status: 500 });
     }
 
     if (duplicatePlan.data) {
-      return Response.json({ error: '이미 존재하는 요금제입니다.' }, { status: 400 });
+      return Response.json({ error: '이미 존재하는 멤버십 상품입니다.' }, { status: 400 });
     }
 
     const sortOrder = await supabaseAdmin
@@ -146,7 +145,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (sortOrder.error) {
-      return Response.json({ error: '요금제 정렬값 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 정렬값 확인에 실패했습니다.' }, { status: 500 });
     }
 
     const nextSortOrder = typeof sortOrder.data?.sort_order === 'number' ? sortOrder.data.sort_order + 1 : 1;
@@ -166,7 +165,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (insertPlan.error || !insertPlan.data) {
-      return Response.json({ error: '요금제 추가에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 추가에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -175,9 +174,9 @@ export async function POST(request: Request) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '요금제 추가에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '멤버십 상품 추가에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '요금제 추가에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '멤버십 상품 추가에 실패했습니다.' }, { status: 500 });
   }
 }

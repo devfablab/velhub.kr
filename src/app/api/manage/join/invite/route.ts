@@ -4,7 +4,6 @@ import { Resend } from 'resend';
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 
 type RequestBody = {
   siteName: string | null;
@@ -243,12 +242,6 @@ export async function POST(request: NextRequest) {
 
     if (!access.ok) {
       return Response.json({ error: access.error }, { status: access.status });
-    }
-
-    const memberLimit = await getSiteMemberLimitStatus(access.siteId);
-
-    if (memberLimit.currentCount >= memberLimit.limit) {
-      return Response.json({ error: '현재 요금제의 회원 수 제한에 도달하여 초대할 수 없습니다.' }, { status: 400 });
     }
 
     const particleResult = await access.supabaseAdmin.from('particles').select('id').eq('email', email).maybeSingle();

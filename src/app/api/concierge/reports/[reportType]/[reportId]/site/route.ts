@@ -1,5 +1,4 @@
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { forceTerminateSitePlan } from '@/lib/payments/forceTerminateSitePlan';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -162,13 +161,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ ok: true, action, isBlocked: false });
     }
 
-    const terminationResult = await forceTerminateSitePlan(report.site_id);
-
     return Response.json({
       ok: true,
       action,
       isBlocked: true,
-      termination: terminationResult,
     });
   } catch (unknownError) {
     console.error('[concierge/reports/site] unexpected error', unknownError);

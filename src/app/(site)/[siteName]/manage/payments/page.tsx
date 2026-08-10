@@ -7,7 +7,7 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
-  const { siteName } = await params;
+  await params;
 
-  redirect(`/${siteName}/manage/payments/billing`);
+  redirect('/hub/memberships/plan');
 }

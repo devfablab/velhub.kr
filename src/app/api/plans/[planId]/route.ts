@@ -8,7 +8,7 @@ type RouteContext = {
   }>;
 };
 
-type ProductType = 'service' | 'custom';
+type ProductType = 'service' | 'custom' | 'membership';
 
 type RequestBody = {
   categoryKey: string;
@@ -94,33 +94,23 @@ export async function GET(_request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (plan.error) {
-      return Response.json({ error: '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     if (!plan.data) {
-      return Response.json({ error: '요금제를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    const feature = await supabaseAdmin
-      .from('plan_features')
-      .select('id, is_editor_image, is_member, is_board_attachment, count_subpage, count_board, count_user, plan_id')
-      .eq('plan_id', planId)
-      .maybeSingle();
-
-    if (feature.error) {
-      return Response.json({ error: '요금제 기능 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품을 찾을 수 없습니다.' }, { status: 404 });
     }
 
     return Response.json({
       plan: plan.data,
-      feature: feature.data ?? null,
+      feature: null,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '멤버십 상품 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '요금제 정보를 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '멤버십 상품 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 }
 
@@ -148,26 +138,26 @@ export async function PATCH(request: Request, context: RouteContext) {
     const productType = requestBody.productType;
 
     if (!categoryKey) {
-      return Response.json({ error: '요금제 카테고리 영문명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 카테고리 영문명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!categoryLabel) {
-      return Response.json({ error: '요금제 카테고리 한글명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 카테고리 한글명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!planKey) {
-      return Response.json({ error: '요금제 영문명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 영문명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!planLabel) {
-      return Response.json({ error: '요금제 한글명을 입력해주세요.' }, { status: 400 });
+      return Response.json({ error: '멤버십 상품 한글명을 입력해주세요.' }, { status: 400 });
     }
 
     if (!Number.isFinite(price)) {
       return Response.json({ error: '가격을 입력해주세요.' }, { status: 400 });
     }
 
-    if (productType !== 'service' && productType !== 'custom') {
+    if (productType !== 'service' && productType !== 'custom' && productType !== 'membership') {
       return Response.json({ error: '상품 종류를 선택해주세요.' }, { status: 400 });
     }
 
@@ -176,11 +166,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     const currentPlan = await supabaseAdmin.from('plans').select('id').eq('id', planId).maybeSingle();
 
     if (currentPlan.error) {
-      return Response.json({ error: '요금제 정보를 확인하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
     if (!currentPlan.data) {
-      return Response.json({ error: '요금제를 찾을 수 없습니다.' }, { status: 404 });
+      return Response.json({ error: '멤버십 상품을 찾을 수 없습니다.' }, { status: 404 });
     }
 
     const duplicatePlan = await supabaseAdmin
@@ -192,11 +182,11 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (duplicatePlan.error) {
-      return Response.json({ error: '요금제 중복 확인에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 중복 확인에 실패했습니다.' }, { status: 500 });
     }
 
     if (duplicatePlan.data) {
-      return Response.json({ error: '이미 존재하는 요금제입니다.' }, { status: 400 });
+      return Response.json({ error: '이미 존재하는 멤버십 상품입니다.' }, { status: 400 });
     }
 
     const updatePlan = await supabaseAdmin
@@ -212,7 +202,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .eq('id', planId);
 
     if (updatePlan.error) {
-      return Response.json({ error: '요금제 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 수정에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -220,10 +210,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '요금제 수정에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '멤버십 상품 수정에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '요금제 수정에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '멤버십 상품 수정에 실패했습니다.' }, { status: 500 });
   }
 }
 
@@ -243,16 +233,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const deleteFeature = await supabaseAdmin.from('plan_features').delete().eq('plan_id', planId);
-
-    if (deleteFeature.error) {
-      return Response.json({ error: '요금제 기능 삭제에 실패했습니다.' }, { status: 500 });
-    }
-
     const deletePlan = await supabaseAdmin.from('plans').delete().eq('id', planId);
 
     if (deletePlan.error) {
-      return Response.json({ error: '요금제 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: '멤버십 상품 삭제에 실패했습니다.' }, { status: 500 });
     }
 
     return Response.json({
@@ -260,9 +244,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '요금제 삭제에 실패했습니다.' }, { status: 500 });
+      return Response.json({ error: unknownError.message || '멤버십 상품 삭제에 실패했습니다.' }, { status: 500 });
     }
 
-    return Response.json({ error: '요금제 삭제에 실패했습니다.' }, { status: 500 });
+    return Response.json({ error: '멤버십 상품 삭제에 실패했습니다.' }, { status: 500 });
   }
 }

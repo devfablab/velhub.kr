@@ -47,7 +47,6 @@ export type ConciergeReportItem = {
     name: string;
     href: string;
     isBlocked: boolean;
-    isPlanTerminated: boolean;
   } | null;
   board: {
     id: string;

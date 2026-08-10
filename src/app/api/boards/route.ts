@@ -6,11 +6,6 @@ import {
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
-type PlanFeatureRow = {
-  count_board: number | null;
-  count_subpage: number | null;
-};
-
 type BoardRow = {
   id: string;
   board_key: string;
@@ -23,14 +18,6 @@ type BoardRow = {
   created_at: string;
   post_per_page: number | null;
 };
-
-function toNonNegativeInteger(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.floor(value));
-}
 
 export async function GET(request: Request) {
   try {
@@ -45,7 +32,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_type, visibility_type, is_shutdown, plan_type')
+      .select('id, site_type, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -113,22 +100,6 @@ export async function GET(request: Request) {
       return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const planFeatureResult = await supabaseAdmin
-      .from('plan_features')
-      .select('count_board, count_subpage')
-      .eq('plan_id', rhizome.data.plan_type)
-      .maybeSingle();
-
-    if (planFeatureResult.error || !planFeatureResult.data) {
-      return Response.json({ error: '게시판을 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const planFeature = planFeatureResult.data as PlanFeatureRow;
-    const maxBoardCount = Math.max(
-      0,
-      toNonNegativeInteger(planFeature.count_board) - toNonNegativeInteger(planFeature.count_subpage),
-    );
-
     const boardRows = (boards.data ?? []) as BoardRow[];
 
     const currentBoardCount = boardRows.filter((board) => board.board_type !== 'page').length;
@@ -140,9 +111,9 @@ export async function GET(request: Request) {
       manageContents,
       writeBoards,
       limit: {
-        maxBoardCount,
+        maxBoardCount: 0,
         currentBoardCount,
-        canCreateBoard: currentBoardCount < maxBoardCount,
+        canCreateBoard: true,
       },
     });
   } catch (unknownError) {

@@ -23,7 +23,6 @@ import {
   useTheme,
 } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -39,16 +38,6 @@ type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textare
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
-
-type PlanRow = {
-  id: string;
-  category_key: string;
-  category_label: string;
-  plan_key: string;
-  plan_label: string;
-  price: number;
-  product_type: string;
-};
 
 const THEME_TYPES: ThemeType[] = ['default', 'coral', 'teal', 'royalblue', 'slateblue', 'seagreen', 'orchid', 'tomato'];
 
@@ -119,7 +108,7 @@ function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
-export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
+export default function Opt() {
   const router = useRouter();
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
@@ -133,13 +122,10 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
   const [visibilityType, setVisibilityType] = useState<VisibilityType>('public');
   const [themeType, setThemeType] = useState<ThemeType>('default');
   const [commentProvider, setCommentProvider] = useState<CommentProvider>('disqus');
-  const [plans, setPlans] = useState<PlanRow[]>([]);
-  const [planType, setPlanType] = useState('');
 
   const [isCheckingSiteKey, setIsCheckingSiteKey] = useState(false);
   const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -181,42 +167,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
     };
   }, [isMounted, themeMode]);
-
-  useEffect(() => {
-    async function loadPlans() {
-      try {
-        const response = await fetch('/api/plans', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '요금제 목록을 불러오지 못했습니다.');
-        }
-
-        const allPlans = Array.isArray(result.plans) ? result.plans : [];
-        const nextPlans = allPlans.filter((planRow: PlanRow) => planRow.category_key === 'blog');
-
-        setPlans(nextPlans);
-
-        if (nextPlans.length > 0) {
-          setPlanType(nextPlans[0].id);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          openErrorDialog(unknownError.message || '요금제 목록을 불러오지 못했습니다.');
-        } else {
-          openErrorDialog('요금제 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoadingPlans(false);
-      }
-    }
-
-    void loadPlans();
-  }, []);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
@@ -286,10 +236,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
 
   function handleVisibilityTypeChange(event: InputChangeEvent) {
     setVisibilityType(event.currentTarget.checked ? 'public' : 'private');
-  }
-
-  function handlePlanTypeChange(event: InputChangeEvent) {
-    setPlanType(event.currentTarget.value);
   }
 
   async function handleCheckSiteKey() {
@@ -448,7 +394,7 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isCheckingSiteKey || isCheckingSiteLabel || isLoadingPlans) {
+    if (isSubmitting || isCheckingSiteKey || isCheckingSiteLabel) {
       return;
     }
 
@@ -472,11 +418,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       return;
     }
 
-    if (!planType) {
-      openErrorDialog('요금제를 선택해주세요.');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -486,8 +427,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       formData.append('summary', trimmedSummary);
       formData.append('visibilityType', visibilityType);
       formData.append('themeType', themeType);
-      formData.append('planType', planType);
-      formData.append('isShutdown', isMinor ? 'false' : 'true');
       formData.append('commentProvider', commentProvider);
 
       if (profilePictureFile) {
@@ -507,7 +446,7 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
       }
 
       setSuccessMessage('블로그가 개설되었습니다.');
-      router.replace(`/${siteKey}/manage/payments/billing`);
+      router.replace(`/${siteKey}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         openErrorDialog(unknownError.message || '블로그 개설에 실패했습니다.');
@@ -656,35 +595,6 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
           </Stack>
 
           <Stack gap={1}>
-            <Typography variant="subtitle2">요금제</Typography>
-            <RadioGroup value={planType} onChange={handlePlanTypeChange}>
-              {plans.map((planRow) => (
-                <FormControlLabel
-                  key={planRow.id}
-                  value={planRow.id}
-                  control={<Radio />}
-                  label={`${planRow.plan_label} (${isMinor ? `청소년 무료` : `${planRow.price.toLocaleString()} 원`})`}
-                />
-              ))}
-            </RadioGroup>
-            {isMinor ? (
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>만 19세가 된 날부터 요금제 월 결제가 필요합니다.</span>
-              </p>
-            ) : null}
-            <div className="paper">
-              <Typography variant="subtitle2">팀 블로그</Typography>
-              <Stack gap={1}>
-                <Typography variant="body2">- {isMinor ? '청소년 무료 (정상가 ₩ 19,000)' : '₩ 19,000'}</Typography>
-                <Typography variant="body2">- 1개 페이지</Typography>
-                <Typography variant="body2">- 최대 100명까지 팀원 초대 가능 (운영자, 매니저 수 포함)</Typography>
-                <Typography variant="body2">- 최대 3명 매니저</Typography>
-              </Stack>
-            </div>
-          </Stack>
-
-          <Stack gap={1}>
             <Typography variant="subtitle2">댓글 방식 (댓글 서비스 제공자)</Typography>
             <RadioGroup value={commentProvider} onChange={handleCommentProviderChange}>
               <FormControlLabel value="velhub" control={<Radio />} label="데브허브 댓글" />
@@ -733,7 +643,7 @@ export default function Opt({ isMinor = false }: { isMinor?: boolean }) {
         <button
           type="submit"
           className="button medium submit"
-          disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel || isLoadingPlans}
+          disabled={isSubmitting || isCheckingSiteKey || isCheckingSiteLabel}
         >
           블로그 개설
         </button>

@@ -48,20 +48,18 @@ export async function GET() {
     isAuthor,
     owner: {
       available: hasOperatingSite,
-      message: hasOperatingSite ? null : '운영 중인 사이트가 있어야 이용할 수 있습니다.',
+      message: hasOperatingSite ? null : '유료 기능은 운영 중인 사이트가 있을 때 이용할 수 있습니다.',
     },
     creator: {
       available: isAuthor,
-      message: isAuthor ? null : '작가만 이용할 수 있습니다.',
+      message: isAuthor ? null : '유료 기능은 작가만 이용할 수 있습니다.',
     },
     allInOne: {
       available: hasOperatingSite && isAuthor,
       message:
         hasOperatingSite && isAuthor
           ? null
-          : hasOperatingSite
-            ? '작가만 이용할 수 있습니다.'
-            : '운영 중인 사이트가 있고 작가여야 이용할 수 있습니다.',
+          : '올인원 유료 기능은 운영 중인 사이트가 있고 작가인 경우 이용할 수 있습니다.',
     },
   });
 }

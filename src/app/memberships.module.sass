@@ -6,6 +6,17 @@
   max-width: ds.rem(1270)
   margin: 0 auto
 
+.membership-choice-group
+  width: 100%
+  padding: ds.rem(17)
+  border: 1px solid rgba(ds.$rgb-primary, .15)
+  border-radius: ds.rem(12)
+  background-color: rgba(ds.$rgb-white, .72)
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .3)
+    background-color: rgba(ds.$rgb-black, .72)
+
 .membership-type
   display: inline-flex
   align-items: center
@@ -155,3 +166,35 @@
   @include ds.mq(maxSmall)
     .button
       width: 100%
+
+.membership-plan-card
+  padding: ds.rem(23)
+  border: 1px solid rgba(ds.$rgb-primary, .15)
+  border-radius: ds.rem(12)
+  background-color: rgba(ds.$rgb-white, .72)
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .3)
+    background-color: rgba(ds.$rgb-black, .72)
+
+.membership-payment-method
+  display: flex
+  align-items: center
+  width: 100%
+  gap: ds.rem(12)
+  padding: ds.rem(17)
+  border: 1px solid rgba(ds.$rgb-primary, .15)
+  border-radius: ds.rem(12)
+  background-color: transparent
+  color: inherit
+  text-align: left
+  cursor: pointer
+
+  html[data-theme="yellow-dark"] &
+    border-color: rgba(ds.$rgb-bright, .3)
+
+  &:hover, &:focus-visible
+    border-color: ds.$hex-accent
+
+  .MuiRadio-root
+    padding: 0

@@ -97,7 +97,7 @@ export default function WithdrawalActions() {
           <Stack gap={2}>
             <Typography variant="body2">탈퇴 신청 후 30일 내에 취소할 수 있습니다.</Typography>
             <Typography variant="body2">
-              탈퇴 신청과 함께 작성한 글과 댓글은 삭제처리되고, 구독과 멤버십 및 요금제의 다음 결제가 취소됩니다.
+              탈퇴 신청과 함께 작성한 글과 댓글은 삭제처리되고, 구독과 멤버십의 다음 결제가 취소됩니다.
             </Typography>
             <Typography variant="body2">
               탈퇴 신청을 취소하면 삭제된 글과 댓글은 복구됩니다. 구독과 멤버십은 자동 복구되지 않습니다.

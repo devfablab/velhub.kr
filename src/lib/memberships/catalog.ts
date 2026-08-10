@@ -38,6 +38,10 @@ export const MEMBERSHIP_PACKAGE_PRICE: Record<Exclude<MembershipType, 'affetto'>
 
 export const AFFETTO_PACKAGE_PRICE = 9900;
 
+export function getMembershipPlanKey(membershipType: MembershipType, featureKey: MembershipFeatureKey) {
+  return membershipType === 'all_in_one' ? `all_in_one_${featureKey}` : featureKey;
+}
+
 export function getMembershipFeature(featureKey: MembershipFeatureKey) {
   return MEMBERSHIP_FEATURES.find((feature) => feature.key === featureKey) ?? null;
 }

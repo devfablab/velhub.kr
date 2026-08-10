@@ -14,11 +14,6 @@ type RequestBody = {
   postType?: 'none' | 'prefix' | 'series' | null;
 };
 
-type PlanFeatureRow = {
-  count_board: number | null;
-  count_subpage: number | null;
-};
-
 function normalizeBoardKey(rawValue: string | null | undefined) {
   return (rawValue ?? '')
     .trim()
@@ -134,7 +129,7 @@ export async function POST(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_type, plan_type')
+      .select('id, site_type')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -177,37 +172,6 @@ export async function POST(request: Request) {
 
     if (duplicateBoard.data) {
       return Response.json({ error: '이미 존재하는 게시판 식별자입니다.' }, { status: 400 });
-    }
-
-    const planFeatureResult = await supabaseAdmin
-      .from('plan_features')
-      .select('count_board, count_subpage')
-      .eq('plan_id', rhizome.data.plan_type)
-      .maybeSingle();
-
-    if (planFeatureResult.error || !planFeatureResult.data) {
-      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
-    }
-
-    const planFeature = planFeatureResult.data as PlanFeatureRow;
-    const maxBoardCount = Math.max(
-      0,
-      toNonNegativeInteger(planFeature.count_board) - toNonNegativeInteger(planFeature.count_subpage),
-    );
-
-    const currentBoardsResult = await supabaseAdmin
-      .from('boards')
-      .select('id, board_type')
-      .eq('site_id', rhizome.data.id);
-
-    if (currentBoardsResult.error) {
-      return Response.json({ error: '게시판 생성에 실패했습니다.' }, { status: 500 });
-    }
-
-    const currentBoardCount = (currentBoardsResult.data ?? []).filter((board) => board.board_type !== 'page').length;
-
-    if (currentBoardCount >= maxBoardCount) {
-      return Response.json({ error: '더 이상 게시판을 생성할 수 없습니다.' }, { status: 400 });
     }
 
     const lastBoard = await supabaseAdmin

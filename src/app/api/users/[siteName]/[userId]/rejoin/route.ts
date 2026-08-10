@@ -1,7 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 
 type RouteContext = {
@@ -470,15 +469,6 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (membershipResult.data.is_rejoin !== true) {
       return Response.json({ error: '재가입할 수 없는 상태입니다.' }, { status: 403 });
-    }
-
-    const memberLimit = await getSiteMemberLimitStatus(siteResult.data.id);
-
-    if (memberLimit.currentCount >= memberLimit.limit) {
-      return Response.json(
-        { error: '현재 요금제의 회원 수 제한에 도달하여 재가입할 수 없습니다.' },
-        { status: 400 },
-      );
     }
 
     if (mode === 'restore') {

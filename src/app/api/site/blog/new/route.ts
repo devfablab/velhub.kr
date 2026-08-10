@@ -4,7 +4,6 @@ import sharp from 'sharp';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getSiteOwnerAgeStatus } from '@/lib/payments/siteOwnerAge';
 
 type VisibilityType = 'public' | 'private';
 type ThemeType = 'default';
@@ -142,14 +141,12 @@ export async function POST(request: Request) {
     const normalizedSiteKey = normalizeSiteKey(getFormText(formData, 'siteKey').trim());
     const trimmedSiteLabel = normalizeText(getFormText(formData, 'siteLabel'));
     const trimmedSummary = getFormText(formData, 'summary').trim();
-    const trimmedPlanType = getFormText(formData, 'planType').trim();
     const visibilityValue = getFormText(formData, 'visibilityType');
     const themeValue = getFormText(formData, 'themeType');
     const commentProviderValue = getFormText(formData, 'commentProvider');
 
     const visibilityType = isVisibilityType(visibilityValue) ? visibilityValue : 'public';
     const themeType = isThemeType(themeValue) ? themeValue : 'default';
-    const isShutdown = getFormText(formData, 'isShutdown') === 'true';
     const commentProvider = isCommentProvider(commentProviderValue) ? commentProviderValue : 'disqus';
 
     if (!normalizedSiteKey) {
@@ -180,10 +177,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "영소문자, 하이픈('-'), 숫자만 사용 가능합니다." }, { status: 400 });
     }
 
-    if (!trimmedPlanType) {
-      return Response.json({ error: '요금제를 선택해주세요.' }, { status: 400 });
-    }
-
     const supabaseAdmin = getSupabaseAdmin();
 
     const particlesResult = await supabaseAdmin
@@ -205,10 +198,6 @@ export async function POST(request: Request) {
     if (stigmaResult.error || !stigmaResult.data) {
       return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
-
-    const ownerAgeStatus = await getSiteOwnerAgeStatus({
-      ownerStigmaId: stigmaResult.data.id,
-    });
 
     const denylistResult = await supabaseAdmin
       .from('denylist')
@@ -236,21 +225,6 @@ export async function POST(request: Request) {
 
     if (rhizomeResult.data) {
       return Response.json({ error: '사용할 수 없는 사이트 주소입니다.' }, { status: 400 });
-    }
-
-    const planResult = await supabaseAdmin
-      .from('plans')
-      .select('id')
-      .eq('id', trimmedPlanType)
-      .eq('category_key', 'blog')
-      .maybeSingle();
-
-    if (planResult.error) {
-      return Response.json({ error: planResult.error.message || '요금제 확인에 실패했습니다.' }, { status: 500 });
-    }
-
-    if (!planResult.data) {
-      return Response.json({ error: '유효하지 않은 요금제입니다.' }, { status: 400 });
     }
 
     let finalSiteLabel = '';
@@ -301,8 +275,8 @@ export async function POST(request: Request) {
       p_summary: trimmedSummary,
       p_visibility_type: visibilityType,
       p_theme_type: themeType,
-      p_plan_type: trimmedPlanType,
-      p_is_shutdown: ownerAgeStatus.isMinor ? false : isShutdown,
+      p_plan_type: null,
+      p_is_shutdown: false,
       p_comment_provider: commentProvider,
     });
 

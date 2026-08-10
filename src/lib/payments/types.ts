@@ -15,7 +15,6 @@ export const PAYMENT_STATUS = {
 } as const;
 
 export const PAYMENT_TYPE = {
-  PLAN_BILLING: 'plan_billing',
   MEMBERSHIP_BLOG: 'membership_blog',
   SUBSCRIPTION_SERIES: 'subscription_series',
   SUBSCRIPTION_BOARD: 'subscription_board',
@@ -27,7 +26,6 @@ export const PAYMENT_TYPE = {
 } as const;
 
 export const PAYMENT_TARGET_TYPE = {
-  PLAN: 'plan',
   SITE: 'site',
   SERIES: 'series',
   BOARD: 'board',
@@ -46,7 +44,6 @@ export const REFUND_POLICY = {
 } as const;
 
 export const SUBSCRIPTION_TYPE = {
-  PLAN_BILLING: 'plan_billing',
   MEMBERSHIP_BLOG: 'membership_blog',
   SUBSCRIPTION_SERIES: 'subscription_series',
   SUBSCRIPTION_BOARD: 'subscription_board',

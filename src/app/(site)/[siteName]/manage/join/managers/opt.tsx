@@ -60,10 +60,6 @@ type BoardItem = {
   boardLabel: string;
   boardGeneralManagerCount: number;
   boardAssistantManagerCount: number;
-  boardGeneralManagerLimit: number;
-  boardAssistantManagerLimit: number;
-  boardGeneralManagerFull: boolean;
-  boardAssistantManagerFull: boolean;
 };
 
 type MemberSearchItem = {
@@ -96,12 +92,6 @@ type ManagersResponse = {
   managers?: ManagerItem[];
   boards?: BoardItem[];
   managerIcons?: ManagerIconItem[];
-  limits?: {
-    community_manager: number;
-    board_manager: number;
-    board_general_manager: number;
-    board_assistant_manager: number;
-  };
   ownerTransfer?: {
     canRequest: boolean;
     hasPendingRequest: boolean;
@@ -186,34 +176,6 @@ function isBoardRole(role: ManagerRole) {
   return role === 'board-general-manager' || role === 'board-assistant-manager';
 }
 
-function getRoleFullMessage(role: ManagerRole) {
-  if (role === 'community-manager') {
-    return {
-      title: '역할 선택 불가',
-      message: '커뮤니티 매니저 자리가 꽉찼습니다. 커뮤니티 매니저 자리 하나를 남겨두세요.',
-    };
-  }
-
-  if (role === 'board-manager') {
-    return {
-      title: '역할 선택 불가',
-      message: '전체 게시판 매니저 자리가 꽉찼습니다. 전체 게시판 매니저 자리 하나를 남겨두세요.',
-    };
-  }
-
-  if (role === 'board-general-manager') {
-    return {
-      title: '역할 선택 불가',
-      message: '개별 게시판 총괄 매니저 자리가 꽉찼습니다. 개별 게시판 총괄 매니저 자리 하나를 남겨두세요.',
-    };
-  }
-
-  return {
-    title: '역할 선택 불가',
-    message: '개별 게시판 부 매니저 자리가 꽉찼습니다. 개별 게시판 부 매니저 자리 하나를 남겨두세요.',
-  };
-}
-
 export default function Opt() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -226,7 +188,6 @@ export default function Opt() {
   const [managers, setManagers] = useState<ManagerItem[]>([]);
   const [boards, setBoards] = useState<BoardItem[]>([]);
   const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>([]);
-  const [limits, setLimits] = useState<ManagersResponse['limits'] | null>(null);
   const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -261,11 +222,6 @@ export default function Opt() {
   const [isLoadingIcons, setIsLoadingIcons] = useState(false);
   const [isUploadingIcon, setIsUploadingIcon] = useState(false);
   const [deletingIconId, setDeletingIconId] = useState('');
-  const [roleLimitDialog, setRoleLimitDialog] = useState<{
-    title: string;
-    message: string;
-  } | null>(null);
-
   const selectedManager = useMemo(
     () => managers.find((manager) => manager.manageRoleId === selectedManagerRoleId) ?? null,
     [managers, selectedManagerRoleId],
@@ -281,43 +237,23 @@ export default function Opt() {
     [boards, assignBoardId],
   );
 
-  const currentCommunityManagerCount = useMemo(
-    () => managers.filter((manager) => manager.role === 'community-manager').length,
-    [managers],
-  );
-
-  const currentBoardManagerCount = useMemo(
-    () => managers.filter((manager) => manager.role === 'board-manager').length,
-    [managers],
-  );
-
   const boardOptionsForMove = useMemo(() => {
     if (moveRole === 'board-general-manager') {
       return boards.map((board) => ({
         value: board.boardId,
-        label:
-          selectedManager?.boardId === board.boardId
-            ? board.boardLabel
-            : board.boardGeneralManagerFull
-              ? `${board.boardLabel} (꽉참)`
-              : board.boardLabel,
+        label: board.boardLabel,
       }));
     }
 
     if (moveRole === 'board-assistant-manager') {
       return boards.map((board) => ({
         value: board.boardId,
-        label:
-          selectedManager?.boardId === board.boardId
-            ? board.boardLabel
-            : board.boardAssistantManagerFull
-              ? `${board.boardLabel} (꽉참)`
-              : board.boardLabel,
+        label: board.boardLabel,
       }));
     }
 
     return [];
-  }, [boards, moveRole, selectedManager]);
+  }, [boards, moveRole]);
 
   useEffect(() => {
     void (async () => {
@@ -336,76 +272,6 @@ export default function Opt() {
     })();
   }, []);
 
-  function isCommonRoleFull(role: 'community-manager' | 'board-manager') {
-    if (!limits) {
-      return false;
-    }
-
-    if (role === 'community-manager') {
-      return currentCommunityManagerCount >= limits.community_manager;
-    }
-
-    return currentBoardManagerCount >= limits.board_manager;
-  }
-
-  function isAssignBoardRoleFull(role: 'board-general-manager' | 'board-assistant-manager') {
-    if (!selectedAssignBoard) {
-      return false;
-    }
-
-    if (role === 'board-general-manager') {
-      return selectedAssignBoard.boardGeneralManagerFull;
-    }
-
-    return selectedAssignBoard.boardAssistantManagerFull;
-  }
-
-  function isMoveRoleFull(role: ManagerRole, boardId: string) {
-    if (!limits || !selectedManager) {
-      return false;
-    }
-
-    if (role === selectedManager.role && boardId === (selectedManager.boardId ?? '')) {
-      return false;
-    }
-
-    if (role === 'community-manager') {
-      return currentCommunityManagerCount >= limits.community_manager;
-    }
-
-    if (role === 'board-manager') {
-      return currentBoardManagerCount >= limits.board_manager;
-    }
-
-    const targetBoard = boards.find((board) => board.boardId === boardId);
-
-    if (!targetBoard) {
-      return false;
-    }
-
-    if (role === 'board-general-manager') {
-      return targetBoard.boardGeneralManagerFull;
-    }
-
-    return targetBoard.boardAssistantManagerFull;
-  }
-
-  function getBoardRoleLabel(role: 'board-general-manager' | 'board-assistant-manager', label: string) {
-    if (!selectedAssignBoard) {
-      return label;
-    }
-
-    if (role === 'board-general-manager' && selectedAssignBoard.boardGeneralManagerFull) {
-      return `${label} (꽉참)`;
-    }
-
-    if (role === 'board-assistant-manager' && selectedAssignBoard.boardAssistantManagerFull) {
-      return `${label} (꽉참)`;
-    }
-
-    return label;
-  }
-
   async function loadManagers() {
     const response = await fetch(`/api/manage/join/managers?siteName=${siteName}`, {
       method: 'GET',
@@ -421,7 +287,6 @@ export default function Opt() {
     setManagers(Array.isArray(result.managers) ? result.managers : []);
     setBoards(Array.isArray(result.boards) ? result.boards : []);
     setManagerIcons(Array.isArray(result.managerIcons) ? result.managerIcons : []);
-    setLimits(result.limits ?? null);
     setOwnerTransfer(result.ownerTransfer ?? null);
   }
 
@@ -613,9 +478,6 @@ export default function Opt() {
     setMoveRole(nextRole);
     setMoveBoardId(isBoardRole(nextRole) ? moveBoardId : '');
 
-    if (isMoveRoleFull(nextRole, isBoardRole(nextRole) ? moveBoardId : '')) {
-      setRoleLimitDialog(getRoleFullMessage(nextRole));
-    }
   }
 
   function handleMoveBoardChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -624,9 +486,6 @@ export default function Opt() {
     setManagerEditErrorMessage('');
     setMoveBoardId(nextBoardId);
 
-    if (isMoveRoleFull(moveRole, nextBoardId)) {
-      setRoleLimitDialog(getRoleFullMessage(moveRole));
-    }
   }
 
   function openSearchDialog(mode: 'manager' | 'owner-transfer') {
@@ -774,16 +633,6 @@ export default function Opt() {
       return;
     }
 
-    if (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) {
-      setRoleLimitDialog(getRoleFullMessage(assignCommonRole));
-      return;
-    }
-
-    if (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole)) {
-      setRoleLimitDialog(getRoleFullMessage(assignBoardRole));
-      return;
-    }
-
     if (assignManagerGroup === 'common') {
       try {
         setSearchDialogErrorMessage('');
@@ -925,11 +774,6 @@ export default function Opt() {
       return;
     }
 
-    if (isMoveRoleFull(moveRole, isBoardRole(moveRole) ? moveBoardId : '')) {
-      setRoleLimitDialog(getRoleFullMessage(moveRole));
-      return;
-    }
-
     try {
       setManagerEditErrorMessage('');
       setIsSubmittingMove(true);
@@ -1056,9 +900,7 @@ export default function Opt() {
           >
             {roleOptions.map((option) => (
               <MenuItem key={option.value} value={option.value}>
-                {isMoveRoleFull(option.value, isBoardRole(option.value) ? moveBoardId : '')
-                  ? `${getRoleLabel(option.value)} (꽉참)`
-                  : getRoleLabel(option.value)}
+                {getRoleLabel(option.value)}
               </MenuItem>
             ))}
           </TextField>
@@ -1099,7 +941,7 @@ export default function Opt() {
           type="button"
           className="button medium submit"
           onClick={handleMoveManager}
-          disabled={isSubmittingMove || isMoveRoleFull(moveRole, isBoardRole(moveRole) ? moveBoardId : '')}
+          disabled={isSubmittingMove}
         >
           이동
         </button>
@@ -1512,24 +1354,14 @@ export default function Opt() {
                             <TextField
                               select
                               value={assignCommonRole}
-                              onChange={(event) => {
-                                const nextRole = event.target.value as 'community-manager' | 'board-manager';
-
-                                setAssignCommonRole(nextRole);
-
-                                if (isCommonRoleFull(nextRole)) {
-                                  setRoleLimitDialog(getRoleFullMessage(nextRole));
-                                }
-                              }}
+                              onChange={(event) =>
+                                setAssignCommonRole(event.target.value as 'community-manager' | 'board-manager')
+                              }
                               size="small"
                               fullWidth
                             >
-                              <MenuItem value="community-manager">
-                                {isCommonRoleFull('community-manager') ? '커뮤니티 매니저 (꽉참)' : '커뮤니티 매니저'}
-                              </MenuItem>
-                              <MenuItem value="board-manager">
-                                {isCommonRoleFull('board-manager') ? '전체 게시판 매니저 (꽉참)' : '전체 게시판 매니저'}
-                              </MenuItem>
+                              <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
+                              <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
                             </TextField>
                           </Stack>
                         ) : (
@@ -1561,26 +1393,16 @@ export default function Opt() {
                                 <TextField
                                   select
                                   value={assignBoardRole}
-                                  onChange={(event) => {
-                                    const nextRole = event.target.value as
-                                      | 'board-general-manager'
-                                      | 'board-assistant-manager';
-
-                                    setAssignBoardRole(nextRole);
-
-                                    if (isAssignBoardRoleFull(nextRole)) {
-                                      setRoleLimitDialog(getRoleFullMessage(nextRole));
-                                    }
-                                  }}
+                                  onChange={(event) =>
+                                    setAssignBoardRole(
+                                      event.target.value as 'board-general-manager' | 'board-assistant-manager',
+                                    )
+                                  }
                                   size="small"
                                   fullWidth
                                 >
-                                  <MenuItem value="board-general-manager">
-                                    {getBoardRoleLabel('board-general-manager', '개별 게시판 총괄 매니저')}
-                                  </MenuItem>
-                                  <MenuItem value="board-assistant-manager">
-                                    {getBoardRoleLabel('board-assistant-manager', '개별 게시판 부 매니저')}
-                                  </MenuItem>
+                                  <MenuItem value="board-general-manager">개별 게시판 총괄 매니저</MenuItem>
+                                  <MenuItem value="board-assistant-manager">개별 게시판 부 매니저</MenuItem>
                                 </TextField>
                               </Stack>
                             ) : null}
@@ -1593,11 +1415,7 @@ export default function Opt() {
                           type="button"
                           className="button medium submit"
                           onClick={handleCreateManager}
-                          disabled={
-                            isSubmittingNew ||
-                            (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
-                            (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
-                          }
+                          disabled={isSubmittingNew}
                         >
                           위임
                         </button>
@@ -1728,24 +1546,14 @@ export default function Opt() {
                           <TextField
                             select
                             value={assignCommonRole}
-                            onChange={(event) => {
-                              const nextRole = event.target.value as 'community-manager' | 'board-manager';
-
-                              setAssignCommonRole(nextRole);
-
-                              if (isCommonRoleFull(nextRole)) {
-                                setRoleLimitDialog(getRoleFullMessage(nextRole));
-                              }
-                            }}
+                            onChange={(event) =>
+                              setAssignCommonRole(event.target.value as 'community-manager' | 'board-manager')
+                            }
                             size="small"
                             sx={{ minWidth: 240 }}
                           >
-                            <MenuItem value="community-manager">
-                              {isCommonRoleFull('community-manager') ? '커뮤니티 매니저 (꽉참)' : '커뮤니티 매니저'}
-                            </MenuItem>
-                            <MenuItem value="board-manager">
-                              {isCommonRoleFull('board-manager') ? '전체 게시판 매니저 (꽉참)' : '전체 게시판 매니저'}
-                            </MenuItem>
+                            <MenuItem value="community-manager">커뮤니티 매니저</MenuItem>
+                            <MenuItem value="board-manager">전체 게시판 매니저</MenuItem>
                           </TextField>
                         </Stack>
                       ) : (
@@ -1778,26 +1586,16 @@ export default function Opt() {
                               <TextField
                                 select
                                 value={assignBoardRole}
-                                onChange={(event) => {
-                                  const nextRole = event.target.value as
-                                    | 'board-general-manager'
-                                    | 'board-assistant-manager';
-
-                                  setAssignBoardRole(nextRole);
-
-                                  if (isAssignBoardRoleFull(nextRole)) {
-                                    setRoleLimitDialog(getRoleFullMessage(nextRole));
-                                  }
-                                }}
+                                onChange={(event) =>
+                                  setAssignBoardRole(
+                                    event.target.value as 'board-general-manager' | 'board-assistant-manager',
+                                  )
+                                }
                                 size="small"
                                 sx={{ minWidth: 240 }}
                               >
-                                <MenuItem value="board-general-manager">
-                                  {getBoardRoleLabel('board-general-manager', '개별 게시판 총괄 매니저')}
-                                </MenuItem>
-                                <MenuItem value="board-assistant-manager">
-                                  {getBoardRoleLabel('board-assistant-manager', '개별 게시판 부 매니저')}
-                                </MenuItem>
+                                <MenuItem value="board-general-manager">개별 게시판 총괄 매니저</MenuItem>
+                                <MenuItem value="board-assistant-manager">개별 게시판 부 매니저</MenuItem>
                               </TextField>
                             </Stack>
                           ) : null}
@@ -1812,11 +1610,7 @@ export default function Opt() {
                         type="button"
                         className="button medium submit"
                         onClick={handleCreateManager}
-                        disabled={
-                          isSubmittingNew ||
-                          (assignManagerGroup === 'common' && isCommonRoleFull(assignCommonRole)) ||
-                          (assignManagerGroup === 'board' && isAssignBoardRoleFull(assignBoardRole))
-                        }
+                        disabled={isSubmittingNew}
                       >
                         위임
                       </button>
@@ -1924,39 +1718,6 @@ export default function Opt() {
               )}
             </>
           ) : null}
-
-          {isMobile ? (
-            <Drawer
-              anchor="bottom"
-              open={Boolean(roleLimitDialog)}
-              onClose={() => setRoleLimitDialog(null)}
-              className="VhiDrawer-bottom"
-            >
-              <h2>{roleLimitDialog?.title}</h2>
-              <p>{roleLimitDialog?.message}</p>
-              <button type="button" className="button medium submit" onClick={() => setRoleLimitDialog(null)}>
-                확인
-              </button>
-            </Drawer>
-          ) : (
-            <Dialog
-              open={Boolean(roleLimitDialog)}
-              onClose={() => setRoleLimitDialog(null)}
-              fullWidth
-              maxWidth="xs"
-              className="VhiDialog"
-            >
-              <DialogTitle>{roleLimitDialog?.title}</DialogTitle>
-              <DialogContent>
-                <Typography variant="body2">{roleLimitDialog?.message}</Typography>
-              </DialogContent>
-              <DialogActions>
-                <button type="button" className="button medium submit" onClick={() => setRoleLimitDialog(null)}>
-                  확인
-                </button>
-              </DialogActions>
-            </Dialog>
-          )}
 
           <Snackbar
             open={Boolean(snackbarMessage)}

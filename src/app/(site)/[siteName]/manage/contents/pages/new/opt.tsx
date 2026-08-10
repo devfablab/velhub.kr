@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -160,35 +159,10 @@ export default function Opt() {
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [canAddPage, setCanAddPage] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
-
-  useEffect(() => {
-    async function checkPageLimit() {
-      try {
-        const statusResponse = await fetch(`/api/manage/contents/pages/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = await statusResponse.json();
-
-        if (statusResponse.ok && statusResult.canAddPage === false) {
-          setCanAddPage(false);
-          setErrorMessage('더 이상 새 페이지를 추가하실 수 없습니다');
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    if (siteName) {
-      void checkPageLimit();
-    }
-  }, [siteName]);
 
   useEffect(() => {
     return () => {
@@ -437,7 +411,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || !canAddPage) {
+    if (isSubmitting) {
       return;
     }
 
@@ -553,13 +527,7 @@ export default function Opt() {
           ) : null}
 
           <div className={`paper ${styles.paper}`}>
-            {!canAddPage ? (
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>더 이상 새 페이지를 추가하실 수 없습니다</span>
-              </p>
-            ) : (
-              <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
                 <Stack gap={1}>
                   <Typography variant="subtitle2">페이지 식별자 *</Typography>
                   <TextField
@@ -669,21 +637,20 @@ export default function Opt() {
                       <button
                         type="submit"
                         className={`button ${styles.button}`}
-                        disabled={isSubmitting || !canAddPage}
+                        disabled={isSubmitting}
                       >
                         저장
                       </button>
                     </div>
                   ) : (
-                    <button type="submit" className="button medium submit" disabled={isSubmitting || !canAddPage}>
+                    <button type="submit" className="button medium submit" disabled={isSubmitting}>
                       저장
                     </button>
                   )}
                 </Stack>
 
                 {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-              </Stack>
-            )}
+            </Stack>
           </div>
         </div>
       </div>

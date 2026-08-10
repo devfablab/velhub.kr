@@ -1,12 +1,9 @@
 import { NextRequest } from 'next/server';
-import { decrypt } from '@/lib/encryption/decrypt';
-import { encrypt } from '@/lib/encryption/encrypt';
 import { getCurrentPortOneProvider, getPortOneBillingCardInfo, getPortOneBillingKeyInfo } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { createCustomerKey } from '@/lib/payments/customer';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 
 type BillingMethodSuccessBody = {
   billingKey?: string;
@@ -18,14 +15,6 @@ type BillingMethodSuccessBody = {
 type BillingMethodRow = {
   id: string;
   is_default: boolean;
-};
-
-type PlanBillingSubscriptionRow = {
-  id: string;
-  status: string;
-  expired_at: string | null;
-  subscriber_user_id: string | null;
-  billing_key: string | null;
 };
 
 export async function POST(request: NextRequest) {
@@ -88,71 +77,6 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    async function updatePlanBillingSubscription() {
-      if (!siteId || !session.authUserId) {
-        return;
-      }
-
-      const subscriptionResult = await supabaseAdmin
-        .from('subscriptions')
-        .select('id, status, expired_at, subscriber_user_id, billing_key')
-        .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
-        .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
-        .eq('target_id', siteId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (subscriptionResult.error) {
-        console.error(subscriptionResult.error);
-        throw new Error('요금제 구독 정보를 확인하지 못했습니다.');
-      }
-
-      const subscription = subscriptionResult.data as PlanBillingSubscriptionRow | null;
-
-      if (
-        !subscription ||
-        subscription.expired_at ||
-        subscription.status === SUBSCRIPTION_STATUS.CANCELED ||
-        subscription.status === SUBSCRIPTION_STATUS.EXPIRED
-      ) {
-        return;
-      }
-
-      const previousBillingMethodResult =
-        subscription.subscriber_user_id && subscription.billing_key
-          ? await supabaseAdmin
-              .from('subscription_billing_methods')
-              .select('id')
-              .eq('user_id', subscription.subscriber_user_id)
-              .eq('provider', getCurrentPortOneProvider())
-              .eq('billing_key', decrypt(subscription.billing_key))
-              .limit(1)
-              .maybeSingle()
-          : { data: null, error: null };
-
-      if (previousBillingMethodResult.error) {
-        console.error(previousBillingMethodResult.error);
-        throw new Error('현재 요금제 결제수단을 확인하지 못했습니다.');
-      }
-
-      const subscriptionUpdateResult = await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          previous_billing_method_id: previousBillingMethodResult.data?.id ?? null,
-          subscriber_user_id: session.stigmaId,
-          billing_key: encrypt(billingKey),
-          customer_key: customerKey,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', subscription.id);
-
-      if (subscriptionUpdateResult.error) {
-        console.error(subscriptionUpdateResult.error);
-        throw new Error('요금제 결제수단을 변경하지 못했습니다.');
-      }
-    }
-
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .select('id, is_default')
@@ -205,8 +129,6 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '결제 수단을 갱신하지 못했습니다.' }, { status: 500 });
       }
 
-      await updatePlanBillingSubscription();
-
       return Response.json({ ok: true });
     }
 
@@ -231,8 +153,6 @@ export async function POST(request: NextRequest) {
 
       return Response.json({ error: '결제 수단을 저장하지 못했습니다.' }, { status: 500 });
     }
-
-    await updatePlanBillingSubscription();
 
     return Response.json({ ok: true });
   } catch (unknownError) {

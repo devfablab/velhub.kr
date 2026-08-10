@@ -876,8 +876,7 @@ export default function Opt() {
                         ) : null}
                         {report.reportType === 'rights' &&
                         report.canSendMessage &&
-                        report.site?.isBlocked &&
-                        !report.site.isPlanTerminated ? (
+                        report.site?.isBlocked ? (
                           <button
                             type="button"
                             className="button small danger"
@@ -1366,7 +1365,7 @@ export default function Opt() {
               ? '진짜 사이트를 차단하시겠습니까?'
               : siteActionDialog?.action === 'unblock'
                 ? '진짜 사이트 차단을 해제하시겠습니까?'
-                : '진짜 사이트를 폐쇄하시겠습니까? 환불 가능한 요금제는 환불 후 취소되며, 환불할 수 없으면 다음 결제가 취소됩니다.'}
+                : '진짜 사이트를 폐쇄하시겠습니까?'}
           </Typography>
         </DialogContent>
         <DialogActions>

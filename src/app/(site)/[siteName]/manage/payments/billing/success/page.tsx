@@ -1,5 +1,5 @@
-import Opt from './opt';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <Opt />;
+  redirect('/hub/memberships/plan');
 }

@@ -90,8 +90,6 @@ function formatCardNumber(cardNumberMasked: string | null | undefined) {
 
 function getPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
-    case PAYMENT_TYPE.PLAN_BILLING:
-      return '요금제';
     case PAYMENT_TYPE.MEMBERSHIP_BLOG:
       return '블로그 멤버십';
     case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
@@ -160,7 +158,7 @@ function createPaymentDisplayInfo({
   const siteLabel = getSiteLabel(site);
   const siteHref = getSiteHref(site);
 
-  if (payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN) {
+  if (payment.target_type === PAYMENT_TARGET_TYPE.SITE) {
     return {
       siteLabel,
       siteHref,
@@ -304,7 +302,7 @@ export async function GET() {
     const siteTargetIds = payments
       .filter(
         (payment) =>
-          payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN,
+          payment.target_type === PAYMENT_TARGET_TYPE.SITE,
       )
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
@@ -418,7 +416,7 @@ export async function GET() {
         const seriesBoard = series ? boardMap.get(series.board_id) : null;
         const postBoard = post ? boardMap.get(post.board_id) : null;
         const siteId =
-          payment.target_type === PAYMENT_TARGET_TYPE.SITE || payment.target_type === PAYMENT_TARGET_TYPE.PLAN
+          payment.target_type === PAYMENT_TARGET_TYPE.SITE
             ? payment.target_id
             : (board?.site_id ?? series?.site_id ?? post?.site_id ?? null);
         const site = siteId ? siteMap.get(siteId) : null;

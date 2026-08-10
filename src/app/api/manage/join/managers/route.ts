@@ -209,12 +209,6 @@ export async function GET(request: Request) {
     return Response.json({
       ok: true,
       permissions: access.actor.permissions,
-      limits: {
-        community_manager: access.planFeature.communityManagerLimit,
-        board_manager: access.planFeature.boardManagerLimit,
-        board_general_manager: access.planFeature.boardGeneralManagerLimit,
-        board_assistant_manager: access.planFeature.boardAssistantManagerLimit,
-      },
       managers,
       boards,
       managerIcons: managerIcons.icons,

@@ -94,14 +94,6 @@ type SiteRow = {
   is_blocked: boolean | null;
 };
 
-type SubscriptionRow = {
-  target_id: string;
-  status: string;
-  next_billing_at: string | null;
-  canceled_at: string | null;
-  created_at: string;
-};
-
 type BoardRow = {
   id: string;
   board_key: string;
@@ -519,7 +511,7 @@ export async function loadConciergeReports({
   ];
   const reportKeys = new Set(reports.map((report) => `${report.reportType}:${report.id}`));
 
-  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, subscriptionsResult, appealsResult] =
+  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, appealsResult] =
     await Promise.all([
       siteIds.length
         ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
@@ -543,15 +535,6 @@ export async function loadConciergeReports({
             )
             .order('created_at', { ascending: false })
         : Promise.resolve({ data: [], error: null }),
-      siteIds.length
-        ? supabaseAdmin
-            .from('subscriptions')
-            .select('target_id, status, next_billing_at, canceled_at, created_at')
-            .eq('subscription_type', 'plan_billing')
-            .eq('target_type', 'plan')
-            .in('target_id', siteIds)
-            .order('created_at', { ascending: false })
-        : Promise.resolve({ data: [], error: null }),
       reports.length
         ? supabaseAdmin
             .from('report_appeals')
@@ -571,7 +554,6 @@ export async function loadConciergeReports({
     postsResult.error ??
     commentsResult.error ??
     messagesResult.error ??
-    subscriptionsResult.error ??
     appealsResult.error;
 
   if (firstError) {
@@ -630,13 +612,6 @@ export async function loadConciergeReports({
   }
 
   const siteById = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));
-  const latestSubscriptionBySiteId = new Map<string, SubscriptionRow>();
-
-  for (const subscription of (subscriptionsResult.data ?? []) as SubscriptionRow[]) {
-    if (!latestSubscriptionBySiteId.has(subscription.target_id)) {
-      latestSubscriptionBySiteId.set(subscription.target_id, subscription);
-    }
-  }
   const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
   const postById = new Map(((postsResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
   const commentById = new Map(((commentsResult.data ?? []) as CommentRow[]).map((comment) => [comment.id, comment]));
@@ -677,13 +652,6 @@ export async function loadConciergeReports({
     const hasThreeDaysPassed = elapsedMilliseconds >= 3 * 24 * 60 * 60 * 1000;
     const hasThirtyDaysPassed = elapsedMilliseconds >= 30 * 24 * 60 * 60 * 1000;
     const isContentTarget = targetTypeValue === 'post' || targetTypeValue === 'comment';
-    const subscription = site ? (latestSubscriptionBySiteId.get(site.id) ?? null) : null;
-    const isPlanTerminated =
-      !subscription ||
-      subscription.status === 'canceled' ||
-      subscription.status === 'expired' ||
-      subscription.status === 'scheduled_cancel' ||
-      Boolean(subscription.canceled_at && !subscription.next_billing_at);
     const internalTargetPath =
       site && board && post
         ? `/${site.site_key}/${board.board_key}/${post.slug}`
@@ -724,7 +692,6 @@ export async function loadConciergeReports({
             name: site.site_label || site.site_key,
             href: `/${site.site_key}`,
             isBlocked: site.is_blocked === true,
-            isPlanTerminated,
           }
         : null,
       board:

@@ -1,5 +1,4 @@
 import type { CommunityManagerAccess } from '@/lib/community/community-manager/utils';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 
 const OWNER_TRANSFER_WAIT_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -17,24 +16,6 @@ export type OwnerTransferAvailability = {
   requesterRole: 'owner' | 'community-manager' | null;
   availableAt: string | null;
 };
-
-async function hasPastDuePlanBilling(access: CommunityManagerAccess) {
-  const subscriptionResult = await access.supabaseAdmin
-    .from('subscriptions')
-    .select('status')
-    .eq('subscription_type', SUBSCRIPTION_TYPE.PLAN_BILLING)
-    .eq('target_type', PAYMENT_TARGET_TYPE.PLAN)
-    .eq('target_id', access.rhizome.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (subscriptionResult.error) {
-    throw new Error('요금제 결제 상태를 확인하지 못했습니다.');
-  }
-
-  return subscriptionResult.data?.status === 'past_due';
-}
 
 export async function getOwnerTransferAvailability(access: CommunityManagerAccess): Promise<OwnerTransferAvailability> {
   const isOwner = access.actor.communityRoles.includes('owner') && access.rhizome.owner_id === access.actor.stigmaId;
@@ -105,12 +86,10 @@ export async function getOwnerTransferAvailability(access: CommunityManagerAcces
     };
   }
 
-  const hasPastDueBilling = await hasPastDuePlanBilling(access);
-
   return {
-    canRequest: !hasPendingRequest && hasPastDueBilling,
+    canRequest: false,
     hasPendingRequest,
-    requesterRole: hasPastDueBilling ? 'community-manager' : null,
+    requesterRole: null,
     availableAt: null,
   };
 }

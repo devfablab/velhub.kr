@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
 const PAYMENT_ORDER_NO_PREFIX = {
-  PLAN: 'VH-PLAN',
   DONATION_SITE: 'VH-DNT-SITE',
   DONATION_BOARD: 'VH-DNT-BOARD',
   DONATION_SERIES: 'VH-DNT-SERIES',

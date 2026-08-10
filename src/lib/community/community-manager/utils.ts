@@ -15,7 +15,6 @@ type RhizomeRow = {
   site_key: string;
   site_label: string;
   site_type: string | null;
-  plan_type: string | null;
 };
 
 type CommunityRow = {
@@ -57,13 +56,6 @@ type StigmaRow = {
   user_name: string | null;
 };
 
-type PlanFeatureRow = {
-  count_manager: number | null;
-  count_board_manager: number | null;
-  count_board_general_manager: number | null;
-  count_board_assistant_manager: number | null;
-};
-
 type GetCommunityManagerAccessOptions = {
   requireManagerControlPermission?: boolean;
 };
@@ -82,10 +74,6 @@ export type CommunityManageBoardSummary = {
   boardLabel: string;
   boardGeneralManagerCount: number;
   boardAssistantManagerCount: number;
-  boardGeneralManagerLimit: number;
-  boardAssistantManagerLimit: number;
-  boardGeneralManagerFull: boolean;
-  boardAssistantManagerFull: boolean;
 };
 
 export type CommunityManagerListItem = {
@@ -120,12 +108,6 @@ export type CommunityManagerAccess = {
   rhizome: RhizomeRow;
   community: CommunityRow;
   actor: CommunityManagerActor;
-  planFeature: {
-    communityManagerLimit: number;
-    boardManagerLimit: number;
-    boardGeneralManagerLimit: number;
-    boardAssistantManagerLimit: number;
-  };
 };
 
 export function canManageAllCommunityBoardContents(actor: CommunityManagerActor) {
@@ -165,14 +147,6 @@ function decryptNullable(value: string | null | undefined) {
   }
 }
 
-function toNonNegativeInteger(value: number | null | undefined) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.floor(value));
-}
-
 export async function getCommunityManagerAccess(
   siteName: string,
   options: GetCommunityManagerAccessOptions = {},
@@ -187,7 +161,7 @@ export async function getCommunityManagerAccess(
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, owner_id, site_key, site_label, site_type, plan_type')
+    .select('id, owner_id, site_key, site_label, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -294,18 +268,6 @@ export async function getCommunityManagerAccess(
     throw new Error('접근 권한이 없습니다.');
   }
 
-  const planFeatureResult = await supabaseAdmin
-    .from('plan_features')
-    .select('count_manager, count_board_manager, count_board_general_manager, count_board_assistant_manager')
-    .eq('plan_id', rhizome.plan_type)
-    .maybeSingle();
-
-  if (planFeatureResult.error || !planFeatureResult.data) {
-    throw new Error('플랜 정보를 찾을 수 없습니다.');
-  }
-
-  const planFeature = planFeatureResult.data as PlanFeatureRow;
-
   return {
     supabaseAdmin,
     rhizome,
@@ -320,12 +282,6 @@ export async function getCommunityManagerAccess(
       managedBoardGeneralIds,
       canManageCommunityManager,
       canManageBoardManager,
-    },
-    planFeature: {
-      communityManagerLimit: toNonNegativeInteger(planFeature.count_manager),
-      boardManagerLimit: toNonNegativeInteger(planFeature.count_board_manager),
-      boardGeneralManagerLimit: toNonNegativeInteger(planFeature.count_board_general_manager),
-      boardAssistantManagerLimit: toNonNegativeInteger(planFeature.count_board_assistant_manager),
     },
   };
 }
@@ -414,14 +370,6 @@ export async function getBoardSummaries(access: CommunityManagerAccess, managerR
       boardLabel: normalizeText(board.board_label) || board.board_key,
       boardGeneralManagerCount,
       boardAssistantManagerCount,
-      boardGeneralManagerLimit: access.planFeature.boardGeneralManagerLimit,
-      boardAssistantManagerLimit: access.planFeature.boardAssistantManagerLimit,
-      boardGeneralManagerFull:
-        access.planFeature.boardGeneralManagerLimit > 0 &&
-        boardGeneralManagerCount >= access.planFeature.boardGeneralManagerLimit,
-      boardAssistantManagerFull:
-        access.planFeature.boardAssistantManagerLimit > 0 &&
-        boardAssistantManagerCount >= access.planFeature.boardAssistantManagerLimit,
     };
   });
 }

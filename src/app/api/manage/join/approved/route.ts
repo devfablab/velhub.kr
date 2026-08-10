@@ -3,7 +3,6 @@ import { getCommunityManagerAccess } from '@/lib/community/community-manager/uti
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { getSiteMemberLimitStatus } from '@/lib/siteMemberLimit';
 import { ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
 
 type RequestBody = {
@@ -380,16 +379,6 @@ export async function PATCH(request: Request) {
 
       if (approvalCountResult.error) {
         return Response.json({ error: '가입 승인 대상을 확인하지 못했습니다.' }, { status: 500 });
-      }
-
-      const approvalCount = approvalCountResult.count ?? 0;
-      const memberLimit = await getSiteMemberLimitStatus(access.rhizome.id);
-
-      if (memberLimit.currentCount + approvalCount > memberLimit.limit) {
-        return Response.json(
-          { error: '현재 요금제의 회원 수 제한을 초과하여 가입을 승인할 수 없습니다.' },
-          { status: 400 },
-        );
       }
 
       const levelOneResult = await access.supabaseAdmin

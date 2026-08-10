@@ -1,6 +1,5 @@
 export function getPaymentTypeLabel(value: string | null) {
   const labels: Record<string, string> = {
-    plan_billing: '요금제',
     membership_blog: '블로그 멤버십',
     subscription_board: '게시판 구독',
     subscription_series: '연재 구독',

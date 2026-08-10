@@ -3,7 +3,6 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
-import { getPlanBillingSubscriberUserId } from '@/lib/payments/planBillingSubscriber';
 
 type RouteContext = {
   params: Promise<{
@@ -323,12 +322,6 @@ async function getSiteUserInfo(siteName: string) {
     } as const;
   }
 
-  const planBillingSubscriberUserId = await getPlanBillingSubscriberUserId({
-    supabaseAdmin,
-    siteId: site.id,
-  });
-  const isPlanBillingSubscriber = planBillingSubscriberUserId === session.stigmaId;
-
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .select('id, user_id, user_name, avatar')
@@ -630,7 +623,6 @@ async function getSiteUserInfo(siteName: string) {
     status: 200,
     data: {
       status: 'active',
-      isPlanBillingSubscriber,
       userInfo: {
         avatarUrl: getAvatarUrl(stigma.avatar),
         activityName: decryptNullable(stigma.user_name),
@@ -837,18 +829,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!session.authUserId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-
-    const planBillingSubscriberUserId = await getPlanBillingSubscriberUserId({
-      supabaseAdmin,
-      siteId: siteResult.data.id,
-    });
-
-    if (planBillingSubscriberUserId === session.stigmaId) {
-      return Response.json(
-        { error: '이용자님은 요금제를 월결제하시는 분입니다. 탈퇴하실 수 없어요.' },
-        { status: 403 },
-      );
     }
 
     const stigmaResult = await supabaseAdmin

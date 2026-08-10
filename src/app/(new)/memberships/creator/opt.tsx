@@ -9,6 +9,7 @@ import {
   getMembershipPrice,
   MEMBERSHIP_PACKAGE_PRICE,
   type MembershipFeatureKey,
+  type MembershipType,
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/memberships.module.sass';
@@ -18,6 +19,13 @@ type Eligibility = {
   creator: { available: boolean; message: string | null };
   allInOne: { available: boolean; message: string | null };
 };
+
+type MembershipStatusResponse = {
+  memberships?: Array<{ id: string; type: MembershipType }>;
+  message?: string;
+};
+
+type MembershipMode = 'individual' | 'all_in_one';
 
 const ownerFeatures = getMembershipFeatures('owner');
 const creatorFeatures = getMembershipFeatures('creator');
@@ -30,26 +38,49 @@ function toggleFeature(current: MembershipFeatureKey[], featureKey: MembershipFe
   return current.includes(featureKey) ? current.filter((key) => key !== featureKey) : [...current, featureKey];
 }
 
+function getPackageKeys(features: typeof ownerFeatures) {
+  return features.map((feature) => feature.key);
+}
+
 export default function Opt() {
   const router = useRouter();
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [mode, setMode] = useState<MembershipMode>('individual');
+  const [isAllInOneAutomatic, setIsAllInOneAutomatic] = useState(false);
   const [ownerSelection, setOwnerSelection] = useState<MembershipFeatureKey[]>([]);
   const [creatorSelection, setCreatorSelection] = useState<MembershipFeatureKey[]>([]);
+  const [isOwnerPackage, setIsOwnerPackage] = useState(false);
+  const [isCreatorPackage, setIsCreatorPackage] = useState(false);
   const [allInOneSelection, setAllInOneSelection] = useState<MembershipFeatureKey[]>([]);
-  const [isAllInOneSelected, setIsAllInOneSelected] = useState(false);
-  const [isAllInOneAutomatic, setIsAllInOneAutomatic] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     async function loadEligibility() {
       try {
-        const response = await fetch('/api/memberships/eligibility', { credentials: 'include', cache: 'no-store' });
-        const result = (await response.json().catch(() => null)) as Eligibility | { message?: string } | null;
+        const [eligibilityResponse, membershipResponse] = await Promise.all([
+          fetch('/api/memberships/eligibility', { credentials: 'include', cache: 'no-store' }),
+          fetch('/api/memberships', { credentials: 'include', cache: 'no-store' }),
+        ]);
+        const result = (await eligibilityResponse.json().catch(() => null)) as Eligibility | { message?: string } | null;
+        const membershipResult = (await membershipResponse.json().catch(() => null)) as MembershipStatusResponse | null;
 
-        if (!response.ok || !result || !('owner' in result)) {
+        if (!eligibilityResponse.ok || !result || !('owner' in result)) {
           const message = result && 'message' in result ? result.message : null;
           throw new Error(message || '멤버십 이용 조건을 확인하지 못했습니다.');
+        }
+
+        if (!membershipResponse.ok) {
+          throw new Error(membershipResult?.message || '멤버십 정보를 불러오지 못했습니다.');
+        }
+
+        const hasCreatorMembership = (membershipResult?.memberships ?? []).some((membership) =>
+          ['owner', 'creator', 'all_in_one'].includes(membership.type),
+        );
+
+        if (hasCreatorMembership) {
+          router.replace('/hub/memberships/plan');
+          return;
         }
 
         setEligibility(result);
@@ -59,101 +90,149 @@ export default function Opt() {
     }
 
     void loadEligibility();
-  }, []);
+  }, [router]);
 
-  const totalPrice = useMemo(() => {
-    if (isAllInOneSelected) {
-      return getMembershipPrice(allInOneSelection, 'all_in_one');
-    }
-
-    return getMembershipPrice(ownerSelection, 'owner') + getMembershipPrice(creatorSelection, 'creator');
-  }, [allInOneSelection, creatorSelection, isAllInOneSelected, ownerSelection]);
-
+  const effectiveOwnerSelection = isOwnerPackage ? getPackageKeys(ownerFeatures) : ownerSelection;
+  const effectiveCreatorSelection = isCreatorPackage ? getPackageKeys(creatorFeatures) : creatorSelection;
   const isAllInOnePackage = useMemo(
     () =>
       ownerFeatures.filter((feature) => allInOneSelection.includes(feature.key)).length >= 2 &&
       creatorFeatures.filter((feature) => allInOneSelection.includes(feature.key)).length >= 2,
     [allInOneSelection],
   );
+  const canEditIndividual = mode === 'individual' || isAllInOneAutomatic;
+  const canUseAllInOne = eligibility?.allInOne.available ?? false;
 
-  function handleTopSelectionChange(
+  const totalPrice = useMemo(() => {
+    if (mode === 'all_in_one') {
+      return getMembershipPrice(allInOneSelection, 'all_in_one');
+    }
+
+    return getMembershipPrice(effectiveOwnerSelection, 'owner') + getMembershipPrice(effectiveCreatorSelection, 'creator');
+  }, [allInOneSelection, effectiveCreatorSelection, effectiveOwnerSelection, mode]);
+
+  function updateIndividualSelections(
     nextOwnerSelection: MembershipFeatureKey[],
     nextCreatorSelection: MembershipFeatureKey[],
+    nextIsOwnerPackage = isOwnerPackage,
+    nextIsCreatorPackage = isCreatorPackage,
   ) {
-    const canUseAllInOne = nextOwnerSelection.length >= 2 && nextCreatorSelection.length >= 2;
-    const wasManuallyUsingAllInOne = isAllInOneSelected && !isAllInOneAutomatic;
+    const nextEffectiveOwnerSelection = nextIsOwnerPackage ? getPackageKeys(ownerFeatures) : nextOwnerSelection;
+    const nextEffectiveCreatorSelection = nextIsCreatorPackage ? getPackageKeys(creatorFeatures) : nextCreatorSelection;
+    const shouldAutomaticallyUseAllInOne =
+      nextEffectiveOwnerSelection.length >= 2 && nextEffectiveCreatorSelection.length >= 2;
 
     setOwnerSelection(nextOwnerSelection);
     setCreatorSelection(nextCreatorSelection);
+    setIsOwnerPackage(nextIsOwnerPackage);
+    setIsCreatorPackage(nextIsCreatorPackage);
 
-    if (wasManuallyUsingAllInOne) {
-      setIsAllInOneSelected(false);
-      setAllInOneSelection([]);
-    }
-
-    if (canUseAllInOne) {
-      if (!isAllInOneSelected || wasManuallyUsingAllInOne) {
+    if (shouldAutomaticallyUseAllInOne) {
+      if (mode !== 'all_in_one' || !isAllInOneAutomatic) {
         setSnackbarMessage('올인원 멤버십으로 전환됩니다.');
       }
 
-      setIsAllInOneSelected(true);
+      setMode('all_in_one');
       setIsAllInOneAutomatic(true);
-      setAllInOneSelection([...nextOwnerSelection, ...nextCreatorSelection]);
+      setAllInOneSelection([...nextEffectiveOwnerSelection, ...nextEffectiveCreatorSelection]);
       return;
     }
 
-    if (isAllInOneSelected && isAllInOneAutomatic) {
+    if (isAllInOneAutomatic) {
       setSnackbarMessage('올인원 멤버십이 해제됩니다.');
-      setIsAllInOneSelected(false);
+      setMode('individual');
       setIsAllInOneAutomatic(false);
       setAllInOneSelection([]);
     }
   }
 
-  function handleMembershipTypeChange(nextIsAllInOneSelected: boolean) {
-    setIsAllInOneSelected(nextIsAllInOneSelected);
+  function chooseIndividualMembership() {
+    setMode('individual');
     setIsAllInOneAutomatic(false);
+    setAllInOneSelection([]);
+  }
 
-    if (nextIsAllInOneSelected) {
-      setOwnerSelection([]);
-      setCreatorSelection([]);
-      return;
-    }
+  function chooseAllInOneMembership() {
+    if (!canUseAllInOne) return;
 
-    if (!nextIsAllInOneSelected) {
-      setAllInOneSelection([]);
-    }
+    setMode('all_in_one');
+    setIsAllInOneAutomatic(false);
+    setOwnerSelection([]);
+    setCreatorSelection([]);
+    setIsOwnerPackage(false);
+    setIsCreatorPackage(false);
+    setAllInOneSelection([]);
   }
 
   function handleOwnerFeatureChange(featureKey: MembershipFeatureKey) {
-    const nextSelection = toggleFeature(ownerSelection, featureKey);
-    const isPackage = nextSelection.length === ownerFeatures.length;
+    if (!canEditIndividual || !eligibility?.owner.available) return;
 
-    handleTopSelectionChange(isPackage ? ownerFeatures.map((feature) => feature.key) : nextSelection, creatorSelection);
+    if (isOwnerPackage) {
+      updateIndividualSelections(
+        getPackageKeys(ownerFeatures).filter((key) => key !== featureKey),
+        creatorSelection,
+        false,
+        isCreatorPackage,
+      );
+      return;
+    }
+
+    updateIndividualSelections(toggleFeature(ownerSelection, featureKey), creatorSelection);
   }
 
   function handleCreatorFeatureChange(featureKey: MembershipFeatureKey) {
-    const nextSelection = toggleFeature(creatorSelection, featureKey);
-    const isPackage = nextSelection.length === creatorFeatures.length;
+    if (!canEditIndividual || !eligibility?.creator.available) return;
 
-    handleTopSelectionChange(ownerSelection, isPackage ? creatorFeatures.map((feature) => feature.key) : nextSelection);
+    if (isCreatorPackage) {
+      updateIndividualSelections(
+        ownerSelection,
+        getPackageKeys(creatorFeatures).filter((key) => key !== featureKey),
+        isOwnerPackage,
+        false,
+      );
+      return;
+    }
+
+    updateIndividualSelections(ownerSelection, toggleFeature(creatorSelection, featureKey));
+  }
+
+  function handleOwnerPackageChange() {
+    if (!canEditIndividual || !eligibility?.owner.available) return;
+
+    updateIndividualSelections([], creatorSelection, !isOwnerPackage, isCreatorPackage);
+  }
+
+  function handleCreatorPackageChange() {
+    if (!canEditIndividual || !eligibility?.creator.available) return;
+
+    updateIndividualSelections(ownerSelection, [], isOwnerPackage, !isCreatorPackage);
   }
 
   function handleAllInOneFeatureChange(featureKey: MembershipFeatureKey) {
+    if (!canUseAllInOne) return;
+
+    if (mode !== 'all_in_one') {
+      setMode('all_in_one');
+      setIsAllInOneAutomatic(false);
+      setOwnerSelection([]);
+      setCreatorSelection([]);
+      setIsOwnerPackage(false);
+      setIsCreatorPackage(false);
+    }
+
     setAllInOneSelection((current) => toggleFeature(current, featureKey));
   }
 
   function handleMoveToPlan() {
-    const selection = isAllInOneSelected
-      ? { allInOne: allInOneSelection }
-      : { owner: ownerSelection, creator: creatorSelection };
+    const selection =
+      mode === 'all_in_one'
+        ? { allInOne: allInOneSelection }
+        : { owner: effectiveOwnerSelection, creator: effectiveCreatorSelection };
 
     router.push(`/hub/memberships/plan?selection=${encodeURIComponent(JSON.stringify(selection))}`);
   }
 
-  if (!eligibility && !errorMessage) {
-    return;
-  }
+  if (!eligibility && !errorMessage) return null;
 
   return (
     <main className={styles['membership-page']}>
@@ -161,79 +240,94 @@ export default function Opt() {
         <Stack gap={3}>
           <Stack gap={1}>
             <Typography variant="h6">창작자 멤버십 가입</Typography>
-            <Typography variant="subtitle2">
-              원하는 기능을 선택해 주세요. 기본 기능은 자동으로 이용할 수 있습니다.
-            </Typography>
+            <Typography variant="subtitle2">원하는 기능을 선택해 주세요. 기본 기능은 자동으로 이용할 수 있습니다.</Typography>
           </Stack>
           {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
-          <Stack gap={3}>
-            <Stack gap={1}>
+
+          <Stack gap={2} className={styles['membership-choice-group']}>
+            <Typography variant="subtitle2">멤버십 선택</Typography>
+            <Stack direction="row" gap={2} flexWrap="wrap">
               <button
                 type="button"
                 className={styles['membership-type']}
-                onClick={() => handleMembershipTypeChange(false)}
+                onClick={chooseIndividualMembership}
+                disabled={isAllInOneAutomatic}
+                aria-pressed={mode === 'individual'}
               >
-                <Radio checked={!isAllInOneSelected} tabIndex={-1} size="small" />
+                <Radio checked={mode === 'individual'} tabIndex={-1} size="small" />
                 <span>개별 멤버십</span>
               </button>
-              <div className={`paper ${styles['membership-cards']}`}>
-                <MembershipCard
-                  title="오너 멤버십"
-                  description="사이트 운영에 필요한 기능을 이용합니다."
-                  disabledMessage={eligibility?.owner.message ?? null}
-                  basic="블로그와 커뮤니티를 각각 1개 개설할 수 있습니다."
-                  features={ownerFeatures}
-                  selection={ownerSelection}
-                  onSelectionChange={(selection) => handleTopSelectionChange(selection, creatorSelection)}
-                  onFeatureChange={handleOwnerFeatureChange}
-                  packagePrice={MEMBERSHIP_PACKAGE_PRICE.owner}
-                  isDisabled={false}
-                  available={eligibility?.owner.available ?? false}
-                />
-                <MembershipCard
-                  title="크리에이터 멤버십"
-                  description="작가 활동을 위한 기능을 이용합니다."
-                  disabledMessage={eligibility?.creator.message ?? null}
-                  basic="작가 신청과 작가 활동으로 수익 창출을 이용할 수 있습니다."
-                  features={creatorFeatures}
-                  selection={creatorSelection}
-                  onSelectionChange={(selection) => handleTopSelectionChange(ownerSelection, selection)}
-                  onFeatureChange={handleCreatorFeatureChange}
-                  packagePrice={MEMBERSHIP_PACKAGE_PRICE.creator}
-                  isDisabled={false}
-                  available={eligibility?.creator.available ?? false}
-                />
-              </div>
+              <button
+                type="button"
+                className={styles['membership-type']}
+                onClick={chooseAllInOneMembership}
+                disabled={!canUseAllInOne}
+                aria-pressed={mode === 'all_in_one'}
+              >
+                <Radio checked={mode === 'all_in_one'} tabIndex={-1} size="small" />
+                <span>올인원 멤버십</span>
+              </button>
             </Stack>
-            <Stack gap={1}>
-              <MembershipCard
-                title="올인원 멤버십"
-                description="오너와 크리에이터 기능을 함께 이용합니다."
-                disabledMessage={eligibility?.allInOne.message ?? null}
-                basic="운영 중인 사이트가 있고 작가인 경우 이용할 수 있습니다."
-                features={[...ownerFeatures, ...creatorFeatures]}
-                selection={allInOneSelection}
-                onSelectionChange={setAllInOneSelection}
-                onFeatureChange={handleAllInOneFeatureChange}
-                packagePrice={MEMBERSHIP_PACKAGE_PRICE.all_in_one}
-                isDisabled={!isAllInOneSelected}
-                available={eligibility?.allInOne.available ?? false}
-                allInOne
-                isMembershipTypeSelected={isAllInOneSelected}
-                isMembershipTypeDisabled={!(eligibility?.allInOne.available ?? false)}
-                onMembershipTypeChange={() => handleMembershipTypeChange(true)}
-              />
-            </Stack>
+            {!canUseAllInOne && eligibility?.allInOne.message ? <p className="alert error">{eligibility.allInOne.message}</p> : null}
           </Stack>
+
+          <div className={`paper ${styles['membership-cards']}`}>
+            <MembershipCard
+              title="오너 멤버십"
+              description="사이트 운영에 필요한 기능을 이용합니다."
+              disabledMessage={eligibility?.owner.message ?? null}
+              basic="블로그와 커뮤니티를 각각 1개 개설할 수 있습니다."
+              features={ownerFeatures}
+              selection={effectiveOwnerSelection}
+              onFeatureChange={handleOwnerFeatureChange}
+              onPackageChange={handleOwnerPackageChange}
+              packagePrice={MEMBERSHIP_PACKAGE_PRICE.owner}
+              isPackage={isOwnerPackage}
+              isDisabled={!canEditIndividual}
+              available={eligibility?.owner.available ?? false}
+            />
+            <MembershipCard
+              title="크리에이터 멤버십"
+              description="작가 활동을 위한 기능을 이용합니다."
+              disabledMessage={eligibility?.creator.message ?? null}
+              basic="작가 신청과 작가 활동으로 수익 창출을 이용할 수 있습니다."
+              features={creatorFeatures}
+              selection={effectiveCreatorSelection}
+              onFeatureChange={handleCreatorFeatureChange}
+              onPackageChange={handleCreatorPackageChange}
+              packagePrice={MEMBERSHIP_PACKAGE_PRICE.creator}
+              isPackage={isCreatorPackage}
+              isDisabled={!canEditIndividual}
+              available={eligibility?.creator.available ?? false}
+            />
+          </div>
+
+          <MembershipCard
+            title="올인원 멤버십"
+            description="오너와 크리에이터 기능을 함께 이용합니다."
+            disabledMessage={eligibility?.allInOne.message ?? null}
+            basic="운영 중인 사이트가 있고 작가인 경우 이용할 수 있습니다."
+            features={[...ownerFeatures, ...creatorFeatures]}
+            selection={allInOneSelection}
+            onFeatureChange={handleAllInOneFeatureChange}
+            onPackageChange={() => undefined}
+            packagePrice={MEMBERSHIP_PACKAGE_PRICE.all_in_one}
+            isPackage={isAllInOnePackage}
+            isDisabled={!canUseAllInOne}
+            available={canUseAllInOne}
+            allInOne
+          />
+
           <div className={styles['membership-actions']}>
-            <Anchor href="/" className="button medium close">
-              멤버십 가입 취소
-            </Anchor>
+            <Anchor href="/" className="button medium close">멤버십 가입 취소</Anchor>
             <button
               type="button"
               className="button medium submit"
               onClick={handleMoveToPlan}
-              disabled={!eligibility || (isAllInOneSelected && !isAllInOnePackage)}
+              disabled={
+                !eligibility ||
+                (mode === 'all_in_one' && (!isAllInOnePackage || !canUseAllInOne))
+              }
             >
               {totalPrice === 0 ? '무료로 이용하기' : `${formatMembershipPrice(totalPrice)} 결제하기`}
             </button>
@@ -244,6 +338,7 @@ export default function Opt() {
         open={Boolean(snackbarMessage)}
         autoHideDuration={3000}
         message={snackbarMessage}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         onClose={() => setSnackbarMessage('')}
       />
     </main>
@@ -257,15 +352,13 @@ type MembershipCardProps = {
   disabledMessage: string | null;
   features: ReturnType<typeof getMembershipFeatures>;
   selection: MembershipFeatureKey[];
-  onSelectionChange: (value: MembershipFeatureKey[]) => void;
   onFeatureChange: (featureKey: MembershipFeatureKey) => void;
+  onPackageChange: () => void;
   packagePrice: number;
+  isPackage: boolean;
   isDisabled: boolean;
-  available?: boolean;
+  available: boolean;
   allInOne?: boolean;
-  isMembershipTypeSelected?: boolean;
-  isMembershipTypeDisabled?: boolean;
-  onMembershipTypeChange?: () => void;
 };
 
 function MembershipCard({
@@ -275,31 +368,16 @@ function MembershipCard({
   disabledMessage,
   features,
   selection,
-  onSelectionChange,
   onFeatureChange,
+  onPackageChange,
   packagePrice,
+  isPackage,
   isDisabled,
-  available = true,
+  available,
   allInOne = false,
-  isMembershipTypeSelected = false,
-  isMembershipTypeDisabled = false,
-  onMembershipTypeChange,
 }: MembershipCardProps) {
-  const isPackage = allInOne
-    ? ownerFeatures.filter((feature) => selection.includes(feature.key)).length >= 2 &&
-      creatorFeatures.filter((feature) => selection.includes(feature.key)).length >= 2
-    : selection.length === features.length;
-  const regularPrice = features.reduce((total, feature) => total + (allInOne ? 3900 : feature.price), 0);
+  const regularPrice = features.reduce((total, feature) => total + feature.price, 0);
   const canSelectPaidFeatures = available && !isDisabled;
-
-  function handlePackageChange() {
-    if (isPackage) {
-      onSelectionChange([]);
-      return;
-    }
-
-    onSelectionChange(features.map((feature) => feature.key));
-  }
 
   function renderFeature(feature: (typeof ownerFeatures)[number]) {
     return (
@@ -323,19 +401,7 @@ function MembershipCard({
     >
       <Stack gap={2}>
         <Stack className={styles['membership-card-title']} gap={1}>
-          {onMembershipTypeChange ? (
-            <button
-              type="button"
-              className={styles['membership-type']}
-              onClick={onMembershipTypeChange}
-              disabled={isMembershipTypeDisabled}
-            >
-              <Radio checked={isMembershipTypeSelected} tabIndex={-1} size="small" />
-              <span>{title}</span>
-            </button>
-          ) : (
-            <Typography variant="h6">{title}</Typography>
-          )}
+          <Typography variant="h6">{title}</Typography>
           <Typography variant="body2">{description}</Typography>
         </Stack>
         <Stack className={styles['membership-basic']} gap={1} direction="column">
@@ -345,9 +411,9 @@ function MembershipCard({
           </Stack>
           <Typography variant="body2">{basic}</Typography>
         </Stack>
-        {!available ? <p className="alert info">{disabledMessage}</p> : null}
+        {!available && disabledMessage ? <p className="alert error">{disabledMessage}</p> : null}
         {available && allInOne ? (
-          <div className={`paper ${styles['membership-all-in-one-features']}`}>
+          <div className={styles['membership-all-in-one-features']}>
             <Stack gap={1}>
               <Typography variant="subtitle2">오너 기능</Typography>
               {ownerFeatures.map(renderFeature)}
@@ -357,12 +423,11 @@ function MembershipCard({
               {creatorFeatures.map(renderFeature)}
             </Stack>
             <div className={styles['membership-package']}>
-              <Checkbox checked={isPackage} tabIndex={-1} onChange={() => undefined} sx={{ pointerEvents: 'none' }} />
+              <Checkbox checked={isPackage} tabIndex={-1} readOnly />
               <Stack gap={1} direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="subtitle2">통합</Typography>
                 <Typography variant="body2">
-                  <del>{formatMembershipPrice(regularPrice)}</del>{' '}
-                  <strong>{formatMembershipPrice(packagePrice)}</strong>
+                  <del>{formatMembershipPrice(regularPrice)}</del> <strong>{formatMembershipPrice(packagePrice)}</strong>
                 </Typography>
               </Stack>
             </div>
@@ -374,15 +439,14 @@ function MembershipCard({
             <button
               type="button"
               className={styles['membership-package']}
-              onClick={handlePackageChange}
+              onClick={onPackageChange}
               disabled={!canSelectPaidFeatures}
             >
               <Checkbox checked={isPackage} tabIndex={-1} />
               <Stack gap={1} direction="row" justifyContent="space-between" alignItems="center">
                 <Typography variant="subtitle2">통합</Typography>
                 <Typography variant="body2">
-                  <del>{formatMembershipPrice(regularPrice)}</del>{' '}
-                  <strong>{formatMembershipPrice(packagePrice)}</strong>
+                  <del>{formatMembershipPrice(regularPrice)}</del> <strong>{formatMembershipPrice(packagePrice)}</strong>
                 </Typography>
               </Stack>
             </button>

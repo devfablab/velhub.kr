@@ -129,7 +129,7 @@ export default async function Page() {
             </div>
           ) : null}
 
-          {hasIdentity || isMinor ? <Opt isMinor={isMinor} /> : null}
+          {hasIdentity || isMinor ? <Opt /> : null}
         </div>
       </div>
     </main>

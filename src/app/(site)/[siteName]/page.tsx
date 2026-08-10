@@ -65,7 +65,7 @@ export default async function Page(context: RouteContext) {
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_label, profile_picture, summary, site_type, plan_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, site_label, profile_picture, summary, site_type, visibility_type, theme_type, is_shutdown',
     )
     .eq('site_key', normalizedSiteName)
     .maybeSingle();

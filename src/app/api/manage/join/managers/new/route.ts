@@ -161,31 +161,7 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미 동일한 매니저 권한이 있습니다.' }, { status: 400 });
     }
 
-    if (role === 'community-manager') {
-      const currentCount = managerRows.filter((row) => normalizeText(row.role) === 'community-manager').length;
-
-      if (currentCount >= access.planFeature.communityManagerLimit) {
-        return Response.json({ error: '커뮤니티 매니저 위임 가능 인원이 없습니다.' }, { status: 400 });
-      }
-    }
-
-    if (role === 'board-manager') {
-      const currentCount = managerRows.filter((row) => normalizeText(row.role) === 'board-manager').length;
-
-      if (currentCount >= access.planFeature.boardManagerLimit) {
-        return Response.json({ error: '전체 게시판 매니저 위임 가능 인원이 없습니다.' }, { status: 400 });
-      }
-    }
-
     if (role === 'board-assistant-manager') {
-      const currentCount = managerRows.filter(
-        (row) => normalizeText(row.role) === 'board-assistant-manager' && normalizeText(row.board_id) === boardId,
-      ).length;
-
-      if (currentCount >= access.planFeature.boardAssistantManagerLimit) {
-        return Response.json({ error: '해당 게시판의 부 매니저 자리가 꽉 찼습니다.' }, { status: 400 });
-      }
-
       const boardResult = await access.supabaseAdmin
         .from('boards')
         .select('id')

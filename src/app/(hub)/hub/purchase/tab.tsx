@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
 import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
 import DiscountRoundedIcon from '@mui/icons-material/DiscountRounded';
@@ -19,11 +18,6 @@ const tabs = [
     href: '/hub/purchase',
     label: '전체',
     icon: <ReceiptLongRoundedIcon />,
-  },
-  {
-    href: '/hub/purchase/billing',
-    label: '요금제',
-    icon: <CreditCardRoundedIcon />,
   },
   {
     href: '/hub/purchase/donation',

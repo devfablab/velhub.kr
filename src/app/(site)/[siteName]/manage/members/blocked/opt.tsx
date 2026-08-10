@@ -35,7 +35,6 @@ import {
   memberRestrictionMessageStatusLabels,
   type MemberRestrictionMessageStatus,
 } from '@/lib/users/memberRestrictionMessages';
-import PlanBillingMemberPopup from '../planBillingMemberPopup';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -50,12 +49,6 @@ type BlockedUserRow = {
   blockTerm: string | null;
   blockedBy: string;
   messageStatus: MemberRestrictionMessageStatus | null;
-};
-
-type PlanBillingSubscriberResponse = {
-  ok?: boolean;
-  userId?: string | null;
-  error?: string;
 };
 
 type BlockedUsersResponse = {
@@ -77,7 +70,6 @@ export default function Opt() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
-  const [isPlanBillingMemberPopupOpen, setIsPlanBillingMemberPopupOpen] = useState(false);
 
   const [actionType, setActionType] = useState<ActionType>(null);
   const [actionReason, setActionReason] = useState('');
@@ -91,21 +83,6 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-
-  async function getPlanBillingSubscriberUserId() {
-    const response = await fetch(`/api/manage/members/plan-billing-subscriber?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as PlanBillingSubscriberResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '요금제 결제 멤버를 확인하지 못했습니다.');
-    }
-
-    return normalizeText(result.userId) || null;
-  }
 
   const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/blocked?siteName=${siteName}`, {
@@ -194,24 +171,6 @@ export default function Opt() {
     if (selectedUserIds.length === 0) {
       setErrorMessage('멤버를 선택해주세요.');
       return;
-    }
-
-    if (nextActionType === 'kick' || nextActionType === 'ban') {
-      try {
-        const planBillingSubscriberUserId = await getPlanBillingSubscriberUserId();
-
-        if (planBillingSubscriberUserId && selectedUserIds.includes(planBillingSubscriberUserId)) {
-          setIsPlanBillingMemberPopupOpen(true);
-          return;
-        }
-      } catch (unknownError) {
-        setErrorMessage(
-          unknownError instanceof Error
-            ? unknownError.message || '요금제 결제 멤버를 확인하지 못했습니다.'
-            : '요금제 결제 멤버를 확인하지 못했습니다.',
-        );
-        return;
-      }
     }
 
     setDialogErrorMessage('');
@@ -628,11 +587,6 @@ export default function Opt() {
               </DialogActions>
             </Dialog>
           )}
-
-          <PlanBillingMemberPopup
-            open={isPlanBillingMemberPopupOpen}
-            onClose={() => setIsPlanBillingMemberPopupOpen(false)}
-          />
 
           <MemberRestrictionMessageDialog
             open={Boolean(messageUser)}

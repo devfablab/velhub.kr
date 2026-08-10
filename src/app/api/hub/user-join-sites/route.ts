@@ -32,7 +32,7 @@ type RpcResult = {
 };
 
 type MembershipStatus = 'block' | 'kick' | 'ban' | 'rejoin';
-type SiteOperationalStatus = 'normal' | 'payment_failed' | 'shutdown' | 'blocked' | 'closed';
+type SiteOperationalStatus = 'normal' | 'shutdown' | 'blocked' | 'closed';
 
 type MembershipRow = {
   site_id: string;
@@ -61,12 +61,6 @@ type SiteRow = {
   is_closed: boolean | null;
 };
 
-type SubscriptionRow = {
-  target_id: string;
-  status: string | null;
-  created_at: string;
-};
-
 function getMembershipStatus(membership: MembershipRow): MembershipStatus | null {
   if (membership.is_block) {
     return 'block';
@@ -87,17 +81,13 @@ function getMembershipStatus(membership: MembershipRow): MembershipStatus | null
   return null;
 }
 
-function getOperationalStatus(site: SiteRow, subscriptionStatus: string | null): SiteOperationalStatus {
+function getOperationalStatus(site: SiteRow): SiteOperationalStatus {
   if (site.is_closed) {
     return 'closed';
   }
 
   if (site.is_blocked) {
     return 'blocked';
-  }
-
-  if (subscriptionStatus === 'past_due') {
-    return 'payment_failed';
   }
 
   if (site.is_shutdown) {
@@ -108,10 +98,6 @@ function getOperationalStatus(site: SiteRow, subscriptionStatus: string | null):
 }
 
 function getOperationalStatusLabel(status: SiteOperationalStatus) {
-  if (status === 'payment_failed') {
-    return '요금제 결제 실패';
-  }
-
   if (status === 'shutdown') {
     return '운영 중지';
   }
@@ -239,29 +225,6 @@ export async function GET() {
 
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteMap = new Map(sites.map((site) => [site.id, site]));
-    const subscriptionsResult =
-      siteIds.length > 0
-        ? await supabaseAdmin
-            .from('subscriptions')
-            .select('target_id, status, created_at')
-            .eq('subscription_type', 'plan_billing')
-            .eq('target_type', 'plan')
-            .in('target_id', siteIds)
-            .order('created_at', { ascending: false })
-        : { data: [], error: null };
-
-    if (subscriptionsResult.error) {
-      return Response.json({ error: '사이트 요금제 상태를 불러오지 못했습니다.' }, { status: 500 });
-    }
-
-    const latestSubscriptionStatusMap = new Map<string, string | null>();
-
-    for (const subscription of (subscriptionsResult.data ?? []) as SubscriptionRow[]) {
-      if (!latestSubscriptionStatusMap.has(subscription.target_id)) {
-        latestSubscriptionStatusMap.set(subscription.target_id, subscription.status);
-      }
-    }
-
     const membershipMap = new Map(memberships.map((membership) => [membership.site_id, membership]));
 
     const joinSites = rpcSites
@@ -281,7 +244,7 @@ export async function GET() {
 
         const siteRow = siteMap.get(site.id);
         const operationalStatus = siteRow
-          ? getOperationalStatus(siteRow, latestSubscriptionStatusMap.get(site.id) ?? null)
+          ? getOperationalStatus(siteRow)
           : 'normal';
 
         const latestPosts = (Array.isArray(site.latest_posts) ? site.latest_posts : []).map((post) => ({
@@ -358,7 +321,7 @@ export async function GET() {
         const canRejoin = membershipStatus === 'rejoin' || (Number.isFinite(rejoinAtTime) && rejoinAtTime <= now);
         const daysUntilRejoin =
           !canRejoin && Number.isFinite(rejoinAtTime) ? Math.max(1, Math.ceil((rejoinAtTime - now) / 86_400_000)) : null;
-        const operationalStatus = getOperationalStatus(site, latestSubscriptionStatusMap.get(site.id) ?? null);
+        const operationalStatus = getOperationalStatus(site);
 
         return {
           id: site.id,

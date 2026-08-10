@@ -34,12 +34,6 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string;
-  plan_type: string | null;
-};
-
-type PlanRow = {
-  id: string;
-  price: number;
 };
 
 type SubscriptionSettingRow = {
@@ -95,7 +89,6 @@ type PaymentFailInfo = {
 
 function getPaymentType(value: string) {
   if (
-    value === PAYMENT_TYPE.PLAN_BILLING ||
     value === PAYMENT_TYPE.DONATION_SITE ||
     value === PAYMENT_TYPE.DONATION_BOARD ||
     value === PAYMENT_TYPE.DONATION_POST ||
@@ -133,7 +126,7 @@ function getPostPurchasePrice(seriesSubscriptionPrice: number) {
 async function getSiteById(supabaseAdmin: SupabaseAdminClient, siteId: string) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, plan_type')
+    .select('id, site_key, site_label')
     .eq('id', siteId)
     .maybeSingle();
 
@@ -151,7 +144,7 @@ async function getSiteById(supabaseAdmin: SupabaseAdminClient, siteId: string) {
 async function getSiteByName(supabaseAdmin: SupabaseAdminClient, siteName: string) {
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, plan_type')
+    .select('id, site_key, site_label')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -341,42 +334,6 @@ async function getBoardSeriesCount({
   }
 
   return seriesCountResult.count ?? 0;
-}
-
-async function getPlanBillingFailInfo({
-  supabaseAdmin,
-  siteId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-}): Promise<PaymentFailInfo> {
-  const site = await getSiteById(supabaseAdmin, siteId);
-
-  if (!site.plan_type) {
-    throw new Error('사이트 요금제가 설정되지 않았습니다.');
-  }
-
-  const planResult = await supabaseAdmin.from('plans').select('id, price').eq('id', site.plan_type).maybeSingle();
-
-  if (planResult.error) {
-    throw new Error('요금제 정보를 확인하지 못했습니다.');
-  }
-
-  if (!planResult.data) {
-    throw new Error('요금제 정보를 찾을 수 없습니다.');
-  }
-
-  const plan = planResult.data as PlanRow;
-
-  return {
-    amount: plan.price,
-    paymentType: PAYMENT_TYPE.PLAN_BILLING,
-    targetType: PAYMENT_TARGET_TYPE.PLAN,
-    targetId: site.id,
-    postPayment: null,
-    refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-    failureStage: 'plan_billing_fail',
-  };
 }
 
 async function getDonationSiteFailInfo({
@@ -706,14 +663,6 @@ async function getPaymentFailInfo({
   const targetType = normalizeText(body.targetType);
   const seriesName = normalizeText(body.seriesName).toLowerCase();
   const postId = normalizeText(body.postId);
-
-  if (paymentType === PAYMENT_TYPE.PLAN_BILLING) {
-    if (!siteId) {
-      throw new Error('siteId가 유효하지 않습니다.');
-    }
-
-    return getPlanBillingFailInfo({ supabaseAdmin, siteId });
-  }
 
   if (paymentType === PAYMENT_TYPE.DONATION_SITE) {
     if (!siteId) {
