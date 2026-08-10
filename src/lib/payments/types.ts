@@ -16,6 +16,7 @@ export const PAYMENT_STATUS = {
 
 export const PAYMENT_TYPE = {
   MEMBERSHIP_BLOG: 'membership_blog',
+  MEMBERSHIP_PLATFORM: 'membership_platform',
   SUBSCRIPTION_SERIES: 'subscription_series',
   SUBSCRIPTION_BOARD: 'subscription_board',
   DONATION_SITE: 'donation_site',
@@ -30,6 +31,7 @@ export const PAYMENT_TARGET_TYPE = {
   SERIES: 'series',
   BOARD: 'board',
   POST: 'post',
+  MEMBERSHIP: 'membership',
 } as const;
 
 export const PAYMENT_SPLIT_RECEIVER_TYPE = {
@@ -41,10 +43,12 @@ export const PAYMENT_SPLIT_RECEIVER_TYPE = {
 export const REFUND_POLICY = {
   SEVEN_DAYS: 'seven_days',
   DONATION_RESTRICTED: 'donation_restricted',
+  MEMBERSHIP: 'membership',
 } as const;
 
 export const SUBSCRIPTION_TYPE = {
   MEMBERSHIP_BLOG: 'membership_blog',
+  MEMBERSHIP_PLATFORM: 'membership_platform',
   SUBSCRIPTION_SERIES: 'subscription_series',
   SUBSCRIPTION_BOARD: 'subscription_board',
 } as const;

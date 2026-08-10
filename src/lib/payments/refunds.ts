@@ -77,6 +77,43 @@ export function calculateSubscriptionRefundAmount({
   };
 }
 
+export function calculateMembershipRefundAmount({
+  amount,
+  paidAt,
+  now = new Date(),
+}: {
+  amount: number;
+  paidAt: string | Date;
+  now?: Date;
+}): RefundCalculationResult {
+  const elapsedMs = getElapsedTime(paidAt, now);
+
+  if (elapsedMs <= 7 * DAY_MS) {
+    return {
+      isRefundable: true,
+      isFullRefund: true,
+      refundAmount: amount,
+      retainedAmount: 0,
+      usedDays: 0,
+      refundWindowDays: 7,
+    };
+  }
+
+  const usedDays = Math.min(BILLING_CYCLE_DAYS, Math.max(1, Math.ceil(elapsedMs / DAY_MS)));
+  const usedAmount = Math.ceil((amount * usedDays) / BILLING_CYCLE_DAYS);
+  const penaltyAmount = Math.ceil(amount * 0.1);
+  const refundAmount = Math.max(0, amount - usedAmount - penaltyAmount);
+
+  return {
+    isRefundable: refundAmount > 0,
+    isFullRefund: false,
+    refundAmount,
+    retainedAmount: amount - refundAmount,
+    usedDays,
+    refundWindowDays: BILLING_CYCLE_DAYS,
+  };
+}
+
 export function calculateDonationRefundAmount({
   amount,
   paidAt,
