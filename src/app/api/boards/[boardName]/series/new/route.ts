@@ -4,7 +4,7 @@ import {
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { isSoloBlog } from '@/lib/board/seriesAuthor';
+import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
@@ -172,6 +172,20 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!userId) {
       return Response.json({ error: '연재 담당 작가를 선택해주세요.' }, { status: 400 });
+    }
+
+    if (
+      !soloBlog &&
+      !(await canBeSeriesAuthor({
+        supabaseAdmin,
+        siteId: rhizome.data.id,
+        stigmaId: userId,
+      }))
+    ) {
+      return Response.json(
+        { error: '작가로 승인된 활성 구성원만 연재 담당 작가로 지정할 수 있습니다.' },
+        { status: 400 },
+      );
     }
 
     const duplicatedSeriesKey = await supabaseAdmin

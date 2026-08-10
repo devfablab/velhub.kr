@@ -112,11 +112,6 @@ type SeriesUserSearchResponse = {
 
 type DialogMode = 'new' | 'edit' | 'delete' | null;
 
-type AgeCheckResponse = {
-  isAdult?: boolean;
-  error?: string;
-};
-
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',

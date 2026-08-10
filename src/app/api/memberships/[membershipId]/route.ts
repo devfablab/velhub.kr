@@ -27,7 +27,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     .from('memberships')
     .select('id')
     .eq('id', membershipId)
-    .eq('user_id', stigma.id)
+    .eq('user_id', stigma.stigmaId)
     .maybeSingle();
 
   if (membershipResult.error) {
@@ -42,7 +42,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   const subscriptionResult = await supabaseAdmin
     .from('subscriptions')
     .select('id,last_payment_id')
-    .eq('subscriber_user_id', stigma.id)
+    .eq('subscriber_user_id', stigma.stigmaId)
     .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
     .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
     .eq('target_id', membershipId)
@@ -138,7 +138,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: '멤버십 기능을 해지하지 못했습니다.' }, { status: 500 });
   }
 
-  const membershipDeleteResult = await supabaseAdmin.from('memberships').delete().eq('id', membershipId).eq('user_id', stigma.id);
+  const membershipDeleteResult = await supabaseAdmin.from('memberships').delete().eq('id', membershipId).eq('user_id', stigma.stigmaId);
 
   if (membershipDeleteResult.error) {
     console.error(membershipDeleteResult.error);

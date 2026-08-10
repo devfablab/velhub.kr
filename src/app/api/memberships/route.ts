@@ -196,6 +196,16 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+  const identityResult = await supabaseAdmin
+    .from('chorogons')
+    .select('id')
+    .eq('user_id', currentStigma.stigmaId)
+    .maybeSingle();
+
+  if (identityResult.error) {
+    return NextResponse.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
   const [billingMethodResult, existingMembershipResult, ownedSiteResult, authorResult] = await Promise.all([
     supabaseAdmin
       .from('subscription_billing_methods')
@@ -214,11 +224,13 @@ export async function POST(request: Request) {
       .eq('owner_id', currentStigma.stigmaId)
       .eq('is_shutdown', false)
       .limit(1),
-    supabaseAdmin
-      .from('chorogons_banque')
-      .select('id, is_author')
-      .eq('user_id', currentStigma.stigmaId)
-      .maybeSingle(),
+    identityResult.data?.id
+      ? supabaseAdmin
+          .from('chorogons_banque')
+          .select('id, is_author')
+          .eq('chorogon_id', identityResult.data.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (billingMethodResult.error || !billingMethodResult.data) return NextResponse.json({ error: '선택한 결제수단을 확인하지 못했습니다.' }, { status: 400 });

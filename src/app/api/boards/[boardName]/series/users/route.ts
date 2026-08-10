@@ -73,7 +73,9 @@ export async function GET(request: Request, context: RouteContext) {
     const membersResult = await supabaseAdmin
       .from('rhizome_stigmas')
       .select('user_id, nickname')
-      .eq('site_id', rhizome.data.id);
+      .eq('site_id', rhizome.data.id)
+      .eq('is_approval', true)
+      .neq('role', 'observer');
 
     if (membersResult.error) {
       return Response.json({ error: '사용자 목록을 불러오지 못했습니다.' }, { status: 500 });
@@ -94,10 +96,61 @@ export async function GET(request: Request, context: RouteContext) {
       });
     }
 
+    const identitiesResult = await supabaseAdmin
+      .from('chorogons')
+      .select('id, user_id')
+      .in('user_id', stigmaIds);
+
+    if (identitiesResult.error) {
+      return Response.json({ error: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const identityRows = identitiesResult.data ?? [];
+    const chorogonIds = identityRows
+      .map((row) => row.id)
+      .filter((value): value is string => typeof value === 'string' && Boolean(value));
+
+    if (chorogonIds.length === 0) {
+      return Response.json({
+        users: [],
+      });
+    }
+
+    const authorsResult = await supabaseAdmin
+      .from('chorogons_banque')
+      .select('chorogon_id')
+      .in('chorogon_id', chorogonIds)
+      .eq('is_author', true);
+
+    if (authorsResult.error) {
+      return Response.json({ error: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const authorChorogonIds = new Set(
+      (authorsResult.data ?? []).map((row) => row.chorogon_id),
+    );
+    const authorStigmaIds = new Set(
+      identityRows
+        .filter((row) => authorChorogonIds.has(row.id))
+        .map((row) => row.user_id),
+    );
+    const authorMembers = memberRows.filter((row) => authorStigmaIds.has(row.user_id));
+
+    if (authorMembers.length === 0) {
+      return Response.json({
+        users: [],
+      });
+    }
+
     const stigmaResult = await supabaseAdmin
       .from('stigmas')
       .select('id, email, user_name')
-      .in('id', stigmaIds);
+      .in(
+        'id',
+        authorMembers
+          .map((row) => row.user_id)
+          .filter((value): value is string => typeof value === 'string' && Boolean(value)),
+      );
 
     if (stigmaResult.error) {
       return Response.json({ error: '사용자 목록을 불러오지 못했습니다.' }, { status: 500 });
@@ -114,7 +167,7 @@ export async function GET(request: Request, context: RouteContext) {
       ]),
     );
 
-    const filteredUsers: SearchRow[] = memberRows
+    const filteredUsers: SearchRow[] = authorMembers
       .map((row) => {
         const stigmaId = row.user_id as string;
         const stigma = stigmaMap.get(stigmaId);
