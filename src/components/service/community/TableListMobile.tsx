@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
+import DonationButton from '../common/DonationButton';
 import ReportButton from '../common/ReportButton';
 import SubscriptionButton from '../common/SubscriptionButton';
 import styles from '@/app/aside.module.sass';
@@ -224,14 +225,22 @@ export default function TableListMobile({
         </div>
         {boardName && board ? (
           <>
-            {selectedSeries ? (
-              <SubscriptionButton
-                siteName={siteName}
-                boardName={boardName}
-                board={board}
-                selectedSeries={selectedSeries}
-                selectedBoard={true}
-              />
+      {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+              <>
+                <SubscriptionButton
+                  siteName={siteName}
+                  boardName={boardName}
+                  board={board}
+                  selectedSeries={selectedSeries}
+                  selectedBoard={true}
+                />
+                <DonationButton
+                  siteName={siteName}
+                  targetType="series"
+                  boardName={boardName}
+                  seriesName={selectedSeries.series_key}
+                />
+              </>
             ) : null}
           </>
         ) : null}

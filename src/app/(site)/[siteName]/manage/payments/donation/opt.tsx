@@ -19,7 +19,7 @@ import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
-type DonationKind = 'site' | 'post';
+type DonationKind = 'site' | 'series';
 
 type DonationItem = {
   id: string;
@@ -32,12 +32,9 @@ type DonationItem = {
   paymentMethod: string | null;
   approvedAt: string | null;
   createdAt: string;
-  post: {
+  series: {
     id: string;
-    subject: string;
-    slug: number;
-    boardId: string;
-    boardKey: string | null;
+    label: string | null;
     boardLabel: string | null;
   } | null;
 };
@@ -53,8 +50,8 @@ type DonationManageResponse = {
     totalAmount: number;
     siteDonationCount: number;
     siteDonationTotalAmount: number;
-    postDonationCount: number;
-    postDonationTotalAmount: number;
+    seriesDonationCount: number;
+    seriesDonationTotalAmount: number;
   };
   donations?: DonationItem[];
   error?: string;
@@ -83,8 +80,8 @@ function formatDateTime(value: string | null | undefined) {
 }
 
 function getDonationKindLabel(donationKind: DonationKind) {
-  if (donationKind === 'post') {
-    return '글 후원';
+  if (donationKind === 'series') {
+    return '연재 후원';
   }
 
   return '사이트 후원';
@@ -162,7 +159,7 @@ export default function Opt() {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트 후원</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>글 후원</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>연재 후원</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>총 후원</TableCell>
                 </TableRow>
               </TableHead>
@@ -173,8 +170,8 @@ export default function Opt() {
                     {donationData?.summary?.siteDonationCount ?? 0}건)
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                    {formatPrice(donationData?.summary?.postDonationTotalAmount ?? 0)} (
-                    {donationData?.summary?.postDonationCount ?? 0}건)
+                    {formatPrice(donationData?.summary?.seriesDonationTotalAmount ?? 0)} (
+                    {donationData?.summary?.seriesDonationCount ?? 0}건)
                   </TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>
                     {formatPrice(donationData?.summary?.totalAmount ?? 0)} ({donationData?.summary?.count ?? 0}건)
@@ -205,9 +202,9 @@ export default function Opt() {
                   {donationData.donations.map((donation) => (
                     <TableRow key={donation.id}>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {donation.post ? (
+                        {donation.series ? (
                           <Tooltip
-                            title={`${donation.post.boardLabel ?? donation.post.boardKey ?? '게시판'} / ${donation.post.subject}`}
+                            title={`${donation.series.boardLabel ?? '게시판'} / ${donation.series.label ?? '연재'}`}
                           >
                             <button type="button" className={styles.tooltip}>
                               {getDonationKindLabel(donation.donationKind)}

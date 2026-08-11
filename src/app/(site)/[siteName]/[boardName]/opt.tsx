@@ -29,6 +29,7 @@ import BoardPostCountTableList from '@/components/service/community/BoardPostCou
 import FabNew from '@/components/service/common/FabNew';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import DonationButton from '@/components/service/common/DonationButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
@@ -540,14 +541,22 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
-                  {selectedSeries ? (
-                    <SubscriptionButton
-                      siteName={siteName}
-                      boardName={boardName}
-                      board={board}
-                      selectedSeries={selectedSeries}
-                      selectedBoard={true}
-                    />
+        {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+                    <>
+                      <SubscriptionButton
+                        siteName={siteName}
+                        boardName={boardName}
+                        board={board}
+                        selectedSeries={selectedSeries}
+                        selectedBoard={true}
+                      />
+                      <DonationButton
+                        siteName={siteName}
+                        targetType="series"
+                        boardName={boardName}
+                        seriesName={selectedSeries.series_key}
+                      />
+                    </>
                   ) : null}
                   <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
                 </h2>

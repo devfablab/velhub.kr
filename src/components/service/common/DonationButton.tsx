@@ -367,11 +367,10 @@ export default function DonationButton(props: Props) {
     <>
       <button
         type="button"
-        className={props.targetType === 'post' ? styles.button : 'button small action'}
+        className="button small action"
         onClick={handleOpenDialog}
         disabled={disabled || isProcessing}
       >
-        {props.targetType === 'post' ? <VolunteerActivismOutlinedIcon fontSize="small" /> : null}
         <strong>{buttonText}</strong>
       </button>
 

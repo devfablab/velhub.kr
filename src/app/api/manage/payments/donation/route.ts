@@ -40,10 +40,19 @@ type RhizomeStigmaRow = {
   nickname: string | null;
 };
 
+type SeriesRow = {
+  id: string;
+  board_id: string;
+  series_label: string | null;
+};
+
+type BoardRow = {
+  id: string;
+  board_label: string | null;
+};
+
 const DONATION_PAYMENT_TYPES = [
   PAYMENT_TYPE.DONATION_SITE,
-  PAYMENT_TYPE.DONATION_BOARD,
-  PAYMENT_TYPE.DONATION_POST,
   PAYMENT_TYPE.DONATION_SERIES,
 ];
 
@@ -137,6 +146,37 @@ export async function GET(request: Request) {
     }
 
     const donations = (donationsResult.data ?? []) as unknown as DonationPaymentRow[];
+    const seriesIds = Array.from(
+      new Set(
+        donations
+          .filter((donation) => donation.payment_type === PAYMENT_TYPE.DONATION_SERIES)
+          .map((donation) => donation.target_id),
+      ),
+    );
+    const seriesResult = seriesIds.length
+      ? await supabaseAdmin.from('board_series').select('id, board_id, series_label').in('id', seriesIds)
+      : { data: [], error: null };
+
+    if (seriesResult.error) {
+      console.error(seriesResult.error);
+
+      return Response.json({ error: '연재 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const seriesList = (seriesResult.data ?? []) as SeriesRow[];
+    const boardIds = Array.from(new Set(seriesList.map((series) => series.board_id)));
+    const boardsResult = boardIds.length
+      ? await supabaseAdmin.from('boards').select('id, board_label').in('id', boardIds)
+      : { data: [], error: null };
+
+    if (boardsResult.error) {
+      console.error(boardsResult.error);
+
+      return Response.json({ error: '게시판 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const seriesById = new Map(seriesList.map((series) => [series.id, series]));
+    const boardById = new Map(((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
     const donorParticleIds = Array.from(new Set(donations.map((donation) => donation.buyer_user_id)));
 
     const stigmasResult = donorParticleIds.length
@@ -175,7 +215,9 @@ export async function GET(request: Request) {
       rhizomeStigmas.map((rhizomeStigma) => [rhizomeStigma.user_id, rhizomeStigma.nickname]),
     );
 
-    const totalAmount = donations.reduce((total, donation) => total + donation.amount, 0);
+    const siteDonations = donations.filter((donation) => donation.payment_type === PAYMENT_TYPE.DONATION_SITE);
+    const seriesDonations = donations.filter((donation) => donation.payment_type === PAYMENT_TYPE.DONATION_SERIES);
+    const getTotalAmount = (items: DonationPaymentRow[]) => items.reduce((total, donation) => total + donation.amount, 0);
 
     return Response.json({
       site: {
@@ -185,12 +227,19 @@ export async function GET(request: Request) {
       },
       summary: {
         count: donations.length,
-        totalAmount,
+        totalAmount: getTotalAmount(donations),
+        siteDonationCount: siteDonations.length,
+        siteDonationTotalAmount: getTotalAmount(siteDonations),
+        seriesDonationCount: seriesDonations.length,
+        seriesDonationTotalAmount: getTotalAmount(seriesDonations),
       },
       donations: donations.map((donation) => {
         const stigmaId = stigmaIdByParticleId.get(donation.buyer_user_id);
         const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
         const buyerName = nickname || activityNameByParticleId.get(donation.buyer_user_id) || '사용자';
+        const series =
+          donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? seriesById.get(donation.target_id) ?? null : null;
+        const board = series ? boardById.get(series.board_id) ?? null : null;
 
         return {
           id: donation.id,
@@ -207,6 +256,14 @@ export async function GET(request: Request) {
           targetId: donation.target_id,
           approvedAt: donation.approved_at,
           createdAt: donation.created_at,
+          donationKind: donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? 'series' : 'site',
+          series: series
+            ? {
+                id: series.id,
+                label: series.series_label,
+                boardLabel: board?.board_label ?? null,
+              }
+            : null,
         };
       }),
     });
