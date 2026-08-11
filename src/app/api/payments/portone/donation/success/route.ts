@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
-import { createOwnerPaymentSplits, createPostPaymentSplits } from '@/lib/payments/splits';
+import { createOwnerPaymentSplits } from '@/lib/payments/splits';
 import {
   PAYMENT_METHOD,
   PAYMENT_STATUS,
@@ -37,7 +37,7 @@ type DonationSuccessBody = {
   siteId?: string;
   targetType?: string;
   boardId?: string;
-  postId?: string;
+  seriesId?: string;
 };
 
 type SiteRow = {
@@ -58,20 +58,8 @@ type BoardRow = {
   is_active: boolean;
 };
 
-type PostRow = {
-  id: string;
-  site_id: string;
-  board_id: string;
-  user_id: string;
-  series_id: string;
-  subject: string;
-  published_status: string;
-  is_closed: boolean;
-};
-
 type SeriesRow = {
   id: string;
-  is_subscription: boolean | null;
   series_label: string | null;
 };
 
@@ -305,10 +293,6 @@ async function getBoardById({
   site: SiteRow;
   boardId: string;
 }) {
-  if (site.site_type !== 'community') {
-    throw new Error('게시판 후원은 커뮤니티에서만 가능합니다.');
-  }
-
   if (!boardId) {
     throw new Error('boardId가 유효하지 않습니다.');
   }
@@ -337,53 +321,14 @@ async function getBoardById({
   }
 
   if (board.board_type === 'page') {
-    throw new Error('페이지 게시판은 후원할 수 없습니다.');
+    throw new Error('페이지에 속한 연재는 후원할 수 없습니다.');
+  }
+
+  if (site.site_type === 'community' && !['basic', 'gallery'].includes(board.board_type)) {
+    throw new Error('커뮤니티는 일반 또는 갤러리 게시판의 연재만 후원할 수 있습니다.');
   }
 
   return board;
-}
-
-async function getPostById({
-  supabaseAdmin,
-  siteId,
-  postId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  postId: string;
-}) {
-  const postResult = await supabaseAdmin
-    .from('posts')
-    .select('id, site_id, board_id, user_id, series_id, subject, published_status, is_closed')
-    .eq('site_id', siteId)
-    .eq('id', postId)
-    .maybeSingle();
-
-  if (postResult.error) {
-    console.error(postResult.error);
-
-    throw new Error('글 정보를 불러오지 못했습니다.');
-  }
-
-  if (!postResult.data) {
-    throw new Error('글 정보를 찾을 수 없습니다.');
-  }
-
-  const post = postResult.data as PostRow;
-
-  if (post.published_status !== 'published') {
-    throw new Error('공개된 글만 후원할 수 있습니다.');
-  }
-
-  if (post.is_closed) {
-    throw new Error('현재 후원할 수 없는 글입니다.');
-  }
-
-  if (!post.series_id) {
-    throw new Error('연재 글만 후원할 수 있습니다.');
-  }
-
-  return post;
 }
 
 async function getSeriesById({
@@ -399,7 +344,7 @@ async function getSeriesById({
 }) {
   const seriesResult = await supabaseAdmin
     .from('board_series')
-    .select('id, is_subscription, series_label')
+    .select('id, series_label')
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('id', seriesId)
@@ -423,21 +368,18 @@ async function sendDonationPaymentEmail({
   siteLabel,
   boardLabel,
   seriesLabel,
-  postSubject,
   amount,
 }: {
   email: string;
   siteLabel: string;
   boardLabel: string | null;
   seriesLabel: string | null;
-  postSubject: string | null;
   amount: number;
 }) {
   const rows = [
     ['사이트명', siteLabel],
     ['게시판명', boardLabel],
     ['연재명', seriesLabel],
-    ['게시물명', postSubject],
     ['후원 금액', `${amount.toLocaleString('ko-KR')}원`],
   ]
     .filter(([, value]) => Boolean(normalizeText(value)))
@@ -482,30 +424,6 @@ async function getStigmaEmail({
   return normalizeText((stigmaResult.data as StigmaRow | null)?.email);
 }
 
-async function getBoardSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId);
-
-  if (seriesCountResult.error) {
-    console.error(seriesCountResult.error);
-
-    throw new Error('연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
 export async function POST(request: NextRequest) {
   try {
     const session = await verifySession({ siteId: null });
@@ -522,7 +440,7 @@ export async function POST(request: NextRequest) {
     const siteId = normalizeText(body.siteId);
     const targetType = normalizeText(body.targetType);
     const boardId = normalizeText(body.boardId);
-    const postId = normalizeText(body.postId);
+    const seriesId = normalizeText(body.seriesId);
     const amount = body.amount;
 
     if (!paymentKey || !orderId || !siteId || typeof amount !== 'number') {
@@ -540,9 +458,12 @@ export async function POST(request: NextRequest) {
       siteId,
     });
 
-    const isBoardDonation = targetType === PAYMENT_TARGET_TYPE.BOARD || (Boolean(boardId) && !postId);
-    const isPostDonation = targetType === PAYMENT_TARGET_TYPE.POST || (!isBoardDonation && Boolean(postId));
-    const isSiteDonation = !isBoardDonation && !isPostDonation;
+    const isSeriesDonation = targetType === PAYMENT_TARGET_TYPE.SERIES || Boolean(seriesId);
+    const isSiteDonation = !isSeriesDonation;
+
+    if (isSeriesDonation && (!boardId || !seriesId)) {
+      return Response.json({ error: '연재 후원 정보가 없습니다.' }, { status: 400 });
+    }
 
     if (isSiteDonation) {
       await validateSiteDonationTarget({
@@ -551,7 +472,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let board = isBoardDonation
+    const board = isSeriesDonation
       ? await getBoardById({
           supabaseAdmin,
           site,
@@ -559,62 +480,20 @@ export async function POST(request: NextRequest) {
         })
       : null;
 
-    const post = isPostDonation
-      ? await getPostById({
+    const series = board
+      ? await getSeriesById({
           supabaseAdmin,
           siteId: site.id,
-          postId,
+          boardId: board.id,
+          seriesId,
         })
       : null;
-
-    if (isPostDonation && !post) {
-      return Response.json({ error: '글 정보를 찾을 수 없습니다.' }, { status: 404 });
-    }
-
-    let series: SeriesRow | null = null;
-
-    if (post) {
-      board = await getBoardById({
-        supabaseAdmin,
-        site,
-        boardId: post.board_id,
-      });
-
-      const seriesCount = await getBoardSeriesCount({
-        supabaseAdmin,
-        siteId: site.id,
-        boardId: post.board_id,
-      });
-
-      if (seriesCount < 2) {
-        return Response.json({ error: '연재가 2개 이상 있는 게시판의 연재 글만 후원할 수 있습니다.' }, { status: 400 });
-      }
-
-      series = await getSeriesById({
-        supabaseAdmin,
-        siteId: site.id,
-        boardId: post.board_id,
-        seriesId: post.series_id,
-      });
-
-      if (series.is_subscription === true) {
-        return Response.json({ error: '구독 설정된 연재 글은 후원 대신 구매할 수 있습니다.' }, { status: 400 });
-      }
-    }
 
     const siteOwnerUserId = await getStigmaAuthUserId({
       supabaseAdmin,
       stigmaIdOrAuthUserId: site.owner_id,
       errorMessage: '사이트 오너 정보를 확인하지 못했습니다.',
     });
-
-    const postAuthorUserId = post
-      ? await getStigmaAuthUserId({
-          supabaseAdmin,
-          stigmaIdOrAuthUserId: post.user_id,
-          errorMessage: '글 작성자 정보를 확인하지 못했습니다.',
-        })
-      : '';
 
     const existingPaymentResult = await supabaseAdmin
       .from('payments')
@@ -631,28 +510,15 @@ export async function POST(request: NextRequest) {
     const existingPayment = ((existingPaymentResult.data ?? [])[0] as ExistingPaymentRow | undefined) ?? null;
 
     if (existingPayment) {
-      if (post) {
-        await createPostPaymentSplits({
-          supabaseAdmin,
-          paymentId: existingPayment.id,
-          siteId: site.id,
-          boardId: post.board_id,
-          seriesId: post.series_id,
-          postId: post.id,
-          siteOwnerUserId,
-          postAuthorUserId,
-          amount: existingPayment.amount,
-        });
-      } else {
-        await createOwnerPaymentSplits({
-          supabaseAdmin,
-          paymentId: existingPayment.id,
-          siteId: site.id,
-          boardId: board?.id ?? null,
-          siteOwnerUserId,
-          amount: existingPayment.amount,
-        });
-      }
+      await createOwnerPaymentSplits({
+        supabaseAdmin,
+        paymentId: existingPayment.id,
+        siteId: site.id,
+        boardId: board?.id ?? null,
+        seriesId: series?.id ?? null,
+        siteOwnerUserId,
+        amount: existingPayment.amount,
+      });
 
       return Response.json({
         ok: true,
@@ -682,21 +548,10 @@ export async function POST(request: NextRequest) {
         currency: confirmResult.currency || 'KRW',
         status: PAYMENT_STATUS.PAID,
         payment_method: confirmResult.method || PAYMENT_METHOD.CARD,
-        payment_type: post
-          ? PAYMENT_TYPE.DONATION_POST
-          : board
-            ? PAYMENT_TYPE.DONATION_BOARD
-            : PAYMENT_TYPE.DONATION_SITE,
-        target_type: post ? PAYMENT_TARGET_TYPE.POST : board ? PAYMENT_TARGET_TYPE.BOARD : PAYMENT_TARGET_TYPE.SITE,
-        target_id: post ? post.id : board ? board.id : site.id,
-        post_payment: post
-          ? {
-              site_id: site.id,
-              board_id: post.board_id,
-              series_id: post.series_id,
-              post_id: post.id,
-            }
-          : null,
+        payment_type: series ? PAYMENT_TYPE.DONATION_SERIES : PAYMENT_TYPE.DONATION_SITE,
+        target_type: series ? PAYMENT_TARGET_TYPE.SERIES : PAYMENT_TARGET_TYPE.SITE,
+        target_id: series?.id ?? site.id,
+        post_payment: null,
         subscription_id: null,
         failure_code: null,
         failure_message: null,
@@ -716,28 +571,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '후원 결제 내역을 저장하지 못했습니다.' }, { status: 500 });
     }
 
-    if (post) {
-      await createPostPaymentSplits({
-        supabaseAdmin,
-        paymentId: paymentInsertResult.data.id,
-        siteId: site.id,
-        boardId: post.board_id,
-        seriesId: post.series_id,
-        postId: post.id,
-        siteOwnerUserId,
-        postAuthorUserId,
-        amount: confirmResult.totalAmount,
-      });
-    } else {
-      await createOwnerPaymentSplits({
-        supabaseAdmin,
-        paymentId: paymentInsertResult.data.id,
-        siteId: site.id,
-        boardId: board?.id ?? null,
-        siteOwnerUserId,
-        amount: confirmResult.totalAmount,
-      });
-    }
+    await createOwnerPaymentSplits({
+      supabaseAdmin,
+      paymentId: paymentInsertResult.data.id,
+      siteId: site.id,
+      boardId: board?.id ?? null,
+      seriesId: series?.id ?? null,
+      siteOwnerUserId,
+      amount: confirmResult.totalAmount,
+    });
 
     const buyerEmail = session.stigmaId
       ? await getStigmaEmail({
@@ -753,7 +595,6 @@ export async function POST(request: NextRequest) {
           siteLabel: site.site_label,
           boardLabel: board?.board_label ?? null,
           seriesLabel: series?.series_label ?? null,
-          postSubject: post?.subject ?? null,
           amount: confirmResult.totalAmount,
         });
       } catch (emailError) {

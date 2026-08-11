@@ -23,7 +23,7 @@ type PaymentRow = {
 };
 
 function isDonationPaymentType(paymentType: string) {
-  return paymentType === PAYMENT_TYPE.DONATION_SITE || paymentType === PAYMENT_TYPE.DONATION_POST;
+  return paymentType === PAYMENT_TYPE.DONATION_SITE || paymentType === PAYMENT_TYPE.DONATION_SERIES;
 }
 
 export async function POST(request: Request) {
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         ].join(', '),
       )
       .eq('id', paymentId)
-      .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_POST])
+    .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES])
       .maybeSingle();
 
     if (paymentResult.error) {

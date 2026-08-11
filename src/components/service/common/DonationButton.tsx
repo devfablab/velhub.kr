@@ -1,10 +1,8 @@
 'use client';
 
 import { type ChangeEvent, useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined';
 import {
   Dialog,
   DialogActions,
@@ -18,8 +16,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { normalizeText } from '@/lib/utils';
-import styles from '@/app/board.module.sass';
 import PaymentTerms from './PaymentTerms';
 
 type DonationTargetType = 'site' | 'series';
@@ -48,22 +44,15 @@ type SiteDonationProps = CommonProps & {
   failUrl?: string;
 };
 
-type BoardDonationProps = CommonProps & {
-  targetType: 'board';
+type SeriesDonationProps = CommonProps & {
+  targetType: 'series';
   boardName: string;
+  seriesName: string;
   successUrl?: string;
   failUrl?: string;
 };
 
-type PostDonationProps = CommonProps & {
-  targetType: 'post';
-  boardName: string;
-  contentId: string;
-  successUrl?: string;
-  failUrl?: string;
-};
-
-type Props = SiteDonationProps | BoardDonationProps | PostDonationProps;
+type Props = SiteDonationProps | SeriesDonationProps;
 
 type IdentityStatusResponse = {
   exists: boolean;
@@ -145,38 +134,16 @@ function isValidDonationAmount(amount: number) {
 }
 
 function getTargetType(props: Props): DonationTargetType {
-  if (props.targetType === 'post') {
-    return 'post';
-  }
-
-  if (props.targetType === 'board') {
-    return 'board';
-  }
-
-  return 'site';
+  return props.targetType === 'series' ? 'series' : 'site';
 }
 
 function getDonationTitle(props: Props) {
-  const targetType = getTargetType(props);
-
-  if (targetType === 'post') {
-    return '포스팅 후원';
-  }
-
-  if (targetType === 'board') {
-    return '게시판 후원';
-  }
-
-  return '블로그 후원';
+  return getTargetType(props) === 'series' ? '연재 후원' : '블로그 후원';
 }
 
 function getSuccessUrl(props: Props) {
   if (props.successUrl) {
     return props.successUrl;
-  }
-
-  if (props.targetType === 'post') {
-    return `/${props.siteName}/${props.boardName}/${props.contentId}/donation/success`;
   }
 
   return `/${props.siteName}/donation/success`;
@@ -187,31 +154,16 @@ function getFailUrl(props: Props) {
     return props.failUrl;
   }
 
-  if (props.targetType === 'post') {
-    return `/${props.siteName}/${props.boardName}/${props.contentId}/donation/fail`;
-  }
-
   return `/${props.siteName}/donation/fail`;
 }
 
 function createRequestBody(props: Props, amount: number) {
-  if (props.targetType === 'post') {
+  if (props.targetType === 'series') {
     return {
-      targetType: 'post',
+      targetType: 'series',
       siteName: props.siteName,
       boardName: props.boardName,
-      contentId: props.contentId,
-      amount,
-      successUrl: getSuccessUrl(props),
-      failUrl: getFailUrl(props),
-    };
-  }
-
-  if (props.targetType === 'board') {
-    return {
-      targetType: 'board',
-      siteName: props.siteName,
-      boardName: props.boardName,
+      seriesName: props.seriesName,
       amount,
       successUrl: getSuccessUrl(props),
       failUrl: getFailUrl(props),
@@ -228,8 +180,6 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
-  const params = useParams();
-  const siteName = normalizeText(params.siteName);
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
