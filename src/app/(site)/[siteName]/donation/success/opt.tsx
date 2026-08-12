@@ -18,6 +18,8 @@ export default function Opt() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const boardName = normalizeText(searchParams.get('boardName'));
+  const seriesName = normalizeText(searchParams.get('seriesName'));
   const isRequestedRef = useRef(false);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -127,9 +129,20 @@ export default function Opt() {
               </div>
             </>
           )}
-          <Anchor type="button" className="button medium submit" href={`/${siteName}`}>
-            메인으로 이동
-          </Anchor>
+          {boardName && seriesName ? (
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <Anchor type="button" className="button medium action" href={`/${siteName}/${boardName}?series=${seriesName}`}>
+                연재로 돌아가기
+              </Anchor>
+              <Anchor type="button" className="button medium submit" href={`/${siteName}`}>
+                메인으로 이동
+              </Anchor>
+            </div>
+          ) : (
+            <Anchor type="button" className="button medium submit" href={`/${siteName}`}>
+              메인으로 이동
+            </Anchor>
+          )}
         </div>
       </div>
     </Container>

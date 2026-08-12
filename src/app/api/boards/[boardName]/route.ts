@@ -445,6 +445,16 @@ export async function GET(request: Request, context: RouteContext) {
       }
     }
 
+    let blogType = null;
+    if (rhizome.data.site_type === 'blog') {
+      const blogResult = await supabaseAdmin
+        .from('blogs')
+        .select('blog_type')
+        .eq('site_id', rhizome.data.id)
+        .maybeSingle();
+      blogType = blogResult.data?.blog_type ?? null;
+    }
+
     const board = await supabaseAdmin
       .from('boards')
       .select(
@@ -497,6 +507,7 @@ export async function GET(request: Request, context: RouteContext) {
           canWritePost,
         },
         selectedSeries: null,
+        blogType,
       });
     }
 
@@ -620,6 +631,7 @@ export async function GET(request: Request, context: RouteContext) {
       keyword,
       sort,
       includePin,
+      blogType,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

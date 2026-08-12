@@ -44,6 +44,7 @@ type SiteProfileResponse = {
   siteInfo?: SiteInfo;
   profilePictureUrl?: string;
   profileLogoUrl?: string;
+  blogType?: string | null;
   error?: string;
 };
 
@@ -187,6 +188,7 @@ export default function SiteProfile() {
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
+  const [blogType, setBlogType] = useState<string | null>(null);
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
   const [profileLogoUrl, setProfileLogoUrl] = useState('');
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -315,6 +317,7 @@ export default function SiteProfile() {
         }
 
         setSiteInfo(result.siteInfo);
+        setBlogType(result.blogType ?? null);
         setProfilePictureUrl(normalizeText(result.profilePictureUrl));
         setProfileLogoUrl(normalizeText(result.profileLogoUrl));
 
@@ -605,8 +608,9 @@ export default function SiteProfile() {
         </div>
       </div>
 
-      <div className={styles.action}>
-        {!hasSettlement ? (
+      {blogType !== 'team' ? (
+        <div className={styles.action}>
+          {!hasSettlement ? (
           <>
             <Snackbar
               open={Boolean(isMinor)}
@@ -652,6 +656,7 @@ export default function SiteProfile() {
           </>
         )}
       </div>
+      ) : null}
 
       {membershipErrorMessage ? (
         <p className="alert error">

@@ -98,6 +98,7 @@ type BoardListResponse = {
   size?: number;
   totalCount?: number;
   totalPage?: number;
+  blogType?: string | null;
   keyword?: string;
   selectedSeries?: SelectedSeries | null;
   actions?: {
@@ -282,6 +283,7 @@ export default function Opt({ isCommunity }: Props) {
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
   const [canWritePost, setCanWritePost] = useState(false);
   const [isBoardSubscriptionEnabled, setIsBoardSubscriptionEnabled] = useState(false);
+  const [blogType, setBlogType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const theme = useTheme();
@@ -329,6 +331,7 @@ export default function Opt({ isCommunity }: Props) {
       setSearchKeyword(nextKeyword);
       setSelectedSeries(result.selectedSeries ?? null);
       setCanWritePost(Boolean(result.actions?.canWritePost));
+      setBlogType(result.blogType ?? null);
     } catch (unknownError) {
       setCanWritePost(false);
       setSelectedSeries(null);
@@ -541,7 +544,7 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
-        {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') ? (
+                  {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') && blogType !== 'team' ? (
                     <>
                       <SubscriptionButton
                         siteName={siteName}
