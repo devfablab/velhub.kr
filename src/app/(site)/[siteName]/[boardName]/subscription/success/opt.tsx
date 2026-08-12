@@ -51,12 +51,17 @@ export default function Opt() {
 
         const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
+        const paymentId = normalizeText(searchParams.get('paymentId'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
         const targetType = getTargetType(normalizeText(searchParams.get('targetType')));
         const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
-        if (!billingKey || !customerKey || !orderNo || !targetType) {
+        if ((!billingKey || !customerKey) && !paymentId) {
           throw new Error('구독 정보가 올바르지 않습니다.');
+        }
+
+        if (!orderNo || !targetType) {
+          throw new Error('구독 대상 정보가 올바르지 않습니다.');
         }
 
         if (targetType === 'series' && !seriesName) {
@@ -72,6 +77,7 @@ export default function Opt() {
           body: JSON.stringify({
             billingKey,
             customerKey,
+            paymentId,
             orderNo,
             siteName,
             boardName,

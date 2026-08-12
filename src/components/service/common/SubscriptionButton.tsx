@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as PortOne from '@portone/browser-sdk/v2';
 import {
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -20,6 +21,7 @@ import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
 import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
 import styles from '@/app/board.module.sass';
 import PaymentTerms from './PaymentTerms';
+import IdentityVerificationButton from './IdentityVerificationButton';
 
 type BoardInfo = {
   id: string;
@@ -76,6 +78,17 @@ type SubscriptionStartResponse =
       ok: true;
       subscriptionId: string;
       paymentId: string;
+    }
+  | {
+      mode: 'single_payment';
+      storeId: string;
+      channelKey: string;
+      paymentId: string;
+      orderNo: string;
+      orderName: string;
+      amount: number;
+      successUrl: string;
+      failUrl: string;
     }
   | {
       error: string;
@@ -200,7 +213,10 @@ export default function SubscriptionButton({
   selectedBoard,
   onStatusChange,
 }: Props) {
-  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [hasIdentity, setHasIdentity] = useState(false);
+  const [isMinor, setIsMinor] = useState(false);
+  const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
 
   const targetType: SubscriptionTargetType = 'series';
   const targetLabel = selectedSeries.series_label;
@@ -264,11 +280,17 @@ export default function SubscriptionButton({
         const result = (await response.json()) as IdentityStatusResponse;
 
         if (!ignore) {
-          setCanShowDonationButton(Boolean(response.ok && result.exists && isAdult(result.identity?.birth_date)));
+          setHasIdentity(response.ok && Boolean(result.exists));
+          setIsMinor(
+            response.ok && result.exists && result.identity
+              ? !isAdult(result.identity.birth_date)
+              : false,
+          );
+          setIsReady(true);
         }
       } catch {
         if (!ignore) {
-          setCanShowDonationButton(false);
+          setIsReady(true);
         }
       }
     }
@@ -324,11 +346,15 @@ export default function SubscriptionButton({
     void loadSubscriptionStatus();
   }, [board, statusQueryString, onStatusChange]);
 
-  if (!canShowDonationButton) {
+  if (!isReady) {
     return null;
   }
 
   function handleOpenDialog() {
+    if (!hasIdentity) {
+      setIsIdentityDialogOpen(true);
+      return;
+    }
     setErrorMessage('');
     setIsDialogOpen(true);
   }
@@ -339,6 +365,10 @@ export default function SubscriptionButton({
     }
 
     setIsDialogOpen(false);
+  }
+
+  function handleCloseIdentityDialog() {
+    setIsIdentityDialogOpen(false);
   }
 
   function handleOpenCancelDialog() {
@@ -390,6 +420,21 @@ export default function SubscriptionButton({
         onStatusChange?.('active');
         setSuccessMessage(`앞으로 ${targetLabel} 월 ${formatPrice(price ?? 0)} 원 결제됩니다.`);
         setIsDialogOpen(false);
+        return;
+      }
+
+      if (result.mode === 'single_payment') {
+        await PortOne.requestPayment({
+          storeId: result.storeId,
+          channelKey: result.channelKey,
+          paymentId: result.paymentId,
+          orderName: result.orderName,
+          totalAmount: result.amount,
+          currency: 'CURRENCY_KRW',
+          payMethod: 'CARD',
+          redirectUrl: result.successUrl,
+          forceRedirect: true,
+        });
         return;
       }
 
@@ -641,10 +686,18 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
-            <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
-            </Typography>
+            <Stack direction="row" alignItems="center" gap={1}>
+              <Typography variant="body2">
+                {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+              </Typography>
+              {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
+            </Stack>
             <PaymentTerms type="subscription" disabled={isProcessing} />
+            {isMinor && (
+              <p className="alert warning">
+                <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+              </p>
+            )}
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -683,10 +736,18 @@ export default function SubscriptionButton({
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography variant="body2">
-              {targetLabel}을 월 {formatPrice(price ?? 0)} 원에 구독하시겠어요?
-            </Typography>
+            <Stack direction="row" alignItems="center" gap={1} mb={2}>
+              <Typography variant="body2">
+                {targetLabel}을 {isMinor ? '단건' : '월'} {formatPrice(price ?? 0)} 원에 구독하시겠어요?
+              </Typography>
+              {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
+            </Stack>
             <PaymentTerms type="subscription" disabled={isProcessing} />
+            {isMinor && (
+              <p className="alert warning" style={{ marginTop: '12px' }}>
+                <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+              </p>
+            )}
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -791,6 +852,41 @@ export default function SubscriptionButton({
               disabled={isProcessing}
             >
               구독 취소
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>본인인증 필요</h2>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+
+          <Stack gap={3}>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs">
+          <DialogTitle>본인인증 필요</DialogTitle>
+          <DialogContent dividers>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button small default" onClick={handleCloseIdentityDialog}>
+              취소
             </button>
           </DialogActions>
         </Dialog>

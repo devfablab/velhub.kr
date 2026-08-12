@@ -27,8 +27,30 @@ import {
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
+import { normalizeText, onlyDigits } from '@/lib/utils';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
+import { decrypt } from '@/lib/encryption/decrypt';
+
+function isAdult(birthDate: string | null | undefined) {
+  const digits = onlyDigits(birthDate);
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 19;
+}
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 type SubscriptionTargetType = 'series';
@@ -484,6 +506,29 @@ export async function POST(request: Request) {
     if (targetType === 'series') {
       successUrl.searchParams.set('seriesName', seriesName);
       failUrl.searchParams.set('seriesName', seriesName);
+    }
+
+    const chorogonsResult = await supabaseAdmin
+      .from('chorogons')
+      .select('birth_date')
+      .eq('user_id', session.stigmaId ?? '')
+      .maybeSingle();
+
+    const birthDateEncrypted = chorogonsResult.data?.birth_date as string | undefined;
+    const isMinor = birthDateEncrypted ? !isAdult(decrypt(birthDateEncrypted)) : false;
+
+    if (isMinor) {
+      return Response.json({
+        mode: 'single_payment',
+        storeId: getPortOneStoreId(),
+        channelKey: getPortOneKpnSubscriptionChannelKey(),
+        paymentId: createPortOnePaymentKey(orderNo),
+        orderNo,
+        orderName,
+        amount: setting.price,
+        successUrl: successUrl.toString(),
+        failUrl: failUrl.toString(),
+      });
     }
 
     if (!billingMethod) {

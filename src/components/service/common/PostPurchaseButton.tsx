@@ -18,6 +18,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import styles from '@/app/board.module.sass';
 import PaymentTerms from './PaymentTerms';
+import IdentityVerificationButton from './IdentityVerificationButton';
 
 type PostPurchaseStartResponse = {
   ok?: boolean;
@@ -109,7 +110,10 @@ export default function PostPurchaseButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [canShowDonationButton, setCanShowDonationButton] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [hasIdentity, setHasIdentity] = useState(false);
+  const [isMinor, setIsMinor] = useState(false);
+  const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
@@ -148,11 +152,17 @@ export default function PostPurchaseButton(props: Props) {
         const result = (await response.json()) as IdentityStatusResponse;
 
         if (!ignore) {
-          setCanShowDonationButton(Boolean(response.ok && result.exists && isAdult(result.identity?.birth_date)));
+          setHasIdentity(response.ok && Boolean(result.exists));
+          setIsMinor(
+            response.ok && result.exists && result.identity
+              ? !isAdult(result.identity.birth_date)
+              : false,
+          );
+          setIsReady(true);
         }
       } catch {
         if (!ignore) {
-          setCanShowDonationButton(false);
+          setIsReady(true);
         }
       }
     }
@@ -165,7 +175,7 @@ export default function PostPurchaseButton(props: Props) {
     };
   }, [siteName]);
 
-  if (!canShowDonationButton) {
+  if (!isReady) {
     return null;
   }
 
@@ -175,6 +185,10 @@ export default function PostPurchaseButton(props: Props) {
   }
 
   function handleOpenConfirm() {
+    if (!hasIdentity) {
+      setIsIdentityDialogOpen(true);
+      return;
+    }
     setErrorMessage('');
     setIsConfirmOpen(true);
   }
@@ -185,6 +199,10 @@ export default function PostPurchaseButton(props: Props) {
     }
 
     setIsConfirmOpen(false);
+  }
+
+  function handleCloseIdentityDialog() {
+    setIsIdentityDialogOpen(false);
   }
 
   async function handlePurchase() {
@@ -253,7 +271,16 @@ export default function PostPurchaseButton(props: Props) {
   }
 
   function renderPurchaseConsent() {
-    return <PaymentTerms type="purchase" disabled={isProcessing} />;
+    return (
+      <div style={{ marginTop: 20 }}>
+        <PaymentTerms type="purchase" disabled={isProcessing} />
+        {isMinor && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+          </p>
+        )}
+      </div>
+    );
   }
 
   if (!purchaseAvailable) {
@@ -367,6 +394,41 @@ export default function PostPurchaseButton(props: Props) {
         autoHideDuration={2700}
         onClose={() => setErrorMessage('')}
       />
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>본인인증 필요</h2>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+
+          <Stack gap={3}>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs">
+          <DialogTitle>본인인증 필요</DialogTitle>
+          <DialogContent dividers>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button small default" onClick={handleCloseIdentityDialog}>
+              취소
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </>
   );
 }

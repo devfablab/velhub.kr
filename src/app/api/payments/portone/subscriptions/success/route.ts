@@ -34,6 +34,7 @@ type SubscriptionTargetType = 'board' | 'series';
 type SubscriptionSuccessBody = {
   billingKey?: string;
   customerKey?: string;
+  paymentId?: string;
   siteName?: string;
   boardName?: string;
   targetType?: string;
@@ -403,18 +404,15 @@ export async function POST(request: Request) {
     const body = (await request.json()) as SubscriptionSuccessBody;
     const billingKey = normalizeText(body.billingKey);
     const customerKey = normalizeText(body.customerKey);
+    const paymentId = normalizeText(body.paymentId);
     const siteName = normalizeText(body.siteName).toLowerCase();
     const boardName = normalizeText(body.boardName).toLowerCase();
     const targetType = getTargetType(normalizeText(body.targetType));
     const seriesName = normalizeText(body.seriesName).toLowerCase();
     const orderNo = normalizeText(body.orderNo);
 
-    if (!billingKey) {
-      return Response.json({ error: 'billingKey가 유효하지 않습니다.' }, { status: 400 });
-    }
-
-    if (!customerKey) {
-      return Response.json({ error: 'customerKey가 유효하지 않습니다.' }, { status: 400 });
+    if ((!billingKey || !customerKey) && !paymentId) {
+      return Response.json({ error: '구독 정보가 올바르지 않습니다.' }, { status: 400 });
     }
 
     if (!siteName) {
@@ -529,92 +527,94 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미 구독 중입니다.' }, { status: 400 });
     }
 
-    const billingKeyInfo = await getPortOneBillingKeyInfo(billingKey);
+    if (!paymentId) {
+      const billingKeyInfo = await getPortOneBillingKeyInfo(billingKey!);
 
-    if (billingKeyInfo.status !== 'ISSUED') {
-      return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });
-    }
-
-    const cardInfo = getPortOneBillingCardInfo(billingKeyInfo);
-    const billingKeyResult = {
-      billingKey,
-      customerKey,
-    };
-
-    const existingDefaultBillingMethodResult = await supabaseAdmin
-      .from('subscription_billing_methods')
-      .select('id, is_default')
-      .eq('user_id', session.stigmaId ?? '')
-      .eq('provider', getCurrentPortOneProvider())
-      .eq('is_default', true)
-      .maybeSingle();
-
-    if (existingDefaultBillingMethodResult.error) {
-      console.error(existingDefaultBillingMethodResult.error);
-
-      return Response.json({ error: '기본 결제수단을 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const existingBillingMethodResult = await supabaseAdmin
-      .from('subscription_billing_methods')
-      .select('id, is_default')
-      .eq('user_id', session.stigmaId ?? '')
-      .eq('provider', getCurrentPortOneProvider())
-      .eq('billing_key', billingKeyResult.billingKey)
-      .maybeSingle();
-
-    if (existingBillingMethodResult.error) {
-      console.error(existingBillingMethodResult.error);
-
-      return Response.json({ error: '등록된 결제수단을 확인하지 못했습니다.' }, { status: 500 });
-    }
-
-    const existingBillingMethod = existingBillingMethodResult.data as BillingMethodRow | null;
-
-    if (existingBillingMethod) {
-      const billingMethodUpdateResult = await supabaseAdmin
-        .from('subscription_billing_methods')
-        .update({
-          customer_key: customerKey,
-          card_company: cardInfo.cardCompany,
-          card_number_masked: cardInfo.cardNumberMasked,
-          owner_type: cardInfo.ownerType,
-          card_type: cardInfo.cardType,
-          is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
-          updated_at: nowText,
-        })
-        .eq('id', existingBillingMethod.id);
-
-      if (billingMethodUpdateResult.error) {
-        console.error(billingMethodUpdateResult.error);
-
-        return Response.json({ error: '결제수단을 갱신하지 못했습니다.' }, { status: 500 });
-      }
-    } else {
-      if (!session.stigmaId) {
-        return Response.json({ error: '로그인 정보가 올바르지 않습니다.' }, { status: 401 });
+      if (billingKeyInfo.status !== 'ISSUED') {
+        return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });
       }
 
-      const billingMethodInsertResult = await supabaseAdmin
+      const cardInfo = getPortOneBillingCardInfo(billingKeyInfo);
+      const billingKeyResult = {
+        billingKey: billingKey!,
+        customerKey: customerKey!,
+      };
+
+      const existingDefaultBillingMethodResult = await supabaseAdmin
         .from('subscription_billing_methods')
-        .insert({
-          user_id: session.stigmaId,
-          provider: getCurrentPortOneProvider(),
-          customer_key: customerKey,
-          billing_key: billingKeyResult.billingKey,
-          card_company: cardInfo.cardCompany,
-          card_number_masked: cardInfo.cardNumberMasked,
-          owner_type: cardInfo.ownerType,
-          card_type: cardInfo.cardType,
-          is_default: !existingDefaultBillingMethodResult.data,
-        })
-        .select('id')
-        .single();
+        .select('id, is_default')
+        .eq('user_id', session.stigmaId ?? '')
+        .eq('provider', getCurrentPortOneProvider())
+        .eq('is_default', true)
+        .maybeSingle();
 
-      if (billingMethodInsertResult.error) {
-        console.error(billingMethodInsertResult.error);
+      if (existingDefaultBillingMethodResult.error) {
+        console.error(existingDefaultBillingMethodResult.error);
 
-        return Response.json({ error: '결제수단을 저장하지 못했습니다.' }, { status: 500 });
+        return Response.json({ error: '기본 결제수단을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const existingBillingMethodResult = await supabaseAdmin
+        .from('subscription_billing_methods')
+        .select('id, is_default')
+        .eq('user_id', session.stigmaId ?? '')
+        .eq('provider', getCurrentPortOneProvider())
+        .eq('billing_key', billingKeyResult.billingKey)
+        .maybeSingle();
+
+      if (existingBillingMethodResult.error) {
+        console.error(existingBillingMethodResult.error);
+
+        return Response.json({ error: '등록된 결제수단을 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const existingBillingMethod = existingBillingMethodResult.data as BillingMethodRow | null;
+
+      if (existingBillingMethod) {
+        const billingMethodUpdateResult = await supabaseAdmin
+          .from('subscription_billing_methods')
+          .update({
+            customer_key: customerKey,
+            card_company: cardInfo.cardCompany,
+            card_number_masked: cardInfo.cardNumberMasked,
+            owner_type: cardInfo.ownerType,
+            card_type: cardInfo.cardType,
+            is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
+            updated_at: nowText,
+          })
+          .eq('id', existingBillingMethod.id);
+
+        if (billingMethodUpdateResult.error) {
+          console.error(billingMethodUpdateResult.error);
+
+          return Response.json({ error: '결제수단을 갱신하지 못했습니다.' }, { status: 500 });
+        }
+      } else {
+        if (!session.stigmaId) {
+          return Response.json({ error: '로그인 정보가 올바르지 않습니다.' }, { status: 401 });
+        }
+
+        const billingMethodInsertResult = await supabaseAdmin
+          .from('subscription_billing_methods')
+          .insert({
+            user_id: session.stigmaId,
+            provider: getCurrentPortOneProvider(),
+            customer_key: customerKey,
+            billing_key: billingKeyResult.billingKey,
+            card_company: cardInfo.cardCompany,
+            card_number_masked: cardInfo.cardNumberMasked,
+            owner_type: cardInfo.ownerType,
+            card_type: cardInfo.cardType,
+            is_default: !existingDefaultBillingMethodResult.data,
+          })
+          .select('id')
+          .single();
+
+        if (billingMethodInsertResult.error) {
+          console.error(billingMethodInsertResult.error);
+
+          return Response.json({ error: '결제수단을 저장하지 못했습니다.' }, { status: 500 });
+        }
       }
     }
 
@@ -648,14 +648,40 @@ export async function POST(request: Request) {
       });
     }
 
-    const orderName = `${subscriptionTarget.targetLabel ?? (targetType === 'series' ? '연재' : '게시판')} 구독`;
-    const portOnePaymentResult = (await requestPortOneBillingPaymentCompat({
-      billingKey: billingKeyResult.billingKey,
-      customerKey,
-      amount: setting.price,
-      orderId: orderNo,
-      orderName,
-    })) as PortOneBillingPaymentResult;
+    let portOnePaymentResult: PortOneBillingPaymentResult;
+
+    if (paymentId) {
+      const paymentResponse = await getPortOnePayment(paymentId);
+      assertPortOnePaidPayment(paymentResponse);
+      const paidAmount = getPortOnePaidAmount(paymentResponse);
+      
+      if (paidAmount !== setting.price) {
+        return Response.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
+      }
+
+      portOnePaymentResult = {
+        paymentKey: paymentResponse.id,
+        orderId: paymentResponse.order.id,
+        orderName: paymentResponse.order.name,
+        method: getPortOnePaymentMethod(paymentResponse),
+        totalAmount: paidAmount,
+        status: paymentResponse.status,
+        approvedAt: getPortOnePaidAt(paymentResponse),
+        currency: paymentResponse.amount.currency,
+        transactionId: getPortOnePaymentTransactionNo(paymentResponse),
+        rawData: paymentResponse,
+      };
+    } else {
+      const orderName = `${subscriptionTarget.targetLabel ?? (targetType === 'series' ? '연재' : '게시판')} 구독`;
+      portOnePaymentResult = (await requestPortOneBillingPaymentCompat({
+        billingKey: billingKey!,
+        customerKey: customerKey!,
+        amount: setting.price,
+        orderId: orderNo,
+        orderName,
+      })) as PortOneBillingPaymentResult;
+    }
+
     const billingAnchorDay = getBillingAnchorDay(now);
     const billingPeriod = createNextMonthlyBillingPeriod({
       currentPeriodEnd: now,
@@ -708,14 +734,14 @@ export async function POST(request: Request) {
         owner_user_id: siteOwnerUserId,
         price: setting.price,
         status: SUBSCRIPTION_STATUS.ACTIVE,
-        billing_key: encrypt(billingKeyResult.billingKey),
-        customer_key: customerKey,
+        billing_key: paymentId ? null : encrypt(billingKey!),
+        customer_key: paymentId ? null : customerKey!,
         last_payment_id: paymentInsertResult.data.id,
         trial_started_at: null,
         trial_ends_at: null,
         current_period_start: billingPeriod.currentPeriodStart,
         current_period_end: billingPeriod.currentPeriodEnd,
-        next_billing_at: billingPeriod.nextBillingAt,
+        next_billing_at: paymentId ? null : billingPeriod.nextBillingAt,
         billing_anchor_day: billingAnchorDay,
       })
       .select('id')

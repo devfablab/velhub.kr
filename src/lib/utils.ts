@@ -8,6 +8,16 @@ const parseDate = (value: DateInput): Date | null => {
   return isNaN(date.getTime()) ? null : date;
 };
 
+export function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return email;
+  const [localPart, domainPart] = email.split('@');
+  if (localPart.length <= 2) {
+    return `${localPart.charAt(0)}*@${domainPart}`;
+  }
+  const maskedLocal = localPart.slice(0, 2) + '*'.repeat(localPart.length - 2);
+  return `${maskedLocal}@${domainPart}`;
+}
+
 export function formatDate(value: DateInput): string {
   const date = parseDate(value);
   if (!date) return '';

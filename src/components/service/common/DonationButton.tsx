@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import PaymentTerms from './PaymentTerms';
+import IdentityVerificationButton from './IdentityVerificationButton';
 
 type DonationTargetType = 'site' | 'series';
 
@@ -187,6 +188,9 @@ export default function DonationButton(props: Props) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
+  const [hasIdentity, setHasIdentity] = useState(false);
+  const [isMinor, setIsMinor] = useState(false);
+  const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
@@ -216,11 +220,15 @@ export default function DonationButton(props: Props) {
         const identityResult = (await identityResponse.json()) as IdentityStatusResponse;
         const donationStatusResult = (await donationStatusResponse.json()) as DonationStatusResponse;
 
+        setHasIdentity(identityResponse.ok && Boolean(identityResult.exists));
+        setIsMinor(
+          identityResponse.ok && identityResult.exists && identityResult.identity
+            ? !isAdult(identityResult.identity.birth_date)
+            : false,
+        );
+
         setCanShowDonationButton(
           Boolean(
-            identityResponse.ok &&
-            identityResult.identity &&
-            isAdult(identityResult.identity.birth_date) &&
             donationStatusResponse.ok &&
             donationStatusResult.isEnabled,
           ),
@@ -247,6 +255,10 @@ export default function DonationButton(props: Props) {
   }
 
   function handleOpenDialog() {
+    if (!hasIdentity) {
+      setIsIdentityDialogOpen(true);
+      return;
+    }
     setDonationAmount('1,000');
     setErrorMessage('');
     setIsDialogOpen(true);
@@ -258,6 +270,10 @@ export default function DonationButton(props: Props) {
     }
 
     setIsDialogOpen(false);
+  }
+
+  function handleCloseIdentityDialog() {
+    setIsIdentityDialogOpen(false);
   }
 
   function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement>) {
@@ -347,6 +363,12 @@ export default function DonationButton(props: Props) {
           }}
         />
 
+        {isMinor && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+          </p>
+        )}
+
         <PaymentTerms type="donation" disabled={isProcessing} />
 
         <Snackbar
@@ -410,6 +432,41 @@ export default function DonationButton(props: Props) {
             </button>
             <button type="button" className="button medium submit" onClick={handleDonate} disabled={isProcessing}>
               후원
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>본인인증 필요</h2>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
+
+          <Stack gap={3}>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs">
+          <DialogTitle>본인인증 필요</DialogTitle>
+          <DialogContent dividers>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
+              <IdentityVerificationButton />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button small default" onClick={handleCloseIdentityDialog}>
+              취소
             </button>
           </DialogActions>
         </Dialog>

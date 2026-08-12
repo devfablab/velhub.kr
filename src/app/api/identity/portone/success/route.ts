@@ -4,6 +4,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { createLookupHash, encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { maskEmail } from '@/lib/utils';
 
 type SuccessRequestBody = {
   identityVerificationId?: string;
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: duplicateIdentity.accountEmail
-          ? `이미 ${duplicateIdentity.accountEmail} 계정에서 본인인증을 완료했습니다.`
+          ? `이미 ${maskEmail(duplicateIdentity.accountEmail)} 계정에서 본인인증을 완료했습니다.`
           : '이미 다른 계정에서 본인인증을 완료했습니다.',
       },
       { status: 409 },
