@@ -234,6 +234,18 @@ export async function POST(request: Request) {
 
     const site = siteResult.data as SiteRow;
 
+    if (site.site_type === 'blog') {
+      const blogResult = await supabaseAdmin
+        .from('blogs')
+        .select('blog_type')
+        .eq('site_id', site.id)
+        .maybeSingle();
+
+      if (blogResult.data?.blog_type === 'team') {
+        return Response.json({ error: '팀 블로그는 정기 구독을 지원하지 않습니다.' }, { status: 400 });
+      }
+    }
+
     const session = await verifySession({ siteId: site.id });
 
     if (!session.authUserId || !session.stigmaId) {

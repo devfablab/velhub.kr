@@ -6,6 +6,8 @@ type FavoriteRow = {
   id: string;
   created_at: string;
   site_id: string;
+  folder_id: string | null;
+  sort_order: number;
 };
 
 type SiteRow = {
@@ -56,10 +58,11 @@ export async function GET() {
 
     const favoritesResult = await supabaseAdmin
       .from('blog_favorites')
-      .select('id, created_at, site_id')
+      .select('id, created_at, site_id, folder_id, sort_order')
       .eq('user_id', session.stigmaId)
+      .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(500); // Increased limit to 500 for folder management
 
     if (favoritesResult.error) {
       return Response.json({ error: '즐겨찾는 블로그 목록을 불러오지 못했습니다.' }, { status: 500 });
@@ -134,6 +137,8 @@ export async function GET() {
           profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
           href: `/${site.site_key}`,
           favoritedAt: favorite.created_at,
+          folderId: favorite.folder_id,
+          sortOrder: favorite.sort_order,
         };
       })
       .filter(Boolean);

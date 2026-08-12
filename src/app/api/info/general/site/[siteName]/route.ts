@@ -41,7 +41,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, owner_id, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown, custom_domain',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -140,11 +140,21 @@ export async function GET(_request: Request, context: RouteContext) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const sites = await access.supabaseAdmin
-      .from('sites')
-      .select('updated_at, updated_by, log')
-      .eq('site_id', access.rhizome.id)
-      .maybeSingle();
+    const [sites, blogs, features] = await Promise.all([
+      access.supabaseAdmin
+        .from('sites')
+        .select('updated_at, updated_by, log')
+        .eq('site_id', access.rhizome.id)
+        .maybeSingle(),
+      access.rhizome.site_type === 'blog'
+        ? access.supabaseAdmin
+            .from('blogs')
+            .select('blog_type')
+            .eq('site_id', access.rhizome.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      import('@/lib/memberships/features').then((m) => m.getMembershipFeatures(access.rhizome.owner_id as string)),
+    ]);
 
     if (sites.error || !sites.data) {
       return Response.json({ error: 'sites 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -192,6 +202,8 @@ export async function GET(_request: Request, context: RouteContext) {
       profileLogoUrl,
       siteOgImageUrl,
       promotionImageUrl,
+      blogType: blogs.data?.blog_type ?? null,
+      hasOwnerDomainFeature: features.has('owner_domain'),
       sites: {
         updated_at: sites.data.updated_at,
         updated_by: sites.data.updated_by,

@@ -116,6 +116,7 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'concierge' ||
     firstSegment === 'hub' ||
     firstSegment === 'lounge' ||
+    firstSegment === 'user' ||
     firstSegment === 'dummy.webp' ||
     firstSegment === 'together.webp' ||
     firstSegment === 'favicon'
@@ -472,6 +473,19 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/settings') || pathname.startsWith('/new') || pathname.startsWith('/hub')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    return response;
+  }
+
+  if (pathname.startsWith('/user/settings')) {
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const membershipCheck = await fetchSessionRoute(request, '/api/session/membership', {});
+    if (!membershipCheck.response.ok || !membershipCheck.result?.ok) {
+      return redirectWithPath(request, '/hub');
     }
 
     return response;

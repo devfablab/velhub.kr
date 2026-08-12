@@ -45,7 +45,9 @@ type EditableField =
   | 'promotion_image'
   | 'visibility_type'
   | 'theme_type'
-  | 'is_shutdown';
+  | 'is_shutdown'
+  | 'custom_domain'
+  | 'blog_type';
 
 type ThemeType = 'default' | 'coral' | 'teal' | 'royalblue' | 'slateblue' | 'seagreen' | 'orchid' | 'tomato';
 
@@ -62,6 +64,7 @@ type SiteInfoInfo = {
   visibility_type: string;
   theme_type: string;
   is_shutdown: boolean;
+  custom_domain: string | null;
 };
 
 type SitesInfo = {
@@ -135,6 +138,8 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(null);
   const [sites, setSites] = useState<SitesInfo | null>(null);
+  const [blogType, setBlogType] = useState<string | null>(null);
+  const [hasOwnerDomainFeature, setHasOwnerDomainFeature] = useState(false);
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [draftValue, setDraftValue] = useState<string | boolean>('');
   const [profilePictureUrl, setProfilePictureUrl] = useState('');
@@ -180,6 +185,8 @@ export default function Opt() {
 
         setSiteInfo(result.siteInfo);
         setSites(result.sites);
+        setBlogType(result.blogType ?? null);
+        setHasOwnerDomainFeature(Boolean(result.hasOwnerDomainFeature));
         applyColorSet(result.siteInfo.theme_type);
         setProfilePictureUrl(result.profilePictureUrl ?? '');
         setProfileLogoUrl(result.profileLogoUrl ?? '');
@@ -425,6 +432,8 @@ export default function Opt() {
 
     setSiteInfo(result.siteInfo);
     setSites(result.sites);
+    setBlogType(result.blogType ?? null);
+    setHasOwnerDomainFeature(Boolean(result.hasOwnerDomainFeature));
     applyColorSet(result.siteInfo.theme_type);
     setProfilePictureUrl(result.profilePictureUrl ?? '');
     setProfileLogoUrl(result.profileLogoUrl ?? '');
@@ -1091,6 +1100,75 @@ export default function Opt() {
               </Stack>
             )}
           </div>
+          <div className={`paper ${styles.paper}`}>
+            <Typography variant="subtitle2">커스텀 도메인</Typography>
+            {editingField === 'custom_domain' ? (
+              <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
+                <TextField
+                  value={String(draftValue)}
+                  onChange={(e) => {
+                    setDraftValue(e.target.value);
+                    setErrorMessage('');
+                  }}
+                  fullWidth
+                  size="small"
+                  disabled={!hasOwnerDomainFeature}
+                  helperText={!hasOwnerDomainFeature ? '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.' : ''}
+                />
+                <Stack gap={1} direction="row" justifyContent="flex-end">
+                  <button type="button" className={`button ${isMobile ? 'small' : 'medium'} cancel`} onClick={() => cancelEdit()}>취소</button>
+                  <button type="button" className={`button ${isMobile ? 'small' : 'medium'} submit`} onClick={() => void saveField('custom_domain')} disabled={isSubmitting || !hasOwnerDomainFeature}>수정 완료</button>
+                </Stack>
+              </Stack>
+            ) : (
+              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
+                <Typography>{siteInfo.custom_domain || '미설정'}</Typography>
+                <button type="button" className="button small action" onClick={() => startEdit('custom_domain', siteInfo.custom_domain)} disabled={!hasOwnerDomainFeature}>
+                  수정
+                </button>
+              </Stack>
+            )}
+            {!hasOwnerDomainFeature && editingField !== 'custom_domain' && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.
+              </Typography>
+            )}
+          </div>
+          {siteInfo.site_type === 'blog' && (
+            <div className={`paper ${styles.paper}`}>
+              <Typography variant="subtitle2">블로그 타입</Typography>
+              {editingField === 'blog_type' ? (
+                <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center">
+                  <Select
+                    value={String(draftValue)}
+                    onChange={(e) => setDraftValue(e.target.value)}
+                    size="small"
+                    fullWidth
+                    disabled={!hasOwnerDomainFeature}
+                  >
+                    <MenuItem value="personal">1인 블로그</MenuItem>
+                    <MenuItem value="team">팀 블로그</MenuItem>
+                  </Select>
+                  <Stack gap={1} direction="row" justifyContent="flex-end">
+                    <button type="button" className={`button ${isMobile ? 'small' : 'medium'} cancel`} onClick={() => cancelEdit()}>취소</button>
+                    <button type="button" className={`button ${isMobile ? 'small' : 'medium'} submit`} onClick={() => void saveField('blog_type')} disabled={isSubmitting || !hasOwnerDomainFeature}>수정 완료</button>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
+                  <Typography>{blogType === 'team' ? '팀 블로그' : '1인 블로그'}</Typography>
+                  <button type="button" className="button small action" onClick={() => startEdit('blog_type', blogType || 'personal')} disabled={!hasOwnerDomainFeature}>
+                    수정
+                  </button>
+                </Stack>
+              )}
+              {!hasOwnerDomainFeature && editingField !== 'blog_type' && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  팀 블로그 설정은 오너 멤버십 전용 기능입니다.
+                </Typography>
+              )}
+            </div>
+          )}
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">사이트명</Typography>
             {editingField === 'site_label' ? (

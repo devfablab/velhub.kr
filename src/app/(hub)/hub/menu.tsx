@@ -25,6 +25,7 @@ import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
@@ -298,6 +299,12 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 <Anchor href="/hub/communities">
                   <InterestsOutlinedIcon fontSize="small" />
                   <span>커뮤니티 허브</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="posts" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/posts">
+                  <EditOutlinedIcon fontSize="small" />
+                  <span>내가 쓴 글</span>
                 </Anchor>
               </MenuItem>
               <MenuItem key="purchase" onClick={handleCloseProfileDrawer}>

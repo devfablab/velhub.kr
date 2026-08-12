@@ -2,6 +2,8 @@ import { getCommunityManagerAccess } from '@/lib/community/community-manager/uti
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { PAYMENT_STATUS, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE, PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
+import { cancelPortOnePayment } from '@/lib/payments/portone';
 
 type RouteContext = {
   params: Promise<{
@@ -19,7 +21,9 @@ type UpdateField =
   | 'promotion_image'
   | 'visibility_type'
   | 'theme_type'
-  | 'is_shutdown';
+  | 'is_shutdown'
+  | 'custom_domain'
+  | 'blog_type';
 
 type RequestBody = {
   field: UpdateField;
@@ -90,6 +94,14 @@ function formatLogMessage(
     return `테마 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
   }
 
+  if (field === 'custom_domain') {
+    return `커스텀 도메인 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+  }
+
+  if (field === 'blog_type') {
+    return `블로그 타입 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
+  }
+
   return `중단 여부 ${String(previousValue ?? '')} → ${String(nextValue ?? '')}`;
 }
 
@@ -99,7 +111,7 @@ async function checkAccess(siteName: string) {
   const rhizome = await supabaseAdmin
     .from('rhizomes')
     .select(
-      'id, created_at, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown',
+      'id, created_at, owner_id, site_key, site_label, profile_picture, profile_logo, summary, og_image, promotion_image, site_type, visibility_type, theme_type, is_shutdown, custom_domain',
     )
     .eq('site_key', siteName)
     .maybeSingle();
@@ -216,6 +228,8 @@ export async function POST(request: Request, context: RouteContext) {
       'visibility_type',
       'theme_type',
       'is_shutdown',
+      'custom_domain',
+      'blog_type',
     ];
 
     if (!updatableFields.includes(requestBody.field)) {
@@ -315,19 +329,117 @@ export async function POST(request: Request, context: RouteContext) {
       }
 
       nextValue = requestBody.value;
+    } else if (requestBody.field === 'custom_domain') {
+      nextValue = typeof requestBody.value === 'string' ? requestBody.value.trim() || null : null;
+    } else if (requestBody.field === 'blog_type') {
+      if (requestBody.value !== 'personal' && requestBody.value !== 'team') {
+        return Response.json({ error: '블로그 타입 값이 올바르지 않습니다.' }, { status: 400 });
+      }
+      nextValue = requestBody.value;
     } else {
       nextValue = typeof requestBody.value === 'string' ? requestBody.value.trim() || null : null;
     }
 
-    const updateRhizome = await access.supabaseAdmin
-      .from('rhizomes')
-      .update({
-        [requestBody.field]: nextValue,
-      })
-      .eq('id', access.rhizome.id);
+    if (requestBody.field === 'blog_type') {
+      const blogData = await access.supabaseAdmin
+        .from('blogs')
+        .select('blog_type')
+        .eq('site_id', access.rhizome.id)
+        .maybeSingle();
+      
+      const currentBlogType = blogData.data?.blog_type ?? 'personal';
+      if (currentBlogType === nextValue) {
+        return Response.json({
+          ok: true,
+          field: requestBody.field,
+          value: nextValue,
+          siteName: normalizedSiteName,
+        });
+      }
 
-    if (updateRhizome.error) {
-      return Response.json({ error: '사이트 정보 수정에 실패했습니다.' }, { status: 500 });
+      if (nextValue === 'personal') {
+        const otherMembers = await access.supabaseAdmin
+          .from('rhizome_stigmas')
+          .select('id')
+          .eq('site_id', access.rhizome.id)
+          .neq('user_id', access.rhizome.owner_id as string)
+          .limit(1);
+
+        if (otherMembers.error) {
+          return Response.json({ error: '팀원 확인에 실패했습니다.' }, { status: 500 });
+        }
+
+        if (otherMembers.data?.length) {
+          return Response.json({ error: '매니저나 팀원이 존재하는 경우 1인 블로그로 변경할 수 없습니다.' }, { status: 400 });
+        }
+      }
+
+      if (nextValue === 'team') {
+        const activeSubs = await access.supabaseAdmin
+          .from('subscriptions')
+          .select('id, last_payment_id')
+          .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
+          .eq('target_id', access.rhizome.id)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+          .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
+        
+        if (activeSubs.data && activeSubs.data.length > 0) {
+          const paymentIds = activeSubs.data.map(sub => sub.last_payment_id).filter(Boolean);
+          if (paymentIds.length > 0) {
+            const payments = await access.supabaseAdmin
+              .from('payments')
+              .select('id, payment_key, amount')
+              .in('id', paymentIds);
+              
+            const nowIsoString = new Date().toISOString();
+            
+            for (const payment of payments.data ?? []) {
+              if (!payment.payment_key) continue;
+              
+              try {
+                await cancelPortOnePayment({
+                  paymentId: payment.payment_key,
+                  cancelReason: '팀 블로그 전환으로 인한 환불',
+                });
+                
+                await access.supabaseAdmin.from('payments').update({
+                  refunded_amount: payment.amount,
+                  status: PAYMENT_STATUS.REFUNDED,
+                  refunded_at: nowIsoString,
+                }).eq('id', payment.id);
+              } catch (e) {
+                console.error('PortOne Cancel Failed:', e);
+              }
+            }
+          }
+          
+          await access.supabaseAdmin.from('subscriptions').update({
+            status: SUBSCRIPTION_STATUS.CANCELED,
+            canceled_at: new Date().toISOString(),
+            expired_at: new Date().toISOString(),
+          }).in('id', activeSubs.data.map(sub => sub.id));
+        }
+      }
+
+      const updateBlog = await access.supabaseAdmin
+        .from('blogs')
+        .update({ blog_type: nextValue })
+        .eq('site_id', access.rhizome.id);
+
+      if (updateBlog.error) {
+        return Response.json({ error: '블로그 타입 수정에 실패했습니다.' }, { status: 500 });
+      }
+    } else {
+      const updateRhizome = await access.supabaseAdmin
+        .from('rhizomes')
+        .update({
+          [requestBody.field]: nextValue,
+        })
+        .eq('id', access.rhizome.id);
+
+      if (updateRhizome.error) {
+        return Response.json({ error: '사이트 정보 수정에 실패했습니다.' }, { status: 500 });
+      }
     }
 
     const nowIsoString = new Date().toISOString();
