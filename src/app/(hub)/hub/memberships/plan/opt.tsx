@@ -312,15 +312,15 @@ export default function MembershipPlan() {
                         {status.isDirectMembership && status.membership ? (
                           <Stack direction="row" gap={1} flexWrap="wrap">
                             {status.isCanceled ? (
-                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership)}>
+                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership ?? null)}>
                                 취소 철회
                               </button>
                             ) : (
-                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership)}>
+                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership ?? null)}>
                                 구독 취소
                               </button>
                             )}
-                            <button type="button" className="button small danger" onClick={() => setRefundTarget(status.membership)}>
+                            <button type="button" className="button small danger" onClick={() => setRefundTarget(status.membership ?? null)}>
                               환불
                             </button>
                           </Stack>

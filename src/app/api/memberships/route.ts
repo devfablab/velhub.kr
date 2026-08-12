@@ -286,7 +286,7 @@ export async function POST(request: Request) {
 
   const planIdByKey = new Map((planResult.data ?? []).map((plan) => [plan.plan_key, plan.id]));
   const billingMethod = billingMethodResult.data as { customer_key: string; billing_key: string };
-  const customerKey = billingMethod.customer_key || createCustomerKey(currentStigma.authUserId);
+  const customerKey = billingMethod.customer_key || createCustomerKey(currentStigma.userId);
   const now = new Date();
   const billingAnchorDay = getBillingAnchorDay(now);
   const billingPeriod = createNextMonthlyBillingPeriod({ currentPeriodEnd: now, billingAnchorDay });
@@ -295,7 +295,7 @@ export async function POST(request: Request) {
 
   try {
     for (const purchase of normalizedPurchases) {
-      const amount = getMembershipPrice(purchase.type, purchase.featureKeys);
+      const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
       const orderNo = createOrderNo('MEMBERSHIP_PLATFORM');
       const orderName = `${purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토'} 멤버십`;
       const billingPayment = await requestMembershipBilling({ billingKey: billingMethod.billing_key, customerKey, amount, orderNo, orderName });

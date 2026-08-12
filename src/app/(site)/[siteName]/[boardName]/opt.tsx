@@ -544,7 +544,7 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
-                  {selectedSeries && (board.board_type === 'basic' || board.board_type === 'gallery') && blogType !== 'team' ? (
+                  {selectedSeries && (board?.board_type === 'basic' || board?.board_type === 'gallery') && blogType !== 'team' ? (
                     <>
                       <SubscriptionButton
                         siteName={siteName}

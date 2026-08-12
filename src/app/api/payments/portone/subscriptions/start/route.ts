@@ -27,12 +27,12 @@ import {
 } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText, onlyDigits } from '@/lib/utils';
+import { normalizeText } from '@/lib/utils';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 import { decrypt } from '@/lib/encryption/decrypt';
 
 function isAdult(birthDate: string | null | undefined) {
-  const digits = onlyDigits(birthDate);
+  const digits = birthDate ? String(birthDate).replace(/\D/g, '') : '';
 
   if (digits.length !== 8) {
     return false;

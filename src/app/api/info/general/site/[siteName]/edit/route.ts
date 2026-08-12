@@ -242,7 +242,7 @@ export async function POST(request: Request, context: RouteContext) {
       return Response.json({ error: access.error }, { status: access.status });
     }
 
-    const previousValue: string | boolean | null = access.rhizome[requestBody.field];
+    const previousValue: string | boolean | null = (access.rhizome as Record<string, any>)[requestBody.field];
     let nextValue: string | boolean | null = null;
 
     if (requestBody.field === 'site_key') {

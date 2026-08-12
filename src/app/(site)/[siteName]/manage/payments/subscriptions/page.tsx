@@ -2,7 +2,6 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { detectAdult } from '@/lib/service/detectAdult';
 import Container from '../../menu';
-import BoardSubscriptions from './board';
 import SeriesSubscriptions from './series';
 import styles from '@/app/manage.module.sass';
 
@@ -23,7 +22,6 @@ export default async function Page(context: RouteContext) {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isAdult ? (
             <>
-              <BoardSubscriptions />
               <SeriesSubscriptions />
             </>
           ) : (

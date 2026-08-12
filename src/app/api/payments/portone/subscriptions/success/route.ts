@@ -14,6 +14,7 @@ import {
   getPortOnePaymentTransactionNo,
   requestPortOneBillingPayment,
   assertPortOnePaidPayment,
+  getPortOnePayment,
 } from '@/lib/payments/portone';
 import {
   PAYMENT_METHOD,
@@ -659,15 +660,16 @@ export async function POST(request: Request) {
         return Response.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
       }
 
+      const payment: any = paymentResponse;
       portOnePaymentResult = {
-        paymentKey: paymentResponse.id,
-        orderId: paymentResponse.order.id,
-        orderName: paymentResponse.order.name,
+        paymentKey: payment.id as string,
+        orderId: payment.order.id as string,
+        orderName: payment.order.name as string,
         method: getPortOnePaymentMethod(paymentResponse),
         totalAmount: paidAmount,
-        status: paymentResponse.status,
+        status: payment.status as string,
         approvedAt: getPortOnePaidAt(paymentResponse),
-        currency: paymentResponse.amount.currency,
+        currency: payment.amount.currency as string,
         transactionId: getPortOnePaymentTransactionNo(paymentResponse),
         rawData: paymentResponse,
       };

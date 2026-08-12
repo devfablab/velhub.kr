@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
-export async function PUT(request: NextRequest, { params }: { params: { folderId: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ folderId: string }> }) {
   const currentStigma = await getCurrentStigma();
 
   if (!currentStigma) {
@@ -24,10 +24,11 @@ export async function PUT(request: NextRequest, { params }: { params: { folderId
   const supabaseAdmin = getSupabaseAdmin();
 
   // Validate ownership
+  const folderId = (await params).folderId;
   const { data: folder, error: checkError } = await supabaseAdmin
     .from('favorite_folders')
     .select('id')
-    .eq('id', params.folderId)
+    .eq('id', folderId)
     .eq('user_id', currentStigma.stigmaId)
     .single();
 
@@ -38,7 +39,7 @@ export async function PUT(request: NextRequest, { params }: { params: { folderId
   const { data, error } = await supabaseAdmin
     .from('favorite_folders')
     .update({ label: label.trim() })
-    .eq('id', params.folderId)
+    .eq('id', folderId)
     .select('id, label, is_default, created_at')
     .single();
 
@@ -49,7 +50,7 @@ export async function PUT(request: NextRequest, { params }: { params: { folderId
   return NextResponse.json({ folder: data });
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { folderId: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ folderId: string }> }) {
   const currentStigma = await getCurrentStigma();
 
   if (!currentStigma) {
@@ -58,11 +59,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { folde
 
   const supabaseAdmin = getSupabaseAdmin();
 
+  const folderId = (await params).folderId;
   // Validate ownership
   const { data: folder, error: checkError } = await supabaseAdmin
     .from('favorite_folders')
-    .select('id')
-    .eq('id', params.folderId)
+    .select('id, is_default')
+    .eq('id', folderId)
     .eq('user_id', currentStigma.stigmaId)
     .single();
 
@@ -74,7 +76,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { folde
   const { error } = await supabaseAdmin
     .from('favorite_folders')
     .delete()
-    .eq('id', params.folderId);
+    .eq('id', folderId);
 
   if (error) {
     return NextResponse.json({ error: 'Failed to delete folder' }, { status: 500 });
