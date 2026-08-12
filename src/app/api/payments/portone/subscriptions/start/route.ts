@@ -53,7 +53,7 @@ function isAdult(birthDate: string | null | undefined) {
 }
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
-type SubscriptionTargetType = 'series';
+type SubscriptionTargetType = 'board' | 'series' | 'site';
 
 type SubscriptionStartBody = {
   siteName?: string;
@@ -172,7 +172,7 @@ function createSubscriptionOrderNo(targetType: SubscriptionTargetType) {
 }
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'series') {
+  if (value === 'board' || value === 'series' || value === 'site') {
     return value;
   }
 
@@ -180,17 +180,38 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  void targetType;
+  if (targetType === 'board') {
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
+  }
+
+  if (targetType === 'site') {
+    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
+  }
+
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentType(targetType: SubscriptionTargetType) {
-  void targetType;
+  if (targetType === 'board') {
+    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
+  }
+
+  if (targetType === 'site') {
+    return PAYMENT_TYPE.MEMBERSHIP_BLOG;
+  }
+
   return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  void targetType;
+  if (targetType === 'board') {
+    return PAYMENT_TARGET_TYPE.BOARD;
+  }
+
+  if (targetType === 'site') {
+    return PAYMENT_TARGET_TYPE.SITE;
+  }
+
   return PAYMENT_TARGET_TYPE.SERIES;
 }
 
@@ -250,6 +271,30 @@ async function getSubscriptionTarget({
   targetType: SubscriptionTargetType;
   seriesName: string;
 }): Promise<SubscriptionTarget> {
+  if (targetType === 'site') {
+    const siteResult = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_label')
+      .eq('id', siteId)
+      .maybeSingle();
+
+    if (siteResult.error) {
+      throw new Error('블로그 정보를 확인하지 못했습니다.');
+    }
+
+    if (!siteResult.data) {
+      throw new Error('블로그 정보를 찾을 수 없습니다.');
+    }
+
+    return {
+      targetId: siteId,
+      targetLabel: siteResult.data.site_label,
+      boardId: '',
+      seriesId: null,
+      isSubscriptionTarget: true,
+    };
+  }
+
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label, board_type')
@@ -408,12 +453,12 @@ export async function POST(request: Request) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!boardName) {
-      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     if (!targetType) {
       return Response.json({ error: 'targetType이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (targetType !== 'site' && !boardName) {
+      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const successUrl = getSafeRedirectUrl(request, body.successUrl);

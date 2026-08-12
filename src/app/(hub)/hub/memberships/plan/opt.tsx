@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Radio, Snackbar, Stack, Typography } from '@mui/material';
+import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import {
   formatMembershipPrice,
@@ -97,6 +99,19 @@ function getCardNumberLabel(value: string | null) {
   return digits.length >= 4 ? `${digits.slice(0, 4)} ••••` : '카드번호 확인 필요';
 }
 
+function getCardTypeLabel(value: string | null) {
+  if (value === 'CREDIT') return '신용';
+  if (value === 'CHECK') return '체크';
+  if (value === 'GIFT') return '기프트';
+  return '기타';
+}
+
+function getOwnerTypeLabel(value: string | null) {
+  if (value === 'PERSONAL') return '개인';
+  if (value === 'CORPORATE') return '법인';
+  return '기타';
+}
+
 function getSelectionItems(selection: MembershipSelection) {
   const items: Array<{ type: MembershipType; featureKeys: MembershipFeatureKey[] }> = [];
 
@@ -172,7 +187,7 @@ export default function MembershipPlan() {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/memberships', {
+      const response = await fetch('/api/payments/portone/memberships/start', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -203,11 +218,11 @@ export default function MembershipPlan() {
     setErrorMessage('');
 
     try {
-      const response = await fetch(`/api/memberships/${cancelTarget.id}`, {
-        method: 'PATCH',
+      const response = await fetch(`/api/payments/portone/memberships/${action}`, {
+        method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ membershipId: cancelTarget.id }),
       });
       const result = (await response.json()) as { error?: string };
 
@@ -231,9 +246,11 @@ export default function MembershipPlan() {
     setErrorMessage('');
 
     try {
-      const response = await fetch(`/api/memberships/${refundTarget.id}`, {
-        method: 'DELETE',
+      const response = await fetch('/api/payments/portone/memberships/refund', {
+        method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ membershipId: refundTarget.id }),
       });
       const result = (await response.json()) as { error?: string };
 
@@ -358,36 +375,39 @@ export default function MembershipPlan() {
 
           <Stack gap={2}>
             <Typography variant="subtitle2">결제수단 선택</Typography>
-            {billingMethods.length ? (
-              <Stack gap={1} alignItems="flex-start">
-                {billingMethods.map((billingMethod) => {
-                  const isSelected = selectedBillingMethodId === billingMethod.id;
+            <Stack gap={1}>
+              <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
+              <p className="alert info">
+                <InfoOutlineRoundedIcon />
+                <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
+              </p>
 
-                  return (
-                    <button
-                      key={billingMethod.id}
-                      type="button"
-                      className={styles['membership-payment-method']}
-                      onClick={() => setSelectedBillingMethodId(billingMethod.id)}
-                    >
-                      <Radio checked={isSelected} readOnly />
-                      <Stack gap={0.5}>
-                        <Typography variant="subtitle2">
-                          {getCardCompanyLabel(billingMethod.cardCompany)} {getCardNumberLabel(billingMethod.cardNumberMasked)}
+              {billingMethods.length ? (
+                <Stack gap={1}>
+                  {billingMethods.map((billingMethod) => (
+                    <div className="paper" key={billingMethod.id}>
+                      <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="body2">
+                          {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
+                          {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
+                          {getCardNumberLabel(billingMethod.cardNumberMasked)}
                         </Typography>
-                        <Typography variant="body2">{billingMethod.isDefault ? '기본 결제수단' : '등록한 결제수단'}</Typography>
+                        {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}
                       </Stack>
-                    </button>
-                  );
-                })}
-                <BillingMethodButton />
-              </Stack>
-            ) : (
-              <Stack gap={1} alignItems="flex-start">
-                <Typography variant="body2">등록된 결제수단이 없습니다.</Typography>
-                <BillingMethodButton />
-              </Stack>
-            )}
+                    </div>
+                  ))}
+                </Stack>
+              ) : (
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</span>
+                </p>
+              )}
+            </Stack>
+
+            <div>
+              <BillingMethodButton />
+            </div>
           </Stack>
 
           {selectedItems.length && selectedPrice > 0 ? (

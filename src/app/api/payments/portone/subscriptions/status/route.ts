@@ -6,7 +6,7 @@ import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'board' | 'series' | 'site';
 type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type SiteRow = {
@@ -49,7 +49,7 @@ type TargetInfo = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === 'board' || value === 'series' || value === 'site') {
     return value;
   }
 
@@ -61,12 +61,20 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
     return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
   }
 
+  if (targetType === 'site') {
+    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
+  }
+
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
   if (targetType === 'board') {
     return PAYMENT_TARGET_TYPE.BOARD;
+  }
+
+  if (targetType === 'site') {
+    return PAYMENT_TARGET_TYPE.SITE;
   }
 
   return PAYMENT_TARGET_TYPE.SERIES;
@@ -237,12 +245,12 @@ export async function GET(request: Request) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!boardName) {
-      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     if (!targetType) {
       return Response.json({ error: 'targetType이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (targetType !== 'site' && !boardName) {
+      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();

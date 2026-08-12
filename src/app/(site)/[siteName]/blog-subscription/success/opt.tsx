@@ -37,13 +37,13 @@ export default function Opt() {
           throw new Error('멤버십 가입 정보가 올바르지 않습니다.');
         }
 
-        const response = await fetch('/api/payments/portone/membership/success', {
+        const response = await fetch('/api/payments/portone/subscriptions/success', {
           method: 'POST',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ billingKey, customerKey, siteName, orderNo }),
+          body: JSON.stringify({ billingKey, customerKey, siteName, orderNo, targetType: 'site' }),
         });
 
         const result = (await response.json()) as MembershipSuccessResponse;

@@ -1,5 +1,9 @@
 export type MembershipType = 'owner' | 'creator' | 'all_in_one' | 'affetto';
 
+export function isMembershipType(value: string): value is MembershipType {
+  return ['owner', 'creator', 'all_in_one', 'affetto'].includes(value);
+}
+
 export type MembershipFeatureKey =
   | 'owner_lounge'
   | 'owner_domain'

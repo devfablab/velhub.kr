@@ -5,7 +5,7 @@ import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'board' | 'series' | 'site';
 
 type ResumeSubscriptionBody = {
   siteName?: string;
@@ -42,7 +42,7 @@ type SubscriptionRow = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === 'board' || value === 'series' || value === 'site') {
     return value;
   }
 
@@ -52,6 +52,10 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 function getSubscriptionType(targetType: SubscriptionTargetType) {
   if (targetType === 'board') {
     return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
+  }
+
+  if (targetType === 'site') {
+    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
   }
 
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
@@ -142,12 +146,12 @@ export async function POST(request: Request) {
       return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (!boardName) {
-      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
-    }
-
     if (!targetType) {
       return Response.json({ error: 'targetType이 유효하지 않습니다.' }, { status: 400 });
+    }
+
+    if (targetType !== 'site' && !boardName) {
+      return Response.json({ error: 'boardName이 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();

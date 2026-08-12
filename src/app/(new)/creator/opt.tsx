@@ -18,6 +18,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
+import Anchor from '@/components/Anchor';
 import styles from '@/app/new.module.sass';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
@@ -146,10 +147,10 @@ function isUnder14(birthDate: string | null | undefined) {
 
   const today = new Date();
   const birth = new Date(year, month - 1, day);
-  
+
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
-  
+
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -283,7 +284,9 @@ export default function Opt() {
       const verifyData = (await verifyRes.json().catch(() => null)) as GuardianIdentity | { message?: string } | null;
 
       if (!verifyRes.ok) {
-        throw new Error((verifyData as { message?: string })?.message ?? '법정대리인 본인인증 결과를 확인할 수 없습니다.');
+        throw new Error(
+          (verifyData as { message?: string })?.message ?? '법정대리인 본인인증 결과를 확인할 수 없습니다.',
+        );
       }
 
       setGuardianIdentity(verifyData as GuardianIdentity);
@@ -463,7 +466,8 @@ export default function Opt() {
       return (
         <Stack gap={2}>
           <Typography variant="body2">
-            만 14세 미만은 작가 신청을 할 수 없어요. 수익이 발생하는 서비스는 관련 법률에 따라 법정대리인(부모님 등)의 동의와 같은 복잡한 절차가 필요해서 아직은 이용이 어려워요. 만 14세가 되면 다시 찾아와 주세요!
+            만 14세 미만은 작가 신청을 할 수 없어요. 수익이 발생하는 서비스는 관련 법률에 따라 법정대리인(부모님 등)의
+            동의와 같은 복잡한 절차가 필요해서 아직은 이용이 어려워요. 만 14세가 되면 다시 찾아와 주세요!
           </Typography>
         </Stack>
       );
@@ -524,10 +528,14 @@ export default function Opt() {
             </Typography>
           </Stack>
           {settlement.status !== 'approved' && !isFormOpen ? (
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button size="small" variant="outlined" onClick={() => setIsFormOpen(true)}>
+            <Stack direction="row" justifyContent="flex-end" gap={2}>
+              <Anchor href="/" className="button medium action">
+                라운지로 이동
+              </Anchor>
+              {/* 정산 정보는 아무때나 수정하는 게 아니라 정산정보에 문제가 생겼다고 api에서 판단했을 때만 수정 가능함 */}
+              {/* <button className="button medium submit" onClick={() => setIsFormOpen(true)}>
                 정산정보 수정
-              </Button>
+              </button> */}
             </Stack>
           ) : null}
         </Stack>
@@ -549,7 +557,7 @@ export default function Opt() {
                 <Stack gap={1}>
                   <Typography variant="subtitle2">개인/기업 선택</Typography>
                   <RadioGroup
-                    {...(isApproved ? { sx: { pointerEvents: "none", opacity: 0.7 } } : {})}
+                    {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
                     row
                     value={settlementType === 'individual' ? 'individual' : 'business'}
                     onChange={(event) => {
@@ -572,7 +580,8 @@ export default function Opt() {
                       <Stack direction="row" alignItems="center" gap={1}>
                         <Typography variant="body2">{getBirthDatePrefix(identity.birth_date)}</Typography>
                         <Typography variant="body2">-</Typography>
-                        <TextField disabled={isApproved}
+                        <TextField
+                          disabled={isApproved}
                           size="small"
                           type="password"
                           placeholder="주민등록번호 뒷자리"
@@ -580,7 +589,8 @@ export default function Opt() {
                           onChange={(event) => setResidentSuffix(onlyDigits(event.target.value).slice(0, 7))}
                           slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
                         />
-                        <TextField disabled={isApproved}
+                        <TextField
+                          disabled={isApproved}
                           size="small"
                           type="password"
                           placeholder="주민등록번호 뒷자리 확인"
@@ -593,7 +603,8 @@ export default function Opt() {
 
                     <Stack gap={1}>
                       <Typography variant="subtitle2">업종 선택</Typography>
-                      <Select disabled={isApproved}
+                      <Select
+                        disabled={isApproved}
                         size="small"
                         displayEmpty
                         value={businessIncomeCode}
@@ -614,7 +625,7 @@ export default function Opt() {
                   <Stack gap={2}>
                     <Typography variant="subtitle2">사업자 선택</Typography>
                     <RadioGroup
-                    {...(isApproved ? { sx: { pointerEvents: "none", opacity: 0.7 } } : {})}
+                      {...(isApproved ? { sx: { pointerEvents: 'none', opacity: 0.7 } } : {})}
                       row
                       value={settlementType}
                       onChange={(event) => setSettlementType(event.target.value as SettlementType)}
@@ -624,7 +635,8 @@ export default function Opt() {
                     </RadioGroup>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">단체/회사명</Typography>
-                      <TextField disabled={isApproved}
+                      <TextField
+                        disabled={isApproved}
                         fullWidth
                         size="small"
                         placeholder="단체/회사명"
@@ -634,7 +646,8 @@ export default function Opt() {
                     </Stack>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">사업자등록번호/등록증</Typography>
-                      <TextField disabled={isApproved}
+                      <TextField
+                        disabled={isApproved}
                         fullWidth
                         size="small"
                         placeholder="사업자등록번호"
@@ -653,7 +666,8 @@ export default function Opt() {
 
                 <Stack gap={1}>
                   <Typography variant="subtitle2">정산 안내 이메일</Typography>
-                  <TextField disabled={isApproved}
+                  <TextField
+                    disabled={isApproved}
                     fullWidth
                     size="small"
                     type="email"
@@ -665,7 +679,8 @@ export default function Opt() {
                 <Stack gap={1}>
                   <Typography variant="subtitle2">정산 정보 입력</Typography>
                   <Stack gap={1}>
-                    <Select disabled={isApproved}
+                    <Select
+                      disabled={isApproved}
                       size="small"
                       displayEmpty
                       value={bankCode}
@@ -680,7 +695,8 @@ export default function Opt() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <TextField disabled={isApproved}
+                    <TextField
+                      disabled={isApproved}
                       fullWidth
                       size="small"
                       placeholder="예금주"
@@ -694,7 +710,8 @@ export default function Opt() {
                             : '개인사업자 계좌 또는 본인 개인 계좌를 사용할 수 있습니다.'
                       }
                     />
-                    <TextField disabled={isApproved}
+                    <TextField
+                      disabled={isApproved}
                       fullWidth
                       size="small"
                       placeholder="계좌번호"
@@ -709,7 +726,8 @@ export default function Opt() {
                   <Stack gap={1.5} sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, mt: 1 }}>
                     <Typography variant="subtitle2">법정대리인 동의 (만 19세 미만 필수)</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      미성년자 작가 신청에는 민법 제5조에 따라 법정대리인(부모님 등) 중 한 분의 동의가 필요합니다. 아래 버튼으로 법정대리인 본인인증을 완료하고 가족관계증명서를 첨부해 주세요.
+                      미성년자 작가 신청에는 민법 제5조에 따라 법정대리인(부모님 등) 중 한 분의 동의가 필요합니다. 아래
+                      버튼으로 법정대리인 본인인증을 완료하고 가족관계증명서를 첨부해 주세요.
                     </Typography>
                     {guardianIdentity ? (
                       <p className="alert info">
@@ -751,7 +769,8 @@ export default function Opt() {
                 <FormGroup>
                   <FormControlLabel
                     control={
-                      <Checkbox disabled={isApproved}
+                      <Checkbox
+                        disabled={isApproved}
                         checked={isSettlementAgreed}
                         onChange={(event) => setIsSettlementAgreed(event.target.checked)}
                       />

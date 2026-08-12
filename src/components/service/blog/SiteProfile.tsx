@@ -269,7 +269,7 @@ export default function SiteProfile() {
 
   useEffect(() => {
     async function loadMembershipStatus() {
-      const response = await fetch(`/api/payments/portone/membership/status?siteName=${siteName}`, {
+      const response = await fetch(`/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -392,7 +392,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/portone/membership/start', {
+      const response = await fetch('/api/payments/portone/subscriptions/start', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -400,8 +400,9 @@ export default function SiteProfile() {
         },
         body: JSON.stringify({
           siteName,
-          successUrl: `/${siteName}/membership/success`,
-          failUrl: `/${siteName}/membership/fail`,
+          targetType: 'site',
+          successUrl: `/${siteName}/blog-subscription/success`,
+          failUrl: `/${siteName}/blog-subscription/fail`,
         }),
       });
 
@@ -458,7 +459,7 @@ export default function SiteProfile() {
         throw new Error('billingKey가 발급되지 않았습니다.');
       }
 
-      const successResponse = await fetch('/api/payments/portone/membership/success', {
+      const successResponse = await fetch('/api/payments/portone/subscriptions/success', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -468,6 +469,7 @@ export default function SiteProfile() {
           billingKey: billingKeyResponse.billingKey,
           customerKey: result.customerKey,
           siteName,
+          targetType: 'site',
           orderNo: result.orderNo,
         }),
       });
@@ -497,7 +499,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/portone/membership/cancel', {
+      const response = await fetch('/api/payments/portone/subscriptions/cancel', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -505,6 +507,7 @@ export default function SiteProfile() {
         },
         body: JSON.stringify({
           siteName,
+          targetType: 'site',
         }),
       });
 
@@ -531,7 +534,7 @@ export default function SiteProfile() {
       setMembershipErrorMessage('');
       setIsMembershipProcessing(true);
 
-      const response = await fetch('/api/payments/portone/membership/resume', {
+      const response = await fetch('/api/payments/portone/subscriptions/resume', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -539,6 +542,7 @@ export default function SiteProfile() {
         },
         body: JSON.stringify({
           siteName,
+          targetType: 'site',
         }),
       });
 

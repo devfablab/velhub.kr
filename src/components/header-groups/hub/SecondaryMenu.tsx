@@ -19,6 +19,10 @@ const secondaryMenus = [
     label: '커뮤니티 허브',
   },
   {
+    href: '/hub/memberships',
+    label: '멤버십',
+  },
+  {
     href: '/hub/purchase',
     label: '구입내역',
   },

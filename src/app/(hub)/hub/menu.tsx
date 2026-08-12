@@ -28,6 +28,7 @@ import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
@@ -323,6 +324,12 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 <Anchor href="/hub/revenue">
                   <PaymentsOutlinedIcon fontSize="small" />
                   <span>수입/정산</span>
+                </Anchor>
+              </MenuItem>
+              <MenuItem key="memberships" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/memberships/plan">
+                  <LoyaltyOutlinedIcon fontSize="small" />
+                  <span>멤버십 관리</span>
                 </Anchor>
               </MenuItem>
 
