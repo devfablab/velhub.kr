@@ -1119,7 +1119,15 @@ export default function Opt({ isCommunity }: Props) {
                         <PushPinRoundedIcon />
                       </i>
                     ) : null}
-                    {content.is_closed ? <small>(삭제글)</small> : null}
+                    {content.is_closed ? (
+                      content.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
+                        <small className="alert error" style={{ padding: '2px 6px', fontSize: '12px', display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                          정산 오류
+                        </small>
+                      ) : (
+                        <small>(삭제글)</small>
+                      )
+                    ) : null}
                     {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
                     {series ? (
                       <small>

@@ -1022,7 +1022,8 @@ export default function Opt() {
                       </TableCell>
                       <TableCell align="right">
                         {post.is_closed ? (
-                          post.closed_message === '데브허브 탈퇴 신청으로 인한 삭제' ? (
+                          post.closed_message === '데브허브 탈퇴 신청으로 인한 삭제' ||
+                          post.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
                             <button type="button" className="button small action" disabled>
                               복구 불가
                             </button>

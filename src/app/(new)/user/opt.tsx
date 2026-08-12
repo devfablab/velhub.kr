@@ -162,6 +162,8 @@ export default function Opt() {
   const [accountNumber, setAccountNumber] = useState('');
   const [isSettlementAgreed, setIsSettlementAgreed] = useState(false);
 
+  const isApproved = settlement?.status === 'approved';
+
   const load = async () => {
     setIsLoading(true);
     setErrorMessage('');
@@ -384,6 +386,13 @@ export default function Opt() {
               {getBankLabel(settlement.bank_code)} / {settlement.account_holder} / {settlement.account_number}
             </Typography>
           </Stack>
+          {settlement.status !== 'approved' && !isFormOpen ? (
+            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
+              <Button size="small" variant="outlined" onClick={() => setIsFormOpen(true)}>
+                정산정보 수정
+              </Button>
+            </Stack>
+          ) : null}
         </Stack>
       </Stack>
     );
@@ -403,6 +412,7 @@ export default function Opt() {
                 <Stack gap={1}>
                   <Typography variant="subtitle2">개인/기업 선택</Typography>
                   <RadioGroup
+                    {...(isApproved ? { sx: { pointerEvents: "none", opacity: 0.7 } } : {})}
                     row
                     value={settlementType === 'individual' ? 'individual' : 'business'}
                     onChange={(event) => {
@@ -425,7 +435,7 @@ export default function Opt() {
                       <Stack direction="row" alignItems="center" gap={1}>
                         <Typography variant="body2">{getBirthDatePrefix(identity.birth_date)}</Typography>
                         <Typography variant="body2">-</Typography>
-                        <TextField
+                        <TextField disabled={isApproved}
                           size="small"
                           type="password"
                           placeholder="주민등록번호 뒷자리"
@@ -433,7 +443,7 @@ export default function Opt() {
                           onChange={(event) => setResidentSuffix(onlyDigits(event.target.value).slice(0, 7))}
                           slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 7 } }}
                         />
-                        <TextField
+                        <TextField disabled={isApproved}
                           size="small"
                           type="password"
                           placeholder="주민등록번호 뒷자리 확인"
@@ -446,7 +456,7 @@ export default function Opt() {
 
                     <Stack gap={1}>
                       <Typography variant="subtitle2">업종 선택</Typography>
-                      <Select
+                      <Select disabled={isApproved}
                         size="small"
                         displayEmpty
                         value={businessIncomeCode}
@@ -467,6 +477,7 @@ export default function Opt() {
                   <Stack gap={2}>
                     <Typography variant="subtitle2">사업자 선택</Typography>
                     <RadioGroup
+                    {...(isApproved ? { sx: { pointerEvents: "none", opacity: 0.7 } } : {})}
                       row
                       value={settlementType}
                       onChange={(event) => setSettlementType(event.target.value as SettlementType)}
@@ -476,7 +487,7 @@ export default function Opt() {
                     </RadioGroup>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">단체/회사명</Typography>
-                      <TextField
+                      <TextField disabled={isApproved}
                         fullWidth
                         size="small"
                         placeholder="단체/회사명"
@@ -486,7 +497,7 @@ export default function Opt() {
                     </Stack>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">사업자등록번호/등록증</Typography>
-                      <TextField
+                      <TextField disabled={isApproved}
                         fullWidth
                         size="small"
                         placeholder="사업자등록번호"
@@ -494,7 +505,7 @@ export default function Opt() {
                         onChange={(event) => setBusinessRegistrationNumber(onlyDigits(event.target.value).slice(0, 10))}
                         slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 10 } }}
                       />
-                      <Button component="label" className="button small action">
+                      <Button component="label" className="button small action" disabled={isApproved}>
                         사업자등록증 PDF 선택
                         <input type="file" accept="application/pdf" hidden onChange={handleBusinessLicenseChange} />
                       </Button>
@@ -505,7 +516,7 @@ export default function Opt() {
 
                 <Stack gap={1}>
                   <Typography variant="subtitle2">정산 안내 이메일</Typography>
-                  <TextField
+                  <TextField disabled={isApproved}
                     fullWidth
                     size="small"
                     type="email"
@@ -517,7 +528,7 @@ export default function Opt() {
                 <Stack gap={1}>
                   <Typography variant="subtitle2">정산 정보 입력</Typography>
                   <Stack gap={1}>
-                    <Select
+                    <Select disabled={isApproved}
                       size="small"
                       displayEmpty
                       value={bankCode}
@@ -532,7 +543,7 @@ export default function Opt() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <TextField
+                    <TextField disabled={isApproved}
                       fullWidth
                       size="small"
                       placeholder="예금주"
@@ -546,7 +557,7 @@ export default function Opt() {
                             : '개인사업자 계좌 또는 본인 개인 계좌를 사용할 수 있습니다.'
                       }
                     />
-                    <TextField
+                    <TextField disabled={isApproved}
                       fullWidth
                       size="small"
                       placeholder="계좌번호"
@@ -560,7 +571,7 @@ export default function Opt() {
                 <FormGroup>
                   <FormControlLabel
                     control={
-                      <Checkbox
+                      <Checkbox disabled={isApproved}
                         checked={isSettlementAgreed}
                         onChange={(event) => setIsSettlementAgreed(event.target.checked)}
                       />
@@ -577,7 +588,7 @@ export default function Opt() {
                     type="button"
                     className="button medium action"
                     onClick={() => setIsFormOpen(false)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isApproved}
                   >
                     취소
                   </button>
@@ -585,7 +596,7 @@ export default function Opt() {
                     type="button"
                     className="button medium submit"
                     onClick={() => void handleSubmit()}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isApproved}
                   >
                     {isSubmitting ? '저장 중' : settlement ? '정산정보 수정' : '작가 신청'}
                   </button>
