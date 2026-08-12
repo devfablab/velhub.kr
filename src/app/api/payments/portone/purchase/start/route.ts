@@ -26,6 +26,7 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string;
+  site_type: string;
   is_shutdown: boolean;
 };
 
@@ -130,7 +131,7 @@ async function getPurchaseTarget({
 
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, is_shutdown')
+    .select('id, site_key, site_label, site_type, is_shutdown')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -146,6 +147,18 @@ async function getPurchaseTarget({
 
   if (site.is_shutdown) {
     throw new Error('현재 구매할 수 없는 사이트입니다.');
+  }
+
+  if (site.site_type === 'blog') {
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', site.id)
+      .maybeSingle();
+
+    if (blogResult.data?.blog_type === 'team') {
+      throw new Error('팀 블로그의 연재글은 소장(구매)할 수 없습니다.');
+    }
   }
 
   const boardResult = await supabaseAdmin

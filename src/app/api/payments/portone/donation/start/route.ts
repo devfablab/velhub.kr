@@ -194,6 +194,16 @@ async function validateSiteDonationTarget(site: SiteRow) {
     throw new Error('블로그 후원은 블로그에서만 가능합니다.');
   }
 
+  const blogResult = await supabaseAdmin
+    .from('blogs')
+    .select('blog_type')
+    .eq('site_id', site.id)
+    .maybeSingle();
+
+  if (blogResult.data?.blog_type === 'team') {
+    throw new Error('팀 블로그는 블로그 후원을 받을 수 없습니다.');
+  }
+
   const seriesCountResult = await supabaseAdmin
     .from('board_series')
     .select('id', { count: 'exact', head: true })
@@ -270,6 +280,19 @@ async function getDonationTarget({
 
   if (site.site_type === 'community' && !['basic', 'gallery'].includes(board.board_type)) {
     throw new Error('일반 또는 갤러리 게시판의 연재만 후원할 수 있습니다.');
+  }
+
+  if (site.site_type === 'blog') {
+    const supabaseAdmin = getSupabaseAdmin();
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', site.id)
+      .maybeSingle();
+
+    if (blogResult.data?.blog_type === 'team') {
+      throw new Error('팀 블로그 연재는 후원을 받을 수 없습니다.');
+    }
   }
 
   const series = await getSeriesByName({

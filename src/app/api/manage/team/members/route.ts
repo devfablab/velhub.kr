@@ -310,6 +310,22 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '차단 여부 값이 올바르지 않습니다.' }, { status: 400 });
     }
 
+    if (isBlock) {
+      const isSeriesAuthorResult = await access.supabaseAdmin
+        .from('board_series')
+        .select('id')
+        .eq('site_id', access.siteId)
+        .eq('user_id', team.data.user_id)
+        .limit(1);
+
+      if (isSeriesAuthorResult.data && isSeriesAuthorResult.data.length > 0) {
+        return Response.json(
+          { error: '연재 담당 작가는 제재(차단)할 수 없습니다. 담당 작가를 먼저 변경해주세요.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const nextBlockCount =
       isBlock && team.data.is_block !== true
         ? Number(team.data.block_count ?? 0) + 1

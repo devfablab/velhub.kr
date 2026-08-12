@@ -1137,22 +1137,22 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
+                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>
                         {selectedUser ? (
                           <>
-                            <Typography variant="subtitle2">연재가능 멤버 취소</Typography>
+                            <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
                             <button type="button" className="button small danger" onClick={handleClearUser}>
-                              멤버 지정 취소
+                              작가 지정 취소
                             </button>
                           </>
                         ) : (
                           <>
-                            <Typography variant="subtitle2">연재가능 멤버 지정</Typography>
+                            <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
                             <button type="button" className="button small action" onClick={handleOpenUserDialog}>
-                              멤버 검색
+                              작가 검색
                             </button>
                           </>
                         )}
@@ -1374,22 +1374,22 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
+                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>
                         {selectedUser ? (
                           <>
-                            <Typography variant="subtitle2">연재가능 멤버 취소</Typography>
+                            <Typography variant="subtitle2">연재 담당 작가 취소</Typography>
                             <button type="button" className="button small danger" onClick={handleClearUser}>
-                              멤버 지정 취소
+                              작가 지정 취소
                             </button>
                           </>
                         ) : (
                           <>
-                            <Typography variant="subtitle2">연재가능 멤버 지정</Typography>
+                            <Typography variant="subtitle2">연재 담당 작가 지정</Typography>
                             <button type="button" className="button small action" onClick={handleOpenUserDialog}>
-                              멤버 검색
+                              작가 검색
                             </button>
                           </>
                         )}

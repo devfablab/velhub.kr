@@ -45,6 +45,7 @@ type SiteRow = {
   site_key: string;
   site_label: string | null;
   owner_id: string;
+  site_type: string;
 };
 
 type OwnerStigmaRow = {
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, owner_id')
+      .select('id, site_key, site_label, owner_id, site_type')
       .eq('site_key', siteName)
       .maybeSingle();
 

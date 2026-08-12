@@ -67,6 +67,20 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '운영자와 매니저는 강제탈퇴할 수 없습니다.' }, { status: 403 });
     }
 
+    const isSeriesAuthorResult = await access.supabaseAdmin
+      .from('board_series')
+      .select('id')
+      .eq('site_id', access.site.id)
+      .eq('user_id', membershipResult.membership.user_id)
+      .limit(1);
+
+    if (isSeriesAuthorResult.data && isSeriesAuthorResult.data.length > 0) {
+      return Response.json(
+        { error: '연재 담당 작가는 강제탈퇴할 수 없습니다. 담당 작가를 먼저 변경해주세요.' },
+        { status: 400 }
+      );
+    }
+
     if (membershipResult.membership.kicked_at) {
       return Response.json({ error: '이미 강제탈퇴 처리된 멤버입니다.' }, { status: 400 });
     }

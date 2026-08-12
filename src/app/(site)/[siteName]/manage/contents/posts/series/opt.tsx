@@ -1129,7 +1129,7 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
+                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>
@@ -1347,7 +1347,7 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>멤버를 지정하지 않으면 누구든지 해당 연재명으로 연재글을 게시할 수 있습니다.</span>
+                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>

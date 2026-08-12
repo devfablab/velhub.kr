@@ -249,6 +249,18 @@ async function getSubscriptionTarget({
     throw new Error('일반 또는 갤러리 게시판의 연재만 구독할 수 있습니다.');
   }
 
+  if (siteType === 'blog') {
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', siteId)
+      .maybeSingle();
+
+    if (blogResult.data?.blog_type === 'team') {
+      throw new Error('팀 블로그 연재는 구독할 수 없습니다.');
+    }
+  }
+
   if (!seriesName) {
     throw new Error('seriesName이 유효하지 않습니다.');
   }
