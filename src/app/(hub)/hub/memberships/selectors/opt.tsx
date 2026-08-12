@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
-import { enqueueSnackbar } from 'notistack';
+import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography, Snackbar } from '@mui/material';
 
 type Site = { id: string; siteKey: string; siteLabel: string; siteType: string };
 type Post = { id: string; subject: string; slug: number | null; siteKey: string; siteLabel: string };
@@ -53,6 +52,7 @@ export default function MembershipSelectors() {
   const [creatorOwnPostId, setCreatorOwnPostId] = useState('');
   const [creatorOtherPostId, setCreatorOtherPostId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
     fetch('/api/memberships/selectors')
@@ -65,7 +65,7 @@ export default function MembershipSelectors() {
         setCreatorOwnPostId(body.selections.creator_own_post ?? '');
         setCreatorOtherPostId(body.selections.creator_other_post ?? '');
       })
-      .catch((error) => enqueueSnackbar(error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.', { variant: 'error' }));
+      .catch((error) => setSnackbarMessage(error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.'));
   }, []);
 
   async function handleSubmit() {
@@ -78,9 +78,9 @@ export default function MembershipSelectors() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message ?? '라운지 노출 대상을 저장하지 못했습니다.');
-      enqueueSnackbar(body.message, { variant: 'success' });
+      setSnackbarMessage(body.message);
     } catch (error) {
-      enqueueSnackbar(error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.', { variant: 'error' });
+      setSnackbarMessage(error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.');
     } finally {
       setIsSaving(false);
     }
@@ -94,51 +94,60 @@ export default function MembershipSelectors() {
   const canSave = (data.features.ownerLounge || data.features.creatorLounge) && hasOwnerSelection && hasCreatorSelections;
 
   return (
-    <Stack gap={4}>
-      {data.features.ownerLounge ? (
-        <SelectorGroup
-          title="오너 라운지 노출"
-          description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
-          value={ownerSiteId}
-          options={siteOptions}
-          onChange={setOwnerSiteId}
-        />
-      ) : null}
-      {data.features.creatorLounge ? (
-        <Stack gap={3}>
-          <Typography variant="h6">크리에이터 라운지 노출</Typography>
+    <>
+      <Stack gap={4}>
+        {data.features.ownerLounge ? (
           <SelectorGroup
-            title="본인 사이트"
+            title="오너 라운지 노출"
             description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
-            value={creatorSiteId}
+            value={ownerSiteId}
             options={siteOptions}
-            onChange={setCreatorSiteId}
+            onChange={setOwnerSiteId}
           />
-          <SelectorGroup
-            title="본인 사이트 연재글"
-            description="본인 사이트에 작성한 연재글 1개를 선택하세요."
-            value={creatorOwnPostId}
-            options={postOptions(data.ownPosts)}
-            onChange={setCreatorOwnPostId}
-          />
-          <SelectorGroup
-            title="다른 사이트 연재글"
-            description="다른 사이트에 작성한 연재글 1개를 선택하세요."
-            value={creatorOtherPostId}
-            options={postOptions(data.otherPosts)}
-            onChange={setCreatorOtherPostId}
-          />
-        </Stack>
-      ) : null}
-      {data.features.ownerLounge || data.features.creatorLounge ? (
-        <div>
-          <button type="button" className="button medium submit" disabled={!canSave || isSaving} onClick={handleSubmit}>
-            저장
-          </button>
-        </div>
-      ) : (
-        <Typography variant="body2">라운지 노출 기능을 이용 중인 멤버십이 없습니다.</Typography>
-      )}
-    </Stack>
+        ) : null}
+        {data.features.creatorLounge ? (
+          <Stack gap={3}>
+            <Typography variant="h6">크리에이터 라운지 노출</Typography>
+            <SelectorGroup
+              title="본인 사이트"
+              description="운영 중인 본인 사이트 중 라운지에 노출할 사이트 1개를 선택하세요."
+              value={creatorSiteId}
+              options={siteOptions}
+              onChange={setCreatorSiteId}
+            />
+            <SelectorGroup
+              title="본인 사이트 연재글"
+              description="본인 사이트에 작성한 연재글 1개를 선택하세요."
+              value={creatorOwnPostId}
+              options={postOptions(data.ownPosts)}
+              onChange={setCreatorOwnPostId}
+            />
+            <SelectorGroup
+              title="다른 사이트 연재글"
+              description="다른 사이트에 작성한 연재글 1개를 선택하세요."
+              value={creatorOtherPostId}
+              options={postOptions(data.otherPosts)}
+              onChange={setCreatorOtherPostId}
+            />
+          </Stack>
+        ) : null}
+        {data.features.ownerLounge || data.features.creatorLounge ? (
+          <div>
+            <button type="button" className="button medium submit" disabled={!canSave || isSaving} onClick={handleSubmit}>
+              저장
+            </button>
+          </div>
+        ) : (
+          <Typography variant="body2">라운지 노출 기능을 이용 중인 멤버십이 없습니다.</Typography>
+        )}
+      </Stack>
+      <Snackbar
+        open={Boolean(snackbarMessage)}
+        autoHideDuration={2700}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        onClose={() => setSnackbarMessage('')}
+        message={snackbarMessage}
+      />
+    </>
   );
 }
