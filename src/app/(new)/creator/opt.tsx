@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
   Button,
   Checkbox,
@@ -130,6 +130,33 @@ function isMessageResponse(value: unknown): value is { message: string } {
   );
 }
 
+function isUnder14(birthDate: string | null | undefined) {
+  if (!birthDate) {
+    return false;
+  }
+
+  const digits = birthDate.replace(/\D/g, '');
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = parseInt(digits.substring(0, 4), 10);
+  const month = parseInt(digits.substring(4, 6), 10);
+  const day = parseInt(digits.substring(6, 8), 10);
+
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age < 14;
+}
+
 async function getSettlement() {
   const response = await fetch('/api/settlement', { credentials: 'include', cache: 'no-store' });
   const data = (await response.json().catch(() => null)) as SettlementResponse | { message?: string } | null;
@@ -139,6 +166,26 @@ async function getSettlement() {
   }
 
   return data as SettlementResponse;
+}
+
+type GuardianIdentity = {
+  name: string;
+  birth_date: string;
+  gender: string;
+};
+
+function isMinorAge(birthDate: string | null | undefined) {
+  if (!birthDate) return false;
+  const digits = birthDate.replace(/\D/g, '');
+  if (digits.length !== 8) return false;
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+  if (today < birthdayThisYear) age -= 1;
+  return age < 19;
 }
 
 export default function Opt() {
@@ -161,8 +208,14 @@ export default function Opt() {
   const [accountHolder, setAccountHolder] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [isSettlementAgreed, setIsSettlementAgreed] = useState(false);
+  const [guardianIdentity, setGuardianIdentity] = useState<GuardianIdentity | null>(null);
+  const [guardianDocumentFile, setGuardianDocumentFile] = useState<File | null>(null);
+  const [isGuardianVerifying, setIsGuardianVerifying] = useState(false);
+  const [guardianErrorMessage, setGuardianErrorMessage] = useState('');
+  const guardianDocumentRef = useRef<HTMLInputElement>(null);
 
   const isApproved = settlement?.status === 'approved';
+  const needsGuardian = Boolean(identity && isMinorAge(identity.birth_date));
 
   const load = async () => {
     setIsLoading(true);
@@ -187,6 +240,62 @@ export default function Opt() {
 
   const handleBusinessLicenseChange = (event: ChangeEvent<HTMLInputElement>) => {
     setBusinessLicenseFile(event.target.files?.[0] ?? null);
+  };
+
+  const handleGuardianVerify = async () => {
+    if (isGuardianVerifying) return;
+    setIsGuardianVerifying(true);
+    setGuardianErrorMessage('');
+    try {
+      // Step 1: Get PortOne request params
+      const startRes = await fetch('/api/identity/portone/guardian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      });
+      const startData = (await startRes.json().catch(() => null)) as {
+        storeId: string;
+        channelKey: string;
+        identityVerificationId: string;
+      } | null;
+
+      if (!startRes.ok || !startData) {
+        throw new Error('법정대리인 본인인증을 시작할 수 없습니다.');
+      }
+
+      // Step 2: Open PortOne identity verification popup
+      const PortOne = (await import('@portone/browser-sdk/v2')).default;
+      const result = await PortOne.requestIdentityVerification(startData);
+      const identityVerificationId = result?.identityVerificationId ?? startData.identityVerificationId;
+
+      if (!identityVerificationId || result?.code) {
+        throw new Error(result?.message || '법정대리인 본인인증이 완료되지 않았습니다.');
+      }
+
+      // Step 3: Verify with server (checks guardian is adult)
+      const verifyRes = await fetch('/api/identity/portone/guardian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ identityVerificationId }),
+      });
+      const verifyData = (await verifyRes.json().catch(() => null)) as GuardianIdentity | { message?: string } | null;
+
+      if (!verifyRes.ok) {
+        throw new Error((verifyData as { message?: string })?.message ?? '법정대리인 본인인증 결과를 확인할 수 없습니다.');
+      }
+
+      setGuardianIdentity(verifyData as GuardianIdentity);
+    } catch (error) {
+      setGuardianErrorMessage(getMessage(error));
+    } finally {
+      setIsGuardianVerifying(false);
+    }
+  };
+
+  const handleGuardianDocumentChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setGuardianDocumentFile(event.target.files?.[0] ?? null);
   };
 
   const handleSubmit = async () => {
@@ -221,12 +330,30 @@ export default function Opt() {
         throw new Error('예금주는 본인인증한 성명과 일치해야 합니다.');
       }
 
+      if (needsGuardian) {
+        if (!guardianIdentity) {
+          throw new Error('법정대리인 본인인증을 완료해 주세요.');
+        }
+        if (!guardianDocumentFile) {
+          throw new Error('가족관계증명서 파일을 첨부해 주세요.');
+        }
+      }
+
       const formData = new FormData();
       formData.append('settlement_type', settlementType);
       formData.append('payment_email', paymentEmail.trim());
       formData.append('bank_code', bankCode);
       formData.append('account_holder', accountHolder.trim());
       formData.append('account_number', accountNumber);
+
+      if (needsGuardian && guardianIdentity) {
+        formData.append('guardian_name', guardianIdentity.name);
+        formData.append('guardian_birth_date', guardianIdentity.birth_date);
+        formData.append('guardian_gender', guardianIdentity.gender);
+      }
+      if (needsGuardian && guardianDocumentFile) {
+        formData.append('guardian_document_file', guardianDocumentFile);
+      }
 
       if (settlementType === 'individual') {
         const birthDatePrefix = getBirthDatePrefix(identity.birth_date);
@@ -328,6 +455,16 @@ export default function Opt() {
         <Stack gap={2}>
           <Typography variant="body2">작가 신청을 하려면 먼저 본인인증이 필요합니다.</Typography>
           <IdentityVerificationButton className="button small submit" onVerified={() => void load()} />
+        </Stack>
+      );
+    }
+
+    if (isUnder14(identity.birth_date)) {
+      return (
+        <Stack gap={2}>
+          <Typography variant="body2">
+            만 14세 미만은 작가 신청을 할 수 없어요. 수익이 발생하는 서비스는 관련 법률에 따라 법정대리인(부모님 등)의 동의와 같은 복잡한 절차가 필요해서 아직은 이용이 어려워요. 만 14세가 되면 다시 찾아와 주세요!
+          </Typography>
         </Stack>
       );
     }
@@ -568,6 +705,49 @@ export default function Opt() {
                   </Stack>
                   {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
                 </Stack>
+                {needsGuardian ? (
+                  <Stack gap={1.5} sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, mt: 1 }}>
+                    <Typography variant="subtitle2">법정대리인 동의 (만 19세 미만 필수)</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      미성년자 작가 신청에는 민법 제5조에 따라 법정대리인(부모님 등) 중 한 분의 동의가 필요합니다. 아래 버튼으로 법정대리인 본인인증을 완료하고 가족관계증명서를 첨부해 주세요.
+                    </Typography>
+                    {guardianIdentity ? (
+                      <p className="alert info">
+                        <InfoOutlineRoundedIcon />
+                        <span>법정대리인 본인인증 완료: {guardianIdentity.name}</span>
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        className="button small action"
+                        onClick={() => void handleGuardianVerify()}
+                        disabled={isGuardianVerifying}
+                      >
+                        {isGuardianVerifying ? '인증 중...' : '법정대리인 본인인증'}
+                      </button>
+                    )}
+                    {guardianErrorMessage ? <p className="alert error">{guardianErrorMessage}</p> : null}
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">가족관계증명서 첨부</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        정부24(www.gov.kr)에서 발급받은 가족관계증명서(PDF 또는 이미지)를 업로드해 주세요.
+                      </Typography>
+                      <Button component="label" className="button small action">
+                        파일 선택
+                        <input
+                          ref={guardianDocumentRef}
+                          type="file"
+                          accept="application/pdf,image/*"
+                          hidden
+                          onChange={handleGuardianDocumentChange}
+                        />
+                      </Button>
+                      {guardianDocumentFile ? (
+                        <Typography variant="body2">{guardianDocumentFile.name}</Typography>
+                      ) : null}
+                    </Stack>
+                  </Stack>
+                ) : null}
                 <FormGroup>
                   <FormControlLabel
                     control={

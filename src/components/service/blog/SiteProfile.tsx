@@ -162,6 +162,28 @@ function isAdult(birthDate: string | null | undefined) {
   return age >= 19;
 }
 
+function isUnder14(birthDate: string | null | undefined) {
+  if (!birthDate) return false;
+  const digits = onlyDigits(birthDate);
+  if (digits.length !== 8) return false;
+
+  const year = parseInt(digits.substring(0, 4), 10);
+  const month = parseInt(digits.substring(4, 6), 10);
+  const day = parseInt(digits.substring(6, 8), 10);
+
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age < 14;
+}
+
 function formatMembershipPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
@@ -204,6 +226,7 @@ export default function SiteProfile() {
   const [isDonationEnabled, setIsDonationEnabled] = useState(false);
   const [hasSettlement, setHasSettlement] = useState(false);
   const [isMinor, setIsMinor] = useState(false);
+  const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
 
   const theme = useTheme();
@@ -237,6 +260,7 @@ export default function SiteProfile() {
 
       setHasSettlement(Boolean(settlementData?.exists && settlementData.settlement));
       setIsMinor(identity ? !isAdult(identity.birth_date) : false);
+      setIsUnder14Age(identity ? isUnder14(identity.birth_date) : false);
       setIsLoading(false);
     }
 
@@ -608,7 +632,7 @@ export default function SiteProfile() {
         </div>
       </div>
 
-      {blogType !== 'team' ? (
+      {blogType !== 'team' && !isUnder14Age ? (
         <div className={styles.action}>
           {!hasSettlement ? (
           <>

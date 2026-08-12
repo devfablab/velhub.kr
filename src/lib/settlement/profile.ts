@@ -22,6 +22,10 @@ export type SettlementProfileRow = {
   account_verified_at: string | null;
   company_name: string | null;
   status: string | null;
+  guardian_name?: string | null;
+  guardian_birth_date?: string | null;
+  guardian_gender?: string | null;
+  guardian_document_url?: string | null;
 };
 
 type SettlementProfileInput = {
@@ -34,6 +38,10 @@ type SettlementProfileInput = {
   account_number?: string;
   account_holder?: string;
   company_name?: string | null;
+  guardian_name?: string | null;
+  guardian_birth_date?: string | null;
+  guardian_gender?: string | null;
+  guardian_document_url?: string | null;
 };
 
 type ValidatedSettlementProfileInput = {
@@ -46,6 +54,10 @@ type ValidatedSettlementProfileInput = {
   account_number: string;
   account_holder: string;
   company_name?: string | null;
+  guardian_name?: string | null;
+  guardian_birth_date?: string | null;
+  guardian_gender?: string | null;
+  guardian_document_url?: string | null;
 };
 
 function normalizeText(value: unknown) {
@@ -152,12 +164,16 @@ export function serializeSettlementProfile(
           account_holder: decryptNullable(settlementRow.account_holder),
           account_verified_at: settlementRow.account_verified_at,
           status: settlementRow.status,
+          guardian_name: decryptNullable(settlementRow.guardian_name ?? null),
+          guardian_birth_date: decryptNullable(settlementRow.guardian_birth_date ?? null),
+          guardian_gender: settlementRow.guardian_gender,
+          guardian_document_url: settlementRow.guardian_document_url,
         }
       : null,
   };
 }
 
-export function validateSettlementProfileInput(value: unknown, identityName?: string | null) {
+export function validateSettlementProfileInput(value: unknown, identityName?: string | null, isMinorAge: boolean = false) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return {
       ok: false as const,
@@ -189,6 +205,20 @@ export function validateSettlementProfileInput(value: unknown, identityName?: st
       ok: false as const,
       message: '계좌 정보가 올바르지 않습니다.',
     };
+  }
+
+  const guardianName = normalizeText(input.guardian_name);
+  const guardianBirthDate = normalizeText(input.guardian_birth_date);
+  const guardianGender = normalizeText(input.guardian_gender);
+  const guardianDocumentUrl = normalizeText(input.guardian_document_url);
+
+  if (isMinorAge) {
+    if (!guardianName || !guardianBirthDate || !guardianGender || !guardianDocumentUrl) {
+      return {
+        ok: false as const,
+        message: '미성년자는 법정대리인 동의 및 가족관계증명서 제출이 필수입니다.',
+      };
+    }
   }
 
   if (settlementType === 'individual') {
@@ -230,6 +260,10 @@ export function validateSettlementProfileInput(value: unknown, identityName?: st
         bank_code: bankCode,
         account_number: accountNumber,
         account_holder: accountHolder,
+        guardian_name: isMinorAge ? guardianName : null,
+        guardian_birth_date: isMinorAge ? guardianBirthDate : null,
+        guardian_gender: isMinorAge ? guardianGender : null,
+        guardian_document_url: isMinorAge ? guardianDocumentUrl : null,
       },
     };
   }
@@ -281,6 +315,10 @@ export function validateSettlementProfileInput(value: unknown, identityName?: st
       bank_code: bankCode,
       account_number: accountNumber,
       account_holder: accountHolder,
+      guardian_name: isMinorAge ? guardianName : null,
+      guardian_birth_date: isMinorAge ? guardianBirthDate : null,
+      guardian_gender: isMinorAge ? guardianGender : null,
+      guardian_document_url: isMinorAge ? guardianDocumentUrl : null,
     },
   };
 }
@@ -298,5 +336,9 @@ export function toSettlementPayload(data: ValidatedSettlementProfileInput) {
     account_holder: encrypt(data.account_holder),
     account_verified_at: null,
     updated_at: new Date().toISOString(),
+    guardian_name: data.guardian_name ? encrypt(data.guardian_name) : null,
+    guardian_birth_date: data.guardian_birth_date ? encrypt(data.guardian_birth_date) : null,
+    guardian_gender: data.guardian_gender ?? null,
+    guardian_document_url: data.guardian_document_url ?? null,
   };
 }

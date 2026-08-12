@@ -18,6 +18,7 @@ type ExistingBanqueRow = {
   id: string;
   settlement_type: string | null;
   business_license: string | null;
+  guardian_document_url: string | null;
 };
 
 function getString(formData: FormData, key: string) {
@@ -68,6 +69,22 @@ async function uploadBusinessLicenseFile(userId: string, file: File) {
   return filePath;
 }
 
+async function uploadGuardianDocumentFile(userId: string, file: File) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const filePath = `${userId}/guardian_${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+
+  const { error } = await supabaseAdmin.storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+
+  if (error) {
+    throw new Error('가족관계증명서 업로드에 실패했습니다.');
+  }
+
+  return filePath;
+}
+
 export async function PATCH(request: NextRequest) {
   const sessionClaims = await getSessionClaims();
 
@@ -84,7 +101,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
-    .select('id, name, identity_verified_at')
+    .select('id, name, birth_date, identity_verified_at')
     .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
@@ -101,7 +118,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingBanqueRow, error: banqueFindError } = await supabaseAdmin
     .from('chorogons_banque')
-    .select('id, settlement_type, business_license')
+    .select('id, settlement_type, business_license, guardian_document_url')
     .eq('chorogon_id', settlementRow.id)
     .maybeSingle();
 
@@ -138,6 +155,15 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    const guardianDocumentFile = getFile(formData, 'guardian_document_file');
+    let guardianDocumentUrl = '';
+
+    if (guardianDocumentFile) {
+      guardianDocumentUrl = await uploadGuardianDocumentFile(sessionClaims.userId, guardianDocumentFile);
+    } else if (banqueRow.guardian_document_url) {
+      guardianDocumentUrl = banqueRow.guardian_document_url;
+    }
+
     const input = {
       settlement_type: settlementType,
       resident_registration_number: getString(formData, 'resident_registration_number'),
@@ -148,10 +174,30 @@ export async function PATCH(request: NextRequest) {
       account_number: getString(formData, 'account_number'),
       account_holder: getString(formData, 'account_holder'),
       company_name: getString(formData, 'company_name'),
+      guardian_name: getString(formData, 'guardian_name'),
+      guardian_birth_date: getString(formData, 'guardian_birth_date'),
+      guardian_gender: getString(formData, 'guardian_gender'),
+      guardian_document_url: guardianDocumentUrl,
     };
 
     const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
-    const validatedInput = validateSettlementProfileInput(input, identityName);
+    
+    let isMinorAge = false;
+    const rawBirthDate = existingRow?.birth_date;
+    const identityBirthDate = rawBirthDate ? decrypt(String(rawBirthDate)) : null;
+    if (identityBirthDate && identityBirthDate.replace(/\D/g, '').length === 8) {
+      const digits = identityBirthDate.replace(/\D/g, '');
+      const year = Number(digits.slice(0, 4));
+      const month = Number(digits.slice(4, 6));
+      const day = Number(digits.slice(6, 8));
+      const today = new Date();
+      const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+      let age = today.getFullYear() - year;
+      if (today < birthdayThisYear) age -= 1;
+      isMinorAge = age < 19;
+    }
+
+    const validatedInput = validateSettlementProfileInput(input, identityName, isMinorAge);
 
     if (!validatedInput.ok) {
       return NextResponse.json({ message: validatedInput.message }, { status: 400 });

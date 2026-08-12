@@ -88,6 +88,28 @@ function isAdult(birthDate: string | null | undefined) {
   return age >= 19;
 }
 
+function isUnder14(birthDate: string | null | undefined) {
+  if (!birthDate) return false;
+  const digits = onlyDigits(birthDate);
+  if (digits.length !== 8) return false;
+
+  const year = parseInt(digits.substring(0, 4), 10);
+  const month = parseInt(digits.substring(4, 6), 10);
+  const day = parseInt(digits.substring(6, 8), 10);
+
+  const today = new Date();
+  const birth = new Date(year, month - 1, day);
+  
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age < 14;
+}
+
 function getSuccessUrl({ siteName, boardName, contentId, successUrl }: Props) {
   if (successUrl) {
     return successUrl;
@@ -113,6 +135,7 @@ export default function PostPurchaseButton(props: Props) {
   const [isReady, setIsReady] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
   const [isMinor, setIsMinor] = useState(false);
+  const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
@@ -156,6 +179,11 @@ export default function PostPurchaseButton(props: Props) {
           setIsMinor(
             response.ok && result.exists && result.identity
               ? !isAdult(result.identity.birth_date)
+              : false,
+          );
+          setIsUnder14Age(
+            response.ok && result.exists && result.identity
+              ? isUnder14(result.identity.birth_date)
               : false,
           );
           setIsReady(true);
@@ -285,6 +313,10 @@ export default function PostPurchaseButton(props: Props) {
 
   if (!purchaseAvailable) {
     return;
+  }
+
+  if (isUnder14Age) {
+    return null;
   }
 
   return (
