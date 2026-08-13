@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getAuthorState } from '@/lib/session/author';
+
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();
@@ -27,21 +29,9 @@ export async function GET() {
     return NextResponse.json({ message: '멤버십 이용 조건을 확인하지 못했습니다.' }, { status: 500 });
   }
 
-  const chorogonId = identityResult.data?.id as string | undefined;
-  const authorResult = chorogonId
-    ? await supabaseAdmin
-        .from('chorogons_banque')
-        .select('is_author, account_verified_at')
-        .eq('chorogon_id', chorogonId)
-        .maybeSingle()
-    : { data: null, error: null };
-
-  if (authorResult.error) {
-    return NextResponse.json({ message: '작가 상태를 확인하지 못했습니다.' }, { status: 500 });
-  }
+  const { isAuthor } = await getAuthorState(currentStigma.stigmaId);
 
   const hasOperatingSite = (siteResult.data?.length ?? 0) > 0;
-  const isAuthor = Boolean(authorResult.data?.is_author);
 
   return NextResponse.json({
     hasOperatingSite,

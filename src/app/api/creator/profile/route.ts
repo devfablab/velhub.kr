@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getAuthorState } from '@/lib/session/author';
 
 type CreatorLinkInput = { label?: unknown; url?: unknown; sortOrder?: unknown };
 
@@ -24,19 +25,7 @@ function normalizeUrl(value: unknown) {
   }
 }
 
-async function getAuthorState(stigmaId: string) {
-  const supabaseAdmin = getSupabaseAdmin();
-  const identityResult = await supabaseAdmin.from('chorogons').select('id').eq('user_id', stigmaId).maybeSingle();
-  if (identityResult.error || !identityResult.data) return { isAuthor: false };
 
-  const settlementResult = await supabaseAdmin
-    .from('chorogons_banque')
-    .select('is_author')
-    .eq('chorogon_id', identityResult.data.id)
-    .maybeSingle();
-
-  return { isAuthor: Boolean(settlementResult.data?.is_author) };
-}
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();

@@ -1,25 +1,12 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getMembershipFeatures } from '@/lib/memberships/features';
+import { getAuthorState } from '@/lib/session/author';
 
 export async function getLibraryStatus(stigmaId: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
-  const identityResult = await supabaseAdmin
-    .from('chorogons')
-    .select('id')
-    .eq('user_id', stigmaId)
-    .maybeSingle();
-
-  if (identityResult.error || !identityResult.data) {
-    return { isAuthor: false, handleName: null, hasAffettoMyPosts: false };
-  }
-
-  const [banqueResult, creatorResult, features] = await Promise.all([
-    supabaseAdmin
-      .from('chorogons_banque')
-      .select('is_author')
-      .eq('chorogon_id', identityResult.data.id)
-      .maybeSingle(),
+  const [{ isAuthor }, creatorResult, features] = await Promise.all([
+    getAuthorState(stigmaId),
     supabaseAdmin
       .from('creators')
       .select('handle_name')
@@ -29,7 +16,7 @@ export async function getLibraryStatus(stigmaId: string) {
   ]);
 
   return {
-    isAuthor: Boolean(banqueResult.data?.is_author),
+    isAuthor,
     handleName: creatorResult.data?.handle_name ?? null,
     hasAffettoMyPosts: features.has('affetto_my_posts'),
   };

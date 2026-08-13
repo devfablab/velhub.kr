@@ -16,6 +16,8 @@ import { PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, REFU
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { getMembershipFeatures } from '@/lib/memberships/features';
+import { generateReceiptId } from '@/lib/payments/utils';
+import { getAuthorState } from '@/lib/session/author';
 import { createCustomerKey } from '@/lib/payments/customer';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -143,17 +145,11 @@ export async function POST(request: Request) {
       .eq('owner_id', currentStigma.stigmaId)
       .eq('is_shutdown', false)
       .limit(1),
-    identityResult.data?.id
-      ? supabaseAdmin
-          .from('chorogons_banque')
-          .select('id, is_author')
-          .eq('chorogon_id', identityResult.data.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
+    getAuthorState(currentStigma.stigmaId),
   ]);
 
   if (billingMethodResult.error || !billingMethodResult.data) return NextResponse.json({ error: '선택한 결제수단을 확인하지 못했습니다.' }, { status: 400 });
-  if (existingMembershipResult.error || ownedSiteResult.error || authorResult.error) return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+  if (existingMembershipResult.error || ownedSiteResult.error) return NextResponse.json({ error: '멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
 
   const existingTypes = new Set((existingMembershipResult.data ?? []).map((membership) => membership.membership_type));
   if (normalizedPurchases.some((purchase) => existingTypes.has(purchase.type))) {
@@ -169,7 +165,7 @@ export async function POST(request: Request) {
   const needsOwner = normalizedPurchases.some((purchase) => purchase.type === 'owner' || purchase.type === 'all_in_one');
   const needsCreator = normalizedPurchases.some((purchase) => purchase.type === 'creator' || purchase.type === 'all_in_one');
   if (needsOwner && !(ownedSiteResult.data ?? []).length) return NextResponse.json({ error: '운영 중인 사이트가 있어야 오너 멤버십을 이용할 수 있습니다.' }, { status: 400 });
-  if (needsCreator && authorResult.data?.is_author !== true) return NextResponse.json({ error: '작가만 크리에이터 멤버십을 이용할 수 있습니다.' }, { status: 400 });
+  if (needsCreator && !authorResult.isAuthor) return NextResponse.json({ error: '작가만 크리에이터 멤버십을 이용할 수 있습니다.' }, { status: 400 });
 
   const allPlanKeys = normalizedPurchases.flatMap((purchase) => purchase.featureKeys.map((key) => getMembershipPlanKey(purchase.type, key)));
   const planResult = await supabaseAdmin.from('plans').select('id, plan_key').in('plan_key', allPlanKeys);
