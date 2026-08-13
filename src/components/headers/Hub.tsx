@@ -53,12 +53,18 @@ type HeaderResponse = {
   globalRole: string | null;
   siteRole: string | null;
   sessionCase?: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
   name: string | null;
   email: string | null;
   avatarUrl: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
@@ -166,6 +172,9 @@ export default function HeaderHub() {
         name: result.userName,
         email: result.email,
         avatarUrl: result.avatar,
+        isAuthor: result.isAuthor,
+        handleName: result.handleName,
+        hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
 
@@ -327,6 +336,22 @@ export default function HeaderHub() {
                       <span>라운지 이동</span>
                     </Anchor>
                   </MenuItem>
+                  {userProfile.isAuthor ? (
+                    <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                        <MenuBookRoundedIcon fontSize="small" />
+                        <span>작가의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ) : null}
+                  {userProfile.hasAffettoMyPosts ? (
+                    <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                        <InterestsOutlinedIcon fontSize="small" />
+                        <span>독자의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ) : null}
                   <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                     <Anchor href="/settings">
                       <SettingsOutlinedIcon fontSize="small" />

@@ -64,6 +64,9 @@ type HeaderResponse = {
   invite: boolean;
   join: boolean;
   sessionCase?: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -78,6 +81,9 @@ type UserProfile = {
   isApproval: boolean | null;
   invite: boolean;
   join: boolean;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type BlogFontSettings = {
@@ -249,6 +255,9 @@ export default function HeaderSite() {
     isApproval: null,
     invite: false,
     join: false,
+    isAuthor: false,
+    handleName: null,
+    hasAffettoMyPosts: false,
   });
 
   const [siteLabel, setSiteLabel] = useState('');
@@ -341,6 +350,9 @@ export default function HeaderSite() {
           isApproval: null,
           invite: false,
           join: false,
+          isAuthor: false,
+          handleName: null,
+          hasAffettoMyPosts: false,
         });
         setSiteLabel('');
         setProfilePictureUrl(null);
@@ -364,6 +376,9 @@ export default function HeaderSite() {
         isApproval: result.isApproval,
         invite: result.invite,
         join: result.join,
+        isAuthor: result.isAuthor,
+        handleName: result.handleName,
+        hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
 
       setSiteLabel(result.siteLabel || result.siteName || '');
@@ -696,6 +711,22 @@ export default function HeaderSite() {
                       <span>마이허브</span>
                     </Anchor>
                   </MenuItem>,
+                  ...(userProfile.isAuthor ? [
+                    <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                        <MenuBookRoundedIcon fontSize="small" />
+                        <span>작가의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ] : []),
+                  ...(userProfile.hasAffettoMyPosts ? [
+                    <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                        <InterestsOutlinedIcon fontSize="small" />
+                        <span>독자의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ] : []),
                   <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                     <Anchor href="/settings">
                       <SettingsOutlinedIcon fontSize="small" />

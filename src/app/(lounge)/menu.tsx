@@ -58,6 +58,9 @@ type HeaderResponse = {
   globalRole: string | null;
   siteRole: string | null;
   sessionCase?: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -65,6 +68,9 @@ type UserProfile = {
   email: string | null;
   avatarUrl: string | null;
   isLoggedIn: boolean;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
@@ -113,6 +119,9 @@ export default function Container({ children }: ContainerProps) {
     email: null,
     avatarUrl: null,
     isLoggedIn: false,
+    isAuthor: false,
+    handleName: null,
+    hasAffettoMyPosts: false,
   });
 
   useEffect(() => {
@@ -157,6 +166,9 @@ export default function Container({ children }: ContainerProps) {
           email: null,
           avatarUrl: null,
           isLoggedIn: false,
+          isAuthor: false,
+          handleName: null,
+          hasAffettoMyPosts: false,
         });
         return;
       }
@@ -166,6 +178,9 @@ export default function Container({ children }: ContainerProps) {
         email: result.email,
         avatarUrl: result.avatar,
         isLoggedIn: result.isLoggedIn,
+        isAuthor: result.isAuthor,
+        handleName: result.handleName,
+        hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
 
@@ -328,6 +343,22 @@ export default function Container({ children }: ContainerProps) {
                 <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
                 {userProfile.isLoggedIn
                   ? [
+                      ...(userProfile.isAuthor ? [
+                        <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
+                          <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                            <MenuBookRoundedIcon fontSize="small" />
+                            <span>작가의 서재</span>
+                          </Anchor>
+                        </MenuItem>
+                      ] : []),
+                      ...(userProfile.hasAffettoMyPosts ? [
+                        <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
+                          <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                            <InterestsOutlinedIcon fontSize="small" />
+                            <span>독자의 서재</span>
+                          </Anchor>
+                        </MenuItem>
+                      ] : []),
                       <MenuItem key="settings" onClick={handleCloseProfileDrawer}>
                         <Anchor href="/settings">
                           <SettingsOutlinedIcon fontSize="small" />

@@ -12,6 +12,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import Anchor from '@/components/Anchor';
@@ -29,6 +30,9 @@ type HeaderResponse = {
   avatar: string | null;
   themeMode: ThemeMode | null;
   globalRole: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -37,6 +41,9 @@ type UserProfile = {
   avatarUrl: string | null;
   isLoggedIn: boolean;
   globalRole: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
@@ -92,6 +99,9 @@ export default function HeaderConcierge() {
     avatarUrl: null,
     isLoggedIn: false,
     globalRole: null,
+    isAuthor: false,
+    handleName: null,
+    hasAffettoMyPosts: false,
   });
 
   useEffect(() => {
@@ -153,6 +163,9 @@ export default function HeaderConcierge() {
           avatarUrl: null,
           isLoggedIn: false,
           globalRole: null,
+          isAuthor: false,
+          handleName: null,
+          hasAffettoMyPosts: false,
         });
         return;
       }
@@ -163,6 +176,9 @@ export default function HeaderConcierge() {
         avatarUrl: result.avatar,
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
+        isAuthor: result.isAuthor,
+        handleName: result.handleName,
+        hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
 
@@ -378,6 +394,22 @@ export default function HeaderConcierge() {
                       <span>마이허브</span>
                     </Anchor>
                   </MenuItem>,
+                  ...(userProfile.isAuthor ? [
+                    <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                        <MenuBookRoundedIcon fontSize="small" />
+                        <span>작가의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ] : []),
+                  ...(userProfile.hasAffettoMyPosts ? [
+                    <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
+                      <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                        <InterestsOutlinedIcon fontSize="small" />
+                        <span>독자의 서재</span>
+                      </Anchor>
+                    </MenuItem>
+                  ] : []),
                   <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                     <Anchor href="/settings">
                       <SettingsOutlinedIcon fontSize="small" />

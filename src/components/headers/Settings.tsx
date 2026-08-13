@@ -16,6 +16,9 @@ type HeaderResponse = {
   userName: string | null;
   avatar: string | null;
   themeMode: ThemeMode | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';

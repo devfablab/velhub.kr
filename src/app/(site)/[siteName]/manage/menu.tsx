@@ -29,6 +29,8 @@ import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightne
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -82,6 +84,9 @@ type HeaderResponse = {
   invite: boolean;
   join: boolean;
   sessionCase?: string | null;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type UserProfile = {
@@ -95,6 +100,9 @@ type UserProfile = {
   isApproval: boolean | null;
   invite: boolean;
   join: boolean;
+  isAuthor?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
 };
 
 type BlogFontSettings = {
@@ -514,6 +522,9 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     isApproval: null,
     invite: false,
     join: false,
+    isAuthor: false,
+    handleName: null,
+    hasAffettoMyPosts: false,
   });
 
   useEffect(() => {
@@ -570,6 +581,9 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
           isApproval: null,
           invite: false,
           join: false,
+          isAuthor: false,
+          handleName: null,
+          hasAffettoMyPosts: false,
         });
         setSiteLabel('');
         setProfilePictureUrl('');
@@ -587,10 +601,12 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         siteRole: result.siteRole,
-        nickname: result.nickname,
         isApproval: result.isApproval,
         invite: result.invite,
         join: result.join,
+        isAuthor: result.isAuthor,
+        handleName: result.handleName,
+        hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
       setSiteLabel(result.siteLabel || result.siteName || '');
       setProfilePictureUrl(result.profilePictureUrl);
@@ -900,6 +916,23 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                             <span>마이허브</span>
                           </Anchor>
                         </MenuItem>
+
+                        {userProfile.isAuthor ? (
+                          <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
+                            <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                              <MenuBookRoundedIcon fontSize="small" />
+                              <span>작가의 서재</span>
+                            </Anchor>
+                          </MenuItem>
+                        ) : null}
+                        {userProfile.hasAffettoMyPosts ? (
+                          <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
+                            <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                              <InterestsOutlinedIcon fontSize="small" />
+                              <span>독자의 서재</span>
+                            </Anchor>
+                          </MenuItem>
+                        ) : null}
 
                         <MenuItem onClick={handleCloseProfileDrawer}>
                           <Anchor href="/settings">
