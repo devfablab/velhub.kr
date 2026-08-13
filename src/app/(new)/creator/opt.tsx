@@ -15,10 +15,10 @@ import {
   Typography,
 } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import IdentityAgreement from '@/components/service/common/IdentityAgreement';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
+import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import styles from '@/app/new.module.sass';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';

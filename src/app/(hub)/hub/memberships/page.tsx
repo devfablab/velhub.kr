@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import Container from '../menu';
 import MembershipPlan from './opt';
 import Content from './tab';
@@ -13,7 +14,9 @@ export default function Page() {
     <Container pageTitle="멤버십 관리" pageBack="/hub">
       <div className="container">
         <Content>
-          <MembershipPlan />
+          <Suspense fallback={null}>
+            <MembershipPlan />
+          </Suspense>
         </Content>
       </div>
     </Container>

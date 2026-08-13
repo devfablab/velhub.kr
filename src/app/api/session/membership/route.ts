@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
+import { getMembershipFeatures } from '@/lib/memberships/features';
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();
@@ -8,14 +8,10 @@ export async function GET() {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
-  const membershipResult = await supabaseAdmin
-    .from('subscriptions')
-    .select('id')
-    .eq('target_id', currentStigma.stigmaId)
-    .eq('subscription_type', 'affetto_my_posts')
-    .in('status', ['trialing', 'active', 'past_due'])
-    .maybeSingle();
-
-  return NextResponse.json({ ok: !!membershipResult.data });
+  try {
+    const features = await getMembershipFeatures(currentStigma.stigmaId);
+    return NextResponse.json({ ok: features.has('affetto_my_posts') });
+  } catch (error) {
+    return NextResponse.json({ ok: false, error: 'Failed to fetch membership features' }, { status: 500 });
+  }
 }

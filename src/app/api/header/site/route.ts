@@ -3,6 +3,7 @@ import { getSessionClaims } from '@/lib/session';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getLibraryStatus } from '@/lib/session/libraryStatus';
 
 type SiteType = 'blog' | 'community';
 
@@ -607,6 +608,7 @@ export async function GET(request: Request) {
       siteLabel: site.site_label,
       profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
       profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
+      ...(await getLibraryStatus(session.stigmaId)),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

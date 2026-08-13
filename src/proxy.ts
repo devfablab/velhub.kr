@@ -120,7 +120,8 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'dummy.webp' ||
     firstSegment === 'together.webp' ||
     firstSegment === 'favicon' ||
-    firstSegment === 'memberships'
+    firstSegment === 'memberships' ||
+    firstSegment === 'creator'
   );
 }
 
@@ -487,6 +488,19 @@ export async function proxy(request: NextRequest) {
     const membershipCheck = await fetchSessionRoute(request, '/api/session/membership', {});
     if (!membershipCheck.response.ok || !membershipCheck.result?.ok) {
       return redirectWithPath(request, '/hub');
+    }
+
+    return response;
+  }
+
+  if (pathname.startsWith('/creator/settings')) {
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
+    }
+
+    const authorCheck = await fetchSessionRoute(request, '/api/session/author', {});
+    if (!authorCheck.response.ok || !authorCheck.result?.ok) {
+      return redirectWithPath(request, '/');
     }
 
     return response;

@@ -1,5 +1,7 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -151,7 +153,8 @@ function getSelectionItems(selection: MembershipSelection) {
 }
 
 export default function MembershipPlan() {
-  const [selection, setSelection] = useState<MembershipSelection>({});
+  const searchParams = useSearchParams();
+  const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
   const [memberships, setMemberships] = useState<MembershipResponse['memberships']>([]);
   const [billingMethods, setBillingMethods] = useState<BillingMethod[]>([]);
   const [selectedBillingMethodId, setSelectedBillingMethodId] = useState('');
@@ -165,8 +168,6 @@ export default function MembershipPlan() {
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
 
   useEffect(() => {
-    setSelection(parseSelection(new URLSearchParams(window.location.search).get('selection')));
-
     async function loadMemberships() {
       try {
         const [membershipResponse, eligibilityResponse] = await Promise.all([

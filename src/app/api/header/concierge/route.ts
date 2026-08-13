@@ -2,6 +2,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getLibraryStatus } from '@/lib/session/libraryStatus';
 
 type AccountRow = {
   email: string | null;
@@ -86,6 +87,7 @@ export async function GET() {
       email: decryptValue(account.email),
       userName: decryptValue(account.user_name),
       avatar: processAvatar(account.avatar),
+      ...(await getLibraryStatus(session.stigmaId)),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

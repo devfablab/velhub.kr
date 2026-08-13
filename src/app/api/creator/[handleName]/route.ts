@@ -68,14 +68,18 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const boardMap = new Map((boardsResult.data ?? []).map((board) => [board.id, board.board_key]));
   const seriesMap = new Map(series.map((item) => [item.id, item.series_label]));
 
+  const { getMembershipFeatures } = await import('@/lib/memberships/features');
+  const features = await getMembershipFeatures(creator.user_id);
+  const hasBranding = features.has('creator_branding');
+
   return NextResponse.json({
     creator: {
       handleName: creator.handle_name,
-      coverImage: creator.cover_image,
-      introduction: creator.introduction,
+      coverImage: hasBranding ? creator.cover_image : null,
+      introduction: hasBranding ? creator.introduction : null,
       activityName: decryptUserName(stigmaResult.data?.user_name ?? null) ?? '작가',
       profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
-      links: (linksResult.data ?? []).map((link) => ({ id: link.id, label: link.label, url: link.url, sortOrder: link.sort_order })),
+      links: hasBranding ? (linksResult.data ?? []).map((link) => ({ id: link.id, label: link.label, url: link.url, sortOrder: link.sort_order })) : [],
     },
     posts: posts.map((post) => ({
       id: post.id,

@@ -108,14 +108,18 @@ export default function Opt({ handleName }: { handleName: string }) {
   const [message, setMessage] = useState('');
 
   const load = useCallback(async (nextPage: number) => {
-    setMessage('');
-    const response = await fetch(`/api/user/${encodeURIComponent(handleName)}?page=${nextPage}`);
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message ?? '유저 정보를 불러오지 못했습니다.');
-    setData(payload);
+    try {
+      setMessage('');
+      const response = await fetch(`/api/user/${encodeURIComponent(handleName)}?page=${nextPage}`);
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message ?? '유저 정보를 불러오지 못했습니다.');
+      setData(payload);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '유저 정보를 불러오지 못했습니다.');
+    }
   }, [handleName]);
 
-  useEffect(() => { load(page).catch((error) => setMessage(error instanceof Error ? error.message : '유저 정보를 불러오지 못했습니다.')); }, [load, page]);
+  useEffect(() => { void load(page); }, [load, page]);
 
   if (message) return <Typography variant="body2" color="error">{message}</Typography>;
   if (!data) return null;
