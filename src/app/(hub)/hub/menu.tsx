@@ -327,7 +327,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                 </Anchor>
               </MenuItem>
               <MenuItem key="memberships" onClick={handleCloseProfileDrawer}>
-                <Anchor href="/hub/memberships/plan">
+                <Anchor href="/hub/memberships/plans">
                   <LoyaltyOutlinedIcon fontSize="small" />
                   <span>멤버십 관리</span>
                 </Anchor>

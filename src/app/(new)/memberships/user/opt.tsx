@@ -32,7 +32,7 @@ export default function Opt() {
   }
 
   function handleMoveToPlan() {
-    router.push(`/hub/memberships/plan?selection=${encodeURIComponent(JSON.stringify({ affetto: selection }))}`);
+    router.push(`/hub/memberships/plans?selection=${encodeURIComponent(JSON.stringify({ affetto: selection }))}`);
   }
 
   return (

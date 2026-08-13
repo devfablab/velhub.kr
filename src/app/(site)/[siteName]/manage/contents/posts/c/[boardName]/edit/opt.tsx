@@ -465,8 +465,9 @@ export default function Opt() {
           ) : null}
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <div className={`paper ${styles.paper}`}>
-            <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
+          {boardId ? (
+            <div className={`paper ${styles.paper}`}>
+              <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
               <Snackbar
                 open={Boolean(successMessage)}
                 autoHideDuration={2700}
@@ -664,6 +665,7 @@ export default function Opt() {
               </Stack>
             </Stack>
           </div>
+          ) : null}
         </div>
       </div>
     </Container>

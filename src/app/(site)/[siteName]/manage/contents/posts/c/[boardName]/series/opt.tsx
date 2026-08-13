@@ -66,6 +66,7 @@ type SeriesUserSearchRow = {
   email: string;
   userName: string;
   nickname: string;
+  isAuthor: boolean;
 };
 
 type SeriesListResponse = {
@@ -345,9 +346,9 @@ export default function Opt() {
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '연재 정보를 불러오지 못했습니다.');
+        setSnackbarMessage(unknownError.message || '연재 정보를 불러오지 못했습니다.');
       } else {
-        setErrorMessage('연재 정보를 불러오지 못했습니다.');
+        setSnackbarMessage('연재 정보를 불러오지 못했습니다.');
       }
     }
   }
@@ -439,6 +440,11 @@ export default function Opt() {
   };
 
   async function handleSelectUser(user: SeriesUserSearchRow) {
+    if (!user.isAuthor) {
+      setSnackbarMessage('작가가 아니어서 지정할 수 없습니다.');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/identity/portone/status`, {
         method: 'GET',
@@ -1137,7 +1143,9 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
+                          <span>
+                            연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
+                          </span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>
@@ -1374,7 +1382,9 @@ export default function Opt() {
                       ) : (
                         <p className="alert warning">
                           <WarningAmberRoundedIcon />
-                          <span>연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.</span>
+                          <span>
+                            연재 담당 작가가 지정되지 않았습니다. 팀 블로그나 커뮤니티의 경우 필수로 지정해야 합니다.
+                          </span>
                         </p>
                       )}
                       <Stack direction="column" gap={1}>
@@ -1573,19 +1583,19 @@ export default function Opt() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>이메일</TableCell>
-                          <TableCell>활동명</TableCell>
-                          <TableCell>닉네임</TableCell>
-                          <TableCell align="right">선택</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>이메일</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>활동명</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>닉네임</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {searchedUsers.map((user) => (
                           <TableRow key={user.stigmaId}>
-                            <TableCell>{user.email}</TableCell>
-                            <TableCell>{user.userName}</TableCell>
-                            <TableCell>{user.nickname}</TableCell>
-                            <TableCell align="right">
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.email}</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.userName}</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>{user.nickname}</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
                               <button
                                 type="button"
                                 className="button small action"
@@ -1599,7 +1609,7 @@ export default function Opt() {
 
                         {searchedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} align="center">
+                            <TableCell colSpan={4} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
                               검색 결과가 없습니다.
                             </TableCell>
                           </TableRow>
@@ -1662,19 +1672,25 @@ export default function Opt() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell>이메일</TableCell>
-                          <TableCell>활동명</TableCell>
-                          <TableCell>닉네임</TableCell>
-                          <TableCell align="right">선택</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>활동명</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>닉네임</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>작가 여부</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>선택</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {searchedUsers.map((user) => (
                           <TableRow key={user.stigmaId}>
-                            <TableCell>{user.email}</TableCell>
                             <TableCell>{user.userName}</TableCell>
                             <TableCell>{user.nickname}</TableCell>
-                            <TableCell align="right">
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+                              {user.isAuthor ? (
+                                <span style={{ color: 'var(--color-green)' }}>O</span>
+                              ) : (
+                                <span style={{ color: 'var(--color-red)' }}>X</span>
+                              )}
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
                               <button
                                 type="button"
                                 className="button small action"
@@ -1688,7 +1704,7 @@ export default function Opt() {
 
                         {searchedUsers.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} align="center">
+                            <TableCell colSpan={5} sx={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
                               검색 결과가 없습니다.
                             </TableCell>
                           </TableRow>

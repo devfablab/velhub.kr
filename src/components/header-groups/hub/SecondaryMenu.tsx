@@ -19,7 +19,7 @@ const secondaryMenus = [
     label: '커뮤니티 허브',
   },
   {
-    href: '/hub/memberships',
+    href: '/hub/memberships/plans',
     label: '멤버십',
   },
   {

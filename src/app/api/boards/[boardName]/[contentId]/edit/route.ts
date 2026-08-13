@@ -675,7 +675,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_type, site_id, post_type, is_subscription')
+      .select('id, board_key, board_type, site_id, post_type')
       .eq('site_id', rhizomeData.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -1177,7 +1177,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         supabaseAdmin,
         siteId: rhizomeData.id,
         boardId: board.data.id,
-        isBoardSubscription: board.data.is_subscription === true,
+        isBoardSubscription: false,
         seriesId,
         postId: updatePost.data.id,
         authorUserId: currentPost.data.user_id,

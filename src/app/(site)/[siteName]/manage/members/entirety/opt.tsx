@@ -86,6 +86,7 @@ type UserLevelRow = {
 
 type UserRow = {
   email: string | null;
+  userName: string;
   avatar: string | null;
   membership: UserMembershipRow;
   level: UserLevelRow | null;
@@ -151,7 +152,7 @@ type AppliedSearch =
   | null;
 
 function getDisplayNickname(user: UserRow) {
-  return user.membership.nickname || user.email || '';
+  return user.membership.nickname || user.userName || user.email || '';
 }
 
 function getNormalizedKeyword(value: string) {

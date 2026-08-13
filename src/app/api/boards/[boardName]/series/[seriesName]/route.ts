@@ -40,7 +40,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, board_key, board_label, board_type, post_type, site_id, created_at, is_subscription')
+      .select('id, board_key, board_label, board_type, post_type, site_id, created_at')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();

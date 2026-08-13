@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography, Snackbar } from '@mui/material';
+import styles from '@/app/hub.module.sass';
 
 type Site = { id: string; siteKey: string; siteLabel: string; siteType: string };
 type Post = { id: string; subject: string; slug: number | null; siteKey: string; siteLabel: string };
@@ -65,7 +66,9 @@ export default function MembershipSelectors() {
         setCreatorOwnPostId(body.selections.creator_own_post ?? '');
         setCreatorOtherPostId(body.selections.creator_other_post ?? '');
       })
-      .catch((error) => setSnackbarMessage(error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.'));
+      .catch((error) =>
+        setSnackbarMessage(error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.'),
+      );
   }, []);
 
   async function handleSubmit() {
@@ -88,10 +91,13 @@ export default function MembershipSelectors() {
 
   if (!data) return <Typography variant="body2">라운지 노출 대상을 불러오는 중입니다.</Typography>;
   const siteOptions = data.sites.map((site) => ({ id: site.id, label: `${site.siteLabel} (${site.siteKey})` }));
-  const postOptions = (posts: Post[]) => posts.map((post) => ({ id: post.id, label: `${post.siteLabel} · ${post.subject}` }));
+  const postOptions = (posts: Post[]) =>
+    posts.map((post) => ({ id: post.id, label: `${post.siteLabel} · ${post.subject}` }));
   const hasOwnerSelection = !data.features.ownerLounge || Boolean(ownerSiteId);
-  const hasCreatorSelections = !data.features.creatorLounge || Boolean(creatorSiteId && creatorOwnPostId && creatorOtherPostId);
-  const canSave = (data.features.ownerLounge || data.features.creatorLounge) && hasOwnerSelection && hasCreatorSelections;
+  const hasCreatorSelections =
+    !data.features.creatorLounge || Boolean(creatorSiteId && creatorOwnPostId && creatorOtherPostId);
+  const canSave =
+    (data.features.ownerLounge || data.features.creatorLounge) && hasOwnerSelection && hasCreatorSelections;
 
   return (
     <>
@@ -133,7 +139,12 @@ export default function MembershipSelectors() {
         ) : null}
         {data.features.ownerLounge || data.features.creatorLounge ? (
           <div>
-            <button type="button" className="button medium submit" disabled={!canSave || isSaving} onClick={handleSubmit}>
+            <button
+              type="button"
+              className="button medium submit"
+              disabled={!canSave || isSaving}
+              onClick={handleSubmit}
+            >
               저장
             </button>
           </div>

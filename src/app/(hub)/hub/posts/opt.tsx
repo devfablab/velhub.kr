@@ -1,13 +1,37 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 
-type Post = { id: string; subject: string; url: string; siteLabel: string; seriesLabel: string; publishedAt: string | null };
+type Post = {
+  id: string;
+  subject: string;
+  url: string;
+  siteLabel: string;
+  seriesLabel: string;
+  publishedAt: string | null;
+};
 type Response = { posts: Post[]; total: number; page: number };
 
 function openPost(url: string) {
-  window.open(url, 'creator-post', ['popup=yes', 'width=960', 'height=760', 'left=80', 'top=80', 'resizable=yes', 'scrollbars=yes', 'toolbar=no', 'menubar=no', 'location=no', 'status=no'].join(','));
+  window.open(
+    url,
+    'creator-post',
+    [
+      'popup=yes',
+      'width=960',
+      'height=760',
+      'left=80',
+      'top=80',
+      'resizable=yes',
+      'scrollbars=yes',
+      'toolbar=no',
+      'menubar=no',
+      'location=no',
+      'status=no',
+    ].join(','),
+  );
 }
 
 export default function Opt() {
@@ -23,9 +47,18 @@ export default function Opt() {
     setData(payload);
   }, []);
 
-  useEffect(() => { load(page).catch((error) => setMessage(error instanceof Error ? error.message : '내가 쓴 글을 불러오지 못했습니다.')); }, [load, page]);
+  useEffect(() => {
+    load(page).catch((error) =>
+      setMessage(error instanceof Error ? error.message : '내가 쓴 글을 불러오지 못했습니다.'),
+    );
+  }, [load, page]);
 
-  if (message) return <Typography variant="body2" color="error">{message}</Typography>;
+  if (message)
+    return (
+      <Typography variant="body2" color="error">
+        {message}
+      </Typography>
+    );
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 20);
@@ -48,9 +81,15 @@ export default function Opt() {
               {data.posts.map((post) => (
                 <TableRow key={post.id}>
                   <TableCell>{post.seriesLabel}</TableCell>
-                  <TableCell><button type="button" className="button small action" onClick={() => openPost(post.url)}>{post.subject}</button></TableCell>
+                  <TableCell>
+                    <button type="button" className="button small action" onClick={() => openPost(post.url)}>
+                      {post.subject}
+                    </button>
+                  </TableCell>
                   <TableCell>{post.siteLabel}</TableCell>
-                  <TableCell>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}</TableCell>
+                  <TableCell>
+                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -58,12 +97,28 @@ export default function Opt() {
         ) : (
           <Typography variant="body2">작성한 글이 없습니다.</Typography>
         )}
-        
+
         {totalPages > 1 ? (
           <Stack direction="row" justifyContent="center" gap={1}>
-            <button type="button" className="button small action" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>이전</button>
-            <Typography variant="body2">{page} / {totalPages}</Typography>
-            <button type="button" className="button small action" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>다음</button>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page <= 1}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              이전
+            </button>
+            <Typography variant="body2">
+              {page} / {totalPages}
+            </Typography>
+            <button
+              type="button"
+              className="button small action"
+              disabled={page >= totalPages}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              다음
+            </button>
           </Stack>
         ) : null}
       </Stack>

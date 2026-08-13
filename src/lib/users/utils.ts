@@ -556,6 +556,7 @@ export function buildMemberResponse(
 
   return {
     email: decryptNullable(stigma?.payment_email ?? null) || decryptNullable(stigma?.email ?? null),
+    userName: decryptNullable(stigma?.user_name ?? null) || '',
     avatar: stigma?.avatar ?? null,
     membership,
     level: level

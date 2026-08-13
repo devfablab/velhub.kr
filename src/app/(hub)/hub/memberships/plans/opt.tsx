@@ -13,7 +13,14 @@ import {
   MembershipType,
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/memberships.module.sass';
+import styles from '@/app/hub.module.sass';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+
+type Eligibility = {
+  owner: { available: boolean; message: string | null };
+  creator: { available: boolean; message: string | null };
+  allInOne: { available: boolean; message: string | null };
+};
 
 type MembershipSelection = Partial<Record<'owner' | 'creator' | 'allInOne' | 'affetto', MembershipFeatureKey[]>>;
 
@@ -140,26 +147,42 @@ export default function MembershipPlan() {
   const [refundTarget, setRefundTarget] = useState<CurrentMembership | null>(null);
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
 
   useEffect(() => {
     setSelection(parseSelection(new URLSearchParams(window.location.search).get('selection')));
 
     async function loadMemberships() {
       try {
-        const response = await fetch('/api/memberships', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        const result = (await response.json()) as MembershipResponse;
+        const [membershipResponse, eligibilityResponse] = await Promise.all([
+          fetch('/api/memberships', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+          }),
+          fetch('/api/memberships/eligibility', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+          }),
+        ]);
 
-        if (!response.ok) {
+        const result = (await membershipResponse.json()) as MembershipResponse;
+        const eligibilityResult = (await eligibilityResponse.json().catch(() => null)) as Eligibility | null;
+
+        if (!membershipResponse.ok) {
           throw new Error(result.message || '멤버십 정보를 불러오지 못했습니다.');
+        }
+
+        if (eligibilityResponse.ok && eligibilityResult && 'owner' in eligibilityResult) {
+          setEligibility(eligibilityResult);
         }
 
         setMemberships(result.memberships);
         setBillingMethods(result.billingMethods);
-        setSelectedBillingMethodId(result.billingMethods.find((method) => method.isDefault)?.id ?? result.billingMethods[0]?.id ?? '');
+        setSelectedBillingMethodId(
+          result.billingMethods.find((method) => method.isDefault)?.id ?? result.billingMethods[0]?.id ?? '',
+        );
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : '멤버십 정보를 불러오지 못했습니다.');
       } finally {
@@ -170,7 +193,17 @@ export default function MembershipPlan() {
     void loadMemberships();
   }, []);
 
-  const selectedItems = useMemo(() => getSelectionItems(selection), [selection]);
+  const selectedItems = useMemo(() => {
+    const items = getSelectionItems(selection);
+    if (!eligibility) return items;
+
+    return items.filter((item) => {
+      if (item.type === 'owner') return eligibility.owner.available;
+      if (item.type === 'creator') return eligibility.creator.available;
+      if (item.type === 'all_in_one') return eligibility.allInOne.available;
+      return true;
+    });
+  }, [selection, eligibility]);
   const membershipByType = useMemo(
     () => new Map(memberships.map((membership) => [membership.type, membership])),
     [memberships],
@@ -202,7 +235,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 결제를 완료하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships/plan');
+      window.location.replace('/hub/memberships/plans');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 결제를 완료하지 못했습니다.');
       setIsSubmitting(false);
@@ -230,7 +263,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 구독 상태를 변경하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships/plan');
+      window.location.replace('/hub/memberships/plans');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 구독 상태를 변경하지 못했습니다.');
       setIsChangingSubscription(false);
@@ -258,7 +291,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 환불을 완료하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships/plan');
+      window.location.replace('/hub/memberships/plans');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 환불을 완료하지 못했습니다.');
       setIsChangingSubscription(false);
@@ -292,138 +325,154 @@ export default function MembershipPlan() {
   }
 
   return (
-    <main className={styles['membership-page']}>
-      <div className={styles['membership-container']}>
-        <Stack gap={4}>
+    <>
+      <section className={`paper ${styles.paper}`}>
+        <h2>멤버십 이용 상태</h2>
+        {isLoading ? (
+          <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
+            <LoadingIndicator />
+          </Stack>
+        ) : (
           <Stack gap={1}>
-            <Typography variant="h6">멤버십 관리</Typography>
-            <Typography variant="body2">이용 중인 멤버십과 결제수단을 확인합니다.</Typography>
-          </Stack>
+            {(Object.keys(MEMBERSHIP_LABEL) as MembershipType[])
+              .filter((type) => {
+                const status = getMembershipStatus(type);
+                if (status.membership) return true;
+                if (!eligibility) return true;
 
-          {isLoading ? (
-            <Typography variant="body2">멤버십 정보를 불러오는 중입니다.</Typography>
-          ) : (
-            <Stack gap={2}>
-              <Typography variant="subtitle2">멤버십 이용 상태</Typography>
-              <Stack gap={1}>
-                {(Object.keys(MEMBERSHIP_LABEL) as MembershipType[]).map((type) => {
-                  const status = getMembershipStatus(type);
+                if (type === 'owner') return eligibility.owner.available;
+                if (type === 'creator') return eligibility.creator.available;
+                if (type === 'all_in_one') return eligibility.allInOne.available;
+                return true;
+              })
+              .map((type) => {
+                const status = getMembershipStatus(type);
 
-                  return (
-                    <div className={styles['membership-plan-card']} key={type}>
-                      <Stack gap={1}>
-                        <Stack direction="row" justifyContent="space-between" gap={2} alignItems="center">
-                          <Typography variant="subtitle2">{MEMBERSHIP_LABEL[type]}</Typography>
-                          <Typography variant="body2">{status.label}</Typography>
-                        </Stack>
-                        {status.membership?.itemLabels.map((itemLabel) => (
-                          <Typography key={itemLabel} variant="body2">
-                            {itemLabel}
-                          </Typography>
-                        ))}
-                        {!status.membership ? (
-                          <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
-                            유료 기능
-                          </Anchor>
-                        ) : null}
-                        {status.isDirectMembership && status.membership ? (
-                          <Stack direction="row" gap={1} flexWrap="wrap">
-                            {status.isCanceled ? (
-                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership ?? null)}>
-                                취소 철회
-                              </button>
-                            ) : (
-                              <button type="button" className="button small action" onClick={() => setCancelTarget(status.membership ?? null)}>
-                                구독 취소
-                              </button>
-                            )}
-                            <button type="button" className="button small danger" onClick={() => setRefundTarget(status.membership ?? null)}>
-                              환불
-                            </button>
-                          </Stack>
-                        ) : null}
+                return (
+                  <div className={styles['membership-plan-card']} key={type}>
+                    <Stack gap={1}>
+                      <Stack direction="row" justifyContent="space-between" gap={2} alignItems="center">
+                        <Typography variant="subtitle2">{MEMBERSHIP_LABEL[type]}</Typography>
+                        <Typography variant="body2">{status.label}</Typography>
                       </Stack>
-                    </div>
-                  );
-                })}
-              </Stack>
-            </Stack>
-          )}
-
-          {selectedItems.length ? (
-            <Stack gap={2}>
-              <Typography variant="subtitle2">선택한 멤버십</Typography>
-              <div className={styles['membership-plan-card']}>
-                <Stack gap={2}>
-                  {selectedItems.map((item) => (
-                    <Stack gap={1} key={item.type}>
-                      <Typography variant="subtitle2">{MEMBERSHIP_LABEL[item.type]}</Typography>
-                      <Stack gap={0.5}>
-                        {item.featureKeys.map((featureKey) => (
-                          <Typography key={featureKey} variant="body2">
-                            {getMembershipFeature(featureKey)?.label}
-                          </Typography>
-                        ))}
-                      </Stack>
-                    </Stack>
-                  ))}
-                  <Typography variant="subtitle2">{formatMembershipPrice(selectedPrice)}</Typography>
-                </Stack>
-              </div>
-            </Stack>
-          ) : null}
-
-          <Stack gap={2}>
-            <Typography variant="subtitle2">결제수단 선택</Typography>
-            <Stack gap={1}>
-              <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
-              <p className="alert info">
-                <InfoOutlineRoundedIcon />
-                <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
-              </p>
-
-              {billingMethods.length ? (
-                <Stack gap={1}>
-                  {billingMethods.map((billingMethod) => (
-                    <div className="paper" key={billingMethod.id}>
-                      <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="body2">
-                          {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
-                          {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
-                          {getCardNumberLabel(billingMethod.cardNumberMasked)}
+                      {status.membership?.itemLabels.map((itemLabel) => (
+                        <Typography key={itemLabel} variant="body2">
+                          {itemLabel}
                         </Typography>
-                        {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}
-                      </Stack>
-                    </div>
-                  ))}
-                </Stack>
-              ) : (
-                <p className="alert warning">
-                  <WarningAmberRoundedIcon />
-                  <span>등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</span>
-                </p>
-              )}
-            </Stack>
-
-            <div>
-              <BillingMethodButton />
-            </div>
+                      ))}
+                      {!status.membership ? (
+                        <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
+                          유료 기능
+                        </Anchor>
+                      ) : null}
+                      {status.isDirectMembership && status.membership ? (
+                        <Stack direction="row" gap={1} flexWrap="wrap">
+                          {status.isCanceled ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => setCancelTarget(status.membership ?? null)}
+                            >
+                              취소 철회
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => setCancelTarget(status.membership ?? null)}
+                            >
+                              구독 취소
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="button small danger"
+                            onClick={() => setRefundTarget(status.membership ?? null)}
+                          >
+                            환불
+                          </button>
+                        </Stack>
+                      ) : null}
+                    </Stack>
+                  </div>
+                );
+              })}
           </Stack>
+        )}
+      </section>
+      {selectedItems.length ? (
+        <section className={`paper ${styles.paper}`}>
+          <h2>선택한 멤버십</h2>
+          <div className={styles['membership-plan-card']}>
+            <Stack gap={2}>
+              {selectedItems.map((item) => (
+                <Stack gap={1} key={item.type}>
+                  <Typography variant="subtitle2">{MEMBERSHIP_LABEL[item.type]}</Typography>
+                  <Stack gap={0.5}>
+                    {item.featureKeys.map((featureKey) => (
+                      <Typography key={featureKey} variant="body2">
+                        {getMembershipFeature(featureKey)?.label}
+                      </Typography>
+                    ))}
+                  </Stack>
+                </Stack>
+              ))}
+              <Typography variant="subtitle2">{formatMembershipPrice(selectedPrice)}</Typography>
+            </Stack>
+          </div>
+        </section>
+      ) : null}
 
-          {selectedItems.length && selectedPrice > 0 ? (
-            <div className={styles['membership-actions']}>
-              <button
-                type="button"
-                className="button medium submit"
-                onClick={handlePayment}
-                disabled={!selectedBillingMethodId || isSubmitting}
-              >
-                {isSubmitting ? '결제 중' : `${formatMembershipPrice(selectedPrice)} 결제하기`}
-              </button>
-            </div>
-          ) : null}
+      <section className={`paper ${styles.paper}`}>
+        <h2>결제수단 선택</h2>
+        <Stack gap={2}>
+          <Stack gap={1}>
+            <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
+            <p className="alert info">
+              <InfoOutlineRoundedIcon />
+              <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
+            </p>
+
+            {billingMethods.length ? (
+              <Stack gap={1}>
+                {billingMethods.map((billingMethod) => (
+                  <div className="paper" key={billingMethod.id}>
+                    <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2">
+                        {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
+                        {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
+                        {getCardNumberLabel(billingMethod.cardNumberMasked)}
+                      </Typography>
+                      {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}
+                    </Stack>
+                  </div>
+                ))}
+              </Stack>
+            ) : (
+              <p className="alert warning">
+                <WarningAmberRoundedIcon />
+                <span>등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</span>
+              </p>
+            )}
+          </Stack>
+          <div>
+            <BillingMethodButton />
+          </div>
         </Stack>
-      </div>
+
+        {selectedItems.length && selectedPrice > 0 ? (
+          <div className={styles['membership-actions']}>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={handlePayment}
+              disabled={!selectedBillingMethodId || isSubmitting}
+            >
+              {isSubmitting ? '결제 중' : `${formatMembershipPrice(selectedPrice)} 결제하기`}
+            </button>
+          </div>
+        ) : null}
+      </section>
 
       <Snackbar
         open={Boolean(errorMessage)}
@@ -433,8 +482,15 @@ export default function MembershipPlan() {
         onClose={() => setErrorMessage('')}
       />
 
-      <Dialog open={Boolean(cancelTarget)} onClose={() => !isChangingSubscription && setCancelTarget(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>{cancelTarget?.subscriptionStatus === 'canceled' ? '멤버십 구독 취소 철회' : '멤버십 구독 취소'}</DialogTitle>
+      <Dialog
+        open={Boolean(cancelTarget)}
+        onClose={() => !isChangingSubscription && setCancelTarget(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {cancelTarget?.subscriptionStatus === 'canceled' ? '멤버십 구독 취소 철회' : '멤버십 구독 취소'}
+        </DialogTitle>
         <DialogContent>
           <Typography variant="body2">
             {cancelTarget?.subscriptionStatus === 'canceled'
@@ -443,36 +499,63 @@ export default function MembershipPlan() {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <button type="button" className="button medium close" disabled={isChangingSubscription} onClick={() => setCancelTarget(null)}>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={isChangingSubscription}
+            onClick={() => setCancelTarget(null)}
+          >
             닫기
           </button>
           <button
             type="button"
             className="button medium submit"
             disabled={isChangingSubscription}
-            onClick={() => void handleSubscriptionChange(cancelTarget?.subscriptionStatus === 'canceled' ? 'resume' : 'cancel')}
+            onClick={() =>
+              void handleSubscriptionChange(cancelTarget?.subscriptionStatus === 'canceled' ? 'resume' : 'cancel')
+            }
           >
-            {isChangingSubscription ? '처리 중' : cancelTarget?.subscriptionStatus === 'canceled' ? '취소 철회' : '구독 취소'}
+            {isChangingSubscription
+              ? '처리 중'
+              : cancelTarget?.subscriptionStatus === 'canceled'
+                ? '취소 철회'
+                : '구독 취소'}
           </button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(refundTarget)} onClose={() => !isChangingSubscription && setRefundTarget(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={Boolean(refundTarget)}
+        onClose={() => !isChangingSubscription && setRefundTarget(null)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>멤버십 환불</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
-            환불하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를 공제한 금액이 환불됩니다.
+            환불하면 멤버십 기능이 바로 종료됩니다. 결제 후 7일 이내에는 전액 환불되며, 이후에는 이용일수와 위약금 10%를
+            공제한 금액이 환불됩니다.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <button type="button" className="button medium close" disabled={isChangingSubscription} onClick={() => setRefundTarget(null)}>
+          <button
+            type="button"
+            className="button medium close"
+            disabled={isChangingSubscription}
+            onClick={() => setRefundTarget(null)}
+          >
             닫기
           </button>
-          <button type="button" className="button medium warning" disabled={isChangingSubscription} onClick={() => void handleRefund()}>
+          <button
+            type="button"
+            className="button medium warning"
+            disabled={isChangingSubscription}
+            onClick={() => void handleRefund()}
+          >
             {isChangingSubscription ? '환불 중' : '환불'}
           </button>
         </DialogActions>
       </Dialog>
-    </main>
+    </>
   );
 }
