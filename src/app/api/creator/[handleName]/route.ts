@@ -10,7 +10,7 @@ function getAvatarUrl(path: string | null) {
   return getSupabaseAdmin().storage.from('avatar').getPublicUrl(path).data.publicUrl ?? null;
 }
 
-function decryptUserName(value: string | null) {
+function decryptUserName(value: string) {
   const text = normalizeText(value);
   if (!text) return null;
   try {
@@ -95,7 +95,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       handleName: creator.handle_name,
       coverImage: hasBranding ? creator.cover_image : null,
       introduction: hasBranding ? creator.introduction : null,
-      activityName: decryptUserName(stigmaResult.data?.user_name ?? null) ?? '작가',
+      activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '작가',
       profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
       links: hasBranding
         ? (linksResult.data ?? []).map((link) => ({

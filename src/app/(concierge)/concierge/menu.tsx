@@ -13,6 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';

@@ -32,7 +32,7 @@ type CreatorProfile = {
   links: CreatorLink[];
 };
 type Response = {
-  creator: CreatorProfile & { activityName: string | null; profileImage: string | null };
+  creator: CreatorProfile & { activityName: string; profileImage: string | null };
   posts: Post[];
   total: number;
   page: number;
@@ -295,7 +295,7 @@ export default function Opt({ handleName }: { handleName: string }) {
     async (nextPage: number) => {
       try {
         setMessage('');
-        const response = await fetch(`/api/creator/${encodeURIComponent(handleName)}?page=${nextPage}`);
+        const response = await fetch(`/api/creator/${handleName}?page=${nextPage}`);
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message ?? '작가 정보를 불러오지 못했습니다.');
         setData(payload);
@@ -344,9 +344,9 @@ export default function Opt({ handleName }: { handleName: string }) {
           />
         ) : null}
         <Stack direction="row" gap={2} alignItems="center">
-          <Avatar src={creator.profileImage ?? undefined} alt="" />
+          <Avatar src={creator.profileImage || '/broken-image.jpg'} alt={creator.activityName} />
           <Stack gap={0.5}>
-            <Typography variant="h6">{creator.activityName ?? creator.handleName} 작가</Typography>
+            <Typography variant="h6">{creator.activityName} 작가</Typography>
             <Typography variant="body2">@{creator.handleName}</Typography>
           </Stack>
           {data.isOwner ? (

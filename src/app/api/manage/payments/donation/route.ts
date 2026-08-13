@@ -53,11 +53,7 @@ type BoardRow = {
 
 const DONATION_PAYMENT_TYPES = [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES];
 
-function decryptUserName(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
+function decryptUserName(value: string) {
   try {
     return normalizeText(decrypt(value));
   } catch {

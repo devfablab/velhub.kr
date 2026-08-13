@@ -55,14 +55,8 @@ type ReportMessageRow = {
   report_id: string;
   created_at: string;
 };
-
-function decryptUserName(value: string | null) {
+function decryptUserName(value: string) {
   const normalizedValue = normalizeText(value);
-
-  if (!normalizedValue) {
-    return '';
-  }
-
   try {
     return decrypt(normalizedValue);
   } catch {

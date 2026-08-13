@@ -101,11 +101,7 @@ function getNickname({
   return nickname || activityNameByParticleId.get(subscriberUserId) || '사용자';
 }
 
-function decryptUserName(value: string | null) {
-  if (!value) {
-    return '';
-  }
-
+function decryptUserName(value: string) {
   try {
     return normalizeText(decrypt(value));
   } catch {

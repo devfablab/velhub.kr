@@ -1,19 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Avatar,
-  Box,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { formatTimeAgo } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
+import styles from '@/app/new.module.sass';
 
 type Post = {
   id: string;
@@ -21,23 +13,35 @@ type Post = {
   url: string;
   siteLabel: string;
   seriesLabel: string;
-  publishedAt: string | null;
+  publishedAt: string;
 };
-type CreatorLink = { id?: string; label: string; url: string };
-type CreatorProfile = {
+type UserLink = { id?: string; label: string; url: string };
+type UserProfile = {
   id?: string;
   handleName: string;
   coverImage: string | null;
   introduction: string | null;
-  links: CreatorLink[];
+  links: UserLink[];
 };
 type Response = {
-  creator: CreatorProfile & { activityName: string | null; profileImage: string | null };
+  user: UserProfile & { activityName: string; profileImage: string | null };
   posts: Post[];
   total: number;
   page: number;
   isOwner: boolean;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 const MAX_FILE_SIZE = 1024 * 1024;
 
@@ -71,19 +75,19 @@ function ProfileForm({
   onCancel,
   onSaved,
 }: {
-  profile: CreatorProfile;
+  profile: UserProfile;
   onCancel: () => void;
-  onSaved: (profile: CreatorProfile) => void;
+  onSaved: (profile: UserProfile) => void;
 }) {
   const [introduction, setIntroduction] = useState(profile.introduction ?? '');
   const [coverImage, setCoverImage] = useState(profile.coverImage ?? '');
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [links, setLinks] = useState<CreatorLink[]>(profile.links);
+  const [links, setLinks] = useState<UserLink[]>(profile.links);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const updateLink = (index: number, key: keyof CreatorLink, value: string) =>
+  const updateLink = (index: number, key: keyof UserLink, value: string) =>
     setLinks((current) => current.map((link, linkIndex) => (linkIndex === index ? { ...link, [key]: value } : link)));
   const moveLinkToTop = (index: number) =>
     setLinks((current) => [current[index], ...current.filter((_, linkIndex) => linkIndex !== index)]);
@@ -114,7 +118,7 @@ function ProfileForm({
     try {
       let nextCoverImage = coverImage;
       if (coverFile) {
-        uploadedPath = `creator/${crypto.randomUUID()}.webp`;
+        uploadedPath = `user/${crypto.randomUUID()}.webp`;
         const supabase = getSupabaseBrowser();
         const upload = await supabase.storage
           .from('cover-image')
@@ -122,7 +126,7 @@ function ProfileForm({
         if (upload.error) throw upload.error;
         nextCoverImage = supabase.storage.from('cover-image').getPublicUrl(uploadedPath).data.publicUrl;
       }
-      const response = await fetch('/api/creator/profile', {
+      const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -133,22 +137,20 @@ function ProfileForm({
         }),
       });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message ?? '작가 프로필을 저장하지 못했습니다.');
-      onSaved({ ...payload.creator, links: links.map((link) => ({ ...link, url: withProtocol(link.url) })) });
+      if (!response.ok) throw new Error(payload.message ?? '독자 프로필을 저장하지 못했습니다.');
+      onSaved({ ...payload.user, links: links.map((link) => ({ ...link, url: withProtocol(link.url) })) });
     } catch (error) {
       if (uploadedPath) await getSupabaseBrowser().storage.from('cover-image').remove([uploadedPath]);
-      setMessage(error instanceof Error ? error.message : '작가 프로필을 저장하지 못했습니다.');
+      setMessage(error instanceof Error ? error.message : '독자 프로필을 저장하지 못했습니다.');
       setSaving(false);
     }
   };
 
   return (
     <Stack gap={3}>
-      <input
-        ref={fileRef}
+      <VisuallyHiddenInput
         type="file"
         accept="image/png,image/jpeg,image/webp"
-        hidden
         onChange={(event) => selectCover(event.target.files?.[0])}
       />
       <Stack gap={1}>
@@ -268,7 +270,7 @@ function ProfileForm({
 function openPost(url: string) {
   window.open(
     url,
-    'creator-post',
+    'user-post',
     [
       'popup=yes',
       'width=960',
@@ -295,7 +297,7 @@ export default function Opt({ handleName }: { handleName: string }) {
     async (nextPage: number) => {
       try {
         setMessage('');
-        const response = await fetch(`/api/user/${encodeURIComponent(handleName)}?page=${nextPage}`);
+        const response = await fetch(`/api/user/${handleName}?page=${nextPage}`);
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message ?? '유저 정보를 불러오지 못했습니다.');
         setData(payload);
@@ -319,14 +321,14 @@ export default function Opt({ handleName }: { handleName: string }) {
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 100);
-  const creator = data.creator;
+  const user = data.user;
   if (editing && data.isOwner) {
     return (
       <ProfileForm
-        profile={creator}
+        profile={user}
         onCancel={() => setEditing(false)}
         onSaved={(next) => {
-          setData((current) => (current ? { ...current, creator: { ...current.creator, ...next } } : current));
+          setData((current) => (current ? { ...current, user: { ...current.user, ...next } } : current));
           setEditing(false);
         }}
       />
@@ -334,98 +336,94 @@ export default function Opt({ handleName }: { handleName: string }) {
   }
 
   return (
-    <Stack gap={4}>
-      <Stack gap={2}>
-        {creator.coverImage ? (
-          <img
-            src={creator.coverImage}
-            alt=""
-            style={{ width: '100%', aspectRatio: '1270 / 270', objectFit: 'contain', background: 'transparent' }}
-          />
+    <main className={styles['my-library']}>
+      <div className={`${styles['user-cover']} ${user.coverImage ? styles['user-cover-image-container'] : ''}`}>
+        {user.coverImage ? (
+          <div className={styles['user-cover-image']} style={{ backgroundImage: `url(${user.coverImage})` }}>
+            <div className={styles['dummy-before']} />
+            <div className={styles['dummy-after']} />
+          </div>
         ) : null}
-        <Stack direction="row" gap={2} alignItems="center">
-          <Avatar src={creator.profileImage ?? undefined} alt="" />
-          <Stack gap={0.5}>
-            <Typography variant="h6">{creator.activityName ?? creator.handleName}</Typography>
-            <Typography variant="body2">@{creator.handleName}</Typography>
-          </Stack>
-          {data.isOwner ? (
-            <button type="button" className="button small action" onClick={() => setEditing(true)}>
-              수정
-            </button>
-          ) : null}
-        </Stack>
-        {creator.introduction ? (
-          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-            {creator.introduction}
-          </Typography>
-        ) : null}
-        {creator.links.length ? (
-          <Stack direction="row" gap={1} flexWrap="wrap">
-            {creator.links.map((link) => (
-              <a key={link.id ?? link.url} href={link.url}>
-                {link.label}
-              </a>
-            ))}
-          </Stack>
-        ) : null}
-      </Stack>
-      <Stack gap={2}>
-        <Typography variant="h6">내가 쓴 글</Typography>
-        {data.posts.length ? (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>게시일</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.posts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell>{post.seriesLabel}</TableCell>
-                  <TableCell>
-                    <button type="button" className="button small action" onClick={() => openPost(post.url)}>
-                      {post.subject}
+      </div>
+      <div className={styles.container}>
+        <div className={`content ${styles.content}`}>
+          <div className={styles['user-bio']}>
+            <Avatar
+              src={user.profileImage || '/broken-image.jpg'}
+              alt={user.activityName}
+              sx={{ width: 72, height: 72 }}
+            />
+            <div className={styles['user-bio-name']}>
+              <h1>{user.activityName}</h1>
+              <Typography variant="subtitle2">@{user.handleName}</Typography>
+            </div>
+            {data.isOwner ? (
+              <div className={styles['user-bio-action']}>
+                <button type="button" className="button small action" onClick={() => setEditing(true)}>
+                  수정
+                </button>
+              </div>
+            ) : null}
+
+            {user.introduction ? (
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {user.introduction}
+              </Typography>
+            ) : null}
+            {user.links.length ? (
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                {user.links.map((link) => (
+                  <Anchor key={link.id ?? link.url} href={link.url}>
+                    {link.label}
+                  </Anchor>
+                ))}
+              </Stack>
+            ) : null}
+          </div>
+          <Stack gap={2}>
+            {data.posts.length ? (
+              <ul className={`paper ${styles['user-posts']}`}>
+                {data.posts.map((post) => (
+                  <li key={post.id}>
+                    <button type="button" onClick={() => openPost(post.url)} className="paper">
+                      <strong>{post.subject}</strong>
+                      <span className={styles['post-label']}>
+                        <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
+                      </span>
+                      <time>{formatTimeAgo(post.publishedAt)}</time>
                     </button>
-                  </TableCell>
-                  <TableCell>{post.siteLabel}</TableCell>
-                  <TableCell>
-                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Typography variant="body2">작성한 글이 없습니다.</Typography>
-        )}
-        {totalPages > 1 ? (
-          <Stack direction="row" justifyContent="center" gap={1}>
-            <button
-              type="button"
-              className="button small action"
-              disabled={page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              이전
-            </button>
-            <Typography variant="body2">
-              {page} / {totalPages}
-            </Typography>
-            <button
-              type="button"
-              className="button small action"
-              disabled={page >= totalPages}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              다음
-            </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Typography variant="body2">작성한 글이 없습니다.</Typography>
+            )}
+            {totalPages > 1 ? (
+              <Stack direction="row" justifyContent="center" gap={1}>
+                <button
+                  type="button"
+                  className="button small action"
+                  disabled={page <= 1}
+                  onClick={() => setPage((current) => current - 1)}
+                >
+                  이전
+                </button>
+                <Typography variant="body2">
+                  {page} / {totalPages}
+                </Typography>
+                <button
+                  type="button"
+                  className="button small action"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((current) => current + 1)}
+                >
+                  다음
+                </button>
+              </Stack>
+            ) : null}
           </Stack>
-        ) : null}
-      </Stack>
-    </Stack>
+        </div>
+      </div>
+    </main>
   );
 }

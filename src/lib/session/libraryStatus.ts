@@ -15,5 +15,8 @@ export async function getLibraryStatus(stigmaId: string) {
     isAuthor,
     handleName: creatorResult.data?.handle_name ?? null,
     hasAffettoMyPosts: features.has('affetto_my_posts'),
+    hasCreatorLounge: features.has('creator_lounge'),
+    hasCreatorPosts: features.has('creator_posts'),
+    hasOwnerLounge: features.has('owner_lounge'),
   };
 }
