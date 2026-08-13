@@ -232,7 +232,11 @@ export async function getPublicActiveMemberships(siteId: string) {
 
   const withdrawnStigmaIds = new Set(
     stigmaResult.stigmas
-      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING || s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
+      .filter(
+        (s) =>
+          s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
+          s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED,
+      )
       .map((s) => s.id),
   );
 
@@ -277,9 +281,7 @@ export async function getBlockedMemberships(siteId: string) {
   }
 
   const completedStigmaIds = new Set(
-    stigmaResult.stigmas
-      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
-      .map((s) => s.id),
+    stigmaResult.stigmas.filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED).map((s) => s.id),
   );
 
   const activeMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
@@ -320,9 +322,7 @@ export async function getWithdrawnMemberships(siteId: string) {
   }
 
   const completedStigmaIds = new Set(
-    stigmaResult.stigmas
-      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
-      .map((s) => s.id),
+    stigmaResult.stigmas.filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED).map((s) => s.id),
   );
 
   const filteredMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
@@ -363,9 +363,7 @@ export async function getBannedMemberships(siteId: string) {
   }
 
   const completedStigmaIds = new Set(
-    stigmaResult.stigmas
-      .filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED)
-      .map((s) => s.id),
+    stigmaResult.stigmas.filter((s) => s.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED).map((s) => s.id),
   );
 
   const activeMemberships = memberships.filter((m) => !completedStigmaIds.has(m.user_id));
@@ -407,11 +405,7 @@ export async function getPublicActiveMembership(siteId: string, userId: string) 
     } as const;
   }
 
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('withdrawal_status')
-    .eq('id', userId)
-    .maybeSingle();
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('withdrawal_status').eq('id', userId).maybeSingle();
 
   if (
     stigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||

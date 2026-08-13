@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
 import { calculateMembershipRefundAmount } from '@/lib/payments/refunds';
-import {
-  PAYMENT_STATUS,
-  PAYMENT_TARGET_TYPE,
-  SUBSCRIPTION_STATUS,
-  SUBSCRIPTION_TYPE,
-} from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -100,7 +95,8 @@ export async function POST(request: Request) {
           cancelReason: '멤버십 해지 및 환불',
           cancelAmount: refund.isFullRefund ? undefined : refund.refundAmount,
         });
-        const status = refund.refundAmount >= Number(payment.amount) ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED;
+        const status =
+          refund.refundAmount >= Number(payment.amount) ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED;
         const paymentUpdateResult = await supabaseAdmin
           .from('payments')
           .update({
@@ -148,7 +144,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '멤버십 기능을 해지하지 못했습니다.' }, { status: 500 });
   }
 
-  const membershipDeleteResult = await supabaseAdmin.from('memberships').delete().eq('id', membershipId).eq('user_id', stigma.stigmaId);
+  const membershipDeleteResult = await supabaseAdmin
+    .from('memberships')
+    .delete()
+    .eq('id', membershipId)
+    .eq('user_id', stigma.stigmaId);
 
   if (membershipDeleteResult.error) {
     console.error(membershipDeleteResult.error);

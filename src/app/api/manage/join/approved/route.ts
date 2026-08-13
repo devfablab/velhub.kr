@@ -224,15 +224,15 @@ async function createJoinRejectedNotifications({
   actorStigmaId: string;
 }) {
   const notifications = recipientStigmaIds.map((stigmaId) => ({
-        user_id: stigmaId,
-        send_user_id: actorStigmaId,
-        send_site_id: siteId,
-        send_board_id: null,
-        send_series_id: null,
-        send_post_id: null,
-        notification_type: NOTIFICATION_TYPE.COMMUNITY_JOIN_REJECTED,
-        is_read: false,
-      }));
+    user_id: stigmaId,
+    send_user_id: actorStigmaId,
+    send_site_id: siteId,
+    send_board_id: null,
+    send_series_id: null,
+    send_post_id: null,
+    notification_type: NOTIFICATION_TYPE.COMMUNITY_JOIN_REJECTED,
+    is_read: false,
+  }));
 
   if (notifications.length === 0) {
     return;
@@ -294,7 +294,10 @@ export async function GET(request: Request) {
 
     const stigmaResult =
       stigmaIds.length > 0
-        ? await access.supabaseAdmin.from('stigmas').select('id, email, payment_email, user_name, withdrawal_status').in('id', stigmaIds)
+        ? await access.supabaseAdmin
+            .from('stigmas')
+            .select('id, email, payment_email, user_name, withdrawal_status')
+            .in('id', stigmaIds)
         : { data: [], error: null };
 
     if (stigmaResult.error) {
@@ -306,7 +309,10 @@ export async function GET(request: Request) {
     const activeMemberships = memberships.filter((membership) => {
       const stigma = stigmaMap.get(membership.user_id);
       if (!stigma) return false;
-      if (stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING || stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED) {
+      if (
+        stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
+        stigma.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED
+      ) {
         return false;
       }
       return true;
@@ -325,7 +331,11 @@ export async function GET(request: Request) {
           nickname: getApplicantNickname(membership.nickname, stigma?.user_name),
           createdAt: membership.created_at,
           rejectedAt: membership.rejected_at,
-          rejectedBy: getDisplayName(rejectedByStigma?.user_name, rejectedByStigma?.email, rejectedByStigma?.payment_email),
+          rejectedBy: getDisplayName(
+            rejectedByStigma?.user_name,
+            rejectedByStigma?.email,
+            rejectedByStigma?.payment_email,
+          ),
           isReApproval: membership.is_re_approval === true,
           answeredQuestions: normalizeAnsweredQuestions(membership.answered_questions, questionMap),
         };

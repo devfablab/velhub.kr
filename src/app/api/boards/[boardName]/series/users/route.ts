@@ -111,10 +111,7 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '사용자 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const identitiesResult = await supabaseAdmin
-      .from('chorogons')
-      .select('id, user_id')
-      .in('user_id', stigmaIds);
+    const identitiesResult = await supabaseAdmin.from('chorogons').select('id, user_id').in('user_id', stigmaIds);
 
     const identityRows = identitiesResult.data ?? [];
     const chorogonIds = identityRows
@@ -130,15 +127,9 @@ export async function GET(request: Request, context: RouteContext) {
         .in('chorogon_id', chorogonIds)
         .eq('is_author', true);
 
-      const authorChorogonIds = new Set(
-        (authorsResult.data ?? []).map((row) => row.chorogon_id),
-      );
+      const authorChorogonIds = new Set((authorsResult.data ?? []).map((row) => row.chorogon_id));
 
-      authorStigmaIds = new Set(
-        identityRows
-          .filter((row) => authorChorogonIds.has(row.id))
-          .map((row) => row.user_id),
-      );
+      authorStigmaIds = new Set(identityRows.filter((row) => authorChorogonIds.has(row.id)).map((row) => row.user_id));
     }
 
     const stigmaMap = new Map(

@@ -477,7 +477,6 @@ export default function Opt() {
     setManagerEditErrorMessage('');
     setMoveRole(nextRole);
     setMoveBoardId(isBoardRole(nextRole) ? moveBoardId : '');
-
   }
 
   function handleMoveBoardChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
@@ -485,7 +484,6 @@ export default function Opt() {
 
     setManagerEditErrorMessage('');
     setMoveBoardId(nextBoardId);
-
   }
 
   function openSearchDialog(mode: 'manager' | 'owner-transfer') {
@@ -937,12 +935,7 @@ export default function Opt() {
         ) : (
           <i />
         )}
-        <button
-          type="button"
-          className="button medium submit"
-          onClick={handleMoveManager}
-          disabled={isSubmittingMove}
-        >
+        <button type="button" className="button medium submit" onClick={handleMoveManager} disabled={isSubmittingMove}>
           이동
         </button>
       </Stack>

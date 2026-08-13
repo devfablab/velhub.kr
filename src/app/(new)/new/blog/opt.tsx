@@ -475,8 +475,8 @@ export default function Opt() {
               fullWidth
               helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
               size="small"
-              inputProps={{ maxLength: 15 }}
               slotProps={{
+                htmlInput: { maxLength: 15 },
                 input: {
                   startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
                   endAdornment: (
@@ -511,8 +511,8 @@ export default function Opt() {
               fullWidth
               size="small"
               helperText={`입력하지 않으면 블로그 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`}
-              inputProps={{ maxLength: 10 }}
               slotProps={{
+                htmlInput: { maxLength: 10 },
                 input: {
                   endAdornment: siteLabel.trim() ? (
                     <InputAdornment position="end">
@@ -574,7 +574,7 @@ export default function Opt() {
               multiline
               minRows={4}
               helperText={`${summary.length} / 52`}
-              inputProps={{ maxLength: 52 }}
+              slotProps={{ htmlInput: { maxLength: 52 } }}
             />
           </Stack>
 

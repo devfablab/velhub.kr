@@ -24,7 +24,7 @@ export async function PUT(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
 
   // Validate ownership for all items
-  const ids = updates.map(u => u.id);
+  const ids = updates.map((u) => u.id);
   const { data: validItems, error: checkError } = await supabaseAdmin
     .from('blog_favorites')
     .select('id')
@@ -38,14 +38,14 @@ export async function PUT(request: NextRequest) {
   // Update in loop (since Supabase JS bulk upsert requires full row or RPC). We can do individual updates.
   // Or we can use upsert if we know all columns, but we don't.
   // For safety, let's update one by one. If it's a large list, it might be slow, but usually it's small.
-  const promises = updates.map(update => 
+  const promises = updates.map((update) =>
     supabaseAdmin
       .from('blog_favorites')
       .update({
         folder_id: update.folder_id,
         sort_order: update.sort_order,
       })
-      .eq('id', update.id)
+      .eq('id', update.id),
   );
 
   await Promise.all(promises);

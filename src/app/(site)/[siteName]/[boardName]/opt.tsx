@@ -544,7 +544,9 @@ export default function Opt({ isCommunity }: Props) {
                   ) : board ? (
                     <span>{board.board_label}</span>
                   ) : null}
-                  {selectedSeries && (board?.board_type === 'basic' || board?.board_type === 'gallery') && blogType !== 'team' ? (
+                  {selectedSeries &&
+                  (board?.board_type === 'basic' || board?.board_type === 'gallery') &&
+                  blogType !== 'team' ? (
                     <>
                       <SubscriptionButton
                         siteName={siteName}
@@ -825,12 +827,7 @@ export default function Opt({ isCommunity }: Props) {
                         </span>
                         <small>{`${imageCount}개 이미지`}</small>
                         {thumbnail ? (
-                          <img
-                            src={thumbnail.url}
-                            width={thumbnail.width}
-                            height={thumbnail.height}
-                            alt=""
-                          />
+                          <img src={thumbnail.url} width={thumbnail.width} height={thumbnail.height} alt="" />
                         ) : null}
                       </div>
                       <div className={styles.info}>

@@ -272,11 +272,7 @@ async function getSubscriptionTarget({
   seriesName: string;
 }): Promise<SubscriptionTarget> {
   if (targetType === 'site') {
-    const siteResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_label')
-      .eq('id', siteId)
-      .maybeSingle();
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('id', siteId).maybeSingle();
 
     if (siteResult.error) {
       throw new Error('블로그 정보를 확인하지 못했습니다.');
@@ -317,11 +313,7 @@ async function getSubscriptionTarget({
   }
 
   if (siteType === 'blog') {
-    const blogResult = await supabaseAdmin
-      .from('blogs')
-      .select('blog_type')
-      .eq('site_id', siteId)
-      .maybeSingle();
+    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle();
 
     if (blogResult.data?.blog_type === 'team') {
       throw new Error('팀 블로그 연재는 구독할 수 없습니다.');

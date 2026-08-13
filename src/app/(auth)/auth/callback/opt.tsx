@@ -489,9 +489,7 @@ export default function Opt() {
                   <ErrorOutlineRoundedIcon />
                   <span>{errorMessage}</span>
                 </p>
-                <SocialLoginButtons
-                  excludeProviders={failedProvider ? [failedProvider] : []}
-                />
+                <SocialLoginButtons excludeProviders={failedProvider ? [failedProvider] : []} />
               </Stack>
             ) : null}
           </div>

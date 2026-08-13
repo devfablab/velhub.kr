@@ -88,7 +88,7 @@ export default function Opt() {
           setHasExistingMembership(true);
           const features = membershipResult?.features ?? [];
           const isAllInOne = existingMemberships.some((m) => m.type === 'all_in_one');
-          
+
           if (isAllInOne) {
             setMode('all_in_one');
             setAllInOneSelection(features);

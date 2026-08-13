@@ -67,7 +67,10 @@ export async function POST(request: Request) {
       return Response.json({ error: 'provider가 유효하지 않습니다.' }, { status: 400 });
     }
 
-    if (hasAgreementPayload && (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true)) {
+    if (
+      hasAgreementPayload &&
+      (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true)
+    ) {
       return Response.json({ error: '필수 동의 항목에 모두 동의해 주세요.' }, { status: 400 });
     }
 

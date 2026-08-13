@@ -137,11 +137,13 @@ function getManagerIconUrl(value: string | null | undefined) {
   return publicUrl.data.publicUrl ?? '';
 }
 
-function isCommunityJoinClosed(communityData?: {
-  join_accept_status?: string | null;
-  join_accept_start_day?: string | null;
-  join_accept_end_day?: string | null;
-} | null) {
+function isCommunityJoinClosed(
+  communityData?: {
+    join_accept_status?: string | null;
+    join_accept_start_day?: string | null;
+    join_accept_end_day?: string | null;
+  } | null,
+) {
   if (!communityData) {
     return false;
   }
@@ -720,11 +722,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('id', session.stigmaId)
-      .maybeSingle();
+    const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('id', session.stigmaId).maybeSingle();
 
     if (stigmaResult.error || !stigmaResult.data) {
       return Response.json({ error: '사용자 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -831,11 +829,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
-    const stigmaResult = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('id', session.stigmaId)
-      .maybeSingle();
+    const stigmaResult = await supabaseAdmin.from('stigmas').select('id').eq('id', session.stigmaId).maybeSingle();
 
     if (stigmaResult.error || !stigmaResult.data) {
       return Response.json({ error: '사용자 정보를 불러오지 못했습니다.' }, { status: 500 });

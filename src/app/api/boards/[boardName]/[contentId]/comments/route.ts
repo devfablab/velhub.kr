@@ -872,14 +872,24 @@ export async function GET(request: Request, context: RouteContext) {
     let canWriteReason: 'guest' | 'policy' | 'hidden' | null = null;
 
     let canWrite = Boolean(
-      session.authUserId && session.stigmaId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed,
+      session.authUserId &&
+      session.stigmaId &&
+      target.data.isPublished &&
+      target.data.isCommentEnabled &&
+      !target.data.isClosed,
     );
 
     if (!session.authUserId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
       canWriteReason = 'guest';
     }
 
-    if (session.authUserId && session.stigmaId && target.data.isPublished && target.data.isCommentEnabled && !target.data.isClosed) {
+    if (
+      session.authUserId &&
+      session.stigmaId &&
+      target.data.isPublished &&
+      target.data.isCommentEnabled &&
+      !target.data.isClosed
+    ) {
       try {
         await assertCommunityCommentWritePolicy({
           siteId: target.data.siteId,

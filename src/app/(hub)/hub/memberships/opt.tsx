@@ -636,7 +636,12 @@ export default function MembershipPlan() {
         fullWidth
       >
         <DialogTitle>멤버십 결제 확인</DialogTitle>
-        <button type="button" className="close-button" onClick={() => setIsPaymentPopupOpen(false)} disabled={isSubmitting}>
+        <button
+          type="button"
+          className="close-button"
+          onClick={() => setIsPaymentPopupOpen(false)}
+          disabled={isSubmitting}
+        >
           <CloseRoundedIcon />
         </button>
         <DialogContent>

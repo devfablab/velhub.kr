@@ -547,8 +547,7 @@ export async function GET(request: Request, context: RouteContext) {
     const sort = normalizeSort(requestUrl.searchParams.get('sort'));
     const includePin = parseIncludePin(requestUrl.searchParams.get('includePin'));
 
-    const postListSessionCase =
-      canManageContents ? 'staff' : session.case === 'member' ? 'member' : 'guest';
+    const postListSessionCase = canManageContents ? 'staff' : session.case === 'member' ? 'member' : 'guest';
 
     const result = selectedSeries
       ? await getSeriesFilteredPostList({

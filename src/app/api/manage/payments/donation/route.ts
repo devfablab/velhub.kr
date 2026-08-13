@@ -51,10 +51,7 @@ type BoardRow = {
   board_label: string | null;
 };
 
-const DONATION_PAYMENT_TYPES = [
-  PAYMENT_TYPE.DONATION_SITE,
-  PAYMENT_TYPE.DONATION_SERIES,
-];
+const DONATION_PAYMENT_TYPES = [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES];
 
 function decryptUserName(value: string | null) {
   if (!value) {
@@ -217,7 +214,8 @@ export async function GET(request: Request) {
 
     const siteDonations = donations.filter((donation) => donation.payment_type === PAYMENT_TYPE.DONATION_SITE);
     const seriesDonations = donations.filter((donation) => donation.payment_type === PAYMENT_TYPE.DONATION_SERIES);
-    const getTotalAmount = (items: DonationPaymentRow[]) => items.reduce((total, donation) => total + donation.amount, 0);
+    const getTotalAmount = (items: DonationPaymentRow[]) =>
+      items.reduce((total, donation) => total + donation.amount, 0);
 
     return Response.json({
       site: {
@@ -238,8 +236,8 @@ export async function GET(request: Request) {
         const nickname = stigmaId ? normalizeText(nicknameByStigmaId.get(stigmaId)) : '';
         const buyerName = nickname || activityNameByParticleId.get(donation.buyer_user_id) || '사용자';
         const series =
-          donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? seriesById.get(donation.target_id) ?? null : null;
-        const board = series ? boardById.get(series.board_id) ?? null : null;
+          donation.payment_type === PAYMENT_TYPE.DONATION_SERIES ? (seriesById.get(donation.target_id) ?? null) : null;
+        const board = series ? (boardById.get(series.board_id) ?? null) : null;
 
         return {
           id: donation.id,

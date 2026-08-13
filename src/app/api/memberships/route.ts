@@ -53,7 +53,12 @@ export async function GET() {
         .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
         .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
         .in('target_id', membershipIds)
-        .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE, SUBSCRIPTION_STATUS.CANCELED])
+        .in('status', [
+          SUBSCRIPTION_STATUS.TRIALING,
+          SUBSCRIPTION_STATUS.ACTIVE,
+          SUBSCRIPTION_STATUS.PAST_DUE,
+          SUBSCRIPTION_STATUS.CANCELED,
+        ])
         .order('created_at', { ascending: false })
     : { data: [], error: null };
 
@@ -72,7 +77,10 @@ export async function GET() {
 
   const planLabelById = new Map((planResult.data ?? []).map((plan) => [plan.id as string, plan.plan_label as string]));
   const itemLabelsByMembershipId = new Map<string, string[]>();
-  const subscriptionByMembershipId = new Map<string, { status: string; currentPeriodEnd: string | null; createdAt: string | null }>();
+  const subscriptionByMembershipId = new Map<
+    string,
+    { status: string; currentPeriodEnd: string | null; createdAt: string | null }
+  >();
 
   for (const subscription of subscriptionResult.data ?? []) {
     const membershipId = subscription.target_id as string;

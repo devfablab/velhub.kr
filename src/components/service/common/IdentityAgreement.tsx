@@ -141,7 +141,9 @@ function AgreementContent({ type }: { type: AgreementType }) {
           <button
             type="button"
             className="button-term"
-            onClick={() => openLawWindow('https://law.go.kr/LSW/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1030573049')}
+            onClick={() =>
+              openLawWindow('https://law.go.kr/LSW/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1030573049')
+            }
           >
             소득세법 제164조의3
           </button>

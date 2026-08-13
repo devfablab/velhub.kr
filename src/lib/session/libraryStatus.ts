@@ -7,11 +7,7 @@ export async function getLibraryStatus(stigmaId: string) {
 
   const [{ isAuthor }, creatorResult, features] = await Promise.all([
     getAuthorState(stigmaId),
-    supabaseAdmin
-      .from('creators')
-      .select('handle_name')
-      .eq('user_id', stigmaId)
-      .maybeSingle(),
+    supabaseAdmin.from('creators').select('handle_name').eq('user_id', stigmaId).maybeSingle(),
     getMembershipFeatures(stigmaId),
   ]);
 

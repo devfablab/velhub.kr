@@ -1,15 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Drawer,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Chip, Dialog, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -123,7 +115,8 @@ function extractUrls(value: string) {
 function ContentBody({ board, content }: { board: BoardInfo; content: PostContent }) {
   const theme = useTheme();
   const hashtags = normalizeHashtags(content.hashtags);
-  const feedLinkPreviewUrls = board.board_type === 'feed' && content.content_simple ? extractUrls(content.content_simple) : [];
+  const feedLinkPreviewUrls =
+    board.board_type === 'feed' && content.content_simple ? extractUrls(content.content_simple) : [];
   const embeddedContent = content.content_html ? (
     <EmbeddedContentHtml
       contentHtml={content.content_html}
@@ -190,7 +183,9 @@ function ContentBody({ board, content }: { board: BoardInfo; content: PostConten
     return (
       <div className={`${boardStyles['board-container']} ${boardStyles['feed-board']}`}>
         <div className="paper">
-          {content.content_simple ? <div className={boardStyles['content-simple']}>{content.content_simple}</div> : null}
+          {content.content_simple ? (
+            <div className={boardStyles['content-simple']}>{content.content_simple}</div>
+          ) : null}
           {feedLinkPreviewUrls.length ? (
             <div className={boardStyles['link-previews']}>
               {feedLinkPreviewUrls.map((url) => (
@@ -244,9 +239,7 @@ function PostPreview({ response, errorMessage }: { response: ContentResponse | n
                   <cite>{content.author_name}</cite>
                 </div>
                 <div className={boardStyles.datetime}>
-                  <span aria-label="작성일">
-                    {formatDateTimeDetail(content.published_at || content.created_at)}
-                  </span>
+                  <span aria-label="작성일">{formatDateTimeDetail(content.published_at || content.created_at)}</span>
                   {content.edited_at ? <span>(수정됨)</span> : null}
                 </div>
               </div>
@@ -326,7 +319,9 @@ export default function OwnedDonationPosts({ siteType }: Props) {
         }
       } catch (unknownError) {
         if (!ignore) {
-          setContentErrorMessage(unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.');
+          setContentErrorMessage(
+            unknownError instanceof Error ? unknownError.message : '글 내용을 불러오지 못했습니다.',
+          );
         }
       }
     }

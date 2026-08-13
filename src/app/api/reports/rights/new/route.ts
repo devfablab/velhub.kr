@@ -152,9 +152,7 @@ function getCopyrightProofFiles(formData: FormData) {
 }
 
 function getSingleFormFile(formData: FormData, key: string) {
-  const files = formData
-    .getAll(key)
-    .filter((value): value is File => value instanceof File && value.size > 0);
+  const files = formData.getAll(key).filter((value): value is File => value instanceof File && value.size > 0);
 
   return files.length === 1 ? files[0] : null;
 }
@@ -576,7 +574,9 @@ export async function POST(request: Request) {
 
     if (requiresRightsHolderDetails && !rightsHolderName) {
       return Response.json(
-        { error: rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.' },
+        {
+          error: rightsOwnerType === 'organization' ? '피해단체 이름을 입력해 주세요.' : '피해자 이름을 입력해 주세요.',
+        },
         { status: 400 },
       );
     }
@@ -676,11 +676,7 @@ export async function POST(request: Request) {
       }
 
       if (usesOwnerDetails && reporterCapacity === 'proxy' && powerOfAttorneyFile) {
-        uploadedPowerOfAttorneyFile = await uploadRightsReportFile(
-          reportId,
-          'power-of-attorney',
-          powerOfAttorneyFile,
-        );
+        uploadedPowerOfAttorneyFile = await uploadRightsReportFile(reportId, 'power-of-attorney', powerOfAttorneyFile);
         uploadedReportFiles.push(uploadedPowerOfAttorneyFile);
       }
 

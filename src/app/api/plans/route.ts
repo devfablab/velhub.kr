@@ -62,7 +62,10 @@ export async function GET() {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '멤버십 상품 목록을 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json(
+        { error: unknownError.message || '멤버십 상품 목록을 불러오지 못했습니다.' },
+        { status: 500 },
+      );
     }
 
     return Response.json({ error: '멤버십 상품 목록을 불러오지 못했습니다.' }, { status: 500 });

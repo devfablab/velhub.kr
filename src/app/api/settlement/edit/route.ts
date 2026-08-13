@@ -181,7 +181,7 @@ export async function PATCH(request: NextRequest) {
     };
 
     const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
-    
+
     let isMinorAge = false;
     const rawBirthDate = existingRow?.birth_date;
     const identityBirthDate = rawBirthDate ? decrypt(String(rawBirthDate)) : null;

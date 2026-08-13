@@ -87,11 +87,7 @@ export default function List({ postsData, orderType }: ListProps) {
                   {post.board_type === 'youtube' && (
                     <div className={styles.thumbnail}>
                       <img
-                        src={
-                          post.thumbnail_image
-                            ? post.thumbnail_image
-                            : getYoutubeThumbnailUrl(post.youtube_id)
-                        }
+                        src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
                         alt=""
                       />
                     </div>
@@ -143,11 +139,7 @@ export default function List({ postsData, orderType }: ListProps) {
                     {post.board_type === 'youtube' && (
                       <div className={styles.thumbnail}>
                         <img
-                          src={
-                            post.thumbnail_image
-                              ? post.thumbnail_image
-                            : getYoutubeThumbnailUrl(post.youtube_id)
-                          }
+                          src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
                           alt=""
                         />
                       </div>
@@ -201,11 +193,7 @@ export default function List({ postsData, orderType }: ListProps) {
               {post.board_type === 'youtube' && (
                 <div className={styles.thumbnail}>
                   <img
-                    src={
-                      post.thumbnail_image
-                        ? post.thumbnail_image
-                        : getYoutubeThumbnailUrl(post.youtube_id)
-                    }
+                    src={post.thumbnail_image ? post.thumbnail_image : getYoutubeThumbnailUrl(post.youtube_id)}
                     alt=""
                   />
                 </div>

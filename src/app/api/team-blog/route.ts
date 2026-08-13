@@ -21,11 +21,7 @@ type TeamMemberRow = {
   nickname: string | null;
 };
 
-async function getUpdatedByName(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
-  siteId: string,
-  stigmaId: string,
-) {
+async function getUpdatedByName(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, siteId: string, stigmaId: string) {
   const nickname = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('nickname')

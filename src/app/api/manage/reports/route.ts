@@ -15,10 +15,7 @@ import {
   isGuidelineReportCategory,
   type GuidelineReportCategory,
 } from '@/lib/reports/guidelines';
-import {
-  getStaffMessageStatus,
-  type GuidelineAppealSenderType,
-} from '@/lib/reports/guidelineAppeals';
+import { getStaffMessageStatus, type GuidelineAppealSenderType } from '@/lib/reports/guidelineAppeals';
 
 type PostImageRow = {
   path?: string | null;

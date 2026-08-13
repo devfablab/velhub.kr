@@ -31,7 +31,8 @@ export default function Opt() {
       try {
         setErrorMessage('');
 
-        const paymentKey = normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
+        const paymentKey =
+          normalizeText(searchParams.get('paymentKey')) || normalizeText(searchParams.get('paymentId'));
         const orderId = normalizeText(searchParams.get('orderId')) || normalizeText(searchParams.get('orderNo'));
         const txId = normalizeText(searchParams.get('txId'));
         const amount = Number(normalizeText(searchParams.get('amount')));

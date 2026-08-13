@@ -228,12 +228,7 @@ export default function DonationButton(props: Props) {
             : false,
         );
 
-        setCanShowDonationButton(
-          Boolean(
-            donationStatusResponse.ok &&
-            donationStatusResult.isEnabled,
-          ),
-        );
+        setCanShowDonationButton(Boolean(donationStatusResponse.ok && donationStatusResult.isEnabled));
       } catch {
         setCanShowDonationButton(false);
       }

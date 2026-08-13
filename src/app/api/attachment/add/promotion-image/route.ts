@@ -45,18 +45,21 @@ export async function POST(request: Request) {
         position: 'centre',
       });
 
-      outputBuffer = file.type.toLowerCase() === 'image/webp'
-        ? await image.toBuffer()
-        : await image.webp({ quality: 90 }).toBuffer();
+      outputBuffer =
+        file.type.toLowerCase() === 'image/webp'
+          ? await image.toBuffer()
+          : await image.webp({ quality: 90 }).toBuffer();
     } catch {
       return Response.json({ error: '이미지 파일이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const storagePath = `${access.siteId}/${crypto.randomUUID()}.webp`;
-    const uploadResult = await access.supabaseAdmin.storage.from(SITE_PROMOTION_BUCKET).upload(storagePath, outputBuffer, {
-      contentType: 'image/webp',
-      upsert: false,
-    });
+    const uploadResult = await access.supabaseAdmin.storage
+      .from(SITE_PROMOTION_BUCKET)
+      .upload(storagePath, outputBuffer, {
+        contentType: 'image/webp',
+        upsert: false,
+      });
 
     if (uploadResult.error) {
       return Response.json({ error: '프로모션 이미지 업로드에 실패했습니다.' }, { status: 500 });
@@ -67,7 +70,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, path: storagePath, url: publicUrl.data.publicUrl ?? '' });
   } catch (unknownError) {
     return Response.json(
-      { error: unknownError instanceof Error ? unknownError.message || '프로모션 이미지 업로드에 실패했습니다.' : '프로모션 이미지 업로드에 실패했습니다.' },
+      {
+        error:
+          unknownError instanceof Error
+            ? unknownError.message || '프로모션 이미지 업로드에 실패했습니다.'
+            : '프로모션 이미지 업로드에 실패했습니다.',
+      },
       { status: 500 },
     );
   }

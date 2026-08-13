@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import {
-  canManageCommunityBoardContents,
-  getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
@@ -1143,8 +1140,7 @@ export async function GET(request: Request, context: RouteContext) {
       : null;
 
     const canViewPaidContent = isAuthor || canManageContent || paidContentAccess.can_view_paid_content;
-    let isGallerySubscriptionPreview =
-      boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
+    let isGallerySubscriptionPreview = boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
     const closedBy = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.closed_by);

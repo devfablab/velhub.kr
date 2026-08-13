@@ -145,9 +145,7 @@ export async function loadAppellantRestrictionMessageContext({
 
   const membershipResult = await supabaseAdmin
     .from('rhizome_stigmas')
-    .select(
-      'id, user_id, nickname, is_block, blocked_at, block_reason, kicked_at, kick_reason, banned_at, ban_reason',
-    )
+    .select('id, user_id, nickname, is_block, blocked_at, block_reason, kicked_at, kick_reason, banned_at, ban_reason')
     .eq('site_id', siteResult.data.id)
     .eq('user_id', stigmaResult.data.id)
     .maybeSingle();

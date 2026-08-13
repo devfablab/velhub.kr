@@ -315,7 +315,8 @@ export function getAppealTreatmentMessage({
   }
 
   if (deletionReason === 'external_review_required') {
-    const subject = category === 'illegal_filming' ? '신고된 자료가 불법촬영물등' : '신고된 내용이 불법정보 또는 허위조작정보';
+    const subject =
+      category === 'illegal_filming' ? '신고된 자료가 불법촬영물등' : '신고된 내용이 불법정보 또는 허위조작정보';
     return `${subject}에 해당하는지 판단하기 어려워 외부 심의를 요청하고 ${targetLabel}을 삭제했습니다.`;
   }
 

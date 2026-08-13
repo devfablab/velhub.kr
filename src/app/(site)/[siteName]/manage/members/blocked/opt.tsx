@@ -408,11 +408,7 @@ export default function Opt() {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.messageStatus ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => setMessageUser(user)}
-                          >
+                          <button type="button" className="button small action" onClick={() => setMessageUser(user)}>
                             메시지 보기
                           </button>
                         ) : (

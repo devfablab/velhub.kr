@@ -215,10 +215,7 @@ export async function POST(request: Request) {
         }
 
         if ((siteCountResult.count ?? 0) >= 1) {
-          return Response.json(
-            { error: '기본 오너 멤버십에서는 블로그를 1개만 개설할 수 있습니다.' },
-            { status: 403 },
-          );
+          return Response.json({ error: '기본 오너 멤버십에서는 블로그를 1개만 개설할 수 있습니다.' }, { status: 403 });
         }
       }
     } catch {

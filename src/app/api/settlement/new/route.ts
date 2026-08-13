@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
     };
 
     const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
-    
+
     let isMinorAge = false;
     const identityBirthDate = existingRow?.birth_date ? decrypt(String(existingRow.birth_date)) : null;
     if (identityBirthDate && identityBirthDate.replace(/\D/g, '').length === 8) {
@@ -193,12 +193,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: validatedInput.message }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin
-      .from('chorogons_banque')
-      .insert({
-        chorogon_id: settlementRow.id,
-        ...toSettlementPayload(validatedInput.data),
-      });
+    const { error } = await supabaseAdmin.from('chorogons_banque').insert({
+      chorogon_id: settlementRow.id,
+      ...toSettlementPayload(validatedInput.data),
+    });
 
     if (error) {
       return NextResponse.json({ message: '정산 정보 등록에 실패했습니다.' }, { status: 500 });

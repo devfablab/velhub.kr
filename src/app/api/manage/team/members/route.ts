@@ -132,12 +132,14 @@ export async function GET(request: Request) {
       return Response.json({ error: '운영자 교체 가능 여부를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const isOriginalOwner = !firstOwnerTransfer.data || firstOwnerTransfer.data.previous_owner_id === currentTeam?.user_id;
-    const availableAt = !isOriginalOwner && acceptedOwnerTransfer.data?.responded_at
-      ? new Date(
-          new Date(acceptedOwnerTransfer.data.responded_at as string).getTime() + OWNER_TRANSFER_WAIT_MS,
-        ).toISOString()
-      : null;
+    const isOriginalOwner =
+      !firstOwnerTransfer.data || firstOwnerTransfer.data.previous_owner_id === currentTeam?.user_id;
+    const availableAt =
+      !isOriginalOwner && acceptedOwnerTransfer.data?.responded_at
+        ? new Date(
+            new Date(acceptedOwnerTransfer.data.responded_at as string).getTime() + OWNER_TRANSFER_WAIT_MS,
+          ).toISOString()
+        : null;
     const hasPendingOwnerTransfer = Boolean(pendingOwnerTransfer.data);
 
     const stigmaIdList = Array.from(new Set((team.data ?? []).map((item) => item.user_id).filter(Boolean)));
@@ -158,7 +160,11 @@ export async function GET(request: Request) {
         item.id,
         {
           authUserId: item.user_id as string | null,
-          email: item.payment_email ? decrypt(item.payment_email as string) : item.email ? decrypt(item.email as string) : '',
+          email: item.payment_email
+            ? decrypt(item.payment_email as string)
+            : item.email
+              ? decrypt(item.email as string)
+              : '',
           userName: (item.user_name as string | null) ?? '',
           withdrawalStatus: item.withdrawal_status as string | null,
         },
@@ -168,7 +174,10 @@ export async function GET(request: Request) {
     const activeTeams = (team.data ?? []).filter((item) => {
       const stigma = stigmaMap.get(item.user_id as string);
       if (!stigma) return false;
-      if (stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.PENDING || stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED) {
+      if (
+        stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
+        stigma.withdrawalStatus === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED
+      ) {
         return false;
       }
       return true;
@@ -177,9 +186,7 @@ export async function GET(request: Request) {
     return Response.json({
       ownerTransfer: {
         canRequest:
-          isOwner &&
-          !hasPendingOwnerTransfer &&
-          (!availableAt || new Date(availableAt).getTime() <= Date.now()),
+          isOwner && !hasPendingOwnerTransfer && (!availableAt || new Date(availableAt).getTime() <= Date.now()),
         hasPendingRequest: hasPendingOwnerTransfer,
         availableAt,
       },
@@ -278,26 +285,26 @@ export async function PATCH(request: Request) {
       }
 
       if (team.data.role !== 'observer') {
-          const notificationType =
-            role === 'manager'
-              ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
-              : role === 'observer'
-                ? NOTIFICATION_TYPE.BLOG_MEMBER_CHANGED_TO_OBSERVER
-                : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER;
-          const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-            user_id: team.data.user_id,
-            send_user_id: access.session.stigmaId,
-            send_site_id: access.siteId,
-            send_board_id: null,
-            send_series_id: null,
-            send_post_id: null,
-            notification_type: notificationType,
-            is_read: false,
-          });
+        const notificationType =
+          role === 'manager'
+            ? NOTIFICATION_TYPE.BLOG_MEMBER_PROMOTED_TO_MANAGER
+            : role === 'observer'
+              ? NOTIFICATION_TYPE.BLOG_MEMBER_CHANGED_TO_OBSERVER
+              : NOTIFICATION_TYPE.BLOG_MANAGER_CHANGED_TO_MEMBER;
+        const notificationResult = await access.supabaseAdmin.from('notifications').insert({
+          user_id: team.data.user_id,
+          send_user_id: access.session.stigmaId,
+          send_site_id: access.siteId,
+          send_board_id: null,
+          send_series_id: null,
+          send_post_id: null,
+          notification_type: notificationType,
+          is_read: false,
+        });
 
-          if (notificationResult.error) {
-            console.error(notificationResult.error);
-          }
+        if (notificationResult.error) {
+          console.error(notificationResult.error);
+        }
       }
 
       return Response.json({
@@ -321,7 +328,7 @@ export async function PATCH(request: Request) {
       if (isSeriesAuthorResult.data && isSeriesAuthorResult.data.length > 0) {
         return Response.json(
           { error: '연재 담당 작가는 제재(차단)할 수 없습니다. 담당 작가를 먼저 변경해주세요.' },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -349,14 +356,14 @@ export async function PATCH(request: Request) {
 
     {
       const notificationResult = await access.supabaseAdmin.from('notifications').insert({
-          user_id: team.data.user_id,
-          send_user_id: access.session.stigmaId,
-          send_site_id: access.siteId,
-          send_board_id: null,
-          send_series_id: null,
-          send_post_id: null,
-          notification_type: isBlock ? NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED : NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED,
-          is_read: false,
+        user_id: team.data.user_id,
+        send_user_id: access.session.stigmaId,
+        send_site_id: access.siteId,
+        send_board_id: null,
+        send_series_id: null,
+        send_post_id: null,
+        notification_type: isBlock ? NOTIFICATION_TYPE.SITE_MEMBER_BLOCKED : NOTIFICATION_TYPE.SITE_MEMBER_UNBLOCKED,
+        is_read: false,
       });
 
       if (notificationResult.error) {

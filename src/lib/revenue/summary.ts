@@ -85,10 +85,7 @@ export async function getRevenueSummary(context: RevenueContext): Promise<Revenu
 
   const paymentResult =
     sitePaymentIds.length > 0
-      ? await context.supabase
-          .from('payments')
-          .select('*')
-          .in('id', sitePaymentIds)
+      ? await context.supabase.from('payments').select('*').in('id', sitePaymentIds)
       : { data: [], error: null };
 
   if (paymentResult.error) {

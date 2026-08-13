@@ -92,19 +92,9 @@ function decryptName(value: string | null | undefined) {
   }
 }
 
-export async function getGuidelineAppealAuthorName({
-  siteId,
-  stigmaId,
-}: {
-  siteId: string;
-  stigmaId: string;
-}) {
+export async function getGuidelineAppealAuthorName({ siteId, stigmaId }: { siteId: string; stigmaId: string }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('id, user_name')
-    .eq('id', stigmaId)
-    .maybeSingle();
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('id, user_name').eq('id', stigmaId).maybeSingle();
 
   if (stigmaResult.error || !stigmaResult.data) {
     return '사용자';
@@ -196,16 +186,8 @@ export async function loadGuidelineAppealContext(reportId: string): Promise<Guid
   }
 
   const [siteResult, boardResult] = await Promise.all([
-    supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_key, site_label')
-      .eq('id', report.site_id)
-      .maybeSingle(),
-    supabaseAdmin
-      .from('boards')
-      .select('id, board_key, board_label')
-      .eq('id', post.board_id)
-      .maybeSingle(),
+    supabaseAdmin.from('rhizomes').select('id, site_key, site_label').eq('id', report.site_id).maybeSingle(),
+    supabaseAdmin.from('boards').select('id, board_key, board_label').eq('id', post.board_id).maybeSingle(),
   ]);
 
   if (siteResult.error || !siteResult.data || boardResult.error || !boardResult.data) {
@@ -253,13 +235,7 @@ export async function loadGuidelineAppealMessages(context: GuidelineAppealContex
   );
 }
 
-export async function loadGuidelineAppealItems({
-  stigmaId,
-  origin,
-}: {
-  stigmaId: string;
-  origin: string;
-}) {
+export async function loadGuidelineAppealItems({ stigmaId, origin }: { stigmaId: string; origin: string }) {
   const supabaseAdmin = getSupabaseAdmin();
   const [postsResult, commentsResult] = await Promise.all([
     supabaseAdmin
@@ -377,7 +353,9 @@ export async function loadGuidelineAppealItems({
       const site = siteById.get(report.site_id);
       const board = post ? boardById.get(post.board_id) : null;
       const deletionMessage =
-        report.target_type === 'comment' ? normalizeText(comment?.deleted_message) : normalizeText(post?.closed_message);
+        report.target_type === 'comment'
+          ? normalizeText(comment?.deleted_message)
+          : normalizeText(post?.closed_message);
 
       if (!post || !site || !board || !deletionMessage) {
         return [];

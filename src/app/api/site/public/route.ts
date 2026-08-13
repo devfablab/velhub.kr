@@ -52,11 +52,7 @@ export async function GET(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const owner = await supabaseAdmin
-      .from('stigmas')
-      .select('id')
-      .eq('id', rhizome.data.owner_id)
-      .maybeSingle();
+    const owner = await supabaseAdmin.from('stigmas').select('id').eq('id', rhizome.data.owner_id).maybeSingle();
 
     if (owner.error) {
       return Response.json({ error: '운영자 정보를 불러오지 못했습니다.' }, { status: 500 });

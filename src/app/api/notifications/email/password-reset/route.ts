@@ -44,7 +44,10 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '비밀번호 재설정 메일 처리 중 오류가 발생했습니다.' }, { status: 500 });
+      return Response.json(
+        { error: unknownError.message || '비밀번호 재설정 메일 처리 중 오류가 발생했습니다.' },
+        { status: 500 },
+      );
     }
 
     return Response.json({ error: '비밀번호 재설정 메일 처리 중 오류가 발생했습니다.' }, { status: 500 });

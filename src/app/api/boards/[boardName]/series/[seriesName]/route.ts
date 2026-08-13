@@ -76,11 +76,7 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (seriesResult.data.user_id) {
       const [stigmaResult, memberResult] = await Promise.all([
-        supabaseAdmin
-          .from('stigmas')
-          .select('id, email, user_name')
-          .eq('id', seriesResult.data.user_id)
-          .maybeSingle(),
+        supabaseAdmin.from('stigmas').select('id, email, user_name').eq('id', seriesResult.data.user_id).maybeSingle(),
         supabaseAdmin
           .from('rhizome_stigmas')
           .select('user_id, nickname')

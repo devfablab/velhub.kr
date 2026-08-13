@@ -131,7 +131,11 @@ export default function Opt() {
           )}
           {boardName && seriesName ? (
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-              <Anchor type="button" className="button medium action" href={`/${siteName}/${boardName}?series=${seriesName}`}>
+              <Anchor
+                type="button"
+                className="button medium action"
+                href={`/${siteName}/${boardName}?series=${seriesName}`}
+              >
                 연재로 돌아가기
               </Anchor>
               <Anchor type="button" className="button medium submit" href={`/${siteName}`}>

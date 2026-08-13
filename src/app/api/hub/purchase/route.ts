@@ -300,10 +300,7 @@ export async function GET() {
     const billingMethods = (billingMethodResult.data ?? []) as unknown as BillingMethodRow[];
 
     const siteTargetIds = payments
-      .filter(
-        (payment) =>
-          payment.target_type === PAYMENT_TARGET_TYPE.SITE,
-      )
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SITE)
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 

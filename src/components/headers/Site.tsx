@@ -711,22 +711,28 @@ export default function HeaderSite() {
                       <span>마이허브</span>
                     </Anchor>
                   </MenuItem>,
-                  ...(userProfile.isAuthor ? [
-                    <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
-                      <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
-                        <MenuBookRoundedIcon fontSize="small" />
-                        <span>작가의 서재</span>
-                      </Anchor>
-                    </MenuItem>
-                  ] : []),
-                  ...(userProfile.hasAffettoMyPosts ? [
-                    <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                      <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
-                        <InterestsOutlinedIcon fontSize="small" />
-                        <span>독자의 서재</span>
-                      </Anchor>
-                    </MenuItem>
-                  ] : []),
+                  ...(userProfile.isAuthor
+                    ? [
+                        <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
+                          <Anchor
+                            href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}
+                          >
+                            <MenuBookRoundedIcon fontSize="small" />
+                            <span>작가의 서재</span>
+                          </Anchor>
+                        </MenuItem>,
+                      ]
+                    : []),
+                  ...(userProfile.hasAffettoMyPosts
+                    ? [
+                        <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
+                          <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                            <InterestsOutlinedIcon fontSize="small" />
+                            <span>독자의 서재</span>
+                          </Anchor>
+                        </MenuItem>,
+                      ]
+                    : []),
                   <MenuItem key="settings" onClick={handleCloseProfileMenu}>
                     <Anchor href="/settings">
                       <SettingsOutlinedIcon fontSize="small" />

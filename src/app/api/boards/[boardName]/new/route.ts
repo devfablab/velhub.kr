@@ -648,7 +648,11 @@ export async function POST(request: Request, context: RouteContext) {
       siteId: rhizomeData.id,
     });
 
-    if (!session.authUserId || !session.stigmaId || (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member')) {
+    if (
+      !session.authUserId ||
+      !session.stigmaId ||
+      (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member')
+    ) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -795,10 +799,7 @@ export async function POST(request: Request, context: RouteContext) {
       });
 
       if (!seriesResult.data.user_id && !soloBlog) {
-        return Response.json(
-          { error: '연재 담당 작가가 지정되지 않아 글을 작성할 수 없습니다.' },
-          { status: 400 },
-        );
+        return Response.json({ error: '연재 담당 작가가 지정되지 않아 글을 작성할 수 없습니다.' }, { status: 400 });
       }
 
       if (seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {

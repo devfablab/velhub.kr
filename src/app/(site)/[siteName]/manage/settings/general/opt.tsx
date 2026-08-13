@@ -1040,8 +1040,8 @@ export default function Opt() {
                     fullWidth
                     size="small"
                     helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
-                    inputProps={{ maxLength: 15 }}
                     slotProps={{
+                      htmlInput: { maxLength: 15 },
                       input: {
                         startAdornment: <InputAdornment position="start">{baseUrl}/</InputAdornment>,
                         endAdornment: (
@@ -1116,14 +1116,32 @@ export default function Opt() {
                   helperText={!hasOwnerDomainFeature ? '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.' : ''}
                 />
                 <Stack gap={1} direction="row" justifyContent="flex-end">
-                  <button type="button" className={`button ${isMobile ? 'small' : 'medium'} cancel`} onClick={() => cancelEdit()}>취소</button>
-                  <button type="button" className={`button ${isMobile ? 'small' : 'medium'} submit`} onClick={() => void saveField('custom_domain')} disabled={isSubmitting || !hasOwnerDomainFeature}>수정 완료</button>
+                  <button
+                    type="button"
+                    className={`button ${isMobile ? 'small' : 'medium'} cancel`}
+                    onClick={() => cancelEdit()}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className={`button ${isMobile ? 'small' : 'medium'} submit`}
+                    onClick={() => void saveField('custom_domain')}
+                    disabled={isSubmitting || !hasOwnerDomainFeature}
+                  >
+                    수정 완료
+                  </button>
                 </Stack>
               </Stack>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                 <Typography>{siteInfo.custom_domain || '미설정'}</Typography>
-                <button type="button" className="button small action" onClick={() => startEdit('custom_domain', siteInfo.custom_domain)} disabled={!hasOwnerDomainFeature}>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => startEdit('custom_domain', siteInfo.custom_domain)}
+                  disabled={!hasOwnerDomainFeature}
+                >
                   수정
                 </button>
               </Stack>
@@ -1150,14 +1168,32 @@ export default function Opt() {
                     <MenuItem value="team">팀 블로그</MenuItem>
                   </Select>
                   <Stack gap={1} direction="row" justifyContent="flex-end">
-                    <button type="button" className={`button ${isMobile ? 'small' : 'medium'} cancel`} onClick={() => cancelEdit()}>취소</button>
-                    <button type="button" className={`button ${isMobile ? 'small' : 'medium'} submit`} onClick={() => void saveField('blog_type')} disabled={isSubmitting || !hasOwnerDomainFeature}>수정 완료</button>
+                    <button
+                      type="button"
+                      className={`button ${isMobile ? 'small' : 'medium'} cancel`}
+                      onClick={() => cancelEdit()}
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      className={`button ${isMobile ? 'small' : 'medium'} submit`}
+                      onClick={() => void saveField('blog_type')}
+                      disabled={isSubmitting || !hasOwnerDomainFeature}
+                    >
+                      수정 완료
+                    </button>
                   </Stack>
                 </Stack>
               ) : (
                 <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
                   <Typography>{blogType === 'team' ? '팀 블로그' : '1인 블로그'}</Typography>
-                  <button type="button" className="button small action" onClick={() => startEdit('blog_type', blogType || 'personal')} disabled={!hasOwnerDomainFeature}>
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={() => startEdit('blog_type', blogType || 'personal')}
+                    disabled={!hasOwnerDomainFeature}
+                  >
                     수정
                   </button>
                 </Stack>
@@ -1180,8 +1216,8 @@ export default function Opt() {
                     fullWidth
                     size="small"
                     helperText={`${String(draftValue).length} / 10`}
-                    inputProps={{ maxLength: 10 }}
                     slotProps={{
+                      htmlInput: { maxLength: 10 },
                       input: {
                         endAdornment: (
                           <InputAdornment position="end">
@@ -1248,7 +1284,7 @@ export default function Opt() {
                   size="small"
                   minRows={4}
                   helperText={`${String(draftValue).length} / 52`}
-                  inputProps={{ maxLength: 52 }}
+                  slotProps={{ htmlInput: { maxLength: 52 } }}
                 />
                 <Stack
                   direction="row"

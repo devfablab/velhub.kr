@@ -226,7 +226,7 @@ export async function getCommunityManagerAccess(
     .from('community_manage_role')
     .select('role, board_id')
     .eq('community_id', community.id)
-      .eq('manager_id', actorRhizomeStigmaId);
+    .eq('manager_id', actorRhizomeStigmaId);
 
   if (actorManageRoleResult.error) {
     throw new Error('접근 권한이 없습니다.');

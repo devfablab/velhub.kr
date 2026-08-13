@@ -1,9 +1,6 @@
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import {
-  cancelAccountWithdrawal,
-  requestAccountWithdrawal,
-} from '@/lib/users/accountWithdrawalServer';
+import { cancelAccountWithdrawal, requestAccountWithdrawal } from '@/lib/users/accountWithdrawalServer';
 
 export async function GET() {
   try {
@@ -59,9 +56,7 @@ export async function POST() {
     if (unknownError instanceof Error) {
       const errorMessage = unknownError.message || '탈퇴 신청에 실패했습니다.';
       const status =
-        errorMessage === '운영자 또는 매니저 역할을 하고 있는 사이트가 있어서 탈퇴 신청하실 수 없습니다.'
-          ? 409
-          : 500;
+        errorMessage === '운영자 또는 매니저 역할을 하고 있는 사이트가 있어서 탈퇴 신청하실 수 없습니다.' ? 409 : 500;
 
       return Response.json({ error: errorMessage }, { status });
     }

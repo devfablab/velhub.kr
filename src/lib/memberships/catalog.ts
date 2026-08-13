@@ -75,9 +75,7 @@ export function getMembershipPrice(featureKeys: MembershipFeatureKey[], membersh
   const availableFeatures = getMembershipFeatures(group);
 
   if (selectedFeatures.length === availableFeatures.length && availableFeatures.length > 0) {
-    return membershipType === 'affetto'
-      ? AFFETTO_PACKAGE_PRICE
-      : MEMBERSHIP_PACKAGE_PRICE[membershipType];
+    return membershipType === 'affetto' ? AFFETTO_PACKAGE_PRICE : MEMBERSHIP_PACKAGE_PRICE[membershipType];
   }
 
   return selectedFeatures.reduce((total, key) => total + (getMembershipFeature(key)?.price ?? 0), 0);

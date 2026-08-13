@@ -300,15 +300,9 @@ export async function cancelMemberSiteSubscriptions({
   const subscriptionsResult = await supabaseAdmin
     .from('subscriptions')
     .select(
-      [
-        'id',
-        'subscription_type',
-        'target_type',
-        'target_id',
-        'last_payment_id',
-        'next_billing_at',
-        'canceled_at',
-      ].join(', '),
+      ['id', 'subscription_type', 'target_type', 'target_id', 'last_payment_id', 'next_billing_at', 'canceled_at'].join(
+        ', ',
+      ),
     )
     .eq('subscriber_user_id', stigmaId)
     .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])

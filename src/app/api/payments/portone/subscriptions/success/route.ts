@@ -300,11 +300,7 @@ async function getSubscriptionTarget({
   seriesName: string;
 }): Promise<SubscriptionTarget> {
   if (targetType === 'site') {
-    const siteResult = await supabaseAdmin
-      .from('rhizomes')
-      .select('id, site_label')
-      .eq('id', siteId)
-      .maybeSingle();
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('id', siteId).maybeSingle();
 
     if (siteResult.error) {
       throw new Error('블로그 정보를 확인하지 못했습니다.');
@@ -695,7 +691,7 @@ export async function POST(request: Request) {
       const paymentResponse = await getPortOnePayment(paymentId);
       assertPortOnePaidPayment(paymentResponse);
       const paidAmount = getPortOnePaidAmount(paymentResponse);
-      
+
       if (paidAmount !== setting.price) {
         return Response.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
       }

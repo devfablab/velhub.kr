@@ -200,10 +200,12 @@ export default function Verify2fa() {
               fullWidth
               autoComplete="one-time-code"
               size="small"
-              inputProps={{
-                inputMode: 'numeric',
-                pattern: '[0-9]*',
-                maxLength: 6,
+              slotProps={{
+                htmlInput: {
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 6,
+                },
               }}
             />
           </Stack>
@@ -239,10 +241,12 @@ export default function Verify2fa() {
                 fullWidth
                 autoComplete="one-time-code"
                 size="small"
-                inputProps={{
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                  maxLength: 6,
+                slotProps={{
+                  htmlInput: {
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                    maxLength: 6,
+                  },
                 }}
               />
             </Stack>

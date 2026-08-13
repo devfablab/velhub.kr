@@ -395,7 +395,6 @@ export default function Opt({ isCommunity }: Props) {
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
 
-
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
@@ -1121,7 +1120,16 @@ export default function Opt({ isCommunity }: Props) {
                     ) : null}
                     {content.is_closed ? (
                       content.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
-                        <small className="alert error" style={{ padding: '2px 6px', fontSize: '12px', display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }}>
+                        <small
+                          className="alert error"
+                          style={{
+                            padding: '2px 6px',
+                            fontSize: '12px',
+                            display: 'inline-block',
+                            verticalAlign: 'middle',
+                            marginRight: '4px',
+                          }}
+                        >
                           정산 오류
                         </small>
                       ) : (

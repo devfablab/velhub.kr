@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
 import { calculateMembershipRefundAmount } from '@/lib/payments/refunds';
-import {
-  PAYMENT_STATUS,
-  PAYMENT_TARGET_TYPE,
-  SUBSCRIPTION_STATUS,
-  SUBSCRIPTION_TYPE,
-} from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -90,10 +85,7 @@ export async function POST(request: Request) {
 
   if (updateResult.error) {
     console.error(updateResult.error);
-    return NextResponse.json(
-      { error: '멤버십 구독을 취소하지 못했습니다.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: '멤버십 구독을 취소하지 못했습니다.' }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -102,5 +94,3 @@ export async function POST(request: Request) {
     currentPeriodEnd: subscription.current_period_end,
   });
 }
-
-

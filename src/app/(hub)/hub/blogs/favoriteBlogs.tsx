@@ -54,14 +54,14 @@ export default function FavoriteBlogs() {
       setErrorMessage('');
       const [blogsRes, foldersRes] = await Promise.all([
         fetch('/api/hub/blog-favorites', { credentials: 'include' }),
-        fetch('/api/hub/favorite-folders', { credentials: 'include' })
+        fetch('/api/hub/favorite-folders', { credentials: 'include' }),
       ]);
 
-      const blogsResult = await blogsRes.json() as FavoriteBlogsResponse;
+      const blogsResult = (await blogsRes.json()) as FavoriteBlogsResponse;
       const foldersResult = await foldersRes.json();
 
       if (!blogsRes.ok) throw new Error(blogsResult.error ?? 'Error loading blogs');
-      
+
       setBlogs(Array.isArray(blogsResult.blogs) ? blogsResult.blogs : []);
       setFolders(foldersResult.folders || []);
     } catch (e: any) {
@@ -80,7 +80,7 @@ export default function FavoriteBlogs() {
     await fetch('/api/hub/favorite-folders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label })
+      body: JSON.stringify({ label }),
     });
     await loadData();
   };
@@ -89,7 +89,7 @@ export default function FavoriteBlogs() {
     await fetch(`/api/hub/favorite-folders/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label })
+      body: JSON.stringify({ label }),
     });
     await loadData();
   };
@@ -101,17 +101,17 @@ export default function FavoriteBlogs() {
 
   const handleMoveSites = async (targetFolderId: string | null) => {
     if (selectedSiteIds.size === 0) return;
-    const updates = Array.from(selectedSiteIds).map(id => {
-      const blog = blogs.find(b => b.id === id);
+    const updates = Array.from(selectedSiteIds).map((id) => {
+      const blog = blogs.find((b) => b.id === id);
       return { id, folder_id: targetFolderId, sort_order: blog?.sortOrder || 0 };
     });
-    
+
     await fetch('/api/hub/blog-favorites/move', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ updates })
+      body: JSON.stringify({ updates }),
     });
-    
+
     setSelectedSiteIds(new Set());
     await loadData();
   };
@@ -138,10 +138,10 @@ export default function FavoriteBlogs() {
     }
 
     // Reorder locally
-    const folderBlogs = blogs.filter(b => b.folderId === item.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
-    const draggedIndex = folderBlogs.findIndex(b => b.id === draggedItem.id);
-    const dropIndex = folderBlogs.findIndex(b => b.id === item.id);
-    
+    const folderBlogs = blogs.filter((b) => b.folderId === item.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
+    const draggedIndex = folderBlogs.findIndex((b) => b.id === draggedItem.id);
+    const dropIndex = folderBlogs.findIndex((b) => b.id === item.id);
+
     folderBlogs.splice(draggedIndex, 1);
     folderBlogs.splice(dropIndex, 0, draggedItem);
 
@@ -149,14 +149,14 @@ export default function FavoriteBlogs() {
     const updates = folderBlogs.map((b, index) => ({
       id: b.id,
       folder_id: b.folderId,
-      sort_order: index
+      sort_order: index,
     }));
 
     // Optimistic update
-    setBlogs(prev => {
+    setBlogs((prev) => {
       const newBlogs = [...prev];
-      updates.forEach(u => {
-        const idx = newBlogs.findIndex(nb => nb.id === u.id);
+      updates.forEach((u) => {
+        const idx = newBlogs.findIndex((nb) => nb.id === u.id);
         if (idx !== -1) newBlogs[idx].sortOrder = u.sort_order;
       });
       return newBlogs;
@@ -169,14 +169,14 @@ export default function FavoriteBlogs() {
     await fetch('/api/hub/blog-favorites/move', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ updates })
+      body: JSON.stringify({ updates }),
     });
   };
 
   // --- Render Helpers ---
   const renderSite = (blog: FavoriteBlogRow) => (
-    <div 
-      key={blog.id} 
+    <div
+      key={blog.id}
       className={`${styles['join-site']} ${dragOverItem?.id === blog.id ? 'drag-over' : ''}`}
       draggable
       onDragStart={(e) => handleDragStart(e, blog)}
@@ -184,8 +184,8 @@ export default function FavoriteBlogs() {
       onDrop={(e) => handleDrop(e, blog)}
       style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
     >
-      <input 
-        type="checkbox" 
+      <input
+        type="checkbox"
         checked={selectedSiteIds.has(blog.id)}
         onChange={(e) => {
           const newSet = new Set(selectedSiteIds);
@@ -217,11 +217,16 @@ export default function FavoriteBlogs() {
   );
 
   if (isLoading) return null;
-  if (errorMessage) return <section className={`paper ${styles.paper}`}><p>{errorMessage}</p></section>;
+  if (errorMessage)
+    return (
+      <section className={`paper ${styles.paper}`}>
+        <p>{errorMessage}</p>
+      </section>
+    );
   if (blogs.length === 0) return null;
 
-  const defaultFolderBlogs = blogs.filter(b => !b.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
-  
+  const defaultFolderBlogs = blogs.filter((b) => !b.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
+
   return (
     <section className={`paper ${styles.paper} ${styles.join}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -231,7 +236,7 @@ export default function FavoriteBlogs() {
         </button>
       </div>
 
-      <FolderModals 
+      <FolderModals
         isAddFolderOpen={isAddFolderOpen}
         setIsAddFolderOpen={setIsAddFolderOpen}
         onAddFolder={handleAddFolder}
@@ -257,21 +262,19 @@ export default function FavoriteBlogs() {
         </div>
 
         {/* Custom Folders */}
-        {folders.map(folder => {
-          const folderBlogs = blogs.filter(b => b.folderId === folder.id).sort((a, b) => a.sortOrder - b.sortOrder);
+        {folders.map((folder) => {
+          const folderBlogs = blogs.filter((b) => b.folderId === folder.id).sort((a, b) => a.sortOrder - b.sortOrder);
           return (
             <div key={folder.id} style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}
+              >
                 <h3 style={{ fontSize: '1.2em' }}>{folder.label}</h3>
                 <button type="button" className="button small" onClick={() => setEditFolder(folder)}>
                   폴더 수정
                 </button>
               </div>
-              {folderBlogs.length > 0 ? (
-                folderBlogs.map(renderSite)
-              ) : (
-                <p style={{ color: '#888' }}>항목이 없습니다.</p>
-              )}
+              {folderBlogs.length > 0 ? folderBlogs.map(renderSite) : <p style={{ color: '#888' }}>항목이 없습니다.</p>}
             </div>
           );
         })}
@@ -279,25 +282,27 @@ export default function FavoriteBlogs() {
 
       {/* Floating Move Button */}
       {selectedSiteIds.size > 0 && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: '#333',
-          color: '#fff',
-          padding: '12px 24px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          zIndex: 50
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#333',
+            color: '#fff',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            zIndex: 50,
+          }}
+        >
           <span>{selectedSiteIds.size}개 사이트 선택됨</span>
-          <button 
-            type="button" 
-            className="button action" 
+          <button
+            type="button"
+            className="button action"
             onClick={() => setIsMoveSitesOpen(true)}
             style={{ background: '#007aff', color: '#fff', border: 'none' }}
           >
@@ -305,12 +310,16 @@ export default function FavoriteBlogs() {
           </button>
         </div>
       )}
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .drag-over {
           border-top: 2px solid #007aff;
         }
-      `}} />
+      `,
+        }}
+      />
     </section>
   );
 }

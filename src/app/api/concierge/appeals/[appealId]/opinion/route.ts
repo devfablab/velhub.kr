@@ -123,7 +123,11 @@ async function getContentAuthorId(report: ReportRow) {
   }
 
   if (report.target_type === 'comment' && report.comment_id) {
-    const result = await supabaseAdmin.from('post_comments').select('user_id').eq('id', report.comment_id).maybeSingle();
+    const result = await supabaseAdmin
+      .from('post_comments')
+      .select('user_id')
+      .eq('id', report.comment_id)
+      .maybeSingle();
     return result.error ? null : normalizeText(result.data?.user_id);
   }
 
@@ -134,7 +138,12 @@ async function setEditPermission(report: ReportRow, expAt: string) {
   const supabaseAdmin = getSupabaseAdmin();
 
   if (report.target_type === 'post' && report.post_id) {
-    const result = await supabaseAdmin.from('posts').update({ exp_at: expAt }).eq('id', report.post_id).select('id').maybeSingle();
+    const result = await supabaseAdmin
+      .from('posts')
+      .update({ exp_at: expAt })
+      .eq('id', report.post_id)
+      .select('id')
+      .maybeSingle();
 
     if (result.error || !result.data) {
       throw new Error('게시물 수정 권한을 제공하지 못했습니다.');

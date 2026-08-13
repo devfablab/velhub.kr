@@ -98,11 +98,7 @@ async function getUserDisplayName(siteId: string, userId: string | null | undefi
     return normalizeText(nicknameResult.data.nickname);
   }
 
-  const stigmaResult = await supabaseAdmin
-    .from('stigmas')
-    .select('user_name')
-    .eq('id', normalizedUserId)
-    .maybeSingle();
+  const stigmaResult = await supabaseAdmin.from('stigmas').select('user_name').eq('id', normalizedUserId).maybeSingle();
 
   if (!stigmaResult.error && stigmaResult.data?.user_name) {
     try {

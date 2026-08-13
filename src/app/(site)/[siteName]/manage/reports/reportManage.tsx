@@ -515,10 +515,9 @@ export default function ReportManage({ targetType }: ReportManageProps) {
     setErrorMessage('');
 
     const searchParams = new URLSearchParams({ siteName });
-    const response = await fetch(
-      `/api/manage/reports/${report.id}/appeal-messages?${searchParams.toString()}`,
-      { credentials: 'include' },
-    );
+    const response = await fetch(`/api/manage/reports/${report.id}/appeal-messages?${searchParams.toString()}`, {
+      credentials: 'include',
+    });
     const result = (await response.json().catch(() => ({
       error: '소명 메시지 응답을 확인하지 못했습니다.',
     }))) as AppealMessagesResponse;
@@ -956,7 +955,9 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                             >
                               최종 판단하기
                             </button>
-                          ) : (getHandlingResultLabel(report) ?? '-')}
+                          ) : (
+                            (getHandlingResultLabel(report) ?? '-')
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -994,14 +995,12 @@ export default function ReportManage({ targetType }: ReportManageProps) {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {canFinalize(report) && !showPast ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => handleOpenFinal(report)}
-                          >
+                          <button type="button" className="button small action" onClick={() => handleOpenFinal(report)}>
                             최종 판단하기
                           </button>
-                        ) : (getHandlingResultLabel(report) ?? '-')}
+                        ) : (
+                          (getHandlingResultLabel(report) ?? '-')
+                        )}
                       </TableCell>
                     </TableRow>
                   );
@@ -1075,12 +1074,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             className="VhiDrawer-bottom"
           >
             <h2>소명 메시지</h2>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseMessages}
-              disabled={messageSaving}
-            >
+            <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
               <CloseRoundedIcon />
             </button>
 
@@ -1116,12 +1110,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             className="VhiDialog"
           >
             <DialogTitle>소명 메시지</DialogTitle>
-            <button
-              type="button"
-              className="close-button"
-              onClick={handleCloseMessages}
-              disabled={messageSaving}
-            >
+            <button type="button" className="close-button" onClick={handleCloseMessages} disabled={messageSaving}>
               <CloseRoundedIcon />
             </button>
             <DialogContent>{messageContent}</DialogContent>
@@ -1146,13 +1135,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </Dialog>
         )}
 
-        <Dialog
-          open={Boolean(finalReport)}
-          onClose={handleCloseFinal}
-          fullWidth
-          maxWidth="xs"
-          className="VhiDialog"
-        >
+        <Dialog open={Boolean(finalReport)} onClose={handleCloseFinal} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>최종 판단</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseFinal} disabled={finalSaving}>
             <CloseRoundedIcon />

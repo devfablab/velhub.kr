@@ -10,11 +10,7 @@ type RouteContext = {
   }>;
 };
 
-async function getUpdatedByName(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
-  siteId: string,
-  stigmaId: string,
-) {
+async function getUpdatedByName(supabaseAdmin: ReturnType<typeof getSupabaseAdmin>, siteId: string, stigmaId: string) {
   const nickname = await supabaseAdmin
     .from('rhizome_stigmas')
     .select('nickname')
@@ -147,11 +143,7 @@ export async function GET(_request: Request, context: RouteContext) {
         .eq('site_id', access.rhizome.id)
         .maybeSingle(),
       access.rhizome.site_type === 'blog'
-        ? access.supabaseAdmin
-            .from('blogs')
-            .select('blog_type')
-            .eq('site_id', access.rhizome.id)
-            .maybeSingle()
+        ? access.supabaseAdmin.from('blogs').select('blog_type').eq('site_id', access.rhizome.id).maybeSingle()
         : Promise.resolve({ data: null, error: null }),
       import('@/lib/memberships/features').then((m) => m.getMembershipFeatures(access.rhizome.owner_id as string)),
     ]);

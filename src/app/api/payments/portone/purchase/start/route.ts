@@ -150,11 +150,7 @@ async function getPurchaseTarget({
   }
 
   if (site.site_type === 'blog') {
-    const blogResult = await supabaseAdmin
-      .from('blogs')
-      .select('blog_type')
-      .eq('site_id', site.id)
-      .maybeSingle();
+    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle();
 
     if (blogResult.data?.blog_type === 'team') {
       throw new Error('팀 블로그의 연재글은 소장(구매)할 수 없습니다.');

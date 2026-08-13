@@ -40,10 +40,7 @@ async function getSelectorData(stigmaId: string) {
       .eq('published_status', 'published')
       .eq('is_closed', false)
       .order('published_at', { ascending: false }),
-    supabaseAdmin
-      .from('membership_selectors')
-      .select('selector_type, target_id')
-      .eq('user_id', stigmaId),
+    supabaseAdmin.from('membership_selectors').select('selector_type, target_id').eq('user_id', stigmaId),
   ]);
   if (sitesResult.error) {
     console.error('[Membership Selectors API] Failed to fetch sites:', sitesResult.error);
@@ -63,7 +60,11 @@ async function getSelectorData(stigmaId: string) {
   const ownSiteIds = new Set(sites.map((site) => site.id));
   const siteIds = Array.from(new Set(posts.map((post) => post.site_id).filter((siteId) => !ownSiteIds.has(siteId))));
   const otherSitesResult = siteIds.length
-    ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label, site_type').in('id', siteIds).eq('is_shutdown', false)
+    ? await supabaseAdmin
+        .from('rhizomes')
+        .select('id, site_key, site_label, site_type')
+        .in('id', siteIds)
+        .eq('is_shutdown', false)
     : { data: [], error: null };
 
   if (otherSitesResult.error) throw new Error('연재글 사이트 정보를 불러오지 못했습니다.');
@@ -72,7 +73,13 @@ async function getSelectorData(stigmaId: string) {
   const toPost = (post: Post): PostOption | null => {
     const site = siteMap.get(post.site_id);
     return site
-      ? { id: post.id, subject: post.subject ?? '제목 없음', slug: post.slug, siteKey: site.site_key, siteLabel: site.site_label }
+      ? {
+          id: post.id,
+          subject: post.subject ?? '제목 없음',
+          slug: post.slug,
+          siteKey: site.site_key,
+          siteLabel: site.site_label,
+        }
       : null;
   };
 
@@ -84,9 +91,20 @@ async function getSelectorData(stigmaId: string) {
 
   return {
     features: { ownerLounge: features.has('owner_lounge'), creatorLounge: features.has('creator_lounge') },
-    sites: sites.map((site) => ({ id: site.id, siteKey: site.site_key, siteLabel: site.site_label, siteType: site.site_type })),
-    ownPosts: posts.filter((post) => ownSiteIds.has(post.site_id)).map(toPost).filter(isPostOption),
-    otherPosts: posts.filter((post) => !ownSiteIds.has(post.site_id)).map(toPost).filter(isPostOption),
+    sites: sites.map((site) => ({
+      id: site.id,
+      siteKey: site.site_key,
+      siteLabel: site.site_label,
+      siteType: site.site_type,
+    })),
+    ownPosts: posts
+      .filter((post) => ownSiteIds.has(post.site_id))
+      .map(toPost)
+      .filter(isPostOption),
+    otherPosts: posts
+      .filter((post) => !ownSiteIds.has(post.site_id))
+      .map(toPost)
+      .filter(isPostOption),
     selections,
   };
 }
@@ -98,7 +116,10 @@ export async function GET() {
   try {
     return NextResponse.json(await getSelectorData(currentStigma.stigmaId));
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.' }, { status: 500 });
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.' },
+      { status: 500 },
+    );
   }
 }
 
@@ -129,7 +150,9 @@ export async function PUT(request: Request) {
     };
     const enabledTypes: SelectorType[] = [
       ...(selectorData.features.ownerLounge ? (['owner_site'] as const) : []),
-      ...(selectorData.features.creatorLounge ? (['creator_site', 'creator_own_post', 'creator_other_post'] as const) : []),
+      ...(selectorData.features.creatorLounge
+        ? (['creator_site', 'creator_own_post', 'creator_other_post'] as const)
+        : []),
     ];
 
     for (const type of enabledTypes) {
@@ -144,7 +167,11 @@ export async function PUT(request: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
     const deleteResult = enabledTypes.length
-      ? await supabaseAdmin.from('membership_selectors').delete().eq('user_id', currentStigma.stigmaId).in('selector_type', enabledTypes)
+      ? await supabaseAdmin
+          .from('membership_selectors')
+          .delete()
+          .eq('user_id', currentStigma.stigmaId)
+          .in('selector_type', enabledTypes)
       : { error: null };
     if (deleteResult.error) {
       console.error('[Membership Selectors API] Failed to delete old selections:', deleteResult.error);
@@ -152,7 +179,9 @@ export async function PUT(request: Request) {
     }
 
     const rows = enabledTypes.flatMap((selectorType) =>
-      values[selectorType] ? [{ user_id: currentStigma.stigmaId, selector_type: selectorType, target_id: values[selectorType] }] : [],
+      values[selectorType]
+        ? [{ user_id: currentStigma.stigmaId, selector_type: selectorType, target_id: values[selectorType] }]
+        : [],
     );
     if (rows.length) {
       const insertResult = await supabaseAdmin.from('membership_selectors').insert(rows);
@@ -165,6 +194,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({ message: '라운지 노출 대상을 저장했습니다.' });
   } catch (error) {
     console.error('[Membership Selectors API] PUT Error:', error);
-    return NextResponse.json({ message: error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.' }, { status: 500 });
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.' },
+      { status: 500 },
+    );
   }
 }

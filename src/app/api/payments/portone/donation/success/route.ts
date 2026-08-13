@@ -407,13 +407,7 @@ async function sendDonationPaymentEmail({
   }
 }
 
-async function getStigmaEmail({
-  supabaseAdmin,
-  stigmaId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  stigmaId: string;
-}) {
+async function getStigmaEmail({ supabaseAdmin, stigmaId }: { supabaseAdmin: SupabaseAdminClient; stigmaId: string }) {
   const stigmaResult = await supabaseAdmin.from('stigmas').select('email').eq('id', stigmaId).maybeSingle();
 
   if (stigmaResult.error) {

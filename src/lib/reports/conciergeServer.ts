@@ -390,7 +390,11 @@ function getRightsDetails(report: RawReport, reportUrl: string | null): ReportDe
   ];
 }
 
-function getDetails(report: UnifiedRawReport, targetType: ReportTargetType | null, reportUrl: string | null): ReportDetail[] {
+function getDetails(
+  report: UnifiedRawReport,
+  targetType: ReportTargetType | null,
+  reportUrl: string | null,
+): ReportDetail[] {
   if (report.reportType === 'legal') {
     return getLegalDetails(report, reportUrl);
   }
@@ -511,42 +515,41 @@ export async function loadConciergeReports({
   ];
   const reportKeys = new Set(reports.map((report) => `${report.reportType}:${report.id}`));
 
-  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, appealsResult] =
-    await Promise.all([
-      siteIds.length
-        ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
-        : Promise.resolve({ data: [], error: null }),
-      boardIds.length
-        ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
-        : Promise.resolve({ data: [], error: null }),
-      postIds.length
-        ? supabaseAdmin.from('posts').select('id, board_id, slug, subject').in('id', postIds)
-        : Promise.resolve({ data: [], error: null }),
-      commentIds.length
-        ? supabaseAdmin.from('post_comments').select('id, post_id, content').in('id', commentIds)
-        : Promise.resolve({ data: [], error: null }),
-      reports.length
-        ? supabaseAdmin
-            .from('report_messages')
-            .select('id, report_type, report_id, sender_user_id, recipient_user_id, message, created_at')
-            .in(
-              'report_id',
-              reports.map((report) => report.id),
-            )
-            .order('created_at', { ascending: false })
-        : Promise.resolve({ data: [], error: null }),
-      reports.length
-        ? supabaseAdmin
-            .from('report_appeals')
-            .select(
-              'id, report_type, report_id, admin_status, appellant_status, submission_summary, deletion_reason, appeal_request, request_submitted_at, opinion_position, disputed_parts, opinion_data, opinion_file, content_request, modification_content, opinion_submitted_at, edit_completed_at, final_decision, final_handled_at, created_at, updated_at',
-            )
-            .in(
-              'report_id',
-              reports.map((report) => report.id),
-            )
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+  const [sitesResult, boardsResult, postsResult, commentsResult, messagesResult, appealsResult] = await Promise.all([
+    siteIds.length
+      ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label, is_blocked').in('id', siteIds)
+      : Promise.resolve({ data: [], error: null }),
+    boardIds.length
+      ? supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds)
+      : Promise.resolve({ data: [], error: null }),
+    postIds.length
+      ? supabaseAdmin.from('posts').select('id, board_id, slug, subject').in('id', postIds)
+      : Promise.resolve({ data: [], error: null }),
+    commentIds.length
+      ? supabaseAdmin.from('post_comments').select('id, post_id, content').in('id', commentIds)
+      : Promise.resolve({ data: [], error: null }),
+    reports.length
+      ? supabaseAdmin
+          .from('report_messages')
+          .select('id, report_type, report_id, sender_user_id, recipient_user_id, message, created_at')
+          .in(
+            'report_id',
+            reports.map((report) => report.id),
+          )
+          .order('created_at', { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+    reports.length
+      ? supabaseAdmin
+          .from('report_appeals')
+          .select(
+            'id, report_type, report_id, admin_status, appellant_status, submission_summary, deletion_reason, appeal_request, request_submitted_at, opinion_position, disputed_parts, opinion_data, opinion_file, content_request, modification_content, opinion_submitted_at, edit_completed_at, final_decision, final_handled_at, created_at, updated_at',
+          )
+          .in(
+            'report_id',
+            reports.map((report) => report.id),
+          )
+      : Promise.resolve({ data: [], error: null }),
+  ]);
 
   const firstError =
     sitesResult.error ??
@@ -661,7 +664,8 @@ export async function loadConciergeReports({
             ? `/${site.site_key}`
             : null;
     const storedReportUrl = normalizeText(report.report_url) || null;
-    const resolvedReportUrl = storedReportUrl ?? (internalTargetPath ? new URL(internalTargetPath, origin).toString() : null);
+    const resolvedReportUrl =
+      storedReportUrl ?? (internalTargetPath ? new URL(internalTargetPath, origin).toString() : null);
     const appealCategory = getReportAppealCategory({
       reportType: report.reportType,
       legalType: report.legal_type,

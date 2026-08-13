@@ -111,12 +111,7 @@ export default function IdentityVerificationButton({
 
   return (
     <>
-      <button
-        type="button"
-        className={className}
-        onClick={() => setAgreementOpen(true)}
-        disabled={isProcessing}
-      >
+      <button type="button" className={className} onClick={() => setAgreementOpen(true)} disabled={isProcessing}>
         {isProcessing ? '처리 중' : children}
       </button>
       <IdentityAgreement

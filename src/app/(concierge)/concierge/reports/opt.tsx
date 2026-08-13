@@ -874,9 +874,7 @@ export default function Opt() {
                             차단 해제
                           </button>
                         ) : null}
-                        {report.reportType === 'rights' &&
-                        report.canSendMessage &&
-                        report.site?.isBlocked ? (
+                        {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
                           <button
                             type="button"
                             className="button small danger"

@@ -240,7 +240,10 @@ function SortableBoardRow({
 
       <TableCell align="right">
         {canEditBoard ? (
-          <Anchor className="button medium action" href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}>
+          <Anchor
+            className="button medium action"
+            href={`/${siteName}/manage/contents/posts/c/${board.board_key}/edit`}
+          >
             수정
           </Anchor>
         ) : null}
@@ -265,9 +268,9 @@ export default function Opt() {
   const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [isStaff, setIsStaff] = useState(false);
   const [boards, setBoards] = useState<BoardRow[]>([]);
-  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<BoardsResponse['manageContents']> | null>(
-    null,
-  );
+  const [communityManageContents, setCommunityManageContents] = useState<NonNullable<
+    BoardsResponse['manageContents']
+  > | null>(null);
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [board, setBoard] = useState<BoardRow | null>(null);
   const [boardName, setBoardName] = useState<string | null>(null);

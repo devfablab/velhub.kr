@@ -9,11 +9,7 @@ export const SITE_OG_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/we
 
 export async function getSiteOgAccess(siteName: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const rhizome = await supabaseAdmin
-    .from('rhizomes')
-    .select('id, site_type')
-    .eq('site_key', siteName)
-    .maybeSingle();
+  const rhizome = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
 
   if (rhizome.error || !rhizome.data) {
     return {

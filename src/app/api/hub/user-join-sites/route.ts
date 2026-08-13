@@ -207,7 +207,9 @@ export async function GET() {
     const memberships = (membershipsResult.data ?? []) as MembershipRow[];
     const rpcSites = Array.isArray(result.join_sites) ? result.join_sites : [];
     const siteIds = [
-      ...new Set([...rpcSites.map((site) => site.id), ...memberships.map((membership) => membership.site_id)].filter(Boolean)),
+      ...new Set(
+        [...rpcSites.map((site) => site.id), ...memberships.map((membership) => membership.site_id)].filter(Boolean),
+      ),
     ];
     const sitesResult =
       siteIds.length > 0
@@ -243,9 +245,7 @@ export async function GET() {
         }
 
         const siteRow = siteMap.get(site.id);
-        const operationalStatus = siteRow
-          ? getOperationalStatus(siteRow)
-          : 'normal';
+        const operationalStatus = siteRow ? getOperationalStatus(siteRow) : 'normal';
 
         const latestPosts = (Array.isArray(site.latest_posts) ? site.latest_posts : []).map((post) => ({
           id: post.id,
@@ -312,15 +312,13 @@ export async function GET() {
         }
 
         const rejoinAt =
-          membershipStatus === 'kick'
-            ? membership.kick_term
-            : membershipStatus === 'ban'
-              ? membership.ban_term
-              : null;
+          membershipStatus === 'kick' ? membership.kick_term : membershipStatus === 'ban' ? membership.ban_term : null;
         const rejoinAtTime = rejoinAt ? new Date(rejoinAt).getTime() : Number.NaN;
         const canRejoin = membershipStatus === 'rejoin' || (Number.isFinite(rejoinAtTime) && rejoinAtTime <= now);
         const daysUntilRejoin =
-          !canRejoin && Number.isFinite(rejoinAtTime) ? Math.max(1, Math.ceil((rejoinAtTime - now) / 86_400_000)) : null;
+          !canRejoin && Number.isFinite(rejoinAtTime)
+            ? Math.max(1, Math.ceil((rejoinAtTime - now) / 86_400_000))
+            : null;
         const operationalStatus = getOperationalStatus(site);
 
         return {

@@ -711,7 +711,9 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
 
                         {userProfile.isAuthor ? (
                           <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
-                            <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                            <Anchor
+                              href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}
+                            >
                               <MenuBookRoundedIcon fontSize="small" />
                               <span>작가의 서재</span>
                             </Anchor>
@@ -719,7 +721,9 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                         ) : null}
                         {userProfile.hasAffettoMyPosts ? (
                           <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
-                            <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                            <Anchor
+                              href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}
+                            >
                               <InterestsOutlinedIcon fontSize="small" />
                               <span>독자의 서재</span>
                             </Anchor>

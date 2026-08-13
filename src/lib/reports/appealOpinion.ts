@@ -50,7 +50,8 @@ const illegalInfoFields: AppealOpinionField[] = [
     key: 'explanation',
     label: '소명 내용',
     type: 'text',
-    helperText: '해당 내용이 불법정보 또는 허위조작정보에 해당하지 않는다고 판단하는 이유와 실제 사실관계를 작성해 주세요.',
+    helperText:
+      '해당 내용이 불법정보 또는 허위조작정보에 해당하지 않는다고 판단하는 이유와 실제 사실관계를 작성해 주세요.',
   },
   {
     key: 'source_basis',
@@ -210,8 +211,18 @@ const illegalFilmingFields: AppealOpinionField[] = [
 ];
 
 const privacyFields: AppealOpinionField[] = [
-  { key: 'information_source', label: '개인정보의 출처 및 취득 경위', type: 'text', helperText: '신고된 개인정보를 어디에서 어떤 방법으로 취득했는지 작성해 주세요.' },
-  { key: 'provided_purpose', label: '정보를 제공받은 목적', type: 'text', helperText: '정보를 제공받을 당시 안내받거나 합의한 이용 목적을 작성해 주세요.' },
+  {
+    key: 'information_source',
+    label: '개인정보의 출처 및 취득 경위',
+    type: 'text',
+    helperText: '신고된 개인정보를 어디에서 어떤 방법으로 취득했는지 작성해 주세요.',
+  },
+  {
+    key: 'provided_purpose',
+    label: '정보를 제공받은 목적',
+    type: 'text',
+    helperText: '정보를 제공받을 당시 안내받거나 합의한 이용 목적을 작성해 주세요.',
+  },
   {
     key: 'publication_basis',
     label: '게시 근거',
@@ -226,7 +237,12 @@ const privacyFields: AppealOpinionField[] = [
       { value: 'none', label: '별도의 게시 근거가 없음' },
     ],
   },
-  { key: 'publication_basis_details', label: '게시 근거에 대한 설명', type: 'text', helperText: '개인정보를 공개 게시물 또는 댓글에 작성할 수 있다고 판단한 이유와 근거를 작성해 주세요.' },
+  {
+    key: 'publication_basis_details',
+    label: '게시 근거에 대한 설명',
+    type: 'text',
+    helperText: '개인정보를 공개 게시물 또는 댓글에 작성할 수 있다고 판단한 이유와 근거를 작성해 주세요.',
+  },
   {
     key: 'publication_consent',
     label: '게시 동의 여부',
@@ -247,8 +263,18 @@ const privacyFields: AppealOpinionField[] = [
     helperText: '동의받은 개인정보의 종류, 게시 장소, 공개 대상과 공개 기간을 작성해 주세요.',
     visibleWhenAll: [{ source: 'values', key: 'publication_consent', values: ['same_scope', 'partial'] }],
   },
-  { key: 'publication_purpose', label: '게시 목적', type: 'text', helperText: '신고된 개인정보를 게시물 또는 댓글에 포함한 목적을 작성해 주세요.' },
-  { key: 'public_scope', label: '공개 범위', type: 'text', helperText: '신고된 개인정보가 누구에게 어느 기간 동안 공개되도록 설정했는지 작성해 주세요.' },
+  {
+    key: 'publication_purpose',
+    label: '게시 목적',
+    type: 'text',
+    helperText: '신고된 개인정보를 게시물 또는 댓글에 포함한 목적을 작성해 주세요.',
+  },
+  {
+    key: 'public_scope',
+    label: '공개 범위',
+    type: 'text',
+    helperText: '신고된 개인정보가 누구에게 어느 기간 동안 공개되도록 설정했는지 작성해 주세요.',
+  },
   {
     key: 'content_maintainability',
     label: '개인정보를 제외하고 내용을 유지할 수 있는지',
@@ -278,9 +304,24 @@ const defamationFields: AppealOpinionField[] = [
       { value: 'other', label: '그 밖의 표현' },
     ],
   },
-  { key: 'facts_explanation', label: '사실관계에 대한 소명', type: 'text', helperText: '직접 확인한 사실관계와 사건의 진행 경과를 작성해 주세요.' },
-  { key: 'source_basis', label: '작성 근거 및 출처', type: 'text', helperText: '작성 당시 확인한 문서, 대화, 직접 경험, 취재 내용과 자료의 출처를 작성해 주세요.' },
-  { key: 'fact_check_process', label: '사실 확인 과정', type: 'text', helperText: '작성 전에 사실관계를 확인한 과정을 작성해 주세요.' },
+  {
+    key: 'facts_explanation',
+    label: '사실관계에 대한 소명',
+    type: 'text',
+    helperText: '직접 확인한 사실관계와 사건의 진행 경과를 작성해 주세요.',
+  },
+  {
+    key: 'source_basis',
+    label: '작성 근거 및 출처',
+    type: 'text',
+    helperText: '작성 당시 확인한 문서, 대화, 직접 경험, 취재 내용과 자료의 출처를 작성해 주세요.',
+  },
+  {
+    key: 'fact_check_process',
+    label: '사실 확인 과정',
+    type: 'text',
+    helperText: '작성 전에 사실관계를 확인한 과정을 작성해 주세요.',
+  },
   { key: 'writing_purpose', label: '작성 목적', type: 'text', helperText: '해당 내용을 작성한 목적을 작성해 주세요.' },
   {
     key: 'public_interest_type',
@@ -301,7 +342,12 @@ const defamationFields: AppealOpinionField[] = [
     helperText: '해당 내용을 공개하는 것이 다수 이용자나 사회적 이해와 관련된다고 판단한 이유를 작성해 주세요.',
     visibleWhenAll: [{ source: 'values', key: 'public_interest_type', values: ['public', 'both'] }],
   },
-  { key: 'full_context', label: '전체 문맥에 대한 설명', type: 'text', helperText: '문제가 된 표현의 앞뒤 내용과 전체 문맥에서의 의미를 작성해 주세요.' },
+  {
+    key: 'full_context',
+    label: '전체 문맥에 대한 설명',
+    type: 'text',
+    helperText: '문제가 된 표현의 앞뒤 내용과 전체 문맥에서의 의미를 작성해 주세요.',
+  },
   {
     key: 'quotation_type',
     label: '인용 여부',
@@ -335,7 +381,12 @@ const defamationFields: AppealOpinionField[] = [
 ];
 
 const personalityRightsFields: AppealOpinionField[] = [
-  { key: 'source', label: '자료 또는 정보의 출처', type: 'text', helperText: '신고된 자료 또는 정보를 어디에서 취득했는지 작성해 주세요.' },
+  {
+    key: 'source',
+    label: '자료 또는 정보의 출처',
+    type: 'text',
+    helperText: '신고된 자료 또는 정보를 어디에서 취득했는지 작성해 주세요.',
+  },
   {
     key: 'collector',
     label: '촬영·녹음·수집한 사람',
@@ -350,7 +401,12 @@ const personalityRightsFields: AppealOpinionField[] = [
       { value: 'not_applicable', label: '해당 없음' },
     ],
   },
-  { key: 'collection_circumstances', label: '촬영·녹음·수집 경위', type: 'text', helperText: '자료나 정보를 촬영·녹음·수집한 장소, 상황과 목적을 작성해 주세요.' },
+  {
+    key: 'collection_circumstances',
+    label: '촬영·녹음·수집 경위',
+    type: 'text',
+    helperText: '자료나 정보를 촬영·녹음·수집한 장소, 상황과 목적을 작성해 주세요.',
+  },
   {
     key: 'recording_consent',
     label: '촬영·녹음 동의 여부',
@@ -392,7 +448,12 @@ const personalityRightsFields: AppealOpinionField[] = [
     helperText: '공개가 허용된 서비스, 공개 대상, 공개 기간과 사용 목적을 작성해 주세요.',
     visibleWhenAll: [{ source: 'values', key: 'publication_consent', values: ['same_scope', 'limited_scope'] }],
   },
-  { key: 'private_information_source', label: '사생활 정보를 알게 된 경위', type: 'text', helperText: '신고된 사생활 정보를 알게 된 경위를 작성해 주세요.' },
+  {
+    key: 'private_information_source',
+    label: '사생활 정보를 알게 된 경위',
+    type: 'text',
+    helperText: '신고된 사생활 정보를 알게 된 경위를 작성해 주세요.',
+  },
   {
     key: 'publication_basis',
     label: '게시·공개 근거',
@@ -408,10 +469,30 @@ const personalityRightsFields: AppealOpinionField[] = [
       { value: 'none', label: '별도의 공개 근거가 없음' },
     ],
   },
-  { key: 'publication_basis_details', label: '게시·공개 근거에 대한 설명', type: 'text', helperText: '자료 또는 정보를 게시할 수 있다고 판단한 이유를 작성해 주세요.' },
-  { key: 'publication_purpose', label: '게시 목적', type: 'text', helperText: '신고된 자료나 정보를 게시물 또는 댓글에 포함한 목적을 작성해 주세요.' },
-  { key: 'public_scope', label: '공개 범위', type: 'text', helperText: '자료나 정보가 누구에게 어느 기간 동안 공개되도록 설정했는지 작성해 주세요.' },
-  { key: 'identification_need', label: '당사자를 식별할 필요가 있었다고 판단한 이유', type: 'text', helperText: '당사자를 식별할 수 있게 작성해야 했다고 판단한 이유를 작성해 주세요.' },
+  {
+    key: 'publication_basis_details',
+    label: '게시·공개 근거에 대한 설명',
+    type: 'text',
+    helperText: '자료 또는 정보를 게시할 수 있다고 판단한 이유를 작성해 주세요.',
+  },
+  {
+    key: 'publication_purpose',
+    label: '게시 목적',
+    type: 'text',
+    helperText: '신고된 자료나 정보를 게시물 또는 댓글에 포함한 목적을 작성해 주세요.',
+  },
+  {
+    key: 'public_scope',
+    label: '공개 범위',
+    type: 'text',
+    helperText: '자료나 정보가 누구에게 어느 기간 동안 공개되도록 설정했는지 작성해 주세요.',
+  },
+  {
+    key: 'identification_need',
+    label: '당사자를 식별할 필요가 있었다고 판단한 이유',
+    type: 'text',
+    helperText: '당사자를 식별할 수 있게 작성해야 했다고 판단한 이유를 작성해 주세요.',
+  },
   {
     key: 'editing_status',
     label: '편집·가공 여부',

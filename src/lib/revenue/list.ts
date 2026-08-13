@@ -248,10 +248,7 @@ async function getStigmaRowsByParticleIds(context: RevenueContext, particleIds: 
     return [];
   }
 
-  const result = await context.supabase
-    .from('stigmas')
-    .select('id, user_id, user_name')
-    .in('user_id', particleIds);
+  const result = await context.supabase.from('stigmas').select('id, user_id, user_name').in('user_id', particleIds);
 
   if (result.error) {
     throw result.error;

@@ -524,11 +524,7 @@ export default function Opt() {
                       </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>
                         {user.restrictionType && user.messageStatus ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => setMessageUser(user)}
-                          >
+                          <button type="button" className="button small action" onClick={() => setMessageUser(user)}>
                             메시지 보기
                           </button>
                         ) : user.restrictionType ? (
@@ -541,7 +537,7 @@ export default function Opt() {
 
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={7}>
+                    <TableCell colSpan={7}>
                       <p className="alert info">
                         <InfoOutlineRoundedIcon />
                         <span>검색 결과가 없습니다.</span>

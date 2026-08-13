@@ -60,10 +60,7 @@ export const memberRestrictionMessageStatusLabels: Record<MemberRestrictionMessa
   staff_replied: '답변 보냄',
 };
 
-export function getRestrictionInitialMessageCreatedAt(
-  messages: MemberRestrictionMessage[],
-  fallbackCreatedAt: string,
-) {
+export function getRestrictionInitialMessageCreatedAt(messages: MemberRestrictionMessage[], fallbackCreatedAt: string) {
   const appellantMessages = messages.filter((message) => message.senderType === 'appellant');
 
   if (appellantMessages.length === 0) {
@@ -81,4 +78,3 @@ export function getRestrictionInitialMessageCreatedAt(
     return Number.isFinite(messageTime) && messageTime < earliestTime ? message.createdAt : earliestCreatedAt;
   }, appellantMessages[0].createdAt);
 }
-

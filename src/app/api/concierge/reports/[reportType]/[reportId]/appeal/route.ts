@@ -1,10 +1,6 @@
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import {
-  getReportAppealCategory,
-  isAppealDeletionReason,
-  type ReportAppealCategory,
-} from '@/lib/reports/appeals';
+import { getReportAppealCategory, isAppealDeletionReason, type ReportAppealCategory } from '@/lib/reports/appeals';
 import { normalizeText } from '@/lib/utils';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
@@ -61,13 +57,7 @@ const reportTableByType = {
   rights: 'report_rights',
 } as const;
 
-async function restoreContentState({
-  post,
-  comment,
-}: {
-  post: PostState | null;
-  comment: CommentState | null;
-}) {
+async function restoreContentState({ post, comment }: { post: PostState | null; comment: CommentState | null }) {
   const supabaseAdmin = getSupabaseAdmin();
 
   if (post) {
@@ -304,11 +294,7 @@ export async function POST(request: Request, context: RouteContext) {
       reportType === 'legal'
         ? 'id, target_type, post_id, comment_id, status, legal_type'
         : 'id, target_type, post_id, comment_id, status, reason_type';
-    const reportResult = await supabaseAdmin
-      .from(reportTable)
-      .select(reportColumns)
-      .eq('id', reportId)
-      .maybeSingle();
+    const reportResult = await supabaseAdmin.from(reportTable).select(reportColumns).eq('id', reportId).maybeSingle();
 
     if (reportResult.error || !reportResult.data) {
       return Response.json({ error: '신고 내역을 찾을 수 없습니다.' }, { status: 404 });
@@ -364,7 +350,10 @@ export async function POST(request: Request, context: RouteContext) {
       .single();
 
     if (insertResult.error || !insertResult.data) {
-      const message = insertResult.error?.code === '23505' ? '이미 소명 요청서를 제출했습니다.' : '소명 요청서를 저장하지 못했습니다.';
+      const message =
+        insertResult.error?.code === '23505'
+          ? '이미 소명 요청서를 제출했습니다.'
+          : '소명 요청서를 저장하지 못했습니다.';
       return Response.json({ error: message }, { status: insertResult.error?.code === '23505' ? 409 : 500 });
     }
 

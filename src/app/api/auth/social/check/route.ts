@@ -50,7 +50,11 @@ export async function POST(request: Request) {
     }
 
     if (particlesResult.data.social === false) {
-      return Response.json({ needsSignup: false, needsConfirm: true, message: '이미 이메일로 가입한 계정입니다. 그래도 소셜 로그인으로 로그인하시겠습니까?' });
+      return Response.json({
+        needsSignup: false,
+        needsConfirm: true,
+        message: '이미 이메일로 가입한 계정입니다. 그래도 소셜 로그인으로 로그인하시겠습니까?',
+      });
     }
 
     return Response.json({ needsSignup: false, needsConfirm: false });

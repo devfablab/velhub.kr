@@ -163,7 +163,15 @@ async function getBoardByName({ siteId, boardName }: { siteId: string; boardName
   return board;
 }
 
-async function getSeriesByName({ siteId, boardId, seriesName }: { siteId: string; boardId: string; seriesName: string }) {
+async function getSeriesByName({
+  siteId,
+  boardId,
+  seriesName,
+}: {
+  siteId: string;
+  boardId: string;
+  seriesName: string;
+}) {
   const supabaseAdmin = getSupabaseAdmin();
 
   const seriesResult = await supabaseAdmin
@@ -194,11 +202,7 @@ async function validateSiteDonationTarget(site: SiteRow) {
     throw new Error('블로그 후원은 블로그에서만 가능합니다.');
   }
 
-  const blogResult = await supabaseAdmin
-    .from('blogs')
-    .select('blog_type')
-    .eq('site_id', site.id)
-    .maybeSingle();
+  const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle();
 
   if (blogResult.data?.blog_type === 'team') {
     throw new Error('팀 블로그는 블로그 후원을 받을 수 없습니다.');
@@ -284,11 +288,7 @@ async function getDonationTarget({
 
   if (site.site_type === 'blog') {
     const supabaseAdmin = getSupabaseAdmin();
-    const blogResult = await supabaseAdmin
-      .from('blogs')
-      .select('blog_type')
-      .eq('site_id', site.id)
-      .maybeSingle();
+    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle();
 
     if (blogResult.data?.blog_type === 'team') {
       throw new Error('팀 블로그 연재는 후원을 받을 수 없습니다.');

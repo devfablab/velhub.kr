@@ -3,7 +3,6 @@ import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { getAuthorState } from '@/lib/session/author';
 
-
 export async function GET() {
   const currentStigma = await getCurrentStigma();
 
@@ -13,16 +12,8 @@ export async function GET() {
 
   const supabaseAdmin = getSupabaseAdmin();
   const [siteResult, identityResult] = await Promise.all([
-    supabaseAdmin
-      .from('rhizomes')
-      .select('id')
-      .eq('owner_id', currentStigma.stigmaId)
-      .eq('is_shutdown', false),
-    supabaseAdmin
-      .from('chorogons')
-      .select('id')
-      .eq('user_id', currentStigma.stigmaId)
-      .maybeSingle(),
+    supabaseAdmin.from('rhizomes').select('id').eq('owner_id', currentStigma.stigmaId).eq('is_shutdown', false),
+    supabaseAdmin.from('chorogons').select('id').eq('user_id', currentStigma.stigmaId).maybeSingle(),
   ]);
 
   if (siteResult.error || identityResult.error) {

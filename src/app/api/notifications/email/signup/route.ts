@@ -69,7 +69,10 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, authUserId: generateLinkResult.data.user.id });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '회원가입 인증 메일 처리 중 오류가 발생했습니다.' }, { status: 500 });
+      return Response.json(
+        { error: unknownError.message || '회원가입 인증 메일 처리 중 오류가 발생했습니다.' },
+        { status: 500 },
+      );
     }
 
     return Response.json({ error: '회원가입 인증 메일 처리 중 오류가 발생했습니다.' }, { status: 500 });

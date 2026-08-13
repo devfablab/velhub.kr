@@ -29,10 +29,7 @@ export type GuidelineAppealItem = {
   messageStatus: GuidelineAppealMessageStatus | null;
 };
 
-export function getGuidelineInitialMessageCreatedAt(
-  messages: GuidelineAppealMessage[],
-  fallbackCreatedAt: string,
-) {
+export function getGuidelineInitialMessageCreatedAt(messages: GuidelineAppealMessage[], fallbackCreatedAt: string) {
   const appellantMessages = messages.filter((message) => message.senderType === 'appellant');
 
   if (appellantMessages.length === 0) {

@@ -76,7 +76,9 @@ export default function Opt() {
 
         const providerAccountId =
           provider === 'naver'
-            ? (typeof metadata.naver_id === 'string' ? metadata.naver_id : null)
+            ? typeof metadata.naver_id === 'string'
+              ? metadata.naver_id
+              : null
             : (authUser.identities?.[0]?.id ?? (typeof metadata.sub === 'string' ? metadata.sub : null));
         const initialUserName = getDefaultUserName(
           metadata.name ?? metadata.full_name ?? metadata.user_name ?? metadata.preferred_username,
@@ -99,7 +101,9 @@ export default function Opt() {
           tokenExpiresAt: sessionResult.data.session.expires_at ?? null,
         });
       } catch (unknownError) {
-        setErrorMessage(unknownError instanceof Error ? unknownError.message : '소셜 로그인 정보를 확인하지 못했습니다.');
+        setErrorMessage(
+          unknownError instanceof Error ? unknownError.message : '소셜 로그인 정보를 확인하지 못했습니다.',
+        );
       } finally {
         setIsLoading(false);
       }

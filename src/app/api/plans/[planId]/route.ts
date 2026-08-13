@@ -107,7 +107,10 @@ export async function GET(_request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '멤버십 상품 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json(
+        { error: unknownError.message || '멤버십 상품 정보를 불러오지 못했습니다.' },
+        { status: 500 },
+      );
     }
 
     return Response.json({ error: '멤버십 상품 정보를 불러오지 못했습니다.' }, { status: 500 });

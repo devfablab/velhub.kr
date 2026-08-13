@@ -173,10 +173,10 @@ function isUnder14(birthDate: string | null | undefined) {
 
   const today = new Date();
   const birth = new Date(year, month - 1, day);
-  
+
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
-  
+
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -639,51 +639,51 @@ export default function SiteProfile() {
       {blogType !== 'team' && !isUnder14Age ? (
         <div className={styles.action}>
           {!hasSettlement ? (
-          <>
-            <Snackbar
-              open={Boolean(isMinor)}
-              message="만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다."
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-              }}
-              autoHideDuration={2700}
-              onClose={() => setIsMinor(false)}
-            />
-            {membershipStatus === 'none' ? (
-              <button type="button" className="button small action" onClick={handleOpenIdentityDialog}>
-                블로그 후원
-              </button>
-            ) : (
-              <button type="button" className="button small submit" onClick={handleOpenIdentityDialog}>
-                {getMembershipButtonLabel(membershipStatus)}
-              </button>
-            )}
-          </>
-        ) : (
-          <>
-            {isDonationEnabled ? (
-              <DonationButton
-                siteName={siteName}
-                targetType="site"
-                buttonText="블로그 후원"
-                disabled={isMembershipProcessing}
-                onProcessingChange={setIsDonationProcessing}
+            <>
+              <Snackbar
+                open={Boolean(isMinor)}
+                message="만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다."
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'center',
+                }}
+                autoHideDuration={2700}
+                onClose={() => setIsMinor(false)}
               />
-            ) : null}
-            {isMembershipEnabled ? (
-              <button
-                type="button"
-                className="button small submit"
-                onClick={handleMembershipButtonClick}
-                disabled={isDonationProcessing || isMembershipProcessing}
-              >
-                {getMembershipButtonLabel(membershipStatus)}
-              </button>
-            ) : null}
-          </>
-        )}
-      </div>
+              {membershipStatus === 'none' ? (
+                <button type="button" className="button small action" onClick={handleOpenIdentityDialog}>
+                  블로그 후원
+                </button>
+              ) : (
+                <button type="button" className="button small submit" onClick={handleOpenIdentityDialog}>
+                  {getMembershipButtonLabel(membershipStatus)}
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {isDonationEnabled ? (
+                <DonationButton
+                  siteName={siteName}
+                  targetType="site"
+                  buttonText="블로그 후원"
+                  disabled={isMembershipProcessing}
+                  onProcessingChange={setIsDonationProcessing}
+                />
+              ) : null}
+              {isMembershipEnabled ? (
+                <button
+                  type="button"
+                  className="button small submit"
+                  onClick={handleMembershipButtonClick}
+                  disabled={isDonationProcessing || isMembershipProcessing}
+                >
+                  {getMembershipButtonLabel(membershipStatus)}
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
       ) : null}
 
       {membershipErrorMessage ? (

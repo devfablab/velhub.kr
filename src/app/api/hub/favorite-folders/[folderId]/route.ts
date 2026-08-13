@@ -73,10 +73,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
 
   // Delete the folder. ON DELETE SET NULL will handle moving items to the default folder.
-  const { error } = await supabaseAdmin
-    .from('favorite_folders')
-    .delete()
-    .eq('id', folderId);
+  const { error } = await supabaseAdmin.from('favorite_folders').delete().eq('id', folderId);
 
   if (error) {
     return NextResponse.json({ error: 'Failed to delete folder' }, { status: 500 });

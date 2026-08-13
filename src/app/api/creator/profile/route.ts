@@ -25,8 +25,6 @@ function normalizeUrl(value: unknown) {
   }
 }
 
-
-
 export async function GET() {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
@@ -41,7 +39,11 @@ export async function GET() {
       .maybeSingle(),
   ]);
 
-  if (creatorResult.error) return NextResponse.json({ message: `작가 프로필을 불러오지 못했습니다. (${creatorResult.error.message})` }, { status: 500 });
+  if (creatorResult.error)
+    return NextResponse.json(
+      { message: `작가 프로필을 불러오지 못했습니다. (${creatorResult.error.message})` },
+      { status: 500 },
+    );
 
   const linksResult = creatorResult.data
     ? await supabaseAdmin
@@ -65,11 +67,13 @@ export async function GET() {
           handleName: creatorResult.data.handle_name,
           coverImage: hasBranding ? creatorResult.data.cover_image : null,
           introduction: hasBranding ? creatorResult.data.introduction : null,
-          links: hasBranding ? (linksResult.data ?? []).map((link) => ({
-            id: link.id,
-            label: link.label,
-            url: link.url,
-          })) : [],
+          links: hasBranding
+            ? (linksResult.data ?? []).map((link) => ({
+                id: link.id,
+                label: link.label,
+                url: link.url,
+              }))
+            : [],
         }
       : null,
   });
@@ -80,9 +84,10 @@ export async function PUT(request: Request) {
   if (!currentStigma) return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
 
   const authorState = await getAuthorState(currentStigma.stigmaId);
-  if (!authorState.isAuthor) return NextResponse.json({ message: '작가만 프로필을 설정할 수 있습니다.' }, { status: 403 });
+  if (!authorState.isAuthor)
+    return NextResponse.json({ message: '작가만 프로필을 설정할 수 있습니다.' }, { status: 403 });
 
-  const body = await request.json().catch(() => null) as {
+  const body = (await request.json().catch(() => null)) as {
     handleName?: unknown;
     coverImage?: unknown;
     introduction?: unknown;
@@ -93,7 +98,10 @@ export async function PUT(request: Request) {
   const coverImage = toText(body?.coverImage) || null;
 
   if (!/^[a-z0-9](?:[a-z0-9-]{1,13}[a-z0-9])?$/.test(handleName)) {
-    return NextResponse.json({ message: '핸들네임은 영문 소문자, 숫자, 하이픈으로 3~15자 입력해 주세요.' }, { status: 400 });
+    return NextResponse.json(
+      { message: '핸들네임은 영문 소문자, 숫자, 하이픈으로 3~15자 입력해 주세요.' },
+      { status: 400 },
+    );
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -102,7 +110,8 @@ export async function PUT(request: Request) {
     supabaseAdmin.from('creators').select('id, user_id').eq('handle_name', handleName).maybeSingle(),
   ]);
 
-  if (existingResult.error || sameHandleResult.error) return NextResponse.json({ message: '작가 프로필을 확인하지 못했습니다.' }, { status: 500 });
+  if (existingResult.error || sameHandleResult.error)
+    return NextResponse.json({ message: '작가 프로필을 확인하지 못했습니다.' }, { status: 500 });
   if (sameHandleResult.data && sameHandleResult.data.user_id !== currentStigma.stigmaId) {
     return NextResponse.json({ message: '이미 사용 중인 핸들네임입니다.' }, { status: 409 });
   }
@@ -130,7 +139,8 @@ export async function PUT(request: Request) {
         .select('id, handle_name, cover_image, introduction')
         .single();
 
-  if (updateResult.error || !updateResult.data) return NextResponse.json({ message: '작가 프로필을 저장하지 못했습니다.' }, { status: 500 });
+  if (updateResult.error || !updateResult.data)
+    return NextResponse.json({ message: '작가 프로필을 저장하지 못했습니다.' }, { status: 500 });
 
   if (hasBranding) {
     const nextLinks = (body?.links ?? [])
@@ -141,19 +151,27 @@ export async function PUT(request: Request) {
       }))
       .filter((link) => link.label && link.url);
 
-    if (nextLinks.length > 5) return NextResponse.json({ message: '링크는 최대 5개까지 등록할 수 있습니다.' }, { status: 400 });
+    if (nextLinks.length > 5)
+      return NextResponse.json({ message: '링크는 최대 5개까지 등록할 수 있습니다.' }, { status: 400 });
 
     const deleteResult = await supabaseAdmin.from('creator_links').delete().eq('creator_id', updateResult.data.id);
     if (deleteResult.error) return NextResponse.json({ message: '작가 링크를 갱신하지 못했습니다.' }, { status: 500 });
 
     if (nextLinks.length > 0) {
-      const insertResult = await supabaseAdmin.from('creator_links').insert(nextLinks.map((link) => ({ ...link, creator_id: updateResult.data.id })));
-      if (insertResult.error) return NextResponse.json({ message: '작가 링크를 저장하지 못했습니다.' }, { status: 500 });
+      const insertResult = await supabaseAdmin
+        .from('creator_links')
+        .insert(nextLinks.map((link) => ({ ...link, creator_id: updateResult.data.id })));
+      if (insertResult.error)
+        return NextResponse.json({ message: '작가 링크를 저장하지 못했습니다.' }, { status: 500 });
     }
   }
 
-  const finalLinksResult = hasBranding 
-    ? await supabaseAdmin.from('creator_links').select('id, label, url, sort_order').eq('creator_id', updateResult.data.id).order('sort_order', { ascending: true })
+  const finalLinksResult = hasBranding
+    ? await supabaseAdmin
+        .from('creator_links')
+        .select('id, label, url, sort_order')
+        .eq('creator_id', updateResult.data.id)
+        .order('sort_order', { ascending: true })
     : { data: [], error: null };
 
   return NextResponse.json({
@@ -162,11 +180,13 @@ export async function PUT(request: Request) {
       handleName: updateResult.data.handle_name,
       coverImage: hasBranding ? updateResult.data.cover_image : null,
       introduction: hasBranding ? updateResult.data.introduction : null,
-      links: hasBranding ? (finalLinksResult.data ?? []).map((link) => ({
-        id: link.id,
-        label: link.label,
-        url: link.url,
-      })) : [],
+      links: hasBranding
+        ? (finalLinksResult.data ?? []).map((link) => ({
+            id: link.id,
+            label: link.label,
+            url: link.url,
+          }))
+        : [],
     },
   });
 }

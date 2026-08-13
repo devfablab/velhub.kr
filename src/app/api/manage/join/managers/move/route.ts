@@ -435,7 +435,6 @@ export async function PATCH(request: Request) {
         if (boardResult.error || !boardResult.data) {
           return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
         }
-
       }
 
       const duplicateRow = managerRows.find(

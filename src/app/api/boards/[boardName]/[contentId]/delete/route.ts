@@ -1,8 +1,5 @@
 import verifySession from '@/lib/session/verifySession';
-import {
-  canManageCommunityBoardContents,
-  getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -260,7 +257,10 @@ export async function PATCH(request: Request, context: RouteContext) {
         authorStigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.PENDING ||
         authorStigmaResult.data?.withdrawal_status === ACCOUNT_WITHDRAWAL_STATUS.COMPLETED
       ) {
-        return Response.json({ error: '탈퇴 신청 및 탈퇴 완료된 회원의 게시물은 복구할 수 없습니다.' }, { status: 400 });
+        return Response.json(
+          { error: '탈퇴 신청 및 탈퇴 완료된 회원의 게시물은 복구할 수 없습니다.' },
+          { status: 400 },
+        );
       }
     }
 

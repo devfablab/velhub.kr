@@ -173,7 +173,11 @@ export function serializeSettlementProfile(
   };
 }
 
-export function validateSettlementProfileInput(value: unknown, identityName?: string | null, isMinorAge: boolean = false) {
+export function validateSettlementProfileInput(
+  value: unknown,
+  identityName?: string | null,
+  isMinorAge: boolean = false,
+) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return {
       ok: false as const,
@@ -187,11 +191,7 @@ export function validateSettlementProfileInput(value: unknown, identityName?: st
   const accountNumber = normalizeDigits(input.account_number);
   const accountHolder = normalizeText(input.account_holder);
 
-  if (
-    settlementType !== 'individual' &&
-    settlementType !== 'individual_business' &&
-    settlementType !== 'corporation'
-  ) {
+  if (settlementType !== 'individual' && settlementType !== 'individual_business' && settlementType !== 'corporation') {
     return {
       ok: false as const,
       message: '정산 유형이 올바르지 않습니다.',
@@ -239,10 +239,7 @@ export function validateSettlementProfileInput(value: unknown, identityName?: st
       };
     }
 
-    if (
-      !identityName ||
-      normalizeComparableText(accountHolder) !== normalizeComparableText(identityName)
-    ) {
+    if (!identityName || normalizeComparableText(accountHolder) !== normalizeComparableText(identityName)) {
       return {
         ok: false as const,
         message: '예금주는 본인인증한 성명과 일치해야 합니다.',

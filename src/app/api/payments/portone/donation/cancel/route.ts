@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         ].join(', '),
       )
       .eq('id', paymentId)
-    .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES])
+      .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES])
       .maybeSingle();
 
     if (paymentResult.error) {

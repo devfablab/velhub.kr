@@ -1,8 +1,5 @@
 import verifySession from '@/lib/session/verifySession';
-import {
-  canManageCommunityBoardContents,
-  getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
@@ -879,10 +876,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         });
 
         if (!seriesResult.data.user_id && !soloBlog) {
-          return Response.json(
-            { error: '연재 담당 작가가 지정되지 않아 글을 작성할 수 없습니다.' },
-            { status: 400 },
-          );
+          return Response.json({ error: '연재 담당 작가가 지정되지 않아 글을 작성할 수 없습니다.' }, { status: 400 });
         }
 
         if (seriesResult.data.user_id && seriesResult.data.user_id !== session.stigmaId) {

@@ -161,9 +161,7 @@ export async function GET(request: Request) {
 
     const postsResult = await supabaseAdmin
       .from('posts')
-      .select(
-        'id, site_id, board_id, slug, subject, user_id, created_at, published_at, published_status, is_closed',
-      )
+      .select('id, site_id, board_id, slug, subject, user_id, created_at, published_at, published_status, is_closed')
       .in('id', postIds);
 
     if (postsResult.error) {
@@ -240,13 +238,7 @@ export async function GET(request: Request) {
         const paymentInfo = paymentInfoByPostId.get(post.id);
         const stigma = stigmaByAuthorId.get(normalizeText(post.user_id));
 
-        if (
-          !site ||
-          !board ||
-          !paymentInfo ||
-          post.published_status !== 'published' ||
-          post.is_closed === true
-        ) {
+        if (!site || !board || !paymentInfo || post.published_status !== 'published' || post.is_closed === true) {
           return null;
         }
 
@@ -276,7 +268,10 @@ export async function GET(request: Request) {
     return Response.json({ posts: resultPosts });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
-      return Response.json({ error: unknownError.message || '소장/후원글 목록을 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json(
+        { error: unknownError.message || '소장/후원글 목록을 불러오지 못했습니다.' },
+        { status: 500 },
+      );
     }
 
     return Response.json({ error: '소장/후원글 목록을 불러오지 못했습니다.' }, { status: 500 });

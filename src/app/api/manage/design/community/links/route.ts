@@ -296,7 +296,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const retainedImages = new Set(nextRows.map((link) => link.image).filter((image): image is string => Boolean(image)));
+    const retainedImages = new Set(
+      nextRows.map((link) => link.image).filter((image): image is string => Boolean(image)),
+    );
     await removeImages([...currentImages].filter((image) => !retainedImages.has(image)));
 
     const linksResult = await getLinks(communityId);

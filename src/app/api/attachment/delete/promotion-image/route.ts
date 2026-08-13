@@ -32,7 +32,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: true });
   } catch (unknownError) {
     return Response.json(
-      { error: unknownError instanceof Error ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.' : '프로모션 이미지 삭제에 실패했습니다.' },
+      {
+        error:
+          unknownError instanceof Error
+            ? unknownError.message || '프로모션 이미지 삭제에 실패했습니다.'
+            : '프로모션 이미지 삭제에 실패했습니다.',
+      },
       { status: 500 },
     );
   }

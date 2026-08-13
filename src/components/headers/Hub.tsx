@@ -338,7 +338,9 @@ export default function HeaderHub() {
                   </MenuItem>
                   {userProfile.isAuthor ? (
                     <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
-                      <Anchor href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}>
+                      <Anchor
+                        href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}
+                      >
                         <MenuBookRoundedIcon fontSize="small" />
                         <span>작가의 서재</span>
                       </Anchor>

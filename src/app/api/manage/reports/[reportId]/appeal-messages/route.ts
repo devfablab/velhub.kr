@@ -1,7 +1,4 @@
-import {
-  loadGuidelineAppealContext,
-  loadGuidelineAppealMessages,
-} from '@/lib/reports/guidelineAppealServer';
+import { loadGuidelineAppealContext, loadGuidelineAppealMessages } from '@/lib/reports/guidelineAppealServer';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

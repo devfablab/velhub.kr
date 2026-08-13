@@ -1,8 +1,5 @@
 import verifySession from '@/lib/session/verifySession';
-import {
-  canManageAllCommunityBoardContents,
-  getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+import { canManageAllCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -64,8 +61,8 @@ export async function GET(request: Request) {
     if (isManageContentsRequest && rhizome.data.site_type === 'community') {
       try {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
-        const canEditAllBoards = access.actor.communityRoles.includes('owner') ||
-          access.actor.communityRoles.includes('community-manager');
+        const canEditAllBoards =
+          access.actor.communityRoles.includes('owner') || access.actor.communityRoles.includes('community-manager');
 
         manageContents = {
           canCreateBoard: canEditAllBoards,

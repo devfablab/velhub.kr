@@ -109,9 +109,7 @@ export async function GET(request: Request) {
             banTerm: typedMembership.ban_term ?? null,
             type: '가입불가',
             restrictionType: 'ban',
-            messageStatus: getStaffRestrictionMessageStatus(
-              lastSenderMap.get(`${typedMembership.id}:ban`) ?? null,
-            ),
+            messageStatus: getStaffRestrictionMessageStatus(lastSenderMap.get(`${typedMembership.id}:ban`) ?? null),
           };
         }
 
@@ -127,9 +125,7 @@ export async function GET(request: Request) {
             kickTerm: typedMembership.kick_term ?? null,
             type: '강제탈퇴',
             restrictionType: 'kick',
-            messageStatus: getStaffRestrictionMessageStatus(
-              lastSenderMap.get(`${typedMembership.id}:kick`) ?? null,
-            ),
+            messageStatus: getStaffRestrictionMessageStatus(lastSenderMap.get(`${typedMembership.id}:kick`) ?? null),
           };
         }
 

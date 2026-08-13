@@ -99,10 +99,10 @@ function isUnder14(birthDate: string | null | undefined) {
 
   const today = new Date();
   const birth = new Date(year, month - 1, day);
-  
+
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
-  
+
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -176,15 +176,9 @@ export default function PostPurchaseButton(props: Props) {
 
         if (!ignore) {
           setHasIdentity(response.ok && Boolean(result.exists));
-          setIsMinor(
-            response.ok && result.exists && result.identity
-              ? !isAdult(result.identity.birth_date)
-              : false,
-          );
+          setIsMinor(response.ok && result.exists && result.identity ? !isAdult(result.identity.birth_date) : false);
           setIsUnder14Age(
-            response.ok && result.exists && result.identity
-              ? isUnder14(result.identity.birth_date)
-              : false,
+            response.ok && result.exists && result.identity ? isUnder14(result.identity.birth_date) : false,
           );
           setIsReady(true);
         }

@@ -1,8 +1,5 @@
 import verifySession from '@/lib/session/verifySession';
-import {
-  canManageCommunityBoardSettings,
-  getCommunityManagerAccess,
-} from '@/lib/community/community-manager/utils';
+import { canManageCommunityBoardSettings, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';

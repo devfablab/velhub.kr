@@ -1,11 +1,6 @@
 import crypto from 'crypto';
 import sharp from 'sharp';
-import {
-  getSiteOgAccess,
-  MAX_SITE_OG_FILE_SIZE,
-  SITE_OG_BUCKET,
-  SITE_OG_IMAGE_TYPES,
-} from '@/lib/service/siteOgImage';
+import { getSiteOgAccess, MAX_SITE_OG_FILE_SIZE, SITE_OG_BUCKET, SITE_OG_IMAGE_TYPES } from '@/lib/service/siteOgImage';
 import { normalizeText } from '@/lib/utils';
 
 export async function POST(request: Request) {

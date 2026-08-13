@@ -122,7 +122,6 @@ async function finishCancellation({
   if (subscriptionResult.error) {
     throw new Error('구독 취소 정보를 저장하지 못했습니다.');
   }
-
 }
 
 async function scheduleCancellation({

@@ -82,9 +82,7 @@ export async function GET(request: Request) {
           blockedAt: typedMembership.blocked_at,
           blockTerm: typedMembership.block_term ?? null,
           blockedBy: getStigmaDisplayName(blockedByUser),
-          messageStatus: getStaffRestrictionMessageStatus(
-            lastSenderMap.get(`${typedMembership.id}:block`) ?? null,
-          ),
+          messageStatus: getStaffRestrictionMessageStatus(lastSenderMap.get(`${typedMembership.id}:block`) ?? null),
         };
       }),
     });

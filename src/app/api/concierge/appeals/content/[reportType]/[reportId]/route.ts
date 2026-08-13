@@ -113,8 +113,8 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
     reportType === 'guideline'
       ? 'id, target_type, post_id, comment_id, report_category, status'
       : reportType === 'legal'
-      ? 'id, target_type, post_id, comment_id, legal_type'
-      : 'id, target_type, post_id, comment_id, reason_type';
+        ? 'id, target_type, post_id, comment_id, legal_type'
+        : 'id, target_type, post_id, comment_id, reason_type';
   const reportResult = await supabaseAdmin
     .from(reportTableByType[reportType])
     .select(reportColumns)
@@ -225,9 +225,9 @@ async function loadContext(reportType: 'guideline' | 'legal' | 'rights', reportI
 function canEdit(appeal: AppealRow | null) {
   return Boolean(
     appeal &&
-      appeal.content_request === 'edit_and_review' &&
-      appeal.appellant_status === 'opinion_submitted' &&
-      !appeal.edit_completed_at,
+    appeal.content_request === 'edit_and_review' &&
+    appeal.appellant_status === 'opinion_submitted' &&
+    !appeal.edit_completed_at,
   );
 }
 
@@ -342,8 +342,7 @@ function normalizePollUpdate(currentPoll: PollData | null, value: unknown) {
     const submittedImage =
       option.image && typeof option.image === 'object' ? (option.image as Record<string, unknown>) : null;
     const submittedImagePath = normalizeUnknownText(submittedImage?.path);
-    const image =
-      currentOption.image && submittedImagePath === currentOption.image.path ? currentOption.image : null;
+    const image = currentOption.image && submittedImagePath === currentOption.image.path ? currentOption.image : null;
 
     return {
       ...currentOption,

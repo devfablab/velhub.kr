@@ -28,10 +28,7 @@ export async function createCommunityManagerChangeNotifications({
   action: ManagerChangeAction;
 }) {
   const [managerRoleResult, ownerMembershipResult, targetMembershipResult] = await Promise.all([
-    access.supabaseAdmin
-      .from('community_manage_role')
-      .select('manager_id')
-      .eq('community_id', access.community.id),
+    access.supabaseAdmin.from('community_manage_role').select('manager_id').eq('community_id', access.community.id),
     access.supabaseAdmin
       .from('rhizome_stigmas')
       .select('id, user_id')
@@ -51,9 +48,7 @@ export async function createCommunityManagerChangeNotifications({
     targetMembershipResult.error ||
     !targetMembershipResult.data
   ) {
-    console.error(
-      managerRoleResult.error ?? ownerMembershipResult.error ?? targetMembershipResult.error,
-    );
+    console.error(managerRoleResult.error ?? ownerMembershipResult.error ?? targetMembershipResult.error);
     return;
   }
 

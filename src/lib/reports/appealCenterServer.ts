@@ -126,11 +126,19 @@ function getReportDetails(report: RawReport) {
     addDetail(details, '신고·요청 사유', getArrayLabel(report.filming_reason_types));
     addDetail(details, '신고·요청 대상', report.filming_target);
   } else if (report.reportType === 'legal' && report.legal_type === 'privacy') {
-    addDetail(details, '개인정보 신고유형', legalValueLabels[normalizeText(report.privacy_report_type)] ?? report.privacy_report_type);
+    addDetail(
+      details,
+      '개인정보 신고유형',
+      legalValueLabels[normalizeText(report.privacy_report_type)] ?? report.privacy_report_type,
+    );
     addDetail(details, '노출된 정보', report.exposed_information);
     addDetail(details, '요청사유', report.privacy_request_reason);
   } else if (report.reportType === 'rights') {
-    addDetail(details, '권리 소유자', legalValueLabels[normalizeText(report.rights_owner_type)] ?? report.rights_owner_type);
+    addDetail(
+      details,
+      '권리 소유자',
+      legalValueLabels[normalizeText(report.rights_owner_type)] ?? report.rights_owner_type,
+    );
     addDetail(details, '권리 침해 대상', report.rights_holder_name);
     addDetail(
       details,
@@ -158,7 +166,8 @@ function getOpinionContext(report: RawReport): AppealOpinionContext {
 
 async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[]; commentIds: string[] }) {
   const supabaseAdmin = getSupabaseAdmin();
-  const requests: Promise<{ data: unknown[] | null; error: { message?: string } | null; reportType: ReportType }>[] = [];
+  const requests: Promise<{ data: unknown[] | null; error: { message?: string } | null; reportType: ReportType }>[] =
+    [];
 
   function addRequest(reportType: ReportType, column: 'post_id' | 'comment_id', ids: string[]) {
     if (ids.length === 0) {
@@ -169,9 +178,7 @@ async function loadReportsForTargets({ postIds, commentIds }: { postIds: string[
     const columns = reportType === 'legal' ? legalColumns : rightsColumns;
     const subtypeColumn = reportType === 'legal' ? 'legal_type' : 'reason_type';
     const allowedTypes =
-      reportType === 'legal'
-        ? ['illegal_info', 'illegal_filming', 'privacy']
-        : ['defamation', 'personality_rights'];
+      reportType === 'legal' ? ['illegal_info', 'illegal_filming', 'privacy'] : ['defamation', 'personality_rights'];
 
     requests.push(
       (async () => {
@@ -264,8 +271,12 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
   const posts = (postsResult.data ?? []) as PostRow[];
   const postById = new Map(posts.map((post) => [post.id, post]));
   const commentById = new Map(comments.map((comment) => [comment.id, comment]));
-  const siteIds = [...new Set(reports.map((report) => report.site_id).filter((value): value is string => Boolean(value)))];
-  const boardIds = [...new Set(reports.map((report) => report.board_id).filter((value): value is string => Boolean(value)))];
+  const siteIds = [
+    ...new Set(reports.map((report) => report.site_id).filter((value): value is string => Boolean(value))),
+  ];
+  const boardIds = [
+    ...new Set(reports.map((report) => report.board_id).filter((value): value is string => Boolean(value))),
+  ];
   const [sitesResult, boardsResult] = await Promise.all([
     supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', siteIds),
     supabaseAdmin.from('boards').select('id, board_key, board_label').in('id', boardIds),
@@ -306,10 +317,7 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
       return [];
     }
 
-    const category =
-      report.reportType === 'legal'
-        ? report.legal_type
-        : report.reason_type;
+    const category = report.reportType === 'legal' ? report.legal_type : report.reason_type;
 
     if (
       category !== 'illegal_info' &&
@@ -360,8 +368,7 @@ export async function loadAppealCenterItems({ stigmaId, origin }: { stigmaId: st
         appeal,
         reportDetails: getReportDetails(report),
         opinionContext: getOpinionContext(report),
-        canSubmitOpinion:
-          Boolean(appeal) && appeal?.appellantStatus === 'request_arrived' && !deadline.isExpired,
+        canSubmitOpinion: Boolean(appeal) && appeal?.appellantStatus === 'request_arrived' && !deadline.isExpired,
         canEditContent:
           appeal?.contentRequest === 'edit_and_review' &&
           appeal.appellantStatus === 'opinion_submitted' &&

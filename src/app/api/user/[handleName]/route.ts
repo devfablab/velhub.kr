@@ -40,7 +40,11 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
 
   const [currentStigma, linksResult, stigmaResult, seriesResult, features] = await Promise.all([
     getCurrentStigma(),
-    supabaseAdmin.from('creator_links').select('id, label, url, sort_order').eq('creator_id', creator.id).order('sort_order'),
+    supabaseAdmin
+      .from('creator_links')
+      .select('id, label, url, sort_order')
+      .eq('creator_id', creator.id)
+      .order('sort_order'),
     supabaseAdmin.from('stigmas').select('user_name, avatar').eq('id', creator.user_id).maybeSingle(),
     supabaseAdmin.from('board_series').select('id, series_label').eq('user_id', creator.user_id),
     getMembershipFeatures(creator.user_id),
@@ -50,27 +54,41 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     return NextResponse.json({ message: '개인사정으로 인해 운영이 중단되었습니다.' }, { status: 403 });
   }
 
-  if (linksResult.error || stigmaResult.error || seriesResult.error) return NextResponse.json({ message: '독자 정보를 불러오지 못했습니다.' }, { status: 500 });
+  if (linksResult.error || stigmaResult.error || seriesResult.error)
+    return NextResponse.json({ message: '독자 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const series = seriesResult.data ?? [];
   const postsResult = await supabaseAdmin
-        .from('posts')
-        .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
-        .eq('user_id', creator.user_id)
-        .eq('published_status', 'published')
-        .eq('is_closed', false)
-        .order('published_at', { ascending: false })
-        .range(from, from + 99);
-        
+    .from('posts')
+    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
+    .eq('user_id', creator.user_id)
+    .eq('published_status', 'published')
+    .eq('is_closed', false)
+    .order('published_at', { ascending: false })
+    .range(from, from + 99);
+
   if (postsResult.error) return NextResponse.json({ message: '내가 쓴 글을 불러오지 못했습니다.' }, { status: 500 });
 
   const posts = postsResult.data ?? [];
   const [sitesResult, boardsResult] = await Promise.all([
-    posts.length ? supabaseAdmin.from('rhizomes').select('id, site_key, site_label').in('id', [...new Set(posts.map((post) => post.site_id))]) : { data: [], error: null },
-    posts.length ? supabaseAdmin.from('boards').select('id, board_key').in('id', [...new Set(posts.map((post) => post.board_id))]) : { data: [], error: null },
+    posts.length
+      ? supabaseAdmin
+          .from('rhizomes')
+          .select('id, site_key, site_label')
+          .in('id', [...new Set(posts.map((post) => post.site_id))])
+      : { data: [], error: null },
+    posts.length
+      ? supabaseAdmin
+          .from('boards')
+          .select('id, board_key')
+          .in('id', [...new Set(posts.map((post) => post.board_id))])
+      : { data: [], error: null },
   ]);
-  if (sitesResult.error || boardsResult.error) return NextResponse.json({ message: '연재글 경로를 불러오지 못했습니다.' }, { status: 500 });
-  const siteMap = new Map((sitesResult.data ?? []).map((site) => [site.id, { key: site.site_key, label: site.site_label }]));
+  if (sitesResult.error || boardsResult.error)
+    return NextResponse.json({ message: '연재글 경로를 불러오지 못했습니다.' }, { status: 500 });
+  const siteMap = new Map(
+    (sitesResult.data ?? []).map((site) => [site.id, { key: site.site_key, label: site.site_label }]),
+  );
   const boardMap = new Map((boardsResult.data ?? []).map((board) => [board.id, board.board_key]));
   const seriesMap = new Map(series.map((item) => [item.id, item.series_label]));
 
@@ -81,7 +99,12 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       introduction: creator.introduction,
       activityName: decryptUserName(stigmaResult.data?.user_name ?? null) ?? '작가',
       profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
-      links: (linksResult.data ?? []).map((link) => ({ id: link.id, label: link.label, url: link.url, sortOrder: link.sort_order })),
+      links: (linksResult.data ?? []).map((link) => ({
+        id: link.id,
+        label: link.label,
+        url: link.url,
+        sortOrder: link.sort_order,
+      })),
     },
     posts: posts.map((post) => ({
       id: post.id,
