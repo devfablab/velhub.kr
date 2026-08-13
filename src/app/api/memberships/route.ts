@@ -72,7 +72,7 @@ export async function GET() {
 
   const planLabelById = new Map((planResult.data ?? []).map((plan) => [plan.id as string, plan.plan_label as string]));
   const itemLabelsByMembershipId = new Map<string, string[]>();
-  const subscriptionByMembershipId = new Map<string, { status: string; currentPeriodEnd: string | null }>();
+  const subscriptionByMembershipId = new Map<string, { status: string; currentPeriodEnd: string | null; createdAt: string | null }>();
 
   for (const subscription of subscriptionResult.data ?? []) {
     const membershipId = subscription.target_id as string;
@@ -80,6 +80,7 @@ export async function GET() {
       subscriptionByMembershipId.set(membershipId, {
         status: subscription.status as string,
         currentPeriodEnd: subscription.current_period_end as string | null,
+        createdAt: subscription.created_at as string | null,
       });
     }
   }
@@ -100,6 +101,7 @@ export async function GET() {
       itemLabels: itemLabelsByMembershipId.get(membership.id) ?? [],
       subscriptionStatus: subscriptionByMembershipId.get(membership.id)?.status ?? null,
       currentPeriodEnd: subscriptionByMembershipId.get(membership.id)?.currentPeriodEnd ?? null,
+      createdAt: subscriptionByMembershipId.get(membership.id)?.createdAt ?? null,
     })),
     billingMethods: (billingMethodResult.data ?? []).map((billingMethod) => ({
       id: billingMethod.id as string,

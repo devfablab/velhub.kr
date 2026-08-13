@@ -45,9 +45,17 @@ async function getSelectorData(stigmaId: string) {
       .select('selector_type, target_id')
       .eq('user_id', stigmaId),
   ]);
-
-  if (sitesResult.error || postsResult.error || selectionsResult.error) {
-    throw new Error('라운지 노출 대상을 불러오지 못했습니다.');
+  if (sitesResult.error) {
+    console.error('[Membership Selectors API] Failed to fetch sites:', sitesResult.error);
+    throw new Error('내 사이트 목록을 불러오는 중 오류가 발생했습니다.');
+  }
+  if (postsResult.error) {
+    console.error('[Membership Selectors API] Failed to fetch posts:', postsResult.error);
+    throw new Error('내 연재글 목록을 불러오는 중 오류가 발생했습니다.');
+  }
+  if (selectionsResult.error) {
+    console.error('[Membership Selectors API] Failed to fetch selections:', selectionsResult.error);
+    throw new Error('기존 노출 대상 설정을 불러오는 중 오류가 발생했습니다.');
   }
 
   const sites = (sitesResult.data ?? []) as Site[];
@@ -126,7 +134,7 @@ export async function PUT(request: Request) {
 
     for (const type of enabledTypes) {
       if (!values[type]) {
-        return NextResponse.json({ message: '모든 대상을 선택해 주세요.' }, { status: 400 });
+        continue;
       }
 
       if (!allowedIds[type].has(values[type])) {
@@ -138,18 +146,25 @@ export async function PUT(request: Request) {
     const deleteResult = enabledTypes.length
       ? await supabaseAdmin.from('membership_selectors').delete().eq('user_id', currentStigma.stigmaId).in('selector_type', enabledTypes)
       : { error: null };
-    if (deleteResult.error) throw new Error('라운지 노출 대상을 저장하지 못했습니다.');
+    if (deleteResult.error) {
+      console.error('[Membership Selectors API] Failed to delete old selections:', deleteResult.error);
+      throw new Error('라운지 노출 대상을 저장하지 못했습니다. (삭제 실패)');
+    }
 
     const rows = enabledTypes.flatMap((selectorType) =>
       values[selectorType] ? [{ user_id: currentStigma.stigmaId, selector_type: selectorType, target_id: values[selectorType] }] : [],
     );
     if (rows.length) {
       const insertResult = await supabaseAdmin.from('membership_selectors').insert(rows);
-      if (insertResult.error) throw new Error('라운지 노출 대상을 저장하지 못했습니다.');
+      if (insertResult.error) {
+        console.error('[Membership Selectors API] Failed to insert new selections:', insertResult.error);
+        throw new Error('라운지 노출 대상을 저장하지 못했습니다. (추가 실패)');
+      }
     }
 
     return NextResponse.json({ message: '라운지 노출 대상을 저장했습니다.' });
   } catch (error) {
+    console.error('[Membership Selectors API] PUT Error:', error);
     return NextResponse.json({ message: error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.' }, { status: 500 });
   }
 }

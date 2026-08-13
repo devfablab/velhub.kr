@@ -23,6 +23,7 @@ type Eligibility = {
 type MembershipStatusResponse = {
   memberships?: Array<{ id: string; type: MembershipType }>;
   message?: string;
+  features?: MembershipFeatureKey[];
 };
 
 type MembershipMode = 'individual' | 'all_in_one';
@@ -54,6 +55,7 @@ export default function Opt() {
   const [isCreatorPackage, setIsCreatorPackage] = useState(false);
   const [allInOneSelection, setAllInOneSelection] = useState<MembershipFeatureKey[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [hasExistingMembership, setHasExistingMembership] = useState(false);
 
   useEffect(() => {
     async function loadEligibility() {
@@ -77,13 +79,26 @@ export default function Opt() {
           throw new Error(membershipResult?.message || '멤버십 정보를 불러오지 못했습니다.');
         }
 
-        const hasCreatorMembership = (membershipResult?.memberships ?? []).some((membership) =>
+        const existingMemberships = membershipResult?.memberships ?? [];
+        const hasCreatorMembership = existingMemberships.some((membership) =>
           ['owner', 'creator', 'all_in_one'].includes(membership.type),
         );
 
         if (hasCreatorMembership) {
-          router.replace('/hub/memberships/plans');
-          return;
+          setHasExistingMembership(true);
+          const features = membershipResult?.features ?? [];
+          const isAllInOne = existingMemberships.some((m) => m.type === 'all_in_one');
+          
+          if (isAllInOne) {
+            setMode('all_in_one');
+            setAllInOneSelection(features);
+          } else {
+            setMode('individual');
+            const ownerSelected = features.filter((key) => ownerFeatures.some((f) => f.key === key));
+            const creatorSelected = features.filter((key) => creatorFeatures.some((f) => f.key === key));
+            setOwnerSelection(ownerSelected);
+            setCreatorSelection(creatorSelected);
+          }
         }
 
         setEligibility(result);
@@ -256,7 +271,7 @@ export default function Opt() {
         ? { allInOne: allInOneSelection }
         : { owner: effectiveOwnerSelection, creator: effectiveCreatorSelection };
 
-    router.push(`/hub/memberships/plans?selection=${encodeURIComponent(JSON.stringify(selection))}`);
+    router.push(`/hub/memberships?selection=${encodeURIComponent(JSON.stringify(selection))}`);
   }
 
   if (!eligibility && !errorMessage) return null;
@@ -350,7 +365,13 @@ export default function Opt() {
               onClick={handleMoveToPlan}
               disabled={!eligibility || (mode === 'all_in_one' && (!isAllInOnePackage || !canUseAllInOne))}
             >
-              {totalPrice === 0 ? '무료로 이용하기' : `${formatMembershipPrice(totalPrice)} 결제하기`}
+              {hasExistingMembership
+                ? totalPrice === 0
+                  ? '무료로 변경하기'
+                  : `${formatMembershipPrice(totalPrice)} 변경하기`
+                : totalPrice === 0
+                  ? '무료로 이용하기'
+                  : `${formatMembershipPrice(totalPrice)} 결제하기`}
             </button>
           </div>
         </Stack>

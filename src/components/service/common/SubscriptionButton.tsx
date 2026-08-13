@@ -19,9 +19,9 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
 import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
-import styles from '@/app/board.module.sass';
 import PaymentTerms from './PaymentTerms';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import styles from '@/app/board.module.sass';
 
 type BoardInfo = {
   id: string;
@@ -164,10 +164,10 @@ function isUnder14(birthDate: string | null | undefined) {
 
   const today = new Date();
   const birth = new Date(year, month - 1, day);
-  
+
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
-  
+
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -304,15 +304,9 @@ export default function SubscriptionButton({
 
         if (!ignore) {
           setHasIdentity(response.ok && Boolean(result.exists));
-          setIsMinor(
-            response.ok && result.exists && result.identity
-              ? !isAdult(result.identity.birth_date)
-              : false,
-          );
+          setIsMinor(response.ok && result.exists && result.identity ? !isAdult(result.identity.birth_date) : false);
           setIsUnder14Age(
-            response.ok && result.exists && result.identity
-              ? isUnder14(result.identity.birth_date)
-              : false,
+            response.ok && result.exists && result.identity ? isUnder14(result.identity.birth_date) : false,
           );
           setIsReady(true);
         }

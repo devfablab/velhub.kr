@@ -119,7 +119,8 @@ function isReservedRootPath(pathname: string) {
     firstSegment === 'user' ||
     firstSegment === 'dummy.webp' ||
     firstSegment === 'together.webp' ||
-    firstSegment === 'favicon'
+    firstSegment === 'favicon' ||
+    firstSegment === 'memberships'
   );
 }
 

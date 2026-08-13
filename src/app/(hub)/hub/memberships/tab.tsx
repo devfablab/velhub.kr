@@ -13,7 +13,7 @@ type ContainerProps = {
 
 const tabs = [
   {
-    href: '/hub/memberships/plans',
+    href: '/hub/memberships',
     label: '멤버십 관리',
     icon: <CardGiftcardRoundedIcon />,
   },
