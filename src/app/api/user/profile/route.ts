@@ -41,7 +41,7 @@ export async function GET() {
       .maybeSingle(),
   ]);
 
-  if (creatorResult.error) return NextResponse.json({ message: '작가 프로필을 불러오지 못했습니다.' }, { status: 500 });
+  if (creatorResult.error) return NextResponse.json({ message: '독자 프로필을 불러오지 못했습니다.' }, { status: 500 });
 
   const linksResult = creatorResult.data
     ? await supabaseAdmin
@@ -51,11 +51,11 @@ export async function GET() {
         .order('sort_order', { ascending: true })
     : { data: [], error: null };
 
-  if (linksResult.error) return NextResponse.json({ message: '작가 링크를 불러오지 못했습니다.' }, { status: 500 });
+  if (linksResult.error) return NextResponse.json({ message: '독자 링크를 불러오지 못했습니다.' }, { status: 500 });
 
   return NextResponse.json({
     isAuthor: authorState.isAuthor,
-    creator: creatorResult.data
+    user: creatorResult.data
       ? {
           id: creatorResult.data.id,
           handleName: creatorResult.data.handle_name,
@@ -75,8 +75,6 @@ export async function PUT(request: Request) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
 
-  const authorState = await getAuthorState(currentStigma.stigmaId);
-  if (!authorState.isAuthor) return NextResponse.json({ message: '작가만 프로필을 설정할 수 있습니다.' }, { status: 403 });
 
   const body = await request.json().catch(() => null) as {
     handleName?: unknown;
@@ -109,7 +107,7 @@ export async function PUT(request: Request) {
     supabaseAdmin.from('creators').select('id').eq('user_id', currentStigma.stigmaId).maybeSingle(),
     supabaseAdmin.from('creators').select('id, user_id').eq('handle_name', handleName).maybeSingle(),
   ]);
-  if (existingResult.error || sameHandleResult.error) return NextResponse.json({ message: '작가 프로필을 확인하지 못했습니다.' }, { status: 500 });
+  if (existingResult.error || sameHandleResult.error) return NextResponse.json({ message: '독자 프로필을 확인하지 못했습니다.' }, { status: 500 });
   if (sameHandleResult.data && sameHandleResult.data.user_id !== currentStigma.stigmaId) {
     return NextResponse.json({ message: '이미 사용 중인 핸들네임입니다.' }, { status: 409 });
   }
@@ -127,19 +125,19 @@ export async function PUT(request: Request) {
         .select('id, handle_name, cover_image, introduction')
         .single();
 
-  if (savedResult.error || !savedResult.data) return NextResponse.json({ message: '작가 프로필을 저장하지 못했습니다.' }, { status: 500 });
+  if (savedResult.error || !savedResult.data) return NextResponse.json({ message: '독자 프로필을 저장하지 못했습니다.' }, { status: 500 });
 
   const deleteResult = await supabaseAdmin.from('creator_links').delete().eq('creator_id', savedResult.data.id);
-  if (deleteResult.error) return NextResponse.json({ message: '작가 링크를 저장하지 못했습니다.' }, { status: 500 });
+  if (deleteResult.error) return NextResponse.json({ message: '독자 링크를 저장하지 못했습니다.' }, { status: 500 });
   if (normalizedLinks.length) {
     const insertResult = await supabaseAdmin
       .from('creator_links')
       .insert(normalizedLinks.map((link) => ({ ...link, creator_id: savedResult.data.id })));
-    if (insertResult.error) return NextResponse.json({ message: '작가 링크를 저장하지 못했습니다.' }, { status: 500 });
+    if (insertResult.error) return NextResponse.json({ message: '독자 링크를 저장하지 못했습니다.' }, { status: 500 });
   }
 
   return NextResponse.json({
-    creator: {
+    user: {
       id: savedResult.data.id,
       handleName: savedResult.data.handle_name,
       coverImage: savedResult.data.cover_image,

@@ -3,6 +3,7 @@ import { decrypt } from '@/lib/encryption/decrypt';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import { getMembershipFeatures } from '@/lib/memberships/features';
 
 function getAvatarUrl(path: string | null) {
   if (!path) return null;
@@ -30,26 +31,26 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     .select('id, user_id, handle_name, cover_image, introduction')
     .eq('handle_name', normalizedHandleName)
     .maybeSingle();
-  if (creatorResult.error) return NextResponse.json({ message: '작가 프로필을 불러오지 못했습니다.' }, { status: 500 });
-  if (!creatorResult.data) return NextResponse.json({ message: '작가 프로필을 찾을 수 없습니다.' }, { status: 404 });
+  if (creatorResult.error) return NextResponse.json({ message: '독자 프로필을 불러오지 못했습니다.' }, { status: 500 });
+  if (!creatorResult.data) return NextResponse.json({ message: '독자 프로필을 찾을 수 없습니다.' }, { status: 404 });
 
   const page = Math.max(1, Number(new URL(_.url).searchParams.get('page') ?? '1') || 1);
   const from = (page - 1) * 100;
   const creator = creatorResult.data;
 
-  const [currentStigma, linksResult, stigmaResult, seriesResult, membershipResult] = await Promise.all([
+  const [currentStigma, linksResult, stigmaResult, seriesResult, features] = await Promise.all([
     getCurrentStigma(),
     supabaseAdmin.from('creator_links').select('id, label, url, sort_order').eq('creator_id', creator.id).order('sort_order'),
     supabaseAdmin.from('stigmas').select('user_name, avatar').eq('id', creator.user_id).maybeSingle(),
     supabaseAdmin.from('board_series').select('id, series_label').eq('user_id', creator.user_id),
-    supabaseAdmin.from('subscriptions').select('id').eq('target_id', creator.user_id).eq('subscription_type', 'affetto_my_posts').in('status', ['trialing', 'active', 'past_due']).maybeSingle(),
+    getMembershipFeatures(creator.user_id),
   ]);
 
-  if (!membershipResult.data) {
+  if (!features.has('affetto_my_posts')) {
     return NextResponse.json({ message: '개인사정으로 인해 운영이 중단되었습니다.' }, { status: 403 });
   }
 
-  if (linksResult.error || stigmaResult.error || seriesResult.error) return NextResponse.json({ message: '작가 정보를 불러오지 못했습니다.' }, { status: 500 });
+  if (linksResult.error || stigmaResult.error || seriesResult.error) return NextResponse.json({ message: '독자 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const series = seriesResult.data ?? [];
   const postsResult = await supabaseAdmin
