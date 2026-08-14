@@ -11,6 +11,8 @@
 !.yarn/versions
 /supabase
 /supabase/
+/.antigravity
+/.antigravity/
 
 # testing
 /coverage
