@@ -15,6 +15,7 @@ type SocialRequestBody = {
   isAgreeTerm?: boolean | null;
   isAgreeChild?: boolean | null;
   isAgreePrivacy?: boolean | null;
+  paymentEmail?: string | null;
 };
 
 function getSafeUserName(userName: string | null, email: string) {
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     const email = requestBody.email?.trim().toLowerCase() ?? '';
     const provider = requestBody.provider?.trim().toLowerCase() ?? '';
     const providerAccountId = requestBody.providerAccountId?.trim() ?? null;
+    const paymentEmail = requestBody.paymentEmail?.trim() ?? null;
     const avatar = requestBody.avatar?.trim() ?? null;
     const accessToken = requestBody.accessToken?.trim() ?? null;
     const refreshToken = requestBody.refreshToken?.trim() ?? null;
@@ -67,6 +69,10 @@ export async function POST(request: Request) {
       return Response.json({ error: 'provider가 유효하지 않습니다.' }, { status: 400 });
     }
 
+    if (provider === 'naver' && !paymentEmail) {
+      return Response.json({ error: '이메일을 입력해주세요.' }, { status: 400 });
+    }
+
     if (
       hasAgreementPayload &&
       (requestBody.isAgreeTerm !== true || requestBody.isAgreeChild !== true || requestBody.isAgreePrivacy !== true)
@@ -78,6 +84,7 @@ export async function POST(request: Request) {
 
     const encryptedEmail = encrypt(email);
     const encryptedUserName = encrypt(safeUserName);
+    const encryptedPaymentEmail = paymentEmail ? encrypt(paymentEmail) : null;
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -118,6 +125,7 @@ export async function POST(request: Request) {
         .update({
           user_name: encryptedUserName,
           email: encryptedEmail,
+          payment_email: encryptedPaymentEmail,
           avatar,
           ...agreementPayload,
         })
@@ -136,6 +144,7 @@ export async function POST(request: Request) {
         avatar,
         role: 'user',
         email: encryptedEmail,
+        payment_email: encryptedPaymentEmail,
         ...agreementPayload,
       });
 

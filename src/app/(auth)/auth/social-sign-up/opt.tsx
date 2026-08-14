@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useEffect, useRef, useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, Stack, TextField } from '@mui/material';
@@ -34,6 +34,7 @@ export default function Opt() {
   const { canSubmit, isAgreeTerm, isAgreeChild, isAgreePrivacy } = useSignupAgreements();
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [userName, setUserName] = useState('');
+  const [paymentEmail, setPaymentEmail] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,6 +123,12 @@ export default function Opt() {
       return;
     }
 
+    const normalizedPaymentEmail = paymentEmail.trim();
+    if (profile?.provider === 'naver' && !normalizedPaymentEmail) {
+      setErrorMessage('이메일을 입력해주세요.');
+      return;
+    }
+
     if (!canSubmit) {
       setErrorMessage('필수 동의 항목에 모두 동의해 주세요.');
       return;
@@ -142,6 +149,7 @@ export default function Opt() {
         body: JSON.stringify({
           ...profile,
           userName: normalizedUserName,
+          paymentEmail: profile?.provider === 'naver' ? normalizedPaymentEmail : undefined,
           isAgreeTerm,
           isAgreeChild,
           isAgreePrivacy,
@@ -164,6 +172,18 @@ export default function Opt() {
     <Box component="form" onSubmit={handleSubmit}>
       <Stack gap={1}>
         {isLoading ? <p>소셜 로그인 정보를 확인하고 있습니다.</p> : null}
+        {profile?.provider === 'naver' && (
+          <TextField
+            placeholder="이메일"
+            autoComplete="email"
+            type="email"
+            value={paymentEmail}
+            onChange={(event) => setPaymentEmail(event.currentTarget.value)}
+            fullWidth
+            size="small"
+            disabled={isLoading || isSubmitting}
+          />
+        )}
         <TextField
           placeholder="활동명"
           autoComplete="nickname"
