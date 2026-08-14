@@ -185,7 +185,7 @@ export async function GET(request: Request) {
     const stigmas = (stigmasResult.data ?? []) as StigmaRow[];
     const stigmaIdByParticleId = new Map(stigmas.map((stigma) => [stigma.user_id, stigma.id]));
     const activityNameByParticleId = new Map(
-      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name)]),
+      stigmas.map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name || '')]),
     );
     const donorStigmaIds = stigmas.map((stigma) => stigma.id);
 

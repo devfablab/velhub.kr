@@ -28,7 +28,7 @@ export default async function Page() {
   let sitesHitsData = null;
   let postsHitsData = null;
   try {
-    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=post_count&siteType=blog`, {
+    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&membership=owner&siteType=blog`, {
       cache: 'no-store',
     });
 
@@ -38,7 +38,7 @@ export default async function Page() {
       sitesHitsData = await sitesHitsResponse.json();
     }
 
-    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=post_count&siteType=blog`, {
+    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=blog`, {
       cache: 'no-store',
     });
 
@@ -57,7 +57,7 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <AuthSection />
           <section>
-            <h2>핫한 블로그를 모았어요 💃</h2>
+            <h2>오너 멤버십 추천 블로그 💃</h2>
             <Slick sitesHitsData={sitesHitsData} />
           </section>
           <section>

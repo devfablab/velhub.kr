@@ -2,9 +2,9 @@ import { getRevenueErrorResponse, getRevenueSites } from '@/lib/revenue/context'
 
 export async function GET() {
   try {
-    const sites = await getRevenueSites();
+    const { sites, isAuthor, isSettlementError } = await getRevenueSites();
 
-    return Response.json({ sites });
+    return Response.json({ sites, isAuthor, isSettlementError });
   } catch (error) {
     return getRevenueErrorResponse(error);
   }

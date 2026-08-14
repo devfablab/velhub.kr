@@ -43,13 +43,27 @@ export async function GET(request: NextRequest) {
 
     const ascending = sortOrder === 'asc';
     const limit = parseInt(limitParam, 10);
+    const membership = searchParams.get('membership');
 
     const supabaseAdmin = getSupabaseAdmin();
+    
+    let allowedSiteIds: string[] | null = null;
+    if (membership === 'owner') {
+      const { data: selections, error: selectionsError } = await supabaseAdmin
+        .from('membership_selectors')
+        .select('target_id')
+        .eq('selector_type', 'owner_site')
+        .limit(limit * 3);
+      
+      if (!selectionsError && selections) {
+        allowedSiteIds = selections.map((s) => s.target_id);
+      }
+    }
 
     let query = supabaseAdmin
       .from('rhizomes')
       .select(
-        'site_key, site_label, profile_picture, summary, site_type, profile_logo, promotion_image, member_count, post_count, created_at',
+        'id, site_key, site_label, profile_picture, summary, site_type, profile_logo, promotion_image, member_count, post_count, created_at',
       )
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false)
@@ -57,6 +71,14 @@ export async function GET(request: NextRequest) {
 
     if (siteType === 'blog' || siteType === 'community') {
       query = query.eq('site_type', siteType);
+    }
+    
+    if (allowedSiteIds !== null) {
+      if (allowedSiteIds.length > 0) {
+        query = query.in('id', allowedSiteIds);
+      } else {
+        return Response.json({ sites: [] });
+      }
     }
 
     const { data, error } = await query.order(sortBy, { ascending }).limit(limit);

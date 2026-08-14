@@ -51,17 +51,28 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
 
   const series = seriesResult.data ?? [];
   const seriesIds = series.map((item) => item.id);
-  const postsResult = seriesIds.length
-    ? await supabaseAdmin
-        .from('posts')
-        .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
-        .in('series_id', seriesIds)
-        .eq('published_status', 'published')
-        .eq('is_closed', false)
-        .order('published_at', { ascending: false })
-        .range(from, from + 49)
+  const tab = new URL(_.url).searchParams.get('tab') || 'all';
+
+  let postsQuery = supabaseAdmin
+    .from('posts')
+    .select('id, site_id, board_id, series_id, subject, slug, published_at', { count: 'exact' })
+    .eq('user_id', creator.user_id)
+    .eq('published_status', 'published')
+    .eq('is_closed', false);
+
+  if (tab === 'series') {
+    if (seriesIds.length > 0) {
+      postsQuery = postsQuery.in('series_id', seriesIds);
+    } else {
+      postsQuery = null as any; // No series, so no posts
+    }
+  }
+
+  const postsResult = postsQuery
+    ? await postsQuery.order('published_at', { ascending: false }).range(from, from + 49)
     : { data: [], error: null, count: 0 };
-  if (postsResult.error) return NextResponse.json({ message: '연재글을 불러오지 못했습니다.' }, { status: 500 });
+
+  if (postsResult.error) return NextResponse.json({ message: '글을 불러오지 못했습니다.' }, { status: 500 });
 
   const posts = postsResult.data ?? [];
   const [sitesResult, boardsResult] = await Promise.all([
@@ -79,7 +90,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       : { data: [], error: null },
   ]);
   if (sitesResult.error || boardsResult.error)
-    return NextResponse.json({ message: '연재글 경로를 불러오지 못했습니다.' }, { status: 500 });
+    return NextResponse.json({ message: '글 경로를 불러오지 못했습니다.' }, { status: 500 });
   const siteMap = new Map(
     (sitesResult.data ?? []).map((site) => [site.id, { key: site.site_key, label: site.site_label }]),
   );
@@ -89,6 +100,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const { getMembershipFeatures } = await import('@/lib/memberships/features');
   const features = await getMembershipFeatures(creator.user_id);
   const hasBranding = features.has('creator_branding');
+  const hasCreatorPosts = features.has('creator_posts');
 
   return NextResponse.json({
     creator: {
@@ -106,11 +118,13 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
           }))
         : [],
     },
+    hasBranding,
+    hasCreatorPosts,
     posts: posts.map((post) => ({
       id: post.id,
       subject: post.subject ?? '제목 없음',
       publishedAt: post.published_at,
-      seriesLabel: seriesMap.get(post.series_id) ?? '연재',
+      seriesLabel: post.series_id ? seriesMap.get(post.series_id) ?? '연재' : '단편',
       siteLabel: siteMap.get(post.site_id)?.label ?? '사이트',
       url: `/${siteMap.get(post.site_id)?.key ?? ''}/${boardMap.get(post.board_id) ?? ''}/${post.slug ?? ''}`,
     })),

@@ -2,7 +2,17 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { getMembershipFeatures } from '@/lib/memberships/features';
 import { getAuthorState } from '@/lib/session/author';
 
-export async function getLibraryStatus(stigmaId: string) {
+export async function getLibraryStatus(stigmaId: string | null) {
+  if (!stigmaId) {
+    return {
+      isAuthor: false,
+      creatorHandleName: null,
+      userHandleName: null,
+      hasAffettoMyPosts: false,
+      hasCreatorLounge: false,
+    };
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
 
   const [{ isAuthor }, creatorResult, userResult, features] = await Promise.all([

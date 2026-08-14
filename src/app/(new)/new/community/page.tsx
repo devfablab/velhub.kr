@@ -2,7 +2,12 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { originTitle, Seo } from '@/lib/seo';
+import { getCurrentStigma } from '@/lib/session/utils';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { hasMembershipFeature } from '@/lib/memberships/features';
+import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
@@ -103,6 +108,27 @@ export default async function Page() {
     }
   }
 
+  let canCreateSite = true;
+  let blockMessage = '';
+
+  const currentStigma = await getCurrentStigma();
+  if (currentStigma) {
+    const hasUnlimitedSites = await hasMembershipFeature(currentStigma.stigmaId, 'owner_unlimited_sites');
+    if (!hasUnlimitedSites) {
+      const supabaseAdmin = getSupabaseAdmin();
+      const siteCountResult = await supabaseAdmin
+        .from('rhizomes')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_id', currentStigma.stigmaId)
+        .eq('site_type', 'community');
+
+      if ((siteCountResult.count ?? 0) >= 1) {
+        canCreateSite = false;
+        blockMessage = '기본 오너 멤버십에서는 커뮤니티를 1개만 개설할 수 있습니다.';
+      }
+    }
+  }
+
   return (
     <main className={styles['new-generation']}>
       <div className={styles.container}>
@@ -127,9 +153,19 @@ export default async function Page() {
                 </p>
               ) : null}
             </div>
+          ) : !canCreateSite ? (
+            <div className="paper page-error">
+              <NearbyErrorRoundedIcon />
+              <p className="alert error">
+                <span>{blockMessage}</span>
+              </p>
+              <Anchor href={`/memberships/creator`} className="button medium submit">
+                멤버십 가입하기
+              </Anchor>
+            </div>
           ) : null}
 
-          {hasIdentity || isMinor ? <Opt /> : null}
+          {(hasIdentity || isMinor) && canCreateSite ? <Opt /> : null}
         </div>
       </div>
     </main>

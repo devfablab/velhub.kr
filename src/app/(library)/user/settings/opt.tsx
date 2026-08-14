@@ -5,7 +5,40 @@ import { InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import Anchor from '@/components/Anchor';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
+
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
+}
 
 export default function Opt() {
   const [handleName, setHandleName] = useState('');
@@ -13,6 +46,8 @@ export default function Opt() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+  const { themeMode, setThemeMode } = useThemeMode();
 
   useEffect(() => {
     fetch('/api/user/profile')
@@ -28,6 +63,39 @@ export default function Opt() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
+
+  useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    setIsMounted(true);
+  }, [setThemeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
+    }
+
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+  }, [isMounted]);
 
   if (message)
     return (

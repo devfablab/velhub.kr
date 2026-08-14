@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
+import SettlementForm from '@/components/service/common/SettlementForm';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RevenueList from '@/app/(site)/[siteName]/payments/RevenueList';
@@ -18,6 +19,8 @@ type RevenueSite = {
 };
 
 type RevenueSitesResponse = {
+  isAuthor?: boolean;
+  isSettlementError?: boolean;
   sites?: RevenueSite[];
   error?: string;
 };
@@ -56,6 +59,8 @@ export default function RevenueHub() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sites, setSites] = useState<RevenueSite[]>([]);
+  const [isAuthor, setIsAuthor] = useState<boolean | null>(null);
+  const [isSettlementError, setIsSettlementError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -70,32 +75,34 @@ export default function RevenueHub() {
   const requestedView = searchParams.get('view');
   const selectedView: RevenueView = isRevenueView(requestedView) ? requestedView : 'summary';
 
-  useEffect(() => {
-    async function loadSites() {
-      try {
-        const response = await fetch('/api/hub/revenue/sites', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const result = (await response.json()) as RevenueSitesResponse;
+  const loadSites = useCallback(async () => {
+    try {
+      const response = await fetch('/api/hub/revenue/sites', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const result = (await response.json()) as RevenueSitesResponse;
 
-        if (!response.ok) {
-          throw new Error(result.error || '수입/정산 사이트를 불러오지 못했습니다.');
-        }
-
-        setSites(Array.isArray(result.sites) ? result.sites : []);
-        setErrorMessage('');
-      } catch (unknownError) {
-        setErrorMessage(
-          unknownError instanceof Error ? unknownError.message : '수입/정산 사이트를 불러오지 못했습니다.',
-        );
-      } finally {
-        setIsLoading(false);
+      if (!response.ok) {
+        throw new Error(result.error || '수입/정산 사이트를 불러오지 못했습니다.');
       }
-    }
 
-    void loadSites();
+      setSites(Array.isArray(result.sites) ? result.sites : []);
+      setIsAuthor(result.isAuthor ?? false);
+      setIsSettlementError(result.isSettlementError ?? false);
+      setErrorMessage('');
+    } catch (unknownError) {
+      setErrorMessage(
+        unknownError instanceof Error ? unknownError.message : '수입/정산 사이트를 불러오지 못했습니다.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadSites();
+  }, [loadSites]);
 
   useEffect(() => {
     if (isLoading || !selectedSiteName || requestedSiteName === selectedSiteName) {
@@ -134,10 +141,23 @@ export default function RevenueHub() {
         ) : null}
 
         {!isLoading && !errorMessage && sites.length === 0 ? (
-          <p className="alert warning">
-            <WarningAmberRoundedIcon />
-            <span>수입 또는 정산 내역이 있는 사이트가 없습니다.</span>
-          </p>
+          <>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>
+                {isSettlementError
+                  ? '정산 정보에 문제가 있습니다. 아래 양식에서 정산 정보를 올바르게 업데이트해 주세요.'
+                  : isAuthor === false
+                    ? '작가가 아니어서 정산 데이터가 없습니다.'
+                    : '정산 데이터가 없습니다.'}
+              </span>
+            </p>
+            {isSettlementError ? (
+              <div className="paper" style={{ marginTop: '16px' }}>
+                <SettlementForm onSuccess={() => void loadSites()} />
+              </div>
+            ) : null}
+          </>
         ) : null}
 
         {!isLoading && !errorMessage && selectedSiteName ? (

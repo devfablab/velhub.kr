@@ -34,7 +34,8 @@ function extractYoutubeId(value: string | null | undefined) {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const sortBy = searchParams.get('sortBy') === 'post_count' ? 'post_count' : 'published_at';
+    const sortByParam = searchParams.get('sortBy');
+    const sortBy = sortByParam === 'like_count' ? 'like_count' : sortByParam === 'post_count' ? 'post_count' : 'published_at';
     const limitParam = searchParams.get('limit') ?? '10';
     const limit = parseInt(limitParam, 10);
     const siteType = searchParams.get('siteType');
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
     const postsResult = await supabaseAdmin
       .from('posts')
       .select(
-        'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, board_id, user_id',
+        'slug, subject, summary, content_html, content_simple, images, thumbnail_image, thumbnail_width, thumbnail_height, youtube_id, youtube_url, youtube_created_at, published_at, post_count, like_count, board_id, user_id',
       )
       .eq('is_closed', false)
       .not('published_at', 'is', null)

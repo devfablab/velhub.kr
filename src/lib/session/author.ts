@@ -21,7 +21,7 @@ function isMinorAge(birthDate: string | null | undefined) {
   return age < 19;
 }
 
-export async function getAuthorState(stigmaId: string) {
+export async function getAuthorState(stigmaId: string): Promise<{ isAuthor: boolean; isSettlementError?: boolean }> {
   const supabaseAdmin = getSupabaseAdmin();
 
   const identityResult = await supabaseAdmin
@@ -36,12 +36,16 @@ export async function getAuthorState(stigmaId: string) {
 
   const settlementResult = await supabaseAdmin
     .from('chorogons_banque')
-    .select('is_author, is_guardian_approved')
+    .select('is_author, is_guardian_approved, status')
     .eq('chorogon_id', identityResult.data.id)
     .maybeSingle();
 
   if (!settlementResult.data || !settlementResult.data.is_author) {
     return { isAuthor: false };
+  }
+
+  if (settlementResult.data.status !== 'approved') {
+    return { isAuthor: false, isSettlementError: true };
   }
 
   const identityBirthDate = identityResult.data.birth_date ? decrypt(String(identityResult.data.birth_date)) : null;

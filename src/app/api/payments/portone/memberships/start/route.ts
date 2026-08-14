@@ -24,7 +24,7 @@ import {
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { getMembershipFeatures } from '@/lib/memberships/features';
-import { generateReceiptId } from '@/lib/payments/utils';
+
 import { getAuthorState } from '@/lib/session/author';
 import { createCustomerKey } from '@/lib/payments/customer';
 import { getCurrentStigma } from '@/lib/session/utils';

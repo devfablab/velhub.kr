@@ -12,6 +12,7 @@ import {
   type MembershipType,
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/memberships.module.sass';
 
 type Eligibility = {
@@ -27,6 +28,38 @@ type MembershipStatusResponse = {
 };
 
 type MembershipMode = 'individual' | 'all_in_one';
+
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
+
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
+}
 
 const ownerFeatures = getMembershipFeatures('owner');
 const creatorFeatures = getMembershipFeatures('creator');
@@ -56,6 +89,8 @@ export default function Opt() {
   const [allInOneSelection, setAllInOneSelection] = useState<MembershipFeatureKey[]>([]);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [hasExistingMembership, setHasExistingMembership] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const { themeMode, setThemeMode } = useThemeMode();
 
   useEffect(() => {
     async function loadEligibility() {
@@ -109,6 +144,39 @@ export default function Opt() {
 
     void loadEligibility();
   }, [router]);
+
+  useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    setIsMounted(true);
+  }, [setThemeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
+    }
+
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+  }, [isMounted]);
 
   const effectiveOwnerSelection = isOwnerPackage ? getPackageKeys(ownerFeatures) : ownerSelection;
   const effectiveCreatorSelection = isCreatorPackage ? getPackageKeys(creatorFeatures) : creatorSelection;

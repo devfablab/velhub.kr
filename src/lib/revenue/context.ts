@@ -17,6 +17,8 @@ export type RevenueContext = {
   recipientUserIds: string[];
   siteId: string;
   siteName: string;
+  isAuthor: boolean;
+  isSettlementError?: boolean;
 };
 
 export type RevenueSite = {
@@ -57,14 +59,24 @@ async function getRevenueIdentity() {
     throw new RevenueError('사용자 정보를 찾을 수 없습니다.', 404);
   }
 
+  const { getAuthorState } = await import('@/lib/session/author');
+  const authorState = await getAuthorState(stigma.id);
+
   return {
     supabase,
+    stigmaId: stigma.id,
+    isAuthor: authorState.isAuthor,
+    isSettlementError: authorState.isSettlementError,
     // 현재 결제 분배 데이터는 auth user id를 사용합니다. 이전 데이터와의 호환을 위해 stigma id도 함께 조회합니다.
     recipientUserIds: [...new Set([sessionClaims.userId, stigma.id])],
   };
 }
 
-export async function getRevenueSites(): Promise<RevenueSite[]> {
+export async function getRevenueSites(): Promise<{
+  sites: RevenueSite[];
+  isAuthor: boolean;
+  isSettlementError?: boolean;
+}> {
   const identity = await getRevenueIdentity();
   const splitResult = await identity.supabase
     .from('payment_splits')
@@ -84,7 +96,7 @@ export async function getRevenueSites(): Promise<RevenueSite[]> {
   ];
 
   if (siteIds.length === 0) {
-    return [];
+    return { sites: [], isAuthor: identity.isAuthor, isSettlementError: identity.isSettlementError };
   }
 
   const siteResult = await identity.supabase
@@ -96,7 +108,7 @@ export async function getRevenueSites(): Promise<RevenueSite[]> {
     throw new RevenueError(siteResult.error.message, 500);
   }
 
-  return ((siteResult.data ?? []) as SiteRow[])
+  const sites = ((siteResult.data ?? []) as SiteRow[])
     .map((site) => ({
       id: site.id,
       siteName: site.site_key,
@@ -104,6 +116,8 @@ export async function getRevenueSites(): Promise<RevenueSite[]> {
       siteType: normalizeText(site.site_type) || null,
     }))
     .sort((firstSite, secondSite) => firstSite.siteLabel.localeCompare(secondSite.siteLabel, 'ko-KR'));
+
+  return { sites, isAuthor: identity.isAuthor, isSettlementError: identity.isSettlementError };
 }
 
 export async function getRevenueContext(siteNameValue: string | null): Promise<RevenueContext> {
@@ -133,6 +147,8 @@ export async function getRevenueContext(siteNameValue: string | null): Promise<R
     recipientUserIds: identity.recipientUserIds,
     siteId: site.id,
     siteName: site.site_key,
+    isAuthor: identity.isAuthor,
+    isSettlementError: identity.isSettlementError,
   };
 }
 

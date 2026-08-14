@@ -8,6 +8,9 @@ type PaymentSplitRow = UnknownRecord & {
 };
 
 export type RevenueSummaryResponse = {
+  isAuthor?: boolean;
+  isSettlementError?: boolean;
+  hasData?: boolean;
   totalPaymentAmount: number;
   totalPaymentCount: number;
   todayPaymentAmount: number;
@@ -116,6 +119,9 @@ export async function getRevenueSummary(context: RevenueContext): Promise<Revenu
       };
     },
     {
+      isAuthor: context.isAuthor,
+      isSettlementError: context.isSettlementError,
+      hasData: paymentRows.length > 0,
       totalPaymentAmount: 0,
       totalPaymentCount: 0,
       todayPaymentAmount: 0,

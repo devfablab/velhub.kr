@@ -28,7 +28,7 @@ export default async function Page() {
   let sitesHitsData = null;
   let postsHitsData = null;
   try {
-    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&sortBy=member_count&siteType=community`, {
+    const sitesHitsResponse = await fetch(`${baseUrl}/api/home/sites?limit=10&membership=owner&siteType=community`, {
       cache: 'no-store',
     });
 
@@ -38,7 +38,7 @@ export default async function Page() {
       sitesHitsData = await sitesHitsResponse.json();
     }
 
-    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=post_count&siteType=community`, {
+    const postsHitsResponse = await fetch(`${baseUrl}/api/home/posts?limit=20&sortBy=like_count&siteType=community`, {
       cache: 'no-store',
     });
 
@@ -57,7 +57,7 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <AuthSection />
           <section>
-            <h2>핫한 커뮤니티를 모았어요 💃</h2>
+            <h2>오너 멤버십 추천 커뮤니티 💃</h2>
             <Slick sitesHitsData={sitesHitsData} />
           </section>
           <section>

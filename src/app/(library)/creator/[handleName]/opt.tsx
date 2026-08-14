@@ -47,6 +47,7 @@ type CreatorProfile = {
 };
 type Response = {
   creator: CreatorProfile & { activityName: string; profileImage: string | null };
+  hasBranding?: boolean;
   posts: Post[];
   total: number;
   page: number;
@@ -283,7 +284,7 @@ function ProfileForm({
   };
 
   return (
-    <div className="paper" style={{ marginTop: 23 }}>
+    <div className="paper" style={{ marginTop: 72 }}>
       <h1>바이오 수정</h1>
       <VisuallyHiddenInput
         ref={fileRef}
@@ -397,18 +398,19 @@ function openPost(url: string) {
 }
 
 export default function Opt({ handleName }: { handleName: string }) {
-  const [data, setData] = useState<Response | null>(null);
+  const [data, setData] = useState<(Response & { hasCreatorPosts?: boolean }) | null>(null);
   const [page, setPage] = useState(1);
+  const [tab, setTab] = useState<'all' | 'series'>('all');
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
   const load = useCallback(
-    async (nextPage: number) => {
+    async (nextPage: number, nextTab: 'all' | 'series') => {
       try {
         setMessage('');
-        const response = await fetch(`/api/creator/${handleName}?page=${nextPage}`);
+        const response = await fetch(`/api/creator/${handleName}?page=${nextPage}&tab=${nextTab}`);
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.message ?? '작가 정보를 불러오지 못했습니다.');
         setData(payload);
@@ -420,8 +422,8 @@ export default function Opt({ handleName }: { handleName: string }) {
   );
 
   useEffect(() => {
-    void load(page);
-  }, [load, page]);
+    void load(page, tab);
+  }, [load, page, tab]);
 
   useEffect(() => {
     setThemeMode(getStoredThemeMode());
@@ -514,7 +516,7 @@ export default function Opt({ handleName }: { handleName: string }) {
                   <h1>{creator.activityName} 작가</h1>
                   <Typography variant="subtitle2">@{creator.handleName}</Typography>
                 </div>
-                {data.isOwner ? (
+                {data.isOwner && data.hasBranding ? (
                   <div className={styles['user-bio-action']}>
                     <button type="button" className="button small action" onClick={() => setEditing(true)}>
                       수정
@@ -540,6 +542,31 @@ export default function Opt({ handleName }: { handleName: string }) {
             )}
           </div>
           <Stack gap={2}>
+            {data.hasCreatorPosts && (
+              <Stack direction="row" gap={1} sx={{ mb: 1 }}>
+                <button
+                  type="button"
+                  className={`button medium ${tab === 'all' ? 'submit' : 'action'}`}
+                  onClick={() => {
+                    setTab('all');
+                    setPage(1);
+                  }}
+                >
+                  전체글
+                </button>
+                <button
+                  type="button"
+                  className={`button medium ${tab === 'series' ? 'submit' : 'action'}`}
+                  onClick={() => {
+                    setTab('series');
+                    setPage(1);
+                  }}
+                >
+                  연재글
+                </button>
+              </Stack>
+            )}
+
             {data.posts.length ? (
               <ul className={`paper ${styles['user-posts']}`}>
                 {data.posts.map((post) => (

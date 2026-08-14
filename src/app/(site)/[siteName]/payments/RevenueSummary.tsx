@@ -1,14 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Typography } from '@mui/material';
+import SettlementForm from '@/components/service/common/SettlementForm';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/payments.module.sass';
 
 type RevenueSummaryResponse = {
+  isAuthor?: boolean;
+  isSettlementError?: boolean;
+  hasData?: boolean;
   totalPaymentAmount: number;
   totalPaymentCount: number;
   todayPaymentAmount: number;
@@ -60,32 +65,32 @@ export default function RevenueSummary({
   const [summary, setSummary] = useState<RevenueSummaryResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
-    async function loadSummary() {
-      if (!siteName) {
-        return;
-      }
-
-      setSummary(null);
-      setErrorMessage('');
-
-      const response = await fetch(`${apiPath}?siteName=${encodeURIComponent(siteName)}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      const result = (await response.json()) as RevenueSummaryResponse | RevenueErrorResponse;
-
-      if (!response.ok || isRevenueErrorResponse(result)) {
-        setErrorMessage(isRevenueErrorResponse(result) ? result.error : '수익정산 홈 정보를 불러오지 못했습니다.');
-        return;
-      }
-
-      setSummary(result);
-      setErrorMessage('');
+  const loadSummary = useCallback(async () => {
+    if (!siteName) {
+      return;
     }
 
-    void loadSummary();
+    setSummary(null);
+    setErrorMessage('');
+
+    const response = await fetch(`${apiPath}?siteName=${encodeURIComponent(siteName)}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const result = (await response.json()) as RevenueSummaryResponse | RevenueErrorResponse;
+
+    if (!response.ok || isRevenueErrorResponse(result)) {
+      setErrorMessage(isRevenueErrorResponse(result) ? result.error : '수익정산 홈 정보를 불러오지 못했습니다.');
+      return;
+    }
+
+    setSummary(result);
+    setErrorMessage('');
   }, [apiPath, siteName]);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
 
   if (errorMessage) {
     return (
@@ -117,16 +122,36 @@ export default function RevenueSummary({
   return (
     <div className={`container ${styles.container}`}>
       <div className={`content ${styles.content} ${styles['content-payments']}`}>
-        <div className={styles.summary}>
-          {summaryItems.map((summaryItem) => (
-            <div className="paper" key={summaryItem.key}>
-              <Typography variant="subtitle2">{summaryItem.label}</Typography>
-              <Typography variant="h6" component="p">
-                {summaryItem.format(summary[summaryItem.key])}
-              </Typography>
-            </div>
-          ))}
-        </div>
+        {!summary.hasData ? (
+          <>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>
+                {summary.isSettlementError
+                  ? '정산 정보에 문제가 있습니다. 아래 양식에서 정산 정보를 올바르게 업데이트해 주세요.'
+                  : summary.isAuthor === false
+                    ? '작가가 아니어서 정산 데이터가 없습니다.'
+                    : '정산 데이터가 없습니다.'}
+              </span>
+            </p>
+            {summary.isSettlementError ? (
+              <div className="paper" style={{ marginTop: '16px' }}>
+                <SettlementForm onSuccess={() => void loadSummary()} />
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className={styles.summary}>
+            {summaryItems.map((summaryItem) => (
+              <div className="paper" key={summaryItem.key}>
+                <Typography variant="subtitle2">{summaryItem.label}</Typography>
+                <Typography variant="h6" component="p">
+                  {summaryItem.format(Number(summary[summaryItem.key]) || 0)}
+                </Typography>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
