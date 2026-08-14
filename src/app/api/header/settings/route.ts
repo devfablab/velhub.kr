@@ -1,8 +1,8 @@
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getLibraryStatus } from '@/lib/session/libraryStatus';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getLibraryStatus } from '@/lib/session/libraryStatus';
 
 type AccountRow = {
   email: string | null;

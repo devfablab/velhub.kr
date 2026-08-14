@@ -1,6 +1,6 @@
 import Image from 'next/image';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';

@@ -1,11 +1,11 @@
-import { normalizeText } from '@/lib/utils';
-import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
+import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
 import { createMemberStatusNotification } from '@/lib/notifications/createMemberStatusNotification';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
-import { deleteMemberContents } from '@/lib/community/community-member/deleteMemberContents';
 import { cancelMemberSiteSubscriptions } from '@/lib/payments/cancelMemberSiteSubscriptions';
-import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
 import { getMailFrom, getResendClient } from '@/lib/resend';
+import { deleteMemberRestrictionMessages } from '@/lib/users/memberRestrictionMessagesServer';
+import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

@@ -1,13 +1,13 @@
+import {
+  type CommunityManagePermissionMap,
+  type CommunityManageRoleType,
+  getMergedCommunityManagePermission,
+  isCommunityManageRole,
+} from '@/lib/community/community-manager/permissions';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import {
-  getMergedCommunityManagePermission,
-  type CommunityManagePermissionMap,
-  type CommunityManageRoleType,
-  isCommunityManageRole,
-} from '@/lib/community/community-manager/permissions';
 
 type RhizomeRow = {
   id: string;

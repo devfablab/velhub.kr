@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Dialog,
   DialogActions,
@@ -13,11 +15,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/auth.module.sass';
 
 type ProcessingState = 'idle' | 'processing' | 'confirm' | 'failed';

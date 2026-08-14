@@ -1,5 +1,5 @@
-import verifySession from '@/lib/session/verifySession';
 import { getPaymentCustomerName } from '@/lib/payments/customer';
+import verifySession from '@/lib/session/verifySession';
 
 export async function GET() {
   try {

@@ -1,7 +1,7 @@
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import Anchor from '@/components/Anchor';
 import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
-import Anchor from '@/components/Anchor';
 
 type DonationSuccessResponse = {
   ok?: boolean;

@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import Content from '../tab';
-import SavedItems from '../../shared/savedItems';
 import Container from '../../menu';
+import SavedItems from '../../shared/savedItems';
+import Content from '../tab';
 
 export const metadata: Metadata = {
   title: '블로그 허브 - 마이허브 - 데브허브',

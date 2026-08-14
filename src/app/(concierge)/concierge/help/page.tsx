@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { Accordion, AccordionActions, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionActions, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useMemo, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Checkbox,
   Dialog,
@@ -20,7 +21,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 type AgreementState = {
   isAgreeTerm: boolean;

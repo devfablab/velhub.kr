@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import { Stack, Typography } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import { Stack, Typography } from '@mui/material';
 import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
 import Container from './menu';

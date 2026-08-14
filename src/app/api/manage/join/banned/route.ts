@@ -1,5 +1,4 @@
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
-import { normalizeText } from '@/lib/utils';
 import {
   decryptNullable,
   getBannedMemberships,
@@ -7,6 +6,7 @@ import {
   getStigmaDisplayName,
   getStigmasByIds,
 } from '@/lib/users/utils';
+import { normalizeText } from '@/lib/utils';
 
 type MembershipRow = {
   user_id: string;

@@ -1,15 +1,15 @@
 import { ReactNode } from 'react';
 import type { Metadata, Viewport } from 'next';
+import { Hahmlet,Noto_Sans_KR, Noto_Serif_KR } from 'next/font/google';
 import localFont from 'next/font/local';
-import { Noto_Sans_KR, Noto_Serif_KR, Hahmlet } from 'next/font/google';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
-import ThemeProviderClient from './themeProvider';
 import AuthStateProvider from '@/components/auth/AuthStateProvider';
 import TotpGuard from '@/components/auth/TotpGuard';
 import WithdrawalGuard from '@/components/auth/WithdrawalGuard';
+import ThemeProviderClient from './themeProvider';
 import './globals.sass';
-import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import 'slick-carousel/slick/slick.css';
 
 const Sans = Noto_Sans_KR({
   subsets: ['cyrillic'],

@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getVatBreakdown, toNumber } from '@/lib/revenue/amounts';
+import type { RevenueContext } from '@/lib/revenue/context';
 import {
   getRevenueFilterOptions,
   isDateInRevenueRange,
@@ -7,7 +8,6 @@ import {
   type RevenueFilterParams,
 } from '@/lib/revenue/filters';
 import { getPaymentStatusLabel, getPaymentTypeLabel, getSettlementStatusLabel } from '@/lib/revenue/labels';
-import type { RevenueContext } from '@/lib/revenue/context';
 
 export type RevenueListKind = 'transactions' | 'refunds' | 'scheduled' | 'confirmed' | 'completed';
 

@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from '@mui/material/Link';
-import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import Link from '@mui/material/Link';
+import { getSupabaseBrowser } from '@/lib/supabase';
 
 type InviteResponse = {
   ok: boolean;

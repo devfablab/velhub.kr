@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Box, FormControlLabel, Stack, Switch, TextField, useMediaQuery, useTheme } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, FormControlLabel, Stack, Switch, TextField, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/auth.module.sass';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
+import styles from '@/app/auth.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];

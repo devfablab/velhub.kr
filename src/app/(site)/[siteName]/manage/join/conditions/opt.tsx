@@ -1,8 +1,14 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   FormControlLabel,
   MenuItem,
@@ -15,19 +21,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
-import RemoveCircleOutlineRoundedIcon from '@mui/icons-material/RemoveCircleOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 

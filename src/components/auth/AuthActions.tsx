@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Avatar } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import { Avatar } from '@mui/material';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
 import styles from '@/app/aside.module.sass';

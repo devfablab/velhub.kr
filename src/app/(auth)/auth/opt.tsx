@@ -2,14 +2,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import EastRoundedIcon from '@mui/icons-material/EastRounded';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { useMediaQuery, useTheme } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/auth.module.sass';
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';

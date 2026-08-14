@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
 import Container from '../menu';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{

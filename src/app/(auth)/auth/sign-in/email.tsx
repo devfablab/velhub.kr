@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   Dialog,
@@ -15,9 +18,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import HCaptchaBox from './hCaptcha';

@@ -1,14 +1,14 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { hasMembershipFeature } from '@/lib/memberships/features';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Anchor from '@/components/Anchor';
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
 

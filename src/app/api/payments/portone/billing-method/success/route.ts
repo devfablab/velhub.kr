@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
+import { createCustomerKey } from '@/lib/payments/customer';
 import { getCurrentPortOneProvider, getPortOneBillingCardInfo, getPortOneBillingKeyInfo } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { createCustomerKey } from '@/lib/payments/customer';
 
 type BillingMethodSuccessBody = {
   billingKey?: string;

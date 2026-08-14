@@ -1,14 +1,11 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-
 import { useEffect, useMemo, useState } from 'react';
-import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
+import { useSearchParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import BillingMethodButton from '@/components/service/common/BillingMethodButton';
-import PaymentTerms from '@/components/service/common/PaymentTerms';
+import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
 import {
   formatMembershipPrice,
   getMembershipFeature,
@@ -19,6 +16,8 @@ import {
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import BillingMethodButton from '@/components/service/common/BillingMethodButton';
+import PaymentTerms from '@/components/service/common/PaymentTerms';
 import styles from '@/app/hub.module.sass';
 
 type Eligibility = {

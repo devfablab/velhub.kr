@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SearchIcon from '@mui/icons-material/Search';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import {
   Box,
   Checkbox,
@@ -23,9 +26,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import SearchIcon from '@mui/icons-material/Search';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';

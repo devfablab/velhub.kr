@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   FormControlLabel,
@@ -13,13 +15,11 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { normalizeText } from '@/lib/utils';
-import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 

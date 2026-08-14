@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Box,
   Chip,
@@ -23,7 +24,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';

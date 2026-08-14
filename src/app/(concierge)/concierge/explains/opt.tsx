@@ -1,6 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { type Dispatch, type SetStateAction,useCallback, useEffect, useMemo, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Button,
@@ -25,30 +28,27 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
-import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import {
-  getAppealTreatmentMessage,
-  reportAppealContentRequestLabels,
-  reportAppealDeletionReasonOptions,
-  type AppealCenterItem,
-  type ReportAppealContentRequest,
-} from '@/lib/reports/appeals';
 import {
   appealOpinionFields,
   appealOpinionPositionOptions,
   isAppealOpinionFieldVisible,
 } from '@/lib/reports/appealOpinion';
+import {
+  type AppealCenterItem,
+  getAppealTreatmentMessage,
+  type ReportAppealContentRequest,
+  reportAppealContentRequestLabels,
+  reportAppealDeletionReasonOptions,
+} from '@/lib/reports/appeals';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
+import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type ItemsResponse = {
   items?: AppealCenterItem[];

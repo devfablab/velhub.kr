@@ -1,5 +1,5 @@
-import { Metadata } from 'next';
 import { Suspense } from 'react';
+import { Metadata } from 'next';
 import Container from '../menu';
 import MembershipPlan from './opt';
 import Content from './tab';

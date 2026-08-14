@@ -3,6 +3,24 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
   Avatar,
   Box,
@@ -17,36 +35,18 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import { detectAdult } from '@/lib/service/detectAdult.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { detectAdult } from '@/lib/service/detectAdult.client';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
-import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
-import DrawerManage from '@/components/header-groups/site/DrawerManage';
-import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import DrawerManage from '@/components/header-groups/site/DrawerManage';
+import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
+import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {

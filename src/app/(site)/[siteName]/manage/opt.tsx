@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
-import Container from './menu';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import Container from './menu';
 import styles from '@/app/manage.module.sass';
 
 type StaffResponse = {

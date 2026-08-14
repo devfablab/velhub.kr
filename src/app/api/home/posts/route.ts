@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { decrypt } from '@/lib/encryption/decrypt';
 
 function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);

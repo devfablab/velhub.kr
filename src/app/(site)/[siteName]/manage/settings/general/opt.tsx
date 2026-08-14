@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   FormControlLabel,
@@ -22,13 +25,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 

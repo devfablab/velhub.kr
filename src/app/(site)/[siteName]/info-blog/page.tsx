@@ -2,8 +2,8 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSitePageMetadata } from '@/lib/seoSite';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
 import Container from '../menu';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{

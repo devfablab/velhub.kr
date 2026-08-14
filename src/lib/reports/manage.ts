@@ -1,6 +1,6 @@
 import {
-  guidelineReportItemsByTargetType,
   type GuidelineReportCategory,
+  guidelineReportItemsByTargetType,
   type ReportTargetType,
 } from '@/lib/reports/guidelines';
 import { normalizeText } from '@/lib/utils';

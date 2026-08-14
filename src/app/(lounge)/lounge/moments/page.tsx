@@ -3,8 +3,8 @@ import { headers } from 'next/headers';
 import { originTitle, Seo } from '@/lib/seo';
 import Container from '../../menu';
 import Aside from '../aside';
-import Slick from '../slick';
 import List from '../list';
+import Slick from '../slick';
 import styles from '@/app/page.module.sass';
 
 export async function generateMetadata(): Promise<Metadata> {

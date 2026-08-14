@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
   Dialog,
@@ -15,7 +16,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { getSupabaseBrowser } from '@/lib/supabase';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
 
 type RightsReportCategory =
   | 'rights_defamation'

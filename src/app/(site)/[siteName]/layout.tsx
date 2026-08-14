@@ -1,8 +1,8 @@
-import { cache, Suspense, type ReactNode } from 'react';
+import { cache, type ReactNode,Suspense } from 'react';
 import type { Metadata } from 'next';
-import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
 
 type RouteContext = {
   children: ReactNode;

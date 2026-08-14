@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { getSessionClaims } from '@/lib/session';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 type AuthIdentity = {
   provider?: string;

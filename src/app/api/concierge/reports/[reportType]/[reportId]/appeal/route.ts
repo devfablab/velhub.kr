@@ -1,8 +1,8 @@
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
+import { getReportAppealCategory, isAppealDeletionReason, type ReportAppealCategory } from '@/lib/reports/appeals';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { getReportAppealCategory, isAppealDeletionReason, type ReportAppealCategory } from '@/lib/reports/appeals';
 import { normalizeText } from '@/lib/utils';
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{

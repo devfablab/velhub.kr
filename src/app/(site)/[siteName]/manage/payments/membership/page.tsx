@@ -1,6 +1,6 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { detectAdult } from '@/lib/service/detectAdult';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import Container from '../../menu';
 import Opt from './opt';
 import styles from '@/app/manage.module.sass';

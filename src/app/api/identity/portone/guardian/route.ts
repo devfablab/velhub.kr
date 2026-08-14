@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  extractVerifiedIdentity,
-  getPortOneIdentityVerification,
   createIdentityVerificationId,
   createPortOneIdentityRequest,
+  extractVerifiedIdentity,
+  getPortOneIdentityVerification,
 } from '@/lib/identity/portone';
 import { getSessionClaims } from '@/lib/session';
 

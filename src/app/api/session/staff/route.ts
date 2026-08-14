@@ -1,5 +1,5 @@
-import { normalizeText } from '@/lib/utils';
 import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
+import { normalizeText } from '@/lib/utils';
 
 export async function GET(request: Request) {
   try {

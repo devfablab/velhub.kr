@@ -1,5 +1,5 @@
-import verifySession from '@/lib/session/verifySession';
 import { canManageAllCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 

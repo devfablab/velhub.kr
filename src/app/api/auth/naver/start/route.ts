@@ -1,5 +1,5 @@
-import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 function getNaverClientId() {
   const naverClientId = process.env.NAVER_CLIENT_ID;

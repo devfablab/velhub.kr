@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import {
   Dialog,
   DialogActions,
@@ -13,7 +14,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../Anchor';
 import styles from '@/app/footer.module.sass';

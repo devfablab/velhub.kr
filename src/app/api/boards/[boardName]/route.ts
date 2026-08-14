@@ -1,13 +1,13 @@
-import verifySession from '@/lib/session/verifySession';
+import { getPostList } from '@/lib/board/getPostList';
 import {
   canManageCommunityBoardContents,
   canManageCommunityBoardSettings,
   getCommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getPostList } from '@/lib/board/getPostList';
 
 type RouteContext = {
   params: Promise<{

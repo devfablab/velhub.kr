@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
-import { Typography } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 

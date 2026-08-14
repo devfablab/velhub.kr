@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
+import { useMediaQuery, useTheme } from '@mui/material';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type HeaderResponse = {

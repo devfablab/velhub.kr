@@ -2,6 +2,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
+import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import {
   Avatar,
   Drawer,
@@ -13,31 +31,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
-import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
-import { ServiceLogo } from '@/components/Svgs';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
 import SecondaryMenu from '@/components/header-groups/concierge/SecondaryMenu';
 import NotificationButton from '@/components/service/common/NotificationButton';
+import { ServiceLogo } from '@/components/Svgs';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {

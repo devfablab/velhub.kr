@@ -1,9 +1,9 @@
+import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
-import { assertCommunityCommentWritePolicy, increaseCommunityCommentCount } from '@/lib/community/policies';
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 
 type RouteContext = {
   params: Promise<{

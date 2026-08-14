@@ -1,8 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   Button,
@@ -26,25 +29,22 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import {
-  reportHandlingResultLabels,
+  getGuidelineInitialMessageCreatedAt,
+  type GuidelineAppealMessage,
+  type GuidelineAppealMessageStatus,
+  guidelineAppealMessageStatusLabels,
+} from '@/lib/reports/guidelineAppeals';
+import {
   type ReportHandlingResult,
+  reportHandlingResultLabels,
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
+import { formatTimeAgo } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
-import {
-  getGuidelineInitialMessageCreatedAt,
-  guidelineAppealMessageStatusLabels,
-  type GuidelineAppealMessage,
-  type GuidelineAppealMessageStatus,
-} from '@/lib/reports/guidelineAppeals';
-import { formatTimeAgo } from '@/lib/utils';
 
 type PostImage = {
   path: string;

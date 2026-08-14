@@ -1,6 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Dialog,
   DialogActions,
@@ -19,19 +22,16 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
-import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import {
   getGuidelineInitialMessageCreatedAt,
-  guidelineAppealMessageStatusLabels,
   type GuidelineAppealItem,
   type GuidelineAppealMessage,
+  guidelineAppealMessageStatusLabels,
 } from '@/lib/reports/guidelineAppeals';
 import { formatDateTimeDetail, formatTimeAgo, normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type ItemsResponse = {
   items?: GuidelineAppealItem[];

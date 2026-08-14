@@ -1,9 +1,5 @@
-import verifySession from '@/lib/session/verifySession';
-import { getSessionClaims } from '@/lib/session';
-import { getCurrentStigma } from '@/lib/session/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
 import { reorderSeriesIdx } from '@/lib/board/seriesIdx';
+import { type GuidelineReportCategory,isGuidelineReportCategory } from '@/lib/reports/guidelines';
 import {
   getReportCategoryTitle,
   isAllowedReportStatus,
@@ -12,7 +8,11 @@ import {
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
-import { isGuidelineReportCategory, type GuidelineReportCategory } from '@/lib/reports/guidelines';
+import { getSessionClaims } from '@/lib/session';
+import { getCurrentStigma } from '@/lib/session/utils';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

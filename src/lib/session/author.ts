@@ -1,5 +1,5 @@
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 function isMinorAge(birthDate: string | null | undefined) {
   if (!birthDate) return false;

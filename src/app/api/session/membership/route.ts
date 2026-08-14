@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentStigma } from '@/lib/session/utils';
 import { getMembershipFeatures } from '@/lib/memberships/features';
+import { getCurrentStigma } from '@/lib/session/utils';
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();

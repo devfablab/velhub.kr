@@ -2,6 +2,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
   Avatar,
   Drawer,
@@ -13,32 +35,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
-import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '@/components/Anchor';
+import { useAuthState } from '@/components/auth/AuthStateProvider';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {

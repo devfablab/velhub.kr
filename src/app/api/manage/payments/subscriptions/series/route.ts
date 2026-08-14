@@ -1,15 +1,15 @@
 import {
+  getMaxAllowedSeriesSubscriptionPrice,
+  SUBSCRIPTION_SERIES_MIN_PRICE,
+  validateSeriesPriceAgainstParentPrice,
+} from '@/lib/payments/subscriptionPrice';
+import {
   PAYMENT_STATUS,
   PAYMENT_TARGET_TYPE,
   PAYMENT_TYPE,
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
-import {
-  SUBSCRIPTION_SERIES_MIN_PRICE,
-  getMaxAllowedSeriesSubscriptionPrice,
-  validateSeriesPriceAgainstParentPrice,
-} from '@/lib/payments/subscriptionPrice';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

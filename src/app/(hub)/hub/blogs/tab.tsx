@@ -2,10 +2,10 @@
 
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
-import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 

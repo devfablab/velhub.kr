@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
   DialogActions,
@@ -14,15 +16,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { formatTimeAgo } from '@/lib/utils';
 import {
   getRestrictionInitialMessageCreatedAt,
   type MemberRestrictionMessageSenderType,
   type MemberRestrictionMessagesResponse,
 } from '@/lib/users/memberRestrictionMessages';
+import { formatTimeAgo } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Props = {
   open: boolean;

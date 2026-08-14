@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { Editor } from '@toast-ui/react-editor';
-import '@toast-ui/editor/dist/toastui-editor.css';
-import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
-import '@toast-ui/editor/dist/i18n/ko-kr';
-import 'prismjs/themes/prism-okaidia.css';
-import '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
+import '@toast-ui/editor/dist/i18n/ko-kr';
+import { Editor } from '@toast-ui/react-editor';
 import { fontSizePlugin } from '@/lib/editor/createFontSizeToolbarItem';
 import { markdownAlignPlugin } from '@/lib/editor/createMarkdownAlignToolbarItem';
 import { textAlignPlugin } from '@/lib/editor/createTextAlignToolbarItem';
 import { textColorPlugin } from '@/lib/editor/createTextColorToolbarItem';
+import '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css';
+import '@toast-ui/editor/dist/theme/toastui-editor-dark.css';
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'prismjs/themes/prism-okaidia.css';
 
 const MAX_EDITOR_IMAGE_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];

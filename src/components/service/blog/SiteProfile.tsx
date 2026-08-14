@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import * as PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -25,11 +24,12 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DonationButton from '@/components/service/common/DonationButton';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import IdentityVerificationButton from '../common/IdentityVerificationButton';
 import styles from '@/app/aside.module.sass';
 

@@ -1,7 +1,7 @@
+import { getPostList } from '@/lib/board/getPostList';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getPostList } from '@/lib/board/getPostList';
 
 function parsePositiveInt(value: string | null, fallbackValue: number) {
   const parsedValue = Number(value);

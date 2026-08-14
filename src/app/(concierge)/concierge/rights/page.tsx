@@ -1,11 +1,11 @@
 import React from 'react';
-import { Accordion, AccordionActions, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
+import { Metadata } from 'next';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionActions, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
+import { originTitle, Seo } from '@/lib/seo';
 import Anchor from '@/components/Anchor';
 import Container from '../menu';
 import styles from '@/app/concierge.module.sass';
-import { Metadata } from 'next';
-import { originTitle, Seo } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   const timestamp = Date.now();

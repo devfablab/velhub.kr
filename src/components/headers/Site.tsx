@@ -3,6 +3,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
   Avatar,
   Box,
@@ -14,32 +26,20 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
+import AppIconAvatar from '../custom-ui/AppIconAvatar';
 import BlogSearch from '../header-groups/site/BlogSearch';
 import CommunitySearch from '../header-groups/site/CommunitySearch';
-import NavMenu from '../header-groups/site/NavMenu';
 import NavManage from '../header-groups/site/NavManage';
-import PrimaryMenu from '../header-groups/site/PrimaryMenu';
+import NavMenu from '../header-groups/site/NavMenu';
 import NavPayments from '../header-groups/site/NavPayments';
-import AppIconAvatar from '../custom-ui/AppIconAvatar';
+import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';

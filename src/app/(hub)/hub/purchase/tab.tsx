@@ -2,10 +2,10 @@
 
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
+import DiscountRoundedIcon from '@mui/icons-material/DiscountRounded';
+import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import VolunteerActivismRoundedIcon from '@mui/icons-material/VolunteerActivismRounded';
-import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
-import DiscountRoundedIcon from '@mui/icons-material/DiscountRounded';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/hub.module.sass';
 

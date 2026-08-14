@@ -1,7 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Box,
   Dialog,
@@ -24,10 +28,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
-import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';

@@ -3,13 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import { useMediaQuery, useTheme } from '@mui/material';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/auth.module.sass';
-import { ThemeMode } from '@/app/themeProvider';
 import { SignupAgreementsProvider } from '@/components/auth/SignupAgreements';
+import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
+import { ThemeMode } from '@/app/themeProvider';
+import styles from '@/app/auth.module.sass';
 
 type ContainerProps = {
   children: React.ReactNode;

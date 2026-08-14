@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createLookupHash, encrypt } from '@/lib/encryption/encrypt';
+import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';

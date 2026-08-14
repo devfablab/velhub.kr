@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { normalizeText } from '@/lib/utils';
-import Container from '@/app/(site)/[siteName]/menu';
 import Anchor from '@/components/Anchor';
+import Container from '@/app/(site)/[siteName]/menu';
 
 type DonationSuccessResponse = {
   ok?: boolean;

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Content from '../tab';
 import Container from '../../menu';
+import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
 type BillingMethodSuccessResponse =

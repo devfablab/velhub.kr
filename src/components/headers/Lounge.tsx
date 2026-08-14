@@ -2,25 +2,25 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, useMediaQuery, useTheme } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
-import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/lounge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/lounge/SecondaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
+import { ServiceLogo } from '../Svgs';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type HeaderResponse = {

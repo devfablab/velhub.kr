@@ -1,5 +1,5 @@
-import Opt from './opt';
 import Container from '../menu';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{

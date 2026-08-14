@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import {
   MenuItem,
   Select,
+  type SelectChangeEvent,
   Table,
   TableBody,
   TableCell,
@@ -12,7 +13,6 @@ import {
   TableHead,
   TableRow,
   Typography,
-  type SelectChangeEvent,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';

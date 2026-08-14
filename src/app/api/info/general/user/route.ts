@@ -1,7 +1,7 @@
+import { decrypt } from '@/lib/encryption/decrypt';
+import { encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { encrypt } from '@/lib/encryption/encrypt';
-import { decrypt } from '@/lib/encryption/decrypt';
 
 type RequestBody = {
   userName: string;

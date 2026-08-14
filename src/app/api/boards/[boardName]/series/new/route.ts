@@ -1,7 +1,7 @@
-import verifySession from '@/lib/session/verifySession';
-import { canManageCommunityBoardSettings, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { canBeSeriesAuthor, isSoloBlog } from '@/lib/board/seriesAuthor';
+import { canManageCommunityBoardSettings, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

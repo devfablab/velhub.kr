@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
   AccordionDetails,
@@ -15,10 +17,8 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { getSupabaseBrowser } from '@/lib/supabase';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];

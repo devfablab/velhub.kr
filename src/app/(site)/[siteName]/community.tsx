@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
-import SiteInfo from '@/components/service/community/SiteInfo';
-import UserInfo from '@/components/service/community/UserInfo';
-import TableList from '@/components/service/community/TableList';
 import PostCountTableList from '@/components/service/community/PostCountTableList';
+import SiteInfo from '@/components/service/community/SiteInfo';
+import TableList from '@/components/service/community/TableList';
+import UserInfo from '@/components/service/community/UserInfo';
 import Container from './menu';
 import styles from '@/app/board.module.sass';
 

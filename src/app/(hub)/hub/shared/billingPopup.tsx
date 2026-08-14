@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Dialog,
   DialogActions,
@@ -11,7 +12,6 @@ import {
   Stack,
   useMediaQuery,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import styles from '@/app/hub.module.sass';
 
 type BillingPopupDetailType = 'billing' | 'donation';

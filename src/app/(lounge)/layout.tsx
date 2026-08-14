@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import HeaderLounge from '@/components/headers/Lounge';
 import Footer from '@/components/footers/Footer';
+import HeaderLounge from '@/components/headers/Lounge';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

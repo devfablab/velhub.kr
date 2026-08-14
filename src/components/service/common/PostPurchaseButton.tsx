@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import PortOne from '@portone/browser-sdk/v2';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import {
   Dialog,
   DialogActions,
@@ -14,11 +15,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import styles from '@/app/board.module.sass';
-import PaymentTerms from './PaymentTerms';
+import PortOne from '@portone/browser-sdk/v2';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentTerms from './PaymentTerms';
+import styles from '@/app/board.module.sass';
 
 type PostPurchaseStartResponse = {
   ok?: boolean;

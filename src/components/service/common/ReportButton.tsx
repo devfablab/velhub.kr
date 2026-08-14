@@ -1,6 +1,10 @@
 'use client';
 
-import { useState, type MouseEvent, type SyntheticEvent } from 'react';
+import { type MouseEvent, type SyntheticEvent,useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {
   Accordion,
   AccordionDetails,
@@ -20,13 +24,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
-  guidelineReportItemsByTargetType,
   type GuidelineReportCategory,
+  guidelineReportItemsByTargetType,
   type ReportTargetType,
 } from '@/lib/reports/guidelines';
 import styles from '@/app/reports.module.sass';

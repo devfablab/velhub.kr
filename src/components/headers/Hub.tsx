@@ -3,6 +3,20 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import {
   Avatar,
   Drawer,
@@ -15,27 +29,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import DarkModeIcon from '@mui/icons-material/DarkMode';
-import LightModeIcon from '@mui/icons-material/LightMode';
-import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
-import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import HearingOutlinedIcon from '@mui/icons-material/HearingOutlined';
-import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
-import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
-import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
-import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
-import { useThemeMode, type ThemeMode } from '@/app/themeProvider';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
-import { ServiceLogo } from '../Svgs';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
+import { ServiceLogo } from '../Svgs';
+import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';

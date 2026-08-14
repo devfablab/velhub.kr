@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import Content from '../tab';
-import LikedItems from '../../shared/likedItems';
 import Container from '../../menu';
+import LikedItems from '../../shared/likedItems';
+import Content from '../tab';
 
 export const metadata: Metadata = {
   title: '커뮤니티 허브 - 마이허브 - 데브허브',

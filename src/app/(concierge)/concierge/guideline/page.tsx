@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import {
   guidelineReportItemsByTargetType,
   isGuidelineReportCategory,

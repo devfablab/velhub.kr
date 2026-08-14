@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Anchor from '@/components/Anchor';
 import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 
 type InviteResponse = {
   status?: string;

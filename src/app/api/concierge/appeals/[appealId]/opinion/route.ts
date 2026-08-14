@@ -1,17 +1,17 @@
 import { randomUUID } from 'crypto';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import {
   appealOpinionFields,
   appealOpinionPositionOptions,
   isAppealOpinionFieldVisible,
 } from '@/lib/reports/appealOpinion';
 import {
+  type AppealOpinionContext,
   getReportAppealCategory,
   getReportAppealDeadline,
   isReportAppealContentRequest,
-  type AppealOpinionContext,
   type ReportAppealCategory,
 } from '@/lib/reports/appeals';
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

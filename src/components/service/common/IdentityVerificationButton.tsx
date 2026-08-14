@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import PortOne from '@portone/browser-sdk/v2';
 import { Snackbar } from '@mui/material';
+import PortOne from '@portone/browser-sdk/v2';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 
 type IdentityVerificationRequest = {

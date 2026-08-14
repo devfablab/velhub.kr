@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, type JSX } from 'react';
-import { Box, Stack, TextField } from '@mui/material';
+import { type JSX,useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, Stack, TextField } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import Container from '../container';
 import styles from '@/app/auth.module.sass';

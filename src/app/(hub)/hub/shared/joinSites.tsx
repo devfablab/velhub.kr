@@ -1,6 +1,6 @@
 import { formatTimeAgo } from '@/lib/utils';
-import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import Anchor from '@/components/Anchor';
+import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';

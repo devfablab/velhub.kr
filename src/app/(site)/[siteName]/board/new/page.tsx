@@ -3,8 +3,8 @@ import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
 import Container from '../../menu';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{

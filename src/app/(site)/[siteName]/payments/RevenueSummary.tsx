@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Typography } from '@mui/material';
-import SettlementForm from '@/components/service/common/SettlementForm';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import SettlementForm from '@/components/service/common/SettlementForm';
 import styles from '@/app/payments.module.sass';
 
 type RevenueSummaryResponse = {

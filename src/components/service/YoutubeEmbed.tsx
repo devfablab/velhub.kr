@@ -1,8 +1,8 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import YouTube, { type YouTubeEvent, type YouTubeProps } from 'react-youtube';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import YouTube, { type YouTubeEvent, type YouTubeProps } from 'react-youtube';
 import styles from '@/app/youtube.module.sass';
 
 type Props = {

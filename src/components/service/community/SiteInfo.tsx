@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import Dialog from '@mui/material/Dialog';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';

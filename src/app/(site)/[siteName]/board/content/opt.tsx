@@ -2,21 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import Avatar from '@mui/material/Avatar';
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
-import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
-import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
-import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
+import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import {
   Accordion,
   AccordionDetails,
@@ -32,21 +31,22 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Comment from '@/components/comments/Comment';
-import LinkPreview from '@/components/service/LinkPreview';
-import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
+import ReportButton from '@/components/service/common/ReportButton';
+import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import PostCountTableList from '@/components/service/community/PostCountTableList';
+import RecentTableList from '@/components/service/community/RecentTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
-import PostCountTableList from '@/components/service/community/PostCountTableList';
-import RecentTableList from '@/components/service/community/RecentTableList';
-import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
-import SubscriptionButton from '@/components/service/common/SubscriptionButton';
-import ReportButton from '@/components/service/common/ReportButton';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import LinkPreview from '@/components/service/LinkPreview';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 

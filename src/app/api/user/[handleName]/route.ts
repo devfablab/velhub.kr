@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getMembershipFeatures } from '@/lib/memberships/features';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getMembershipFeatures } from '@/lib/memberships/features';
 
 function getAvatarUrl(path: string | null) {
   if (!path) return null;

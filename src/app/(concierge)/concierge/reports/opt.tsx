@@ -1,6 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Accordion,
   AccordionDetails,
@@ -26,28 +30,24 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
-import YoutubeEmbed from '@/components/service/YoutubeEmbed';
-import type { ConciergeReportItem, ConciergeReportType } from '@/lib/reports/concierge';
-import type { ReportTargetType } from '@/lib/reports/guidelines';
-import {
-  getAppealTreatmentMessage,
-  reportAppealContentRequestLabels,
-  reportAppealDeletionReasonOptions,
-} from '@/lib/reports/appeals';
 import {
   appealOpinionFields,
   appealOpinionPositionOptions,
   getAppealOpinionValueLabel,
 } from '@/lib/reports/appealOpinion';
+import {
+  getAppealTreatmentMessage,
+  reportAppealContentRequestLabels,
+  reportAppealDeletionReasonOptions,
+} from '@/lib/reports/appeals';
+import type { ConciergeReportItem, ConciergeReportType } from '@/lib/reports/concierge';
+import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
+import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type ReportsResponse = {
   items?: ConciergeReportItem[];

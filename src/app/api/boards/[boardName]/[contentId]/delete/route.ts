@@ -1,11 +1,11 @@
-import verifySession from '@/lib/session/verifySession';
+import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
-import { getNextSeriesIdx, reorderSeriesIdx } from '@/lib/board/seriesIdx';
 import { ACCOUNT_WITHDRAWAL_CONTENT_MESSAGE, ACCOUNT_WITHDRAWAL_STATUS } from '@/lib/users/accountWithdrawalServer';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

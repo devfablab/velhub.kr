@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Chip, Stack, Typography } from '@mui/material';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Box, Chip, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';

@@ -1,7 +1,7 @@
 import SiteInfo from '@/components/service/community/SiteInfo';
 import Container from '../../menu';
-import Opt from './opt';
 import Aside from './aside';
+import Opt from './opt';
 import styles from '@/app/board.module.sass';
 
 type RouteContext = {

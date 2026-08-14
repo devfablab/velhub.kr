@@ -1,6 +1,6 @@
 import { useParams } from 'next/navigation';
-import { Fab, useMediaQuery, useTheme } from '@mui/material';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import { Fab, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 
 type Props = {

@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { type ChangeEvent,useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Button,
@@ -18,13 +21,10 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type LegalType = 'illegal_info' | 'illegal_filming' | 'privacy';
 

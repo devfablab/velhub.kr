@@ -1,8 +1,8 @@
 'use client';
 
-import { Avatar, useMediaQuery, useTheme } from '@mui/material';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { Avatar, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';

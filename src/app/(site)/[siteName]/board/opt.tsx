@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect, useState, type JSX, type ReactNode } from 'react';
+import { type JSX, type ReactNode,useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { Stack, useMediaQuery, useTheme } from '@mui/material';
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
-import HowToVoteIcon from '@mui/icons-material/HowToVote';
-import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
+import SearchIcon from '@mui/icons-material/Search';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { formatTimeAgo, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import FabNew from '@/components/service/common/FabNew';
+import PostCountTableList from '@/components/service/community/PostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
-import UserInfo from '@/components/service/community/UserInfo';
-import PostCountTableList from '@/components/service/community/PostCountTableList';
-import FabNew from '@/components/service/common/FabNew';
 import TableListMobile from '@/components/service/community/TableListMobile';
+import UserInfo from '@/components/service/community/UserInfo';
 import styles from '@/app/board.module.sass';
 
 type Props = {

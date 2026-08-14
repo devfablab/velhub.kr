@@ -1,11 +1,11 @@
-import verifySession from '@/lib/session/verifySession';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
-import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { isSoloBlog } from '@/lib/board/seriesAuthor';
+import { getNextSeriesIdx } from '@/lib/board/seriesIdx';
 import { assertCommunityPostWritePolicy } from '@/lib/community/policies';
 import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

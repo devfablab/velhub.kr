@@ -1,13 +1,13 @@
 import { Metadata } from 'next';
 import { Grid } from '@mui/material';
 import Headline from './headline';
-import PasswordChange from './passwordChange';
-import TotpSetup from './totpSetup';
-import LogoutActions from './logoutActions';
-import WithdrawalActions from './withdrawalActions';
-import PasswordSetup from './passwordSetup';
-import LoginMethod from './loginMethod';
 import UserInfo from './info';
+import LoginMethod from './loginMethod';
+import LogoutActions from './logoutActions';
+import PasswordChange from './passwordChange';
+import PasswordSetup from './passwordSetup';
+import TotpSetup from './totpSetup';
+import WithdrawalActions from './withdrawalActions';
 import styles from '@/app/settings.module.sass';
 
 export const metadata: Metadata = {

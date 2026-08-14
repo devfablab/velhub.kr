@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 type EmailSignUpRequestBody = {
   authUserId: string | null;

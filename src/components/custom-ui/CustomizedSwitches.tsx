@@ -1,9 +1,9 @@
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch, { SwitchProps } from '@mui/material/Switch';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import { styled } from '@mui/material';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import Stack from '@mui/material/Stack';
+import Switch, { SwitchProps } from '@mui/material/Switch';
+import Typography from '@mui/material/Typography';
 
 const MaterialUISwitch = styled(Switch)(({ theme }) => ({
   width: 62,

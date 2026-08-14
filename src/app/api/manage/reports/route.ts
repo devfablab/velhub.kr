@@ -1,7 +1,10 @@
-import verifySession from '@/lib/session/verifySession';
 import { decrypt } from '@/lib/encryption/decrypt';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { normalizeText } from '@/lib/utils';
+import { getStaffMessageStatus, type GuidelineAppealSenderType } from '@/lib/reports/guidelineAppeals';
+import {
+  guidelineReportCategories,
+  type GuidelineReportCategory,
+  isGuidelineReportCategory,
+} from '@/lib/reports/guidelines';
 import {
   getPostContentText,
   getReportCategoryTitle,
@@ -10,12 +13,9 @@ import {
   type ReportManageTargetType,
   type ReportStatus,
 } from '@/lib/reports/manage';
-import {
-  guidelineReportCategories,
-  isGuidelineReportCategory,
-  type GuidelineReportCategory,
-} from '@/lib/reports/guidelines';
-import { getStaffMessageStatus, type GuidelineAppealSenderType } from '@/lib/reports/guidelineAppeals';
+import verifySession from '@/lib/session/verifySession';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { normalizeText } from '@/lib/utils';
 
 type PostImageRow = {
   path?: string | null;

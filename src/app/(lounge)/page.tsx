@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { mainTitle, Seo } from '@/lib/seo';
-import Container from './menu';
-import AuthSection from './lounge/auth';
 import Aside from './lounge/aside';
-import Slick from './lounge/slick';
+import AuthSection from './lounge/auth';
 import List from './lounge/list';
+import Slick from './lounge/slick';
+import Container from './menu';
 import styles from '../page.module.sass';
 
 type SiteItem = {

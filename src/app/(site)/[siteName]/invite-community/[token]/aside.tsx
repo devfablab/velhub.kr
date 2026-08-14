@@ -1,7 +1,7 @@
 'use client';
 
-import UserInfo from '@/components/service/community/UserInfo';
 import { useMediaQuery, useTheme } from '@mui/material';
+import UserInfo from '@/components/service/community/UserInfo';
 
 export default function Aside() {
   const theme = useTheme();

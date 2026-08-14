@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { Typography } from '@mui/material';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import Opt from './opt';
 import Container from '../menu';
+import Opt from './opt';
 
 type RouteContext = {
   params: Promise<{

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import { Stack, Typography } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 

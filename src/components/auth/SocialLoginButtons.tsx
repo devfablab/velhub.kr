@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import GoogleIcon from '@mui/icons-material/Google';
 import GitHubIcon from '@mui/icons-material/GitHub';
+import GoogleIcon from '@mui/icons-material/Google';
 import { getSupabaseBrowser } from '@/lib/supabase';
-import VhiNaver from '../icons/VhiNaver';
 import VhiKakao from '../icons/VhiKakao';
+import VhiNaver from '../icons/VhiNaver';
 import styles from '@/app/auth.module.sass';
 
 type SocialProvider = 'kakao' | 'google' | 'github';

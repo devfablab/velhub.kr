@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation';
 import {
   closestCenter,
   DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -19,15 +19,15 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { Box, FormControlLabel, Snackbar, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, FormControlLabel, Snackbar, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 

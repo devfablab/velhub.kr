@@ -1,8 +1,8 @@
-import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
+import { redis } from '@/lib/redis';
 import { getMailFrom, getResendClient } from '@/lib/resend';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { redis } from '@/lib/redis';
 
 type SignInRequestBody = {
   email: string | null;

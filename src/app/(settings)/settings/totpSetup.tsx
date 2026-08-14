@@ -1,7 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useState } from 'react';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Accordion,
   AccordionDetails,
@@ -14,9 +17,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';

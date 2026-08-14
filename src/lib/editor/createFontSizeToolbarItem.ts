@@ -1,4 +1,4 @@
-import type { PluginContext, PluginInfo, HTMLMdNode } from '@toast-ui/editor';
+import type { HTMLMdNode,PluginContext, PluginInfo } from '@toast-ui/editor';
 import type { Context } from '@toast-ui/editor/types/toastmark';
 
 type FontSizePayload = {

@@ -1,10 +1,10 @@
-import { normalizeText } from '@/lib/utils';
 import { isMemberRestrictionType } from '@/lib/users/memberRestrictionMessages';
 import {
   createMemberRestrictionMessage,
   loadAppellantRestrictionMessageContext,
   loadMemberRestrictionMessages,
 } from '@/lib/users/memberRestrictionMessagesServer';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

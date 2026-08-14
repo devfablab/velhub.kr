@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import ToastEditor from '@/components/editor/ToastEditor';
 import Anchor from '@/components/Anchor';
+import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 

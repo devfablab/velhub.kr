@@ -1,11 +1,11 @@
 import {
   buildCommunityManagerList,
+  type CommunityManagerAccess,
   getCommunityManagerAccess,
   getCommunityManagerRows,
-  type CommunityManagerAccess,
 } from '@/lib/community/community-manager/utils';
-import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { createCommunityManagerChangeNotifications } from '@/lib/notifications/createCommunityManagerChangeNotifications';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { normalizeText } from '@/lib/utils';
 
 type RequestBody = {

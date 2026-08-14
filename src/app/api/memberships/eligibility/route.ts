@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getAuthorState } from '@/lib/session/author';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { getAuthorState } from '@/lib/session/author';
 
 export async function GET() {
   const currentStigma = await getCurrentStigma();

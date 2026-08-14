@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Stack, Typography } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';

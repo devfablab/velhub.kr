@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';

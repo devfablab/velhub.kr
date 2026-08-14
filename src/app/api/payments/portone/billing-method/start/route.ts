@@ -1,9 +1,9 @@
-import crypto from 'crypto';
 import { NextRequest } from 'next/server';
+import crypto from 'crypto';
+import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
-import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 
 type BillingMethodStartBody = {
   orderName?: string;

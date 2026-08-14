@@ -1,7 +1,7 @@
 'use client';
 
-import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/settings.module.sass';
 

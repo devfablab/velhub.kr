@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
+import { decrypt } from '@/lib/encryption/decrypt';
+import { encrypt } from '@/lib/encryption/encrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
+import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { encrypt } from '@/lib/encryption/encrypt';
-import { decrypt } from '@/lib/encryption/decrypt';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
 

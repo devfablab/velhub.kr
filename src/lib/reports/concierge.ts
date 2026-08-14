@@ -1,6 +1,6 @@
-import type { ReportHandlingResult, ReportStatus } from '@/lib/reports/manage';
-import type { ReportTargetType } from '@/lib/reports/guidelines';
 import type { ReportAppeal, ReportAppealCategory } from '@/lib/reports/appeals';
+import type { ReportTargetType } from '@/lib/reports/guidelines';
+import type { ReportHandlingResult, ReportStatus } from '@/lib/reports/manage';
 
 export const conciergeReportTypes = ['guideline', 'legal', 'rights'] as const;
 

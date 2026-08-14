@@ -1,5 +1,5 @@
-import { Stack } from '@mui/material';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import { Stack } from '@mui/material';
 import Anchor from '@/components/Anchor';
 
 export default function NotFound() {

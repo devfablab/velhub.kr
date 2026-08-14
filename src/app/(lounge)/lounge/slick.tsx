@@ -1,14 +1,14 @@
 'use client';
 
-import Slider from 'react-slick';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import Slider from 'react-slick';
 import { formatDate, formatTimeAgo } from '@/lib/utils';
-import { SlickProps } from '../page';
 import Anchor from '@/components/Anchor';
+import { SlickProps } from '../page';
 import styles from '@/app/page.module.sass';
 
 type ArrowProps = {

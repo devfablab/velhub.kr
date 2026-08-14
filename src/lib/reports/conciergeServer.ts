@@ -1,31 +1,31 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import {
-  conciergeReportTypeLabels,
-  conciergeTargetTypeLabels,
-  legalTypeLabels,
-  legalValueLabels,
-  rightsReasonTypeLabels,
-  type ConciergeReportItem,
-  type ConciergeReportType,
-  type ReportDetail,
-  type ReportMessage,
-} from '@/lib/reports/concierge';
-import {
-  getReportCategoryTitle,
-  isReportHandlingResult,
-  isReportStatus,
-  reportHandlingResultLabels,
-  reportStatusLabels,
-  type ReportHandlingResult,
-  type ReportStatus,
-} from '@/lib/reports/manage';
-import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
-import {
   getReportAppealCategory,
   normalizeReportAppeal,
   type ReportAppeal,
   type ReportAppealDatabaseRow,
 } from '@/lib/reports/appeals';
+import {
+  type ConciergeReportItem,
+  type ConciergeReportType,
+  conciergeReportTypeLabels,
+  conciergeTargetTypeLabels,
+  legalTypeLabels,
+  legalValueLabels,
+  type ReportDetail,
+  type ReportMessage,
+  rightsReasonTypeLabels,
+} from '@/lib/reports/concierge';
+import { isReportTargetType, type ReportTargetType } from '@/lib/reports/guidelines';
+import {
+  getReportCategoryTitle,
+  isReportHandlingResult,
+  isReportStatus,
+  type ReportHandlingResult,
+  reportHandlingResultLabels,
+  type ReportStatus,
+  reportStatusLabels,
+} from '@/lib/reports/manage';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 

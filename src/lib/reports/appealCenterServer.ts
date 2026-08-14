@@ -1,9 +1,9 @@
 import {
-  normalizeReportAppeal,
-  getReportAppealDeadline,
   type AppealCenterDetail,
   type AppealCenterItem,
   type AppealOpinionContext,
+  getReportAppealDeadline,
+  normalizeReportAppeal,
   type ReportAppealDatabaseRow,
 } from '@/lib/reports/appeals';
 import { legalTypeLabels, legalValueLabels, rightsReasonTypeLabels } from '@/lib/reports/concierge';

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import EmailSignUp from './email';
 import Container from '../container';
+import EmailSignUp from './email';
 
 export const metadata: Metadata = {
   title: '회원가입 - 데브허브',

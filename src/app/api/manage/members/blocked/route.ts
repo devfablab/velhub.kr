@@ -1,5 +1,6 @@
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
-import { normalizeText } from '@/lib/utils';
+import { getStaffRestrictionMessageStatus } from '@/lib/users/memberRestrictionMessages';
+import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessagesServer';
 import {
   decryptNullable,
   getBlockedMemberships,
@@ -7,8 +8,7 @@ import {
   getStigmaDisplayName,
   getStigmasByIds,
 } from '@/lib/users/utils';
-import { getStaffRestrictionMessageStatus } from '@/lib/users/memberRestrictionMessages';
-import { loadRestrictionLastSenderMap } from '@/lib/users/memberRestrictionMessagesServer';
+import { normalizeText } from '@/lib/utils';
 
 type MembershipRow = {
   id: string;

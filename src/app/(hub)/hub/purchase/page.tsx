@@ -2,9 +2,9 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Anchor from '@/components/Anchor';
-import Content from './tab';
 import Container from '../menu';
 import BillingMethods from './billingMethods';
+import Content from './tab';
 import styles from '@/app/hub.module.sass';
 
 type PurchaseSummaryItem = {

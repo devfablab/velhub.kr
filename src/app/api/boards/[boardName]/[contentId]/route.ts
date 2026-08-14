@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
+import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
-import { canManageCommunityBoardContents, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { decrypt } from '@/lib/encryption/decrypt';
 import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {

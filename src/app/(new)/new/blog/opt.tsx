@@ -1,7 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   Dialog,
@@ -22,13 +26,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { ThemeMode, useThemeMode } from '@/app/themeProvider';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];

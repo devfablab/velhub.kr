@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Dialog, DialogContent, DialogTitle, Drawer, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import Container from '@/app/(site)/[siteName]/menu';
 import Anchor from '@/components/Anchor';
+import Container from '@/app/(site)/[siteName]/menu';
 
 type PurchaseSuccessResponse = {
   ok?: boolean;

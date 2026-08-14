@@ -1,16 +1,16 @@
-import { redirect } from 'next/navigation';
+import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Container from './menu';
-import Personal from './personal';
 import PendingInvite from './pendingInvite';
 import PendingJoin from './pendingJoin';
+import Personal from './personal';
 import MemberStatusSites, { type MemberStatusSiteRow } from './shared/memberStatusSites';
 import styles from '@/app/hub.module.sass';
-import { Metadata } from 'next';
 
 type AccountRow = {
   email: string | null;

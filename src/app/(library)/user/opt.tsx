@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Button,
   Checkbox,
@@ -14,11 +15,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import IdentityAgreement from '@/components/service/common/IdentityAgreement';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
+import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import styles from '@/app/new.module.sass';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';

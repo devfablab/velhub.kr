@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import * as PortOne from '@portone/browser-sdk/v2';
 import { Snackbar } from '@mui/material';
+import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
 
 type PortOneBillingKeyResponse = {

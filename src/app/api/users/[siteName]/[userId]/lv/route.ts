@@ -1,5 +1,5 @@
-import { normalizeText } from '@/lib/utils';
 import { getSiteMembership, getStaffMembersAccess, isCommunityStaffMembership } from '@/lib/users/utils';
+import { normalizeText } from '@/lib/utils';
 
 type RouteContext = {
   params: Promise<{

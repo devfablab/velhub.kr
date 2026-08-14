@@ -1,8 +1,8 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Content from '../tab';
 import Container from '../../menu';
+import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
 export default function Page() {

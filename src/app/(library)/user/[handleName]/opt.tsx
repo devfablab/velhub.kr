@@ -1,14 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import styles from '@/app/new.module.sass';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
+import styles from '@/app/new.module.sass';
 
 type Post = {
   id: string;

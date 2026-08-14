@@ -1,7 +1,7 @@
 'use client';
 
-import AuthActions from '@/components/auth/AuthActions';
 import { useMediaQuery, useTheme } from '@mui/material';
+import AuthActions from '@/components/auth/AuthActions';
 
 export default function Aside() {
   const theme = useTheme();

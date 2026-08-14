@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from '@mui/material';
 import styles from '@/app/concierge.module.sass';
 
 type Faq = {

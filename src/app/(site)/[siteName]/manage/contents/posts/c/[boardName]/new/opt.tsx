@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   FormControl,
@@ -16,18 +18,16 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
-import ToastEditor from '@/components/editor/ToastEditor';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import Anchor from '@/components/Anchor';
+import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 

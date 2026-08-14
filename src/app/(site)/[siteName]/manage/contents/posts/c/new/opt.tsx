@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   FormControl,
   FormControlLabel,
@@ -16,9 +19,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Container from '../../../../menu';

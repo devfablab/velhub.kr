@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { closestCenter, DndContext, type DragEndEvent,PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
@@ -17,14 +17,14 @@ import {
   MenuItem,
   Select,
   Stack,
+  styled,
   TextField,
   Typography,
-  styled,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { normalizeText } from '@/lib/utils';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 

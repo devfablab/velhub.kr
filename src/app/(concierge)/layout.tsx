@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import HeaderConcierge from '@/components/headers/Concierge';
 import Footer from '@/components/footers/Footer';
+import HeaderConcierge from '@/components/headers/Concierge';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',

@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Accordion,
   AccordionDetails,
@@ -13,8 +15,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';

@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormControlLabel, FormLabel, Snackbar, Stack } from '@mui/material';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/settings.module.sass';
 
 type AdvancedUserResponse = {

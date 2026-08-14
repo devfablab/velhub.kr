@@ -1,9 +1,9 @@
 import { type NextRequest } from 'next/server';
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import verifySession from '@/lib/session/verifySession';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
 
 type SiteRow = {
   id: string;

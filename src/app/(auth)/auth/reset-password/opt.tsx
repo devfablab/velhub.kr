@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Stack, TextField } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, Stack, TextField } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Container from '../container';
 import styles from '@/app/auth.module.sass';

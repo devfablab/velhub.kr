@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Dialog,
   DialogActions,
@@ -12,7 +13,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 
 export type PaymentTermsType = 'donation' | 'subscription' | 'purchase';
 

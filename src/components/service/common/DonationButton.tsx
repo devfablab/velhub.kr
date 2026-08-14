@@ -1,7 +1,6 @@
 'use client';
 
 import { type ChangeEvent, useEffect, useState } from 'react';
-import PortOne from '@portone/browser-sdk/v2';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
   Dialog,
@@ -17,8 +16,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import PaymentTerms from './PaymentTerms';
+import PortOne from '@portone/browser-sdk/v2';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentTerms from './PaymentTerms';
 
 type DonationTargetType = 'site' | 'series';
 

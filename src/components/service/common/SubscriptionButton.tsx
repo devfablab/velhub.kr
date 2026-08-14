@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import * as PortOne from '@portone/browser-sdk/v2';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
 import {
   Chip,
   Dialog,
@@ -15,12 +18,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import LoyaltyOutlinedIcon from '@mui/icons-material/LoyaltyOutlined';
-import CreditCardOffOutlinedIcon from '@mui/icons-material/CreditCardOffOutlined';
-import PaymentTerms from './PaymentTerms';
+import * as PortOne from '@portone/browser-sdk/v2';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
 
 type BoardInfo = {

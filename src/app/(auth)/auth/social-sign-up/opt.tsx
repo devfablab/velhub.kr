@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { type JSX,useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Stack, TextField } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, Stack, TextField } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { SignupAgreementFields, useSignupAgreements } from '@/components/auth/SignupAgreements';
 import styles from '@/app/auth.module.sass';

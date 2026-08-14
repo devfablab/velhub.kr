@@ -1,20 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type JSX } from 'react';
+import { type ChangeEvent, type JSX,useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
+import CropOriginalOutlinedIcon from '@mui/icons-material/CropOriginalOutlined';
+import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
+import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
 import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 import HowToVoteRoundedIcon from '@mui/icons-material/HowToVoteRounded';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import FormatListNumberedOutlinedIcon from '@mui/icons-material/FormatListNumberedOutlined';
-import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
-import DynamicFeedOutlinedIcon from '@mui/icons-material/DynamicFeedOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import {
   Checkbox,
   Dialog,
@@ -36,21 +36,21 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { ko } from 'date-fns/locale';
-import { normalizeText } from '@/lib/utils';
 import { normalizeEditorHtml } from '@/lib/editor/normalizeEditorContent';
+import { normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
-import ToastEditor from '@/components/editor/ToastEditor';
 import NumberField from '@/components/custom-ui/NumberField';
+import ToastEditor from '@/components/editor/ToastEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
-import Anchor from '@/components/Anchor';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
