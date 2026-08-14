@@ -17,7 +17,8 @@ type HeaderResponse = {
   avatar: string | null;
   themeMode: ThemeMode | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 

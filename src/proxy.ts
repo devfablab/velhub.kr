@@ -23,6 +23,11 @@ type SessionRouteResult = {
   inviteHref?: string | null;
   isRejoin?: boolean;
   needsSocialSignUp?: boolean;
+  handleName?: string | null;
+  hasAffettoMyPosts?: boolean;
+  hasCreatorLounge?: boolean;
+  hasCreatorPosts?: boolean;
+  hasOwnerLounge?: boolean;
 };
 
 type RhizomeStateResult = {
@@ -472,14 +477,6 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  if (pathname.startsWith('/settings') || pathname.startsWith('/new') || pathname.startsWith('/hub')) {
-    if (!isLoggedIn) {
-      return redirectWithPath(request, '/auth/sign-in');
-    }
-
-    return response;
-  }
-
   if (pathname.startsWith('/user/settings')) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');
@@ -501,6 +498,34 @@ export async function proxy(request: NextRequest) {
     const authorCheck = await fetchSessionRoute(request, '/api/session/author', {});
     if (!authorCheck.response.ok || !authorCheck.result?.ok) {
       return redirectWithPath(request, '/');
+    }
+
+    return response;
+  }
+
+  if (pathname === '/user') {
+    if (!isLoggedIn) return redirectWithPath(request, '/auth/sign-in');
+
+    const status = await fetchSessionRoute(request, '/api/session/library-status', {});
+    if (!status.response.ok || !status.result?.ok) return redirectWithPath(request, '/');
+
+    if (!status.result.hasAffettoMyPosts) return redirectWithPath(request, '/');
+    if (!status.result.handleName) return redirectWithPath(request, '/user/settings');
+    return redirectWithPath(request, `/user/${status.result.handleName}`);
+  }
+
+
+
+  if (
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/new') ||
+    pathname.startsWith('/hub') ||
+    pathname.startsWith('/creator') ||
+    pathname.startsWith('/memberships') ||
+    pathname.startsWith('/user')
+  ) {
+    if (!isLoggedIn) {
+      return redirectWithPath(request, '/auth/sign-in');
     }
 
     return response;

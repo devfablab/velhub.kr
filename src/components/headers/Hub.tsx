@@ -54,7 +54,8 @@ type HeaderResponse = {
   siteRole: string | null;
   sessionCase?: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -63,7 +64,8 @@ type UserProfile = {
   email: string | null;
   avatarUrl: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -173,7 +175,8 @@ export default function HeaderHub() {
         email: result.email,
         avatarUrl: result.avatar,
         isAuthor: result.isAuthor,
-        handleName: result.handleName,
+        creatorHandleName: result.creatorHandleName,
+        userHandleName: result.userHandleName,
         hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
@@ -339,7 +342,7 @@ export default function HeaderHub() {
                   {userProfile.isAuthor ? (
                     <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
                       <Anchor
-                        href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}
+                        href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}
                       >
                         <MenuBookRoundedIcon fontSize="small" />
                         <span>작가의 서재</span>
@@ -348,7 +351,7 @@ export default function HeaderHub() {
                   ) : null}
                   {userProfile.hasAffettoMyPosts ? (
                     <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                      <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                      <Anchor href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}>
                         <InterestsOutlinedIcon fontSize="small" />
                         <span>독자의 서재</span>
                       </Anchor>

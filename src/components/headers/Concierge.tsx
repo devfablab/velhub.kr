@@ -31,7 +31,8 @@ type HeaderResponse = {
   themeMode: ThemeMode | null;
   globalRole: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -42,7 +43,8 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -100,7 +102,8 @@ export default function HeaderConcierge() {
     isLoggedIn: false,
     globalRole: null,
     isAuthor: false,
-    handleName: null,
+    creatorHandleName: null,
+          userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -164,7 +167,8 @@ export default function HeaderConcierge() {
           isLoggedIn: false,
           globalRole: null,
           isAuthor: false,
-          handleName: null,
+          creatorHandleName: null,
+          userHandleName: null,
           hasAffettoMyPosts: false,
         });
         return;
@@ -177,7 +181,8 @@ export default function HeaderConcierge() {
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         isAuthor: result.isAuthor,
-        handleName: result.handleName,
+        creatorHandleName: result.creatorHandleName,
+        userHandleName: result.userHandleName,
         hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
@@ -398,7 +403,7 @@ export default function HeaderConcierge() {
                     ? [
                         <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
                           <Anchor
-                            href={userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'}
+                            href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}
                           >
                             <MenuBookRoundedIcon fontSize="small" />
                             <span>작가의 서재</span>
@@ -409,7 +414,7 @@ export default function HeaderConcierge() {
                   ...(userProfile.hasAffettoMyPosts
                     ? [
                         <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                          <Anchor href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}>
+                          <Anchor href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}>
                             <InterestsOutlinedIcon fontSize="small" />
                             <span>독자의 서재</span>
                           </Anchor>

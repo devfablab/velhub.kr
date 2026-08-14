@@ -26,25 +26,20 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
   const { handleName } = await context.params;
   const normalizedHandleName = handleName.trim().toLowerCase();
   const supabaseAdmin = getSupabaseAdmin();
-  const creatorResult = await supabaseAdmin
-    .from('creators')
+  const profileResult = await supabaseAdmin
+    .from('users')
     .select('id, user_id, handle_name, cover_image, introduction')
     .eq('handle_name', normalizedHandleName)
     .maybeSingle();
-  if (creatorResult.error) return NextResponse.json({ message: '독자 프로필을 불러오지 못했습니다.' }, { status: 500 });
-  if (!creatorResult.data) return NextResponse.json({ message: '독자 프로필을 찾을 수 없습니다.' }, { status: 404 });
+  if (profileResult.error) return NextResponse.json({ message: '독자 프로필을 불러오지 못했습니다.' }, { status: 500 });
+  if (!profileResult.data) return NextResponse.json({ message: '독자 프로필을 찾을 수 없습니다.' }, { status: 404 });
 
   const page = Math.max(1, Number(new URL(_.url).searchParams.get('page') ?? '1') || 1);
   const from = (page - 1) * 100;
-  const creator = creatorResult.data;
+  const creator = profileResult.data;
 
-  const [currentStigma, linksResult, stigmaResult, seriesResult, features] = await Promise.all([
+  const [currentStigma, stigmaResult, seriesResult, features] = await Promise.all([
     getCurrentStigma(),
-    supabaseAdmin
-      .from('creator_links')
-      .select('id, label, url, sort_order')
-      .eq('creator_id', creator.id)
-      .order('sort_order'),
     supabaseAdmin.from('stigmas').select('user_name, avatar').eq('id', creator.user_id).maybeSingle(),
     supabaseAdmin.from('board_series').select('id, series_label').eq('user_id', creator.user_id),
     getMembershipFeatures(creator.user_id),
@@ -54,7 +49,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     return NextResponse.json({ message: '개인사정으로 인해 운영이 중단되었습니다.' }, { status: 403 });
   }
 
-  if (linksResult.error || stigmaResult.error || seriesResult.error)
+  if (stigmaResult.error || seriesResult.error)
     return NextResponse.json({ message: '독자 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const series = seriesResult.data ?? [];
@@ -99,12 +94,6 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       introduction: creator.introduction,
       activityName: decryptUserName(stigmaResult.data?.user_name ?? '') ?? '독자',
       profileImage: getAvatarUrl(stigmaResult.data?.avatar ?? null),
-      links: (linksResult.data ?? []).map((link) => ({
-        id: link.id,
-        label: link.label,
-        url: link.url,
-        sortOrder: link.sort_order,
-      })),
     },
     posts: posts.map((post) => ({
       id: post.id,

@@ -60,7 +60,8 @@ type HeaderResponse = {
   siteRole: string | null;
   sessionCase?: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -71,7 +72,8 @@ type UserProfile = {
   isLoggedIn: boolean;
   globalRole: string | null;
   isAuthor?: boolean;
-  handleName?: string | null;
+  creatorHandleName?: string | null;
+  userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
 };
 
@@ -123,7 +125,8 @@ export default function Container({ children }: ContainerProps) {
     isLoggedIn: false,
     globalRole: null,
     isAuthor: false,
-    handleName: null,
+    creatorHandleName: null,
+userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -171,7 +174,8 @@ export default function Container({ children }: ContainerProps) {
           isLoggedIn: false,
           globalRole: null,
           isAuthor: false,
-          handleName: null,
+          creatorHandleName: null,
+userHandleName: null,
           hasAffettoMyPosts: false,
         });
         return;
@@ -184,7 +188,8 @@ export default function Container({ children }: ContainerProps) {
         isLoggedIn: result.isLoggedIn,
         globalRole: result.globalRole,
         isAuthor: result.isAuthor,
-        handleName: result.handleName,
+        creatorHandleName: result.creatorHandleName,
+userHandleName: result.userHandleName,
         hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
@@ -373,7 +378,7 @@ export default function Container({ children }: ContainerProps) {
                             <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
                               <Anchor
                                 href={
-                                  userProfile.handleName ? `/creator/${userProfile.handleName}` : '/creator/settings'
+                                  userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'
                                 }
                               >
                                 <MenuBookRoundedIcon fontSize="small" />
@@ -386,7 +391,7 @@ export default function Container({ children }: ContainerProps) {
                         ? [
                             <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
                               <Anchor
-                                href={userProfile.handleName ? `/user/${userProfile.handleName}` : '/user/settings'}
+                                href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
                               >
                                 <InterestsOutlinedIcon fontSize="small" />
                                 <span>독자의 서재</span>

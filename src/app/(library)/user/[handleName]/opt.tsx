@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
-import { getSupabaseBrowser } from '@/lib/supabase';
+import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import styles from '@/app/new.module.sass';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 
 type Post = {
   id: string;
@@ -15,13 +18,11 @@ type Post = {
   seriesLabel: string;
   publishedAt: string;
 };
-type UserLink = { id?: string; label: string; url: string };
 type UserProfile = {
   id?: string;
   handleName: string;
   coverImage: string | null;
   introduction: string | null;
-  links: UserLink[];
 };
 type Response = {
   user: UserProfile & { activityName: string; profileImage: string | null };
@@ -43,12 +44,39 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-const MAX_FILE_SIZE = 1024 * 1024;
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
-function withProtocol(value: string) {
-  const text = value.trim();
-  return text && !/^[a-z][a-z\d+.-]*:\/\//i.test(text) ? `https://${text}` : text;
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
 }
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
+}
+
+const MAX_FILE_SIZE = 1024 * 1024;
 
 async function toCoverImage(file: File) {
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type))
@@ -60,7 +88,7 @@ async function toCoverImage(file: File) {
   canvas.height = 270;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('이미지를 처리하지 못했습니다.');
-  const ratio = Math.min(canvas.width / source.width, canvas.height / source.height);
+  const ratio = Math.max(canvas.width / source.width, canvas.height / source.height);
   const width = source.width * ratio;
   const height = source.height * ratio;
   context.drawImage(source, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
@@ -82,22 +110,9 @@ function ProfileForm({
   const [introduction, setIntroduction] = useState(profile.introduction ?? '');
   const [coverImage, setCoverImage] = useState(profile.coverImage ?? '');
   const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [links, setLinks] = useState<UserLink[]>(profile.links);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const updateLink = (index: number, key: keyof UserLink, value: string) =>
-    setLinks((current) => current.map((link, linkIndex) => (linkIndex === index ? { ...link, [key]: value } : link)));
-  const moveLinkToTop = (index: number) =>
-    setLinks((current) => [current[index], ...current.filter((_, linkIndex) => linkIndex !== index)]);
-  const moveLink = (from: number, to: number) =>
-    setLinks((current) => {
-      const next = [...current];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
 
   const selectCover = async (file: File | undefined) => {
     if (!file) return;
@@ -114,17 +129,20 @@ function ProfileForm({
   const save = async () => {
     setSaving(true);
     setMessage('');
-    let uploadedPath = '';
     try {
       let nextCoverImage = coverImage;
       if (coverFile) {
-        uploadedPath = `user/${crypto.randomUUID()}.webp`;
-        const supabase = getSupabaseBrowser();
-        const upload = await supabase.storage
-          .from('cover-image')
-          .upload(uploadedPath, coverFile, { contentType: 'image/webp', upsert: false });
-        if (upload.error) throw upload.error;
-        nextCoverImage = supabase.storage.from('cover-image').getPublicUrl(uploadedPath).data.publicUrl;
+        const formData = new FormData();
+        formData.append('file', coverFile);
+        const uploadResponse = await fetch('/api/user/profile/cover', {
+          method: 'POST',
+          body: formData,
+        });
+        const uploadPayload = await uploadResponse.json();
+        if (!uploadResponse.ok) {
+          throw new Error(uploadPayload.message ?? '커버 이미지를 업로드하지 못했습니다.');
+        }
+        nextCoverImage = uploadPayload.url;
       }
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -133,22 +151,22 @@ function ProfileForm({
           handleName: profile.handleName,
           introduction,
           coverImage: nextCoverImage,
-          links: links.map((link) => ({ ...link, url: withProtocol(link.url) })),
         }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message ?? '독자 프로필을 저장하지 못했습니다.');
-      onSaved({ ...payload.user, links: links.map((link) => ({ ...link, url: withProtocol(link.url) })) });
+      onSaved(payload.user);
     } catch (error) {
-      if (uploadedPath) await getSupabaseBrowser().storage.from('cover-image').remove([uploadedPath]);
       setMessage(error instanceof Error ? error.message : '독자 프로필을 저장하지 못했습니다.');
       setSaving(false);
     }
   };
 
   return (
-    <Stack gap={3}>
+    <div className="paper" style={{ marginTop: 23 }}>
+      <h1>바이오 수정</h1>
       <VisuallyHiddenInput
+        ref={fileRef}
         type="file"
         accept="image/png,image/jpeg,image/webp"
         onChange={(event) => selectCover(event.target.files?.[0])}
@@ -160,7 +178,7 @@ function ProfileForm({
             component="img"
             src={coverImage}
             alt=""
-            sx={{ width: '100%', aspectRatio: '1270 / 270', objectFit: 'contain', bgcolor: 'transparent' }}
+            sx={{ width: '100%', aspectRatio: '1270 / 270', objectFit: 'cover', bgcolor: 'transparent' }}
           />
         ) : null}
         <Stack direction="row" gap={1}>
@@ -192,68 +210,11 @@ function ProfileForm({
           onChange={(event) => setIntroduction(event.target.value)}
         />
       </Stack>
-      <Stack gap={2}>
-        <Typography variant="subtitle2">링크</Typography>
-        {links.map((link, index) => (
-          <Stack
-            key={link.id ?? index}
-            gap={1}
-            draggable
-            onDragStart={(event) => event.dataTransfer.setData('text/plain', String(index))}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              const from = Number(event.dataTransfer.getData('text/plain'));
-              if (!Number.isNaN(from) && from !== index) moveLink(from, index);
-            }}
-          >
-            <Stack gap={1}>
-              <Typography variant="subtitle2">레이블</Typography>
-              <TextField
-                size="small"
-                value={link.label}
-                onChange={(event) => updateLink(index, 'label', event.target.value)}
-              />
-            </Stack>
-            <Stack gap={1}>
-              <Typography variant="subtitle2">링크</Typography>
-              <TextField
-                size="small"
-                value={link.url}
-                onChange={(event) => updateLink(index, 'url', event.target.value)}
-              />
-            </Stack>
-            <Stack direction="row" gap={1}>
-              {index > 0 ? (
-                <button type="button" className="button small action" onClick={() => moveLinkToTop(index)}>
-                  메인 링크로 설정
-                </button>
-              ) : (
-                <Typography variant="body2">메인 링크</Typography>
-              )}
-              <button
-                type="button"
-                className="button small danger"
-                onClick={() => setLinks((current) => current.filter((_, linkIndex) => linkIndex !== index))}
-              >
-                삭제
-              </button>
-            </Stack>
-          </Stack>
-        ))}
-        {links.length < 5 ? (
-          <button
-            type="button"
-            className="button small action"
-            onClick={() => setLinks((current) => [...current, { label: '', url: '' }])}
-          >
-            링크 추가
-          </button>
-        ) : null}
-      </Stack>
       {message ? (
-        <Typography variant="body2" color="error">
-          {message}
-        </Typography>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{message}</span>
+        </p>
       ) : null}
       <Stack direction="row" justifyContent="flex-end" gap={1}>
         <button type="button" className="button medium close" disabled={saving} onClick={onCancel}>
@@ -263,7 +224,7 @@ function ProfileForm({
           {saving ? '저장 중' : '저장'}
         </button>
       </Stack>
-    </Stack>
+    </div>
   );
 }
 
@@ -292,6 +253,8 @@ export default function Opt({ handleName }: { handleName: string }) {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
+  const { themeMode, setThemeMode } = useThemeMode();
 
   const load = useCallback(
     async (nextPage: number) => {
@@ -309,34 +272,69 @@ export default function Opt({ handleName }: { handleName: string }) {
   );
 
   useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    setIsMounted(true);
+  }, [setThemeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
+    }
+
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+  }, [isMounted]);
+
+  useEffect(() => {
     void load(page);
   }, [load, page]);
 
   if (message)
     return (
-      <Typography variant="body2" color="error">
-        {message}
-      </Typography>
+      <main className={styles['my-library']}>
+        <div className={styles.container}>
+          <div className={`content ${styles.content}`}>
+            <div className="paper page-error">
+              <NearbyErrorRoundedIcon />
+              <p className="alert error">
+                <span>{message}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
     );
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 100);
   const user = data.user;
-  if (editing && data.isOwner) {
-    return (
-      <ProfileForm
-        profile={user}
-        onCancel={() => setEditing(false)}
-        onSaved={(next) => {
-          setData((current) => (current ? { ...current, user: { ...current.user, ...next } } : current));
-          setEditing(false);
-        }}
-      />
-    );
-  }
-
   return (
     <main className={styles['my-library']}>
+      <div className={styles.back}>
+        <Anchor href="/" className={styles.backlink}>
+          <ArrowBackRoundedIcon />
+          <span>라운지로 돌아가기</span>
+        </Anchor>
+      </div>
       <div className={`${styles['user-cover']} ${user.coverImage ? styles['user-cover-image-container'] : ''}`}>
         {user.coverImage ? (
           <div className={styles['user-cover-image']} style={{ backgroundImage: `url(${user.coverImage})` }}>
@@ -348,37 +346,41 @@ export default function Opt({ handleName }: { handleName: string }) {
       <div className={styles.container}>
         <div className={`content ${styles.content}`}>
           <div className={styles['user-bio']}>
-            <Avatar
-              src={user.profileImage || '/broken-image.jpg'}
-              alt={user.activityName}
-              sx={{ width: 72, height: 72 }}
-            />
-            <div className={styles['user-bio-name']}>
-              <h1>{user.activityName}</h1>
-              <Typography variant="subtitle2">@{user.handleName}</Typography>
-            </div>
-            {data.isOwner ? (
-              <div className={styles['user-bio-action']}>
-                <button type="button" className="button small action" onClick={() => setEditing(true)}>
-                  수정
-                </button>
-              </div>
-            ) : null}
+            {editing && data.isOwner ? (
+              <ProfileForm
+                profile={user}
+                onCancel={() => setEditing(false)}
+                onSaved={(next) => {
+                  setData((current) => (current ? { ...current, user: { ...current.user, ...next } } : current));
+                  setEditing(false);
+                }}
+              />
+            ) : (
+              <>
+                <Avatar
+                  src={user.profileImage || '/broken-image.jpg'}
+                  alt={user.activityName}
+                  sx={{ width: 72, height: 72 }}
+                />
+                <div className={styles['user-bio-name']}>
+                  <h1>{user.activityName}</h1>
+                  <Typography variant="subtitle2">@{user.handleName}</Typography>
+                </div>
+                {data.isOwner ? (
+                  <div className={styles['user-bio-action']}>
+                    <button type="button" className="button small action" onClick={() => setEditing(true)}>
+                      수정
+                    </button>
+                  </div>
+                ) : null}
 
-            {user.introduction ? (
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                {user.introduction}
-              </Typography>
-            ) : null}
-            {user.links.length ? (
-              <Stack direction="row" gap={1} flexWrap="wrap">
-                {user.links.map((link) => (
-                  <Anchor key={link.id ?? link.url} href={link.url}>
-                    {link.label}
-                  </Anchor>
-                ))}
-              </Stack>
-            ) : null}
+                {user.introduction ? (
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {user.introduction}
+                  </Typography>
+                ) : null}
+              </>
+            )}
           </div>
           <Stack gap={2}>
             {data.posts.length ? (

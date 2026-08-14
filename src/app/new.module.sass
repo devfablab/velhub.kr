@@ -162,6 +162,56 @@ header.header
 .my-library
   flex-direction: column
   align-items: center
+  justify-content: flex-start
+  background-color: ds.$hex-bright
+
+  html[data-theme="yellow-dark"] &
+    background-color: ds.$hex-secondary
+
+  .back
+    position: absolute
+    top: ds.rem(17)
+    left: ds.rem(17)
+    z-index: 1
+
+    .backlink
+      display: inline-flex
+      gap: ds.rem(7)
+      padding: ds.rem(12) ds.rem(17)
+      background-color: ds.$hex-black
+      color: ds.$hex-light
+      border-radius: ds.rem(12)
+      transition: all .4s cubic-bezier(.4,0,.2,1)
+      outline: ds.rem(3) solid ds.$hex-black
+
+      html[data-theme="yellow-dark"] &
+        background-color: ds.$hex-white
+        color: ds.$hex-secondary
+        outline: ds.rem(3) solid ds.$hex-white
+
+      &:hover, &:focus-visible
+        outline: ds.rem(3) solid ds.$hex-accent!important
+
+      @include ds.mq(maxMedium)
+        padding: ds.rem(8) ds.rem(12)
+
+      svg
+        width: ds.rem(16)
+        height: ds.rem(16)
+
+        @include ds.mq(maxMedium)
+          width: ds.rem(14)
+          height: ds.rem(14)
+
+      span
+        display: inline-flex
+        align-items: center
+        @include ds.fw(pre, 600)
+        font-size: ds.rem(16)
+        line-height: 1
+
+        @include ds.mq(maxMedium)
+          @include ds.screen-reader-only
 
   .content
     padding-bottom: ds.rem(53)
@@ -173,15 +223,63 @@ header.header
   .user-cover
     width: 100%
     height: ds.rem(270)
-    position: relative
+    background-color: ds.$hex-primary
+
+    @include ds.mq(maxMedium)
+      height: ds.rem(170)
 
     &:not(.user-cover-image-container)
       height: ds.rem(53)
+      background-color: ds.$hex-accent
+
+    .user-cover-image
+      background-size: cover
+      background-position: center
+      background-repeat: no-repeat
+      background-color: ds.$hex-primary
+      margin: 0 auto
+      width: 100%
+      max-width: ds.rem(1270)
+      height: 100%
+      position: relative
+
+      .dummy-before, .dummy-after
+        width: ds.rem(257)
+        position: absolute
+        top: 0
+        bottom: 0
+
+      .dummy-before
+        left: 0
+        background: linear-gradient(to left, transparent, rgb(ds.$rgb-primary))
+
+      .dummy-after
+        right: 0
+        background: linear-gradient(to right, transparent, rgb(ds.$rgb-primary))
 
   .user-bio
     display: flex
     flex-direction: column
     gap: ds.rem(12)
+    margin-top: ds.rem(-23)
+
+  .user-bio-links
+    display: flex
+    flex-wrap: wrap
+    gap: ds.rem(12)
+
+    li::before
+      content: '+'
+
+    a
+      color: ds.$hex-secondary
+      opacity: .9
+      text-decoration: underline
+      @include ds.fw(pre, 600)
+      font-size: ds.rem(14)
+
+      html[data-theme="yellow-dark"] &
+        color: ds.$hex-light
 
   .user-bio-action
     display: flex
