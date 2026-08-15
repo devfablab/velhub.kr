@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const membership = searchParams.get('membership');
 
     const supabaseAdmin = getSupabaseAdmin();
-    
+
     let allowedSiteIds: string[] | null = null;
     if (membership === 'owner') {
       const { data: selections, error: selectionsError } = await supabaseAdmin
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         .select('target_id')
         .eq('selector_type', 'owner_site')
         .limit(limit * 3);
-      
+
       if (!selectionsError && selections) {
         allowedSiteIds = selections.map((s) => s.target_id);
       }
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     if (siteType === 'blog' || siteType === 'community') {
       query = query.eq('site_type', siteType);
     }
-    
+
     if (allowedSiteIds !== null) {
       if (allowedSiteIds.length > 0) {
         query = query.in('id', allowedSiteIds);

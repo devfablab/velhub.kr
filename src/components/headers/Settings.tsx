@@ -7,7 +7,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 import Anchor from '../Anchor';
-import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type HeaderResponse = {

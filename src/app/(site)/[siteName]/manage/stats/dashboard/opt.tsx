@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode,useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';

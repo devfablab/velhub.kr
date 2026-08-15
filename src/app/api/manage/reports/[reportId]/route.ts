@@ -1,5 +1,5 @@
 import { reorderSeriesIdx } from '@/lib/board/seriesIdx';
-import { type GuidelineReportCategory,isGuidelineReportCategory } from '@/lib/reports/guidelines';
+import { type GuidelineReportCategory, isGuidelineReportCategory } from '@/lib/reports/guidelines';
 import {
   getReportCategoryTitle,
   isAllowedReportStatus,

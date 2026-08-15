@@ -171,7 +171,10 @@ export async function POST(request: Request) {
       .filter((membershipId): membershipId is string => Boolean(membershipId));
 
     if (expiredMembershipIds.length) {
-      const itemDeleteResult = await supabaseAdmin.from('membership_items').delete().in('membership_id', expiredMembershipIds);
+      const itemDeleteResult = await supabaseAdmin
+        .from('membership_items')
+        .delete()
+        .in('membership_id', expiredMembershipIds);
       const membershipDeleteResult = itemDeleteResult.error
         ? { error: itemDeleteResult.error }
         : await supabaseAdmin.from('memberships').delete().in('id', expiredMembershipIds);
@@ -251,7 +254,14 @@ export async function POST(request: Request) {
     for (const purchase of normalizedPurchases) {
       const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
       const orderNo = createOrderNo('MEMBERSHIP_PLATFORM');
-      const membershipLabel = purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토';
+      const membershipLabel =
+        purchase.type === 'all_in_one'
+          ? '올인원'
+          : purchase.type === 'creator'
+            ? '크리에이터'
+            : purchase.type === 'owner'
+              ? '오너'
+              : '아페토';
       const orderName = isMinorUser ? `${membershipLabel} 1개월 멤버십 구독` : `${membershipLabel} 멤버십`;
       const billingPayment = await requestMembershipBilling({
         billingKey: billingMethod.billing_key,
@@ -318,7 +328,7 @@ export async function POST(request: Request) {
           target_id: membershipResult.data.id,
           owner_user_id: currentStigma.stigmaId,
           price: amount,
-        status: isMinorUser ? SUBSCRIPTION_STATUS.CANCELED : SUBSCRIPTION_STATUS.ACTIVE,
+          status: isMinorUser ? SUBSCRIPTION_STATUS.CANCELED : SUBSCRIPTION_STATUS.ACTIVE,
           billing_key: encrypt(billingMethod.billing_key),
           customer_key: customerKey,
           last_payment_id: paymentResult.data.id,
@@ -326,9 +336,9 @@ export async function POST(request: Request) {
           trial_ends_at: null,
           current_period_start: billingPeriod.currentPeriodStart,
           current_period_end: billingPeriod.currentPeriodEnd,
-        next_billing_at: isMinorUser ? null : billingPeriod.nextBillingAt,
+          next_billing_at: isMinorUser ? null : billingPeriod.nextBillingAt,
           billing_anchor_day: billingAnchorDay,
-        canceled_at: isMinorUser ? now.toISOString() : null,
+          canceled_at: isMinorUser ? now.toISOString() : null,
           expired_at: null,
         })
         .select('id')

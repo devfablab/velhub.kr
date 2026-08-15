@@ -1,6 +1,6 @@
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
-import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE,SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

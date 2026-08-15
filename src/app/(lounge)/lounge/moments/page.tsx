@@ -24,7 +24,7 @@ export default async function Page() {
   const host = headerList.get('host');
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
-  
+
   let supportCreatorsData = null;
   let supportCreatorsListData = null;
   let recentCreatorsData = null;
@@ -55,17 +55,27 @@ export default async function Page() {
           <section>
             <h2>서포트 작가전 🚀</h2>
             {supportCreatorsData && (supportCreatorsData.sites || supportCreatorsData.posts) ? (
-              <Slick sitesHitsData={supportCreatorsData.sites ? supportCreatorsData : undefined} postsData={supportCreatorsData.posts ? supportCreatorsData : undefined} />
+              <Slick
+                sitesHitsData={supportCreatorsData.sites ? supportCreatorsData : undefined}
+                postsData={supportCreatorsData.posts ? supportCreatorsData : undefined}
+              />
             ) : (
-              <div className="paper"><p>아직 등록된 서포트 작가가 없습니다.</p></div>
+              <div className="paper">
+                <p>아직 등록된 서포트 작가가 없습니다.</p>
+              </div>
             )}
           </section>
           <section>
             <h2>서포트 크리에이터 ✨</h2>
             {supportCreatorsListData && (supportCreatorsListData.sites || supportCreatorsListData.posts) ? (
-              <List postsData={supportCreatorsListData.posts ? supportCreatorsListData : undefined} orderType="newest" />
+              <List
+                postsData={supportCreatorsListData.posts ? supportCreatorsListData : undefined}
+                orderType="newest"
+              />
             ) : (
-              <div className="paper"><p>아직 등록된 서포트 크리에이터가 없습니다.</p></div>
+              <div className="paper">
+                <p>아직 등록된 서포트 크리에이터가 없습니다.</p>
+              </div>
             )}
           </section>
           <section>
@@ -73,7 +83,9 @@ export default async function Page() {
             {recentCreatorsData && recentCreatorsData.posts ? (
               <List postsData={recentCreatorsData} orderType="newest" />
             ) : (
-              <div className="paper"><p>최근 승인된 작가가 없습니다.</p></div>
+              <div className="paper">
+                <p>최근 승인된 작가가 없습니다.</p>
+              </div>
             )}
           </section>
         </div>

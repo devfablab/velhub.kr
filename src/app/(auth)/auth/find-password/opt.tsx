@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useState } from 'react';
+import { type JSX, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, Stack, TextField } from '@mui/material';
 import Anchor from '@/components/Anchor';

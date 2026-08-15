@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { MenuItem, Select, type SelectChangeEvent,Typography } from '@mui/material';
+import { MenuItem, Select, type SelectChangeEvent, Typography } from '@mui/material';
 import {
   Area,
   AreaChart,

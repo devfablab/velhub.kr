@@ -1,9 +1,9 @@
 'use client';
 
-import { type JSX,useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { closestCenter, DndContext, type DragEndEvent,PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove,horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
+import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, horizontalListSortingStrategy, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';

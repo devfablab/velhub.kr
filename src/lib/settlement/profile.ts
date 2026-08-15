@@ -82,10 +82,7 @@ function decryptNullable(value: string | number | null) {
   return decrypt(String(value));
 }
 
-function getBirthDatePrefix(
-  value: string | number | null,
-  birthDateDummy?: string | number | null,
-) {
+function getBirthDatePrefix(value: string | number | null, birthDateDummy?: string | number | null) {
   const birthDate = getChorogonBirthDate({ birth_date: value, birth_date_dummy: birthDateDummy });
 
   if (!birthDate) {

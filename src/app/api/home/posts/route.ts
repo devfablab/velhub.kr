@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const sortByParam = searchParams.get('sortBy');
-    const sortBy = sortByParam === 'like_count' ? 'like_count' : sortByParam === 'post_count' ? 'post_count' : 'published_at';
+    const sortBy =
+      sortByParam === 'like_count' ? 'like_count' : sortByParam === 'post_count' ? 'post_count' : 'published_at';
     const limitParam = searchParams.get('limit') ?? '10';
     const limit = parseInt(limitParam, 10);
     const siteType = searchParams.get('siteType');

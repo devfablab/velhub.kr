@@ -1,4 +1,4 @@
-import { cache, type ReactNode,Suspense } from 'react';
+import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

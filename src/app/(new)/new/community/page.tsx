@@ -65,10 +65,10 @@ export default async function Page() {
 
     hasIdentity = Boolean(
       !identityResult.error &&
-        identity?.identity_verified_at &&
-        identity.name &&
-        (identity.birth_date || identity.birth_date_dummy) &&
-        identity.gender,
+      identity?.identity_verified_at &&
+      identity.name &&
+      (identity.birth_date || identity.birth_date_dummy) &&
+      identity.gender,
     );
 
     if (hasIdentity) {

@@ -29,13 +29,10 @@ export async function GET(request: Request) {
 
     const chorogonIds = banques.map((b) => b.chorogon_id);
     const userIds: string[] = [];
-    
+
     if (chorogonIds.length > 0) {
-      const { data: chorogons } = await supabaseAdmin
-        .from('chorogons')
-        .select('id, user_id')
-        .in('id', chorogonIds);
-        
+      const { data: chorogons } = await supabaseAdmin.from('chorogons').select('id, user_id').in('id', chorogonIds);
+
       if (chorogons) {
         chorogons.forEach((c) => {
           if (c.user_id) {
@@ -52,11 +49,13 @@ export async function GET(request: Request) {
     // 신규 작가들의 실제 게시물(posts) 가져오기
     const { data: recentPostsResult, error: postsError } = await supabaseAdmin
       .from('posts')
-      .select(`
+      .select(
+        `
         id, subject, summary, content_html, images, published_at, slug, user_id, post_count, thumbnail_image, youtube_id,
         site:rhizomes!posts_site_id_fkey(site_key, site_label, site_type, profile_picture, promotion_image),
         board:boards(board_key, board_type)
-      `)
+      `,
+      )
       .in('user_id', userIds)
       .not('published_at', 'is', null)
       .order('published_at', { ascending: false })
@@ -75,18 +74,18 @@ export async function GET(request: Request) {
 
     const postUserIds = Array.from(new Set(uniqueRecentPosts.map((p: any) => p.user_id).filter(Boolean)));
     const stigmasMap = new Map();
-    
+
     if (postUserIds.length > 0) {
       const { data: stigmas } = await supabaseAdmin
         .from('stigmas')
         .select('id, user_name, avatar')
         .in('id', postUserIds);
-        
+
       if (stigmas) {
         stigmas.forEach((s) => stigmasMap.set(s.id, s));
       }
     }
-    
+
     const { decrypt } = await import('@/lib/encryption/decrypt');
 
     const posts = uniqueRecentPosts.map((post: any) => {
@@ -99,7 +98,7 @@ export async function GET(request: Request) {
           authorName = '';
         }
       }
-      
+
       return {
         site_key: post.site?.site_key,
         site_label: post.site?.site_label,
@@ -115,9 +114,8 @@ export async function GET(request: Request) {
         subject: post.subject,
         summary: post.summary,
         content_html: post.content_html,
-        image: Array.isArray(post.images) && post.images.length > 0
-          ? getPublicImageUrl('post', post.images[0].path)
-          : null,
+        image:
+          Array.isArray(post.images) && post.images.length > 0 ? getPublicImageUrl('post', post.images[0].path) : null,
         thumbnail_image: getPublicImageUrl('og-image', post.thumbnail_image),
         youtube_id: post.youtube_id,
         post_count: post.post_count,

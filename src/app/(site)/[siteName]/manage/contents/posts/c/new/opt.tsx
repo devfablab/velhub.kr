@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useEffect, useMemo, useState } from 'react';
+import { type JSX, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';

@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';

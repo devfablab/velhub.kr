@@ -46,7 +46,7 @@ import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
-import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type ContainerProps = {
@@ -526,7 +526,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     join: false,
     isAuthor: false,
     creatorHandleName: null,
-userHandleName: null,
+    userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -586,7 +586,7 @@ userHandleName: null,
           join: false,
           isAuthor: false,
           creatorHandleName: null,
-userHandleName: null,
+          userHandleName: null,
           hasAffettoMyPosts: false,
         });
         setSiteLabel('');
@@ -926,7 +926,11 @@ userHandleName: null,
                         {userProfile.isAuthor ? (
                           <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
                             <Anchor
-                              href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}
+                              href={
+                                userProfile.creatorHandleName
+                                  ? `/creator/${userProfile.creatorHandleName}`
+                                  : '/creator/settings'
+                              }
                             >
                               <MenuBookRoundedIcon fontSize="small" />
                               <span>작가의 서재</span>
@@ -936,7 +940,9 @@ userHandleName: null,
                         {userProfile.hasAffettoMyPosts ? (
                           <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
                             <Anchor
-                              href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
+                              href={
+                                userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'
+                              }
                             >
                               <InterestsOutlinedIcon fontSize="small" />
                               <span>독자의 서재</span>

@@ -20,7 +20,7 @@ import PrimaryMenu from '../header-groups/concierge/PrimaryMenu';
 import SecondaryMenu from '../header-groups/concierge/SecondaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
-import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type HeaderResponse = {
@@ -103,7 +103,7 @@ export default function HeaderConcierge() {
     globalRole: null,
     isAuthor: false,
     creatorHandleName: null,
-          userHandleName: null,
+    userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -403,7 +403,11 @@ export default function HeaderConcierge() {
                     ? [
                         <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
                           <Anchor
-                            href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}
+                            href={
+                              userProfile.creatorHandleName
+                                ? `/creator/${userProfile.creatorHandleName}`
+                                : '/creator/settings'
+                            }
                           >
                             <MenuBookRoundedIcon fontSize="small" />
                             <span>작가의 서재</span>
@@ -414,7 +418,9 @@ export default function HeaderConcierge() {
                   ...(userProfile.hasAffettoMyPosts
                     ? [
                         <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                          <Anchor href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}>
+                          <Anchor
+                            href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
+                          >
                             <InterestsOutlinedIcon fontSize="small" />
                             <span>독자의 서재</span>
                           </Anchor>

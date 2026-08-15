@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { type NextRequest,NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { createHash } from 'crypto';
 import { redis } from '@/lib/redis';

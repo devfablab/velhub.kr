@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';

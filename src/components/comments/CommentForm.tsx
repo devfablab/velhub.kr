@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent,JSX, useRef, useState } from 'react';
+import { type ChangeEvent, JSX, useRef, useState } from 'react';
 import Avatar from '@mui/material/Avatar';
 import styles from '@/app/comments.module.sass';
 

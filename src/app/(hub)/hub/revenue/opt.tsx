@@ -92,9 +92,7 @@ export default function RevenueHub() {
       setIsSettlementError(result.isSettlementError ?? false);
       setErrorMessage('');
     } catch (unknownError) {
-      setErrorMessage(
-        unknownError instanceof Error ? unknownError.message : '수입/정산 사이트를 불러오지 못했습니다.',
-      );
+      setErrorMessage(unknownError instanceof Error ? unknownError.message : '수입/정산 사이트를 불러오지 못했습니다.');
     } finally {
       setIsLoading(false);
     }

@@ -219,7 +219,10 @@ export async function GET() {
     }
 
     const stigmaMap = new Map(
-      ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [stigma.user_id, decryptUserName(stigma.user_name || '')]),
+      ((stigmasResult.data ?? []) as StigmaRow[]).map((stigma) => [
+        stigma.user_id,
+        decryptUserName(stigma.user_name || ''),
+      ]),
     );
 
     const siteMap = new Map(((sitesResult.data ?? []) as SiteRow[]).map((site) => [site.id, site]));

@@ -126,7 +126,7 @@ export default function Container({ children }: ContainerProps) {
     globalRole: null,
     isAuthor: false,
     creatorHandleName: null,
-userHandleName: null,
+    userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -175,7 +175,7 @@ userHandleName: null,
           globalRole: null,
           isAuthor: false,
           creatorHandleName: null,
-userHandleName: null,
+          userHandleName: null,
           hasAffettoMyPosts: false,
         });
         return;
@@ -189,7 +189,7 @@ userHandleName: null,
         globalRole: result.globalRole,
         isAuthor: result.isAuthor,
         creatorHandleName: result.creatorHandleName,
-userHandleName: result.userHandleName,
+        userHandleName: result.userHandleName,
         hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
@@ -378,7 +378,9 @@ userHandleName: result.userHandleName,
                             <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
                               <Anchor
                                 href={
-                                  userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'
+                                  userProfile.creatorHandleName
+                                    ? `/creator/${userProfile.creatorHandleName}`
+                                    : '/creator/settings'
                                 }
                               >
                                 <MenuBookRoundedIcon fontSize="small" />
@@ -391,7 +393,9 @@ userHandleName: result.userHandleName,
                         ? [
                             <MenuItem key="user-library" onClick={handleCloseProfileDrawer}>
                               <Anchor
-                                href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
+                                href={
+                                  userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'
+                                }
                               >
                                 <InterestsOutlinedIcon fontSize="small" />
                                 <span>독자의 서재</span>

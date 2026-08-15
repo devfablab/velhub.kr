@@ -125,7 +125,7 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
     avatarUrl: null,
     isAuthor: false,
     creatorHandleName: null,
-userHandleName: null,
+    userHandleName: null,
     hasAffettoMyPosts: false,
   });
 
@@ -176,7 +176,7 @@ userHandleName: null,
         avatarUrl: result.avatar,
         isAuthor: result.isAuthor,
         creatorHandleName: result.creatorHandleName,
-userHandleName: result.userHandleName,
+        userHandleName: result.userHandleName,
         hasAffettoMyPosts: result.hasAffettoMyPosts,
       });
     }
@@ -372,7 +372,11 @@ userHandleName: result.userHandleName,
               <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
               {userProfile.isAuthor ? (
                 <MenuItem key="creator-library" onClick={handleCloseProfileDrawer}>
-                  <Anchor href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}>
+                  <Anchor
+                    href={
+                      userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'
+                    }
+                  >
                     <MenuBookRoundedIcon fontSize="small" />
                     <span>작가의 서재</span>
                   </Anchor>

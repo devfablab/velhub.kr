@@ -34,7 +34,10 @@ export default function List({ postsData, orderType }: ListProps) {
     return (
       <div className={`${styles.list} ${styles['list-newest']}`}>
         {postsData.posts.map((post) => (
-          <div key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`} className={`paper ${styles.item}`}>
+          <div
+            key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
+            className={`paper ${styles.item}`}
+          >
             <Anchor href={post.slug ? `/${post.site_key}/${post.board_key}/${post.slug}` : '#'}>
               {isMobile ? (
                 <div className={`${styles['description-item']} ${styles['description-item-mini']}`}>
@@ -183,7 +186,10 @@ export default function List({ postsData, orderType }: ListProps) {
     return (
       <div className={`${styles.list} ${styles['list-hits']}`}>
         {postsData.posts.map((post) => (
-          <div key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`} className={`paper paper-p0 ${styles.item}`}>
+          <div
+            key={`${post.site_key}-${post.board_key}-${post.slug || Math.random()}`}
+            className={`paper paper-p0 ${styles.item}`}
+          >
             <Anchor href={post.slug ? `/${post.site_key}/${post.board_key}/${post.slug}` : '#'}>
               {post.board_type === 'gallery' && (
                 <div className={styles.thumbnail}>

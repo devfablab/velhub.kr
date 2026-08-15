@@ -261,10 +261,13 @@ export default function MembershipPlan() {
 
   if (!isLoading && isUnder14Age) {
     return (
-      <p className="alert warning">
-        <WarningAmberRoundedIcon />
-        <span>결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭</span>
-      </p>
+      <section className={`paper ${styles.paper}`}>
+        <p className="alert warning">
+          <WarningAmberRoundedIcon />
+          <h2>멤버십</h2>
+          <span>결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭</span>
+        </p>
+      </section>
     );
   }
 
@@ -285,8 +288,8 @@ export default function MembershipPlan() {
     const apiPath = isMinorUser
       ? '/api/payments/portone/memberships/start'
       : isModification
-      ? '/api/payments/portone/memberships/modify'
-      : '/api/payments/portone/memberships/start';
+        ? '/api/payments/portone/memberships/modify'
+        : '/api/payments/portone/memberships/start';
 
     try {
       const response = await fetch(apiPath, {
@@ -419,7 +422,9 @@ export default function MembershipPlan() {
                 </Stack>
               ))}
               <Typography variant="subtitle2">
-                {isMinorUser ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제` : `${formatMembershipPrice(selectedPrice)} 결제합니다`}
+                {isMinorUser
+                  ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제`
+                  : `${formatMembershipPrice(selectedPrice)} 결제합니다`}
               </Typography>
             </Stack>
           </div>
@@ -473,7 +478,9 @@ export default function MembershipPlan() {
               onClick={() => setIsPaymentPopupOpen(true)}
               disabled={!selectedBillingMethodId || isSubmitting}
             >
-              {isMinorUser ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제` : `${formatMembershipPrice(selectedPrice)} 결제하기`}
+              {isMinorUser
+                ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제`
+                : `${formatMembershipPrice(selectedPrice)} 결제하기`}
             </button>
           </div>
         ) : null}

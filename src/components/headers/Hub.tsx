@@ -35,7 +35,7 @@ import Anchor from '../Anchor';
 import PrimaryMenu from '../header-groups/hub/PrimaryMenu';
 import SecondaryMenu from '../header-groups/hub/SecondaryMenu';
 import { ServiceLogo } from '../Svgs';
-import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -342,7 +342,11 @@ export default function HeaderHub() {
                   {userProfile.isAuthor ? (
                     <MenuItem key="creator-library" onClick={handleCloseProfileMenu}>
                       <Anchor
-                        href={userProfile.creatorHandleName ? `/creator/${userProfile.creatorHandleName}` : '/creator/settings'}
+                        href={
+                          userProfile.creatorHandleName
+                            ? `/creator/${userProfile.creatorHandleName}`
+                            : '/creator/settings'
+                        }
                       >
                         <MenuBookRoundedIcon fontSize="small" />
                         <span>작가의 서재</span>
@@ -351,7 +355,9 @@ export default function HeaderHub() {
                   ) : null}
                   {userProfile.hasAffettoMyPosts ? (
                     <MenuItem key="user-library" onClick={handleCloseProfileMenu}>
-                      <Anchor href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}>
+                      <Anchor
+                        href={userProfile.userHandleName ? `/user/${userProfile.userHandleName}` : '/user/settings'}
+                      >
                         <InterestsOutlinedIcon fontSize="small" />
                         <span>독자의 서재</span>
                       </Anchor>

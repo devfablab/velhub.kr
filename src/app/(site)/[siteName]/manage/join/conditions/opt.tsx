@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { type JSX,useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';

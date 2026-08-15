@@ -124,7 +124,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
       id: post.id,
       subject: post.subject ?? '제목 없음',
       publishedAt: post.published_at,
-      seriesLabel: post.series_id ? seriesMap.get(post.series_id) ?? '연재' : '단편',
+      seriesLabel: post.series_id ? (seriesMap.get(post.series_id) ?? '연재') : '단편',
       siteLabel: siteMap.get(post.site_id)?.label ?? '사이트',
       url: `/${siteMap.get(post.site_id)?.key ?? ''}/${boardMap.get(post.board_id) ?? ''}/${post.slug ?? ''}`,
     })),

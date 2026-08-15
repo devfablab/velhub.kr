@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type JSX,useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';

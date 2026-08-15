@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX,useEffect, useState } from 'react';
+import { type JSX, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Box, FormControlLabel, Stack, Switch, TextField, useMediaQuery, useTheme } from '@mui/material';

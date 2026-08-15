@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { createTheme,CssBaseline, ThemeProvider } from '@mui/material';
+import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
 
 export type ThemeMode = 'light' | 'system' | 'dark';

@@ -1,4 +1,4 @@
-import { type CommunityManageRoleType,isCommunityManageRole } from '@/lib/community/community-manager/permissions';
+import { type CommunityManageRoleType, isCommunityManageRole } from '@/lib/community/community-manager/permissions';
 import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';

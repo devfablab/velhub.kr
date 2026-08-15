@@ -9,7 +9,7 @@ import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import { useMediaQuery, useTheme } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { useAuthState } from '@/components/auth/AuthStateProvider';
-import { type ThemeMode,useThemeMode } from '@/app/themeProvider';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
 const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';

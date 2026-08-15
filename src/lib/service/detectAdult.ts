@@ -1,4 +1,4 @@
-import { cookies,headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 type IdentityStatusResponse = {
   exists: boolean;

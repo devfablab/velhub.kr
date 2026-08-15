@@ -1,4 +1,4 @@
-import { type NextRequest,NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/session';
 import { normalizeText } from '@/lib/utils';
 
@@ -513,8 +513,6 @@ export async function proxy(request: NextRequest) {
     if (!status.result.handleName) return redirectWithPath(request, '/user/settings');
     return redirectWithPath(request, `/user/${status.result.handleName}`);
   }
-
-
 
   if (
     pathname.startsWith('/settings') ||
