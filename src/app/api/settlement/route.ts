@@ -22,7 +22,7 @@ export async function GET() {
   const [identityResult, paymentEmailResult] = await Promise.all([
     supabaseAdmin
       .from('chorogons')
-      .select('id, name, birth_date, gender, identity_verified_at')
+      .select('id, name, birth_date, birth_date_dummy, gender, identity_verified_at')
       .eq('user_id', currentStigma.stigmaId)
       .maybeSingle(),
     supabaseAdmin.from('stigmas').select('payment_email').eq('user_id', sessionClaims.userId).maybeSingle(),

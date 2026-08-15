@@ -95,17 +95,13 @@ export default async function Page() {
   const cookieHeader = cookieStore.toString();
 
   let hasIdentity = false;
-  let isMinor = false;
+  const isMinor = false;
 
   if (baseUrl) {
     const identityStatus = await getIdentityStatus(baseUrl, cookieHeader);
     const identity = identityStatus?.exists ? identityStatus.identity : null;
 
     hasIdentity = Boolean(identity);
-
-    if (identity) {
-      isMinor = !isAdult(identity.birth_date);
-    }
   }
 
   let canCreateSite = true;
@@ -135,25 +131,7 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <h1>블로그 개설</h1>
 
-          {(!hasIdentity && !isMinor) || isMinor ? (
-            <div className="paper">
-              {!hasIdentity && !isMinor ? (
-                <>
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>본인인증 하시면 블로그를 개설하실 수 있습니다.</span>
-                  </p>
-                  <IdentityVerificationButton />
-                </>
-              ) : null}
-              {isMinor ? (
-                <p className="alert warning">
-                  <WarningAmberRoundedIcon />
-                  <span>만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다.</span>
-                </p>
-              ) : null}
-            </div>
-          ) : !canCreateSite ? (
+          {!canCreateSite ? (
             <div className="paper page-error">
               <NearbyErrorRoundedIcon />
               <p className="alert error">
@@ -163,9 +141,9 @@ export default async function Page() {
                 멤버십 가입하기
               </Anchor>
             </div>
-          ) : null}
-
-          {(hasIdentity || isMinor) && canCreateSite ? <Opt /> : null}
+          ) : (
+            <Opt />
+          )}
         </div>
       </div>
     </main>

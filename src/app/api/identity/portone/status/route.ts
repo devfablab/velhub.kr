@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -31,17 +32,14 @@ export async function GET() {
     return NextResponse.json({ message: '본인인증 상태 조회에 실패했습니다.' }, { status: 500 });
   }
 
-  if (!data?.identity_verified_at || !data.name || !data.birth_date || !data.gender) {
+  if (!data?.identity_verified_at || !data.name || (!data.birth_date && !data.birth_date_dummy) || !data.gender) {
     return NextResponse.json({
       exists: false,
       identity: null,
     });
   }
 
-  const birthDate =
-    process.env.NEXT_PUBLIC_APP_ENV === 'test' && data.birth_date_dummy
-      ? data.birth_date_dummy
-      : decrypt(String(data.birth_date));
+  const birthDate = getChorogonBirthDate(data);
 
   return NextResponse.json({
     exists: true,

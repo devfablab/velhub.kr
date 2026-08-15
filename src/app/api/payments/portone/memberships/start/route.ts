@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
-import { getMembershipFeatures } from '@/lib/memberships/features';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey } from '@/lib/payments/customer';
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
@@ -231,14 +230,12 @@ export async function POST(request: Request) {
       if (membershipResult.error) throw new Error('멤버십 정보를 저장하지 못했습니다.');
       createdMembershipIds.push(membershipResult.data.id);
 
-      const membershipItemResult = await supabaseAdmin
-        .from('membership_items')
-        .insert(
-          purchase.featureKeys.map((key) => ({
-            membership_id: membershipResult.data.id,
-            plan_id: planIdByKey.get(getMembershipPlanKey(purchase.type, key)),
-          })),
-        );
+      const membershipItemResult = await supabaseAdmin.from('membership_items').insert(
+        purchase.featureKeys.map((key) => ({
+          membership_id: membershipResult.data.id,
+          plan_id: planIdByKey.get(getMembershipPlanKey(purchase.type, key)),
+        })),
+      );
       if (membershipItemResult.error) throw new Error('선택한 기능을 저장하지 못했습니다.');
 
       const paymentResult = await supabaseAdmin

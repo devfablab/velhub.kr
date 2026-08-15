@@ -1,4 +1,4 @@
-import { decrypt } from '@/lib/encryption/decrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -72,12 +72,7 @@ export async function GET(request: Request) {
       }
 
       if (chorogon.data?.identity_verified_at) {
-        const birthDate =
-          process.env.NEXT_PUBLIC_APP_ENV === 'test' && chorogon.data.birth_date_dummy
-            ? chorogon.data.birth_date_dummy
-            : chorogon.data.birth_date
-              ? decrypt(chorogon.data.birth_date)
-              : null;
+        const birthDate = getChorogonBirthDate(chorogon.data);
 
         purchaseAvailable = isAdult(birthDate);
       }

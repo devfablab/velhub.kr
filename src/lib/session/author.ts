@@ -1,4 +1,4 @@
-import { decrypt } from '@/lib/encryption/decrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 function isMinorAge(birthDate: string | null | undefined) {
@@ -26,7 +26,7 @@ export async function getAuthorState(stigmaId: string): Promise<{ isAuthor: bool
 
   const identityResult = await supabaseAdmin
     .from('chorogons')
-    .select('id, birth_date')
+    .select('id, birth_date, birth_date_dummy')
     .eq('user_id', stigmaId)
     .maybeSingle();
 
@@ -48,7 +48,7 @@ export async function getAuthorState(stigmaId: string): Promise<{ isAuthor: bool
     return { isAuthor: false, isSettlementError: true };
   }
 
-  const identityBirthDate = identityResult.data.birth_date ? decrypt(String(identityResult.data.birth_date)) : null;
+  const identityBirthDate = getChorogonBirthDate(identityResult.data);
   const isMinor = isMinorAge(identityBirthDate);
 
   if (isMinor && settlementResult.data.is_guardian_approved !== true) {

@@ -1,4 +1,4 @@
-import { decrypt } from '@/lib/encryption/decrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type SiteOwnerAgeStatus = {
@@ -92,12 +92,7 @@ export async function getSiteOwnerAgeStatus({
   }
 
   const chorogon = chorogonResult.data;
-  const birthDate =
-    chorogon?.identity_verified_at && chorogon.birth_date
-      ? process.env.NEXT_PUBLIC_APP_ENV === 'test' && chorogon.birth_date_dummy
-        ? chorogon.birth_date_dummy
-        : decrypt(String(chorogon.birth_date))
-      : null;
+  const birthDate = chorogon?.identity_verified_at ? getChorogonBirthDate(chorogon) : null;
 
   return getSiteOwnerAgeStatusFromBirthDate({ birthDate, siteCreatedAt, now });
 }

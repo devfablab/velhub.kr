@@ -1,11 +1,13 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 
 export type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
 
 export type IdentityProfileRow = {
   name: string | number | null;
   birth_date: string | number | null;
+  birth_date_dummy?: string | number | null;
   gender: string | number | null;
   identity_verified_at: string | null;
 };
@@ -80,8 +82,11 @@ function decryptNullable(value: string | number | null) {
   return decrypt(String(value));
 }
 
-function getBirthDatePrefix(value: string | number | null) {
-  const birthDate = decryptNullable(value);
+function getBirthDatePrefix(
+  value: string | number | null,
+  birthDateDummy?: string | number | null,
+) {
+  const birthDate = getChorogonBirthDate({ birth_date: value, birth_date_dummy: birthDateDummy });
 
   if (!birthDate) {
     return '';
@@ -103,8 +108,9 @@ function getBirthDatePrefix(value: string | number | null) {
 export function maskResidentRegistrationNumber(
   residentRegistrationNumber: string | number | null,
   birthDate: string | number | null,
+  birthDateDummy?: string | number | null,
 ) {
-  const birthDatePrefix = getBirthDatePrefix(birthDate);
+  const birthDatePrefix = getBirthDatePrefix(birthDate, birthDateDummy);
   const residentRegistrationValue = decryptNullable(residentRegistrationNumber);
 
   if (!birthDatePrefix || !residentRegistrationValue) {
@@ -134,7 +140,7 @@ export function serializeSettlementProfile(
   }
 
   const name = decryptNullable(identityRow.name);
-  const birthDate = decryptNullable(identityRow.birth_date);
+  const birthDate = getChorogonBirthDate(identityRow);
   const gender = decryptNullable(identityRow.gender);
 
   return {
@@ -154,6 +160,7 @@ export function serializeSettlementProfile(
           resident_registration_number: maskResidentRegistrationNumber(
             settlementRow.resident_registration_number,
             identityRow.birth_date,
+            identityRow.birth_date_dummy,
           ),
           company_name: decryptNullable(settlementRow.company_name),
           business_registration_number: decryptNullable(settlementRow.business_registration_number),
@@ -325,7 +332,7 @@ export function toSettlementPayload(data: ValidatedSettlementProfileInput) {
     settlement_type: data.settlement_type,
     resident_registration_number: data.resident_registration_number ? encrypt(data.resident_registration_number) : null,
     business_registration_number: data.business_registration_number ? encrypt(data.business_registration_number) : null,
-    company_name: data.company_name ? normalizeText(data.company_name) : null,
+    company_name: data.company_name ? encrypt(normalizeText(data.company_name)) : null,
     business_license: data.business_license,
     business_income_code: data.business_income_code,
     bank_code: data.bank_code,

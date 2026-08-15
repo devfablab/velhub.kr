@@ -1,5 +1,5 @@
-import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
@@ -547,12 +547,12 @@ export async function POST(request: Request) {
 
     const chorogonsResult = await supabaseAdmin
       .from('chorogons')
-      .select('birth_date')
+      .select('birth_date, birth_date_dummy')
       .eq('user_id', session.stigmaId ?? '')
       .maybeSingle();
 
-    const birthDateEncrypted = chorogonsResult.data?.birth_date as string | undefined;
-    const isMinor = birthDateEncrypted ? !isAdult(decrypt(birthDateEncrypted)) : false;
+    const birthDate = getChorogonBirthDate(chorogonsResult.data);
+    const isMinor = birthDate ? !isAdult(birthDate) : false;
 
     if (isMinor) {
       return Response.json({

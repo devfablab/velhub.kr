@@ -54,8 +54,15 @@ type DonationManageResponse = {
     seriesDonationTotalAmount: number;
   };
   donations?: DonationItem[];
+  ownerStatus?: {
+    isOwner: boolean;
+    isCreator: boolean;
+    status: string | null;
+  };
   error?: string;
 };
+
+import SettlementForm from '@/components/service/common/SettlementForm';
 
 function formatPrice(price: number | null | undefined) {
   if (typeof price !== 'number') {
@@ -139,6 +146,33 @@ export default function Opt() {
           <LoadingIndicator />
         </div>
       </div>
+    );
+  }
+
+  if (donationData?.ownerStatus && !donationData.ownerStatus.isCreator) {
+    return (
+      <Stack gap={3}>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>운영자는 작가가 아니기 때문에 수익을 낼 수 없습니다.</span>
+        </p>
+      </Stack>
+    );
+  }
+
+  if (donationData?.ownerStatus && donationData.ownerStatus.status !== 'approved') {
+    return (
+      <Stack gap={3}>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>운영자 계정의 정산정보에 문제가 있습니다.</span>
+        </p>
+        {donationData.ownerStatus.isOwner && (
+          <div className={`paper ${styles.paper}`}>
+            <SettlementForm />
+          </div>
+        )}
+      </Stack>
     );
   }
 

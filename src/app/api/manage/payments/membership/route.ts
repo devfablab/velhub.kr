@@ -11,6 +11,7 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -22,6 +23,7 @@ type SiteRow = {
   site_key: string;
   site_label: string | null;
   site_type: string;
+  owner_id: string;
 };
 
 type SubscriptionSettingRow = {
@@ -114,7 +116,7 @@ async function getSiteAndSession(siteName: string) {
 
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, site_type')
+    .select('id, site_key, site_label, site_type, owner_id')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -158,10 +160,20 @@ async function getSiteAndSession(siteName: string) {
     };
   }
 
+  const authorState = await getAuthorState(site.owner_id);
+
+  const ownerIsCreator = authorState.isAuthor || !!authorState.isSettlementError;
+  const ownerCreatorStatus = authorState.isAuthor ? 'approved' : authorState.isSettlementError ? 'error' : null;
+
   return {
     response: null,
     site,
     supabaseAdmin,
+    ownerStatus: {
+      isOwner: session.stigmaId === site.owner_id,
+      isCreator: ownerIsCreator,
+      status: ownerCreatorStatus,
+    },
   };
 }
 
@@ -221,7 +233,7 @@ export async function GET(request: Request) {
       return siteAndSession.response;
     }
 
-    const { site, supabaseAdmin } = siteAndSession;
+    const { site, supabaseAdmin, ownerStatus } = siteAndSession;
 
     const [settingResult, maxSeriesPrice] = await Promise.all([
       supabaseAdmin
@@ -355,6 +367,7 @@ export async function GET(request: Request) {
         siteKey: site.site_key,
         siteLabel: site.site_label,
       },
+      ownerStatus,
       setting: setting
         ? {
             id: setting.id,

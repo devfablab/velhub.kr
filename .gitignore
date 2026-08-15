@@ -13,6 +13,8 @@
 /supabase/
 /.antigravity
 /.antigravity/
+/.agents
+/.agents/
 
 # testing
 /coverage

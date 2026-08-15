@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { PAYMENT_STATUS, PAYMENT_TYPE } from '@/lib/payments/types';
+import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -8,6 +9,7 @@ type SiteRow = {
   id: string;
   site_key: string;
   site_label: string | null;
+  owner_id: string;
 };
 
 type PaymentSplitRow = {
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
 
     const siteResult = await supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label')
+      .select('id, site_key, site_label, owner_id')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -95,6 +97,11 @@ export async function GET(request: Request) {
     if (session.case !== 'admin' && session.case !== 'staff') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
+
+    const authorState = await getAuthorState(site.owner_id);
+
+    const ownerIsCreator = authorState.isAuthor || !!authorState.isSettlementError;
+    const ownerCreatorStatus = authorState.isAuthor ? 'approved' : authorState.isSettlementError ? 'error' : null;
 
     const paymentSplitsResult = await supabaseAdmin.from('payment_splits').select('payment_id').eq('site_id', site.id);
 
@@ -218,6 +225,11 @@ export async function GET(request: Request) {
         id: site.id,
         siteKey: site.site_key,
         siteLabel: site.site_label,
+      },
+      ownerStatus: {
+        isOwner: session.stigmaId === site.owner_id,
+        isCreator: ownerIsCreator,
+        status: ownerCreatorStatus,
       },
       summary: {
         count: donations.length,

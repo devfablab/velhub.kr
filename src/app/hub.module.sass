@@ -148,6 +148,7 @@
         display: flex
         flex-direction: column
         align-items: center
+        gap: ds.rem(3)
 
       cite
         @include ds.fw(neo, 800)
@@ -158,6 +159,9 @@
         font-size: ds.rem(14)
         color: ds.$hex-secondary
         opacity: .7
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
 
     .profile-bio
       p

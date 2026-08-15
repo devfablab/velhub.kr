@@ -5,8 +5,10 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import SettlementForm from '@/components/service/common/SettlementForm';
+import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
@@ -39,7 +41,37 @@ type SettlementResponse = {
   paymentEmail: string | null;
 };
 
+const THEME_MODE_STORAGE_KEY = 'velhub-theme-mode';
 
+function isThemeMode(value: unknown): value is ThemeMode {
+  return value === 'light' || value === 'system' || value === 'dark';
+}
+
+function getStoredThemeMode() {
+  if (typeof window === 'undefined') {
+    return 'system' as ThemeMode;
+  }
+
+  const storedThemeMode = window.localStorage.getItem(THEME_MODE_STORAGE_KEY);
+
+  if (isThemeMode(storedThemeMode)) {
+    return storedThemeMode;
+  }
+
+  return 'system' as ThemeMode;
+}
+
+function getResolvedThemeMode(themeMode: ThemeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') {
+    return themeMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeMode(themeMode: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
+}
 
 function getSettlementTypeLabel(value: SettlementType) {
   if (value === 'individual') {
@@ -66,8 +98,6 @@ function getBusinessIncomeCodeLabel(code: string | null) {
 
   return option ? `${option.code} (${option.label})` : code;
 }
-
-
 
 function getMessage(error: unknown) {
   return error instanceof Error ? error.message : '요청 처리에 실패했습니다.';
@@ -120,8 +150,6 @@ async function getSettlement() {
   return data as SettlementResponse;
 }
 
-
-
 export default function Opt() {
   const [identity, setIdentity] = useState<Identity | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
@@ -129,6 +157,8 @@ export default function Opt() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const { themeMode, setThemeMode } = useThemeMode();
 
   const load = async () => {
     setIsLoading(true);
@@ -139,7 +169,7 @@ export default function Opt() {
       setIdentity(data.identity);
       setSettlement(data.settlement);
       setPaymentEmail(data.paymentEmail ?? '');
-      setIsFormOpen(Boolean(data.identity && !data.settlement));
+      setIsFormOpen(Boolean(data.identity && !data.settlement && !isUnder14(data.identity.birth_date)));
     } catch (error) {
       setErrorMessage(getMessage(error));
     } finally {
@@ -151,9 +181,48 @@ export default function Opt() {
     void load();
   }, []);
 
+  useEffect(() => {
+    setThemeMode(getStoredThemeMode());
+    setIsMounted(true);
+  }, [setThemeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
+    applyThemeMode(themeMode);
+
+    const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function handleSystemThemeModeChange() {
+      if (themeMode === 'system') {
+        applyThemeMode('system');
+      }
+    }
+
+    mediaQueryList.addEventListener('change', handleSystemThemeModeChange);
+
+    return () => {
+      mediaQueryList.removeEventListener('change', handleSystemThemeModeChange);
+    };
+  }, [isMounted, themeMode]);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+  }, [isMounted]);
+
+  const isUnder14Age = Boolean(identity && isUnder14(identity.birth_date));
+
   const content = (() => {
     if (isLoading) {
-      return <Typography variant="body2">정보를 불러오는 중입니다.</Typography>;
+      return (
+        <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
+          <LoadingIndicator />
+        </Stack>
+      );
     }
 
     if (!identity) {
@@ -165,12 +234,13 @@ export default function Opt() {
       );
     }
 
-    if (isUnder14(identity.birth_date)) {
+    if (isUnder14Age) {
       return (
         <Stack gap={2}>
           <Typography variant="body2">
-            만 14세 미만은 작가 신청을 할 수 없어요. 수익이 발생하는 서비스는 관련 법률에 따라 법정대리인(부모님 등)의
-            동의와 같은 복잡한 절차가 필요해서 아직은 이용이 어려워요. 만 14세가 되면 다시 찾아와 주세요!
+            만 14세 미만은 작가 신청을 할 수 없어요.
+            <br />
+            수익이 발생하는 서비스는 관련 법률에 따라 아직은 이용이 어려워요.
           </Typography>
         </Stack>
       );
@@ -252,11 +322,7 @@ export default function Opt() {
           <h1>작가 신청</h1>
           {content ? <div className="paper">{content}</div> : null}
 
-          {isFormOpen && identity ? (
-            <div className="paper">
-              <SettlementForm onSuccess={() => void load()} />
-            </div>
-          ) : null}
+          {isFormOpen && identity && !isUnder14Age ? <SettlementForm onSuccess={() => void load()} /> : null}
         </div>
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
@@ -70,8 +71,14 @@ async function uploadBusinessLicenseFile(userId: string, file: File) {
 }
 
 async function uploadGuardianDocumentFile(userId: string, file: File) {
+  const header = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+
+  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf') || header !== '%PDF-') {
+    throw new Error('가족관계증명서는 PDF 파일만 업로드할 수 있습니다.');
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
-  const filePath = `${userId}/guardian_${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+  const filePath = `${userId}/guardian_${crypto.randomUUID()}.pdf`;
 
   const { error } = await supabaseAdmin.storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
     contentType: file.type,
@@ -101,7 +108,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
-    .select('id, name, birth_date, identity_verified_at')
+    .select('id, name, birth_date, birth_date_dummy, identity_verified_at')
     .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
@@ -183,8 +190,7 @@ export async function PATCH(request: NextRequest) {
     const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
 
     let isMinorAge = false;
-    const rawBirthDate = existingRow?.birth_date;
-    const identityBirthDate = rawBirthDate ? decrypt(String(rawBirthDate)) : null;
+    const identityBirthDate = getChorogonBirthDate(existingRow);
     if (identityBirthDate && identityBirthDate.replace(/\D/g, '').length === 8) {
       const digits = identityBirthDate.replace(/\D/g, '');
       const year = Number(digits.slice(0, 4));

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSessionClaims } from '@/lib/session';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settlement/profile';
@@ -46,6 +47,30 @@ function isValidPaymentEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function isUnder14(birthDate: string | null) {
+  if (!birthDate) {
+    return false;
+  }
+
+  const digits = birthDate.replace(/\D/g, '');
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age < 14;
+}
+
 async function uploadBusinessLicenseFile(userId: string, file: File) {
   if (file.type !== 'application/pdf') {
     throw new Error('사업자등록증은 PDF 파일만 등록할 수 있습니다.');
@@ -67,9 +92,14 @@ async function uploadBusinessLicenseFile(userId: string, file: File) {
 }
 
 async function uploadGuardianDocumentFile(userId: string, file: File) {
+  const header = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+
+  if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf') || header !== '%PDF-') {
+    throw new Error('가족관계증명서는 PDF 파일만 업로드할 수 있습니다.');
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
-  // Using the same bucket, just a different folder prefix to distinguish
-  const filePath = `${userId}/guardian_${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+  const filePath = `${userId}/guardian_${crypto.randomUUID()}.pdf`;
 
   const { error } = await supabaseAdmin.storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
     contentType: file.type,
@@ -99,7 +129,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
-    .select('id, name, birth_date, identity_verified_at')
+    .select('id, name, birth_date, birth_date_dummy, identity_verified_at')
     .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
@@ -174,7 +204,12 @@ export async function POST(request: NextRequest) {
     const identityName = settlementRow.name ? decrypt(settlementRow.name) : null;
 
     let isMinorAge = false;
-    const identityBirthDate = existingRow?.birth_date ? decrypt(String(existingRow.birth_date)) : null;
+    const identityBirthDate = getChorogonBirthDate(existingRow);
+
+    if (isUnder14(identityBirthDate)) {
+      return NextResponse.json({ message: '만 14세 미만은 작가 신청을 할 수 없습니다.' }, { status: 403 });
+    }
+
     if (identityBirthDate && identityBirthDate.replace(/\D/g, '').length === 8) {
       const digits = identityBirthDate.replace(/\D/g, '');
       const year = Number(digits.slice(0, 4));

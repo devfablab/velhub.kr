@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
@@ -11,18 +11,6 @@ import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
-
-type Identity = {
-  name: string;
-  birth_date: string;
-  gender: string;
-  identity_verified_at: string;
-};
-
-type IdentityStatusResponse = {
-  exists: boolean;
-  identity: Identity | null;
-};
 
 export async function generateMetadata(): Promise<Metadata> {
   const timestamp = Date.now();
@@ -40,7 +28,7 @@ function onlyDigits(value: string | null | undefined) {
   return String(value ?? '').replace(/\D/g, '');
 }
 
-function isAdult(birthDate: string | null | undefined) {
+function isAtLeast14(birthDate: string | null | undefined) {
   const digits = onlyDigits(birthDate);
 
   if (digits.length !== 8) {
@@ -58,64 +46,42 @@ function isAdult(birthDate: string | null | undefined) {
     age -= 1;
   }
 
-  return age >= 19;
-}
-
-async function getBaseUrl() {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
-
-  if (!host) {
-    return null;
-  }
-
-  return `${protocol}://${host}`;
-}
-
-async function getIdentityStatus(baseUrl: string, cookieHeader: string) {
-  const response = await fetch(`${baseUrl}/api/identity/portone/status`, {
-    method: 'GET',
-    headers: {
-      Cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return (await response.json().catch(() => null)) as IdentityStatusResponse | null;
+  return age >= 14;
 }
 
 export default async function Page() {
-  const cookieStore = await cookies();
-  const baseUrl = await getBaseUrl();
-  const cookieHeader = cookieStore.toString();
-
+  const currentStigma = await getCurrentStigma();
+  const supabaseAdmin = getSupabaseAdmin();
   let hasIdentity = false;
-  let isMinor = false;
+  let isUnder14 = false;
 
-  if (baseUrl) {
-    const identityStatus = await getIdentityStatus(baseUrl, cookieHeader);
-    const identity = identityStatus?.exists ? identityStatus.identity : null;
+  if (currentStigma) {
+    const identityResult = await supabaseAdmin
+      .from('chorogons')
+      .select('name, birth_date, birth_date_dummy, gender, identity_verified_at')
+      .eq('user_id', currentStigma.stigmaId)
+      .maybeSingle();
+    const identity = identityResult.data;
 
-    hasIdentity = Boolean(identity);
+    hasIdentity = Boolean(
+      !identityResult.error &&
+        identity?.identity_verified_at &&
+        identity.name &&
+        (identity.birth_date || identity.birth_date_dummy) &&
+        identity.gender,
+    );
 
-    if (identity) {
-      isMinor = !isAdult(identity.birth_date);
+    if (hasIdentity) {
+      isUnder14 = !isAtLeast14(getChorogonBirthDate(identity));
     }
   }
 
   let canCreateSite = true;
   let blockMessage = '';
 
-  const currentStigma = await getCurrentStigma();
   if (currentStigma) {
     const hasUnlimitedSites = await hasMembershipFeature(currentStigma.stigmaId, 'owner_unlimited_sites');
     if (!hasUnlimitedSites) {
-      const supabaseAdmin = getSupabaseAdmin();
       const siteCountResult = await supabaseAdmin
         .from('rhizomes')
         .select('id', { count: 'exact', head: true })
@@ -135,9 +101,9 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <h1>커뮤니티 개설</h1>
 
-          {(!hasIdentity && !isMinor) || isMinor ? (
+          {(!hasIdentity && !isUnder14) || isUnder14 ? (
             <div className="paper">
-              {!hasIdentity && !isMinor ? (
+              {!hasIdentity && !isUnder14 ? (
                 <>
                   <p className="alert info">
                     <InfoOutlineRoundedIcon />
@@ -146,10 +112,10 @@ export default async function Page() {
                   <IdentityVerificationButton />
                 </>
               ) : null}
-              {isMinor ? (
+              {isUnder14 ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
-                  <span>만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다.</span>
+                  <span>커뮤니티는 데브허브 정책상 만 14세 이상부터 만들 수 있어요. 😭</span>
                 </p>
               ) : null}
             </div>
@@ -165,7 +131,7 @@ export default async function Page() {
             </div>
           ) : null}
 
-          {(hasIdentity || isMinor) && canCreateSite ? <Opt /> : null}
+          {hasIdentity && !isUnder14 && canCreateSite ? <Opt /> : null}
         </div>
       </div>
     </main>

@@ -47,8 +47,15 @@ type MembershipResponse = {
     maxSeriesPrice: number;
   };
   members?: MembershipMember[];
+  ownerStatus?: {
+    isOwner: boolean;
+    isCreator: boolean;
+    status: string | null;
+  };
   error?: string;
 };
+
+import SettlementForm from '@/components/service/common/SettlementForm';
 
 type MembershipSaveResponse = {
   ok?: boolean;
@@ -115,6 +122,7 @@ export default function Opt() {
   const [requiredMinPrice, setRequiredMinPrice] = useState(10000);
   const [maxSeriesPrice, setMaxSeriesPrice] = useState(0);
   const [members, setMembers] = useState<MembershipMember[]>([]);
+  const [membershipData, setMembershipData] = useState<MembershipResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -143,6 +151,7 @@ export default function Opt() {
         setMaxSeriesPrice(result.setting?.maxSeriesPrice ?? 0);
         setMembershipPrice(formatMembershipPrice(Math.max(nextPrice, nextRequiredMinPrice)));
         setMembers(result.members ?? []);
+        setMembershipData(result);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '멤버십 정보를 불러오지 못했습니다.');
@@ -254,6 +263,33 @@ export default function Opt() {
         <NearbyErrorRoundedIcon />
         <p>{errorMessage}</p>
       </div>
+    );
+  }
+
+  if (membershipData?.ownerStatus && !membershipData.ownerStatus.isCreator) {
+    return (
+      <Stack gap={3}>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>운영자는 작가가 아니기 때문에 수익을 낼 수 없습니다.</span>
+        </p>
+      </Stack>
+    );
+  }
+
+  if (membershipData?.ownerStatus && membershipData.ownerStatus.status !== 'approved') {
+    return (
+      <Stack gap={3}>
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>운영자 계정의 정산정보에 문제가 있습니다.</span>
+        </p>
+        {membershipData.ownerStatus.isOwner && (
+          <div className={`paper ${styles.paper}`}>
+            <SettlementForm />
+          </div>
+        )}
+      </Stack>
     );
   }
 

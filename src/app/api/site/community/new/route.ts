@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import path from 'path';
 import sharp from 'sharp';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -12,6 +13,27 @@ type PolicyPost = 'comment_0' | 'comment_1' | 'comment_3' | 'comment_5';
 type PolicyComment = 'estimate_0' | 'estimate_1' | 'estimate_3' | 'estimate_5';
 
 const AVATAR_BUCKET = 'avatar';
+
+function isAtLeast14(birthDate: string | null) {
+  const digits = String(birthDate ?? '').replace(/\D/g, '');
+
+  if (digits.length !== 8) {
+    return false;
+  }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+
+  if (today < birthdayThisYear) {
+    age -= 1;
+  }
+
+  return age >= 14;
+}
 
 function normalizeSiteKey(rawValue: string) {
   return rawValue
@@ -173,6 +195,23 @@ export async function POST(request: Request) {
 
     if (stigmaResult.error || !stigmaResult.data) {
       return Response.json({ error: '사용자 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const identityResult = await supabaseAdmin
+      .from('chorogons')
+      .select('birth_date, birth_date_dummy')
+      .eq('user_id', stigmaResult.data.id)
+      .maybeSingle();
+
+    if (identityResult.error) {
+      return Response.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!isAtLeast14(getChorogonBirthDate(identityResult.data))) {
+      return Response.json(
+        { error: '커뮤니티는 데브허브 정책상 만 14세 이상부터 만들 수 있어요. 😭' },
+        { status: 403 },
+      );
     }
 
     try {
