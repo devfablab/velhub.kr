@@ -66,9 +66,19 @@
       width: 100%
 
     &.slider-created-sites
+      :global(.slick-track)
+        display: flex!important
+        align-items: stretch
+
       div
         &[class~="slick-slide"]
+          height: auto
+
+          > div
+            height: 100%
+
           a
+            height: 100%
             border-radius: ds.rem(12)
             padding: ds.rem(17)
             position: relative
