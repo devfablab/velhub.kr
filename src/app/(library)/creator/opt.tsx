@@ -240,8 +240,13 @@ export default function Opt() {
           <Typography variant="body2">
             만 14세 미만은 작가 신청을 할 수 없어요.
             <br />
-            수익이 발생하는 서비스는 관련 법률에 따라 아직은 이용이 어려워요.
+            수익이 발생하는 서비스는 관련 법률에 따라 아직은 이용이 어려워요. 😞
           </Typography>
+          <Stack direction="row" justifyContent="flex-end" gap={2}>
+            <Anchor href="/" className="button medium action">
+              라운지로 이동
+            </Anchor>
+          </Stack>
         </Stack>
       );
     }
