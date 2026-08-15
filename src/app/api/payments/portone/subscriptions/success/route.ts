@@ -103,6 +103,13 @@ type PortOneBillingPaymentResult = {
   rawData?: unknown;
 };
 
+type PortOneDirectPayment = {
+  id?: string;
+  order?: { id?: string; name?: string };
+  status?: string;
+  amount?: { currency?: string };
+};
+
 type BillingMethodRow = {
   id: string;
   is_default: boolean;
@@ -696,16 +703,16 @@ export async function POST(request: Request) {
         return Response.json({ error: '결제 금액이 일치하지 않습니다.' }, { status: 400 });
       }
 
-      const payment: any = paymentResponse;
+      const payment = getPortOnePaymentFromResponse(paymentResponse) as unknown as PortOneDirectPayment;
       portOnePaymentResult = {
-        paymentKey: payment.id as string,
-        orderId: payment.order.id as string,
-        orderName: payment.order.name as string,
+        paymentKey: payment.id ?? paymentId,
+        orderId: payment.order?.id ?? orderNo,
+        orderName: payment.order?.name ?? `${subscriptionTarget.targetLabel ?? '구독'} 1개월 구독권`,
         method: getPortOnePaymentMethod(paymentResponse),
         totalAmount: paidAmount,
-        status: payment.status as string,
+        status: payment.status ?? PAYMENT_STATUS.PAID,
         approvedAt: getPortOnePaidAt(paymentResponse),
-        currency: payment.amount.currency as string,
+        currency: payment.amount?.currency ?? 'KRW',
         transactionId: getPortOnePaymentTransactionNo(paymentResponse),
         rawData: paymentResponse,
       };
@@ -781,6 +788,7 @@ export async function POST(request: Request) {
         current_period_end: billingPeriod.currentPeriodEnd,
         next_billing_at: paymentId ? null : billingPeriod.nextBillingAt,
         billing_anchor_day: billingAnchorDay,
+        canceled_at: paymentId ? nowText : null,
       })
       .select('id')
       .single();

@@ -1,4 +1,6 @@
 import { NextRequest } from 'next/server';
+import { isAtLeast14 } from '@/lib/identity/age';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import {
@@ -298,6 +300,20 @@ export async function POST(request: NextRequest) {
     });
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    const identityResult = await supabaseAdmin
+      .from('chorogons')
+      .select('birth_date, birth_date_dummy')
+      .eq('user_id', session.stigmaId)
+      .maybeSingle();
+
+    if (identityResult.error) {
+      return Response.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!isAtLeast14(getChorogonBirthDate(identityResult.data))) {
+      return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
+    }
 
     const hasBoardSubscription = await hasActiveSubscription({
       supabaseAdmin,

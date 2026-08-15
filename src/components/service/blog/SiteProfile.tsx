@@ -751,13 +751,21 @@ export default function SiteProfile() {
           onClose={handleCloseMembershipDialog}
           className="VhiDrawer-bottom"
         >
-          <h2>{membershipStatus === 'canceled' || membershipStatus === 'expired' ? '멤버십 재가입' : '멤버십 가입'}</h2>
+          <h2>
+            {isMinor
+              ? '1개월 구독권'
+              : membershipStatus === 'canceled' || membershipStatus === 'expired'
+                ? '멤버십 재가입'
+                : '멤버십 가입'}
+          </h2>
           <button className="close-button" onClick={handleCloseMembershipDialog}>
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
             <Typography variant="body2">
-              월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
+              {isMinor
+                ? `1개월 ${formatMembershipPrice(membershipPrice ?? 0)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                : `월 ${formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?`}
             </Typography>
             <PaymentTerms type="subscription" disabled={isMembershipProcessing} />
 
@@ -796,7 +804,11 @@ export default function SiteProfile() {
           className="VhiDialog"
         >
           <DialogTitle>
-            {membershipStatus === 'canceled' || membershipStatus === 'expired' ? '멤버십 재가입' : '멤버십 가입'}
+            {isMinor
+              ? '1개월 구독권'
+              : membershipStatus === 'canceled' || membershipStatus === 'expired'
+                ? '멤버십 재가입'
+                : '멤버십 가입'}
           </DialogTitle>
           <button className="close-button" onClick={handleCloseMembershipDialog}>
             <CloseRoundedIcon />

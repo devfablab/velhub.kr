@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { isAtLeast14, isMinor } from '@/lib/identity/age';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { getMembershipFeatures } from '@/lib/memberships/features';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
@@ -138,12 +140,20 @@ export async function POST(request: Request) {
   const supabaseAdmin = getSupabaseAdmin();
   const identityResult = await supabaseAdmin
     .from('chorogons')
-    .select('id')
+    .select('id, birth_date, birth_date_dummy')
     .eq('user_id', currentStigma.stigmaId)
     .maybeSingle();
 
   if (identityResult.error) {
     return NextResponse.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  const birthDate = getChorogonBirthDate(identityResult.data);
+  if (!isAtLeast14(birthDate)) {
+    return NextResponse.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
+  }
+  if (isMinor(birthDate)) {
+    return NextResponse.json({ error: '미성년 멤버십은 1개월 단건 결제로만 이용할 수 있습니다.' }, { status: 400 });
   }
 
   const [billingMethodResult, existingMembershipResult, ownedSiteResult, authorResult] = await Promise.all([

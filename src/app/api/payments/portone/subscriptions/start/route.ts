@@ -1,4 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
+import { isAtLeast14, isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
@@ -30,27 +31,6 @@ import {
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-
-function isAdult(birthDate: string | null | undefined) {
-  const digits = birthDate ? String(birthDate).replace(/\D/g, '') : '';
-
-  if (digits.length !== 8) {
-    return false;
-  }
-
-  const year = Number(digits.slice(0, 4));
-  const month = Number(digits.slice(4, 6));
-  const day = Number(digits.slice(6, 8));
-  const today = new Date();
-  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
-  let age = today.getFullYear() - year;
-
-  if (today < birthdayThisYear) {
-    age -= 1;
-  }
-
-  return age >= 19;
-}
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 type SubscriptionTargetType = 'board' | 'series' | 'site';
@@ -552,9 +532,14 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     const birthDate = getChorogonBirthDate(chorogonsResult.data);
-    const isMinor = birthDate ? !isAdult(birthDate) : false;
 
-    if (isMinor) {
+    if (!isAtLeast14(birthDate)) {
+      return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
+    }
+
+    const isMinorUser = isMinor(birthDate);
+
+    if (isMinorUser) {
       return Response.json({
         mode: 'single_payment',
         storeId: getPortOneStoreId(),

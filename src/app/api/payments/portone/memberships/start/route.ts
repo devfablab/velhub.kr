@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { encrypt } from '@/lib/encryption/encrypt';
+import { isAtLeast14, isMinor } from '@/lib/identity/age';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey } from '@/lib/payments/customer';
@@ -136,12 +138,48 @@ export async function POST(request: Request) {
   const supabaseAdmin = getSupabaseAdmin();
   const identityResult = await supabaseAdmin
     .from('chorogons')
-    .select('id')
+    .select('id, birth_date, birth_date_dummy')
     .eq('user_id', currentStigma.stigmaId)
     .maybeSingle();
 
   if (identityResult.error) {
     return NextResponse.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  const birthDate = getChorogonBirthDate(identityResult.data);
+  if (!isAtLeast14(birthDate)) {
+    return NextResponse.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
+  }
+  const isMinorUser = isMinor(birthDate);
+
+  if (isMinorUser) {
+    const expiredSubscriptionResult = await supabaseAdmin
+      .from('subscriptions')
+      .select('target_id')
+      .eq('subscriber_user_id', currentStigma.stigmaId)
+      .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+      .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
+      .eq('status', SUBSCRIPTION_STATUS.CANCELED)
+      .lt('current_period_end', new Date().toISOString());
+
+    if (expiredSubscriptionResult.error) {
+      return NextResponse.json({ error: '기존 멤버십 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const expiredMembershipIds = (expiredSubscriptionResult.data ?? [])
+      .map((subscription) => subscription.target_id)
+      .filter((membershipId): membershipId is string => Boolean(membershipId));
+
+    if (expiredMembershipIds.length) {
+      const itemDeleteResult = await supabaseAdmin.from('membership_items').delete().in('membership_id', expiredMembershipIds);
+      const membershipDeleteResult = itemDeleteResult.error
+        ? { error: itemDeleteResult.error }
+        : await supabaseAdmin.from('memberships').delete().in('id', expiredMembershipIds);
+
+      if (itemDeleteResult.error || membershipDeleteResult.error) {
+        return NextResponse.json({ error: '만료된 멤버십 정보를 정리하지 못했습니다.' }, { status: 500 });
+      }
+    }
   }
 
   const [billingMethodResult, existingMembershipResult, ownedSiteResult, authorResult] = await Promise.all([
@@ -213,7 +251,8 @@ export async function POST(request: Request) {
     for (const purchase of normalizedPurchases) {
       const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
       const orderNo = createOrderNo('MEMBERSHIP_PLATFORM');
-      const orderName = `${purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토'} 멤버십`;
+      const membershipLabel = purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토';
+      const orderName = isMinorUser ? `${membershipLabel} 1개월 멤버십 구독` : `${membershipLabel} 멤버십`;
       const billingPayment = await requestMembershipBilling({
         billingKey: billingMethod.billing_key,
         customerKey,
@@ -279,7 +318,7 @@ export async function POST(request: Request) {
           target_id: membershipResult.data.id,
           owner_user_id: currentStigma.stigmaId,
           price: amount,
-          status: SUBSCRIPTION_STATUS.ACTIVE,
+        status: isMinorUser ? SUBSCRIPTION_STATUS.CANCELED : SUBSCRIPTION_STATUS.ACTIVE,
           billing_key: encrypt(billingMethod.billing_key),
           customer_key: customerKey,
           last_payment_id: paymentResult.data.id,
@@ -287,9 +326,9 @@ export async function POST(request: Request) {
           trial_ends_at: null,
           current_period_start: billingPeriod.currentPeriodStart,
           current_period_end: billingPeriod.currentPeriodEnd,
-          next_billing_at: billingPeriod.nextBillingAt,
+        next_billing_at: isMinorUser ? null : billingPeriod.nextBillingAt,
           billing_anchor_day: billingAnchorDay,
-          canceled_at: null,
+        canceled_at: isMinorUser ? now.toISOString() : null,
           expired_at: null,
         })
         .select('id')

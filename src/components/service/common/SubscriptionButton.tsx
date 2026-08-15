@@ -196,10 +196,13 @@ function getSubscribeButtonText({
 function getDialogTitle({
   targetType,
   subscriptionStatus,
+  isMinor,
 }: {
   targetType: SubscriptionTargetType;
   subscriptionStatus: SubscriptionStatus;
+  isMinor: boolean;
 }) {
+  if (isMinor) return '1개월 구독권';
   if (subscriptionStatus === 'canceled' || subscriptionStatus === 'expired') {
     return '재구독하기';
   }
@@ -707,7 +710,7 @@ export default function SubscriptionButton({
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
-          <h2>{getDialogTitle({ targetType, subscriptionStatus })}</h2>
+          <h2>{getDialogTitle({ targetType, subscriptionStatus, isMinor })}</h2>
           <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
@@ -757,7 +760,9 @@ export default function SubscriptionButton({
           aria-labelledby="subscription-dialog-title"
           className="VhiDialog"
         >
-          <DialogTitle id="subscription-dialog-title">{getDialogTitle({ targetType, subscriptionStatus })}</DialogTitle>
+          <DialogTitle id="subscription-dialog-title">
+            {getDialogTitle({ targetType, subscriptionStatus, isMinor })}
+          </DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>

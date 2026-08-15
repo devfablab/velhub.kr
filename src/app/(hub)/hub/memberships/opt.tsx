@@ -42,6 +42,11 @@ type MembershipResponse = {
   message?: string;
 };
 
+type IdentityStatusResponse = {
+  exists: boolean;
+  identity: { birth_date: string } | null;
+};
+
 type CurrentMembership = MembershipResponse['memberships'][number];
 
 type BillingMethod = {
@@ -151,6 +156,20 @@ function getSelectionItems(selection: MembershipSelection) {
   return items;
 }
 
+function getAge(birthDate: string | null | undefined) {
+  const digits = String(birthDate ?? '').replace(/\D/g, '');
+  if (digits.length !== 8) return null;
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6, 8));
+  const today = new Date();
+  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
+  let age = today.getFullYear() - year;
+  if (today < birthdayThisYear) age -= 1;
+  return age;
+}
+
 export default function MembershipPlan() {
   const searchParams = useSearchParams();
   const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
@@ -165,11 +184,13 @@ export default function MembershipPlan() {
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [eligibility, setEligibility] = useState<Eligibility | null>(null);
+  const [isUnder14Age, setIsUnder14Age] = useState(false);
+  const [isMinorUser, setIsMinorUser] = useState(false);
 
   useEffect(() => {
     async function loadMemberships() {
       try {
-        const [membershipResponse, eligibilityResponse] = await Promise.all([
+        const [membershipResponse, eligibilityResponse, identityResponse] = await Promise.all([
           fetch('/api/memberships', {
             method: 'GET',
             credentials: 'include',
@@ -180,10 +201,20 @@ export default function MembershipPlan() {
             credentials: 'include',
             cache: 'no-store',
           }),
+          fetch('/api/identity/portone/status', {
+            method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
+          }),
         ]);
 
         const result = (await membershipResponse.json()) as MembershipResponse;
         const eligibilityResult = (await eligibilityResponse.json().catch(() => null)) as Eligibility | null;
+        const identityResult = (await identityResponse.json().catch(() => null)) as IdentityStatusResponse | null;
+        const age = identityResponse.ok && identityResult?.exists ? getAge(identityResult.identity?.birth_date) : null;
+
+        setIsUnder14Age(age === null || age < 14);
+        setIsMinorUser(age !== null && age < 19);
 
         if (!membershipResponse.ok) {
           throw new Error(result.message || '멤버십 정보를 불러오지 못했습니다.');
@@ -228,6 +259,15 @@ export default function MembershipPlan() {
     [selectedItems],
   );
 
+  if (!isLoading && isUnder14Age) {
+    return (
+      <p className="alert warning">
+        <WarningAmberRoundedIcon />
+        <span>결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭</span>
+      </p>
+    );
+  }
+
   async function handlePayment() {
     if (!selectedItems.length || !selectedBillingMethodId || isSubmitting) return;
 
@@ -242,7 +282,9 @@ export default function MembershipPlan() {
         ((item.type === 'owner' || item.type === 'creator') && existingTypes.has('all_in_one')),
     );
 
-    const apiPath = isModification
+    const apiPath = isMinorUser
+      ? '/api/payments/portone/memberships/start'
+      : isModification
       ? '/api/payments/portone/memberships/modify'
       : '/api/payments/portone/memberships/start';
 
@@ -376,7 +418,9 @@ export default function MembershipPlan() {
                   </Stack>
                 </Stack>
               ))}
-              <Typography variant="subtitle2">{formatMembershipPrice(selectedPrice)} 결제합니다</Typography>
+              <Typography variant="subtitle2">
+                {isMinorUser ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제` : `${formatMembershipPrice(selectedPrice)} 결제합니다`}
+              </Typography>
             </Stack>
           </div>
         </section>
@@ -386,7 +430,9 @@ export default function MembershipPlan() {
         <h2>결제수단 선택</h2>
         <Stack gap={2}>
           <Stack gap={1}>
-            <Typography variant="body2">자동결제에 사용할 카드를 관리합니다.</Typography>
+            <Typography variant="body2">
+              {isMinorUser ? '1개월 이용권 결제에 사용할 카드를 관리합니다.' : '자동결제에 사용할 카드를 관리합니다.'}
+            </Typography>
             <p className="alert info">
               <InfoOutlineRoundedIcon />
               <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
@@ -427,7 +473,7 @@ export default function MembershipPlan() {
               onClick={() => setIsPaymentPopupOpen(true)}
               disabled={!selectedBillingMethodId || isSubmitting}
             >
-              {formatMembershipPrice(selectedPrice)} 결제하기
+              {isMinorUser ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제` : `${formatMembershipPrice(selectedPrice)} 결제하기`}
             </button>
           </div>
         ) : null}
@@ -634,7 +680,7 @@ export default function MembershipPlan() {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>멤버십 결제 확인</DialogTitle>
+        <DialogTitle>{isMinorUser ? '1개월 멤버십 구독' : '멤버십 결제 확인'}</DialogTitle>
         <button
           type="button"
           className="close-button"
@@ -646,7 +692,9 @@ export default function MembershipPlan() {
         <DialogContent>
           <Stack direction="row" alignItems="center" gap={1} mb={2}>
             <Typography variant="body2">
-              멤버십을 월 {formatMembershipPrice(selectedPrice)} 원에 구독하시겠어요?
+              {isMinorUser
+                ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                : `멤버십을 월 ${formatMembershipPrice(selectedPrice)} 원에 구독하시겠어요?`}
             </Typography>
           </Stack>
           <PaymentTerms type="subscription" disabled={isSubmitting} />
