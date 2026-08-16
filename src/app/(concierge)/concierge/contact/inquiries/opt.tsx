@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Alert, Box, Button, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
 import { inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import Anchor from '@/components/Anchor';
 
 type InquiryRow = {
   id: string;
@@ -162,7 +163,14 @@ export default function Opt() {
           {inquiries.length === 0 ? <Typography color="text.secondary">문의 내역이 없습니다.</Typography> : null}
           {inquiries.map((inquiry) => (
             <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-              <Typography fontWeight={700}>{inquiry.title}</Typography>
+              <Typography
+                component={Anchor}
+                href={`/concierge/contact/inquiries/${inquiry.id}`}
+                fontWeight={700}
+                color="inherit"
+              >
+                {inquiry.title}
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 {inquiryTypeLabels[inquiry.inquiry_type]} · {inquiry.status} ·{' '}
                 {new Date(inquiry.created_at).toLocaleDateString('ko-KR')}
