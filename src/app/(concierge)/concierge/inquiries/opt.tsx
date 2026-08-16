@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Paper, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
 
@@ -39,26 +39,19 @@ export default function Opt() {
   }, [type]);
 
   return (
-    <Paper sx={{ p: { xs: 1, sm: 2 } }}>
+    <div className="paper">
       <Tabs value={type} onChange={(_, value: InquiryType) => setType(value)} variant="scrollable" scrollButtons="auto">
         {inquiryTypes.map((value) => (
           <Tab key={value} value={value} label={inquiryTypeLabels[value]} />
         ))}
       </Tabs>
       <Box sx={{ p: 2 }}>
-        <Stack spacing={1.5}>
+        <Stack gap={1.5}>
           {error ? <Typography color="error">{error}</Typography> : null}
           {!error && inquiries.length === 0 ? <Typography color="text.secondary">문의가 없습니다.</Typography> : null}
           {inquiries.map((inquiry) => (
             <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-              <Typography
-                component={Anchor}
-                href={`/concierge/inquiries/${inquiry.id}`}
-                fontWeight={700}
-                color="inherit"
-              >
-                {inquiry.title}
-              </Typography>
+              <Anchor href={`/concierge/inquiries/${inquiry.id}`}>{inquiry.title}</Anchor>
               <Typography variant="body2" color="text.secondary">
                 {inquiry.status} · {new Date(inquiry.created_at).toLocaleString('ko-KR')}
               </Typography>
@@ -66,6 +59,6 @@ export default function Opt() {
           ))}
         </Stack>
       </Box>
-    </Paper>
+    </div>
   );
 }

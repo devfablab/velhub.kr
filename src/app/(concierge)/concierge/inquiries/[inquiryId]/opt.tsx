@@ -2,13 +2,14 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Box, Button, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryResolutionLabels,
   inquiryTypeLabels,
   type InquiryResolutionCode,
   type InquiryType,
 } from '@/lib/concierge/inquiries';
+import Anchor from '@/components/Anchor';
 
 type Inquiry = {
   id: string;
@@ -168,13 +169,11 @@ export default function Opt() {
   if (!inquiry) return null;
   const options = resolutionOptions(inquiry.inquiry_type);
   return (
-    <Stack spacing={3}>
-      <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-        <Stack spacing={1}>
-          <Typography variant="overline">{inquiryTypeLabels[inquiry.inquiry_type]}</Typography>
-          <Typography variant="h5" fontWeight={700}>
-            {inquiry.title}
-          </Typography>
+    <Stack gap={3}>
+      <div className="paper">
+        <Stack gap={1}>
+          <Typography variant="subtitle2">{inquiryTypeLabels[inquiry.inquiry_type]}</Typography>
+          <Typography variant="h6">{inquiry.title}</Typography>
           <Typography whiteSpace="pre-wrap">{inquiry.content}</Typography>
           {inquiry.inquiry_orders[0] ? (
             <Typography variant="body2">연결 결제 ID: {inquiry.inquiry_orders[0].payment_id}</Typography>
@@ -182,39 +181,55 @@ export default function Opt() {
           {inquiry.inquiry_type === 'minor_purchase_cancellation' ? (
             <>
               {certificateUrl ? (
-                <Button component="a" href={certificateUrl} target="_blank" rel="noreferrer" variant="outlined">
+                <Anchor href={certificateUrl} target="_blank" rel="noreferrer" className="button small action">
                   가족관계증명서 PDF 확인
-                </Button>
+                </Anchor>
               ) : (
                 <Alert severity="warning">제출된 가족관계증명서가 없습니다.</Alert>
               )}
-              <TextField label="부 성명" value={fatherName} onChange={(event) => setFatherName(event.target.value)} />
+              <Typography variant="subtitle2">부 성명</Typography>
               <TextField
-                label="부 생년월일"
+                fullWidth
+                size="small"
+                value={fatherName}
+                onChange={(event) => setFatherName(event.target.value)}
+              />
+              <Typography variant="subtitle2">부 생년월일</Typography>
+              <TextField
+                fullWidth
+                size="small"
                 value={fatherBirthDate}
                 onChange={(event) => setFatherBirthDate(event.target.value)}
               />
-              <TextField label="모 성명" value={motherName} onChange={(event) => setMotherName(event.target.value)} />
+              <Typography variant="subtitle2">모 성명</Typography>
               <TextField
-                label="모 생년월일"
+                fullWidth
+                size="small"
+                value={motherName}
+                onChange={(event) => setMotherName(event.target.value)}
+              />
+              <Typography variant="subtitle2">모 생년월일</Typography>
+              <TextField
+                fullWidth
+                size="small"
                 value={motherBirthDate}
                 onChange={(event) => setMotherBirthDate(event.target.value)}
               />
-              <Button variant="contained" onClick={() => void saveParents()}>
+              <button type="button" className="button medium submit" onClick={() => void saveParents()}>
                 부·모 확인 및 결제 방침 선택 요청
-              </Button>
+              </button>
             </>
           ) : null}
         </Stack>
-      </Paper>
-      <Paper component="form" onSubmit={save} sx={{ p: { xs: 2, sm: 3 } }}>
-        <Stack spacing={2}>
-          <Typography variant="h6" fontWeight={700}>
-            처리
-          </Typography>
+      </div>
+      <form className="paper" onSubmit={save}>
+        <Stack gap={2}>
+          <Typography variant="h6">처리</Typography>
+          <Typography variant="subtitle2">문의 상태</Typography>
           <TextField
             select
-            label="문의 상태"
+            fullWidth
+            size="small"
             value={status}
             onChange={(event) => setStatus(event.target.value as Inquiry['status'])}
           >
@@ -226,9 +241,11 @@ export default function Opt() {
           </TextField>
           {status === 'closed' ? (
             <>
+              <Typography variant="subtitle2">종결 결과</Typography>
               <TextField
                 select
-                label="종결 결과"
+                fullWidth
+                size="small"
                 value={resolutionCode}
                 onChange={(event) => setResolutionCode(event.target.value as InquiryResolutionCode)}
               >
@@ -238,11 +255,13 @@ export default function Opt() {
                   </MenuItem>
                 ))}
               </TextField>
+              <Typography variant="subtitle2">계정주 안내 내용</Typography>
               <TextField
                 required
                 multiline
                 minRows={4}
-                label="계정주 안내 내용"
+                fullWidth
+                size="small"
                 value={summary}
                 onChange={(event) => setSummary(event.target.value)}
               />
@@ -252,9 +271,14 @@ export default function Opt() {
           {inquiry.inquiry_type === 'minor_purchase_cancellation' &&
           inquiry.payment_control_selected_at &&
           inquiry.status !== 'closed' ? (
-            <Button color="error" variant="contained" disabled={isSaving} onClick={() => void approveCancellation()}>
+            <button
+              type="button"
+              className="button medium danger"
+              disabled={isSaving}
+              onClick={() => void approveCancellation()}
+            >
               청약취소 승인 및 결제 취소
-            </Button>
+            </button>
           ) : null}
           {inquiry.pg_cancellation_unavailable_at ? (
             <Alert severity={manualRefund.remainingAdjustmentAmount > 0 ? 'warning' : 'info'}>
@@ -266,17 +290,22 @@ export default function Opt() {
           manualRefund.hasAccount &&
           manualRefund.remainingAdjustmentAmount === 0 &&
           inquiry.status !== 'closed' ? (
-            <Button color="error" variant="contained" disabled={isSaving} onClick={() => void completeManualRefund()}>
+            <button
+              type="button"
+              className="button medium danger"
+              disabled={isSaving}
+              onClick={() => void completeManualRefund()}
+            >
               계좌 반환 완료 처리
-            </Button>
+            </button>
           ) : null}
           <Box>
-            <Button type="submit" variant="contained" disabled={isSaving}>
+            <button type="submit" className="button medium submit" disabled={isSaving}>
               {isSaving ? '저장 중' : '저장'}
-            </Button>
+            </button>
           </Box>
         </Stack>
-      </Paper>
+      </form>
     </Stack>
   );
 }

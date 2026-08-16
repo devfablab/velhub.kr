@@ -1075,7 +1075,7 @@ export default function Opt() {
           </button>
           <Stack gap={3}>
             {contentBody}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeContent}>
                 닫기
               </button>

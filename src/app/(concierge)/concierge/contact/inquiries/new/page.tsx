@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
-import Container from '../../menu';
+import Container from '../../../menu';
 import Opt from './opt';
 import styles from '@/app/concierge.module.sass';
 
 export const metadata: Metadata = {
-  title: '문의 내역 - 데브허브',
-  description: '데브허브 문의 내역',
+  title: '문의하기 - 데브허브',
+  description: '데브허브 문의 접수',
 };
 
 export default function Page() {
@@ -13,7 +13,7 @@ export default function Page() {
     <Container>
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
-          <h1>문의 내역</h1>
+          <h1>문의하기</h1>
           <Opt />
         </div>
       </div>
