@@ -32,6 +32,7 @@ export default function Opt() {
         const billingKey = normalizeText(searchParams.get('billingKey'));
         const customerKey = normalizeText(searchParams.get('customerKey'));
         const orderNo = normalizeText(searchParams.get('orderNo'));
+        const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!billingKey || !customerKey || !siteName || !orderNo) {
           throw new Error('멤버십 가입 정보가 올바르지 않습니다.');
@@ -43,7 +44,14 @@ export default function Opt() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ billingKey, customerKey, siteName, orderNo, targetType: 'site' }),
+          body: JSON.stringify({
+            billingKey,
+            customerKey,
+            siteName,
+            orderNo,
+            targetType: 'site',
+            guardianIdentityVerificationId,
+          }),
         });
 
         const result = (await response.json()) as MembershipSuccessResponse;

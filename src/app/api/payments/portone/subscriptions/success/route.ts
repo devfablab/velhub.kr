@@ -1,5 +1,6 @@
 import { encrypt } from '@/lib/encryption/encrypt';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import {
   assertPortOnePaidPayment,
   createPortOnePaymentKey,
@@ -41,6 +42,7 @@ type SubscriptionSuccessBody = {
   targetType?: string;
   seriesName?: string | null;
   orderNo?: string;
+  guardianIdentityVerificationId?: string;
 };
 
 type SiteRow = {
@@ -499,9 +501,13 @@ export async function POST(request: Request) {
     const site = siteResult.data as SiteRow;
     const session = await verifySession({ siteId: site.id });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
+
+    const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
+    if (minorControl.error)
+      return Response.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
 
     const subscriptionTarget = await getSubscriptionTarget({
       supabaseAdmin,
@@ -759,6 +765,9 @@ export async function POST(request: Request) {
         approved_at: portOnePaymentResult.approvedAt,
         refunded_at: null,
         raw_data: portOnePaymentResult.rawData ?? portOnePaymentResult,
+        guardian_identity_verified: Boolean(minorControl.guardianIdentityVerificationId),
+        guardian_identity_verified_at: minorControl.guardianIdentityVerificationId ? now.toISOString() : null,
+        guardian_identity_verification_id: minorControl.guardianIdentityVerificationId,
       })
       .select('id')
       .single();

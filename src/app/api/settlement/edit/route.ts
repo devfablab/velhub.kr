@@ -8,18 +8,19 @@ import { toSettlementPayload, validateSettlementProfileInput } from '@/lib/settl
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 const BUSINESS_LICENSE_BUCKET = 'business-license';
+const FAMILY_RELATION_CERTIFICATE_BUCKET = 'family-relation-certificates';
 
 type ExistingSettlementRow = {
   id: string;
   name: string | null;
   identity_verified_at: string | null;
+  parent_relationship_document_url: string | null;
 };
 
 type ExistingBanqueRow = {
   id: string;
   settlement_type: string | null;
   business_license: string | null;
-  guardian_document_url: string | null;
 };
 
 function getString(formData: FormData, key: string) {
@@ -78,9 +79,9 @@ async function uploadGuardianDocumentFile(userId: string, file: File) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  const filePath = `${userId}/guardian_${crypto.randomUUID()}.pdf`;
+  const filePath = `${userId}/settlement/${crypto.randomUUID()}.pdf`;
 
-  const { error } = await supabaseAdmin.storage.from(BUSINESS_LICENSE_BUCKET).upload(filePath, file, {
+  const { error } = await supabaseAdmin.storage.from(FAMILY_RELATION_CERTIFICATE_BUCKET).upload(filePath, file, {
     contentType: file.type,
     upsert: false,
   });
@@ -108,7 +109,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingRow, error: findError } = await supabaseAdmin
     .from('chorogons')
-    .select('id, name, birth_date, birth_date_dummy, identity_verified_at')
+    .select('id, name, birth_date, birth_date_dummy, identity_verified_at, parent_relationship_document_url')
     .eq('user_id', currentStigma.stigmaId)
     .limit(1)
     .maybeSingle();
@@ -125,7 +126,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: existingBanqueRow, error: banqueFindError } = await supabaseAdmin
     .from('chorogons_banque')
-    .select('id, settlement_type, business_license, guardian_document_url')
+    .select('id, settlement_type, business_license')
     .eq('chorogon_id', settlementRow.id)
     .maybeSingle();
 
@@ -167,8 +168,8 @@ export async function PATCH(request: NextRequest) {
 
     if (guardianDocumentFile) {
       guardianDocumentUrl = await uploadGuardianDocumentFile(sessionClaims.userId, guardianDocumentFile);
-    } else if (banqueRow.guardian_document_url) {
-      guardianDocumentUrl = banqueRow.guardian_document_url;
+    } else if (settlementRow.parent_relationship_document_url) {
+      guardianDocumentUrl = settlementRow.parent_relationship_document_url;
     }
 
     const input = {
@@ -216,6 +217,32 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ message: '정산 정보 수정에 실패했습니다.' }, { status: 500 });
+    }
+
+    if (isMinorAge) {
+      const guardianName = validatedInput.data.guardian_name;
+      const guardianBirthDate = validatedInput.data.guardian_birth_date;
+      const guardianGender = validatedInput.data.guardian_gender?.toUpperCase();
+      const parentUpdate = {
+        parent_relationship_document_url: validatedInput.data.guardian_document_url,
+        parent_relationship_document_bucket: FAMILY_RELATION_CERTIFICATE_BUCKET,
+        parent_relationship_verified_at: null,
+        parent_relationship_verified_by: null,
+        ...(guardianGender === 'MALE' || guardianGender === 'M'
+          ? {
+              father_name: guardianName ? encrypt(guardianName) : null,
+              father_birth_date: guardianBirthDate ? encrypt(guardianBirthDate) : null,
+            }
+          : {
+              mother_name: guardianName ? encrypt(guardianName) : null,
+              mother_birth_date: guardianBirthDate ? encrypt(guardianBirthDate) : null,
+            }),
+      };
+      const { error: parentError } = await supabaseAdmin
+        .from('chorogons')
+        .update(parentUpdate)
+        .eq('id', settlementRow.id);
+      if (parentError) return NextResponse.json({ message: '법정대리인 정보를 저장하지 못했습니다.' }, { status: 500 });
     }
 
     const { error: paymentEmailError } = await supabaseAdmin

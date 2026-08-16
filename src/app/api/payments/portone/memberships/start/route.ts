@@ -325,6 +325,9 @@ export async function POST(request: Request) {
           failure_message: null,
           failure_stage: null,
           refundable_until: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          guardian_identity_verified: Boolean(minorControl.guardianIdentityVerificationId),
+          guardian_identity_verified_at: minorControl.guardianIdentityVerificationId ? now.toISOString() : null,
+          guardian_identity_verification_id: minorControl.guardianIdentityVerificationId,
         })
         .select('id')
         .single();

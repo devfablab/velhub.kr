@@ -393,6 +393,8 @@ export async function POST(request: NextRequest) {
     successUrl.searchParams.set('orderNo', orderNo);
     successUrl.searchParams.set('paymentId', paymentId);
     successUrl.searchParams.set('amount', String(postPurchasePrice));
+    if (minorControl.guardianIdentityVerificationId)
+      successUrl.searchParams.set('guardianIdentityVerificationId', minorControl.guardianIdentityVerificationId);
 
     failUrl.searchParams.set('paymentType', PAYMENT_TYPE.PURCHASE_POST);
     failUrl.searchParams.set('targetType', PAYMENT_TARGET_TYPE.POST);

@@ -47,7 +47,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
       ? await supabaseAdmin
           .from('chorogons')
           .select(
-            'father_name, father_birth_date, mother_name, mother_birth_date, parent_relationship_document_url, parent_relationship_verified_at',
+            'father_name, father_birth_date, mother_name, mother_birth_date, parent_relationship_document_url, parent_relationship_document_bucket, parent_relationship_verified_at',
           )
           .eq('user_id', requester.user_id)
           .maybeSingle()
@@ -67,7 +67,9 @@ export async function GET(_: NextRequest, context: RouteContext) {
     if (documentPath) {
       for (const bucket of activeAttachment?.storage_bucket
         ? [activeAttachment.storage_bucket]
-        : ['business-license', 'family-relation-certificates']) {
+        : identity?.parent_relationship_document_bucket
+          ? [identity.parent_relationship_document_bucket]
+          : ['business-license', 'family-relation-certificates']) {
         const { data: signed } = await supabaseAdmin.storage.from(bucket).createSignedUrl(documentPath, 600);
         if (signed?.signedUrl) {
           certificateUrl = signed.signedUrl;

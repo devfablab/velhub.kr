@@ -55,6 +55,7 @@ export default function Opt() {
         const orderNo = normalizeText(searchParams.get('orderNo'));
         const targetType = getTargetType(normalizeText(searchParams.get('targetType')));
         const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
+        const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if ((!billingKey || !customerKey) && !paymentId) {
           throw new Error('구독 정보가 올바르지 않습니다.');
@@ -83,6 +84,7 @@ export default function Opt() {
             boardName,
             targetType,
             seriesName: targetType === 'series' ? seriesName : null,
+            guardianIdentityVerificationId,
           }),
         });
 

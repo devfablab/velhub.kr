@@ -45,6 +45,7 @@ export default function Opt() {
         const siteId = normalizeText(searchParams.get('siteId'));
         const targetType = normalizeText(searchParams.get('targetType'));
         const boardId = normalizeText(searchParams.get('boardId'));
+        const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!paymentKey || !orderId || !amountText || !siteId) {
           throw new Error('후원 결제 승인 정보가 없습니다.');
@@ -70,6 +71,7 @@ export default function Opt() {
             siteId,
             targetType,
             boardId,
+            guardianIdentityVerificationId,
           }),
         });
 

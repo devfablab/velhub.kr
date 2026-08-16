@@ -39,6 +39,7 @@ export default function Opt() {
         const siteId = normalizeText(searchParams.get('siteId'));
         const targetType = normalizeText(searchParams.get('targetType'));
         const postId = normalizeText(searchParams.get('postId'));
+        const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!paymentKey || !orderId || !Number.isFinite(amount) || !siteId || !targetType || !postId) {
           throw new Error('후원 결제 정보가 올바르지 않습니다.');
@@ -58,6 +59,7 @@ export default function Opt() {
             siteId,
             targetType,
             postId,
+            guardianIdentityVerificationId,
           }),
         });
 

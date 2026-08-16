@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import {
   assertPortOnePaidPayment,
   getCurrentPortOneProvider,
@@ -36,6 +37,7 @@ type PostPurchaseSuccessBody = {
   amount?: number;
   siteId?: string;
   postId?: string;
+  guardianIdentityVerificationId?: string;
 };
 
 type SiteRow = {
@@ -369,6 +371,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as PostPurchaseSuccessBody;
+    const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
+    if (minorControl.error)
+      return Response.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
     const paymentKey = normalizeText(body.paymentId) || normalizeText(body.paymentKey);
     const orderId = normalizeText(body.orderNo) || normalizeText(body.orderId);
     const txNo = normalizeText(body.txId) || null;
@@ -519,6 +524,9 @@ export async function POST(request: NextRequest) {
         approved_at: confirmResult.approvedAt,
         refunded_at: null,
         raw_data: confirmResult.rawData ?? confirmResult,
+        guardian_identity_verified: Boolean(minorControl.guardianIdentityVerificationId),
+        guardian_identity_verified_at: minorControl.guardianIdentityVerificationId ? approvedAt.toISOString() : null,
+        guardian_identity_verification_id: minorControl.guardianIdentityVerificationId,
       })
       .select('id')
       .single();

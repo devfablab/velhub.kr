@@ -519,6 +519,8 @@ export async function POST(request: Request) {
     successUrl.searchParams.set('targetType', targetType);
     successUrl.searchParams.set('orderNo', orderNo);
     successUrl.searchParams.set('paymentType', paymentType);
+    if (minorControl.guardianIdentityVerificationId)
+      successUrl.searchParams.set('guardianIdentityVerificationId', minorControl.guardianIdentityVerificationId);
     failUrl.searchParams.set('siteName', siteName);
     failUrl.searchParams.set('boardName', boardName);
     failUrl.searchParams.set('targetType', targetType);
@@ -617,6 +619,9 @@ export async function POST(request: Request) {
         approved_at: portOnePaymentResult.approvedAt,
         refunded_at: null,
         raw_data: portOnePaymentResult.rawData ?? portOnePaymentResult,
+        guardian_identity_verified: Boolean(minorControl.guardianIdentityVerificationId),
+        guardian_identity_verified_at: minorControl.guardianIdentityVerificationId ? now.toISOString() : null,
+        guardian_identity_verification_id: minorControl.guardianIdentityVerificationId,
       })
       .select('id')
       .single();

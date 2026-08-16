@@ -3,6 +3,7 @@
 
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Alert, Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryResolutionLabels,
@@ -131,7 +132,15 @@ export default function Opt() {
         <div className="paper">
           <Stack gap={2}>
             <Typography variant="h6">가족관계증명서 제출</Typography>
-            <Typography>정부24에서 발급받은 가족관계증명서 PDF만 제출해 주세요.</Typography>
+            <Typography>
+              대한민국 법원 전자가족관계등록시스템(efamily.scourt.go.kr)에서 발급받은 가족관계증명서 PDF를 제출해
+              주세요.
+            </Typography>
+            <p className="alert warning">
+              <WarningAmberRoundedIcon />
+              <span>3개월이 지난 가족관계증명서 제출은 반려사유가 됩니다.</span>
+            </p>
+
             <label className="button small action">
               PDF 선택
               <input hidden type="file" accept="application/pdf,.pdf" onChange={chooseFile} />

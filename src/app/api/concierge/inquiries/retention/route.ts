@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     await db
       .from('chorogons')
-      .update({ parent_relationship_document_url: null })
+      .update({ parent_relationship_document_url: null, parent_relationship_document_bucket: null })
       .in('parent_relationship_document_url', paths);
   }
   const { data: refundAccounts } = await db

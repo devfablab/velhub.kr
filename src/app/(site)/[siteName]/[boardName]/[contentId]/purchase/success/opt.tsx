@@ -46,6 +46,7 @@ export default function Opt() {
         const amount = Number(normalizeText(searchParams.get('amount')));
         const siteId = normalizeText(searchParams.get('siteId'));
         const postId = normalizeText(searchParams.get('postId'));
+        const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!paymentKey || !orderId || !Number.isFinite(amount) || !siteId || !postId) {
           throw new Error('포스팅 구매 결제 정보가 올바르지 않습니다.');
@@ -64,6 +65,7 @@ export default function Opt() {
             amount,
             siteId,
             postId,
+            guardianIdentityVerificationId,
           }),
         });
 

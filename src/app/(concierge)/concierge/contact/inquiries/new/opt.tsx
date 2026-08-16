@@ -2,14 +2,14 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Alert, Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Alert, FormControlLabel, MenuItem, Radio, RadioGroup, Stack, TextField, Typography } from '@mui/material';
 import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
 
 type PaymentRow = {
   id: string;
-  order_no: string;
-  amount: number;
+  label: string;
+  approvedAt: string | null;
 };
 
 const inquiryTypeOptions = inquiryTypes.map((value) => ({ value, label: inquiryTypeLabels[value] }));
@@ -17,6 +17,7 @@ const inquiryTypeOptions = inquiryTypes.map((value) => ({ value, label: inquiryT
 export default function Opt() {
   const router = useRouter();
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [cancellationAvailableAt, setCancellationAvailableAt] = useState<string | null>(null);
   const [inquiryType, setInquiryType] = useState<InquiryType>('service_question');
   const [inquirySubtype, setInquirySubtype] = useState(inquirySubtypes.service_question[0].value);
   const [title, setTitle] = useState('');
@@ -30,6 +31,7 @@ export default function Opt() {
       const response = await fetch('/api/concierge/contact/inquiries?payments=true', { cache: 'no-store' });
       const result = (await response.json().catch(() => null)) as {
         payments?: PaymentRow[];
+        cancellationAvailableAt?: string | null;
         error?: string;
       } | null;
 
@@ -39,10 +41,15 @@ export default function Opt() {
       }
 
       setPayments(result?.payments ?? []);
+      setCancellationAvailableAt(result?.cancellationAvailableAt ?? null);
     }
 
     void loadPayments();
   }, []);
+
+  const isMinorCancellation = inquiryType === 'minor_purchase_cancellation';
+  const isCancellationBlocked =
+    isMinorCancellation && !!cancellationAvailableAt && new Date(cancellationAvailableAt).getTime() > Date.now();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -58,7 +65,7 @@ export default function Opt() {
           inquirySubtype,
           title,
           content,
-          paymentId: inquiryType === 'minor_purchase_cancellation' ? paymentId : undefined,
+          paymentId: isMinorCancellation ? paymentId : undefined,
         }),
       });
       const result = (await response.json().catch(() => null)) as {
@@ -117,25 +124,35 @@ export default function Opt() {
               ))}
             </TextField>
           </Stack>
-          {inquiryType === 'minor_purchase_cancellation' ? (
+          {isMinorCancellation ? (
             <Stack gap={1}>
-              <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>
-              <TextField
-                select
-                required
-                fullWidth
-                size="small"
-                value={paymentId}
-                onChange={(event) => setPaymentId(event.target.value)}
-                helperText="한 문의에는 결제 한 건만 선택할 수 있습니다."
-              >
-                {payments.map((payment) => (
-                  <MenuItem
-                    key={payment.id}
-                    value={payment.id}
-                  >{`${payment.order_no} · ${Number(payment.amount).toLocaleString('ko-KR')}원`}</MenuItem>
-                ))}
-              </TextField>
+              <Alert severity="info">
+                청약취소를 신청하면 신청 시각부터 15일 동안 다른 결제 건의 청약취소를 신청할 수 없습니다.
+              </Alert>
+              {isCancellationBlocked ? (
+                <Alert severity="warning">
+                  다른 결제 건은 {new Date(cancellationAvailableAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
+                  부터 신청할 수 있습니다.
+                </Alert>
+              ) : (
+                <>
+                  <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>
+                  {payments.length ? (
+                    <RadioGroup value={paymentId} onChange={(event) => setPaymentId(event.target.value)}>
+                      {payments.map((payment) => (
+                        <FormControlLabel
+                          key={payment.id}
+                          value={payment.id}
+                          control={<Radio />}
+                          label={payment.label}
+                        />
+                      ))}
+                    </RadioGroup>
+                  ) : (
+                    <Typography variant="body2">청약취소를 신청할 수 있는 결제 내역이 없습니다.</Typography>
+                  )}
+                </>
+              )}
             </Stack>
           ) : null}
           <Stack gap={1}>
@@ -168,7 +185,7 @@ export default function Opt() {
           <Anchor href="/concierge/contact/inquiries" className="button medium close">
             뒤로가기
           </Anchor>
-          <button type="submit" className="button medium submit" disabled={isSubmitting}>
+          <button type="submit" className="button medium submit" disabled={isSubmitting || isCancellationBlocked}>
             {isSubmitting ? '접수 중' : '문의 접수'}
           </button>
         </Stack>
