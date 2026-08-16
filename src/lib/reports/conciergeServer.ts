@@ -309,14 +309,14 @@ function getLegalDetails(report: RawReport, reportUrl: string | null): ReportDet
   if (report.legal_type === 'illegal_info') {
     return [
       ...commonDetails,
-      { label: '신고·요청 구분', value: getLabel(report.request_type) },
-      { label: '불법정보 신고·요청 구분', value: getArrayLabel(report.illegal_info_categories) },
-      { label: '허위조작 신고·요청 구분', value: getArrayLabel(report.false_manipulated_info_categories) },
+      { label: '신고 · 요청 구분', value: getLabel(report.request_type) },
+      { label: '불법정보 신고 · 요청 구분', value: getArrayLabel(report.illegal_info_categories) },
+      { label: '허위조작 신고 · 요청 구분', value: getArrayLabel(report.false_manipulated_info_categories) },
       { label: '신고 내용', value: report.report_content ?? null },
       { label: '신고 이유', value: report.report_reason ?? null },
       { label: '신고 근거', value: report.report_basis ?? null },
-      { label: '불법정보 신고·요청 확인', value: getBooleanLabel(report.illegal_info_confirmed) },
-      { label: '허위조작정보 신고·요청 확인', value: getBooleanLabel(report.false_manipulated_info_confirmed) },
+      { label: '불법정보 신고 · 요청 확인', value: getBooleanLabel(report.illegal_info_confirmed) },
+      { label: '허위조작정보 신고 · 요청 확인', value: getBooleanLabel(report.false_manipulated_info_confirmed) },
       { label: '유의사항 확인', value: getBooleanLabel(report.illegal_info_notice_confirmed) },
     ];
   }
@@ -324,10 +324,10 @@ function getLegalDetails(report: RawReport, reportUrl: string | null): ReportDet
   if (report.legal_type === 'illegal_filming') {
     return [
       ...commonDetails,
-      { label: '신고·요청 구분', value: getArrayLabel(report.filming_request_types) },
-      { label: '신고·요청 사유', value: getArrayLabel(report.filming_reason_types) },
-      { label: '신고·요청 대상', value: report.filming_target ?? null },
-      { label: '신고·요청 확인', value: getBooleanLabel(report.filming_request_confirmed) },
+      { label: '신고 · 요청 구분', value: getArrayLabel(report.filming_request_types) },
+      { label: '신고 · 요청 사유', value: getArrayLabel(report.filming_reason_types) },
+      { label: '신고 · 요청 대상', value: report.filming_target ?? null },
+      { label: '신고 · 요청 확인', value: getBooleanLabel(report.filming_request_confirmed) },
       { label: '유의사항 확인', value: getBooleanLabel(report.filming_notice_confirmed) },
     ];
   }

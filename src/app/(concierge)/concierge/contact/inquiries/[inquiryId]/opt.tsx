@@ -162,7 +162,7 @@ export default function Opt() {
       {inquiry.payment_control_requested_at && !inquiry.payment_control_selected_at ? (
         <div className="paper">
           <Stack gap={2}>
-            <Typography variant="h6">향후 결제·구매·후원 방침</Typography>
+            <Typography variant="h6">향후 결제 · 구매 · 후원 방침</Typography>
             <Typography>청약취소 처리 후 만 19세가 되기 전까지 적용할 방침을 선택해 주세요.</Typography>
             <button
               type="button"
@@ -170,7 +170,7 @@ export default function Opt() {
               disabled={savingControl}
               onClick={() => void choosePaymentControl('blocked_until_adult')}
             >
-              이 계정에서 만 19세가 될 때까지 결제·구매·후원을 허용하지 않습니다.
+              이 계정에서 만 19세가 될 때까지 결제 · 구매 · 후원을 허용하지 않습니다.
             </button>
             <button
               type="button"

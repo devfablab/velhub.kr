@@ -228,7 +228,7 @@ export async function POST(request: Request) {
   const isUsingIndividualCreatorMembership = existingTypes.has('owner') || existingTypes.has('creator');
   if ((hasAllInOne && isUsingIndividualCreatorMembership) || (!hasAllInOne && isUsingAllInOne)) {
     return NextResponse.json(
-      { error: '올인원 멤버십과 오너·크리에이터 멤버십은 함께 이용할 수 없습니다.' },
+      { error: '올인원 멤버십과 오너 · 크리에이터 멤버십은 함께 이용할 수 없습니다.' },
       { status: 400 },
     );
   }

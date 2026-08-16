@@ -363,23 +363,23 @@ function validateIllegalInfo(formData: FormData) {
   const selectedFalseManipulatedInfoCategories = getFormStringArray(formData, 'falseManipulatedInfoCategories');
 
   if (!requestType || !illegalInfoRequestTypes.includes(requestType as (typeof illegalInfoRequestTypes)[number])) {
-    return '신고·요청 구분을 선택해 주세요.';
+    return '신고 · 요청 구분을 선택해 주세요.';
   }
 
   if (requestType === 'illegal_info' && selectedIllegalInfoCategories.length === 0) {
-    return '불법정보 신고·요청 구분을 선택해 주세요.';
+    return '불법정보 신고 · 요청 구분을 선택해 주세요.';
   }
 
   if (requestType === 'false_manipulated_info' && selectedFalseManipulatedInfoCategories.length === 0) {
-    return '허위조작정보 신고·요청 구분을 선택해 주세요.';
+    return '허위조작정보 신고 · 요청 구분을 선택해 주세요.';
   }
 
   if (!isIncludedArray(selectedIllegalInfoCategories, illegalInfoCategories)) {
-    return '불법정보 신고·요청 구분이 올바르지 않습니다.';
+    return '불법정보 신고 · 요청 구분이 올바르지 않습니다.';
   }
 
   if (!isIncludedArray(selectedFalseManipulatedInfoCategories, falseManipulatedInfoCategories)) {
-    return '허위조작정보 신고·요청 구분이 올바르지 않습니다.';
+    return '허위조작정보 신고 · 요청 구분이 올바르지 않습니다.';
   }
 
   if (!getFormStringValue(formData, 'reportContent')) {
@@ -395,11 +395,11 @@ function validateIllegalInfo(formData: FormData) {
   }
 
   if (requestType === 'illegal_info' && !getFormBooleanValue(formData, 'illegalInfoConfirmed')) {
-    return '불법정보 신고·요청 확인이 필요합니다.';
+    return '불법정보 신고 · 요청 확인이 필요합니다.';
   }
 
   if (requestType === 'false_manipulated_info' && !getFormBooleanValue(formData, 'falseManipulatedInfoConfirmed')) {
-    return '허위조작정보 신고·요청 확인이 필요합니다.';
+    return '허위조작정보 신고 · 요청 확인이 필요합니다.';
   }
 
   if (!getFormBooleanValue(formData, 'illegalInfoNoticeConfirmed')) {
@@ -414,27 +414,27 @@ function validateIllegalFilming(formData: FormData) {
   const selectedFilmingReasonTypes = getFormStringArray(formData, 'filmingReasonTypes');
 
   if (selectedFilmingRequestTypes.length === 0) {
-    return '신고·요청 구분을 선택해 주세요.';
+    return '신고 · 요청 구분을 선택해 주세요.';
   }
 
   if (!isIncludedArray(selectedFilmingRequestTypes, filmingRequestTypes)) {
-    return '신고·요청 구분이 올바르지 않습니다.';
+    return '신고 · 요청 구분이 올바르지 않습니다.';
   }
 
   if (selectedFilmingReasonTypes.length === 0) {
-    return '신고·요청 사유를 선택해 주세요.';
+    return '신고 · 요청 사유를 선택해 주세요.';
   }
 
   if (!isIncludedArray(selectedFilmingReasonTypes, filmingReasonTypes)) {
-    return '신고·요청 사유가 올바르지 않습니다.';
+    return '신고 · 요청 사유가 올바르지 않습니다.';
   }
 
   if (!getFormStringValue(formData, 'filmingTarget')) {
-    return '신고·요청 대상을 입력해 주세요.';
+    return '신고 · 요청 대상을 입력해 주세요.';
   }
 
   if (!getFormBooleanValue(formData, 'filmingRequestConfirmed')) {
-    return '불법촬영물등 신고·요청 확인이 필요합니다.';
+    return '불법촬영물등 신고 · 요청 확인이 필요합니다.';
   }
 
   if (!getFormBooleanValue(formData, 'filmingNoticeConfirmed')) {

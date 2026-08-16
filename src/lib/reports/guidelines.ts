@@ -110,7 +110,7 @@ function getRightsReportItems(): GuidelineReportItem[] {
     {
       value: 'rights_defamation',
       title: '명예훼손',
-      descriptions: ['특정인 · 단체 대상 비방 · 허위사실 유포'],
+      descriptions: ['특정인  ·  단체 대상 비방  ·  허위사실 유포'],
       report: {
         kind: 'rights',
         category: 'rights_defamation',
@@ -119,7 +119,7 @@ function getRightsReportItems(): GuidelineReportItem[] {
     {
       value: 'rights_personality_rights',
       title: '초상권 ∙ 사생활 등 인격권',
-      descriptions: ['특정인 사진 · 개인정보 무단 노출'],
+      descriptions: ['특정인 사진  ·  개인정보 무단 노출'],
       report: {
         kind: 'rights',
         category: 'rights_personality_rights',
@@ -128,7 +128,7 @@ function getRightsReportItems(): GuidelineReportItem[] {
     // {
     //   value: 'rights_copyright',
     //   title: '저작권',
-    //   descriptions: ['글 · 이미지 · 영상 등 저작물 무단 복제 · 공유'],
+    //   descriptions: ['글  ·  이미지  ·  영상 등 저작물 무단 복제  ·  공유'],
     //   report: {
     //     kind: 'rights',
     //     category: 'rights_copyright',
@@ -173,7 +173,7 @@ const postBaseGuidelineReportItems: GuidelineReportItem[] = [
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현입니다.',
     descriptions: [
-      '직·간접적인 욕설을 사용하여 타인에게 모욕감을 주는 내용',
+      '직 · 간접적인 욕설을 사용하여 타인에게 모욕감을 주는 내용',
       '생명을 경시하거나 비하하는 내용',
       '계층/지역/종교/성별 등을 혐오하거나 비하하는 표현',
       '신체/외모/취향 등을 경멸하는 표현',
@@ -227,7 +227,7 @@ const postBaseGuidelineReportItems: GuidelineReportItem[] = [
   {
     value: 'child_youth_protection',
     title: '아동 및 청소년 보호 위반입니다.',
-    descriptions: ['미성년자가 참여하는 위험한 행위나 청소년의 정서적·신체적 학대를 유도하거나 방치하는 내용'],
+    descriptions: ['미성년자가 참여하는 위험한 행위나 청소년의 정서적 · 신체적 학대를 유도하거나 방치하는 내용'],
   },
   {
     value: 'offensive',
@@ -243,7 +243,7 @@ const boardBaseGuidelineReportItems: GuidelineReportItem[] = [
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현을 포함한 게시판입니다.',
     descriptions: [
-      '게시판명, 설명, 공지, 운영 방식 등에 직·간접적인 욕설이나 모욕적 표현이 포함된 경우',
+      '게시판명, 설명, 공지, 운영 방식 등에 직 · 간접적인 욕설이나 모욕적 표현이 포함된 경우',
       '생명을 경시하거나 비하하는 방향으로 게시판이 운영되는 경우',
       '계층/지역/종교/성별 등을 혐오하거나 비하하는 게시판인 경우',
       '신체/외모/취향 등을 경멸하거나 조롱하는 목적의 게시판인 경우',
@@ -300,8 +300,8 @@ const boardBaseGuidelineReportItems: GuidelineReportItem[] = [
     title: '아동 및 청소년 보호를 위반한 게시판입니다.',
     descriptions: [
       '미성년자가 참여하는 위험한 행위를 유도하거나 공유하는 경우',
-      '청소년의 정서적·신체적 학대를 유도하거나 방치하는 경우',
-      '아동·청소년 보호 기준에 반하는 내용을 다루거나 운영하는 경우',
+      '청소년의 정서적 · 신체적 학대를 유도하거나 방치하는 경우',
+      '아동 · 청소년 보호 기준에 반하는 내용을 다루거나 운영하는 경우',
     ],
   },
   {
@@ -318,7 +318,7 @@ const siteBaseGuidelineReportItems: GuidelineReportItem[] = [
     value: 'hate',
     title: '혐오/차별적/생명경시/욕설 표현을 포함한 사이트입니다.',
     descriptions: [
-      '사이트명, 소개, 공지, 운영 방향 등에 직·간접적인 욕설이나 모욕적 표현이 포함된 경우',
+      '사이트명, 소개, 공지, 운영 방향 등에 직 · 간접적인 욕설이나 모욕적 표현이 포함된 경우',
       '생명을 경시하거나 비하하는 방향으로 사이트가 운영되는 경우',
       '계층/지역/종교/성별 등을 혐오하거나 비하하는 사이트인 경우',
       '신체/외모/취향 등을 경멸하거나 조롱하는 목적의 사이트인 경우',
@@ -375,8 +375,8 @@ const siteBaseGuidelineReportItems: GuidelineReportItem[] = [
     title: '아동 및 청소년 보호를 위반한 사이트입니다.',
     descriptions: [
       '미성년자가 참여하는 위험한 행위를 유도하거나 공유하는 경우',
-      '청소년의 정서적·신체적 학대를 유도하거나 방치하는 경우',
-      '아동·청소년 보호 기준에 반하는 내용을 다루거나 운영하는 경우',
+      '청소년의 정서적 · 신체적 학대를 유도하거나 방치하는 경우',
+      '아동 · 청소년 보호 기준에 반하는 내용을 다루거나 운영하는 경우',
     ],
   },
   {

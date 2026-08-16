@@ -74,17 +74,17 @@ const legalTypeOptions = [
 const illegalInfoCategoryOptions = [
   { value: 'obscene_distribution', label: '음란물 배포 및 공개 전시 정보' },
   { value: 'false_fact_defamation', label: '허위사실 적시 명예훼손 정보' },
-  { value: 'hate_speech', label: '폭력·차별 선동 및 증오 조장 등 혐오정보' },
-  { value: 'fear_anxiety_repeated_message', label: '공포·불안 유발 메시지(또는 영상) 반복 전송 정보' },
-  { value: 'system_damage_disruption', label: '정보통신시스템 훼손·변조 및 운용방해 정보' },
-  { value: 'youth_harmful_media_violation', label: '연령 확인·표시 의무 위반 청소년유해매체물' },
+  { value: 'hate_speech', label: '폭력 · 차별 선동 및 증오 조장 등 혐오정보' },
+  { value: 'fear_anxiety_repeated_message', label: '공포 · 불안 유발 메시지(또는 영상) 반복 전송 정보' },
+  { value: 'system_damage_disruption', label: '정보통신시스템 훼손 · 변조 및 운용방해 정보' },
+  { value: 'youth_harmful_media_violation', label: '연령 확인 · 표시 의무 위반 청소년유해매체물' },
   { value: 'illegal_gambling', label: '불법 사행성 행위 관련 정보' },
   { value: 'personal_info_illegal_trade', label: '개인정보 불법 거래 정보' },
-  { value: 'weapons_explosives_manufacturing', label: '총포·화약류 제조방법 및 설계 정보' },
-  { value: 'drug_use_manufacture_trade', label: '마약류 사용·제조·매매 및 알선 정보' },
+  { value: 'weapons_explosives_manufacturing', label: '총포 · 화약류 제조방법 및 설계 정보' },
+  { value: 'drug_use_manufacture_trade', label: '마약류 사용 · 제조 · 매매 및 알선 정보' },
   { value: 'national_secret_leak', label: '국가기밀 누설 정보' },
   { value: 'national_security_law_violation', label: '국가보안법 위반 정보' },
-  { value: 'other_criminal_purpose_aiding', label: '기타 범죄 목적·교사·방조 정보' },
+  { value: 'other_criminal_purpose_aiding', label: '기타 범죄 목적 · 교사 · 방조 정보' },
 ];
 
 const falseManipulatedInfoCategoryOptions = [
@@ -100,7 +100,7 @@ const filmingRequestTypeOptions = [
 const filmingReasonTypeOptions = [
   { value: 'illegal_filming', label: '불법촬영물' },
   { value: 'deepfake', label: '허위영상물' },
-  { value: 'child_youth_sexual_exploitation', label: '아동·청소년 성착취물' },
+  { value: 'child_youth_sexual_exploitation', label: '아동 · 청소년 성착취물' },
 ];
 
 const privacyReportTypeOptions = [
@@ -457,15 +457,15 @@ export default function Opt() {
 
   function validateIllegalInfoInputs() {
     if (!requestType) {
-      return '신고·요청 구분을 선택해 주세요.';
+      return '신고 · 요청 구분을 선택해 주세요.';
     }
 
     if (requestType === 'illegal_info' && illegalInfoCategories.length === 0) {
-      return '불법정보 신고·요청 구분을 선택해 주세요.';
+      return '불법정보 신고 · 요청 구분을 선택해 주세요.';
     }
 
     if (requestType === 'false_manipulated_info' && falseManipulatedInfoCategories.length === 0) {
-      return '허위조작정보 신고·요청 구분을 선택해 주세요.';
+      return '허위조작정보 신고 · 요청 구분을 선택해 주세요.';
     }
 
     if (!reportContent.trim()) {
@@ -481,11 +481,11 @@ export default function Opt() {
     }
 
     if (requestType === 'illegal_info' && !illegalInfoConfirmed) {
-      return '불법정보 신고·요청 확인이 필요합니다.';
+      return '불법정보 신고 · 요청 확인이 필요합니다.';
     }
 
     if (requestType === 'false_manipulated_info' && !falseManipulatedInfoConfirmed) {
-      return '허위조작정보 신고·요청 확인이 필요합니다.';
+      return '허위조작정보 신고 · 요청 확인이 필요합니다.';
     }
 
     if (!illegalInfoNoticeConfirmed) {
@@ -497,19 +497,19 @@ export default function Opt() {
 
   function validateIllegalFilmingInputs() {
     if (filmingRequestTypes.length === 0) {
-      return '신고·요청 구분을 선택해 주세요.';
+      return '신고 · 요청 구분을 선택해 주세요.';
     }
 
     if (filmingReasonTypes.length === 0) {
-      return '신고·요청 사유를 선택해 주세요.';
+      return '신고 · 요청 사유를 선택해 주세요.';
     }
 
     if (!filmingTarget.trim()) {
-      return '신고·요청 대상을 입력해 주세요.';
+      return '신고 · 요청 대상을 입력해 주세요.';
     }
 
     if (!filmingRequestConfirmed) {
-      return '불법촬영물등 신고·요청 확인이 필요합니다.';
+      return '불법촬영물등 신고 · 요청 확인이 필요합니다.';
     }
 
     if (!filmingNoticeConfirmed) {
@@ -819,7 +819,7 @@ export default function Opt() {
             </Typography>
             <Stack gap={1}>
               <Typography variant="body2">
-                ① 음란한 부호·문언·음향·화상 또는 영상을 배포·판매·임대하거나 공공연하게 전시하는 내용의 정보
+                ① 음란한 부호 · 문언 · 음향 · 화상 또는 영상을 배포 · 판매 · 임대하거나 공공연하게 전시하는 내용의 정보
               </Typography>
               <Typography variant="body2">
                 ② 사람을 비방할 목적으로 공공연하게 거짓의 사실을 드러내어 타인의 명예를 훼손하는 내용의 정보
@@ -835,11 +835,11 @@ export default function Opt() {
                 </Typography>
               </Stack>
               <Typography variant="body2">
-                ④ 공포심이나 불안감을 유발하는 부호·문언·음향·화상 또는 영상을 반복적으로 상대방에게 도달하도록 하는
-                내용의 정보
+                ④ 공포심이나 불안감을 유발하는 부호 · 문언 · 음향 · 화상 또는 영상을 반복적으로 상대방에게 도달하도록
+                하는 내용의 정보
               </Typography>
               <Typography variant="body2">
-                ⑤ 정당한 사유 없이 정보통신시스템, 데이터 또는 프로그램 등을 훼손·멸실·변경·위조하거나 그 운용을
+                ⑤ 정당한 사유 없이 정보통신시스템, 데이터 또는 프로그램 등을 훼손 · 멸실 · 변경 · 위조하거나 그 운용을
                 방해하는 내용의 정보
               </Typography>
               <Stack>
@@ -850,7 +850,7 @@ export default function Opt() {
                 <Typography variant="body2">
                   - 이 법 또는 개인정보 보호에 관한 법령을 위반하여 개인정보를 거래하는 내용의 정보
                 </Typography>
-                <Typography variant="body2">- 총포·화약류를 제조할 수 있는 방법이나 설계도 등의 정보</Typography>
+                <Typography variant="body2">- 총포 · 화약류를 제조할 수 있는 방법이나 설계도 등의 정보</Typography>
                 <Typography variant="body2">
                   - 마약류 사용, 제조, 매매 또는 매매의 알선 등에 해당하는 내용의 정보
                 </Typography>
@@ -903,7 +903,7 @@ export default function Opt() {
 
         <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150 }}>
-            신고·요청 구분
+            신고 · 요청 구분
           </Typography>
           <Select
             displayEmpty
@@ -913,13 +913,13 @@ export default function Opt() {
             size="small"
             renderValue={(selected) => {
               if (!selected) {
-                return '신고·요청 구분 선택';
+                return '신고 · 요청 구분 선택';
               }
               return selected === 'illegal_info' ? '불법정보' : '허위조작정보';
             }}
           >
             <MenuItem value="" disabled>
-              신고·요청 구분 선택
+              신고 · 요청 구분 선택
             </MenuItem>
             <MenuItem value="illegal_info">불법정보</MenuItem>
             <MenuItem value="false_manipulated_info">허위조작정보</MenuItem>
@@ -932,7 +932,7 @@ export default function Opt() {
               variant="subtitle2"
               sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
             >
-              불법정보 신고·요청 구분
+              불법정보 신고 · 요청 구분
             </Typography>
             <Stack>
               {illegalInfoCategoryOptions.map((option) => (
@@ -957,7 +957,7 @@ export default function Opt() {
               variant="subtitle2"
               sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
             >
-              허위조작 신고·요청 구분
+              허위조작 신고 · 요청 구분
             </Typography>
             <Stack>
               {falseManipulatedInfoCategoryOptions.map((option) => (
@@ -1034,7 +1034,7 @@ export default function Opt() {
 
         <Stack>
           <Typography variant="subtitle2">
-            「정보통신망법」제44조의12에 따라 위와 같이 신고·삭제요청을 합니다.
+            「정보통신망법」제44조의12에 따라 위와 같이 신고 · 삭제요청을 합니다.
           </Typography>
           <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems={isMobile ? 'flex-start' : 'center'}>
             <FormControlLabel
@@ -1044,7 +1044,7 @@ export default function Opt() {
                   onChange={(changeEvent) => setIllegalInfoConfirmed(changeEvent.currentTarget.checked)}
                 />
               }
-              label="불법정보 신고·요청 확인"
+              label="불법정보 신고 · 요청 확인"
             />
             <FormControlLabel
               control={
@@ -1053,7 +1053,7 @@ export default function Opt() {
                   onChange={(changeEvent) => setFalseManipulatedInfoConfirmed(changeEvent.currentTarget.checked)}
                 />
               }
-              label="허위조작정보 신고·요청 확인"
+              label="허위조작정보 신고 · 요청 확인"
             />
           </Stack>
         </Stack>
@@ -1066,12 +1066,12 @@ export default function Opt() {
             <Stack gap={1}>
               <Typography variant="body2">
                 고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
-                수집·이용합니다.
+                수집 · 이용합니다.
               </Typography>
               <Stack>
                 <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
                 <Typography variant="body2">
-                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                  [필수] 이메일, 신고 · 요청자 이름 (기관 · 단체명), 휴대폰 번호 (전화번호)
                 </Typography>
                 <Typography variant="body2">
                   ※ 선택 항목 입력 시 정확하고 신속한 문의 내용 확인 및 처리가 가능하나, 입력하지 않으셔도 고객 문의
@@ -1119,13 +1119,13 @@ export default function Opt() {
         <div className="paper">
           <Typography variant="body2">
             불법촬영물등에 대한 신고 및 삭제요청은 전기통신사업법 제22조의5 제1항 및 동법 시행령 제30조의5 제2항에 따라,
-            다음의 링크에서 “불법촬영물등 유통 신고·삭제요청서”를 다운로드 받아 여기에 작성하여 제출하시거나, 같은
+            다음의 링크에서 “불법촬영물등 유통 신고 · 삭제요청서”를 다운로드 받아 여기에 작성하여 제출하시거나, 같은
             서식의 내용이 포함된 아래의 입력란에 직접 기입하여 접수시키실 수 있습니다.
           </Typography>
           <Stack>
-            <Typography variant="subtitle2">※ 불법촬영물등 유통 신고·삭제요청서 다운로드</Typography>
+            <Typography variant="subtitle2">※ 불법촬영물등 유통 신고 · 삭제요청서 다운로드</Typography>
             <Typography variant="body2">
-              - 불법촬영물등 유통 신고·삭제요청서 다운받기 :{' '}
+              - 불법촬영물등 유통 신고 · 삭제요청서 다운받기 :{' '}
               <Anchor href="/[별지_서식]_불법촬영물등_유통_신고ㆍ삭제요청서.hwp" className="link">
                 한글파일
               </Anchor>{' '}
@@ -1138,8 +1138,8 @@ export default function Opt() {
           <Stack>
             <Typography variant="subtitle2">※ 유의사항</Typography>
             <Typography variant="body2">
-              - 신고·삭제요청(서) 각각의 항목 중 기재되지 않은 항목이 있거나, 대상이 된 불법촬영물등이 특정되지 않아
-              검토가 어려운 경우, 삭제 등의 조치가 취해지지 못하고 신고·삭제요청하신 내용에 대해 보완을 요청 드릴 수
+              - 신고 · 삭제요청(서) 각각의 항목 중 기재되지 않은 항목이 있거나, 대상이 된 불법촬영물등이 특정되지 않아
+              검토가 어려운 경우, 삭제 등의 조치가 취해지지 못하고 신고 · 삭제요청하신 내용에 대해 보완을 요청 드릴 수
               있습니다.
             </Typography>
           </Stack>
@@ -1160,14 +1160,14 @@ export default function Opt() {
             <p className="alert info">
               <InfoOutlineRoundedIcon />
               <span>
-                신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 아래 “신고·요청 대상”에 전달해 주세요.
+                신고유형이 댓글인 경우 화면에 보이는 작성자 정보와 작성시간을 아래 “신고 · 요청 대상”에 전달해 주세요.
               </span>
             </p>
           </Stack>
         ) : null}
         <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
-            신고·요청 구분
+            신고 · 요청 구분
           </Typography>
           <Stack>
             {filmingRequestTypeOptions.map((option) => (
@@ -1187,7 +1187,7 @@ export default function Opt() {
 
         <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
           <Typography variant="subtitle2" sx={{ minWidth: isMobile ? 'auto' : 150, position: 'relative', top: 9 }}>
-            신고·요청 사유
+            신고 · 요청 사유
           </Typography>
           <Stack>
             {filmingReasonTypeOptions.map((option) => (
@@ -1219,19 +1219,19 @@ export default function Opt() {
           <Stack>
             <Typography variant="subtitle2">■ 허위 영상물</Typography>
             <Typography variant="body2">
-              ① 유통할 목적으로 사람의 얼굴·신체 또는 음성을 대상으로 한 촬영물·영상물 또는 음성물을 그 대상자의 의사에
-              반하여 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집·합성 또는 가공한 것
+              ① 유통할 목적으로 사람의 얼굴 · 신체 또는 음성을 대상으로 한 촬영물 · 영상물 또는 음성물을 그 대상자의
+              의사에 반하여 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집 · 합성 또는 가공한 것
             </Typography>
             <Typography variant="body2">
-              ② 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집·합성 또는 가공할 당시에는 그 대상자의 의사에 반하지
-              아니한 경우에도 사후에 그 대상자의 의사에 반하여 유통된 촬영물·영상물 또는 음성물
+              ② 성적 욕망 또는 수치심을 유발할 수 있는 형태로 편집 · 합성 또는 가공할 당시에는 그 대상자의 의사에 반하지
+              아니한 경우에도 사후에 그 대상자의 의사에 반하여 유통된 촬영물 · 영상물 또는 음성물
             </Typography>
           </Stack>
           <Stack>
-            <Typography variant="subtitle2">■ 아동·청소년 성착취물</Typography>
+            <Typography variant="subtitle2">■ 아동 · 청소년 성착취물</Typography>
             <Typography variant="body2">
-              아동·청소년 또는 아동·청소년으로 명백하게 인식될 수 있는 사람이나 표현물이 등장하여 성교 등 성적
-              행위(아동·청소년의 신체의 전부 또는 일부를 접촉·노출하는 행위로서 일반인의 성적 수치심이나 혐오감을
+              아동 · 청소년 또는 아동 · 청소년으로 명백하게 인식될 수 있는 사람이나 표현물이 등장하여 성교 등 성적
+              행위(아동 · 청소년의 신체의 전부 또는 일부를 접촉 · 노출하는 행위로서 일반인의 성적 수치심이나 혐오감을
               일으키는 행위도 포함)를 하는 내용이 표현된 것
             </Typography>
           </Stack>
@@ -1242,7 +1242,7 @@ export default function Opt() {
             variant="subtitle2"
             sx={{ minWidth: isMobile ? 'auto' : 150, position: isMobile ? 'static' : 'relative', top: 9 }}
           >
-            신고·요청 대상
+            신고 · 요청 대상
           </Typography>
           <TextField
             placeholder="※ 불법촬영물등의 위치를 특정할 수 있도록 URL과 화면 캡쳐본을 첨부하여 주시되, URL 기재가 어려울 경우 검색어 등 해당 불법촬영물등의 위치에 대한 상세 설명을 기재하여 주시기 바랍니다."
@@ -1274,7 +1274,7 @@ export default function Opt() {
                   onChange={(changeEvent) => setFilmingRequestConfirmed(changeEvent.currentTarget.checked)}
                 />
               }
-              label="불법촬영물등 신고·요청 확인"
+              label="불법촬영물등 신고 · 요청 확인"
             />
           </Stack>
         </Stack>
@@ -1287,12 +1287,12 @@ export default function Opt() {
             <Stack gap={1}>
               <Typography variant="body2">
                 고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
-                수집·이용합니다.
+                수집 · 이용합니다.
               </Typography>
               <Stack>
                 <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
                 <Typography variant="body2">
-                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                  [필수] 이메일, 신고 · 요청자 이름 (기관 · 단체명), 휴대폰 번호 (전화번호)
                 </Typography>
                 <Typography variant="body2">
                   ※ 선택 항목 입력 시 정확하고 신속한 문의 내용 확인 및 처리가 가능하나, 입력하지 않으셔도 고객 문의
@@ -1434,12 +1434,12 @@ export default function Opt() {
             <Stack gap={1}>
               <Typography variant="body2">
                 고객 문의 처리를 위해 개인정보 보호법 제15조제1항제4호(계약의 체결/이행)에 따라, 다음과 같은 개인정보를
-                수집·이용합니다.
+                수집 · 이용합니다.
               </Typography>
               <Stack>
                 <Typography variant="body2">- 수집하는 개인정보 항목</Typography>
                 <Typography variant="body2">
-                  [필수] 이메일, 신고·요청자 이름 (기관·단체명), 휴대폰 번호 (전화번호)
+                  [필수] 이메일, 신고 · 요청자 이름 (기관 · 단체명), 휴대폰 번호 (전화번호)
                 </Typography>
                 <Typography variant="body2">자세한 사항은 개인정보 처리방침을 참고해주시기 바랍니다.</Typography>
               </Stack>

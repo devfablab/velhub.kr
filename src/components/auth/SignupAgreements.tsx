@@ -69,14 +69,14 @@ function PrivacyContent() {
   return (
     <Stack gap={2}>
       <Typography variant="body2">
-        데브허브는 회원가입 및 서비스 제공을 위해 아래와 같이 개인정보를 수집·이용합니다.
+        데브허브는 회원가입 및 서비스 제공을 위해 아래와 같이 개인정보를 수집 · 이용합니다.
       </Typography>
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>수집·이용 목적</TableCell>
+            <TableCell>수집 · 이용 목적</TableCell>
             <TableCell>수집 항목</TableCell>
-            <TableCell>보유·이용 기간</TableCell>
+            <TableCell>보유 · 이용 기간</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -93,7 +93,7 @@ function PrivacyContent() {
         </TableBody>
       </Table>
       <Typography variant="body2">
-        개인정보 수집·이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 데브허브 회원가입 및 로그인 서비스를
+        개인정보 수집 · 이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 데브허브 회원가입 및 로그인 서비스를
         이용할 수 없습니다.
       </Typography>
     </Stack>

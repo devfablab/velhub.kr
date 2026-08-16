@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('user_id', current.stigmaId)
     .maybeSingle();
   if (!identity?.parent_relationship_verified_at)
-    return Response.json({ error: '부·모 관계 확인이 완료된 뒤에 선택할 수 있습니다.' }, { status: 400 });
+    return Response.json({ error: '부 · 모 관계 확인이 완료된 뒤에 선택할 수 있습니다.' }, { status: 400 });
   const birthDate = getChorogonBirthDate(identity);
   const digits = String(birthDate ?? '').replace(/\D/g, '');
   if (digits.length !== 8) return Response.json({ error: '생년월일을 확인할 수 없습니다.' }, { status: 400 });

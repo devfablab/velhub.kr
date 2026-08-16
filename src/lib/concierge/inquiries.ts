@@ -36,9 +36,9 @@ export const inquirySubtypes = {
 
 export const inquiryTypeLabels: Record<InquiryType, string> = {
   minor_purchase_cancellation: '미성년자 결제 청약취소',
-  payment_refund_error: '결제·환불 처리 오류',
-  account_identity: '계정·본인인증',
-  creator_settlement: '작가·정산',
+  payment_refund_error: '결제 · 환불 처리 오류',
+  account_identity: '계정 · 본인인증',
+  creator_settlement: '작가 · 정산',
   service_question: '서비스 이용',
   bug_report: '기능 오류',
 };
@@ -57,10 +57,10 @@ export type InquiryResolutionCode = (typeof inquiryResolutionCodes)[number];
 export const inquiryResolutionLabels: Record<InquiryResolutionCode, string> = {
   minor_cancellation_approved_payment_cancelled: '청약취소 승인 및 결제 취소 완료',
   minor_cancellation_not_eligible: '청약취소 대상 아님',
-  parent_relationship_unverified: '부·모 관계 확인 불가',
+  parent_relationship_unverified: '부 · 모 관계 확인 불가',
   additional_information_not_submitted: '추가 정보 미제출',
   request_withdrawn: '문의 철회',
-  error_resolved_guidance_completed: '오류 수정·안내 완료',
+  error_resolved_guidance_completed: '오류 수정 · 안내 완료',
 };
 
 export function isInquiryType(value: unknown): value is InquiryType {

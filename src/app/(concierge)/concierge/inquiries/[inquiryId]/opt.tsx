@@ -126,7 +126,7 @@ export default function Opt() {
       body: JSON.stringify({ fatherName, fatherBirthDate, motherName, motherBirthDate }),
     });
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
-    if (!response.ok) setError(result?.error ?? '부·모 확인 정보를 저장하지 못했습니다.');
+    if (!response.ok) setError(result?.error ?? '부 · 모 확인 정보를 저장하지 못했습니다.');
     else {
       setError('');
       await requestPaymentControl();
@@ -216,7 +216,7 @@ export default function Opt() {
                 onChange={(event) => setMotherBirthDate(event.target.value)}
               />
               <button type="button" className="button medium submit" onClick={() => void saveParents()}>
-                부·모 확인 및 결제 방침 선택 요청
+                부 · 모 확인 및 결제 방침 선택 요청
               </button>
             </>
           ) : null}

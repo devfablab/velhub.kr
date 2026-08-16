@@ -585,7 +585,7 @@ export default function Opt() {
     }
 
     if (!contentRequest) {
-      setErrorMessage('게시물·댓글 처리 요청을 선택해 주세요.');
+      setErrorMessage('게시물 · 댓글 처리 요청을 선택해 주세요.');
       return;
     }
 
@@ -973,7 +973,7 @@ export default function Opt() {
                   onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
                 >
                   <MenuItem value="" disabled>
-                    게시물·댓글 처리 요청 선택
+                    게시물 · 댓글 처리 요청 선택
                   </MenuItem>
                   {Object.entries(reportAppealContentRequestLabels).map(([value, label]) => (
                     <MenuItem key={value} value={value}>

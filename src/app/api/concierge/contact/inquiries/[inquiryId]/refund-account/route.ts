@@ -49,19 +49,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         ? decode(identity?.mother_name)
         : decode(identity?.name);
   if (!expected || expected !== holderName)
-    return Response.json({ error: '계정주 또는 확인된 부·모 명의의 계좌만 등록할 수 있습니다.' }, { status: 400 });
-  const { error } = await db
-    .from('inquiry_refund_accounts')
-    .upsert(
-      {
-        inquiry_id: inquiryId,
-        account_holder_type: holderType,
-        bank_code: bankCode,
-        encrypted_account_holder_name: encrypt(holderName),
-        encrypted_account_number: encrypt(accountNumber),
-      },
-      { onConflict: 'inquiry_id' },
-    );
+    return Response.json({ error: '계정주 또는 확인된 부 · 모 명의의 계좌만 등록할 수 있습니다.' }, { status: 400 });
+  const { error } = await db.from('inquiry_refund_accounts').upsert(
+    {
+      inquiry_id: inquiryId,
+      account_holder_type: holderType,
+      bank_code: bankCode,
+      encrypted_account_holder_name: encrypt(holderName),
+      encrypted_account_number: encrypt(accountNumber),
+    },
+    { onConflict: 'inquiry_id' },
+  );
   if (error) return Response.json({ error: '반환 계좌를 저장하지 못했습니다.' }, { status: 500 });
   await db.from('inquiries').update({ manual_refund_ready_at: new Date().toISOString() }).eq('id', inquiryId);
   return Response.json({ ok: true });

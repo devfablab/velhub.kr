@@ -61,9 +61,9 @@ function AgreementContent({ type }: { type: AgreementType }) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>수집·이용 목적</TableCell>
+              <TableCell>수집 · 이용 목적</TableCell>
               <TableCell>수집 항목</TableCell>
-              <TableCell>보유·이용 기간</TableCell>
+              <TableCell>보유 · 이용 기간</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -75,7 +75,7 @@ function AgreementContent({ type }: { type: AgreementType }) {
           </TableBody>
         </Table>
         <Typography variant="body2">
-          본인인증 정보 수집·이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 정산정보 등록 및 수익 활동을
+          본인인증 정보 수집 · 이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 정산정보 등록 및 수익 활동을
           이용할 수 없습니다.
         </Typography>
       </Stack>
@@ -85,15 +85,16 @@ function AgreementContent({ type }: { type: AgreementType }) {
   return (
     <Stack gap={2}>
       <Typography variant="body2">
-        데브허브는 수익 활동 자격 확인, 정산금 지급, 정산 관련 안내 및 세무 처리를 위해 아래 개인정보를 수집·이용합니다.
+        데브허브는 수익 활동 자격 확인, 정산금 지급, 정산 관련 안내 및 세무 처리를 위해 아래 개인정보를 수집 ·
+        이용합니다.
       </Typography>
       <Table size="small">
         <TableHead>
           <TableRow>
             <TableCell>구분</TableCell>
-            <TableCell>수집·이용 목적</TableCell>
+            <TableCell>수집 · 이용 목적</TableCell>
             <TableCell>수집 항목</TableCell>
-            <TableCell>보유·이용 기간</TableCell>
+            <TableCell>보유 · 이용 기간</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -118,8 +119,8 @@ function AgreementContent({ type }: { type: AgreementType }) {
         </TableBody>
       </Table>
       <Typography variant="body2">
-        개인정보 수집·이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 정산정보 등록 및 수익 활동을 이용할 수
-        없습니다.
+        개인정보 수집 · 이용에 동의하지 않을 권리가 있습니다. 다만 동의를 거부하면 정산정보 등록 및 수익 활동을 이용할
+        수 없습니다.
       </Typography>
       <Stack gap={1}>
         <Typography variant="subtitle2">주민등록번호 처리 안내</Typography>
@@ -163,8 +164,8 @@ export default function IdentityAgreement({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isAgreed, setIsAgreed] = useState(false);
-  const title = type === 'identity' ? '본인인증 이용안내' : '정산정보 수집·이용 안내';
-  const agreementLabel = type === 'identity' ? '[필수] 본인인증 이용안내 동의' : '[필수] 정산정보 수집·이용 동의';
+  const title = type === 'identity' ? '본인인증 이용안내' : '정산정보 수집 · 이용 안내';
+  const agreementLabel = type === 'identity' ? '[필수] 본인인증 이용안내 동의' : '[필수] 정산정보 수집 · 이용 동의';
   const closeClassName = isMobile ? 'button medium cancel' : 'button medium close';
 
   const actions = showAgreementCheck ? (

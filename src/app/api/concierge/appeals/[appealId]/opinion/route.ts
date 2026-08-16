@@ -219,7 +219,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     if (!isReportAppealContentRequest(contentRequest)) {
-      return Response.json({ error: '게시물·댓글 처리 요청을 선택해 주세요.' }, { status: 400 });
+      return Response.json({ error: '게시물 · 댓글 처리 요청을 선택해 주세요.' }, { status: 400 });
     }
 
     if (contentRequest === 'edit_and_review' && !modificationContent) {

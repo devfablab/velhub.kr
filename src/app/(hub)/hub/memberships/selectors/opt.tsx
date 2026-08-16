@@ -152,7 +152,7 @@ export default function MembershipSelectors() {
 
   const siteOptions = data.sites.map((site) => ({ id: site.id, label: `${site.siteLabel} (${site.siteKey})` }));
   const postOptions = (posts: Post[]) =>
-    posts.map((post) => ({ id: post.id, label: `${post.siteLabel} · ${post.subject}` }));
+    posts.map((post) => ({ id: post.id, label: `${post.siteLabel}  ·  ${post.subject}` }));
   const hasChanges =
     ownerSiteId !== (data.selections.owner_site ?? '') ||
     creatorSiteId !== (data.selections.creator_site ?? '') ||

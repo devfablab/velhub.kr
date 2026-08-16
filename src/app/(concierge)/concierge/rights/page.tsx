@@ -66,7 +66,7 @@ export default function Page() {
                 id={`${id}-panel2-header`}
               >
                 <Typography variant="subtitle2">
-                  나의 동의 없이 사진·사생활 등이 포함된 게시물을 발견했는데 어떻게 신고하나요?
+                  나의 동의 없이 사진 · 사생활 등이 포함된 게시물을 발견했는데 어떻게 신고하나요?
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -79,7 +79,7 @@ export default function Page() {
                     권리보호센터의 권리 침해 신고 페이지로 접속하여 본인인증 절차 후 신고해 주세요.
                   </Typography>
                   <Typography variant="body2">
-                    초상권·사생활 침해 등 인격권 사유로 신고를 접수하는 경우 구체적인 초상권 또는 본인임을 확인할 수
+                    초상권 · 사생활 침해 등 인격권 사유로 신고를 접수하는 경우 구체적인 초상권 또는 본인임을 확인할 수
                     있는 증빙자료를 함께 제출해 주세요.
                   </Typography>
                 </Stack>
@@ -97,13 +97,13 @@ export default function Page() {
                 aria-controls={`${id}-panel3-content`}
                 id={`${id}-panel3-header`}
               >
-                <Typography variant="subtitle2">명예훼손·인격권 침해로 신고 가능한 대상은 무엇인가요?</Typography>
+                <Typography variant="subtitle2">명예훼손 · 인격권 침해로 신고 가능한 대상은 무엇인가요?</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Stack gap={3}>
                   <Typography variant="body2">
-                    데브허브에 등록된 게시물로 인해 명예를 훼손당했다고 생각되거나 초상권·사생활 침해가 발생한 경우 권리
-                    침해 신고를 접수할 수 있습니다.
+                    데브허브에 등록된 게시물로 인해 명예를 훼손당했다고 생각되거나 초상권 · 사생활 침해가 발생한 경우
+                    권리 침해 신고를 접수할 수 있습니다.
                   </Typography>
                   <Typography variant="body2">
                     이때 조치 가능한 게시물은 커뮤니티, 블로그 등 다른 이용자가 작성한 게시물로 한정됩니다.
@@ -123,7 +123,7 @@ export default function Page() {
                 aria-controls={`${id}-panel4-content`}
                 id={`${id}-panel4-header`}
               >
-                <Typography variant="subtitle2">명예훼손·인격권 침해 신고 시 필요한 서류는 무엇인가요?</Typography>
+                <Typography variant="subtitle2">명예훼손 · 인격권 침해 신고 시 필요한 서류는 무엇인가요?</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Stack gap={3}>
@@ -150,12 +150,12 @@ export default function Page() {
                 aria-controls={`${id}-panel5-content`}
                 id={`${id}-panel5-header`}
               >
-                <Typography variant="subtitle2">명예훼손·인격권 침해 신고 시 처리 과정은 어떻게 되나요?</Typography>
+                <Typography variant="subtitle2">명예훼손 · 인격권 침해 신고 시 처리 과정은 어떻게 되나요?</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <Stack gap={3}>
                   <Typography variant="body2">
-                    명예훼손·인격권 침해로 권리 침해 신고가 접수된 커뮤니티, 블로그 등 게시물의 처리 과정은 아래와
+                    명예훼손 · 인격권 침해로 권리 침해 신고가 접수된 커뮤니티, 블로그 등 게시물의 처리 과정은 아래와
                     같습니다.
                   </Typography>
                   <Stack gap={1}>

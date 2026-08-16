@@ -175,7 +175,7 @@ export default function RevenueHub() {
                     return (
                       <MenuItem key={site.id} value={site.siteName}>
                         {site.siteLabel}
-                        {siteTypeLabel ? ` · ${siteTypeLabel}` : ''}
+                        {siteTypeLabel ? `  ·  ${siteTypeLabel}` : ''}
                       </MenuItem>
                     );
                   })}

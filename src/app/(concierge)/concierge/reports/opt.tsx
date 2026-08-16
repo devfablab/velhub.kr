@@ -1107,7 +1107,7 @@ export default function Opt() {
                     })}
                     {appealDialogReport.appeal.contentRequest ? (
                       <Stack gap={0.5}>
-                        <Typography variant="subtitle2">게시물·댓글 처리 요청</Typography>
+                        <Typography variant="subtitle2">게시물 · 댓글 처리 요청</Typography>
                         <Typography variant="body2">
                           {reportAppealContentRequestLabels[appealDialogReport.appeal.contentRequest]}
                         </Typography>

@@ -312,7 +312,7 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
       }
 
       if (!isSettlementAgreed) {
-        throw new Error('정산정보 수집·이용에 동의해 주세요.');
+        throw new Error('정산정보 수집 · 이용에 동의해 주세요.');
       }
 
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paymentEmail.trim())) {
@@ -776,7 +776,7 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
                 }
                 label={
                   <button type="button" className="link-normal" onClick={() => setSettlementAgreementOpen(true)}>
-                    [필수] 정산정보 수집·이용 동의
+                    [필수] 정산정보 수집 · 이용 동의
                   </button>
                 }
               />

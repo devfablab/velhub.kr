@@ -115,16 +115,16 @@ function getReportDetails(report: RawReport) {
   const details: AppealCenterDetail[] = [];
 
   if (report.reportType === 'legal' && report.legal_type === 'illegal_info') {
-    addDetail(details, '신고·요청 구분', legalValueLabels[normalizeText(report.request_type)] ?? report.request_type);
-    addDetail(details, '불법정보 신고·요청 구분', getArrayLabel(report.illegal_info_categories));
-    addDetail(details, '허위조작정보 신고·요청 구분', getArrayLabel(report.false_manipulated_info_categories));
+    addDetail(details, '신고 · 요청 구분', legalValueLabels[normalizeText(report.request_type)] ?? report.request_type);
+    addDetail(details, '불법정보 신고 · 요청 구분', getArrayLabel(report.illegal_info_categories));
+    addDetail(details, '허위조작정보 신고 · 요청 구분', getArrayLabel(report.false_manipulated_info_categories));
     addDetail(details, '신고 내용', report.report_content);
     addDetail(details, '신고 이유', report.report_reason);
     addDetail(details, '신고 근거', report.report_basis);
   } else if (report.reportType === 'legal' && report.legal_type === 'illegal_filming') {
-    addDetail(details, '신고·요청 구분', getArrayLabel(report.filming_request_types));
-    addDetail(details, '신고·요청 사유', getArrayLabel(report.filming_reason_types));
-    addDetail(details, '신고·요청 대상', report.filming_target);
+    addDetail(details, '신고 · 요청 구분', getArrayLabel(report.filming_request_types));
+    addDetail(details, '신고 · 요청 사유', getArrayLabel(report.filming_reason_types));
+    addDetail(details, '신고 · 요청 대상', report.filming_target);
   } else if (report.reportType === 'legal' && report.legal_type === 'privacy') {
     addDetail(
       details,

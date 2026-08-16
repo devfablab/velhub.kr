@@ -92,17 +92,17 @@ const rightsReportCategoryOptions = [
   {
     value: 'rights_defamation',
     label: '명예훼손',
-    description: '특정인 · 단체 대상 비방 · 허위사실 유포',
+    description: '특정인  ·  단체 대상 비방  ·  허위사실 유포',
   },
   {
     value: 'rights_personality_rights',
     label: '초상권 ∙ 사생활 등 인격권',
-    description: '특정인 사진 · 개인정보 무단 노출',
+    description: '특정인 사진  ·  개인정보 무단 노출',
   },
   // {
   //   value: 'rights_copyright',
   //   label: '저작권',
-  //   description: '글 · 이미지 · 영상 등 저작물 무단 복제 · 공유',
+  //   description: '글  ·  이미지  ·  영상 등 저작물 무단 복제  ·  공유',
   // },
   // {
   //   value: 'rights_trademark',
@@ -809,8 +809,8 @@ export default function Opt() {
                         자료
                       </Typography>
                       <Typography variant="body2">
-                        - 저작권 등을 가지고 있는 자로부터 적법하게 복제·전송의 허락을 받은 사실을 증명하는 계약서 사본
-                        또는 그에 상당하는 자료
+                        - 저작권 등을 가지고 있는 자로부터 적법하게 복제 · 전송의 허락을 받은 사실을 증명하는 계약서
+                        사본 또는 그에 상당하는 자료
                       </Typography>
                       <Typography variant="body2">
                         - 그 저작물 등의 저작재산권의 보호기간이 끝난 경우 그 사실을 확인할 수 있는 자료
@@ -847,8 +847,8 @@ export default function Opt() {
                         자료
                       </Typography>
                       <Typography variant="body2">
-                        - 저작권 등을 가지고 있는 자로부터 적법하게 복제·전송의 허락을 받은 사실을 증명하는 계약서 사본
-                        또는 그에 상당하는 자료
+                        - 저작권 등을 가지고 있는 자로부터 적법하게 복제 · 전송의 허락을 받은 사실을 증명하는 계약서
+                        사본 또는 그에 상당하는 자료
                       </Typography>
                       <Typography variant="body2">
                         - 그 저작물 등의 저작재산권의 보호기간이 끝난 경우 그 사실을 확인할 수 있는 자료

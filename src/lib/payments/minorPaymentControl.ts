@@ -31,7 +31,7 @@ export async function enforceMinorPaymentControl(
   if (control.mode === 'blocked_until_adult')
     return {
       guardianIdentityVerificationId: null,
-      error: '이 계정은 만 19세가 될 때까지 결제·구매·후원을 이용할 수 없습니다.',
+      error: '이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.',
     };
   if (!identityVerificationId)
     return { guardianIdentityVerificationId: null, error: '결제를 진행하려면 법정대리인 본인인증이 필요합니다.' };

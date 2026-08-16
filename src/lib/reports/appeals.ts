@@ -188,7 +188,7 @@ export const reportAppealDeletionReasonOptions: Record<ReportAppealCategory, Del
   defamation: [reviewRequiredOption, { value: 'violation_confirmed', label: '명예훼손 확인' }],
   personality_rights: [
     reviewRequiredOption,
-    { value: 'violation_confirmed', label: '초상권·사생활 등 인격권 침해 확인' },
+    { value: 'violation_confirmed', label: '초상권 · 사생활 등 인격권 침해 확인' },
   ],
 };
 
@@ -325,7 +325,7 @@ export function getAppealTreatmentMessage({
     illegal_filming: '불법촬영물등에 해당하는 자료가',
     privacy: '개인정보가 노출된 사실이',
     defamation: '타인의 명예를 훼손하는 내용이',
-    personality_rights: '타인의 초상권·사생활 등 인격권을 침해하는 내용이',
+    personality_rights: '타인의 초상권 · 사생활 등 인격권을 침해하는 내용이',
   };
 
   return `신고 내용과 제출 자료를 검토한 결과 ${violationText[category]} 확인되어 ${targetLabel}을 삭제했습니다.`;
