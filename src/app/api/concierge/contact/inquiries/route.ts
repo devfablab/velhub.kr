@@ -7,14 +7,15 @@ function getText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const currentStigma = await getCurrentStigma();
 
   if (!currentStigma) {
     return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
   }
 
-  const { data, error } = await getSupabaseAdmin()
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
     .from('inquiries')
     .select('id, inquiry_type, status, title, created_at, closed_at, resolution_code')
     .eq('requester_stigma_id', currentStigma.stigmaId)
@@ -24,7 +25,25 @@ export async function GET() {
     return Response.json({ error: '문의 내역을 불러오지 못했습니다.' }, { status: 500 });
   }
 
-  return Response.json({ inquiries: data ?? [] });
+  const includePayments = request.nextUrl.searchParams.get('payments') === 'true';
+  let payments: unknown[] = [];
+
+  if (includePayments) {
+    const { data: paymentRows, error: paymentError } = await supabaseAdmin
+      .from('payments')
+      .select('id, order_no, payment_type, amount, currency, approved_at, status')
+      .eq('buyer_user_id', currentStigma.stigmaId)
+      .eq('status', 'paid')
+      .order('approved_at', { ascending: false });
+
+    if (paymentError) {
+      return Response.json({ error: '결제 내역을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    payments = paymentRows ?? [];
+  }
+
+  return Response.json({ inquiries: data ?? [], payments });
 }
 
 export async function POST(request: NextRequest) {
