@@ -5,6 +5,7 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey } from '@/lib/payments/customer';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
 import {
   assertPortOnePaidPayment,
@@ -109,7 +110,17 @@ export async function POST(request: Request) {
   const currentStigma = await getCurrentStigma();
   if (!currentStigma) return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as { purchases?: unknown; billingMethodId?: unknown } | null;
+  const body = (await request.json().catch(() => null)) as {
+    purchases?: unknown;
+    billingMethodId?: unknown;
+    guardianIdentityVerificationId?: unknown;
+  } | null;
+  const minorControl = await enforceMinorPaymentControl(
+    currentStigma.stigmaId,
+    typeof body?.guardianIdentityVerificationId === 'string' ? body.guardianIdentityVerificationId : null,
+  );
+  if (minorControl.error)
+    return NextResponse.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
   const purchases = Array.isArray(body?.purchases) ? body.purchases : [];
   const billingMethodId = typeof body?.billingMethodId === 'string' ? body.billingMethodId : '';
   const normalizedPurchases: MembershipPurchase[] = purchases.flatMap((purchase) => {

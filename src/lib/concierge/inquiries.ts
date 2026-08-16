@@ -8,6 +8,31 @@ export const inquiryTypes = [
 ] as const;
 
 export type InquiryType = (typeof inquiryTypes)[number];
+export const inquirySubtypes = {
+  minor_purchase_cancellation: [{ value: 'minor_contract_cancellation', label: '미성년자 결제 청약취소' }],
+  payment_refund_error: [
+    { value: 'pg_payment_declined', label: 'PG 결제 거절' },
+    { value: 'payment_entitlement_missing', label: '결제 완료 후 이용 권한 미반영' },
+    { value: 'refund_status_not_reflected', label: '환불 완료 후 처리 미반영' },
+  ],
+  account_identity: [
+    { value: 'account_access', label: '계정 이용 문제' },
+    { value: 'identity_verification', label: '본인인증 문제' },
+  ],
+  creator_settlement: [
+    { value: 'creator_application', label: '작가 신청 문제' },
+    { value: 'settlement_information', label: '정산 정보 문제' },
+    { value: 'settlement_payment', label: '정산 지급 문제' },
+  ],
+  service_question: [
+    { value: 'service_usage', label: '서비스 이용 문의' },
+    { value: 'service_policy', label: '서비스 정책 문의' },
+  ],
+  bug_report: [
+    { value: 'screen_error', label: '화면 오류' },
+    { value: 'feature_error', label: '기능 오류' },
+  ],
+} satisfies Record<InquiryType, { value: string; label: string }[]>;
 
 export const inquiryTypeLabels: Record<InquiryType, string> = {
   minor_purchase_cancellation: '미성년자 결제 청약취소',

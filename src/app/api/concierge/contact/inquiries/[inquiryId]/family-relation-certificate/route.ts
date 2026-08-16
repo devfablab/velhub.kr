@@ -70,6 +70,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       inquiry_id: inquiryId,
       attachment_type: 'family_relation_certificate',
       storage_path: storagePath,
+      storage_bucket: bucket,
       mime_type: 'application/pdf',
       submitted_by_stigma_id: currentStigma.stigmaId,
       submitted_at: new Date().toISOString(),

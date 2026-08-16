@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
@@ -16,6 +17,7 @@ type DonationStartBody = {
   amount?: number;
   successUrl?: string;
   failUrl?: string;
+  guardianIdentityVerificationId?: string;
 };
 
 type SiteRow = {
@@ -316,11 +318,14 @@ export async function POST(request: NextRequest) {
   try {
     const session = await verifySession({ siteId: null });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
     const body = (await request.json()) as DonationStartBody;
+    const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
+    if (minorControl.error)
+      return Response.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
 
     const siteName = normalizeText(body.siteName).toLowerCase();
     const targetTypeValue = normalizeText(body.targetType).toLowerCase();

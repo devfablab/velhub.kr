@@ -17,6 +17,8 @@ import {
   useTheme,
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
+import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
+import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentTerms from './PaymentTerms';
 
@@ -31,6 +33,7 @@ type DonationStartResponse = {
   amount?: number;
   redirectUrl?: string;
   error?: string;
+  guardianAuthRequired?: boolean;
 };
 
 type CommonProps = {
@@ -67,13 +70,6 @@ type IdentityStatusResponse = {
 
 type DonationStatusResponse = {
   isEnabled?: boolean;
-};
-
-type SitePublicResponse = {
-  siteInfo?: {
-    purchase_available?: boolean;
-  };
-  error?: string;
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -182,6 +178,7 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
+  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -192,19 +189,19 @@ export default function DonationButton(props: Props) {
   const [hasIdentity, setHasIdentity] = useState(false);
   const [isMinor, setIsMinor] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
-  const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
   const donationTitle = getDonationTitle(props);
+  const donationTargetType = getTargetType(props);
 
   useEffect(() => {
     async function checkDonationStatus() {
       try {
         const statusParams = new URLSearchParams({
           siteName: props.siteName,
-          targetType: getTargetType(props),
+          targetType: donationTargetType,
         });
 
         const [identityResponse, donationStatusResponse] = await Promise.all([
@@ -239,9 +236,9 @@ export default function DonationButton(props: Props) {
     return () => {
       setCanShowDonationButton(true);
     };
-  }, [props.siteName, props.targetType]);
+  }, [donationTargetType, props.siteName]);
 
-  if (!canShowDonationButton) {
+  if (!canShowDonationButton || !isMinorControlLoaded || isBlocked) {
     return null;
   }
 
@@ -283,7 +280,7 @@ export default function DonationButton(props: Props) {
     setErrorMessage('');
   }
 
-  async function handleDonate() {
+  async function handleDonate(guardianIdentityVerificationId?: string) {
     try {
       setErrorMessage('');
       updateProcessing(true);
@@ -300,12 +297,18 @@ export default function DonationButton(props: Props) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(createRequestBody(props, amount)),
+        body: JSON.stringify({ ...createRequestBody(props, amount), guardianIdentityVerificationId }),
       });
 
       const result = (await response.json()) as DonationStartResponse;
 
       if (!response.ok) {
+        if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
+          const verifiedId = await requestGuardianIdentityVerification();
+          updateProcessing(false);
+          await handleDonate(verifiedId);
+          return;
+        }
         throw new Error(result.error ?? '후원을 시작하지 못했습니다.');
       }
 
@@ -409,7 +412,12 @@ export default function DonationButton(props: Props) {
               >
                 취소
               </button>
-              <button type="button" className="button medium submit" onClick={handleDonate} disabled={isProcessing}>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleDonate()}
+                disabled={isProcessing}
+              >
                 후원
               </button>
             </Stack>
@@ -426,7 +434,12 @@ export default function DonationButton(props: Props) {
             <button type="button" className="button medium close" onClick={handleCloseDialog} disabled={isProcessing}>
               취소
             </button>
-            <button type="button" className="button medium submit" onClick={handleDonate} disabled={isProcessing}>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleDonate()}
+              disabled={isProcessing}
+            >
               후원
             </button>
           </DialogActions>

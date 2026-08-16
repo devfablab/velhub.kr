@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/concierge/inquiries/retention",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { isInquiryType } from '@/lib/concierge/inquiries';
+import { inquirySubtypes, isInquiryType } from '@/lib/concierge/inquiries';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin();
   const { data, error } = await supabaseAdmin
     .from('inquiries')
-    .select('id, inquiry_type, status, title, created_at, closed_at, resolution_code')
+    .select('id, inquiry_type, inquiry_subtype, status, title, created_at, closed_at, resolution_code')
     .eq('requester_stigma_id', currentStigma.stigmaId)
     .order('created_at', { ascending: false });
 
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   const inquiryType = body?.inquiryType;
+  const inquirySubtype = getText(body?.inquirySubtype);
   const title = getText(body?.title);
   const content = getText(body?.content);
   const paymentId = getText(body?.paymentId);
@@ -62,6 +63,8 @@ export async function POST(request: NextRequest) {
   if (!isInquiryType(inquiryType)) {
     return Response.json({ error: '문의 유형을 선택해 주세요.' }, { status: 400 });
   }
+  if (!inquirySubtypes[inquiryType].some((option) => option.value === inquirySubtype))
+    return Response.json({ error: '문의 세부 유형을 선택해 주세요.' }, { status: 400 });
 
   if (!title || title.length > 120 || !content || content.length > 10000) {
     return Response.json({ error: '제목 또는 문의 내용을 확인해 주세요.' }, { status: 400 });
@@ -90,6 +93,7 @@ export async function POST(request: NextRequest) {
     .insert({
       requester_stigma_id: currentStigma.stigmaId,
       inquiry_type: inquiryType,
+      inquiry_subtype: inquirySubtype,
       title,
       content,
     })

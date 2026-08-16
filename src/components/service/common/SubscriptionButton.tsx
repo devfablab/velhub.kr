@@ -19,6 +19,8 @@ import {
   useTheme,
 } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
+import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
+import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
@@ -92,6 +94,7 @@ type SubscriptionStartResponse =
     }
   | {
       error: string;
+      guardianAuthRequired?: boolean;
     };
 
 type SubscriptionActionResponse =
@@ -238,6 +241,7 @@ export default function SubscriptionButton({
   selectedBoard,
   onStatusChange,
 }: Props) {
+  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const [isReady, setIsReady] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
   const [isMinor, setIsMinor] = useState(false);
@@ -409,7 +413,7 @@ export default function SubscriptionButton({
     setIsCancelDialogOpen(false);
   }
 
-  async function handleStartSubscription() {
+  async function handleStartSubscription(guardianIdentityVerificationId?: string) {
     try {
       setErrorMessage('');
       setIsProcessing(true);
@@ -427,12 +431,18 @@ export default function SubscriptionButton({
           seriesName: selectedSeries?.series_key ?? null,
           successUrl: `/${siteName}/${boardName}/subscription/success`,
           failUrl: `/${siteName}/${boardName}/subscription/fail`,
+          guardianIdentityVerificationId,
         }),
       });
 
       const result = (await response.json()) as SubscriptionStartResponse;
 
       if (!response.ok) {
+        if ('guardianAuthRequired' in result && result.guardianAuthRequired && !guardianIdentityVerificationId) {
+          setIsProcessing(false);
+          await handleStartSubscription(await requestGuardianIdentityVerification());
+          return;
+        }
         throw new Error('error' in result ? result.error : '구독을 시작하지 못했습니다.');
       }
 
@@ -640,7 +650,7 @@ export default function SubscriptionButton({
     return;
   }
 
-  if (isUnder14Age) {
+  if (!isMinorControlLoaded || isUnder14Age || isBlocked) {
     return null;
   }
 
@@ -745,7 +755,7 @@ export default function SubscriptionButton({
               <button
                 type="button"
                 className="button medium submit"
-                onClick={handleStartSubscription}
+                onClick={() => void handleStartSubscription()}
                 disabled={isProcessing}
               >
                 {getDialogSubmitText(subscriptionStatus)}
@@ -793,7 +803,7 @@ export default function SubscriptionButton({
             <button
               type="button"
               className="button medium submit"
-              onClick={handleStartSubscription}
+              onClick={() => void handleStartSubscription()}
               disabled={isProcessing}
             >
               {getDialogSubmitText(subscriptionStatus)}

@@ -350,6 +350,12 @@ export default function Container({ children }: ContainerProps) {
                     <span>신고센터</span>
                   </Anchor>
                 </MenuItem>
+                <MenuItem key="contact" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/contact">
+                    <SupportAgentOutlinedIcon fontSize="small" />
+                    <span>문의하기</span>
+                  </Anchor>
+                </MenuItem>
                 <MenuItem key="rights" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/rights">
                     <ReportOutlinedIcon fontSize="small" />
@@ -363,12 +369,20 @@ export default function Container({ children }: ContainerProps) {
                   </Anchor>
                 </MenuItem>
                 {userProfile.globalRole === 'admin' ? (
-                  <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
-                    <Anchor href="/concierge/reports">
-                      <ReportOutlinedIcon fontSize="small" />
-                      <span>신고 내역</span>
-                    </Anchor>
-                  </MenuItem>
+                  <>
+                    <MenuItem key="inquiries" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/inquiries">
+                        <SupportAgentOutlinedIcon fontSize="small" />
+                        <span>문의 내역</span>
+                      </Anchor>
+                    </MenuItem>
+                    <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
+                      <Anchor href="/concierge/reports">
+                        <ReportOutlinedIcon fontSize="small" />
+                        <span>신고 내역</span>
+                      </Anchor>
+                    </MenuItem>
+                  </>
                 ) : null}
                 <ListSubheader className={styles['VhiDrawer-subheader']}>기타</ListSubheader>
                 {userProfile.isLoggedIn

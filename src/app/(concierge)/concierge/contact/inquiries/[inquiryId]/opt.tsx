@@ -1,8 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryResolutionLabels,
   inquiryTypeLabels,
@@ -17,6 +18,10 @@ type Inquiry = {
   content: string;
   resolution_code: InquiryResolutionCode | null;
   resolution_summary: string | null;
+  payment_control_requested_at: string | null;
+  payment_control_selected_at: string | null;
+  pg_cancellation_unavailable_at: string | null;
+  manual_refund_ready_at: string | null;
 };
 
 export default function Opt() {
@@ -26,6 +31,11 @@ export default function Opt() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [savingControl, setSavingControl] = useState(false);
+  const [holderType, setHolderType] = useState('account_holder');
+  const [holderName, setHolderName] = useState('');
+  const [bankCode, setBankCode] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
 
   async function load() {
     const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}`, { cache: 'no-store' });
@@ -64,6 +74,37 @@ export default function Opt() {
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
+  }
+
+  async function choosePaymentControl(mode: 'blocked_until_adult' | 'guardian_auth_required') {
+    setSavingControl(true);
+    setError('');
+    const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}/payment-minor-control`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode }),
+    });
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (!response.ok) setError(result?.error ?? '결제 방침을 저장하지 못했습니다.');
+    else {
+      setSuccess('향후 결제 방침을 저장했습니다.');
+      await load();
+    }
+    setSavingControl(false);
+  }
+
+  async function saveRefundAccount() {
+    const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}/refund-account`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ holderType, holderName, bankCode, accountNumber }),
+    });
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (!response.ok) setError(result?.error ?? '반환 계좌를 저장하지 못했습니다.');
+    else {
+      setSuccess('예외 반환 계좌를 저장했습니다.');
+      await load();
+    }
   }
 
   if (error && !inquiry) return <Alert severity="error">{error}</Alert>;
@@ -105,6 +146,60 @@ export default function Opt() {
                 {uploading ? '제출 중' : '제출'}
               </Button>
             </Box>
+          </Stack>
+        </Paper>
+      ) : null}
+      {inquiry.payment_control_requested_at && !inquiry.payment_control_selected_at ? (
+        <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h6" fontWeight={700}>
+              향후 결제·구매·후원 방침
+            </Typography>
+            <Typography>청약취소 처리 후 만 19세가 되기 전까지 적용할 방침을 선택해 주세요.</Typography>
+            <Button
+              variant="contained"
+              disabled={savingControl}
+              onClick={() => void choosePaymentControl('blocked_until_adult')}
+            >
+              이 계정에서 만 19세가 될 때까지 결제·구매·후원을 허용하지 않습니다.
+            </Button>
+            <Button
+              variant="outlined"
+              disabled={savingControl}
+              onClick={() => void choosePaymentControl('guardian_auth_required')}
+            >
+              이후 결제마다 법정대리인 본인인증 후 허용합니다.
+            </Button>
+          </Stack>
+        </Paper>
+      ) : null}
+      {inquiry.pg_cancellation_unavailable_at && !inquiry.manual_refund_ready_at ? (
+        <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+          <Stack spacing={2}>
+            <Typography variant="h6" fontWeight={700}>
+              반환 계좌 입력
+            </Typography>
+            <Typography>원결제수단 취소가 불가능하여 계정주 본인, 부 또는 모 명의 계좌로 전액을 반환합니다.</Typography>
+            <TextField
+              select
+              label="계좌 명의자"
+              value={holderType}
+              onChange={(event) => setHolderType(event.target.value)}
+            >
+              <MenuItem value="account_holder">계정주 본인</MenuItem>
+              <MenuItem value="father">부</MenuItem>
+              <MenuItem value="mother">모</MenuItem>
+            </TextField>
+            <TextField label="예금주명" value={holderName} onChange={(event) => setHolderName(event.target.value)} />
+            <TextField label="은행 코드" value={bankCode} onChange={(event) => setBankCode(event.target.value)} />
+            <TextField
+              label="계좌번호"
+              value={accountNumber}
+              onChange={(event) => setAccountNumber(event.target.value)}
+            />
+            <Button variant="contained" onClick={() => void saveRefundAccount()}>
+              반환 계좌 저장
+            </Button>
           </Stack>
         </Paper>
       ) : null}

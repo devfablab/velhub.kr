@@ -19,6 +19,10 @@ const secondaryMenus = [
     label: '가이드라인',
   },
   {
+    href: '/concierge/contact',
+    label: '문의하기',
+  },
+  {
     href: '/concierge/help',
     label: '신고센터',
   },
@@ -39,7 +43,11 @@ type SecondaryMenuProps = {
 export default function SecondaryMenu({ isAdmin = false }: SecondaryMenuProps) {
   const pathname = usePathname();
   const visibleMenus = isAdmin
-    ? [...secondaryMenus, { href: '/concierge/reports', label: '신고 내역' }]
+    ? [
+        ...secondaryMenus,
+        { href: '/concierge/inquiries', label: '문의 내역' },
+        { href: '/concierge/reports', label: '신고 내역' },
+      ]
     : secondaryMenus;
 
   return (

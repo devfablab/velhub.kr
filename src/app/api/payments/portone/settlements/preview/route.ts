@@ -59,6 +59,7 @@ type SettlementPreviewItem = {
   splitAmount: number;
   refundedSplitAmount: number;
   settlementAmount: number;
+  settlementAdjustmentAmount: number;
 };
 
 type SettlementPreviewTotals = {
@@ -130,6 +131,7 @@ function createSettlementPreviewItem({
     splitAmount: split.amount,
     refundedSplitAmount,
     settlementAmount: Math.max(0, split.amount - refundedSplitAmount),
+    settlementAdjustmentAmount: 0,
   };
 }
 
@@ -288,6 +290,21 @@ export async function GET(request: Request) {
     const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
     const paymentMap = createPaymentMap(payments);
 
+    const splitIds = splits.map((split) => split.id);
+    const { data: adjustmentRows } = splitIds.length
+      ? await supabaseAdmin
+          .from('creator_settlement_adjustment_allocations')
+          .select('payment_split_id, amount')
+          .in('payment_split_id', splitIds)
+      : { data: [] };
+    const adjustmentBySplit = new Map<string, number>();
+    for (const row of adjustmentRows ?? []) {
+      adjustmentBySplit.set(
+        row.payment_split_id,
+        (adjustmentBySplit.get(row.payment_split_id) ?? 0) + Number(row.amount),
+      );
+    }
+
     const items = sortItems(
       splits.flatMap((split) => {
         const payment = paymentMap.get(split.payment_id);
@@ -297,10 +314,18 @@ export async function GET(request: Request) {
         }
 
         return [
-          createSettlementPreviewItem({
-            split,
-            payment,
-          }),
+          (() => {
+            const item = createSettlementPreviewItem({
+              split,
+              payment,
+            });
+            const settlementAdjustmentAmount = Math.min(item.settlementAmount, adjustmentBySplit.get(split.id) ?? 0);
+            return {
+              ...item,
+              settlementAdjustmentAmount,
+              settlementAmount: item.settlementAmount - settlementAdjustmentAmount,
+            };
+          })(),
         ];
       }),
     );

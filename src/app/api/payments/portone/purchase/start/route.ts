@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import {
@@ -22,6 +23,7 @@ type PostPurchaseStartBody = {
   contentId?: string;
   successUrl?: string;
   failUrl?: string;
+  guardianIdentityVerificationId?: string;
 };
 
 type SiteRow = {
@@ -277,6 +279,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as PostPurchaseStartBody;
+    const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
+    if (minorControl.error)
+      return Response.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
     const siteName = normalizeText(body.siteName).toLowerCase();
     const boardName = normalizeText(body.boardName).toLowerCase();
     const contentId = normalizeText(body.contentId);

@@ -41,13 +41,31 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('attachment_type', 'family_relation_certificate')
     .is('deleted_at', null)
     .maybeSingle();
-  if (!attachment) return Response.json({ error: '제출된 가족관계증명서가 없습니다.' }, { status: 400 });
   const { data: stigma } = await db
     .from('stigmas')
     .select('user_id')
     .eq('id', inquiry.requester_stigma_id)
     .maybeSingle();
   if (!stigma) return Response.json({ error: '계정 정보를 찾을 수 없습니다.' }, { status: 404 });
+  const { data: existingIdentity } = await db
+    .from('chorogons')
+    .select('parent_relationship_document_url')
+    .eq('user_id', stigma.user_id)
+    .maybeSingle();
+  const documentPath = attachment?.storage_path ?? existingIdentity?.parent_relationship_document_url;
+  if (!documentPath) return Response.json({ error: '확인할 가족관계증명서가 없습니다.' }, { status: 400 });
+  if (!attachment) {
+    await db
+      .from('inquiry_attachments')
+      .insert({
+        inquiry_id: inquiryId,
+        attachment_type: 'family_relation_certificate',
+        storage_path: documentPath,
+        storage_bucket: 'business-license',
+        mime_type: 'application/pdf',
+        submitted_by_stigma_id: admin.stigmaId,
+      });
+  }
   const { error } = await db
     .from('chorogons')
     .update({
@@ -55,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       father_birth_date: fatherBirthDate ? encrypt(fatherBirthDate) : null,
       mother_name: motherName ? encrypt(motherName) : null,
       mother_birth_date: motherBirthDate ? encrypt(motherBirthDate) : null,
-      parent_relationship_document_url: attachment.storage_path,
+      parent_relationship_document_url: documentPath,
       parent_relationship_verified_at: new Date().toISOString(),
       parent_relationship_verified_by: admin.stigmaId,
     })

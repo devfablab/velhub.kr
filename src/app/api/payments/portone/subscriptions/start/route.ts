@@ -3,6 +3,7 @@ import { isAtLeast14, isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
+import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
   assertPortOnePaidPayment,
@@ -43,6 +44,7 @@ type SubscriptionStartBody = {
   orderName?: string;
   successUrl?: string;
   failUrl?: string;
+  guardianIdentityVerificationId?: string;
 };
 
 type SiteRow = {
@@ -444,9 +446,12 @@ export async function POST(request: Request) {
       siteId: site.id,
     });
 
-    if (!session.authUserId) {
+    if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
+    const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
+    if (minorControl.error)
+      return Response.json({ error: minorControl.error, guardianAuthRequired: true }, { status: 403 });
 
     const subscriptionTarget = await getSubscriptionTarget({
       supabaseAdmin,

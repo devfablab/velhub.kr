@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
 
   let query = getSupabaseAdmin()
     .from('inquiries')
-    .select('id, requester_stigma_id, inquiry_type, status, title, created_at, closed_at, resolution_code')
+    .select(
+      'id, requester_stigma_id, inquiry_type, inquiry_subtype, status, title, created_at, closed_at, resolution_code',
+    )
     .order('created_at', { ascending: false });
 
   if (type) {

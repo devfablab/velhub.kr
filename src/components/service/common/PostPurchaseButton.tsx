@@ -16,6 +16,8 @@ import {
   useTheme,
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
+import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
+import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
@@ -32,6 +34,7 @@ type PostPurchaseStartResponse = {
   redirectUrl?: string;
   failUrl?: string;
   error?: string;
+  guardianAuthRequired?: boolean;
 };
 
 type Props = {
@@ -127,6 +130,7 @@ function getFailUrl({ siteName, boardName, contentId, failUrl }: Props) {
 }
 
 export default function PostPurchaseButton(props: Props) {
+  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const { siteName, boardName, contentId, popup, disabled = false, onProcessingChange } = props;
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -227,7 +231,7 @@ export default function PostPurchaseButton(props: Props) {
     setIsIdentityDialogOpen(false);
   }
 
-  async function handlePurchase() {
+  async function handlePurchase(guardianIdentityVerificationId?: string) {
     try {
       setErrorMessage('');
 
@@ -245,12 +249,18 @@ export default function PostPurchaseButton(props: Props) {
           contentId,
           successUrl: getSuccessUrl(props),
           failUrl: getFailUrl(props),
+          guardianIdentityVerificationId,
         }),
       });
 
       const result = (await response.json()) as PostPurchaseStartResponse;
 
       if (!response.ok) {
+        if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
+          updateProcessing(false);
+          await handlePurchase(await requestGuardianIdentityVerification());
+          return;
+        }
         throw new Error(result.error ?? '포스팅 구매를 시작하지 못했습니다.');
       }
 
@@ -309,7 +319,7 @@ export default function PostPurchaseButton(props: Props) {
     return;
   }
 
-  if (isUnder14Age) {
+  if (!isMinorControlLoaded || isUnder14Age || isBlocked) {
     return null;
   }
 
@@ -322,7 +332,7 @@ export default function PostPurchaseButton(props: Props) {
             <button
               type="button"
               className={popup ? 'button medium submit' : styles.button}
-              onClick={handlePurchase}
+              onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
             >
               {popup ? null : <SellOutlinedIcon />}
@@ -367,7 +377,7 @@ export default function PostPurchaseButton(props: Props) {
               <button
                 type="button"
                 className="button medium submit"
-                onClick={handlePurchase}
+                onClick={() => void handlePurchase()}
                 disabled={disabled || isProcessing}
               >
                 결제하기
@@ -401,7 +411,7 @@ export default function PostPurchaseButton(props: Props) {
             <button
               type="button"
               className="button medium submit"
-              onClick={handlePurchase}
+              onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
             >
               결제하기

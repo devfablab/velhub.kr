@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({
+    identityVerificationId,
     name: verifiedIdentity.name,
     birth_date: verifiedIdentity.birthDate,
     gender: verifiedIdentity.gender,

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { Alert, Box, Button, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
-import { inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
 
 type InquiryRow = {
@@ -31,6 +31,7 @@ export default function Opt() {
   const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [inquiryType, setInquiryType] = useState<InquiryType>('service_question');
+  const [inquirySubtype, setInquirySubtype] = useState(inquirySubtypes.service_question[0].value);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [paymentId, setPaymentId] = useState('');
@@ -71,6 +72,7 @@ export default function Opt() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           inquiryType,
+          inquirySubtype,
           title,
           content,
           paymentId: inquiryType === 'minor_purchase_cancellation' ? paymentId : undefined,
@@ -105,9 +107,25 @@ export default function Opt() {
             select
             label="문의 유형"
             value={inquiryType}
-            onChange={(event) => setInquiryType(event.target.value as InquiryType)}
+            onChange={(event) => {
+              const next = event.target.value as InquiryType;
+              setInquiryType(next);
+              setInquirySubtype(inquirySubtypes[next][0].value);
+            }}
           >
             {inquiryTypeOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="세부 유형"
+            value={inquirySubtype}
+            onChange={(event) => setInquirySubtype(event.target.value)}
+          >
+            {inquirySubtypes[inquiryType].map((option) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}
               </MenuItem>

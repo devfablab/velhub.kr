@@ -8,7 +8,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ inquiryId:
   const { data, error } = await getSupabaseAdmin()
     .from('inquiries')
     .select(
-      'id, inquiry_type, status, title, content, created_at, closed_at, resolution_code, resolution_summary, inquiry_messages(id, sender_type, message, created_at), inquiry_attachments(id, attachment_type, submitted_at)',
+      'id, inquiry_type, inquiry_subtype, status, title, content, created_at, closed_at, resolution_code, resolution_summary, payment_control_requested_at, payment_control_selected_at, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_messages(id, sender_type, message, created_at), inquiry_attachments(id, attachment_type, submitted_at)',
     )
     .eq('id', inquiryId)
     .eq('requester_stigma_id', currentStigma.stigmaId)

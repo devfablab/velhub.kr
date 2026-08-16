@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
+import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import {
   formatMembershipPrice,
   getMembershipFeature,
@@ -14,6 +15,7 @@ import {
   MembershipFeatureKey,
   MembershipType,
 } from '@/lib/memberships/catalog';
+import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
@@ -171,6 +173,7 @@ function getAge(birthDate: string | null | undefined) {
 }
 
 export default function MembershipPlan() {
+  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const searchParams = useSearchParams();
   const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
   const [memberships, setMemberships] = useState<MembershipResponse['memberships']>([]);
@@ -259,19 +262,25 @@ export default function MembershipPlan() {
     [selectedItems],
   );
 
-  if (!isLoading && isUnder14Age) {
+  if (!isMinorControlLoaded) return null;
+
+  if (!isLoading && (isUnder14Age || isBlocked)) {
     return (
       <section className={`paper ${styles.paper}`}>
         <p className="alert warning">
           <WarningAmberRoundedIcon />
           <h2>멤버십</h2>
-          <span>결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭</span>
+          <span>
+            {isBlocked
+              ? '이 계정은 만 19세가 될 때까지 결제·구매·후원을 이용할 수 없습니다.'
+              : '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭'}
+          </span>
         </p>
       </section>
     );
   }
 
-  async function handlePayment() {
+  async function handlePayment(guardianIdentityVerificationId?: string) {
     if (!selectedItems.length || !selectedBillingMethodId || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -299,11 +308,17 @@ export default function MembershipPlan() {
         body: JSON.stringify({
           billingMethodId: selectedBillingMethodId,
           purchases: selectedItems.map((item) => ({ type: item.type, featureKeys: item.featureKeys })),
+          guardianIdentityVerificationId,
         }),
       });
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; guardianAuthRequired?: boolean };
 
       if (!response.ok) {
+        if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
+          setIsSubmitting(false);
+          await handlePayment(await requestGuardianIdentityVerification());
+          return;
+        }
         throw new Error(result.error || '멤버십 결제를 완료하지 못했습니다.');
       }
 
