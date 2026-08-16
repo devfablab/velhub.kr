@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Stack, Tab, Tabs, Typography } from '@mui/material';
-import { inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
 
 type InquiryRow = {
@@ -12,6 +12,7 @@ type InquiryRow = {
   title: string;
   created_at: string;
   resolution_code: string | null;
+  inquiry_subtype: string | null;
 };
 
 export default function Opt() {
@@ -53,7 +54,9 @@ export default function Opt() {
             <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
               <Anchor href={`/concierge/inquiries/${inquiry.id}`}>{inquiry.title}</Anchor>
               <Typography variant="body2" color="text.secondary">
-                {inquiry.status} · {new Date(inquiry.created_at).toLocaleString('ko-KR')}
+                {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
+                  inquiryTypeLabels[inquiry.inquiry_type]}{' '}
+                / {inquiry.status} / {new Date(inquiry.created_at).toLocaleString('ko-KR')}
               </Typography>
             </Box>
           ))}

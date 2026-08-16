@@ -2,7 +2,10 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Alert, Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryResolutionLabels,
   inquiryTypeLabels,
@@ -10,6 +13,7 @@ import {
   type InquiryType,
 } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
+import InquiryDetails from '@/components/concierge/InquiryDetails';
 
 type Inquiry = {
   id: string;
@@ -25,6 +29,10 @@ type Inquiry = {
   payment_control_requested_at: string | null;
   payment_control_selected_at: string | null;
   pg_cancellation_unavailable_at: string | null;
+  inquiry_subtype: string | null;
+  inquiry_bug_details: Parameters<typeof InquiryDetails>[0]['bugDetails'];
+  inquiry_payment_details: Parameters<typeof InquiryDetails>[0]['paymentDetails'];
+  evidenceUrl: string | null;
 };
 type Parent = {
   fatherName: string;
@@ -126,7 +134,7 @@ export default function Opt() {
       body: JSON.stringify({ fatherName, fatherBirthDate, motherName, motherBirthDate }),
     });
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
-    if (!response.ok) setError(result?.error ?? '부 · 모 확인 정보를 저장하지 못했습니다.');
+    if (!response.ok) setError(result?.error ?? '부 / 모 확인 정보를 저장하지 못했습니다.');
     else {
       setError('');
       await requestPaymentControl();
@@ -165,7 +173,13 @@ export default function Opt() {
     setIsSaving(false);
   }
 
-  if (error && !inquiry) return <Alert severity="error">{error}</Alert>;
+  if (error && !inquiry)
+    return (
+      <p className="alert error">
+        <ErrorOutlineRoundedIcon />
+        <span>{error}</span>
+      </p>
+    );
   if (!inquiry) return null;
   const options = resolutionOptions(inquiry.inquiry_type);
   return (
@@ -174,10 +188,15 @@ export default function Opt() {
         <Stack gap={1}>
           <Typography variant="subtitle2">{inquiryTypeLabels[inquiry.inquiry_type]}</Typography>
           <Typography variant="h6">{inquiry.title}</Typography>
-          <Typography whiteSpace="pre-wrap">{inquiry.content}</Typography>
-          {inquiry.inquiry_orders[0] ? (
-            <Typography variant="body2">연결 결제 ID: {inquiry.inquiry_orders[0].payment_id}</Typography>
-          ) : null}
+          <InquiryDetails
+            inquiryType={inquiry.inquiry_type}
+            inquirySubtype={inquiry.inquiry_subtype}
+            content={inquiry.content}
+            bugDetails={inquiry.inquiry_bug_details}
+            paymentDetails={inquiry.inquiry_payment_details}
+            paymentId={inquiry.inquiry_orders[0]?.payment_id}
+            evidenceUrl={inquiry.evidenceUrl}
+          />
           {inquiry.inquiry_type === 'minor_purchase_cancellation' ? (
             <>
               {certificateUrl ? (
@@ -185,7 +204,10 @@ export default function Opt() {
                   가족관계증명서 PDF 확인
                 </Anchor>
               ) : (
-                <Alert severity="warning">제출된 가족관계증명서가 없습니다.</Alert>
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>제출된 가족관계증명서가 없습니다.</span>
+                </p>
               )}
               <Typography variant="subtitle2">부 성명</Typography>
               <TextField
@@ -216,7 +238,7 @@ export default function Opt() {
                 onChange={(event) => setMotherBirthDate(event.target.value)}
               />
               <button type="button" className="button medium submit" onClick={() => void saveParents()}>
-                부 · 모 확인 및 결제 방침 선택 요청
+                부 / 모 확인 및 결제 방침 선택 요청
               </button>
             </>
           ) : null}
@@ -267,7 +289,12 @@ export default function Opt() {
               />
             </>
           ) : null}
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? (
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{error}</span>
+            </p>
+          ) : null}
           {inquiry.inquiry_type === 'minor_purchase_cancellation' &&
           inquiry.payment_control_selected_at &&
           inquiry.status !== 'closed' ? (
@@ -281,10 +308,13 @@ export default function Opt() {
             </button>
           ) : null}
           {inquiry.pg_cancellation_unavailable_at ? (
-            <Alert severity={manualRefund.remainingAdjustmentAmount > 0 ? 'warning' : 'info'}>
-              창작자 정산조정 잔액: {manualRefund.remainingAdjustmentAmount.toLocaleString('ko-KR')}원 · 반환 계좌:{' '}
-              {manualRefund.hasAccount ? '등록됨' : '미등록'}
-            </Alert>
+            <p className={`alert ${manualRefund.remainingAdjustmentAmount > 0 ? 'warning' : 'info'}`}>
+              {manualRefund.remainingAdjustmentAmount > 0 ? <WarningAmberRoundedIcon /> : <InfoOutlineRoundedIcon />}
+              <span>
+                창작자 정산조정 잔액: {manualRefund.remainingAdjustmentAmount.toLocaleString('ko-KR')}원 / 반환 계좌:{' '}
+                {manualRefund.hasAccount ? '등록됨' : '미등록'}
+              </span>
+            </p>
           ) : null}
           {inquiry.pg_cancellation_unavailable_at &&
           manualRefund.hasAccount &&

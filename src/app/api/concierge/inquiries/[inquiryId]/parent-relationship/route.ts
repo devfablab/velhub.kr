@@ -80,6 +80,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       parent_relationship_verified_by: admin.stigmaId,
     })
     .eq('user_id', stigma.user_id);
-  if (error) return Response.json({ error: '부 · 모 확인 정보를 저장하지 못했습니다.' }, { status: 500 });
+  if (error) return Response.json({ error: '부 / 모 확인 정보를 저장하지 못했습니다.' }, { status: 500 });
   return Response.json({ ok: true });
 }

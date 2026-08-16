@@ -49,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         ? decode(identity?.mother_name)
         : decode(identity?.name);
   if (!expected || expected !== holderName)
-    return Response.json({ error: '계정주 또는 확인된 부 · 모 명의의 계좌만 등록할 수 있습니다.' }, { status: 400 });
+    return Response.json({ error: '계정주 또는 확인된 부 / 모 명의의 계좌만 등록할 수 있습니다.' }, { status: 400 });
   const { error } = await db.from('inquiry_refund_accounts').upsert(
     {
       inquiry_id: inquiryId,

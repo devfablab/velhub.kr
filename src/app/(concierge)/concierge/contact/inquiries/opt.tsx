@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Alert, Box, Stack, Typography } from '@mui/material';
-import { inquiryTypeLabels, type InquiryType } from '@/lib/concierge/inquiries';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import { Box, Stack, Typography } from '@mui/material';
+import { inquirySubtypes, inquiryTypeLabels, type InquiryType } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
 
 type InquiryRow = {
@@ -11,6 +12,7 @@ type InquiryRow = {
   status: string;
   title: string;
   created_at: string;
+  inquiry_subtype: string | null;
 };
 
 export default function Opt() {
@@ -40,14 +42,20 @@ export default function Opt() {
     <Stack gap={3}>
       <div className="paper">
         <Stack gap={1.5}>
-          {error ? <Alert severity="error">{error}</Alert> : null}
+          {error ? (
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{error}</span>
+            </p>
+          ) : null}
           {!error && inquiries.length === 0 ? <Typography variant="body2">문의 내역이 없습니다.</Typography> : null}
           {inquiries.map((inquiry) => (
             <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
               <Anchor href={`/concierge/contact/inquiries/${inquiry.id}`}>{inquiry.title}</Anchor>
               <Typography variant="body2">
-                {inquiryTypeLabels[inquiry.inquiry_type]} · {inquiry.status} ·{' '}
-                {new Date(inquiry.created_at).toLocaleDateString('ko-KR')}
+                {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
+                  inquiryTypeLabels[inquiry.inquiry_type]}{' '}
+                / {inquiry.status} / {new Date(inquiry.created_at).toLocaleDateString('ko-KR')}
               </Typography>
             </Box>
           ))}

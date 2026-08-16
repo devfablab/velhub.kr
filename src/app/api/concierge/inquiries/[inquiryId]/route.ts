@@ -27,7 +27,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
   const { data: inquiry, error } = await supabaseAdmin
     .from('inquiries')
     .select(
-      'id, requester_stigma_id, inquiry_type, inquiry_subtype, status, title, content, created_at, closed_at, resolution_code, resolution_summary, payment_control_requested_at, payment_control_selected_at, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_orders(payment_id), inquiry_messages(id, sender_type, sender_stigma_id, message, created_at), inquiry_attachments(id, attachment_type, storage_path, storage_bucket, mime_type, submitted_at, deleted_at)',
+      'id, requester_stigma_id, inquiry_type, inquiry_subtype, status, title, content, created_at, closed_at, resolution_code, resolution_summary, payment_control_requested_at, payment_control_selected_at, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_orders(payment_id), inquiry_bug_details(*), inquiry_payment_details(*), inquiry_messages(id, sender_type, sender_stigma_id, message, created_at), inquiry_attachments(id, attachment_type, storage_path, storage_bucket, mime_type, submitted_at, deleted_at)',
     )
     .eq('id', inquiryId)
     .maybeSingle();
@@ -35,6 +35,13 @@ export async function GET(_: NextRequest, context: RouteContext) {
   if (error || !inquiry) {
     return Response.json({ error: '문의를 찾을 수 없습니다.' }, { status: 404 });
   }
+
+  const evidence = inquiry.inquiry_attachments.find(
+    (item) => !item.deleted_at && ['bug_evidence', 'payment_evidence'].includes(item.attachment_type),
+  );
+  const { data: signedEvidence } = evidence
+    ? await supabaseAdmin.storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
+    : { data: null };
 
   let parent = null;
   if (inquiry.inquiry_type === 'minor_purchase_cancellation') {
@@ -98,7 +105,7 @@ export async function GET(_: NextRequest, context: RouteContext) {
     .eq('inquiry_id', inquiryId)
     .maybeSingle();
   return Response.json({
-    inquiry,
+    inquiry: { ...inquiry, evidenceUrl: signedEvidence?.signedUrl ?? null },
     parent,
     manualRefund: {
       hasAccount: Boolean(refundAccount),

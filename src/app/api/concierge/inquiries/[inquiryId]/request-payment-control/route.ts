@@ -27,7 +27,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
         .maybeSingle()
     : { data: null };
   if (!identity?.parent_relationship_verified_at)
-    return Response.json({ error: '부 · 모 관계 확인을 먼저 완료해 주세요.' }, { status: 400 });
+    return Response.json({ error: '부 / 모 관계 확인을 먼저 완료해 주세요.' }, { status: 400 });
   const now = new Date().toISOString();
   const { error } = await db
     .from('inquiries')
@@ -38,7 +38,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     inquiry_id: inquiryId,
     sender_type: 'admin',
     sender_stigma_id: admin.stigmaId,
-    message: '청약취소 처리 전 향후 결제 · 구매 · 후원 방침을 선택해 주세요.',
+    message: '청약취소 처리 전 향후 결제 / 구매 / 후원 방침을 선택해 주세요.',
   });
   return Response.json({ ok: true });
 }

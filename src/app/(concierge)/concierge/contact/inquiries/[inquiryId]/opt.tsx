@@ -1,16 +1,19 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Alert, Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Box, MenuItem, Stack, TextField, Typography, styled } from '@mui/material';
 import {
   inquiryResolutionLabels,
   inquiryTypeLabels,
   type InquiryResolutionCode,
   type InquiryType,
 } from '@/lib/concierge/inquiries';
+import InquiryDetails from '@/components/concierge/InquiryDetails';
 
 type Inquiry = {
   inquiry_type: InquiryType;
@@ -23,10 +26,28 @@ type Inquiry = {
   payment_control_selected_at: string | null;
   pg_cancellation_unavailable_at: string | null;
   manual_refund_ready_at: string | null;
+  inquiry_subtype: string | null;
+  inquiry_orders: { payment_id: string }[];
+  inquiry_bug_details: Parameters<typeof InquiryDetails>[0]['bugDetails'];
+  inquiry_payment_details: Parameters<typeof InquiryDetails>[0]['paymentDetails'];
+  evidenceUrl: string | null;
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
 
 export default function Opt() {
   const { inquiryId } = useParams<{ inquiryId: string }>();
+  const certificateInputRef = useRef<HTMLInputElement | null>(null);
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState('');
@@ -68,6 +89,7 @@ export default function Opt() {
     else {
       setSuccess('가족관계증명서 PDF를 제출했습니다.');
       setFile(null);
+      if (certificateInputRef.current) certificateInputRef.current.value = '';
       await load();
     }
     setUploading(false);
@@ -75,6 +97,11 @@ export default function Opt() {
 
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     setFile(event.target.files?.[0] ?? null);
+  }
+
+  function removeFile() {
+    setFile(null);
+    if (certificateInputRef.current) certificateInputRef.current.value = '';
   }
 
   async function choosePaymentControl(mode: 'blocked_until_adult' | 'guardian_auth_required') {
@@ -108,7 +135,13 @@ export default function Opt() {
     }
   }
 
-  if (error && !inquiry) return <Alert severity="error">{error}</Alert>;
+  if (error && !inquiry)
+    return (
+      <p className="alert error">
+        <ErrorOutlineRoundedIcon />
+        <span>{error}</span>
+      </p>
+    );
   if (!inquiry) return null;
   const canUpload = inquiry.inquiry_type === 'minor_purchase_cancellation' && inquiry.status === 'info_requested';
 
@@ -118,7 +151,15 @@ export default function Opt() {
         <Stack gap={1}>
           <Typography variant="subtitle2">{inquiryTypeLabels[inquiry.inquiry_type]}</Typography>
           <Typography variant="h6">{inquiry.title}</Typography>
-          <Typography whiteSpace="pre-wrap">{inquiry.content}</Typography>
+          <InquiryDetails
+            inquiryType={inquiry.inquiry_type}
+            inquirySubtype={inquiry.inquiry_subtype}
+            content={inquiry.content}
+            bugDetails={inquiry.inquiry_bug_details}
+            paymentDetails={inquiry.inquiry_payment_details}
+            paymentId={inquiry.inquiry_orders[0]?.payment_id}
+            evidenceUrl={inquiry.evidenceUrl}
+          />
           <Typography color="text.secondary">상태: {inquiry.status}</Typography>
           {inquiry.resolution_code ? (
             <>
@@ -141,10 +182,26 @@ export default function Opt() {
               <span>3개월이 지난 가족관계증명서 제출은 반려사유가 됩니다.</span>
             </p>
 
-            <label className="button small action">
-              PDF 선택
-              <input hidden type="file" accept="application/pdf,.pdf" onChange={chooseFile} />
-            </label>
+            <VisuallyHiddenInput
+              ref={certificateInputRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={chooseFile}
+            />
+            <Stack direction="row" gap={1} alignItems="center">
+              <button
+                type="button"
+                className="button small action"
+                onClick={() => certificateInputRef.current?.click()}
+              >
+                PDF 선택
+              </button>
+              {file ? (
+                <button type="button" className="button small danger" onClick={removeFile}>
+                  파일 삭제
+                </button>
+              ) : null}
+            </Stack>
             {file ? <Typography>{file.name}</Typography> : null}
             <Box>
               <button
@@ -162,7 +219,7 @@ export default function Opt() {
       {inquiry.payment_control_requested_at && !inquiry.payment_control_selected_at ? (
         <div className="paper">
           <Stack gap={2}>
-            <Typography variant="h6">향후 결제 · 구매 · 후원 방침</Typography>
+            <Typography variant="h6">향후 결제 / 구매 / 후원 방침</Typography>
             <Typography>청약취소 처리 후 만 19세가 되기 전까지 적용할 방침을 선택해 주세요.</Typography>
             <button
               type="button"
@@ -170,7 +227,7 @@ export default function Opt() {
               disabled={savingControl}
               onClick={() => void choosePaymentControl('blocked_until_adult')}
             >
-              이 계정에서 만 19세가 될 때까지 결제 · 구매 · 후원을 허용하지 않습니다.
+              이 계정에서 만 19세가 될 때까지 결제 / 구매 / 후원을 허용하지 않습니다.
             </button>
             <button
               type="button"
@@ -222,8 +279,18 @@ export default function Opt() {
           </Stack>
         </div>
       ) : null}
-      {error ? <Alert severity="error">{error}</Alert> : null}
-      {success ? <Alert severity="success">{success}</Alert> : null}
+      {error ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{error}</span>
+        </p>
+      ) : null}
+      {success ? (
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>{success}</span>
+        </p>
+      ) : null}
     </Stack>
   );
 }
