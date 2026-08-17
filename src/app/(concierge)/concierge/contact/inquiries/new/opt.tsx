@@ -607,17 +607,28 @@ export default function Opt() {
                           size="small"
                           value={postQuery}
                           onChange={(event) => setPostQuery(event.target.value)}
+                          onKeyDown={(event) =>
+                            runInputAdornmentAction(event, searchPosts, !postQuery.trim() || searchingTargets)
+                          }
                           placeholder="연재글 제목의 일부를 입력해 주세요"
-                          slotProps={{ htmlInput: { maxLength: 200 } }}
+                          slotProps={{
+                            htmlInput: { maxLength: 200 },
+                            input: {
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <button
+                                    type="button"
+                                    className="button small action"
+                                    disabled={!postQuery.trim() || searchingTargets}
+                                    onClick={() => void searchPosts()}
+                                  >
+                                    검색
+                                  </button>
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
                         />
-                        <button
-                          type="button"
-                          className="button small action"
-                          disabled={!postQuery.trim() || searchingTargets}
-                          onClick={() => void searchPosts()}
-                        >
-                          검색
-                        </button>
                       </Stack>
                       {postResults.length ? (
                         <RadioGroup value={selectedPostId} onChange={(event) => setSelectedPostId(event.target.value)}>

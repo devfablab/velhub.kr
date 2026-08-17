@@ -78,7 +78,7 @@ export default function InquiryDetails({
       <Detail label="세부 유형" value={subtypeLabel} />
       {bug ? (
         <>
-          <Detail label="발생 화면" value={bug.page_url} />
+          <Detail label="화면 주소" value={bug.page_url} />
           <Detail label="발생 날짜와 시간" value={new Date(bug.occurred_at).toLocaleString('ko-KR')} />
           <Detail label="하려고 했던 작업" value={bug.attempted_action} />
           <Detail label="실제로 발생한 문제" value={bug.actual_behavior} />

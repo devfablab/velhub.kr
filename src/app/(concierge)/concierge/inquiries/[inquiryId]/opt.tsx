@@ -240,7 +240,9 @@ export default function Opt() {
             <Chip label={inquiryTypeLabels[inquiry.inquiry_type]} size="small" /> {inquiry.title}
           </h2>
         ) : (
-          <Chip label={inquiryTypeLabels[inquiry.inquiry_type]} size="small" />
+          <Stack direction="row">
+            <Chip label={inquiryTypeLabels[inquiry.inquiry_type]} size="small" />
+          </Stack>
         )}
         <Stack>
           <Typography variant="subtitle2">문의자</Typography>
@@ -341,7 +343,7 @@ export default function Opt() {
               onChange={(event) => setMotherBirthDate(event.target.value)}
             />
             <button type="button" className="button medium submit" onClick={() => void saveParents()}>
-              부 / 모 확인 정보 저장
+              부모 확인 정보 저장
             </button>
             {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
               <button type="button" className="button medium action" onClick={() => void requestPaymentControl()}>
@@ -500,6 +502,11 @@ export default function Opt() {
           </div>
         </form>
       ) : null}
+      <Stack direction="row" justifyContent="flex-end" gap={2}>
+        <Anchor href="/concierge/inquiries" className="button medium action">
+          뒤로가기
+        </Anchor>
+      </Stack>
     </div>
   );
 }
