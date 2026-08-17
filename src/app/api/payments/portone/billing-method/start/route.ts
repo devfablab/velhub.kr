@@ -47,6 +47,11 @@ export async function POST(request: NextRequest) {
 
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
+
+    if (!customerName) {
+      return Response.json({ paymentEmailRequired: true });
+    }
+
     const orderNo = createOrderNo();
 
     successUrl.searchParams.set('orderNo', orderNo);

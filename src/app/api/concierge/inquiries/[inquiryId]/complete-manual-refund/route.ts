@@ -1,6 +1,6 @@
 import { sendInquiryResultEmail } from '@/lib/notifications/inquiryResultEmail';
 import { sendMinorPurchaseCancellationAdjustmentEmail } from '@/lib/notifications/minorPurchaseCancellationEmail';
-import { PAYMENT_STATUS, SUBSCRIPTION_STATUS } from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -13,11 +13,18 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
   const { data: inquiry } = await db
     .from('inquiries')
     .select(
-      'requester_stigma_id, status, pg_cancellation_unavailable_at, manual_refund_ready_at, inquiry_orders(payment_id)',
+      'requester_stigma_id, inquiry_type, status, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_orders(payment_id)',
     )
     .eq('id', inquiryId)
     .maybeSingle();
-  if (!inquiry?.pg_cancellation_unavailable_at || !inquiry.manual_refund_ready_at)
+  if (
+    !inquiry ||
+    inquiry.inquiry_type !== 'minor_purchase_cancellation' ||
+    inquiry.status === 'closed' ||
+    inquiry.manual_refund_completed_at ||
+    !inquiry.pg_cancellation_unavailable_at ||
+    !inquiry.manual_refund_ready_at
+  )
     return Response.json({ error: '예외 반환 준비가 완료되지 않았습니다.' }, { status: 400 });
   const { data: adjustments } = await db
     .from('creator_settlement_adjustments')
@@ -27,9 +34,11 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     return Response.json({ error: '회수되지 않은 창작자 정산조정액이 남아 있습니다.' }, { status: 400 });
   const paymentId = inquiry.inquiry_orders?.[0]?.payment_id;
   const { data: payment } = paymentId
-    ? await db.from('payments').select('amount').eq('id', paymentId).maybeSingle()
+    ? await db.from('payments').select('amount, status, target_type, target_id').eq('id', paymentId).maybeSingle()
     : { data: null };
   if (!payment) return Response.json({ error: '결제 정보를 찾을 수 없습니다.' }, { status: 404 });
+  if (payment.status === PAYMENT_STATUS.REFUNDED)
+    return Response.json({ error: '이미 반환이 완료된 결제입니다.' }, { status: 400 });
   const now = new Date().toISOString();
   await db
     .from('payments')
@@ -39,12 +48,21 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     .from('subscriptions')
     .update({ status: SUBSCRIPTION_STATUS.CANCELED, canceled_at: now, expired_at: now, next_billing_at: null })
     .eq('last_payment_id', paymentId);
+  if (payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP && payment.target_id) {
+    await db.from('membership_items').delete().eq('membership_id', payment.target_id);
+    await db.from('memberships').delete().eq('id', payment.target_id);
+  }
   const purgeAfter = new Date();
   purgeAfter.setFullYear(purgeAfter.getFullYear() + 5);
   await db
     .from('inquiry_refund_accounts')
     .update({ returned_at: now, purge_after: purgeAfter.toISOString() })
     .eq('inquiry_id', inquiryId);
+  await db
+    .from('inquiry_attachments')
+    .update({ purge_after: purgeAfter.toISOString() })
+    .eq('inquiry_id', inquiryId)
+    .is('deleted_at', null);
   const summary = '원결제수단 취소가 불가능하여 확인된 반환 계좌로 전액 반환을 완료했습니다.';
   await db
     .from('inquiries')
@@ -57,6 +75,13 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
       closed_at: now,
     })
     .eq('id', inquiryId);
+  await db.from('inquiry_status').insert({
+    inquiry_id: inquiryId,
+    previous_status: inquiry.status,
+    next_status: 'closed',
+    changed_by_stigma_id: admin.stigmaId,
+    reason: summary,
+  });
   for (const adjustment of adjustments ?? []) {
     const { data: receiver } = await db
       .from('stigmas')

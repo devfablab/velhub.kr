@@ -312,7 +312,7 @@ async function getSeriesSubscriptionPrice({
   return subscriptionSetting.price;
 }
 
-async function getStigmaAuthUserId({
+async function getStigmaId({
   supabaseAdmin,
   stigmaIdOrAuthUserId,
   errorMessage,
@@ -339,8 +339,8 @@ async function getStigmaAuthUserId({
 
   const stigmaById = stigmaByIdResult.data as StigmaRow | null;
 
-  if (stigmaById?.user_id) {
-    return stigmaById.user_id;
+  if (stigmaById?.id) {
+    return stigmaById.id;
   }
 
   const stigmaByUserIdResult = await supabaseAdmin
@@ -355,11 +355,11 @@ async function getStigmaAuthUserId({
 
   const stigmaByUserId = stigmaByUserIdResult.data as StigmaRow | null;
 
-  if (stigmaByUserId?.user_id) {
-    return stigmaByUserId.user_id;
+  if (stigmaByUserId?.id) {
+    return stigmaByUserId.id;
   }
 
-  return normalizedId;
+  throw new Error(errorMessage);
 }
 
 export async function POST(request: NextRequest) {
@@ -415,18 +415,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '포스팅 구매 금액이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    const hasBoardSubscription = await hasActiveSubscription({
-      supabaseAdmin,
-      stigmaId: session.stigmaId,
-      targetType: PAYMENT_TARGET_TYPE.BOARD,
-      targetId: post.board_id,
-      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
-    });
-
-    if (hasBoardSubscription) {
-      return Response.json({ error: '이미 게시판 구독으로 볼 수 있는 글입니다.' }, { status: 400 });
-    }
-
     const hasSeriesSubscription = await hasActiveSubscription({
       supabaseAdmin,
       stigmaId: session.stigmaId,
@@ -451,13 +439,13 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '결제 정보를 확인하지 못했습니다.' }, { status: 500 });
     }
 
-    const siteOwnerUserId = await getStigmaAuthUserId({
+    const siteOwnerStigmaId = await getStigmaId({
       supabaseAdmin,
       stigmaIdOrAuthUserId: site.owner_id,
       errorMessage: '사이트 오너 정보를 확인하지 못했습니다.',
     });
 
-    const postAuthorUserId = await getStigmaAuthUserId({
+    const postAuthorStigmaId = await getStigmaId({
       supabaseAdmin,
       stigmaIdOrAuthUserId: post.user_id,
       errorMessage: '글 작성자 정보를 확인하지 못했습니다.',
@@ -473,8 +461,8 @@ export async function POST(request: NextRequest) {
         boardId: post.board_id,
         seriesId: post.series_id,
         postId: post.id,
-        siteOwnerUserId,
-        postAuthorUserId,
+        siteOwnerStigmaId,
+        postAuthorStigmaId,
         amount: existingPayment.amount,
       });
 
@@ -544,8 +532,8 @@ export async function POST(request: NextRequest) {
       boardId: post.board_id,
       seriesId: post.series_id,
       postId: post.id,
-      siteOwnerUserId,
-      postAuthorUserId,
+      siteOwnerStigmaId,
+      postAuthorStigmaId,
       amount: confirmResult.totalAmount,
     });
 

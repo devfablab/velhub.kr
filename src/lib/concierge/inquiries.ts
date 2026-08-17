@@ -8,6 +8,38 @@ export const inquiryTypes = [
 ] as const;
 
 export type InquiryType = (typeof inquiryTypes)[number];
+
+export const inquiryStatusLabels = {
+  received: '접수됨',
+  reviewing: '검토 중',
+  info_requested: '추가 정보 요청',
+  closed: '종결',
+} as const;
+
+export type InquiryStatus = keyof typeof inquiryStatusLabels;
+
+export const inquiryInformationRequestTypes = [
+  'text_response',
+  'evidence',
+  'family_relation_certificate',
+  'payment_control',
+  'refund_account',
+] as const;
+
+export type InquiryInformationRequestType = (typeof inquiryInformationRequestTypes)[number];
+
+export const inquiryInformationRequestLabels: Record<InquiryInformationRequestType, string> = {
+  text_response: '답변 내용',
+  evidence: '증빙 파일',
+  family_relation_certificate: '가족관계증명서 PDF',
+  payment_control: '향후 결제 / 구매 / 후원 방침',
+  refund_account: '반환 계좌 정보',
+};
+
+export function isInquiryInformationRequestType(value: unknown): value is InquiryInformationRequestType {
+  return typeof value === 'string' && inquiryInformationRequestTypes.includes(value as InquiryInformationRequestType);
+}
+
 export const inquirySubtypes = {
   service_question: [
     { value: 'service_usage', label: '서비스 이용 문의' },

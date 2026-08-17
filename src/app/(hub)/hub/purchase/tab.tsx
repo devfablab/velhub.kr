@@ -25,8 +25,8 @@ const tabs = [
     icon: <VolunteerActivismRoundedIcon />,
   },
   {
-    href: '/hub/purchase/membership',
-    label: '멤버십',
+    href: '/hub/purchase/blog-subscription',
+    label: '블로그 구독',
     icon: <LoyaltyRoundedIcon />,
   },
   {

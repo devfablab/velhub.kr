@@ -15,13 +15,11 @@ export const PAYMENT_STATUS = {
 } as const;
 
 export const PAYMENT_TYPE = {
-  MEMBERSHIP_BLOG: 'membership_blog',
-  MEMBERSHIP_PLATFORM: 'membership_platform',
+  SUBSCRIPTION_SITE: 'subscription_site',
+  MEMBERSHIP: 'membership',
   SUBSCRIPTION_SERIES: 'subscription_series',
-  SUBSCRIPTION_BOARD: 'subscription_board',
   DONATION_SITE: 'donation_site',
   DONATION_SERIES: 'donation_series',
-  DONATION_BOARD: 'donation_board',
   DONATION_POST: 'donation_post',
   PURCHASE_POST: 'purchase_post',
 } as const;
@@ -47,10 +45,9 @@ export const REFUND_POLICY = {
 } as const;
 
 export const SUBSCRIPTION_TYPE = {
-  MEMBERSHIP_BLOG: 'membership_blog',
-  MEMBERSHIP_PLATFORM: 'membership_platform',
+  SUBSCRIPTION_SITE: 'subscription_site',
+  MEMBERSHIP: 'membership',
   SUBSCRIPTION_SERIES: 'subscription_series',
-  SUBSCRIPTION_BOARD: 'subscription_board',
 } as const;
 
 export const SUBSCRIPTION_STATUS = {

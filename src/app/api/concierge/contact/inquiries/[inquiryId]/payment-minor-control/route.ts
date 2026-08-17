@@ -18,11 +18,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const db = getSupabaseAdmin();
   const { data: inquiry } = await db
     .from('inquiries')
-    .select('inquiry_type, status')
+    .select('inquiry_type, status, information_request_type')
     .eq('id', inquiryId)
     .eq('requester_stigma_id', current.stigmaId)
     .maybeSingle();
-  if (!inquiry || inquiry.inquiry_type !== 'minor_purchase_cancellation' || inquiry.status !== 'reviewing')
+  if (
+    !inquiry ||
+    inquiry.inquiry_type !== 'minor_purchase_cancellation' ||
+    inquiry.status !== 'info_requested' ||
+    inquiry.information_request_type !== 'payment_control'
+  )
     return Response.json({ error: '현재 결제 방침을 선택할 수 있는 문의가 아닙니다.' }, { status: 400 });
   const { data: identity } = await db
     .from('chorogons')
@@ -46,6 +51,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     { onConflict: 'chorogon_id' },
   );
   if (error) return Response.json({ error: '향후 결제 방침을 저장하지 못했습니다.' }, { status: 500 });
-  await db.from('inquiries').update({ payment_control_selected_at: new Date().toISOString() }).eq('id', inquiryId);
+  await db
+    .from('inquiries')
+    .update({
+      status: 'reviewing',
+      information_request_type: null,
+      information_requested_at: null,
+      information_due_at: null,
+      payment_control_selected_at: new Date().toISOString(),
+    })
+    .eq('id', inquiryId);
+  await db.from('inquiry_messages').insert({
+    inquiry_id: inquiryId,
+    sender_type: 'requester',
+    sender_stigma_id: current.stigmaId,
+    message_type: 'information_response',
+    message:
+      body.mode === 'blocked_until_adult'
+        ? '만 19세가 될 때까지 결제 / 구매 / 후원을 허용하지 않는 방침을 선택했습니다.'
+        : '이후 결제마다 법정대리인 본인인증을 받는 방침을 선택했습니다.',
+  });
+  await db.from('inquiry_status').insert({
+    inquiry_id: inquiryId,
+    previous_status: 'info_requested',
+    next_status: 'reviewing',
+    changed_by_stigma_id: current.stigmaId,
+    reason: '향후 결제 방침 선택 완료',
+  });
   return Response.json({ ok: true });
 }

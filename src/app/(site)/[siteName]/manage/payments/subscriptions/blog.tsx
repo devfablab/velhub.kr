@@ -23,7 +23,7 @@ import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
-type MembershipMember = {
+type BlogSubscriptionMember = {
   id: string;
   nickname: string;
   status: string;
@@ -33,7 +33,7 @@ type MembershipMember = {
   totalPaidAmount: number;
 };
 
-type MembershipResponse = {
+type BlogSubscriptionResponse = {
   site?: {
     id: string;
     siteKey: string;
@@ -46,7 +46,7 @@ type MembershipResponse = {
     requiredMinPrice: number;
     maxSeriesPrice: number;
   };
-  members?: MembershipMember[];
+  members?: BlogSubscriptionMember[];
   ownerStatus?: {
     isOwner: boolean;
     isCreator: boolean;
@@ -57,7 +57,7 @@ type MembershipResponse = {
 
 import SettlementForm from '@/components/service/common/SettlementForm';
 
-type MembershipSaveResponse = {
+type BlogSubscriptionSaveResponse = {
   ok?: boolean;
   settingId?: string;
   requiredMinPrice?: number;
@@ -65,15 +65,15 @@ type MembershipSaveResponse = {
   error?: string;
 };
 
-function formatMembershipPrice(value: number) {
+function formatBlogSubscriptionPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
-function getMembershipPriceNumber(value: string) {
+function getBlogSubscriptionPriceNumber(value: string) {
   return Number(value.replace(/[^0-9]/g, ''));
 }
 
-function isValidMembershipPrice(price: number, requiredMinPrice: number) {
+function isValidBlogSubscriptionPrice(price: number, requiredMinPrice: number) {
   if (!Number.isInteger(price)) {
     return false;
   }
@@ -117,46 +117,46 @@ export default function Opt() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isMembershipEnabled, setIsMembershipEnabled] = useState(false);
-  const [membershipPrice, setMembershipPrice] = useState('10,000');
+  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
+  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState('10,000');
   const [requiredMinPrice, setRequiredMinPrice] = useState(10000);
   const [maxSeriesPrice, setMaxSeriesPrice] = useState(0);
-  const [members, setMembers] = useState<MembershipMember[]>([]);
-  const [membershipData, setMembershipData] = useState<MembershipResponse | null>(null);
+  const [members, setMembers] = useState<BlogSubscriptionMember[]>([]);
+  const [blogSubscriptionData, setBlogSubscriptionData] = useState<BlogSubscriptionResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    async function loadMembership() {
+    async function loadBlogSubscription() {
       try {
         setErrorMessage('');
         setSuccessMessage('');
 
-        const response = await fetch(`/api/manage/payments/membership?siteName=${siteName}`, {
+        const response = await fetch(`/api/manage/payments/subscriptions/site?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });
 
-        const result = (await response.json()) as MembershipResponse;
+        const result = (await response.json()) as BlogSubscriptionResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '멤버십 정보를 불러오지 못했습니다.');
+          throw new Error(result.error ?? '블로그 구독 정보를 불러오지 못했습니다.');
         }
 
         const nextRequiredMinPrice = result.setting?.requiredMinPrice ?? 10000;
         const nextPrice = result.setting?.price ?? nextRequiredMinPrice;
 
-        setIsMembershipEnabled(Boolean(result.setting?.isEnabled));
+        setIsBlogSubscriptionEnabled(Boolean(result.setting?.isEnabled));
         setRequiredMinPrice(nextRequiredMinPrice);
         setMaxSeriesPrice(result.setting?.maxSeriesPrice ?? 0);
-        setMembershipPrice(formatMembershipPrice(Math.max(nextPrice, nextRequiredMinPrice)));
+        setBlogSubscriptionPrice(formatBlogSubscriptionPrice(Math.max(nextPrice, nextRequiredMinPrice)));
         setMembers(result.members ?? []);
-        setMembershipData(result);
+        setBlogSubscriptionData(result);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '멤버십 정보를 불러오지 못했습니다.');
+          setErrorMessage(unknownError.message || '블로그 구독 정보를 불러오지 못했습니다.');
         } else {
-          setErrorMessage('멤버십 정보를 불러오지 못했습니다.');
+          setErrorMessage('블로그 구독 정보를 불러오지 못했습니다.');
         }
       } finally {
         setIsLoading(false);
@@ -170,17 +170,17 @@ export default function Opt() {
       return;
     }
 
-    void loadMembership();
+    void loadBlogSubscription();
   }, [siteName]);
 
-  function handleMembershipEnabledChange(event: ChangeEvent<HTMLInputElement>) {
-    setIsMembershipEnabled(event.target.checked);
+  function handleBlogSubscriptionEnabledChange(event: ChangeEvent<HTMLInputElement>) {
+    setIsBlogSubscriptionEnabled(event.target.checked);
     setSuccessMessage('');
     setErrorMessage('');
   }
 
-  function handleMembershipPriceChange(event: ChangeEvent<HTMLInputElement>) {
-    const nextPrice = getMembershipPriceNumber(event.target.value);
+  function handleBlogSubscriptionPriceChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextPrice = getBlogSubscriptionPriceNumber(event.target.value);
 
     if (nextPrice > 100000) {
       return;
@@ -190,41 +190,41 @@ export default function Opt() {
       return;
     }
 
-    setMembershipPrice(formatMembershipPrice(nextPrice));
+    setBlogSubscriptionPrice(formatBlogSubscriptionPrice(nextPrice));
     setSuccessMessage('');
     setErrorMessage('');
   }
 
-  async function handleSaveMembershipSetting() {
+  async function handleSaveBlogSubscriptionSetting() {
     try {
       setIsSaving(true);
       setErrorMessage('');
       setSuccessMessage('');
 
-      const price = getMembershipPriceNumber(membershipPrice);
+      const price = getBlogSubscriptionPriceNumber(blogSubscriptionPrice);
 
-      if (isMembershipEnabled && !isValidMembershipPrice(price, requiredMinPrice)) {
+      if (isBlogSubscriptionEnabled && !isValidBlogSubscriptionPrice(price, requiredMinPrice)) {
         throw new Error(
-          `멤버십 금액은 ${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`,
+          `블로그 구독료는 ${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`,
         );
       }
 
-      const response = await fetch(`/api/manage/payments/membership?siteName=${siteName}`, {
+      const response = await fetch(`/api/manage/payments/subscriptions/site?siteName=${siteName}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          isEnabled: isMembershipEnabled,
+          isEnabled: isBlogSubscriptionEnabled,
           price,
         }),
       });
 
-      const result = (await response.json()) as MembershipSaveResponse;
+      const result = (await response.json()) as BlogSubscriptionSaveResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '멤버십 설정을 저장하지 못했습니다.');
+        throw new Error(result.error ?? '블로그 구독 설정을 저장하지 못했습니다.');
       }
 
       if (typeof result.requiredMinPrice === 'number') {
@@ -235,12 +235,12 @@ export default function Opt() {
         setMaxSeriesPrice(result.maxSeriesPrice);
       }
 
-      setSuccessMessage('멤버십 설정을 저장했습니다.');
+      setSuccessMessage('블로그 구독 설정을 저장했습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '멤버십 설정을 저장하지 못했습니다.');
+        setErrorMessage(unknownError.message || '블로그 구독 설정을 저장하지 못했습니다.');
       } else {
-        setErrorMessage('멤버십 설정을 저장하지 못했습니다.');
+        setErrorMessage('블로그 구독 설정을 저장하지 못했습니다.');
       }
     } finally {
       setIsSaving(false);
@@ -257,7 +257,7 @@ export default function Opt() {
     );
   }
 
-  if (errorMessage === '멤버십은 블로그에서만 사용할 수 있습니다.') {
+  if (errorMessage === '블로그 구독은 블로그에서만 사용할 수 있습니다.') {
     return (
       <div className="paper page-error">
         <NearbyErrorRoundedIcon />
@@ -266,7 +266,7 @@ export default function Opt() {
     );
   }
 
-  if (membershipData?.ownerStatus && !membershipData.ownerStatus.isCreator) {
+  if (blogSubscriptionData?.ownerStatus && !blogSubscriptionData.ownerStatus.isCreator) {
     return (
       <Stack gap={3}>
         <p className="alert error">
@@ -277,14 +277,14 @@ export default function Opt() {
     );
   }
 
-  if (membershipData?.ownerStatus && membershipData.ownerStatus.status !== 'approved') {
+  if (blogSubscriptionData?.ownerStatus && blogSubscriptionData.ownerStatus.status !== 'approved') {
     return (
       <Stack gap={3}>
         <p className="alert error">
           <ErrorOutlineRoundedIcon />
           <span>운영자 계정의 정산정보에 문제가 있습니다.</span>
         </p>
-        {membershipData.ownerStatus.isOwner && (
+        {blogSubscriptionData.ownerStatus.isOwner && (
           <div className={`paper ${styles.paper}`}>
             <SettlementForm />
           </div>
@@ -312,12 +312,12 @@ export default function Opt() {
       <div className={`paper ${styles.paper}`}>
         <Stack gap={3}>
           <Stack gap={1}>
-            <Typography variant="subtitle2">멤버십 설정</Typography>
+            <Typography variant="subtitle2">블로그 구독</Typography>
             <p className="alert info">
               <InfoOutlineRoundedIcon />
               <span>
-                멤버십 금액은 {requiredMinPrice.toLocaleString('ko-KR')} 원부터 100,000 원까지 1,000 원 단위로 설정할 수
-                있습니다.
+                블로그 구독료는 {requiredMinPrice.toLocaleString('ko-KR')} 원부터 100,000 원까지 1,000 원 단위로 설정할
+                수 있습니다.
               </span>
             </p>
             {maxSeriesPrice > 0 ? (
@@ -331,13 +331,19 @@ export default function Opt() {
           <Divider />
 
           <FormControlLabel
-            control={<IOSSwitch sx={{ m: 1 }} checked={isMembershipEnabled} onChange={handleMembershipEnabledChange} />}
-            label="멤버십 사용"
+            control={
+              <IOSSwitch
+                sx={{ m: 1 }}
+                checked={isBlogSubscriptionEnabled}
+                onChange={handleBlogSubscriptionEnabledChange}
+              />
+            }
+            label="블로그 구독 사용"
           />
 
           <TextField
-            value={membershipPrice}
-            onChange={handleMembershipPriceChange}
+            value={blogSubscriptionPrice}
+            onChange={handleBlogSubscriptionPriceChange}
             helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
             disabled={isSaving}
             fullWidth
@@ -348,7 +354,7 @@ export default function Opt() {
             <button
               type="button"
               className="button medium submit"
-              onClick={handleSaveMembershipSetting}
+              onClick={handleSaveBlogSubscriptionSetting}
               disabled={isSaving}
             >
               저장
@@ -359,7 +365,7 @@ export default function Opt() {
 
       <div className={`paper ${styles.paper}`}>
         <Stack gap={3}>
-          <Typography variant="subtitle2">멤버십 구독자</Typography>
+          <Typography variant="subtitle2">블로그 구독자</Typography>
 
           {members.length ? (
             <TableContainer>
@@ -393,7 +399,7 @@ export default function Opt() {
           ) : (
             <p className="alert info">
               <InfoOutlineRoundedIcon />
-              <span>아직 멤버십 구독자가 없습니다.</span>
+              <span>아직 블로그 구독자가 없습니다.</span>
             </p>
           )}
         </Stack>

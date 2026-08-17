@@ -90,16 +90,12 @@ function formatCardNumber(cardNumberMasked: string | null | undefined) {
 
 function getPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
-    case PAYMENT_TYPE.MEMBERSHIP_BLOG:
-      return '블로그 멤버십';
-    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
-      return '게시판 구독';
+    case PAYMENT_TYPE.SUBSCRIPTION_SITE:
+      return '블로그 구독';
     case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return '연재 구독';
     case PAYMENT_TYPE.DONATION_SITE:
       return '블로그 후원';
-    case PAYMENT_TYPE.DONATION_BOARD:
-      return '게시판 후원';
     case PAYMENT_TYPE.DONATION_SERIES:
       return '연재 후원';
     case PAYMENT_TYPE.DONATION_POST:
@@ -141,7 +137,6 @@ function getSiteHref(site: SiteRow | null | undefined) {
 function createPaymentDisplayInfo({
   payment,
   site,
-  board,
   series,
   seriesBoard,
   post,
@@ -149,7 +144,6 @@ function createPaymentDisplayInfo({
 }: {
   payment: PaymentRow;
   site: SiteRow | null | undefined;
-  board?: BoardRow | null;
   series?: SeriesRow | null;
   seriesBoard?: BoardRow | null;
   post?: PostRow | null;
@@ -164,15 +158,6 @@ function createPaymentDisplayInfo({
       siteHref,
       targetLabel: '',
       targetHref: siteHref,
-    };
-  }
-
-  if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD) {
-    return {
-      siteLabel,
-      siteHref,
-      targetLabel: board?.board_label || board?.board_key || '게시판 확인 필요',
-      targetHref: board && site?.site_key ? `/${site.site_key}/${board.board_key}` : siteHref,
     };
   }
 
@@ -304,11 +289,6 @@ export async function GET() {
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 
-    const boardTargetIds = payments
-      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
-      .map((payment) => payment.target_id)
-      .filter((targetId): targetId is string => Boolean(targetId));
-
     const seriesTargetIds = payments
       .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
       .map((payment) => payment.target_id)
@@ -319,10 +299,7 @@ export async function GET() {
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 
-    const [boardResult, seriesResult, postResult] = await Promise.all([
-      boardTargetIds.length
-        ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardTargetIds)
-        : { data: [], error: null },
+    const [seriesResult, postResult] = await Promise.all([
       seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
@@ -334,13 +311,13 @@ export async function GET() {
         : { data: [], error: null },
     ]);
 
-    if (boardResult.error || seriesResult.error || postResult.error) {
-      console.error(boardResult.error || seriesResult.error || postResult.error);
+    if (seriesResult.error || postResult.error) {
+      console.error(seriesResult.error || postResult.error);
 
       return Response.json({ error: '결제 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardMap = new Map(((boardResult.data ?? []) as BoardRow[]).map((board) => [board.id, board]));
+    const boardMap = new Map<string, BoardRow>();
     const seriesMap = new Map(((seriesResult.data ?? []) as SeriesRow[]).map((series) => [series.id, series]));
     const postMap = new Map(((postResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
 
@@ -400,10 +377,6 @@ export async function GET() {
         updatedAt: billingMethod.updated_at,
       })),
       recentPayments: payments.slice(0, 10).map((payment) => {
-        const board =
-          payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id
-            ? boardMap.get(payment.target_id)
-            : null;
         const series =
           payment.target_type === PAYMENT_TARGET_TYPE.SERIES && payment.target_id
             ? seriesMap.get(payment.target_id)
@@ -415,13 +388,12 @@ export async function GET() {
         const siteId =
           payment.target_type === PAYMENT_TARGET_TYPE.SITE
             ? payment.target_id
-            : (board?.site_id ?? series?.site_id ?? post?.site_id ?? null);
+            : (series?.site_id ?? post?.site_id ?? null);
         const site = siteId ? siteMap.get(siteId) : null;
         const paymentStatus = normalizePaymentStatus(payment.status);
         const displayInfo = createPaymentDisplayInfo({
           payment,
           site,
-          board,
           series,
           seriesBoard,
           post,

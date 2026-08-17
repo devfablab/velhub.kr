@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
+import PaymentEmailDialog from './PaymentEmailDialog';
 
 type PortOneBillingKeyResponse = {
   billingKey?: string;
@@ -27,7 +28,8 @@ type BillingMethodStartResponse =
       successUrl: string;
       failUrl: string;
     }
-  | { error: string };
+  | { error: string; paymentEmailRequired?: boolean }
+  | { paymentEmailRequired: true };
 
 type BillingMethodButtonProps = {
   siteId?: string | null;
@@ -36,6 +38,7 @@ type BillingMethodButtonProps = {
 export default function BillingMethodButton({ siteId }: BillingMethodButtonProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
   async function getBillingMethodStatus() {
     const response = await fetch('/api/payments/portone/billing-method/status', {
@@ -67,6 +70,12 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
     });
 
     const result = (await response.json()) as BillingMethodStartResponse;
+
+    if ('paymentEmailRequired' in result && result.paymentEmailRequired) {
+      setIsProcessing(false);
+      setIsPaymentEmailDialogOpen(true);
+      return;
+    }
 
     if (!response.ok || 'error' in result) {
       throw new Error('error' in result ? result.error : '결제 수단 추가를 시작하지 못했습니다.');
@@ -140,7 +149,9 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       const paymentEmail = await getBillingMethodStatus();
 
       if (!paymentEmail) {
-        throw new Error('정산 이메일이 등록되어 있지 않습니다.');
+        setIsProcessing(false);
+        setIsPaymentEmailDialogOpen(true);
+        return;
       }
 
       await startBillingMethodIssue(paymentEmail);
@@ -155,11 +166,32 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
     }
   }
 
+  async function handlePaymentEmailSaved(paymentEmail: string) {
+    try {
+      setIsProcessing(true);
+      setErrorMessage('');
+      await startBillingMethodIssue(paymentEmail);
+    } catch (unknownError) {
+      setErrorMessage(
+        unknownError instanceof Error
+          ? unknownError.message || '결제 수단 추가를 시작하지 못했습니다.'
+          : '결제 수단 추가를 시작하지 못했습니다.',
+      );
+      setIsProcessing(false);
+    }
+  }
+
   return (
     <>
       <button type="button" className="button small action" onClick={handleAddBillingMethod} disabled={isProcessing}>
         결제 수단 추가
       </button>
+
+      <PaymentEmailDialog
+        open={isPaymentEmailDialogOpen}
+        onClose={() => setIsPaymentEmailDialogOpen(false)}
+        onSaved={handlePaymentEmailSaved}
+      />
 
       <Snackbar
         open={Boolean(normalizeText(errorMessage))}

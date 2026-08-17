@@ -188,3 +188,53 @@
 .concierge-card-arrow
   width: ds.rem(22)
   height: ds.rem(22)
+
+.inquiry
+  display: flex
+  flex-direction: column
+  gap: ds.rem(17)
+
+  h2
+    display: flex
+    gap: ds.rem(5)
+    align-items: center
+    font-size: ds.rem(18)
+    @include ds.fw(neo, 700)
+
+  .inquiry-items
+    display: grid
+    grid-template-columns: repeat(1, 1fr)
+    gap: ds.rem(12)
+    width: 100%
+
+    @include ds.mq(minSmall)
+      grid-template-columns: repeat(2, 1fr)
+
+    @include ds.mq(minLarge)
+      grid-template-columns: repeat(3, 1fr)
+
+    .inquiry-item
+      gap: ds.rem(3)
+
+      strong
+        color: ds.$hex-primary
+        @include ds.fw(neo, 500)
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-bright
+
+      span
+        color: ds.$hex-secondary
+        opacity: .7
+        font-size: ds.rem(14)
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light
+
+      time
+        color: ds.$hex-secondary
+        opacity: .5
+        font-size: ds.rem(12)
+
+        html[data-theme="yellow-dark"] &
+          color: ds.$hex-light

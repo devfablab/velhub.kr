@@ -282,7 +282,6 @@ export default function Opt({ isCommunity }: Props) {
   const [totalPage, setTotalPage] = useState(1);
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
   const [canWritePost, setCanWritePost] = useState(false);
-  const [isBoardSubscriptionEnabled, setIsBoardSubscriptionEnabled] = useState(false);
   const [blogType, setBlogType] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -346,30 +345,6 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
-  async function loadBoardSubscriptionStatus() {
-    const params = new URLSearchParams({
-      siteName,
-      boardName,
-      targetType: 'board',
-    });
-
-    const response = await fetch(`/api/payments/portone/subscriptions/status?${params.toString()}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as {
-      isEnabled?: boolean;
-    };
-
-    if (!response.ok) {
-      setIsBoardSubscriptionEnabled(false);
-      return;
-    }
-
-    setIsBoardSubscriptionEnabled(Boolean(result.isEnabled));
-  }
-
   function updateRoute(nextPage: number, nextKeyword: string, nextSeriesName = '') {
     const queryParams = new URLSearchParams();
 
@@ -407,7 +382,6 @@ export default function Opt({ isCommunity }: Props) {
     setKeywordInput(nextKeyword);
     setIsLoading(true);
     void loadContents(nextPage, nextKeyword, nextSeriesName);
-    void loadBoardSubscriptionStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, boardName, searchParams]);
 
@@ -519,12 +493,7 @@ export default function Opt({ isCommunity }: Props) {
           {isCommunity ? (
             <>
               {isMobile ? (
-                <TableListMobile
-                  board={board}
-                  selectedSeries={selectedSeries}
-                  isCommunity={isCommunity}
-                  isBoardSubscriptionEnabled={isBoardSubscriptionEnabled}
-                />
+                <TableListMobile board={board} selectedSeries={selectedSeries} isCommunity={isCommunity} />
               ) : (
                 <h2>
                   {isSearchMode ? (

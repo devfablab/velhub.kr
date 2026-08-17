@@ -38,7 +38,6 @@ export const NOTIFICATION_TYPE = {
   POST_COMMENTED: 'post_commented',
   POST_LIKED: 'post_liked',
 
-  BOARD_SUBSCRIPTION_NEW_POST: 'board_subscription_new_post',
   SERIES_SUBSCRIPTION_NEW_POST: 'series_subscription_new_post',
 
   FAVORITE_BLOG_NEW_POST: 'favorite_blog_new_post',

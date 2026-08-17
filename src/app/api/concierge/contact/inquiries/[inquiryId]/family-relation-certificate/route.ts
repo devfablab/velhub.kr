@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const supabaseAdmin = getSupabaseAdmin();
   const { data: inquiry, error: inquiryError } = await supabaseAdmin
     .from('inquiries')
-    .select('id, inquiry_type, status')
+    .select('id, inquiry_type, status, information_request_type')
     .eq('id', inquiryId)
     .eq('requester_stigma_id', currentStigma.stigmaId)
     .maybeSingle();
@@ -40,7 +40,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return Response.json({ error: '문의를 찾을 수 없습니다.' }, { status: 404 });
   }
 
-  if (inquiry.inquiry_type !== 'minor_purchase_cancellation' || inquiry.status !== 'info_requested') {
+  if (
+    inquiry.inquiry_type !== 'minor_purchase_cancellation' ||
+    inquiry.status !== 'info_requested' ||
+    inquiry.information_request_type !== 'family_relation_certificate'
+  ) {
     return Response.json({ error: '현재 가족관계증명서를 제출할 수 있는 문의가 아닙니다.' }, { status: 400 });
   }
 
@@ -61,10 +65,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('attachment_type', 'family_relation_certificate')
     .maybeSingle();
 
-  if (existingAttachment?.storage_path) {
-    await supabaseAdmin.storage.from(bucket).remove([existingAttachment.storage_path]);
-  }
-
   const { error: attachmentError } = await supabaseAdmin.from('inquiry_attachments').upsert(
     {
       inquiry_id: inquiryId,
@@ -83,12 +83,50 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await supabaseAdmin.storage.from(bucket).remove([storagePath]);
     return Response.json({ error: '가족관계증명서 제출 기록을 저장하지 못했습니다.' }, { status: 500 });
   }
+  if (existingAttachment?.storage_path) {
+    const [{ data: identityReference }, { data: inquiryReference }] = await Promise.all([
+      supabaseAdmin
+        .from('chorogons')
+        .select('id')
+        .eq('parent_relationship_document_url', existingAttachment.storage_path)
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('inquiry_attachments')
+        .select('id')
+        .eq('storage_path', existingAttachment.storage_path)
+        .neq('inquiry_id', inquiryId)
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (!identityReference && !inquiryReference)
+      await supabaseAdmin.storage.from(bucket).remove([existingAttachment.storage_path]);
+  }
 
   await supabaseAdmin.from('inquiry_messages').insert({
     inquiry_id: inquiryId,
     sender_type: 'requester',
     sender_stigma_id: currentStigma.stigmaId,
+    message_type: 'information_response',
     message: '가족관계증명서 PDF를 제출했습니다.',
+  });
+
+  await supabaseAdmin
+    .from('inquiries')
+    .update({
+      status: 'reviewing',
+      information_request_type: null,
+      information_requested_at: null,
+      information_due_at: null,
+    })
+    .eq('id', inquiryId);
+  await supabaseAdmin.from('inquiry_status').insert({
+    inquiry_id: inquiryId,
+    previous_status: 'info_requested',
+    next_status: 'reviewing',
+    changed_by_stigma_id: currentStigma.stigmaId,
+    reason: '가족관계증명서 PDF 제출',
   });
 
   return Response.json({ ok: true });

@@ -33,23 +33,19 @@ type PaymentRow = {
 };
 
 const SUBSCRIPTION_PAYMENT_TYPE = {
-  [SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG]: PAYMENT_TYPE.MEMBERSHIP_BLOG,
-  [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD]: PAYMENT_TYPE.SUBSCRIPTION_BOARD,
+  [SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE]: PAYMENT_TYPE.SUBSCRIPTION_SITE,
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES]: PAYMENT_TYPE.SUBSCRIPTION_SERIES,
 } as const;
 
 const SUBSCRIPTION_LABEL = {
-  [SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG]: '블로그 멤버십',
-  [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD]: '게시판 구독',
+  [SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE]: '블로그 구독',
   [SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES]: '연재 구독',
 } as const;
 
 function isSupportedSubscription(subscription: SubscriptionRow) {
   return (
-    (subscription.subscription_type === SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG &&
+    (subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE &&
       subscription.target_type === PAYMENT_TARGET_TYPE.SITE) ||
-    (subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD &&
-      subscription.target_type === PAYMENT_TARGET_TYPE.BOARD) ||
     (subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES &&
       subscription.target_type === PAYMENT_TARGET_TYPE.SERIES)
   );
@@ -264,11 +260,7 @@ export async function cancelAccountRecurringPayments({
       ].join(', '),
     )
     .eq('subscriber_user_id', stigmaId)
-    .in('subscription_type', [
-      SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG,
-      SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
-      SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES,
-    ])
+    .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
     .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
 
   if (subscriptionsResult.error) {

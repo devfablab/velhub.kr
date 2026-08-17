@@ -267,15 +267,15 @@ export default function MembershipPlan() {
   if (!isLoading && (isUnder14Age || isBlocked)) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <p className="alert warning">
+        <div className="paper page-error">
           <WarningAmberRoundedIcon />
           <h2>멤버십</h2>
-          <span>
+          <p>
             {isBlocked
               ? '이 계정은 만 19세가 될 때까지 결제 · 구매 · 후원을 이용할 수 없습니다.'
               : '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭'}
-          </span>
-        </p>
+          </p>
+        </div>
       </section>
     );
   }

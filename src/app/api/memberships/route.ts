@@ -50,7 +50,7 @@ export async function GET() {
     ? await supabaseAdmin
         .from('subscriptions')
         .select('target_id, status, current_period_end, created_at')
-        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
         .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
         .in('target_id', membershipIds)
         .in('status', [

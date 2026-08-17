@@ -6,7 +6,7 @@ import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
-type SubscriptionTargetType = 'board' | 'series' | 'site';
+type SubscriptionTargetType = 'series' | 'site';
 type SubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
 type SiteRow = {
@@ -49,7 +49,7 @@ type TargetInfo = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series' || value === 'site') {
+  if (value === 'series' || value === 'site') {
     return value;
   }
 
@@ -57,22 +57,14 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
-  }
-
   if (targetType === 'site') {
-    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE;
   }
 
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TARGET_TYPE.BOARD;
-  }
-
   if (targetType === 'site') {
     return PAYMENT_TARGET_TYPE.SITE;
   }
@@ -114,52 +106,6 @@ function getSubscriptionStatus(subscription: SubscriptionRow | null): Subscripti
   return 'none';
 }
 
-async function getSubscriptionSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesCountResult.error) {
-    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
-async function getSubscriptionEnabledSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesCountResult.error) {
-    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
 async function getTargetInfo({
   supabaseAdmin,
   siteId,
@@ -173,6 +119,33 @@ async function getTargetInfo({
   targetType: SubscriptionTargetType;
   seriesName: string;
 }): Promise<TargetInfo> {
+  if (targetType === 'site') {
+    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle();
+
+    if (blogResult.error) {
+      throw new Error('블로그 유형을 확인하지 못했습니다.');
+    }
+
+    if (blogResult.data?.blog_type === 'team') {
+      return {
+        targetId: siteId,
+        targetLabel: null,
+        isSubscriptionTarget: false,
+      };
+    }
+
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('id', siteId).maybeSingle();
+
+    if (siteResult.error) throw new Error('블로그 정보를 확인하지 못했습니다.');
+    if (!siteResult.data) throw new Error('블로그 정보를 찾을 수 없습니다.');
+
+    return {
+      targetId: siteId,
+      targetLabel: siteResult.data.site_label,
+      isSubscriptionTarget: true,
+    };
+  }
+
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label')
@@ -189,20 +162,6 @@ async function getTargetInfo({
   }
 
   const board = boardResult.data as BoardRow;
-
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD) {
-    const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
-      supabaseAdmin,
-      siteId,
-      boardId: board.id,
-    });
-
-    return {
-      targetId: board.id,
-      targetLabel: board.board_label,
-      isSubscriptionTarget: subscriptionEnabledSeriesCount >= 2,
-    };
-  }
 
   if (!seriesName) {
     throw new Error('seriesName이 유효하지 않습니다.');

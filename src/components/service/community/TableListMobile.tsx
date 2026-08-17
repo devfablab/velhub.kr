@@ -42,7 +42,6 @@ type Props = {
   board?: BoardItem | null;
   selectedSeries?: SelectedSeries | null;
   isCommunity?: boolean;
-  isBoardSubscriptionEnabled?: boolean;
 };
 
 type BoardsResponse = {
@@ -83,12 +82,7 @@ function isWritePath(pathname: string, siteName: string) {
   return false;
 }
 
-export default function TableListMobile({
-  board = null,
-  selectedSeries = null,
-  isCommunity,
-  isBoardSubscriptionEnabled = false,
-}: Props) {
+export default function TableListMobile({ board = null, selectedSeries = null }: Props) {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);

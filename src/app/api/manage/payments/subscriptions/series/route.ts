@@ -10,6 +10,7 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -21,6 +22,7 @@ type SiteRow = {
   site_key: string;
   site_label: string | null;
   site_type: string;
+  owner_id: string;
 };
 
 type BoardRow = {
@@ -97,7 +99,7 @@ async function getSiteAndSession(siteName: string) {
 
   const siteResult = await supabaseAdmin
     .from('rhizomes')
-    .select('id, site_key, site_label, site_type')
+    .select('id, site_key, site_label, site_type, owner_id')
     .eq('site_key', siteName)
     .maybeSingle();
 
@@ -133,6 +135,21 @@ async function getSiteAndSession(siteName: string) {
     };
   }
 
+  if (site.site_type === 'blog') {
+    const authorState = await getAuthorState(site.owner_id);
+
+    if (!authorState.isAuthor) {
+      return {
+        response: Response.json(
+          { error: '연재 구독을 열려면 블로그 운영자가 작가로 승인되어 있어야 합니다.' },
+          { status: 403 },
+        ),
+        site: null,
+        supabaseAdmin,
+      };
+    }
+  }
+
   return {
     response: null,
     site,
@@ -140,7 +157,7 @@ async function getSiteAndSession(siteName: string) {
   };
 }
 
-async function getBlogMembershipPrice({
+async function getBlogSubscriptionPrice({
   supabaseAdmin,
   siteId,
 }: {
@@ -152,37 +169,12 @@ async function getBlogMembershipPrice({
     .select('target_id, is_enabled, price')
     .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
     .eq('target_id', siteId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
     .eq('is_enabled', true)
     .maybeSingle();
 
   if (settingResult.error) {
-    throw new Error('블로그 멤버십 설정을 확인하지 못했습니다.');
-  }
-
-  const setting = settingResult.data as ParentSubscriptionSettingRow | null;
-
-  return setting?.price ?? 0;
-}
-
-async function getBoardSubscriptionPrice({
-  supabaseAdmin,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  boardId: string;
-}) {
-  const settingResult = await supabaseAdmin
-    .from('subscription_settings')
-    .select('target_id, is_enabled, price')
-    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-    .eq('is_enabled', true)
-    .maybeSingle();
-
-  if (settingResult.error) {
-    throw new Error('게시판 구독 설정을 확인하지 못했습니다.');
+    throw new Error('블로그 구독 설정을 확인하지 못했습니다.');
   }
 
   const setting = settingResult.data as ParentSubscriptionSettingRow | null;
@@ -193,23 +185,18 @@ async function getBoardSubscriptionPrice({
 async function getParentSubscriptionPrice({
   supabaseAdmin,
   site,
-  boardId,
 }: {
   supabaseAdmin: SupabaseAdminClient;
   site: SiteRow;
-  boardId: string;
 }) {
   if (site.site_type === 'blog') {
-    return getBlogMembershipPrice({
+    return getBlogSubscriptionPrice({
       supabaseAdmin,
       siteId: site.id,
     });
   }
 
-  return getBoardSubscriptionPrice({
-    supabaseAdmin,
-    boardId,
-  });
+  return 0;
 }
 
 async function getParentPriceByBoardId({
@@ -224,105 +211,19 @@ async function getParentPriceByBoardId({
   const result = new Map<string, number>();
 
   if (site.site_type === 'blog') {
-    const membershipPrice = await getBlogMembershipPrice({
+    const blogSubscriptionPrice = await getBlogSubscriptionPrice({
       supabaseAdmin,
       siteId: site.id,
     });
 
     for (const boardId of boardIds) {
-      result.set(boardId, membershipPrice);
+      result.set(boardId, blogSubscriptionPrice);
     }
 
     return result;
   }
 
-  if (!boardIds.length) {
-    return result;
-  }
-
-  const settingsResult = await supabaseAdmin
-    .from('subscription_settings')
-    .select('target_id, is_enabled, price')
-    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-    .eq('is_enabled', true)
-    .in('target_id', boardIds);
-
-  if (settingsResult.error) {
-    throw new Error('게시판 구독 설정을 확인하지 못했습니다.');
-  }
-
-  const settings = (settingsResult.data ?? []) as ParentSubscriptionSettingRow[];
-
-  for (const setting of settings) {
-    result.set(setting.target_id, setting.price);
-  }
-
   return result;
-}
-
-async function getSubscriptionEnabledSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId)
-    .eq('is_subscription', true);
-
-  if (seriesCountResult.error) {
-    throw new Error('구독 연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
-async function disableBoardSubscriptionIfNeeded({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const subscriptionEnabledSeriesCount = await getSubscriptionEnabledSeriesCount({
-    supabaseAdmin,
-    siteId,
-    boardId,
-  });
-
-  if (subscriptionEnabledSeriesCount >= 2) {
-    return {
-      boardSubscriptionDisabled: false,
-      subscriptionEnabledSeriesCount,
-    };
-  }
-
-  const settingUpdateResult = await supabaseAdmin
-    .from('subscription_settings')
-    .update({
-      is_enabled: false,
-    })
-    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('target_id', boardId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD);
-
-  if (settingUpdateResult.error) {
-    throw new Error('게시판 구독 설정을 자동 해제하지 못했습니다.');
-  }
-
-  return {
-    boardSubscriptionDisabled: true,
-    subscriptionEnabledSeriesCount,
-  };
 }
 
 export async function GET(request: Request) {
@@ -698,7 +599,6 @@ export async function PATCH(request: Request) {
     const parentPrice = await getParentSubscriptionPrice({
       supabaseAdmin,
       site,
-      boardId: board.id,
     });
 
     if (body.isEnabled) {
@@ -760,29 +660,11 @@ export async function PATCH(request: Request) {
       return Response.json({ error: '연재 구독 상태를 저장하지 못했습니다.' }, { status: 500 });
     }
 
-    const boardSubscriptionResult =
-      site.site_type === 'community' && !body.isEnabled
-        ? await disableBoardSubscriptionIfNeeded({
-            supabaseAdmin,
-            siteId: site.id,
-            boardId: board.id,
-          })
-        : {
-            boardSubscriptionDisabled: false,
-            subscriptionEnabledSeriesCount: await getSubscriptionEnabledSeriesCount({
-              supabaseAdmin,
-              siteId: site.id,
-              boardId: board.id,
-            }),
-          };
-
     return Response.json({
       ok: true,
       settingId: settingResult.data.id,
       parentPrice,
       maxAllowedPrice: getMaxAllowedSeriesSubscriptionPrice(parentPrice),
-      boardSubscriptionDisabled: boardSubscriptionResult.boardSubscriptionDisabled,
-      subscriptionEnabledSeriesCount: boardSubscriptionResult.subscriptionEnabledSeriesCount,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

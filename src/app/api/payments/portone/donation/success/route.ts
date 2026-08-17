@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import {
   assertPortOnePaidPayment,
@@ -13,14 +14,7 @@ import {
 } from '@/lib/payments/portone';
 import { getPaymentPolicyMs } from '@/lib/payments/refunds';
 import { createOwnerPaymentSplits } from '@/lib/payments/splits';
-import {
-  PAYMENT_METHOD,
-  PAYMENT_STATUS,
-  PAYMENT_TARGET_TYPE,
-  PAYMENT_TYPE,
-  REFUND_POLICY,
-  SUBSCRIPTION_TYPE,
-} from '@/lib/payments/types';
+import { PAYMENT_METHOD, PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, REFUND_POLICY } from '@/lib/payments/types';
 import { getMailFrom, getResendClient } from '@/lib/resend';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -165,7 +159,7 @@ function createRefundableUntil(startedAt: Date) {
   return new Date(startedAt.getTime() + getPaymentPolicyMs()).toISOString();
 }
 
-async function getStigmaAuthUserId({
+async function getStigmaId({
   supabaseAdmin,
   stigmaIdOrAuthUserId,
   errorMessage,
@@ -192,8 +186,8 @@ async function getStigmaAuthUserId({
 
   const stigmaById = stigmaByIdResult.data as StigmaRow | null;
 
-  if (stigmaById?.user_id) {
-    return stigmaById.user_id;
+  if (stigmaById?.id) {
+    return stigmaById.id;
   }
 
   const stigmaByUserIdResult = await supabaseAdmin
@@ -208,11 +202,11 @@ async function getStigmaAuthUserId({
 
   const stigmaByUserId = stigmaByUserIdResult.data as StigmaRow | null;
 
-  if (stigmaByUserId?.user_id) {
-    return stigmaByUserId.user_id;
+  if (stigmaByUserId?.id) {
+    return stigmaByUserId.id;
   }
 
-  return normalizedId;
+  throw new Error(errorMessage);
 }
 
 async function getSiteById({ supabaseAdmin, siteId }: { supabaseAdmin: SupabaseAdminClient; siteId: string }) {
@@ -241,48 +235,9 @@ async function getSiteById({ supabaseAdmin, siteId }: { supabaseAdmin: SupabaseA
   return site;
 }
 
-async function validateSiteDonationTarget({
-  supabaseAdmin,
-  site,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  site: SiteRow;
-}) {
+function validateSiteDonationTarget(site: SiteRow) {
   if (site.site_type !== 'blog') {
     throw new Error('블로그 후원은 블로그에서만 가능합니다.');
-  }
-
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', site.id);
-
-  if (seriesCountResult.error) {
-    console.error(seriesCountResult.error);
-
-    throw new Error('블로그 연재 개수를 확인하지 못했습니다.');
-  }
-
-  if ((seriesCountResult.count ?? 0) < 2) {
-    throw new Error('블로그 후원은 연재가 2개 이상 있는 블로그에서만 가능합니다.');
-  }
-
-  const membershipSettingResult = await supabaseAdmin
-    .from('subscription_settings')
-    .select('id, is_enabled')
-    .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
-    .eq('target_id', site.id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
-    .maybeSingle();
-
-  if (membershipSettingResult.error) {
-    console.error(membershipSettingResult.error);
-
-    throw new Error('블로그 멤버십 설정을 확인하지 못했습니다.');
-  }
-
-  if (membershipSettingResult.data?.is_enabled) {
-    throw new Error('블로그 멤버십이 설정된 블로그는 블로그 후원을 사용할 수 없습니다.');
   }
 }
 
@@ -465,10 +420,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (isSiteDonation) {
-      await validateSiteDonationTarget({
+      validateSiteDonationTarget(site);
+
+      const hasBlogSubscription = await hasValidBlogSubscription({
         supabaseAdmin,
-        site,
+        subscriberId: session.stigmaId,
+        siteId: site.id,
       });
+
+      if (!hasBlogSubscription) {
+        return Response.json({ error: '블로그 구독 중인 회원만 블로그 후원을 할 수 있습니다.' }, { status: 403 });
+      }
     }
 
     const board = isSeriesDonation
@@ -488,7 +450,7 @@ export async function POST(request: NextRequest) {
         })
       : null;
 
-    const siteOwnerUserId = await getStigmaAuthUserId({
+    const siteOwnerStigmaId = await getStigmaId({
       supabaseAdmin,
       stigmaIdOrAuthUserId: site.owner_id,
       errorMessage: '사이트 오너 정보를 확인하지 못했습니다.',
@@ -515,7 +477,7 @@ export async function POST(request: NextRequest) {
         siteId: site.id,
         boardId: board?.id ?? null,
         seriesId: series?.id ?? null,
-        siteOwnerUserId,
+        siteOwnerStigmaId,
         amount: existingPayment.amount,
       });
 
@@ -579,7 +541,7 @@ export async function POST(request: NextRequest) {
       siteId: site.id,
       boardId: board?.id ?? null,
       seriesId: series?.id ?? null,
-      siteOwnerUserId,
+      siteOwnerStigmaId,
       amount: confirmResult.totalAmount,
     });
 

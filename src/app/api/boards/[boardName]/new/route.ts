@@ -495,33 +495,6 @@ async function createCommunitySubscriptionPostNotifications({
   postId: string;
   authorUserId: string;
 }) {
-  const boardSubscriptionsResult = await supabaseAdmin
-    .from('subscriptions')
-    .select('subscriber_user_id')
-    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-    .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-    .eq('target_id', boardId)
-    .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
-    .is('expired_at', null);
-
-  if (boardSubscriptionsResult.error) {
-    throw new Error(`게시판 구독자 조회 실패: ${boardSubscriptionsResult.error.message}`);
-  }
-
-  const boardNotificationRows = (boardSubscriptionsResult.data ?? [])
-    .map((subscription) => normalizeText(subscription.subscriber_user_id))
-    .filter((userId) => userId && userId !== authorUserId)
-    .map((userId) => ({
-      user_id: userId,
-      send_user_id: authorUserId,
-      send_site_id: siteId,
-      send_board_id: boardId,
-      send_series_id: null,
-      send_post_id: postId,
-      notification_type: NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST,
-      is_read: false,
-    }));
-
   const seriesNotificationRows = [];
 
   if (seriesId) {
@@ -558,7 +531,7 @@ async function createCommunitySubscriptionPostNotifications({
     }
   }
 
-  const notificationRows = [...boardNotificationRows, ...seriesNotificationRows];
+  const notificationRows = seriesNotificationRows;
 
   if (notificationRows.length === 0) {
     return;

@@ -90,7 +90,6 @@ type SeriesSubscriptionSettingRow = {
 type PaidContentAccess = {
   is_purchase_required: boolean;
   purchase_post_price: number;
-  has_subscription_board: boolean;
   has_subscription_series: boolean;
   has_purchase_post: boolean;
   can_view_paid_content: boolean;
@@ -305,16 +304,6 @@ function getPostPurchasePrice(seriesSubscriptionPrice: number) {
   return Math.floor((seriesSubscriptionPrice * 27) / 100 / 1000) * 1000;
 }
 
-function getTextPreview(value: string | null | undefined, maxLength: number) {
-  const normalizedValue = normalizeText(value);
-
-  if (!normalizedValue) {
-    return null;
-  }
-
-  return Array.from(normalizedValue).slice(0, maxLength).join('');
-}
-
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
@@ -405,7 +394,6 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: false,
       purchase_post_price: 0,
-      has_subscription_board: false,
       has_subscription_series: false,
       has_purchase_post: false,
       can_view_paid_content: true,
@@ -428,7 +416,6 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: false,
       purchase_post_price: 0,
-      has_subscription_board: false,
       has_subscription_series: false,
       has_purchase_post: false,
       can_view_paid_content: true,
@@ -451,7 +438,6 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: false,
       purchase_post_price: 0,
-      has_subscription_board: false,
       has_subscription_series: false,
       has_purchase_post: false,
       can_view_paid_content: true,
@@ -465,7 +451,6 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: true,
       purchase_post_price: postPurchasePrice,
-      has_subscription_board: false,
       has_subscription_series: false,
       has_purchase_post: false,
       can_view_paid_content: false,
@@ -494,7 +479,6 @@ async function getPaidContentAccess({
     return {
       is_purchase_required: true,
       purchase_post_price: postPurchasePrice,
-      has_subscription_board: false,
       has_subscription_series: true,
       has_purchase_post: false,
       can_view_paid_content: true,
@@ -521,7 +505,6 @@ async function getPaidContentAccess({
   return {
     is_purchase_required: true,
     purchase_post_price: postPurchasePrice,
-    has_subscription_board: false,
     has_subscription_series: false,
     has_purchase_post: hasPostPurchase,
     can_view_paid_content: hasPostPurchase,
@@ -1058,7 +1041,6 @@ export async function GET(request: Request, context: RouteContext) {
           author_manage_icon: author.manageIcon,
           is_purchase_required: false,
           purchase_post_price: 0,
-          has_subscription_board: false,
           has_subscription_series: false,
           has_purchase_post: false,
           can_view_paid_content: true,
@@ -1383,7 +1365,6 @@ export async function GET(request: Request, context: RouteContext) {
         is_locked: postData.is_locked,
         is_purchase_required: paidContentAccess.is_purchase_required,
         purchase_post_price: paidContentAccess.purchase_post_price,
-        has_subscription_board: paidContentAccess.has_subscription_board,
         has_subscription_series: paidContentAccess.has_subscription_series,
         has_purchase_post: paidContentAccess.has_purchase_post,
         can_view_paid_content: canViewPaidContent,

@@ -50,13 +50,6 @@ type SiteRow = {
   site_type: string;
 };
 
-type BoardRow = {
-  id: string;
-  site_id: string;
-  board_key: string;
-  board_label: string | null;
-};
-
 type SeriesRow = {
   id: string;
   site_id: string;
@@ -77,7 +70,7 @@ const SUCCESS_PAYMENT_STATUSES: string[] = [
   PAYMENT_STATUS.REFUNDED,
 ];
 
-const SUBSCRIPTION_PAYMENT_TYPES = [PAYMENT_TYPE.SUBSCRIPTION_BOARD, PAYMENT_TYPE.SUBSCRIPTION_SERIES];
+const SUBSCRIPTION_PAYMENT_TYPES = [PAYMENT_TYPE.SUBSCRIPTION_SERIES];
 
 function normalizePaymentStatus(status: string) {
   return normalizeText(status).toLowerCase();
@@ -140,8 +133,6 @@ function getSubscriptionStatusLabel(status: string, canceledAt: string | null, e
 
 function getSubscriptionPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
-    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
-      return '게시판 구독';
     case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return '연재 구독';
     default:
@@ -151,8 +142,6 @@ function getSubscriptionPaymentTypeLabel(paymentType: string) {
 
 function getSubscriptionTypeByPaymentType(paymentType: string) {
   switch (paymentType) {
-    case PAYMENT_TYPE.SUBSCRIPTION_BOARD:
-      return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
     case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
     default:
@@ -179,25 +168,13 @@ function getSummary(payments: PaymentRow[]) {
 function createSubscriptionDisplayInfo({
   payment,
   siteById,
-  boardById,
   seriesById,
 }: {
   payment: PaymentRow;
   siteById: Map<string, SiteRow>;
-  boardById: Map<string, BoardRow>;
   seriesById: Map<string, SeriesRow>;
 }): SubscriptionDisplayInfo {
   const paymentTypeLabel = getSubscriptionPaymentTypeLabel(payment.payment_type);
-
-  if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id) {
-    const board = boardById.get(payment.target_id);
-
-    return {
-      site: board ? (siteById.get(board.site_id) ?? null) : null,
-      targetLabel: board?.board_label || board?.board_key || '게시판 확인 필요',
-      paymentTypeLabel,
-    };
-  }
 
   if (payment.target_type === PAYMENT_TARGET_TYPE.SERIES && payment.target_id) {
     const series = seriesById.get(payment.target_id);
@@ -259,11 +236,6 @@ export async function GET() {
 
     const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
 
-    const boardTargetIds = payments
-      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
-      .map((payment) => payment.target_id)
-      .filter((targetId): targetId is string => Boolean(targetId));
-
     const seriesTargetIds = payments
       .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
       .map((payment) => payment.target_id)
@@ -277,10 +249,7 @@ export async function GET() {
       ),
     );
 
-    const [boardsResult, seriesResult, subscriptionsByIdResult] = await Promise.all([
-      boardTargetIds.length
-        ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardTargetIds)
-        : { data: [], error: null },
+    const [seriesResult, subscriptionsByIdResult] = await Promise.all([
       seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
@@ -311,17 +280,15 @@ export async function GET() {
         : { data: [], error: null },
     ]);
 
-    if (boardsResult.error || seriesResult.error || subscriptionsByIdResult.error) {
-      console.error(boardsResult.error || seriesResult.error || subscriptionsByIdResult.error);
+    if (seriesResult.error || subscriptionsByIdResult.error) {
+      console.error(seriesResult.error || subscriptionsByIdResult.error);
 
       return Response.json({ error: '구독 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boards = (boardsResult.data ?? []) as BoardRow[];
     const seriesList = (seriesResult.data ?? []) as SeriesRow[];
     const subscriptionsById = (subscriptionsByIdResult.data ?? []) as SubscriptionRow[];
 
-    const boardById = new Map(boards.map((board) => [board.id, board]));
     const seriesById = new Map(seriesList.map((series) => [series.id, series]));
     const subscriptionById = new Map(subscriptionsById.map((subscription) => [subscription.id, subscription]));
 
@@ -364,7 +331,7 @@ export async function GET() {
           )
           .eq('subscriber_user_id', session.stigmaId)
           .in('target_id', subscriptionTargetIds)
-          .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
           .order('created_at', { ascending: false })
       : { data: [], error: null };
 
@@ -385,9 +352,7 @@ export async function GET() {
       }
     });
 
-    const siteIds = Array.from(
-      new Set([...boards.map((board) => board.site_id), ...seriesList.map((series) => series.site_id)]),
-    ).filter(Boolean);
+    const siteIds = Array.from(new Set(seriesList.map((series) => series.site_id))).filter(Boolean);
 
     const sitesResult = siteIds.length
       ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label, site_type').in('id', siteIds)
@@ -415,7 +380,6 @@ export async function GET() {
         const displayInfo = createSubscriptionDisplayInfo({
           payment,
           siteById,
-          boardById,
           seriesById,
         });
         const site = displayInfo.site;

@@ -2,15 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { Box, Stack, Typography } from '@mui/material';
-import { inquirySubtypes, inquiryTypeLabels, type InquiryType } from '@/lib/concierge/inquiries';
+import { Stack, Typography } from '@mui/material';
+import {
+  inquiryStatusLabels,
+  inquirySubtypes,
+  inquiryTypeLabels,
+  type InquiryStatus,
+  type InquiryType,
+} from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
+import styles from '@/app/concierge.module.sass';
 
 type InquiryRow = {
   id: string;
   inquiry_type: InquiryType;
-  status: string;
-  title: string;
+  status: InquiryStatus;
+  title: string | null;
   created_at: string;
   inquiry_subtype: string | null;
 };
@@ -39,27 +46,30 @@ export default function Opt() {
   }, []);
 
   return (
-    <Stack gap={3}>
-      <div className="paper">
-        <Stack gap={1.5}>
-          {error ? (
-            <p className="alert error">
-              <ErrorOutlineRoundedIcon />
-              <span>{error}</span>
-            </p>
-          ) : null}
-          {!error && inquiries.length === 0 ? <Typography variant="body2">문의 내역이 없습니다.</Typography> : null}
-          {inquiries.map((inquiry) => (
-            <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-              <Anchor href={`/concierge/contact/inquiries/${inquiry.id}`}>{inquiry.title}</Anchor>
-              <Typography variant="body2">
-                {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
-                  inquiryTypeLabels[inquiry.inquiry_type]}{' '}
-                / {inquiry.status} / {new Date(inquiry.created_at).toLocaleDateString('ko-KR')}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
+    <div className={styles.inquiry}>
+      <div className={`paper ${styles['inquiry-items']}`}>
+        {error ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{error}</span>
+          </p>
+        ) : null}
+        {!error && inquiries.length === 0 ? <Typography variant="body2">문의 내역이 없습니다.</Typography> : null}
+        {inquiries.map((inquiry) => (
+          <Anchor
+            href={`/concierge/contact/inquiries/${inquiry.id}`}
+            key={inquiry.id}
+            className={`paper ${styles['inquiry-item']}`}
+          >
+            {inquiry.title ? <strong>{inquiry.title}</strong> : null}
+            <span>
+              {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
+                inquiryTypeLabels[inquiry.inquiry_type]}{' '}
+              / {inquiryStatusLabels[inquiry.status]}
+            </span>
+            <time>{new Date(inquiry.created_at).toLocaleDateString('ko-KR')}</time>
+          </Anchor>
+        ))}
       </div>
       <Stack direction="row" justifyContent="flex-end" gap={2}>
         <Anchor href="/concierge/contact" className="button medium close">
@@ -69,6 +79,6 @@ export default function Opt() {
           문의하기
         </Anchor>
       </Stack>
-    </Stack>
+    </div>
   );
 }

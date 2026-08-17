@@ -8,7 +8,7 @@ import Typography from '@mui/material/Typography';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 
-type MembershipSuccessResponse = {
+type BlogSubscriptionSuccessResponse = {
   ok?: boolean;
   subscriptionId?: string | null;
   error?: string;
@@ -21,11 +21,11 @@ export default function Opt() {
 
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [message, setMessage] = useState('멤버십 가입을 처리하고 있습니다.');
+  const [message, setMessage] = useState('블로그 구독 가입을 처리하고 있습니다.');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    async function completeMembership() {
+    async function completeBlogSubscription() {
       try {
         setErrorMessage('');
 
@@ -35,7 +35,7 @@ export default function Opt() {
         const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!billingKey || !customerKey || !siteName || !orderNo) {
-          throw new Error('멤버십 가입 정보가 올바르지 않습니다.');
+          throw new Error('블로그 구독 가입 정보가 올바르지 않습니다.');
         }
 
         const response = await fetch('/api/payments/portone/subscriptions/success', {
@@ -54,18 +54,18 @@ export default function Opt() {
           }),
         });
 
-        const result = (await response.json()) as MembershipSuccessResponse;
+        const result = (await response.json()) as BlogSubscriptionSuccessResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '멤버십 가입을 완료하지 못했습니다.');
+          throw new Error(result.error ?? '블로그 구독 가입을 완료하지 못했습니다.');
         }
 
-        setMessage('멤버십 가입이 완료되었습니다.');
+        setMessage('블로그 구독 가입이 완료되었습니다.');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '멤버십 가입을 완료하지 못했습니다.');
+          setErrorMessage(unknownError.message || '블로그 구독 가입을 완료하지 못했습니다.');
         } else {
-          setErrorMessage('멤버십 가입을 완료하지 못했습니다.');
+          setErrorMessage('블로그 구독 가입을 완료하지 못했습니다.');
         }
       }
     }
@@ -76,12 +76,12 @@ export default function Opt() {
 
     hasRequestedRef.current = true;
 
-    void completeMembership();
-  }, [searchParams]);
+    void completeBlogSubscription();
+  }, [searchParams, siteName]);
 
   return (
     <div className="paper">
-      <Typography variant="h1">멤버십 가입</Typography>
+      <Typography variant="h1">블로그 구독 가입</Typography>
 
       {errorMessage ? (
         <p className="alert error">

@@ -23,11 +23,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const db = getSupabaseAdmin();
   const { data: inquiry } = await db
     .from('inquiries')
-    .select('pg_cancellation_unavailable_at')
+    .select('status, information_request_type, pg_cancellation_unavailable_at')
     .eq('id', inquiryId)
     .eq('requester_stigma_id', current.stigmaId)
     .maybeSingle();
-  if (!inquiry?.pg_cancellation_unavailable_at)
+  if (
+    !inquiry?.pg_cancellation_unavailable_at ||
+    inquiry.status !== 'info_requested' ||
+    inquiry.information_request_type !== 'refund_account'
+  )
     return Response.json({ error: '예외 반환 계좌를 등록할 수 있는 문의가 아닙니다.' }, { status: 400 });
   const { data: identity } = await db
     .from('chorogons')
@@ -61,6 +65,29 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     { onConflict: 'inquiry_id' },
   );
   if (error) return Response.json({ error: '반환 계좌를 저장하지 못했습니다.' }, { status: 500 });
-  await db.from('inquiries').update({ manual_refund_ready_at: new Date().toISOString() }).eq('id', inquiryId);
+  await db
+    .from('inquiries')
+    .update({
+      status: 'reviewing',
+      information_request_type: null,
+      information_requested_at: null,
+      information_due_at: null,
+      manual_refund_ready_at: new Date().toISOString(),
+    })
+    .eq('id', inquiryId);
+  await db.from('inquiry_messages').insert({
+    inquiry_id: inquiryId,
+    sender_type: 'requester',
+    sender_stigma_id: current.stigmaId,
+    message_type: 'information_response',
+    message: '요청받은 반환 계좌 정보를 제출했습니다.',
+  });
+  await db.from('inquiry_status').insert({
+    inquiry_id: inquiryId,
+    previous_status: 'info_requested',
+    next_status: 'reviewing',
+    changed_by_stigma_id: current.stigmaId,
+    reason: '반환 계좌 정보 제출',
+  });
   return Response.json({ ok: true });
 }

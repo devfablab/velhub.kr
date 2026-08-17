@@ -78,9 +78,7 @@ type SubscriptionNotificationRow = {
   send_board_id: string;
   send_series_id: string | null;
   send_post_id: string;
-  notification_type:
-    | typeof NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST
-    | typeof NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST;
+  notification_type: typeof NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST;
   is_read: boolean;
 };
 
@@ -88,7 +86,6 @@ async function createCommunitySubscriptionPostNotifications({
   supabaseAdmin,
   siteId,
   boardId,
-  isBoardSubscription,
   seriesId,
   postId,
   authorUserId,
@@ -96,48 +93,11 @@ async function createCommunitySubscriptionPostNotifications({
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
   siteId: string;
   boardId: string;
-  isBoardSubscription: boolean;
   seriesId: string | null;
   postId: string;
   authorUserId: string;
 }) {
   const notificationRows: SubscriptionNotificationRow[] = [];
-
-  if (isBoardSubscription) {
-    const boardSubscriptionsResult = await supabaseAdmin
-      .from('subscriptions')
-      .select('subscriber_user_id')
-      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-      .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-      .eq('target_id', boardId)
-      .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
-      .is('expired_at', null);
-
-    if (boardSubscriptionsResult.error) {
-      throw new Error(`게시판 구독자 조회 실패: ${boardSubscriptionsResult.error.message}`);
-    }
-
-    const recipientUserIds = [
-      ...new Set(
-        (boardSubscriptionsResult.data ?? [])
-          .map((subscription) => normalizeText(subscription.subscriber_user_id))
-          .filter((userId) => userId && userId !== authorUserId),
-      ),
-    ];
-
-    notificationRows.push(
-      ...recipientUserIds.map((userId) => ({
-        user_id: userId,
-        send_user_id: authorUserId,
-        send_site_id: siteId,
-        send_board_id: boardId,
-        send_series_id: null,
-        send_post_id: postId,
-        notification_type: NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST,
-        is_read: false,
-      })),
-    );
-  }
 
   if (seriesId) {
     const seriesSubscriptionsResult = await supabaseAdmin
@@ -1171,7 +1131,6 @@ export async function PATCH(request: Request, context: RouteContext) {
         supabaseAdmin,
         siteId: rhizomeData.id,
         boardId: board.data.id,
-        isBoardSubscription: false,
         seriesId,
         postId: updatePost.data.id,
         authorUserId: currentPost.data.user_id,

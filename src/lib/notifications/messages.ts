@@ -278,13 +278,6 @@ export function getNotificationText(
     };
   }
 
-  if (notificationType === NOTIFICATION_TYPE.BOARD_SUBSCRIPTION_NEW_POST) {
-    return {
-      title: '구독 게시판 새 글',
-      message: `${siteLabel}의 ${boardLabel} 게시판에 「${postSubject}」 글이 올라왔습니다.`,
-    };
-  }
-
   if (notificationType === NOTIFICATION_TYPE.SERIES_SUBSCRIPTION_NEW_POST) {
     return {
       title: '구독 연재 새 글',

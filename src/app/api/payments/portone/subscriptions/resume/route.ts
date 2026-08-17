@@ -5,7 +5,7 @@ import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
 
-type SubscriptionTargetType = 'board' | 'series' | 'site';
+type SubscriptionTargetType = 'series' | 'site';
 
 type ResumeSubscriptionBody = {
   siteName?: string;
@@ -42,7 +42,7 @@ type SubscriptionRow = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series' || value === 'site') {
+  if (value === 'series' || value === 'site') {
     return value;
   }
 
@@ -50,21 +50,15 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
-  }
-
   if (targetType === 'site') {
-    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE;
   }
 
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TARGET_TYPE.BOARD;
-  }
+  if (targetType === 'site') return PAYMENT_TARGET_TYPE.SITE;
 
   return PAYMENT_TARGET_TYPE.SERIES;
 }
@@ -82,6 +76,15 @@ async function getSubscriptionTarget({
   targetType: SubscriptionTargetType;
   seriesName: string;
 }) {
+  if (targetType === 'site') {
+    const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('id', siteId).maybeSingle();
+
+    if (siteResult.error) throw new Error('블로그 정보를 확인하지 못했습니다.');
+    if (!siteResult.data) throw new Error('블로그 정보를 찾을 수 없습니다.');
+
+    return { targetId: siteId, targetLabel: siteResult.data.site_label };
+  }
+
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label')
@@ -98,13 +101,6 @@ async function getSubscriptionTarget({
   }
 
   const board = boardResult.data as BoardRow;
-
-  if (targetType === 'board') {
-    return {
-      targetId: board.id,
-      targetLabel: board.board_label,
-    };
-  }
 
   if (!seriesName) {
     throw new Error('seriesName이 유효하지 않습니다.');

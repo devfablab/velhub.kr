@@ -169,7 +169,7 @@ function getAvailableSeriesRows(boards: BoardSeriesGroup[]) {
   return rows;
 }
 
-export default function SeriesSubscriptions() {
+export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanceMessages?: string[] }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
@@ -495,11 +495,7 @@ export default function SeriesSubscriptions() {
         setEditingRow(null);
       }
 
-      setSuccessMessage(
-        result.boardSubscriptionDisabled
-          ? '연재 구독 설정을 해제했습니다. 구독 설정된 연재가 2개 미만이 되어 게시판 구독도 자동 해제되었습니다.'
-          : '연재 구독 설정을 해제했습니다.',
-      );
+      setSuccessMessage('연재 구독 설정을 해제했습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '연재 구독 설정을 해제하지 못했습니다.');
@@ -645,6 +641,13 @@ export default function SeriesSubscriptions() {
     <div className={`paper ${styles.paper}`}>
       <Stack gap={2}>
         <Typography variant="subtitle2">연재 구독</Typography>
+
+        {guidanceMessages.map((guidanceMessage) => (
+          <p className="alert info" key={guidanceMessage}>
+            <InfoOutlineRoundedIcon />
+            <span>{guidanceMessage}</span>
+          </p>
+        ))}
 
         {errorMessage ? (
           <p className="alert error">

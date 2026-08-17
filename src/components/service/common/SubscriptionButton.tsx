@@ -22,6 +22,7 @@ import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
 
@@ -53,6 +54,7 @@ type SubscriptionStatusResponse = {
   price?: number | null;
   subscriptionStatus?: SubscriptionStatus;
   isRefundableCancellation?: boolean;
+  paymentEmail?: string | null;
   error?: string;
 };
 
@@ -95,6 +97,7 @@ type SubscriptionStartResponse =
   | {
       error: string;
       guardianAuthRequired?: boolean;
+      paymentEmailRequired?: boolean;
     };
 
 type SubscriptionActionResponse =
@@ -182,35 +185,21 @@ function formatPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
-function getSubscribeButtonText({
-  targetType,
-  subscriptionStatus,
-}: {
-  targetType: SubscriptionTargetType;
-  subscriptionStatus: SubscriptionStatus;
-}) {
+function getSubscribeButtonText({ subscriptionStatus }: { subscriptionStatus: SubscriptionStatus }) {
   if (subscriptionStatus === 'canceled' || subscriptionStatus === 'expired') {
     return '재구독하기';
   }
 
-  return targetType === 'series' ? '연재 구독' : '게시판 구독';
+  return '연재 구독';
 }
 
-function getDialogTitle({
-  targetType,
-  subscriptionStatus,
-  isMinor,
-}: {
-  targetType: SubscriptionTargetType;
-  subscriptionStatus: SubscriptionStatus;
-  isMinor: boolean;
-}) {
+function getDialogTitle({ subscriptionStatus, isMinor }: { subscriptionStatus: SubscriptionStatus; isMinor: boolean }) {
   if (isMinor) return '1개월 구독권';
   if (subscriptionStatus === 'canceled' || subscriptionStatus === 'expired') {
     return '재구독하기';
   }
 
-  return targetType === 'series' ? '연재 구독' : '게시판 구독';
+  return '연재 구독';
 }
 
 function getDialogSubmitText(subscriptionStatus: SubscriptionStatus) {
@@ -221,8 +210,8 @@ function getDialogSubmitText(subscriptionStatus: SubscriptionStatus) {
   return '구독하기';
 }
 
-function getCancelDialogTitle(targetType: SubscriptionTargetType) {
-  return targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소';
+function getCancelDialogTitle() {
+  return '연재 구독 취소';
 }
 
 function getCancelDialogDescription(isRefundableCancellation: boolean) {
@@ -247,6 +236,8 @@ export default function SubscriptionButton({
   const [isMinor, setIsMinor] = useState(false);
   const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
+  const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
+  const [paymentEmail, setPaymentEmail] = useState('');
 
   const targetType: SubscriptionTargetType = 'series';
   const targetLabel = selectedSeries.series_label;
@@ -362,6 +353,7 @@ export default function SubscriptionButton({
         setPrice(result.price ?? null);
         setSubscriptionStatus(nextSubscriptionStatus);
         setIsRefundableCancellation(Boolean(result.isRefundableCancellation));
+        setPaymentEmail(String(result.paymentEmail ?? ''));
         onStatusChange?.(nextSubscriptionStatus);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -384,6 +376,12 @@ export default function SubscriptionButton({
       setIsIdentityDialogOpen(true);
       return;
     }
+
+    if (!paymentEmail) {
+      setIsPaymentEmailDialogOpen(true);
+      return;
+    }
+
     setErrorMessage('');
     setIsDialogOpen(true);
   }
@@ -398,6 +396,12 @@ export default function SubscriptionButton({
 
   function handleCloseIdentityDialog() {
     setIsIdentityDialogOpen(false);
+  }
+
+  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+    setPaymentEmail(savedPaymentEmail);
+    setErrorMessage('');
+    setIsDialogOpen(true);
   }
 
   function handleOpenCancelDialog() {
@@ -436,6 +440,12 @@ export default function SubscriptionButton({
       });
 
       const result = (await response.json()) as SubscriptionStartResponse;
+
+      if ('paymentEmailRequired' in result && result.paymentEmailRequired) {
+        setIsDialogOpen(false);
+        setIsPaymentEmailDialogOpen(true);
+        return;
+      }
 
       if (!response.ok) {
         if ('guardianAuthRequired' in result && result.guardianAuthRequired && !guardianIdentityVerificationId) {
@@ -656,6 +666,12 @@ export default function SubscriptionButton({
 
   return (
     <>
+      <PaymentEmailDialog
+        open={isPaymentEmailDialogOpen}
+        onClose={() => setIsPaymentEmailDialogOpen(false)}
+        onSaved={handlePaymentEmailSaved}
+      />
+
       {subscriptionStatus === 'none' || subscriptionStatus === 'canceled' || subscriptionStatus === 'expired' ? (
         <button
           type="button"
@@ -664,7 +680,7 @@ export default function SubscriptionButton({
           disabled={isProcessing}
         >
           {selectedBoard ? null : <LoyaltyOutlinedIcon />}
-          <strong>{getSubscribeButtonText({ targetType, subscriptionStatus })}</strong>
+          <strong>{getSubscribeButtonText({ subscriptionStatus })}</strong>
         </button>
       ) : null}
 
@@ -676,7 +692,7 @@ export default function SubscriptionButton({
           disabled={isProcessing}
         >
           {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
-          <strong>{targetType === 'series' ? '연재 구독 취소' : '게시판 구독 취소'}</strong>
+          <strong>연재 구독 취소</strong>
         </button>
       ) : null}
 
@@ -720,7 +736,7 @@ export default function SubscriptionButton({
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">
-          <h2>{getDialogTitle({ targetType, subscriptionStatus, isMinor })}</h2>
+          <h2>{getDialogTitle({ subscriptionStatus, isMinor })}</h2>
           <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
@@ -770,9 +786,7 @@ export default function SubscriptionButton({
           aria-labelledby="subscription-dialog-title"
           className="VhiDialog"
         >
-          <DialogTitle id="subscription-dialog-title">
-            {getDialogTitle({ targetType, subscriptionStatus, isMinor })}
-          </DialogTitle>
+          <DialogTitle id="subscription-dialog-title">{getDialogTitle({ subscriptionStatus, isMinor })}</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
@@ -819,7 +833,7 @@ export default function SubscriptionButton({
           onClose={handleCloseCancelDialog}
           className="VhiDrawer-bottom"
         >
-          <h2>{getCancelDialogTitle(targetType)}</h2>
+          <h2>{getCancelDialogTitle()}</h2>
           <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
@@ -861,7 +875,7 @@ export default function SubscriptionButton({
           aria-labelledby="subscription-cancel-dialog-title"
           className="VhiDialog"
         >
-          <DialogTitle id="subscription-cancel-dialog-title">{getCancelDialogTitle(targetType)}</DialogTitle>
+          <DialogTitle id="subscription-cancel-dialog-title">{getCancelDialogTitle()}</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>

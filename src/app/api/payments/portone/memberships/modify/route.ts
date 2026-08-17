@@ -233,7 +233,7 @@ export async function POST(request: Request) {
         .from('subscriptions')
         .select('id,last_payment_id')
         .eq('subscriber_user_id', currentStigma.stigmaId)
-        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
         .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
         .eq('target_id', membership.id)
         .in('status', [
@@ -308,7 +308,7 @@ export async function POST(request: Request) {
     }
     for (const purchase of normalizedPurchases) {
       const amount = getMembershipPrice(purchase.featureKeys as MembershipFeatureKey[], purchase.type);
-      const orderNo = createOrderNo('MEMBERSHIP_PLATFORM');
+      const orderNo = createOrderNo('MEMBERSHIP');
       const orderName = `${purchase.type === 'all_in_one' ? '올인원' : purchase.type === 'creator' ? '크리에이터' : purchase.type === 'owner' ? '오너' : '아페토'} 멤버십`;
       const billingPayment = await requestMembershipBilling({
         billingKey: billingMethod.billing_key,
@@ -348,7 +348,7 @@ export async function POST(request: Request) {
           currency: 'KRW',
           status: PAYMENT_STATUS.PAID,
           payment_method: PAYMENT_METHOD.CARD,
-          payment_type: PAYMENT_TYPE.MEMBERSHIP_PLATFORM,
+          payment_type: PAYMENT_TYPE.MEMBERSHIP,
           target_type: PAYMENT_TARGET_TYPE.MEMBERSHIP,
           target_id: membershipResult.data.id,
           subscription_id: null,
@@ -370,7 +370,7 @@ export async function POST(request: Request) {
         .from('subscriptions')
         .insert({
           subscriber_user_id: currentStigma.stigmaId,
-          subscription_type: SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM,
+          subscription_type: SUBSCRIPTION_TYPE.MEMBERSHIP,
           target_type: PAYMENT_TARGET_TYPE.MEMBERSHIP,
           target_id: membershipResult.data.id,
           owner_user_id: currentStigma.stigmaId,

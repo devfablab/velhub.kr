@@ -7,7 +7,7 @@ type OwnerPaymentSplitParams = {
   supabaseAdmin: SupabaseAdminClient;
   paymentId: string;
   siteId: string;
-  siteOwnerUserId: string;
+  siteOwnerStigmaId: string;
   amount: number;
   boardId?: string | null;
   seriesId?: string | null;
@@ -18,8 +18,8 @@ type PostPaymentSplitParams = {
   supabaseAdmin: SupabaseAdminClient;
   paymentId: string;
   siteId: string;
-  siteOwnerUserId: string;
-  postAuthorUserId: string;
+  siteOwnerStigmaId: string;
+  postAuthorStigmaId: string;
   amount: number;
   boardId?: string | null;
   seriesId?: string | null;
@@ -46,7 +46,7 @@ export async function createOwnerPaymentSplits({
   supabaseAdmin,
   paymentId,
   siteId,
-  siteOwnerUserId,
+  siteOwnerStigmaId,
   amount,
   boardId = null,
   seriesId = null,
@@ -82,7 +82,7 @@ export async function createOwnerPaymentSplits({
       board_id: boardId,
       series_id: seriesId,
       post_id: postId,
-      receiver_user_id: siteOwnerUserId,
+      receiver_user_id: siteOwnerStigmaId,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
       rate: 83,
       amount: siteOwnerAmount,
@@ -98,8 +98,8 @@ export async function createPostPaymentSplits({
   supabaseAdmin,
   paymentId,
   siteId,
-  siteOwnerUserId,
-  postAuthorUserId,
+  siteOwnerStigmaId,
+  postAuthorStigmaId,
   amount,
   boardId = null,
   seriesId = null,
@@ -116,7 +116,7 @@ export async function createPostPaymentSplits({
 
   const platformAmount = Math.floor(amount * 0.17);
 
-  if (siteOwnerUserId === postAuthorUserId) {
+  if (siteOwnerStigmaId === postAuthorStigmaId) {
     const receiverAmount = amount - platformAmount;
 
     const insertResult = await supabaseAdmin.from('payment_splits').insert([
@@ -137,7 +137,7 @@ export async function createPostPaymentSplits({
         board_id: boardId,
         series_id: seriesId,
         post_id: postId,
-        receiver_user_id: siteOwnerUserId,
+        receiver_user_id: siteOwnerStigmaId,
         receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
         rate: 83,
         amount: receiverAmount,
@@ -172,7 +172,7 @@ export async function createPostPaymentSplits({
       board_id: boardId,
       series_id: seriesId,
       post_id: postId,
-      receiver_user_id: postAuthorUserId,
+      receiver_user_id: postAuthorStigmaId,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.POST_AUTHOR,
       rate: 57,
       amount: postAuthorAmount,
@@ -183,7 +183,7 @@ export async function createPostPaymentSplits({
       board_id: boardId,
       series_id: seriesId,
       post_id: postId,
-      receiver_user_id: siteOwnerUserId,
+      receiver_user_id: siteOwnerStigmaId,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
       rate: 26,
       amount: siteOwnerAmount,

@@ -1,22 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Stack, Tab, Tabs, Typography } from '@mui/material';
-import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { Tab, Tabs, Typography } from '@mui/material';
+import {
+  inquiryStatusLabels,
+  inquirySubtypes,
+  inquiryTypeLabels,
+  inquiryTypes,
+  type InquiryStatus,
+  type InquiryType,
+} from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
+import styles from '@/app/concierge.module.sass';
 
 type InquiryRow = {
   id: string;
   inquiry_type: InquiryType;
-  status: string;
-  title: string;
+  status: InquiryStatus;
+  title: string | null;
   created_at: string;
   resolution_code: string | null;
   inquiry_subtype: string | null;
+  requesterActivityName: string;
 };
 
 export default function Opt() {
-  const [type, setType] = useState<InquiryType>('minor_purchase_cancellation');
+  const [type, setType] = useState<InquiryType>('service_question');
   const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
   const [error, setError] = useState('');
 
@@ -40,28 +49,36 @@ export default function Opt() {
   }, [type]);
 
   return (
-    <div className="paper">
+    <div className={styles.inquiry}>
       <Tabs value={type} onChange={(_, value: InquiryType) => setType(value)} variant="scrollable" scrollButtons="auto">
         {inquiryTypes.map((value) => (
           <Tab key={value} value={value} label={inquiryTypeLabels[value]} />
         ))}
       </Tabs>
-      <Box sx={{ p: 2 }}>
-        <Stack gap={1.5}>
-          {error ? <Typography color="error">{error}</Typography> : null}
-          {!error && inquiries.length === 0 ? <Typography color="text.secondary">문의가 없습니다.</Typography> : null}
-          {inquiries.map((inquiry) => (
-            <Box key={inquiry.id} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-              <Anchor href={`/concierge/inquiries/${inquiry.id}`}>{inquiry.title}</Anchor>
-              <Typography variant="body2" color="text.secondary">
-                {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
-                  inquiryTypeLabels[inquiry.inquiry_type]}{' '}
-                / {inquiry.status} / {new Date(inquiry.created_at).toLocaleString('ko-KR')}
-              </Typography>
-            </Box>
-          ))}
-        </Stack>
-      </Box>
+      <div className={`paper ${styles['inquiry-items']}`}>
+        {error ? (
+          <Typography variant="body2" color="error">
+            {error}
+          </Typography>
+        ) : null}
+        {!error && inquiries.length === 0 ? <Typography variant="body2">문의가 없습니다.</Typography> : null}
+        {inquiries.map((inquiry) => (
+          <Anchor
+            href={`/concierge/inquiries/${inquiry.id}`}
+            key={inquiry.id}
+            className={`paper ${styles['inquiry-item']}`}
+          >
+            {inquiry.title ? <strong>{inquiry.title}</strong> : null}
+            <span>{inquiry.requesterActivityName} 님</span>
+            <span>
+              {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
+                inquiryTypeLabels[inquiry.inquiry_type]}{' '}
+              / {inquiryStatusLabels[inquiry.status]}
+            </span>
+            <time>{new Date(inquiry.created_at).toLocaleDateString('ko-KR')}</time>
+          </Anchor>
+        ))}
+      </div>
     </div>
   );
 }

@@ -29,13 +29,6 @@ type SiteRow = {
   site_type: string;
 };
 
-type BoardRow = {
-  id: string;
-  site_id: string;
-  board_key: string;
-  board_label: string | null;
-};
-
 type SeriesRow = {
   id: string;
   site_id: string;
@@ -60,12 +53,7 @@ type DonationDisplayInfo = {
 
 const SUCCESS_PAYMENT_STATUSES = ['paid', 'partially_refunded', 'refunded'];
 
-const DONATION_PAYMENT_TYPES = [
-  PAYMENT_TYPE.DONATION_SITE,
-  PAYMENT_TYPE.DONATION_BOARD,
-  PAYMENT_TYPE.DONATION_SERIES,
-  PAYMENT_TYPE.DONATION_POST,
-];
+const DONATION_PAYMENT_TYPES = [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES, PAYMENT_TYPE.DONATION_POST];
 
 function normalizePaymentStatus(status: string) {
   return normalizeText(status).toLowerCase();
@@ -104,8 +92,6 @@ function getDonationPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
     case PAYMENT_TYPE.DONATION_SITE:
       return '블로그 후원';
-    case PAYMENT_TYPE.DONATION_BOARD:
-      return '게시판 후원';
     case PAYMENT_TYPE.DONATION_SERIES:
       return '연재 후원';
     case PAYMENT_TYPE.DONATION_POST:
@@ -165,13 +151,11 @@ async function getSitesByIds({ supabaseAdmin, siteIds }: { supabaseAdmin: Supaba
 function createDonationDisplayInfo({
   payment,
   siteById,
-  boardById,
   seriesById,
   postById,
 }: {
   payment: PaymentRow;
   siteById: Map<string, SiteRow>;
-  boardById: Map<string, BoardRow>;
   seriesById: Map<string, SeriesRow>;
   postById: Map<string, PostRow>;
 }): DonationDisplayInfo {
@@ -181,16 +165,6 @@ function createDonationDisplayInfo({
     return {
       site: siteById.get(payment.target_id) ?? null,
       targetLabel: null,
-      paymentTypeLabel,
-    };
-  }
-
-  if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD && payment.target_id) {
-    const board = boardById.get(payment.target_id);
-
-    return {
-      site: board ? (siteById.get(board.site_id) ?? null) : null,
-      targetLabel: board?.board_label || board?.board_key || '게시판 확인 필요',
       paymentTypeLabel,
     };
   }
@@ -269,11 +243,6 @@ export async function GET() {
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 
-    const boardTargetIds = payments
-      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.BOARD)
-      .map((payment) => payment.target_id)
-      .filter((targetId): targetId is string => Boolean(targetId));
-
     const seriesTargetIds = payments
       .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SERIES)
       .map((payment) => payment.target_id)
@@ -284,10 +253,7 @@ export async function GET() {
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 
-    const [boardsResult, seriesResult, postsResult] = await Promise.all([
-      boardTargetIds.length
-        ? supabaseAdmin.from('boards').select('id, site_id, board_key, board_label').in('id', boardTargetIds)
-        : { data: [], error: null },
+    const [seriesResult, postsResult] = await Promise.all([
       seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
@@ -299,27 +265,20 @@ export async function GET() {
         : { data: [], error: null },
     ]);
 
-    if (boardsResult.error || seriesResult.error || postsResult.error) {
-      console.error(boardsResult.error || seriesResult.error || postsResult.error);
+    if (seriesResult.error || postsResult.error) {
+      console.error(seriesResult.error || postsResult.error);
 
       return Response.json({ error: '후원 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boards = (boardsResult.data ?? []) as BoardRow[];
     const seriesList = (seriesResult.data ?? []) as SeriesRow[];
     const posts = (postsResult.data ?? []) as PostRow[];
 
-    const boardById = new Map(boards.map((board) => [board.id, board]));
     const seriesById = new Map(seriesList.map((series) => [series.id, series]));
     const postById = new Map(posts.map((post) => [post.id, post]));
 
     const siteIds = Array.from(
-      new Set([
-        ...siteTargetIds,
-        ...boards.map((board) => board.site_id),
-        ...seriesList.map((series) => series.site_id),
-        ...posts.map((post) => post.site_id),
-      ]),
+      new Set([...siteTargetIds, ...seriesList.map((series) => series.site_id), ...posts.map((post) => post.site_id)]),
     ).filter(Boolean);
 
     const sites = await getSitesByIds({
@@ -336,7 +295,6 @@ export async function GET() {
         const displayInfo = createDonationDisplayInfo({
           payment,
           siteById,
-          boardById,
           seriesById,
           postById,
         });

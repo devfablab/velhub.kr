@@ -320,21 +320,6 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
     }
 
-    const hasBoardSubscription = await hasActiveSubscription({
-      supabaseAdmin,
-      stigmaId: session.stigmaId,
-      targetType: PAYMENT_TARGET_TYPE.BOARD,
-      targetId: board.id,
-      subscriptionType: SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD,
-    });
-
-    if (hasBoardSubscription) {
-      return Response.json({
-        ok: true,
-        alreadyPurchased: true,
-      });
-    }
-
     const hasSeriesSubscription = await hasActiveSubscription({
       supabaseAdmin,
       stigmaId: session.stigmaId,

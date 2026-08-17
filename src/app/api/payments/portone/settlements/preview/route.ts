@@ -231,6 +231,7 @@ export async function GET(request: Request) {
         ].join(', '),
       )
       .eq('site_id', site.id)
+      .is('settlement_blocked_at', null)
       .order('created_at', { ascending: true });
 
     if (splitsResult.error) {

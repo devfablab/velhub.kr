@@ -5,7 +5,7 @@ import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
 import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
-type MembershipPayment = {
+type BlogSubscriptionPayment = {
   id: string;
   siteId: string | null;
   siteName: string | null;
@@ -37,14 +37,14 @@ type MembershipPayment = {
   detail: BillingPopupDetail;
 };
 
-type MembershipResponse = {
+type BlogSubscriptionResponse = {
   summary: {
     totalAmount: number;
     totalRefundedAmount: number;
     netAmount: number;
     count: number;
   };
-  payments: MembershipPayment[];
+  payments: BlogSubscriptionPayment[];
   error?: string;
 };
 
@@ -64,7 +64,7 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
-async function getMembershipPurchase() {
+async function getBlogSubscriptionPurchase() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
   const headerList = await headers();
@@ -72,7 +72,7 @@ async function getMembershipPurchase() {
   const protocol = headerList.get('x-forwarded-proto') || 'http';
   const baseUrl = `${protocol}://${host}`;
 
-  const response = await fetch(`${baseUrl}/api/hub/purchase/membership`, {
+  const response = await fetch(`${baseUrl}/api/hub/purchase/blog-subscription`, {
     method: 'GET',
     headers: {
       cookie: cookieHeader,
@@ -80,25 +80,25 @@ async function getMembershipPurchase() {
     cache: 'no-store',
   });
 
-  const result = (await response.json()) as MembershipResponse;
+  const result = (await response.json()) as BlogSubscriptionResponse;
 
   if (!response.ok) {
-    throw new Error(result.error || '멤버십 구입내역을 불러오지 못했습니다.');
+    throw new Error(result.error || '블로그 구독 구입내역을 불러오지 못했습니다.');
   }
 
   return result;
 }
 
 export default async function Page() {
-  let result: MembershipResponse;
+  let result: BlogSubscriptionResponse;
 
   try {
-    result = await getMembershipPurchase();
+    result = await getBlogSubscriptionPurchase();
   } catch (unknownError) {
     const errorMessage =
       unknownError instanceof Error
-        ? unknownError.message || '멤버십 구입내역을 불러오지 못했습니다.'
-        : '멤버십 구입내역을 불러오지 못했습니다.';
+        ? unknownError.message || '블로그 구독 구입내역을 불러오지 못했습니다.'
+        : '블로그 구독 구입내역을 불러오지 못했습니다.';
 
     return (
       <Container pageTitle="구입내역" pageBack="/hub">
@@ -118,7 +118,7 @@ export default async function Page() {
       <div className="container">
         <Content>
           <section className={`paper ${styles.paper}`}>
-            <h2>멤버십 결제 요약</h2>
+            <h2>블로그 구독 결제 요약</h2>
             <dl className={styles.summary}>
               <div className="paper">
                 <dt>결제 총액</dt>
@@ -140,11 +140,11 @@ export default async function Page() {
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>
-            <h2>멤버십 결제내역</h2>
+            <h2>블로그 구독 결제내역</h2>
 
             {result.payments.length ? (
               <TableContainer className={styles.items}>
-                <Table size="small" aria-label="멤버십 결제내역">
+                <Table size="small" aria-label="블로그 구독 결제내역">
                   <TableHead>
                     <TableRow>
                       <TableCell component="th" scope="col" sx={{ whiteSpace: 'nowrap' }}>
@@ -194,7 +194,7 @@ export default async function Page() {
                 </Table>
               </TableContainer>
             ) : (
-              <p>멤버십 결제내역이 없습니다.</p>
+              <p>블로그 구독 결제내역이 없습니다.</p>
             )}
           </section>
         </Content>

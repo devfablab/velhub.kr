@@ -157,14 +157,14 @@ export async function GET() {
         ].join(', '),
       )
       .eq('buyer_user_id', session.stigmaId)
-      .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP_BLOG)
+      .eq('payment_type', PAYMENT_TYPE.SUBSCRIPTION_SITE)
       .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
       .order('created_at', { ascending: false });
 
     if (paymentsResult.error) {
       console.error(paymentsResult.error);
 
-      return Response.json({ error: '멤버십 구입내역을 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '블로그 구독 구입내역을 불러오지 못했습니다.' }, { status: 500 });
     }
 
     const payments = (paymentsResult.data ?? []) as unknown as PaymentRow[];
@@ -204,7 +204,7 @@ export async function GET() {
             )
             .in('id', subscriptionIds)
             .eq('subscriber_user_id', session.stigmaId)
-            .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+            .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
             .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
         : { data: [], error: null },
       siteIds.length
@@ -225,7 +225,7 @@ export async function GET() {
               ].join(', '),
             )
             .eq('subscriber_user_id', session.stigmaId)
-            .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+            .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
             .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
             .in('target_id', siteIds)
             .order('created_at', { ascending: false })
@@ -235,13 +235,13 @@ export async function GET() {
     if (sitesResult.error) {
       console.error(sitesResult.error);
 
-      return Response.json({ error: '멤버십 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '블로그 구독 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     if (subscriptionsByIdResult.error || subscriptionsBySiteResult.error) {
       console.error(subscriptionsByIdResult.error || subscriptionsBySiteResult.error);
 
-      return Response.json({ error: '멤버십 상태를 불러오지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '블로그 구독 상태를 불러오지 못했습니다.' }, { status: 500 });
     }
 
     const sites = (sitesResult.data ?? []) as SiteRow[];
@@ -267,7 +267,7 @@ export async function GET() {
           (payment.subscription_id ? subscriptionById.get(payment.subscription_id) : null) ??
           (payment.target_id ? latestSubscriptionBySiteId.get(payment.target_id) : null) ??
           null;
-        const paymentTypeLabel = '블로그 멤버십';
+        const paymentTypeLabel = '블로그 구독';
         const isRefunded =
           paymentStatus === PAYMENT_STATUS.REFUNDED || paymentStatus === PAYMENT_STATUS.PARTIALLY_REFUNDED;
         const isCanceled = Boolean(subscription?.canceled_at || subscription?.expired_at);
@@ -333,11 +333,11 @@ export async function GET() {
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return Response.json(
-        { error: unknownError.message || '멤버십 구입내역을 불러오지 못했습니다.' },
+        { error: unknownError.message || '블로그 구독 구입내역을 불러오지 못했습니다.' },
         { status: 500 },
       );
     }
 
-    return Response.json({ error: '멤버십 구입내역을 불러오지 못했습니다.' }, { status: 500 });
+    return Response.json({ error: '블로그 구독 구입내역을 불러오지 못했습니다.' }, { status: 500 });
   }
 }

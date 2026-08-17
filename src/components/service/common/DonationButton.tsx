@@ -20,6 +20,7 @@ import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 
 type DonationTargetType = 'site' | 'series';
@@ -70,6 +71,7 @@ type IdentityStatusResponse = {
 
 type DonationStatusResponse = {
   isEnabled?: boolean;
+  paymentEmail?: string | null;
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -187,8 +189,10 @@ export default function DonationButton(props: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
+  const [paymentEmail, setPaymentEmail] = useState('');
   const [isMinor, setIsMinor] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
+  const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -226,6 +230,7 @@ export default function DonationButton(props: Props) {
         );
 
         setCanShowDonationButton(Boolean(donationStatusResponse.ok && donationStatusResult.isEnabled));
+        setPaymentEmail(donationStatusResponse.ok ? String(donationStatusResult.paymentEmail ?? '') : '');
       } catch {
         setCanShowDonationButton(false);
       }
@@ -252,6 +257,12 @@ export default function DonationButton(props: Props) {
       setIsIdentityDialogOpen(true);
       return;
     }
+
+    if (!paymentEmail) {
+      setIsPaymentEmailDialogOpen(true);
+      return;
+    }
+
     setDonationAmount('1,000');
     setErrorMessage('');
     setIsDialogOpen(true);
@@ -267,6 +278,13 @@ export default function DonationButton(props: Props) {
 
   function handleCloseIdentityDialog() {
     setIsIdentityDialogOpen(false);
+  }
+
+  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+    setPaymentEmail(savedPaymentEmail);
+    setDonationAmount('1,000');
+    setErrorMessage('');
+    setIsDialogOpen(true);
   }
 
   function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement>) {
@@ -394,6 +412,12 @@ export default function DonationButton(props: Props) {
       >
         <strong>{buttonText}</strong>
       </button>
+
+      <PaymentEmailDialog
+        open={isPaymentEmailDialogOpen}
+        onClose={() => setIsPaymentEmailDialogOpen(false)}
+        onSaved={handlePaymentEmailSaved}
+      />
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isDialogOpen} onClose={handleCloseDialog} className="VhiDrawer-bottom">

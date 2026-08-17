@@ -5,12 +5,24 @@ import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { FormControlLabel, MenuItem, Radio, RadioGroup, Stack, TextField, Typography, styled } from '@mui/material';
+import {
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  Stack,
+  TextField,
+  Typography,
+  styled,
+} from '@mui/material';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
 
 type PaymentRow = {
@@ -20,6 +32,15 @@ type PaymentRow = {
   status: string;
 };
 
+type TargetOption = {
+  id: string;
+  label: string;
+  description?: string;
+  boardId?: string;
+};
+
+type AttemptedPaymentKind = 'membership' | 'subscription' | 'donation' | 'post_purchase';
+
 const recurrenceOptions = [
   { value: 'always', label: '항상 발생' },
   { value: 'often', label: '자주 발생' },
@@ -28,6 +49,30 @@ const recurrenceOptions = [
 ];
 
 const inquiryTypeOptions = inquiryTypes.map((value) => ({ value, label: inquiryTypeLabels[value] }));
+
+const attemptedPaymentKinds: { value: AttemptedPaymentKind; label: string }[] = [
+  { value: 'membership', label: '멤버십' },
+  { value: 'subscription', label: '구독' },
+  { value: 'donation', label: '후원' },
+  { value: 'post_purchase', label: '연재글 영구소장' },
+];
+
+const membershipTypes: { value: MembershipType; label: string }[] = [
+  { value: 'owner', label: '오너 멤버십' },
+  { value: 'creator', label: '크리에이터 멤버십' },
+  { value: 'all_in_one', label: '올인원 멤버십' },
+  { value: 'affetto', label: '아페토 멤버십' },
+];
+
+const subscriptionTypes = [
+  { value: 'site_subscription', label: '블로그 구독' },
+  { value: 'series_subscription', label: '연재 구독' },
+];
+
+const donationTypes = [
+  { value: 'site_donation', label: '블로그 후원' },
+  { value: 'series_donation', label: '연재 후원' },
+];
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -58,7 +103,20 @@ export default function Opt() {
   const [actualBehavior, setActualBehavior] = useState('');
   const [recurrence, setRecurrence] = useState('sometimes');
   const [errorMessage, setErrorMessage] = useState('');
-  const [attemptedProduct, setAttemptedProduct] = useState('');
+  const [attemptedPaymentKind, setAttemptedPaymentKind] = useState<AttemptedPaymentKind>('membership');
+  const [attemptedPaymentSubtype, setAttemptedPaymentSubtype] = useState('');
+  const [attemptedMembershipType, setAttemptedMembershipType] = useState<MembershipType>('owner');
+  const [attemptedFeatureKeys, setAttemptedFeatureKeys] = useState<MembershipFeatureKey[]>([]);
+  const [siteQuery, setSiteQuery] = useState('');
+  const [siteResults, setSiteResults] = useState<TargetOption[]>([]);
+  const [selectedSite, setSelectedSite] = useState<TargetOption | null>(null);
+  const [targetOptions, setTargetOptions] = useState<TargetOption[]>([]);
+  const [selectedSeriesId, setSelectedSeriesId] = useState('');
+  const [postQuery, setPostQuery] = useState('');
+  const [postResults, setPostResults] = useState<TargetOption[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState('');
+  const [attemptedAmount, setAttemptedAmount] = useState('');
+  const [searchingTargets, setSearchingTargets] = useState(false);
   const [displayedMessage, setDisplayedMessage] = useState('');
   const [evidence, setEvidence] = useState<File | null>(null);
   const [error, setError] = useState('');
@@ -97,6 +155,12 @@ export default function Opt() {
   const isBug = inquiryType === 'bug_report';
   const isPaymentProblem = inquiryType === 'payment_refund_error';
   const paymentRequired = isPaymentProblem && inquirySubtype !== 'payment_declined';
+  const needsSite = attemptedPaymentKind !== 'membership';
+  const needsSeries =
+    attemptedPaymentSubtype === 'series_subscription' ||
+    attemptedPaymentSubtype === 'series_donation' ||
+    attemptedPaymentKind === 'post_purchase';
+  const needsPost = attemptedPaymentKind === 'post_purchase';
   const isCancellationBlocked =
     isMinorCancellation && !!cancellationAvailableAt && new Date(cancellationAvailableAt).getTime() > Date.now();
 
@@ -121,7 +185,14 @@ export default function Opt() {
           actualBehavior,
           recurrence,
           errorMessage,
-          attemptedProduct,
+          attemptedPaymentKind,
+          attemptedPaymentSubtype,
+          attemptedMembershipType,
+          attemptedFeatureKeys,
+          attemptedSiteId: selectedSite?.id,
+          attemptedSeriesId: selectedSeriesId || undefined,
+          attemptedPostId: selectedPostId || undefined,
+          attemptedAmount: attemptedAmount ? Number(attemptedAmount) : undefined,
           displayedMessage,
           environment: {
             browserName: navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/?\s*([\d.]*)/i)?.[1] ?? 'unknown',
@@ -150,9 +221,11 @@ export default function Opt() {
           method: 'POST',
           body: formData,
         });
-        const uploadResult = (await uploadResponse.json().catch(() => null)) as { error?: string } | null;
-        if (!uploadResponse.ok)
-          throw new Error(uploadResult?.error ?? '문의는 접수됐지만 첨부 파일을 저장하지 못했습니다.');
+        await uploadResponse.json().catch(() => null);
+        if (!uploadResponse.ok) {
+          router.push(`/concierge/contact/inquiries/${result.inquiry.id}?attachment=failed`);
+          return;
+        }
       }
 
       router.push(`/concierge/contact/inquiries/${result.inquiry.id}`);
@@ -177,6 +250,75 @@ export default function Opt() {
   function removeEvidence() {
     setEvidence(null);
     if (evidenceInputRef.current) evidenceInputRef.current.value = '';
+  }
+
+  function resetAttemptedTarget() {
+    setAttemptedPaymentSubtype('');
+    setAttemptedFeatureKeys([]);
+    setSiteQuery('');
+    setSiteResults([]);
+    setSelectedSite(null);
+    setTargetOptions([]);
+    setSelectedSeriesId('');
+    setPostQuery('');
+    setPostResults([]);
+    setSelectedPostId('');
+    setAttemptedAmount('');
+  }
+
+  async function searchSites() {
+    if (!siteQuery.trim()) return;
+    setSearchingTargets(true);
+    setError('');
+    const response = await fetch(
+      `/api/concierge/contact/payment-targets?scope=sites&q=${encodeURIComponent(siteQuery.trim())}&subtype=${encodeURIComponent(attemptedPaymentSubtype)}`,
+      { cache: 'no-store' },
+    );
+    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+    if (!response.ok) setError(result?.error ?? '사이트를 검색하지 못했습니다.');
+    else setSiteResults(result?.items ?? []);
+    setSearchingTargets(false);
+  }
+
+  async function selectSite(site: TargetOption) {
+    setSelectedSite(site);
+    setSelectedSeriesId('');
+    setSelectedPostId('');
+    setPostResults([]);
+    if (
+      attemptedPaymentSubtype === 'site_subscription' ||
+      attemptedPaymentSubtype === 'site_donation' ||
+      attemptedPaymentKind === 'membership'
+    ) {
+      setTargetOptions([]);
+      return;
+    }
+    setSearchingTargets(true);
+    const response = await fetch(
+      `/api/concierge/contact/payment-targets?scope=series&siteId=${encodeURIComponent(site.id)}`,
+      { cache: 'no-store' },
+    );
+    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+    if (!response.ok) setError(result?.error ?? '결제 대상을 불러오지 못했습니다.');
+    else setTargetOptions(result?.items ?? []);
+    setSearchingTargets(false);
+  }
+
+  async function searchPosts() {
+    if (!selectedSite || !selectedSeriesId || !postQuery.trim()) return;
+    setSearchingTargets(true);
+    setError('');
+    const params = new URLSearchParams({
+      scope: 'posts',
+      siteId: selectedSite.id,
+      seriesId: selectedSeriesId,
+      q: postQuery.trim(),
+    });
+    const response = await fetch(`/api/concierge/contact/payment-targets?${params}`, { cache: 'no-store' });
+    const result = (await response.json().catch(() => null)) as { items?: TargetOption[]; error?: string } | null;
+    if (!response.ok) setError(result?.error ?? '연재글을 검색하지 못했습니다.');
+    else setPostResults(result?.items ?? []);
+    setSearchingTargets(false);
   }
 
   return (
@@ -283,16 +425,224 @@ export default function Opt() {
                   )}
                 </Stack>
               ) : (
-                <Stack gap={1}>
-                  <Typography variant="subtitle2">결제를 시도한 상품 또는 기능</Typography>
-                  <TextField
-                    required
-                    fullWidth
-                    size="small"
-                    value={attemptedProduct}
-                    onChange={(event) => setAttemptedProduct(event.target.value)}
-                    slotProps={{ htmlInput: { maxLength: 500 } }}
-                  />
+                <Stack gap={2}>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">결제하려던 항목</Typography>
+                    <RadioGroup
+                      row
+                      value={attemptedPaymentKind}
+                      onChange={(event) => {
+                        const kind = event.target.value as AttemptedPaymentKind;
+                        setAttemptedPaymentKind(kind);
+                        resetAttemptedTarget();
+                        if (kind === 'subscription') setAttemptedPaymentSubtype('site_subscription');
+                        if (kind === 'donation') setAttemptedPaymentSubtype('site_donation');
+                        if (kind === 'post_purchase') setAttemptedPaymentSubtype('post_purchase');
+                      }}
+                    >
+                      {attemptedPaymentKinds.map((option) => (
+                        <FormControlLabel
+                          key={option.value}
+                          value={option.value}
+                          control={<Radio />}
+                          label={option.label}
+                        />
+                      ))}
+                    </RadioGroup>
+                  </Stack>
+
+                  {attemptedPaymentKind === 'membership' ? (
+                    <>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">멤버십 종류</Typography>
+                        <TextField
+                          select
+                          fullWidth
+                          size="small"
+                          value={attemptedMembershipType}
+                          onChange={(event) => {
+                            setAttemptedMembershipType(event.target.value as MembershipType);
+                            setAttemptedFeatureKeys([]);
+                          }}
+                        >
+                          {membershipTypes.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Stack>
+                      <Stack gap={1}>
+                        <Typography variant="subtitle2">선택했던 기능</Typography>
+                        {MEMBERSHIP_FEATURES.filter((feature) => {
+                          if (attemptedMembershipType === 'all_in_one')
+                            return feature.group === 'owner' || feature.group === 'creator';
+                          return feature.group === attemptedMembershipType;
+                        }).map((feature) => (
+                          <FormControlLabel
+                            key={feature.key}
+                            control={
+                              <Checkbox
+                                checked={attemptedFeatureKeys.includes(feature.key)}
+                                onChange={(_, checked) =>
+                                  setAttemptedFeatureKeys((current) =>
+                                    checked ? [...current, feature.key] : current.filter((key) => key !== feature.key),
+                                  )
+                                }
+                              />
+                            }
+                            label={feature.label}
+                          />
+                        ))}
+                      </Stack>
+                    </>
+                  ) : null}
+
+                  {attemptedPaymentKind === 'subscription' || attemptedPaymentKind === 'donation' ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">
+                        {attemptedPaymentKind === 'subscription' ? '구독 종류' : '후원 종류'}
+                      </Typography>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        value={attemptedPaymentSubtype}
+                        onChange={(event) => {
+                          setAttemptedPaymentSubtype(event.target.value);
+                          setSelectedSite(null);
+                          setTargetOptions([]);
+                          setSelectedSeriesId('');
+                        }}
+                      >
+                        {(attemptedPaymentKind === 'subscription' ? subscriptionTypes : donationTypes).map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Stack>
+                  ) : null}
+
+                  {needsSite ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">사이트 검색</Typography>
+                      <Stack direction="row" gap={1}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={siteQuery}
+                          onChange={(event) => setSiteQuery(event.target.value)}
+                          placeholder="사이트 이름의 일부를 입력해 주세요"
+                          slotProps={{
+                            htmlInput: { maxLength: 100 },
+                            input: {
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <button
+                                    type="button"
+                                    className="button small action"
+                                    disabled={!siteQuery.trim() || searchingTargets}
+                                    onClick={() => void searchSites()}
+                                  >
+                                    검색
+                                  </button>
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
+                        />
+                      </Stack>
+                      {siteResults.length ? (
+                        <RadioGroup
+                          value={selectedSite?.id ?? ''}
+                          onChange={(event) => {
+                            const site = siteResults.find((item) => item.id === event.target.value);
+                            if (site) void selectSite(site);
+                          }}
+                        >
+                          {siteResults.map((site) => (
+                            <FormControlLabel key={site.id} value={site.id} control={<Radio />} label={site.label} />
+                          ))}
+                        </RadioGroup>
+                      ) : null}
+                    </Stack>
+                  ) : null}
+
+                  {selectedSite && needsSeries ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재 선택</Typography>
+                      <TextField
+                        select
+                        required
+                        fullWidth
+                        size="small"
+                        value={selectedSeriesId}
+                        onChange={(event) => {
+                          setSelectedSeriesId(event.target.value);
+                          setSelectedPostId('');
+                          setPostResults([]);
+                        }}
+                      >
+                        {targetOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Stack>
+                  ) : null}
+
+                  {needsPost && selectedSite && selectedSeriesId ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">연재글 제목 검색</Typography>
+                      <Stack direction="row" gap={1}>
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={postQuery}
+                          onChange={(event) => setPostQuery(event.target.value)}
+                          placeholder="연재글 제목의 일부를 입력해 주세요"
+                          slotProps={{ htmlInput: { maxLength: 200 } }}
+                        />
+                        <button
+                          type="button"
+                          className="button small action"
+                          disabled={!postQuery.trim() || searchingTargets}
+                          onClick={() => void searchPosts()}
+                        >
+                          검색
+                        </button>
+                      </Stack>
+                      {postResults.length ? (
+                        <RadioGroup value={selectedPostId} onChange={(event) => setSelectedPostId(event.target.value)}>
+                          {postResults.map((post) => (
+                            <FormControlLabel
+                              key={post.id}
+                              value={post.id}
+                              control={<Radio />}
+                              label={`${post.label}${post.description ? ` / ${new Date(post.description).toLocaleDateString('ko-KR')}` : ''}`}
+                            />
+                          ))}
+                        </RadioGroup>
+                      ) : null}
+                    </Stack>
+                  ) : null}
+
+                  {attemptedPaymentKind === 'donation' ? (
+                    <Stack gap={1}>
+                      <Typography variant="subtitle2">후원하려던 금액</Typography>
+                      <TextField
+                        required
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={attemptedAmount}
+                        onChange={(event) => setAttemptedAmount(event.target.value)}
+                        slotProps={{ htmlInput: { min: 1 } }}
+                      />
+                    </Stack>
+                  ) : null}
                 </Stack>
               )}
               <Stack gap={1}>

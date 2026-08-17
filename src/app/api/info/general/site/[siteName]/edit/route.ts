@@ -385,7 +385,7 @@ export async function POST(request: Request, context: RouteContext) {
           .select('id, last_payment_id')
           .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
           .eq('target_id', access.rhizome.id)
-          .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
           .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
 
         if (activeSubs.data && activeSubs.data.length > 0) {

@@ -13,13 +13,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
   const db = getSupabaseAdmin();
   const { data: inquiry, error: inquiryError } = await db
     .from('inquiries')
-    .select('id, requester_stigma_id, inquiry_type')
+    .select('id, requester_stigma_id, inquiry_type, status, information_request_type')
     .eq('id', inquiryId)
     .maybeSingle();
   if (inquiryError || !inquiry || inquiry.requester_stigma_id !== currentStigma.stigmaId)
     return Response.json({ error: '문의를 찾을 수 없습니다.' }, { status: 404 });
   if (!['bug_report', 'payment_refund_error'].includes(inquiry.inquiry_type))
     return Response.json({ error: '이 문의에는 증빙 파일을 첨부할 수 없습니다.' }, { status: 400 });
+  const isInitialEvidence = inquiry.status === 'received';
+  const isRequestedEvidence = inquiry.status === 'info_requested' && inquiry.information_request_type === 'evidence';
+  if (!isInitialEvidence && !isRequestedEvidence)
+    return Response.json({ error: '현재 증빙 파일을 첨부할 수 있는 문의가 아닙니다.' }, { status: 400 });
 
   const formData = await request.formData();
   const file = formData.get('file');
@@ -65,6 +69,34 @@ export async function POST(request: NextRequest, context: { params: Promise<{ in
     return Response.json({ error: '증빙 파일 정보를 저장하지 못했습니다.' }, { status: 500 });
   }
   if (previous?.storage_path) await db.storage.from(bucket).remove([previous.storage_path]);
+
+  if (isRequestedEvidence) {
+    const now = new Date().toISOString();
+    await db.from('inquiry_messages').insert({
+      inquiry_id: inquiryId,
+      sender_type: 'requester',
+      sender_stigma_id: currentStigma.stigmaId,
+      message_type: 'information_response',
+      message: '요청받은 증빙 파일을 제출했습니다.',
+    });
+    await db
+      .from('inquiries')
+      .update({
+        status: 'reviewing',
+        information_request_type: null,
+        information_requested_at: null,
+        information_due_at: null,
+      })
+      .eq('id', inquiryId);
+    await db.from('inquiry_status').insert({
+      inquiry_id: inquiryId,
+      previous_status: 'info_requested',
+      next_status: 'reviewing',
+      changed_by_stigma_id: currentStigma.stigmaId,
+      reason: '증빙 파일 제출',
+      created_at: now,
+    });
+  }
 
   return Response.json({ uploaded: true });
 }

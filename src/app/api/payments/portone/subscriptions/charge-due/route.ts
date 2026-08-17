@@ -41,11 +41,6 @@ type SubscriptionRow = {
   billing_anchor_day: number;
 };
 
-type BoardRow = {
-  id: string;
-  site_id: string;
-};
-
 type SeriesRow = {
   id: string;
   site_id: string;
@@ -86,19 +81,11 @@ function verifyTaskRequest(request: Request) {
   return authorization === expectedAuthorization;
 }
 
-function createOrderNo(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
-    return createPaymentOrderNo('SUBSCRIPTION_BOARD');
-  }
-
+function createOrderNo() {
   return createPaymentOrderNo('SUBSCRIPTION_SERIES');
 }
 
 function getPaymentType(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
-    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
-  }
-
   if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
     return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
   }
@@ -107,10 +94,6 @@ function getPaymentType(subscriptionType: string) {
 }
 
 function getOrderName(subscriptionType: string) {
-  if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD) {
-    return '데브허브 게시판 구독';
-  }
-
   if (subscriptionType === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES) {
     return '데브허브 연재 구독';
   }
@@ -125,30 +108,6 @@ async function getSplitTarget({
   supabaseAdmin: SupabaseAdminClient;
   subscription: SubscriptionRow;
 }): Promise<SplitTarget> {
-  if (subscription.target_type === PAYMENT_TARGET_TYPE.BOARD) {
-    const boardResult = await supabaseAdmin
-      .from('boards')
-      .select('id, site_id')
-      .eq('id', subscription.target_id)
-      .maybeSingle();
-
-    if (boardResult.error) {
-      throw new Error('게시판 정보를 확인하지 못했습니다.');
-    }
-
-    if (!boardResult.data) {
-      throw new Error('게시판 정보를 찾을 수 없습니다.');
-    }
-
-    const board = boardResult.data as BoardRow;
-
-    return {
-      siteId: board.site_id,
-      boardId: board.id,
-      seriesId: null,
-    };
-  }
-
   if (subscription.target_type === PAYMENT_TARGET_TYPE.SERIES) {
     const seriesResult = await supabaseAdmin
       .from('board_series')
@@ -284,8 +243,8 @@ async function chargeDue(request: Request): Promise<Response> {
         'billing_anchor_day',
       ].join(', '),
     )
-    .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
-    .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.TRIALING])
     .is('canceled_at', null)
     .is('expired_at', null)
@@ -315,7 +274,7 @@ async function chargeDue(request: Request): Promise<Response> {
       continue;
     }
 
-    const orderNo = createOrderNo(subscription.subscription_type);
+    const orderNo = createOrderNo();
 
     let paymentKey = '';
     let payment: PortOnePayment;
@@ -414,7 +373,7 @@ async function chargeDue(request: Request): Promise<Response> {
         supabaseAdmin,
         paymentId: paymentInsertResult.data.id,
         siteId: splitTarget.siteId,
-        siteOwnerUserId: subscription.owner_user_id,
+        siteOwnerStigmaId: subscription.owner_user_id,
         amount: paidAmount,
         boardId: splitTarget.boardId,
         seriesId: splitTarget.seriesId,

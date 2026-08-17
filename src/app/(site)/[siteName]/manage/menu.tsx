@@ -704,7 +704,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
     if (menu === 'payments') {
       return [
         { href: `/${siteName}/manage/payments/donation`, label: '후원' },
-        ...(siteType === 'blog' ? [{ href: `/${siteName}/manage/payments/membership`, label: '멤버십' }] : []),
         { href: `/${siteName}/manage/payments/subscriptions`, label: '구독' },
       ];
     }

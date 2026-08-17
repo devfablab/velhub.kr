@@ -90,11 +90,9 @@ type PaymentFailInfo = {
 function getPaymentType(value: string) {
   if (
     value === PAYMENT_TYPE.DONATION_SITE ||
-    value === PAYMENT_TYPE.DONATION_BOARD ||
     value === PAYMENT_TYPE.DONATION_POST ||
     value === PAYMENT_TYPE.PURCHASE_POST ||
-    value === PAYMENT_TYPE.MEMBERSHIP_BLOG ||
-    value === PAYMENT_TYPE.SUBSCRIPTION_BOARD ||
+    value === PAYMENT_TYPE.SUBSCRIPTION_SITE ||
     value === PAYMENT_TYPE.SUBSCRIPTION_SERIES
   ) {
     return value;
@@ -314,28 +312,6 @@ async function getSeriesByName({
   return seriesResult.data as SeriesRow;
 }
 
-async function getBoardSeriesCount({
-  supabaseAdmin,
-  siteId,
-  boardId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-}) {
-  const seriesCountResult = await supabaseAdmin
-    .from('board_series')
-    .select('id', { count: 'exact', head: true })
-    .eq('site_id', siteId)
-    .eq('board_id', boardId);
-
-  if (seriesCountResult.error) {
-    throw new Error('연재 개수를 확인하지 못했습니다.');
-  }
-
-  return seriesCountResult.count ?? 0;
-}
-
 async function getDonationSiteFailInfo({
   supabaseAdmin,
   siteId,
@@ -362,44 +338,6 @@ async function getDonationSiteFailInfo({
   };
 }
 
-async function getDonationBoardFailInfo({
-  supabaseAdmin,
-  siteId,
-  boardId,
-  amount,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  siteId: string;
-  boardId: string;
-  amount: number | undefined;
-}): Promise<PaymentFailInfo> {
-  await getSiteById(supabaseAdmin, siteId);
-
-  if (!boardId) {
-    throw new Error('boardId가 유효하지 않습니다.');
-  }
-
-  if (typeof amount !== 'number' || !validateDonationAmount(amount)) {
-    throw new Error('후원금액이 올바르지 않습니다.');
-  }
-
-  const board = await getBoardById({
-    supabaseAdmin,
-    siteId,
-    boardId,
-  });
-
-  return {
-    amount,
-    paymentType: PAYMENT_TYPE.DONATION_BOARD,
-    targetType: PAYMENT_TARGET_TYPE.BOARD,
-    targetId: board.id,
-    postPayment: null,
-    refundPolicy: REFUND_POLICY.DONATION_RESTRICTED,
-    failureStage: 'donation_board_fail',
-  };
-}
-
 async function getDonationPostFailInfo({
   supabaseAdmin,
   siteId,
@@ -422,16 +360,6 @@ async function getDonationPostFailInfo({
     siteId,
     postId,
   });
-
-  const seriesCount = await getBoardSeriesCount({
-    supabaseAdmin,
-    siteId,
-    boardId: post.board_id,
-  });
-
-  if (seriesCount < 2) {
-    throw new Error('연재가 2개 이상 있는 게시판의 연재 글만 후원할 수 있습니다.');
-  }
 
   return {
     amount,
@@ -515,7 +443,7 @@ async function getPostPurchaseFailInfo({
   };
 }
 
-async function getMembershipFailInfo({
+async function getSiteSubscriptionFailInfo({
   supabaseAdmin,
   siteName,
 }: {
@@ -529,27 +457,27 @@ async function getMembershipFailInfo({
     .select('price, is_enabled')
     .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
     .eq('target_id', site.id)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE)
     .maybeSingle();
 
   if (settingResult.error) {
-    throw new Error('멤버십 설정을 확인하지 못했습니다.');
+    throw new Error('블로그 구독 설정을 확인하지 못했습니다.');
   }
 
   if (!settingResult.data) {
-    throw new Error('멤버십 설정을 찾을 수 없습니다.');
+    throw new Error('블로그 구독 설정을 찾을 수 없습니다.');
   }
 
   const setting = settingResult.data as SubscriptionSettingRow;
 
   return {
     amount: setting.price,
-    paymentType: PAYMENT_TYPE.MEMBERSHIP_BLOG,
+    paymentType: PAYMENT_TYPE.SUBSCRIPTION_SITE,
     targetType: PAYMENT_TARGET_TYPE.SITE,
     targetId: site.id,
     postPayment: null,
     refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-    failureStage: 'membership_fail',
+    failureStage: 'site_subscription_fail',
   };
 }
 
@@ -573,36 +501,6 @@ async function getSubscriptionFailInfo({
     siteId: site.id,
     boardName,
   });
-
-  if (targetType === PAYMENT_TARGET_TYPE.BOARD || targetType === 'board') {
-    const settingResult = await supabaseAdmin
-      .from('subscription_settings')
-      .select('price, is_enabled')
-      .eq('target_type', PAYMENT_TARGET_TYPE.BOARD)
-      .eq('target_id', board.id)
-      .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD)
-      .maybeSingle();
-
-    if (settingResult.error) {
-      throw new Error('게시판 구독 설정을 확인하지 못했습니다.');
-    }
-
-    if (!settingResult.data) {
-      throw new Error('게시판 구독 설정을 찾을 수 없습니다.');
-    }
-
-    const setting = settingResult.data as SubscriptionSettingRow;
-
-    return {
-      amount: setting.price,
-      paymentType: PAYMENT_TYPE.SUBSCRIPTION_BOARD,
-      targetType: PAYMENT_TARGET_TYPE.BOARD,
-      targetId: board.id,
-      postPayment: null,
-      refundPolicy: REFUND_POLICY.SEVEN_DAYS,
-      failureStage: 'subscription_board_fail',
-    };
-  }
 
   if (targetType !== PAYMENT_TARGET_TYPE.SERIES && targetType !== 'series') {
     throw new Error('targetType이 유효하지 않습니다.');
@@ -676,23 +574,6 @@ async function getPaymentFailInfo({
     });
   }
 
-  if (paymentType === PAYMENT_TYPE.DONATION_BOARD) {
-    if (!siteId) {
-      throw new Error('siteId가 유효하지 않습니다.');
-    }
-
-    if (!boardId) {
-      throw new Error('boardId가 유효하지 않습니다.');
-    }
-
-    return getDonationBoardFailInfo({
-      supabaseAdmin,
-      siteId,
-      boardId,
-      amount: body.amount,
-    });
-  }
-
   if (paymentType === PAYMENT_TYPE.DONATION_POST) {
     if (!siteId) {
       throw new Error('siteId가 유효하지 않습니다.');
@@ -726,15 +607,15 @@ async function getPaymentFailInfo({
     });
   }
 
-  if (paymentType === PAYMENT_TYPE.MEMBERSHIP_BLOG) {
+  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_SITE) {
     if (!siteName) {
       throw new Error('siteName이 유효하지 않습니다.');
     }
 
-    return getMembershipFailInfo({ supabaseAdmin, siteName });
+    return getSiteSubscriptionFailInfo({ supabaseAdmin, siteName });
   }
 
-  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_BOARD || paymentType === PAYMENT_TYPE.SUBSCRIPTION_SERIES) {
+  if (paymentType === PAYMENT_TYPE.SUBSCRIPTION_SERIES) {
     if (!siteName && !siteId) {
       throw new Error('사이트 정보가 유효하지 않습니다.');
     }

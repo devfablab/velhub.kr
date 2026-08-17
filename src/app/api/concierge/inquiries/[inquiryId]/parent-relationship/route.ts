@@ -29,10 +29,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const db = getSupabaseAdmin();
   const { data: inquiry } = await db
     .from('inquiries')
-    .select('requester_stigma_id, inquiry_type')
+    .select('requester_stigma_id, inquiry_type, status')
     .eq('id', inquiryId)
     .maybeSingle();
-  if (!inquiry || inquiry.inquiry_type !== 'minor_purchase_cancellation')
+  if (!inquiry || inquiry.inquiry_type !== 'minor_purchase_cancellation' || inquiry.status === 'closed')
     return Response.json({ error: '청약취소 문의를 찾을 수 없습니다.' }, { status: 404 });
   const { data: attachment } = await db
     .from('inquiry_attachments')

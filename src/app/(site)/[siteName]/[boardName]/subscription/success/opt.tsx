@@ -10,7 +10,7 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Container from '../../../menu';
 
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'series';
 
 type SubscriptionSuccessResponse = {
   ok?: boolean;
@@ -20,7 +20,7 @@ type SubscriptionSuccessResponse = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === 'series') {
     return value;
   }
 
@@ -65,7 +65,7 @@ export default function Opt() {
           throw new Error('구독 대상 정보가 올바르지 않습니다.');
         }
 
-        if (targetType === 'series' && !seriesName) {
+        if (!seriesName) {
           throw new Error('연재 구독 정보가 올바르지 않습니다.');
         }
 
@@ -83,7 +83,7 @@ export default function Opt() {
             siteName,
             boardName,
             targetType,
-            seriesName: targetType === 'series' ? seriesName : null,
+            seriesName,
             guardianIdentityVerificationId,
           }),
         });
@@ -94,7 +94,7 @@ export default function Opt() {
           throw new Error(result.error ?? '구독을 완료하지 못했습니다.');
         }
 
-        setMessage(targetType === 'series' ? '연재 구독이 완료되었습니다.' : '게시판 구독이 완료되었습니다.');
+        setMessage('연재 구독이 완료되었습니다.');
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '구독을 완료하지 못했습니다.');
@@ -115,7 +115,7 @@ export default function Opt() {
   }, [boardName, searchParams, siteName]);
 
   return (
-    <Container pageBack={`/${siteName}/${boardName}`} pageTitle="게시판 구독" pageFin>
+    <Container pageBack={`/${siteName}/${boardName}`} pageTitle="연재 구독" pageFin>
       {isMobile ? (
         <Drawer anchor="bottom" open={isProcessing} className="VhiDrawer-bottom">
           <h2>구독 처리중</h2>
@@ -144,7 +144,7 @@ export default function Opt() {
 
       <div className="container">
         <div className="content" style={{ maxWidth: 572 }}>
-          <h2>게시판 구독</h2>
+          <h2>연재 구독</h2>
           <div className="paper" style={{ marginTop: 12 }}>
             {errorMessage ? (
               <p className="alert error">

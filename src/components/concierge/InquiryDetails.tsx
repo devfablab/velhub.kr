@@ -20,6 +20,7 @@ type BugDetail = {
 type PaymentDetail = {
   occurred_at: string;
   attempted_product: string | null;
+  attempted_amount: number | null;
   displayed_message: string | null;
   actual_behavior: string;
   payment_snapshot: Record<string, unknown> | null;
@@ -51,7 +52,7 @@ function Detail({ label, value }: { label: string; value: unknown }) {
   return (
     <Stack gap={0.5}>
       <Typography variant="subtitle2">{label}</Typography>
-      <Typography whiteSpace="pre-wrap" sx={{ overflowWrap: 'anywhere' }}>
+      <Typography variant="body2" whiteSpace="pre-wrap" sx={{ overflowWrap: 'anywhere' }}>
         {String(value)}
       </Typography>
     </Stack>
@@ -98,7 +99,11 @@ export default function InquiryDetails({
       ) : payment ? (
         <>
           <Detail label="발생 날짜와 시간" value={new Date(payment.occurred_at).toLocaleString('ko-KR')} />
-          <Detail label="결제를 시도한 상품 또는 기능" value={payment.attempted_product} />
+          <Detail label="결제하려던 항목" value={payment.attempted_product} />
+          <Detail
+            label="후원하려던 금액"
+            value={payment.attempted_amount ? `${Number(payment.attempted_amount).toLocaleString('ko-KR')}원` : null}
+          />
           <Detail label="화면에 표시된 메시지" value={payment.displayed_message} />
           <Detail label="실제로 발생한 상황" value={payment.actual_behavior} />
           <Detail label="연결 결제 ID" value={paymentId} />
@@ -116,12 +121,16 @@ export default function InquiryDetails({
           />
         </>
       ) : (
-        <Typography whiteSpace="pre-wrap">{content}</Typography>
+        <Typography variant="body2" whiteSpace="pre-wrap">
+          {content}
+        </Typography>
       )}
       {evidenceUrl ? (
-        <Anchor href={evidenceUrl} target="_blank" rel="noreferrer" className="button small action">
-          첨부 자료 확인
-        </Anchor>
+        <Stack direction="row">
+          <Anchor href={evidenceUrl} target="_blank" rel="noreferrer" className="button small action">
+            첨부 자료 확인
+          </Anchor>
+        </Stack>
       ) : null}
     </Stack>
   );

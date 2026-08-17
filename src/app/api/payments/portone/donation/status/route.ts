@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server';
+import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
 import { getPaymentCustomerName } from '@/lib/payments/customer';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -79,51 +80,36 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    if (
+      targetType !== PAYMENT_TARGET_TYPE.SITE &&
+      targetType !== PAYMENT_TARGET_TYPE.SERIES &&
+      targetType !== PAYMENT_TARGET_TYPE.POST
+    ) {
+      return Response.json({
+        isEnabled: false,
+      });
+    }
+
     if (site.site_type === 'community' && targetType === PAYMENT_TARGET_TYPE.SITE) {
       return Response.json({
         isEnabled: false,
       });
     }
 
-    if (site.site_type === 'blog' && targetType === PAYMENT_TARGET_TYPE.BOARD) {
-      return Response.json({
-        isEnabled: false,
+    if (site.site_type === 'blog' && targetType === PAYMENT_TARGET_TYPE.SITE) {
+      if (!session.stigmaId) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      const hasBlogSubscription = await hasValidBlogSubscription({
+        supabaseAdmin,
+        subscriberId: session.stigmaId,
+        siteId: site.id,
       });
-    }
 
-    if (site.site_type === 'community') {
-      const seriesCountResult = await supabaseAdmin
-        .from('board_series')
-        .select('id', { count: 'exact', head: true })
-        .eq('site_id', site.id);
-
-      if (seriesCountResult.error) {
-        console.error(seriesCountResult.error);
-
-        return Response.json({
-          isEnabled: false,
-        });
-      }
-
-      if ((seriesCountResult.count ?? 0) < 2) {
-        return Response.json({
-          isEnabled: false,
-        });
-      }
-    }
-
-    if (site.site_type === 'blog') {
-      const membershipSettingResult = await supabaseAdmin
-        .from('subscription_settings')
-        .select('id')
-        .eq('target_type', PAYMENT_TARGET_TYPE.SITE)
-        .eq('target_id', site.id)
-        .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG)
-        .maybeSingle();
-
-      if (membershipSettingResult.error) {
-        console.error(membershipSettingResult.error);
-
+      if (!hasBlogSubscription) {
         return Response.json({
           isEnabled: false,
         });

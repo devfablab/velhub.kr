@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FacebookIcon from '@mui/icons-material/Facebook';
@@ -18,7 +18,6 @@ import {
   DialogTitle,
   Drawer,
   IconButton,
-  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -29,6 +28,7 @@ import { normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import DonationButton from '@/components/service/common/DonationButton';
+import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import IdentityVerificationButton from '../common/IdentityVerificationButton';
 import styles from '@/app/aside.module.sass';
@@ -75,12 +75,13 @@ const SOCIAL_LINK_OPTIONS: {
   { value: 'YouTube', label: '유튜브', prefix: 'https://youtube.com/@', Icon: YouTubeIcon },
 ];
 
-type MembershipStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
+type BlogSubscriptionStatus = 'none' | 'active' | 'scheduled_cancel' | 'canceled' | 'expired' | 'past_due';
 
-type MembershipStatusResponse = {
+type BlogSubscriptionStatusResponse = {
   isEnabled?: boolean;
   price?: number | null;
-  membershipStatus?: MembershipStatus;
+  subscriptionStatus?: BlogSubscriptionStatus;
+  paymentEmail?: string | null;
   error?: string;
 };
 
@@ -95,7 +96,7 @@ type PortOneBillingKeyResponse = {
   message?: string;
 };
 
-type MembershipStartResponse = {
+type BlogSubscriptionStartResponse = {
   mode?: 'billing_auth' | 'direct_billing';
   storeId?: string;
   channelKey?: string;
@@ -108,13 +109,13 @@ type MembershipStartResponse = {
   failUrl?: string;
   subscriptionId?: string;
   paymentId?: string;
+  paymentEmailRequired?: boolean;
   error?: string;
 };
 
-type MembershipActionResponse = {
+type BlogSubscriptionActionResponse = {
   ok?: boolean;
-  membershipStatus?: MembershipStatus;
-  subscriptionStatus?: MembershipStatus;
+  mode?: string;
   error?: string;
 };
 
@@ -128,13 +129,6 @@ type Identity = {
 type IdentityStatusResponse = {
   exists: boolean;
   identity: Identity | null;
-};
-
-type SettlementResponse = {
-  exists: boolean;
-  settlement: {
-    settlement_type: 'individual' | 'business';
-  } | null;
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -184,29 +178,28 @@ function isUnder14(birthDate: string | null | undefined) {
   return age < 14;
 }
 
-function formatMembershipPrice(value: number) {
+function formatBlogSubscriptionPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
-function getMembershipButtonLabel(status: MembershipStatus) {
+function getBlogSubscriptionButtonLabel(status: BlogSubscriptionStatus) {
   if (status === 'active' || status === 'past_due') {
-    return '멤버십 취소';
+    return '블로그 구독 취소';
   }
 
   if (status === 'scheduled_cancel') {
-    return '멤버십 유지하기';
+    return '블로그 구독 유지하기';
   }
 
   if (status === 'canceled' || status === 'expired') {
-    return '멤버십 재가입하기';
+    return '블로그 재구독하기';
   }
 
-  return '멤버십 가입하기';
+  return '블로그 구독';
 }
 
 export default function SiteProfile() {
   const params = useParams();
-  const router = useRouter();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
@@ -217,17 +210,19 @@ export default function SiteProfile() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
-  const [isMembershipEnabled, setIsMembershipEnabled] = useState(false);
-  const [membershipPrice, setMembershipPrice] = useState<number | null>(null);
-  const [membershipStatus, setMembershipStatus] = useState<MembershipStatus>('none');
-  const [isMembershipDialogOpen, setIsMembershipDialogOpen] = useState(false);
-  const [membershipErrorMessage, setMembershipErrorMessage] = useState('');
-  const [isMembershipProcessing, setIsMembershipProcessing] = useState(false);
+  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
+  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(null);
+  const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>('none');
+  const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
+  const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
+  const [isBlogSubscriptionProcessing, setIsBlogSubscriptionProcessing] = useState(false);
   const [isDonationEnabled, setIsDonationEnabled] = useState(false);
-  const [hasSettlement, setHasSettlement] = useState(false);
+  const [hasIdentity, setHasIdentity] = useState(false);
+  const [paymentEmail, setPaymentEmail] = useState('');
   const [isMinor, setIsMinor] = useState(false);
   const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
+  const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -235,54 +230,44 @@ export default function SiteProfile() {
 
   useEffect(() => {
     async function loadIdentity() {
-      const [identityResponse, settlementResponse] = await Promise.all([
-        fetch('/api/identity/portone/status', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        }),
-        fetch('/api/settlement', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        }),
-      ]);
+      const identityResponse = await fetch('/api/identity/portone/status', {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
 
       const identityData = identityResponse.ok
         ? ((await identityResponse.json().catch(() => null)) as IdentityStatusResponse | null)
         : null;
 
-      const settlementData = settlementResponse.ok
-        ? ((await settlementResponse.json().catch(() => null)) as SettlementResponse | null)
-        : null;
-
       const identity = identityData?.exists ? identityData.identity : null;
 
-      setHasSettlement(Boolean(settlementData?.exists && settlementData.settlement));
+      setHasIdentity(Boolean(identity));
       setIsMinor(identity ? !isAdult(identity.birth_date) : false);
       setIsUnder14Age(identity ? isUnder14(identity.birth_date) : false);
       setIsLoading(false);
     }
 
     void loadIdentity();
-  }, [siteName, router]);
+  }, [siteName]);
 
   useEffect(() => {
-    async function loadMembershipStatus() {
+    async function loadBlogSubscriptionStatus() {
       const response = await fetch(`/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`, {
         method: 'GET',
         credentials: 'include',
       });
 
-      const result = (await response.json()) as MembershipStatusResponse;
+      const result = (await response.json()) as BlogSubscriptionStatusResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '멤버십 상태를 확인하지 못했습니다.');
+        throw new Error(result.error ?? '블로그 구독 상태를 확인하지 못했습니다.');
       }
 
-      setIsMembershipEnabled(Boolean(result.isEnabled));
-      setMembershipPrice(result.price ?? null);
-      setMembershipStatus(result.membershipStatus ?? 'none');
+      setIsBlogSubscriptionEnabled(Boolean(result.isEnabled));
+      setBlogSubscriptionPrice(result.price ?? null);
+      setBlogSubscriptionStatus(result.subscriptionStatus ?? 'none');
+      setPaymentEmail(normalizeText(result.paymentEmail));
     }
 
     async function loadDonationStatus() {
@@ -323,7 +308,7 @@ export default function SiteProfile() {
     async function loadSiteProfile() {
       try {
         setErrorMessage('');
-        setMembershipErrorMessage('');
+        setBlogSubscriptionErrorMessage('');
 
         const response = await fetch(`/api/info/general/site/${siteName}`, {
           method: 'GET',
@@ -345,7 +330,7 @@ export default function SiteProfile() {
         setProfilePictureUrl(normalizeText(result.profilePictureUrl));
         setProfileLogoUrl(normalizeText(result.profileLogoUrl));
 
-        await Promise.all([loadMembershipStatus(), loadDonationStatus(), loadSocialLinks()]);
+        await Promise.all([loadBlogSubscriptionStatus(), loadDonationStatus(), loadSocialLinks()]);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
           setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
@@ -374,23 +359,23 @@ export default function SiteProfile() {
     setIsIdentityDialogOpen(false);
   }
 
-  function handleOpenMembershipDialog() {
-    setMembershipErrorMessage('');
-    setIsMembershipDialogOpen(true);
+  function handleOpenBlogSubscriptionDialog() {
+    setBlogSubscriptionErrorMessage('');
+    setIsBlogSubscriptionDialogOpen(true);
   }
 
-  function handleCloseMembershipDialog() {
-    if (isMembershipProcessing) {
+  function handleCloseBlogSubscriptionDialog() {
+    if (isBlogSubscriptionProcessing) {
       return;
     }
 
-    setIsMembershipDialogOpen(false);
+    setIsBlogSubscriptionDialogOpen(false);
   }
 
-  async function handleJoinMembership() {
+  async function handleJoinBlogSubscription() {
     try {
-      setMembershipErrorMessage('');
-      setIsMembershipProcessing(true);
+      setBlogSubscriptionErrorMessage('');
+      setIsBlogSubscriptionProcessing(true);
 
       const response = await fetch('/api/payments/portone/subscriptions/start', {
         method: 'POST',
@@ -406,16 +391,22 @@ export default function SiteProfile() {
         }),
       });
 
-      const result = (await response.json()) as MembershipStartResponse;
+      const result = (await response.json()) as BlogSubscriptionStartResponse;
+
+      if (result.paymentEmailRequired) {
+        setIsBlogSubscriptionDialogOpen(false);
+        setIsPaymentEmailDialogOpen(true);
+        return;
+      }
 
       if (!response.ok) {
-        throw new Error(result.error ?? '멤버십 가입을 시작하지 못했습니다.');
+        throw new Error(result.error ?? '블로그 구독 가입을 시작하지 못했습니다.');
       }
 
       if (result.mode === 'direct_billing') {
-        setMembershipStatus('active');
-        setIsMembershipDialogOpen(false);
-        setIsMembershipProcessing(false);
+        setBlogSubscriptionStatus('active');
+        setIsBlogSubscriptionDialogOpen(false);
+        setIsBlogSubscriptionProcessing(false);
         return;
       }
 
@@ -428,7 +419,7 @@ export default function SiteProfile() {
         !result.orderName ||
         !result.successUrl
       ) {
-        throw new Error('멤버십 결제 정보가 올바르지 않습니다.');
+        throw new Error('블로그 구독 결제 정보가 올바르지 않습니다.');
       }
 
       const billingKeyResponse = (await PortOne.requestIssueBillingKey({
@@ -448,11 +439,11 @@ export default function SiteProfile() {
       })) as PortOneBillingKeyResponse | undefined;
 
       if (!billingKeyResponse) {
-        throw new Error('멤버십 결제수단 등록 응답이 없습니다.');
+        throw new Error('블로그 구독 결제수단 등록 응답이 없습니다.');
       }
 
       if (billingKeyResponse.code) {
-        throw new Error(billingKeyResponse.message || '멤버십 결제수단 등록에 실패했습니다.');
+        throw new Error(billingKeyResponse.message || '블로그 구독 결제수단 등록에 실패했습니다.');
       }
 
       if (!billingKeyResponse.billingKey) {
@@ -474,30 +465,30 @@ export default function SiteProfile() {
         }),
       });
 
-      const successResult = (await successResponse.json()) as MembershipActionResponse;
+      const successResult = (await successResponse.json()) as BlogSubscriptionActionResponse;
 
       if (!successResponse.ok) {
-        throw new Error(successResult.error ?? '멤버십 가입을 완료하지 못했습니다.');
+        throw new Error(successResult.error ?? '블로그 구독 가입을 완료하지 못했습니다.');
       }
 
-      setMembershipStatus('active');
-      setIsMembershipDialogOpen(false);
-      setIsMembershipProcessing(false);
+      setBlogSubscriptionStatus('active');
+      setIsBlogSubscriptionDialogOpen(false);
+      setIsBlogSubscriptionProcessing(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setMembershipErrorMessage(unknownError.message || '멤버십 가입을 시작하지 못했습니다.');
+        setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 가입을 시작하지 못했습니다.');
       } else {
-        setMembershipErrorMessage('멤버십 가입을 시작하지 못했습니다.');
+        setBlogSubscriptionErrorMessage('블로그 구독 가입을 시작하지 못했습니다.');
       }
 
-      setIsMembershipProcessing(false);
+      setIsBlogSubscriptionProcessing(false);
     }
   }
 
-  async function handleCancelMembership() {
+  async function handleCancelBlogSubscription() {
     try {
-      setMembershipErrorMessage('');
-      setIsMembershipProcessing(true);
+      setBlogSubscriptionErrorMessage('');
+      setIsBlogSubscriptionProcessing(true);
 
       const response = await fetch('/api/payments/portone/subscriptions/cancel', {
         method: 'POST',
@@ -511,28 +502,28 @@ export default function SiteProfile() {
         }),
       });
 
-      const result = (await response.json()) as MembershipActionResponse;
+      const result = (await response.json()) as BlogSubscriptionActionResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '멤버십 취소를 처리하지 못했습니다.');
+        throw new Error(result.error ?? '블로그 구독 취소를 처리하지 못했습니다.');
       }
 
-      setMembershipStatus(result.membershipStatus ?? result.subscriptionStatus ?? 'canceled');
+      setBlogSubscriptionStatus(result.mode === 'cancel_scheduled' ? 'scheduled_cancel' : 'canceled');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setMembershipErrorMessage(unknownError.message || '멤버십 취소를 처리하지 못했습니다.');
+        setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 취소를 처리하지 못했습니다.');
       } else {
-        setMembershipErrorMessage('멤버십 취소를 처리하지 못했습니다.');
+        setBlogSubscriptionErrorMessage('블로그 구독 취소를 처리하지 못했습니다.');
       }
     } finally {
-      setIsMembershipProcessing(false);
+      setIsBlogSubscriptionProcessing(false);
     }
   }
 
-  async function handleResumeMembership() {
+  async function handleResumeBlogSubscription() {
     try {
-      setMembershipErrorMessage('');
-      setIsMembershipProcessing(true);
+      setBlogSubscriptionErrorMessage('');
+      setIsBlogSubscriptionProcessing(true);
 
       const response = await fetch('/api/payments/portone/subscriptions/resume', {
         method: 'POST',
@@ -546,36 +537,46 @@ export default function SiteProfile() {
         }),
       });
 
-      const result = (await response.json()) as MembershipActionResponse;
+      const result = (await response.json()) as BlogSubscriptionActionResponse;
 
       if (!response.ok) {
-        throw new Error(result.error ?? '멤버십 유지를 처리하지 못했습니다.');
+        throw new Error(result.error ?? '블로그 구독 유지를 처리하지 못했습니다.');
       }
 
-      setMembershipStatus(result.membershipStatus ?? result.subscriptionStatus ?? 'active');
+      setBlogSubscriptionStatus('active');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
-        setMembershipErrorMessage(unknownError.message || '멤버십 유지를 처리하지 못했습니다.');
+        setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 유지를 처리하지 못했습니다.');
       } else {
-        setMembershipErrorMessage('멤버십 유지를 처리하지 못했습니다.');
+        setBlogSubscriptionErrorMessage('블로그 구독 유지를 처리하지 못했습니다.');
       }
     } finally {
-      setIsMembershipProcessing(false);
+      setIsBlogSubscriptionProcessing(false);
     }
   }
 
-  function handleMembershipButtonClick() {
-    if (membershipStatus === 'active' || membershipStatus === 'past_due') {
-      void handleCancelMembership();
+  function handleBlogSubscriptionButtonClick() {
+    if (blogSubscriptionStatus === 'active' || blogSubscriptionStatus === 'past_due') {
+      void handleCancelBlogSubscription();
       return;
     }
 
-    if (membershipStatus === 'scheduled_cancel') {
-      void handleResumeMembership();
+    if (blogSubscriptionStatus === 'scheduled_cancel') {
+      void handleResumeBlogSubscription();
       return;
     }
 
-    handleOpenMembershipDialog();
+    if (!paymentEmail) {
+      setIsPaymentEmailDialogOpen(true);
+      return;
+    }
+
+    handleOpenBlogSubscriptionDialog();
+  }
+
+  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+    setPaymentEmail(savedPaymentEmail);
+    handleOpenBlogSubscriptionDialog();
   }
 
   if (isLoading) {
@@ -638,60 +639,47 @@ export default function SiteProfile() {
 
       {blogType !== 'team' && !isUnder14Age ? (
         <div className={styles.action}>
-          {!hasSettlement ? (
-            <>
-              <Snackbar
-                open={Boolean(isMinor)}
-                message="만 19세 미만은 본 사이트에서 수익창출을 하실 수 없습니다."
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'center',
-                }}
-                autoHideDuration={2700}
-                onClose={() => setIsMinor(false)}
-              />
-              {membershipStatus === 'none' ? (
-                <button type="button" className="button small action" onClick={handleOpenIdentityDialog}>
-                  블로그 후원
-                </button>
-              ) : (
-                <button type="button" className="button small submit" onClick={handleOpenIdentityDialog}>
-                  {getMembershipButtonLabel(membershipStatus)}
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              {isDonationEnabled ? (
-                <DonationButton
-                  siteName={siteName}
-                  targetType="site"
-                  buttonText="블로그 후원"
-                  disabled={isMembershipProcessing}
-                  onProcessingChange={setIsDonationProcessing}
-                />
-              ) : null}
-              {isMembershipEnabled ? (
-                <button
-                  type="button"
-                  className="button small submit"
-                  onClick={handleMembershipButtonClick}
-                  disabled={isDonationProcessing || isMembershipProcessing}
-                >
-                  {getMembershipButtonLabel(membershipStatus)}
-                </button>
-              ) : null}
-            </>
-          )}
+          {isDonationEnabled ? (
+            <DonationButton
+              siteName={siteName}
+              targetType="site"
+              buttonText="블로그 후원"
+              disabled={isBlogSubscriptionProcessing}
+              onProcessingChange={setIsDonationProcessing}
+            />
+          ) : null}
+          {isBlogSubscriptionEnabled ? (
+            <button
+              type="button"
+              className="button small action"
+              onClick={hasIdentity ? handleBlogSubscriptionButtonClick : handleOpenIdentityDialog}
+              disabled={isDonationProcessing || isBlogSubscriptionProcessing}
+            >
+              {getBlogSubscriptionButtonLabel(blogSubscriptionStatus)}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
-      {membershipErrorMessage ? (
+      {errorMessage ? (
         <p className="alert error">
           <ErrorOutlineRoundedIcon />
-          <span>{membershipErrorMessage}</span>
+          <span>{errorMessage}</span>
         </p>
       ) : null}
+
+      {blogSubscriptionErrorMessage ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{blogSubscriptionErrorMessage}</span>
+        </p>
+      ) : null}
+
+      <PaymentEmailDialog
+        open={isPaymentEmailDialogOpen}
+        onClose={() => setIsPaymentEmailDialogOpen(false)}
+        onSaved={handlePaymentEmailSaved}
+      />
 
       {isMobile ? (
         <Drawer
@@ -747,48 +735,48 @@ export default function SiteProfile() {
       {isMobile ? (
         <Drawer
           anchor="bottom"
-          open={isMembershipDialogOpen}
-          onClose={handleCloseMembershipDialog}
+          open={isBlogSubscriptionDialogOpen}
+          onClose={handleCloseBlogSubscriptionDialog}
           className="VhiDrawer-bottom"
         >
           <h2>
             {isMinor
               ? '1개월 구독권'
-              : membershipStatus === 'canceled' || membershipStatus === 'expired'
-                ? '멤버십 재가입'
-                : '멤버십 가입'}
+              : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
+                ? '블로그 구독 재가입'
+                : '블로그 구독 가입'}
           </h2>
-          <button className="close-button" onClick={handleCloseMembershipDialog}>
+          <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
             <Typography variant="body2">
               {isMinor
-                ? `1개월 ${formatMembershipPrice(membershipPrice ?? 0)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                : `월 ${formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?`}
+                ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
             </Typography>
-            <PaymentTerms type="subscription" disabled={isMembershipProcessing} />
+            <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
 
-            {membershipErrorMessage ? (
+            {blogSubscriptionErrorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
-                <span>{membershipErrorMessage}</span>
+                <span>{blogSubscriptionErrorMessage}</span>
               </p>
             ) : null}
             <Stack direction="column" spacing={1.5}>
               <button
                 type="button"
                 className="button medium cancel"
-                onClick={handleCloseMembershipDialog}
-                disabled={isMembershipProcessing}
+                onClick={handleCloseBlogSubscriptionDialog}
+                disabled={isBlogSubscriptionProcessing}
               >
                 취소
               </button>
               <button
                 type="button"
                 className="button medium submit"
-                onClick={handleJoinMembership}
-                disabled={isMembershipProcessing}
+                onClick={handleJoinBlogSubscription}
+                disabled={isBlogSubscriptionProcessing}
               >
                 가입하기
               </button>
@@ -797,8 +785,8 @@ export default function SiteProfile() {
         </Drawer>
       ) : (
         <Dialog
-          open={isMembershipDialogOpen}
-          onClose={handleCloseMembershipDialog}
+          open={isBlogSubscriptionDialogOpen}
+          onClose={handleCloseBlogSubscriptionDialog}
           fullWidth
           maxWidth="xs"
           className="VhiDialog"
@@ -806,23 +794,23 @@ export default function SiteProfile() {
           <DialogTitle>
             {isMinor
               ? '1개월 구독권'
-              : membershipStatus === 'canceled' || membershipStatus === 'expired'
-                ? '멤버십 재가입'
-                : '멤버십 가입'}
+              : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
+                ? '블로그 구독 재가입'
+                : '블로그 구독 가입'}
           </DialogTitle>
-          <button className="close-button" onClick={handleCloseMembershipDialog}>
+          <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Typography variant="body2">
-              월 {formatMembershipPrice(membershipPrice ?? 0)}원에 멤버십을 가입하시겠어요?
+              월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?
             </Typography>
-            <PaymentTerms type="subscription" disabled={isMembershipProcessing} />
+            <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
 
-            {membershipErrorMessage ? (
+            {blogSubscriptionErrorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
-                <span>{membershipErrorMessage}</span>
+                <span>{blogSubscriptionErrorMessage}</span>
               </p>
             ) : null}
           </DialogContent>
@@ -830,16 +818,16 @@ export default function SiteProfile() {
             <button
               type="button"
               className="button medium close"
-              onClick={handleCloseMembershipDialog}
-              disabled={isMembershipProcessing}
+              onClick={handleCloseBlogSubscriptionDialog}
+              disabled={isBlogSubscriptionProcessing}
             >
               취소
             </button>
             <button
               type="button"
               className="button medium submit"
-              onClick={handleJoinMembership}
-              disabled={isMembershipProcessing}
+              onClick={handleJoinBlogSubscription}
+              disabled={isBlogSubscriptionProcessing}
             >
               가입하기
             </button>

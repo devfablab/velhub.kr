@@ -27,6 +27,11 @@ export async function POST(request: Request) {
     const baseUrl = getBaseUrl(request);
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
+
+    if (!customerName) {
+      return Response.json({ paymentEmailRequired: true });
+    }
+
     const orderNo = createOrderNo();
     const successUrl = new URL('/api/hub/purchase/billing-method/success', baseUrl);
     const failUrl = new URL('/hub/purchase', baseUrl);

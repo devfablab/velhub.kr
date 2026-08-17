@@ -34,7 +34,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
-type SubscriptionTargetType = 'board' | 'series' | 'site';
+type SubscriptionTargetType = 'series' | 'site';
 
 type SubscriptionStartBody = {
   siteName?: string;
@@ -98,6 +98,12 @@ type PortOneBillingPaymentResult = {
   rawData?: unknown;
 };
 
+type RecoverablePaymentRow = {
+  id: string;
+  amount: number;
+  approved_at: string;
+};
+
 type SubscriptionTarget = {
   targetId: string;
   targetLabel: string | null;
@@ -149,12 +155,11 @@ async function requestPortOneBillingPaymentCompat({
 }
 
 function createSubscriptionOrderNo(targetType: SubscriptionTargetType) {
-  void targetType;
-  return createPaymentOrderNo('SUBSCRIPTION_SERIES');
+  return createPaymentOrderNo(targetType === 'site' ? 'SUBSCRIPTION_SITE' : 'SUBSCRIPTION_SERIES');
 }
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series' || value === 'site') {
+  if (value === 'series' || value === 'site') {
     return value;
   }
 
@@ -162,34 +167,22 @@ function getTargetType(value: string): SubscriptionTargetType | null {
 }
 
 function getSubscriptionType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD;
-  }
-
   if (targetType === 'site') {
-    return SUBSCRIPTION_TYPE.MEMBERSHIP_BLOG;
+    return SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE;
   }
 
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
-  }
-
   if (targetType === 'site') {
-    return PAYMENT_TYPE.MEMBERSHIP_BLOG;
+    return PAYMENT_TYPE.SUBSCRIPTION_SITE;
   }
 
   return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
-  if (targetType === 'board') {
-    return PAYMENT_TARGET_TYPE.BOARD;
-  }
-
   if (targetType === 'site') {
     return PAYMENT_TARGET_TYPE.SITE;
   }
@@ -254,6 +247,16 @@ async function getSubscriptionTarget({
   seriesName: string;
 }): Promise<SubscriptionTarget> {
   if (targetType === 'site') {
+    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle();
+
+    if (blogResult.error) {
+      throw new Error('블로그 유형을 확인하지 못했습니다.');
+    }
+
+    if (blogResult.data?.blog_type === 'team') {
+      throw new Error('팀 블로그는 블로그 구독을 운영할 수 없습니다.');
+    }
+
     const siteResult = await supabaseAdmin.from('rhizomes').select('id, site_label').eq('id', siteId).maybeSingle();
 
     if (siteResult.error) {
@@ -292,14 +295,6 @@ async function getSubscriptionTarget({
 
   if (siteType === 'community' && !['basic', 'gallery'].includes(board.board_type)) {
     throw new Error('일반 또는 갤러리 게시판의 연재만 구독할 수 있습니다.');
-  }
-
-  if (siteType === 'blog') {
-    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle();
-
-    if (blogResult.data?.blog_type === 'team') {
-      throw new Error('팀 블로그 연재는 구독할 수 없습니다.');
-    }
   }
 
   if (!seriesName) {
@@ -381,6 +376,89 @@ async function getOwnerStigma({ supabaseAdmin, ownerId }: { supabaseAdmin: Supab
   }
 
   return ownerStigmaResult.data as OwnerStigmaRow;
+}
+
+async function createRecurringSubscriptionForPayment({
+  supabaseAdmin,
+  paymentId,
+  approvedAt,
+  subscriberId,
+  subscriptionType,
+  paymentTargetType,
+  targetId,
+  ownerStigmaId,
+  siteId,
+  price,
+  billingMethod,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  paymentId: string;
+  approvedAt: string;
+  subscriberId: string;
+  subscriptionType: string;
+  paymentTargetType: string;
+  targetId: string;
+  ownerStigmaId: string;
+  siteId: string;
+  price: number;
+  billingMethod: BillingMethodRow;
+}) {
+  const approvedDate = new Date(approvedAt);
+  const billingAnchorDay = getBillingAnchorDay(approvedDate);
+  const billingPeriod = createNextMonthlyBillingPeriod({
+    currentPeriodEnd: approvedDate,
+    billingAnchorDay,
+  });
+  const subscriptionInsertResult = await supabaseAdmin
+    .from('subscriptions')
+    .insert({
+      subscriber_user_id: subscriberId,
+      subscription_type: subscriptionType,
+      target_type: paymentTargetType,
+      target_id: targetId,
+      owner_user_id: ownerStigmaId,
+      price,
+      status: SUBSCRIPTION_STATUS.ACTIVE,
+      billing_key: encrypt(billingMethod.billing_key),
+      customer_key: billingMethod.customer_key,
+      last_payment_id: paymentId,
+      trial_started_at: null,
+      trial_ends_at: null,
+      current_period_start: billingPeriod.currentPeriodStart,
+      current_period_end: billingPeriod.currentPeriodEnd,
+      next_billing_at: billingPeriod.nextBillingAt,
+      billing_anchor_day: billingAnchorDay,
+      previous_billing_method_id: billingMethod.id,
+    })
+    .select('id')
+    .single();
+
+  if (subscriptionInsertResult.error) {
+    console.error(subscriptionInsertResult.error);
+    throw new Error('구독 정보를 저장하지 못했습니다.');
+  }
+
+  const paymentUpdateResult = await supabaseAdmin
+    .from('payments')
+    .update({
+      subscription_id: subscriptionInsertResult.data.id,
+    })
+    .eq('id', paymentId);
+
+  if (paymentUpdateResult.error) {
+    console.error(paymentUpdateResult.error);
+    throw new Error('결제 구독 정보를 갱신하지 못했습니다.');
+  }
+
+  await createOwnerPaymentSplits({
+    supabaseAdmin,
+    paymentId,
+    siteId,
+    siteOwnerStigmaId: ownerStigmaId,
+    amount: price,
+  });
+
+  return subscriptionInsertResult.data.id;
 }
 
 async function hasActiveSubscription({
@@ -493,6 +571,11 @@ export async function POST(request: Request) {
     });
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
+
+    if (!customerName) {
+      return Response.json({ paymentEmailRequired: true });
+    }
+
     const orderNo = createSubscriptionOrderNo(targetType);
     const orderName =
       normalizeText(body.orderName) ||
@@ -578,6 +661,48 @@ export async function POST(request: Request) {
       });
     }
 
+    const recoverablePaymentResult = await supabaseAdmin
+      .from('payments')
+      .select('id, amount, approved_at')
+      .eq('buyer_user_id', session.stigmaId)
+      .eq('payment_type', paymentType)
+      .eq('target_type', paymentTargetType)
+      .eq('target_id', subscriptionTarget.targetId)
+      .eq('status', PAYMENT_STATUS.PAID)
+      .is('subscription_id', null)
+      .order('approved_at', { ascending: false })
+      .limit(1);
+
+    if (recoverablePaymentResult.error) {
+      console.error(recoverablePaymentResult.error);
+      return Response.json({ error: '기존 결제 상태를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const recoverablePayment = ((recoverablePaymentResult.data ?? [])[0] as RecoverablePaymentRow | undefined) ?? null;
+
+    if (recoverablePayment && recoverablePayment.amount === setting.price) {
+      const recoveredSubscriptionId = await createRecurringSubscriptionForPayment({
+        supabaseAdmin,
+        paymentId: recoverablePayment.id,
+        approvedAt: recoverablePayment.approved_at,
+        subscriberId: session.stigmaId,
+        subscriptionType,
+        paymentTargetType,
+        targetId: subscriptionTarget.targetId,
+        ownerStigmaId: ownerStigma.id,
+        siteId: site.id,
+        price: setting.price,
+        billingMethod,
+      });
+
+      return Response.json({
+        mode: 'direct_billing',
+        ok: true,
+        subscriptionId: recoveredSubscriptionId,
+        paymentId: recoverablePayment.id,
+      });
+    }
+
     const portOnePaymentResult = (await requestPortOneBillingPaymentCompat({
       billingKey: billingMethod.billing_key,
       customerKey: billingMethod.customer_key,
@@ -586,11 +711,6 @@ export async function POST(request: Request) {
       orderName,
     })) as PortOneBillingPaymentResult;
     const now = new Date();
-    const billingAnchorDay = getBillingAnchorDay(now);
-    const billingPeriod = createNextMonthlyBillingPeriod({
-      currentPeriodEnd: now,
-      billingAnchorDay,
-    });
     const refundableUntil = getRefundableUntil(now);
     const paymentInsertResult = await supabaseAdmin
       .from('payments')
@@ -632,60 +752,24 @@ export async function POST(request: Request) {
       return Response.json({ error: '결제 정보를 저장하지 못했습니다.' }, { status: 500 });
     }
 
-    const subscriptionInsertResult = await supabaseAdmin
-      .from('subscriptions')
-      .insert({
-        subscriber_user_id: session.stigmaId,
-        subscription_type: subscriptionType,
-        target_type: paymentTargetType,
-        target_id: subscriptionTarget.targetId,
-        owner_user_id: ownerStigma.user_id,
-        price: setting.price,
-        status: SUBSCRIPTION_STATUS.ACTIVE,
-        billing_key: encrypt(billingMethod.billing_key),
-        customer_key: billingMethod.customer_key,
-        last_payment_id: paymentInsertResult.data.id,
-        trial_started_at: null,
-        trial_ends_at: null,
-        current_period_start: billingPeriod.currentPeriodStart,
-        current_period_end: billingPeriod.currentPeriodEnd,
-        next_billing_at: billingPeriod.nextBillingAt,
-        billing_anchor_day: billingAnchorDay,
-      })
-      .select('id')
-      .single();
-
-    if (subscriptionInsertResult.error) {
-      console.error(subscriptionInsertResult.error);
-
-      return Response.json({ error: '구독 정보를 저장하지 못했습니다.' }, { status: 500 });
-    }
-
-    const paymentUpdateResult = await supabaseAdmin
-      .from('payments')
-      .update({
-        subscription_id: subscriptionInsertResult.data.id,
-      })
-      .eq('id', paymentInsertResult.data.id);
-
-    if (paymentUpdateResult.error) {
-      console.error(paymentUpdateResult.error);
-
-      return Response.json({ error: '결제 구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
-    }
-
-    await createOwnerPaymentSplits({
+    const subscriptionId = await createRecurringSubscriptionForPayment({
       supabaseAdmin,
       paymentId: paymentInsertResult.data.id,
+      approvedAt: portOnePaymentResult.approvedAt,
+      subscriberId: session.stigmaId,
+      subscriptionType,
+      paymentTargetType,
+      targetId: subscriptionTarget.targetId,
+      ownerStigmaId: ownerStigma.id,
       siteId: site.id,
-      siteOwnerUserId: ownerStigma.user_id,
-      amount: setting.price,
+      price: setting.price,
+      billingMethod,
     });
 
     return Response.json({
       mode: 'direct_billing',
       ok: true,
-      subscriptionId: subscriptionInsertResult.data.id,
+      subscriptionId,
       paymentId: paymentInsertResult.data.id,
     });
   } catch (unknownError) {

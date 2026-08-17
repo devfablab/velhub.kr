@@ -6,7 +6,7 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Button, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 
-type SubscriptionTargetType = 'board' | 'series';
+type SubscriptionTargetType = 'series';
 
 type FailResponse = {
   ok?: boolean;
@@ -14,19 +14,15 @@ type FailResponse = {
 };
 
 function getTargetType(value: string): SubscriptionTargetType | null {
-  if (value === 'board' || value === 'series') {
+  if (value === 'series') {
     return value;
   }
 
   return null;
 }
 
-function getDefaultMessage(targetType: SubscriptionTargetType | null) {
-  if (targetType === 'series') {
-    return '연재 구독이 취소되었거나 실패했습니다.';
-  }
-
-  return '게시판 구독이 취소되었거나 실패했습니다.';
+function getDefaultMessage() {
+  return '연재 구독이 취소되었거나 실패했습니다.';
 }
 
 export default function Opt() {
@@ -39,7 +35,7 @@ export default function Opt() {
 
   const targetType = getTargetType(normalizeText(searchParams.get('targetType')));
   const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
-  const message = normalizeText(searchParams.get('message')) || getDefaultMessage(targetType);
+  const message = normalizeText(searchParams.get('message')) || getDefaultMessage();
 
   const [logErrorMessage, setLogErrorMessage] = useState('');
 
@@ -75,7 +71,7 @@ export default function Opt() {
             boardId,
             seriesId,
             boardName,
-            seriesName: targetType === 'series' ? seriesName : null,
+            seriesName,
           }),
         });
 
@@ -108,7 +104,7 @@ export default function Opt() {
           <div className="paper">
             <Stack gap={3} alignItems="center">
               <Typography variant="h6" component="h1">
-                {targetType === 'series' ? '연재 구독 실패' : '게시판 구독 실패'}
+                연재 구독 실패
               </Typography>
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />

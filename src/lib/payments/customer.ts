@@ -17,13 +17,13 @@ export async function getPaymentCustomerName(authUserId: string) {
   }
 
   if (!stigmaResult.data?.payment_email) {
-    throw new Error('사용자 이메일을 확인하지 못했습니다.');
+    return null;
   }
 
   const customerName = normalizeText(decrypt(stigmaResult.data.payment_email)).slice(0, 64);
 
   if (!customerName) {
-    throw new Error('사용자 이메일을 확인하지 못했습니다.');
+    return null;
   }
 
   return customerName;

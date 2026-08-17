@@ -16,10 +16,6 @@ type TargetRow = {
   id: string;
 };
 
-type StigmaRow = {
-  user_id: string;
-};
-
 type SubscriptionRow = {
   id: string;
   subscription_type: string;
@@ -48,13 +44,6 @@ export type MemberSiteSubscriptionCancellationResult = {
   refundAmount: number;
 };
 
-function isBoardSubscription(subscription: SubscriptionRow) {
-  return (
-    subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD &&
-    subscription.target_type === PAYMENT_TARGET_TYPE.BOARD
-  );
-}
-
 function isSeriesSubscription(subscription: SubscriptionRow) {
   return (
     subscription.subscription_type === SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES &&
@@ -62,16 +51,12 @@ function isSeriesSubscription(subscription: SubscriptionRow) {
   );
 }
 
-function getPaymentType(subscription: SubscriptionRow) {
-  if (isBoardSubscription(subscription)) {
-    return PAYMENT_TYPE.SUBSCRIPTION_BOARD;
-  }
-
+function getPaymentType() {
   return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
-function getSubscriptionLabel(subscription: SubscriptionRow) {
-  return isBoardSubscription(subscription) ? '게시판' : '연재';
+function getSubscriptionLabel() {
+  return '연재';
 }
 
 async function getLastPayment({
@@ -101,7 +86,7 @@ async function getLastPayment({
     .from('payments')
     .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
     .eq('buyer_user_id', stigmaId)
-    .eq('payment_type', getPaymentType(subscription))
+    .eq('payment_type', getPaymentType())
     .eq('target_type', subscription.target_type)
     .eq('target_id', subscription.target_id)
     .in('status', [PAYMENT_STATUS.PAID, PAYMENT_STATUS.PARTIALLY_REFUNDED])
@@ -247,7 +232,7 @@ async function cancelSubscription({
 
   const cancelResult = await cancelPortOnePayment({
     paymentId: payment.payment_key,
-    cancelReason: `${actionLabel} 처리로 인한 ${getSubscriptionLabel(subscription)} 구독 환불`,
+    cancelReason: `${actionLabel} 처리로 인한 ${getSubscriptionLabel()} 구독 환불`,
     cancelAmount: refundCalculation.isFullRefund ? undefined : refundCalculation.refundAmount,
   });
   const paymentStatus =
@@ -305,8 +290,8 @@ export async function cancelMemberSiteSubscriptions({
       ),
     )
     .eq('subscriber_user_id', stigmaId)
-    .in('subscription_type', [SUBSCRIPTION_TYPE.SUBSCRIPTION_BOARD, SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES])
-    .in('target_type', [PAYMENT_TARGET_TYPE.BOARD, PAYMENT_TARGET_TYPE.SERIES])
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
     .in('status', [SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE]);
 
   if (subscriptionsResult.error) {
@@ -314,31 +299,19 @@ export async function cancelMemberSiteSubscriptions({
   }
 
   const subscriptionCandidates = (subscriptionsResult.data ?? []) as unknown as SubscriptionRow[];
-  const boardTargetIds = subscriptionCandidates
-    .filter(isBoardSubscription)
-    .map((subscription) => subscription.target_id);
-  const seriesTargetIds = subscriptionCandidates
-    .filter(isSeriesSubscription)
-    .map((subscription) => subscription.target_id);
-  const [boardsResult, seriesResult] = await Promise.all([
-    boardTargetIds.length > 0
-      ? supabaseAdmin.from('boards').select('id').eq('site_id', siteId).in('id', boardTargetIds)
-      : { data: [], error: null },
+  const seriesTargetIds = subscriptionCandidates.map((subscription) => subscription.target_id);
+  const seriesResult =
     seriesTargetIds.length > 0
-      ? supabaseAdmin.from('board_series').select('id').eq('site_id', siteId).in('id', seriesTargetIds)
-      : { data: [], error: null },
-  ]);
+      ? await supabaseAdmin.from('board_series').select('id').eq('site_id', siteId).in('id', seriesTargetIds)
+      : { data: [], error: null };
 
-  if (boardsResult.error || seriesResult.error) {
+  if (seriesResult.error) {
     throw new Error('사이트의 구독 대상을 확인하지 못했습니다.');
   }
 
-  const boardIdSet = new Set(((boardsResult.data ?? []) as TargetRow[]).map((board) => board.id));
   const seriesIdSet = new Set(((seriesResult.data ?? []) as TargetRow[]).map((series) => series.id));
   const subscriptions = subscriptionCandidates.filter(
-    (subscription) =>
-      (isBoardSubscription(subscription) && boardIdSet.has(subscription.target_id)) ||
-      (isSeriesSubscription(subscription) && seriesIdSet.has(subscription.target_id)),
+    (subscription) => isSeriesSubscription(subscription) && seriesIdSet.has(subscription.target_id),
   );
   const now = new Date();
   const results: MemberSiteSubscriptionCancellationResult[] = [];

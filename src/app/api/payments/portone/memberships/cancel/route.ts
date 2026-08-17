@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     .from('subscriptions')
     .select('id,status,current_period_end')
     .eq('subscriber_user_id', stigma.stigmaId)
-    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP_PLATFORM)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
     .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
     .eq('target_id', membershipId)
     .in('status', [

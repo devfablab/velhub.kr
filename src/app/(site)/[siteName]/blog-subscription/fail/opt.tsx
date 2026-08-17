@@ -11,11 +11,11 @@ export default function Opt() {
   const searchParams = useSearchParams();
 
   const siteName = normalizeText(params.siteName).toLowerCase();
-  const message = normalizeText(searchParams.get('message')) || '멤버십 가입이 취소되었거나 실패했습니다.';
+  const message = normalizeText(searchParams.get('message')) || '블로그 구독 가입이 취소되었거나 실패했습니다.';
 
   return (
     <div className="paper">
-      <Typography variant="h1">멤버십 가입 실패</Typography>
+      <Typography variant="h1">블로그 구독 가입 실패</Typography>
 
       <p className="alert error">
         <ErrorOutlineRoundedIcon />

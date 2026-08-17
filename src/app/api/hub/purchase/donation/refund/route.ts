@@ -22,7 +22,7 @@ type PaymentRow = {
   refundable_until: string | null;
 };
 
-const DONATION_PAYMENT_TYPES = ['donation_site', 'donation_board', 'donation_series', 'donation_post'];
+const DONATION_PAYMENT_TYPES = ['donation_site', 'donation_series', 'donation_post'];
 
 function isRefundableDonation(payment: PaymentRow) {
   if (!DONATION_PAYMENT_TYPES.includes(payment.payment_type)) {

@@ -50,12 +50,10 @@ async function getBuyerBirthDate(stigmaId: string) {
 
 function getPaymentTypeLabel(paymentType: string) {
   const labels: Record<string, string> = {
-    [PAYMENT_TYPE.MEMBERSHIP_BLOG]: '블로그 멤버십',
-    [PAYMENT_TYPE.MEMBERSHIP_PLATFORM]: '플랫폼 멤버십',
-    [PAYMENT_TYPE.SUBSCRIPTION_BOARD]: '게시판 구독',
+    [PAYMENT_TYPE.SUBSCRIPTION_SITE]: '블로그 구독',
+    [PAYMENT_TYPE.MEMBERSHIP]: '멤버십',
     [PAYMENT_TYPE.SUBSCRIPTION_SERIES]: '연재 구독',
     [PAYMENT_TYPE.DONATION_SITE]: '블로그 후원',
-    [PAYMENT_TYPE.DONATION_BOARD]: '게시판 후원',
     [PAYMENT_TYPE.DONATION_SERIES]: '연재 후원',
     [PAYMENT_TYPE.DONATION_POST]: '연재글 후원',
     [PAYMENT_TYPE.PURCHASE_POST]: '연재글 구매',
@@ -70,7 +68,90 @@ function getMembershipLabel(type: string | null | undefined) {
     all_in_one: '올인원 멤버십',
     affetto: '아페토 멤버십',
   };
-  return type ? (labels[type] ?? '플랫폼 멤버십') : '플랫폼 멤버십';
+  return type ? (labels[type] ?? '멤버십') : '멤버십';
+}
+
+type AttemptedPaymentInput = {
+  kind: string;
+  subtype: string;
+  membershipType: string;
+  featureKeys: string[];
+  siteId: string;
+  seriesId: string;
+  postId: string;
+  amount: number | null;
+};
+
+async function resolveAttemptedPayment(input: AttemptedPaymentInput) {
+  const db = getSupabaseAdmin();
+  if (input.kind === 'membership') {
+    if (!['owner', 'creator', 'all_in_one', 'affetto'].includes(input.membershipType) || !input.featureKeys.length)
+      throw new Error('멤버십 종류와 선택했던 기능을 확인해 주세요.');
+    const featureMap = new Map<string, (typeof MEMBERSHIP_FEATURES)[number]>(
+      MEMBERSHIP_FEATURES.map((feature) => [feature.key, feature]),
+    );
+    const features = input.featureKeys.map((key) => featureMap.get(key)).filter(Boolean);
+    if (features.length !== input.featureKeys.length) throw new Error('선택한 멤버십 기능을 확인해 주세요.');
+    return {
+      label: `${getMembershipLabel(input.membershipType)} / ${features.map((feature) => feature?.label).join(', ')}`,
+      boardId: null,
+    };
+  }
+
+  if (!['subscription', 'donation', 'post_purchase'].includes(input.kind) || !input.siteId)
+    throw new Error('결제하려던 항목과 사이트를 선택해 주세요.');
+  const validSubtypes: Record<string, string[]> = {
+    subscription: ['site_subscription', 'series_subscription'],
+    donation: ['site_donation', 'series_donation'],
+    post_purchase: ['post_purchase'],
+  };
+  if (!validSubtypes[input.kind]?.includes(input.subtype))
+    throw new Error('결제하려던 항목의 세부 종류를 선택해 주세요.');
+  const { data: site, error: siteError } = await db
+    .from('rhizomes')
+    .select('id, site_label, site_key')
+    .eq('id', input.siteId)
+    .eq('is_shutdown', false)
+    .maybeSingle();
+  if (siteError || !site) throw new Error('선택한 사이트를 확인할 수 없습니다.');
+  const siteLabel = site.site_label || site.site_key;
+
+  if (input.subtype === 'site_subscription' || input.subtype === 'site_donation') {
+    return {
+      label: `${siteLabel} / ${input.subtype === 'site_subscription' ? '블로그 구독' : '블로그 후원'}`,
+      boardId: null,
+    };
+  }
+
+  if (['series_subscription', 'series_donation', 'post_purchase'].includes(input.subtype)) {
+    const { data: series } = await db
+      .from('board_series')
+      .select('id, board_id, series_label, series_key')
+      .eq('id', input.seriesId)
+      .eq('site_id', input.siteId)
+      .maybeSingle();
+    if (!series) throw new Error('결제하려던 연재를 선택해 주세요.');
+    const seriesLabel = series.series_label || series.series_key;
+    if (input.subtype !== 'post_purchase') {
+      return {
+        label: `${siteLabel} / ${seriesLabel} / ${input.subtype === 'series_subscription' ? '연재 구독' : '연재 후원'}`,
+        boardId: series.board_id,
+      };
+    }
+    const { data: post } = await db
+      .from('posts')
+      .select('id, subject, board_id')
+      .eq('id', input.postId)
+      .eq('site_id', input.siteId)
+      .eq('series_id', input.seriesId)
+      .eq('published_status', 'published')
+      .eq('is_closed', false)
+      .maybeSingle();
+    if (!post) throw new Error('영구소장하려던 연재글을 선택해 주세요.');
+    return { label: `${siteLabel} / ${seriesLabel} / ${post.subject} / 연재글 영구소장`, boardId: post.board_id };
+  }
+
+  throw new Error('결제하려던 항목의 세부 종류를 선택해 주세요.');
 }
 
 async function getCancellationAvailability(stigmaId: string) {
@@ -324,7 +405,19 @@ export async function POST(request: NextRequest) {
   const actualBehavior = getText(body?.actualBehavior);
   const recurrence = getText(body?.recurrence);
   const errorMessage = getText(body?.errorMessage);
-  const attemptedProduct = getText(body?.attemptedProduct);
+  const attemptedPayment: AttemptedPaymentInput = {
+    kind: getText(body?.attemptedPaymentKind),
+    subtype: getText(body?.attemptedPaymentSubtype),
+    membershipType: getText(body?.attemptedMembershipType),
+    featureKeys: Array.isArray(body?.attemptedFeatureKeys)
+      ? body.attemptedFeatureKeys.map(getText).filter(Boolean)
+      : [],
+    siteId: getText(body?.attemptedSiteId),
+    seriesId: getText(body?.attemptedSeriesId),
+    postId: getText(body?.attemptedPostId),
+    amount:
+      typeof body?.attemptedAmount === 'number' && Number.isFinite(body.attemptedAmount) ? body.attemptedAmount : null,
+  };
   const displayedMessage = getText(body?.displayedMessage);
   const environment =
     body?.environment && typeof body.environment === 'object' ? (body.environment as Record<string, unknown>) : {};
@@ -353,13 +446,26 @@ export async function POST(request: NextRequest) {
     (!occurredAtDate ||
       Number.isNaN(occurredAtDate.getTime()) ||
       !actualBehavior ||
-      (requiresPayment ? !paymentId : !attemptedProduct))
+      (requiresPayment ? !paymentId : !attemptedPayment.kind))
   )
     return Response.json({ error: '결제 / 환불 문제 정보를 모두 입력해 주세요.' }, { status: 400 });
   if (inquiryType === 'minor_purchase_cancellation' && !paymentId)
     return Response.json({ error: '청약취소를 요청할 결제를 선택해 주세요.' }, { status: 400 });
 
   const db = getSupabaseAdmin();
+  let attemptedPaymentTarget: Awaited<ReturnType<typeof resolveAttemptedPayment>> | null = null;
+  if (isPaymentProblem && !requiresPayment) {
+    if (attemptedPayment.kind === 'donation' && (!attemptedPayment.amount || attemptedPayment.amount <= 0))
+      return Response.json({ error: '후원하려던 금액을 입력해 주세요.' }, { status: 400 });
+    try {
+      attemptedPaymentTarget = await resolveAttemptedPayment(attemptedPayment);
+    } catch (error) {
+      return Response.json(
+        { error: error instanceof Error ? error.message : '결제하려던 항목을 확인해 주세요.' },
+        { status: 400 },
+      );
+    }
+  }
   if (inquiryType === 'minor_purchase_cancellation') {
     const availableAt = await getCancellationAvailability(currentStigma.stigmaId);
     if (availableAt)
@@ -407,22 +513,15 @@ export async function POST(request: NextRequest) {
     paymentSnapshot = Object.fromEntries(Object.entries(payment).filter(([key]) => key !== 'buyer_user_id'));
   }
 
-  let pagePath = '';
   if (isBug) {
     try {
       const url = new URL(pageUrl);
       if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('invalid protocol');
-      pagePath = url.pathname;
     } catch {
       return Response.json({ error: '문제가 발생한 화면 주소를 확인해 주세요.' }, { status: 400 });
     }
   }
-  const subtypeLabel = inquirySubtypes[inquiryType].find((option) => option.value === inquirySubtype)?.label ?? '문의';
-  const generatedTitle = isBug
-    ? `${subtypeLabel} / ${pagePath}`.slice(0, 120)
-    : isPaymentProblem
-      ? subtypeLabel
-      : title;
+  const inquiryTitle = isBug || isPaymentProblem ? null : title;
   const generatedContent = isBug || isPaymentProblem ? actualBehavior : content;
 
   const { data: inquiry, error: inquiryError } = await db
@@ -431,7 +530,7 @@ export async function POST(request: NextRequest) {
       requester_stigma_id: currentStigma.stigmaId,
       inquiry_type: inquiryType,
       inquiry_subtype: inquirySubtype,
-      title: generatedTitle,
+      title: inquiryTitle,
       content: generatedContent,
     })
     .select('id, inquiry_type, status, title, content, created_at')
@@ -465,7 +564,16 @@ export async function POST(request: NextRequest) {
     const { error: detailError } = await db.from('inquiry_payment_details').insert({
       inquiry_id: inquiry.id,
       occurred_at: occurredAt,
-      attempted_product: attemptedProduct || null,
+      attempted_product: attemptedPaymentTarget?.label ?? null,
+      attempted_payment_kind: attemptedPaymentTarget ? attemptedPayment.kind : null,
+      attempted_payment_subtype: attemptedPaymentTarget ? attemptedPayment.subtype || null : null,
+      attempted_membership_type: attemptedPaymentTarget ? attemptedPayment.membershipType || null : null,
+      attempted_feature_keys: attemptedPaymentTarget ? attemptedPayment.featureKeys : null,
+      attempted_site_id: attemptedPaymentTarget ? attemptedPayment.siteId || null : null,
+      attempted_board_id: attemptedPaymentTarget ? attemptedPaymentTarget.boardId : null,
+      attempted_series_id: attemptedPaymentTarget ? attemptedPayment.seriesId || null : null,
+      attempted_post_id: attemptedPaymentTarget ? attemptedPayment.postId || null : null,
+      attempted_amount: attemptedPaymentTarget ? attemptedPayment.amount : null,
       displayed_message: displayedMessage || null,
       actual_behavior: actualBehavior,
       payment_snapshot: paymentSnapshot,

@@ -173,7 +173,6 @@ type PostContent = {
   prefix_label: string | null;
   is_purchase_required: boolean;
   purchase_post_price: number;
-  has_subscription_board: boolean;
   has_subscription_series: boolean;
   has_purchase_post: boolean;
   can_view_paid_content: boolean;
