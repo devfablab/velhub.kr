@@ -456,11 +456,29 @@ async function getPaymentOptions(stigmaId: string, cancellationOnly = true) {
           ? payment.target_id
           : (series?.siteId ?? board?.siteId ?? post?.site_id);
       const siteLabel = siteId ? siteMap.get(siteId) : null;
-      if (siteLabel) segments.push(siteLabel);
-      if (series?.label) segments.push(series.label);
-      else if (board?.label) segments.push(board.label);
-      if (post?.subject) segments.push(post.subject);
-      segments.push(getPaymentTypeLabel(payment.payment_type));
+      
+      let hasSpecificLabel = false;
+      if (siteLabel) {
+        segments.push(siteLabel);
+        hasSpecificLabel = true;
+      }
+      if (series?.label) {
+        segments.push(series.label);
+        hasSpecificLabel = true;
+      } else if (board?.label) {
+        segments.push(board.label);
+        hasSpecificLabel = true;
+      }
+      if (post?.subject) {
+        segments.push(post.subject);
+        hasSpecificLabel = true;
+      }
+
+      if (!hasSpecificLabel && typeof payment.raw_data === 'object' && payment.raw_data && 'orderName' in payment.raw_data && typeof payment.raw_data.orderName === 'string') {
+        segments.push(payment.raw_data.orderName);
+      } else {
+        segments.push(getPaymentTypeLabel(payment.payment_type));
+      }
     }
     segments.push(`${Number(payment.amount).toLocaleString('ko-KR')}원`);
     return {

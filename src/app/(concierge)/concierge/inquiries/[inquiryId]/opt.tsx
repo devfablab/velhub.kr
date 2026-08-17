@@ -316,59 +316,61 @@ export default function Opt() {
         <div className="paper">
           <h2>부모 정보 입력</h2>
           {certificateUrl ? (
-            <Anchor href={certificateUrl} className="button small action">
-              가족관계증명서 PDF 확인
-            </Anchor>
+            <Stack gap={2}>
+              <Anchor href={certificateUrl} className="button small action">
+                가족관계증명서 PDF 확인
+              </Anchor>
+              <Stack>
+                <Typography variant="subtitle2">부 성명</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={fatherName}
+                  onChange={(event) => setFatherName(event.target.value)}
+                />
+              </Stack>
+              <Stack>
+                <Typography variant="subtitle2">부 생년월일</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={fatherBirthDate}
+                  onChange={(event) => setFatherBirthDate(event.target.value)}
+                />
+              </Stack>
+              <Stack>
+                <Typography variant="subtitle2">모 성명</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={motherName}
+                  onChange={(event) => setMotherName(event.target.value)}
+                />
+              </Stack>
+              <Stack>
+                <Typography variant="subtitle2">모 생년월일</Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={motherBirthDate}
+                  onChange={(event) => setMotherBirthDate(event.target.value)}
+                />
+                <button type="button" className="button medium submit" onClick={() => void saveParents()}>
+                  부모 확인 정보 저장
+                </button>
+                {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
+                  <button type="button" className="button medium action" onClick={() => void requestPaymentControl()}>
+                    향후 결제 방침 선택 요청
+                  </button>
+                ) : null}
+              </Stack>
+            </Stack>
           ) : (
             <p className="alert warning">
               <WarningAmberRoundedIcon />
               <span>제출된 가족관계증명서가 없습니다.</span>
             </p>
           )}
-          <Stack>
-            <Typography variant="subtitle2">부 성명</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={fatherName}
-              onChange={(event) => setFatherName(event.target.value)}
-            />
-          </Stack>
-          <Stack>
-            <Typography variant="subtitle2">부 생년월일</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={fatherBirthDate}
-              onChange={(event) => setFatherBirthDate(event.target.value)}
-            />
-          </Stack>
-          <Stack>
-            <Typography variant="subtitle2">모 성명</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={motherName}
-              onChange={(event) => setMotherName(event.target.value)}
-            />
-          </Stack>
-          <Stack>
-            <Typography variant="subtitle2">모 생년월일</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={motherBirthDate}
-              onChange={(event) => setMotherBirthDate(event.target.value)}
-            />
-            <button type="button" className="button medium submit" onClick={() => void saveParents()}>
-              부모 확인 정보 저장
-            </button>
-            {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
-              <button type="button" className="button medium action" onClick={() => void requestPaymentControl()}>
-                향후 결제 방침 선택 요청
-              </button>
-            ) : null}
-          </Stack>
         </div>
       ) : null}
       {inquiry.status !== 'closed' ? (
