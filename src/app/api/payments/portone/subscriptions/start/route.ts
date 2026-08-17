@@ -1,5 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
-import { isAtLeast14, isMinor } from '@/lib/identity/age';
+import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
@@ -627,21 +627,6 @@ export async function POST(request: Request) {
       return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
     }
 
-    const isMinorUser = isMinor(birthDate);
-
-    if (isMinorUser) {
-      return Response.json({
-        mode: 'single_payment',
-        storeId: getPortOneStoreId(),
-        channelKey: getPortOneKpnSubscriptionChannelKey(),
-        paymentId: createPortOnePaymentKey(orderNo),
-        orderNo,
-        orderName,
-        amount: setting.price,
-        successUrl: successUrl.toString(),
-        failUrl: failUrl.toString(),
-      });
-    }
 
     if (!billingMethod) {
       successUrl.searchParams.set('customerKey', customerKey);

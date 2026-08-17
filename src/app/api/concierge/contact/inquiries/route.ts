@@ -71,6 +71,115 @@ function getMembershipLabel(type: string | null | undefined) {
   return type ? (labels[type] ?? '멤버십') : '멤버십';
 }
 
+async function buildPaymentLabel(
+  payment: {
+    payment_type: string;
+    target_type: string | null;
+    target_id: string | null;
+    amount: number | string;
+    order_no: string | null;
+  },
+  db: ReturnType<typeof getSupabaseAdmin>,
+): Promise<string> {
+  const segments: string[] = [];
+
+  if (payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP && payment.target_id) {
+    const { data: membership } = await db
+      .from('memberships')
+      .select('membership_type')
+      .eq('id', payment.target_id)
+      .maybeSingle();
+    segments.push(getMembershipLabel(membership?.membership_type));
+
+    const { data: items } = await db
+      .from('membership_items')
+      .select('plan_id')
+      .eq('membership_id', payment.target_id);
+    const planIds = (items ?? []).map((item) => item.plan_id);
+    if (planIds.length) {
+      const { data: plans } = await db.from('plans').select('id, plan_key').in('id', planIds);
+      const featureLabelMap = new Map(MEMBERSHIP_FEATURES.map((f) => [f.key, f.label]));
+      const featureLabels = (plans ?? [])
+        .map((plan) => {
+          const featureKey = plan.plan_key.replace(/^all_in_one_/, '');
+          return featureLabelMap.get(featureKey);
+        })
+        .filter(Boolean) as string[];
+      if (featureLabels.length) segments.push(featureLabels.join(', '));
+    }
+  } else if (payment.target_id) {
+    let siteId: string | null = null;
+    let seriesLabel: string | null = null;
+    let boardLabel: string | null = null;
+    let postSubject: string | null = null;
+
+    if (payment.target_type === PAYMENT_TARGET_TYPE.SITE) {
+      siteId = payment.target_id;
+    } else if (payment.target_type === PAYMENT_TARGET_TYPE.BOARD) {
+      const { data: board } = await db
+        .from('boards')
+        .select('site_id, board_label, board_key')
+        .eq('id', payment.target_id)
+        .maybeSingle();
+      if (board) {
+        siteId = board.site_id;
+        boardLabel = board.board_label || board.board_key;
+      }
+    } else if (payment.target_type === PAYMENT_TARGET_TYPE.SERIES) {
+      const { data: series } = await db
+        .from('board_series')
+        .select('site_id, series_label, series_key')
+        .eq('id', payment.target_id)
+        .maybeSingle();
+      if (series) {
+        siteId = series.site_id;
+        seriesLabel = series.series_label || series.series_key;
+      }
+    } else if (payment.target_type === PAYMENT_TARGET_TYPE.POST) {
+      const { data: post } = await db
+        .from('posts')
+        .select('site_id, board_id, series_id, subject')
+        .eq('id', payment.target_id)
+        .maybeSingle();
+      if (post) {
+        siteId = post.site_id;
+        postSubject = post.subject;
+        if (post.series_id) {
+          const { data: series } = await db
+            .from('board_series')
+            .select('series_label, series_key')
+            .eq('id', post.series_id)
+            .maybeSingle();
+          if (series) seriesLabel = series.series_label || series.series_key;
+        } else if (post.board_id) {
+          const { data: board } = await db
+            .from('boards')
+            .select('board_label, board_key')
+            .eq('id', post.board_id)
+            .maybeSingle();
+          if (board) boardLabel = board.board_label || board.board_key;
+        }
+      }
+    }
+
+    if (siteId) {
+      const { data: site } = await db
+        .from('rhizomes')
+        .select('site_label, site_key')
+        .eq('id', siteId)
+        .maybeSingle();
+      if (site) segments.push(site.site_label || site.site_key);
+    }
+    if (seriesLabel) segments.push(seriesLabel);
+    else if (boardLabel) segments.push(boardLabel);
+    if (postSubject) segments.push(postSubject);
+    segments.push(getPaymentTypeLabel(payment.payment_type));
+  }
+
+  segments.push(`${Number(payment.amount).toLocaleString('ko-KR')}원`);
+  return `${segments.join(' / ')}${payment.order_no ? ` (${payment.order_no})` : ''}`;
+}
+
 type AttemptedPaymentInput = {
   kind: string;
   subtype: string;
@@ -500,7 +609,8 @@ export async function POST(request: NextRequest) {
   }
 
   let paymentSnapshot: Record<string, unknown> | null = null;
-  if (isPaymentProblem && paymentId) {
+  let resolvedPaymentLabel: string | null = null;
+  if ((isPaymentProblem || inquiryType === 'minor_purchase_cancellation') && paymentId) {
     const { data: payment, error: paymentError } = await db
       .from('payments')
       .select(
@@ -511,6 +621,7 @@ export async function POST(request: NextRequest) {
     if (paymentError || !payment || payment.buyer_user_id !== currentStigma.stigmaId)
       return Response.json({ error: '선택한 결제 내역을 확인할 수 없습니다.' }, { status: 400 });
     paymentSnapshot = Object.fromEntries(Object.entries(payment).filter(([key]) => key !== 'buyer_user_id'));
+    resolvedPaymentLabel = await buildPaymentLabel(payment, db);
   }
 
   if (isBug) {
@@ -560,11 +671,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (isPaymentProblem) {
+  if (isPaymentProblem || (inquiryType === 'minor_purchase_cancellation' && paymentSnapshot)) {
     const { error: detailError } = await db.from('inquiry_payment_details').insert({
       inquiry_id: inquiry.id,
-      occurred_at: occurredAt,
-      attempted_product: attemptedPaymentTarget?.label ?? null,
+      occurred_at: occurredAt || new Date().toISOString(),
+      attempted_product: resolvedPaymentLabel ?? attemptedPaymentTarget?.label ?? null,
       attempted_payment_kind: attemptedPaymentTarget ? attemptedPayment.kind : null,
       attempted_payment_subtype: attemptedPaymentTarget ? attemptedPayment.subtype || null : null,
       attempted_membership_type: attemptedPaymentTarget ? attemptedPayment.membershipType || null : null,
@@ -575,7 +686,7 @@ export async function POST(request: NextRequest) {
       attempted_post_id: attemptedPaymentTarget ? attemptedPayment.postId || null : null,
       attempted_amount: attemptedPaymentTarget ? attemptedPayment.amount : null,
       displayed_message: displayedMessage || null,
-      actual_behavior: actualBehavior,
+      actual_behavior: actualBehavior || '미성년자 결제 청약취소 요청',
       payment_snapshot: paymentSnapshot,
     });
     if (detailError) {

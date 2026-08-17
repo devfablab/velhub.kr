@@ -26,12 +26,21 @@ type PaymentDetail = {
   payment_snapshot: Record<string, unknown> | null;
 };
 
+type LinkedPayment = {
+  order_no: string | null;
+  amount: number | null;
+  payment_method: string | null;
+  status: string | null;
+  approved_at: string | null;
+};
+
 type Props = {
   inquiryType: InquiryType;
   inquirySubtype: string | null;
   content: string;
   bugDetails?: BugDetail | BugDetail[] | null;
   paymentDetails?: PaymentDetail | PaymentDetail[] | null;
+  linkedPayment?: LinkedPayment | LinkedPayment[] | null;
   paymentId?: string | null;
   evidenceUrl?: string | null;
 };
@@ -41,6 +50,20 @@ const recurrenceLabels: Record<string, string> = {
   often: '자주 발생',
   sometimes: '가끔 발생',
   once: '한 번만 발생',
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  paid: '결제 완료',
+  failed: '결제 실패',
+  refunded: '환불 완료',
+  partially_refunded: '부분 환불',
+};
+
+const paymentMethodLabels: Record<string, string> = {
+  card: '카드',
+  vbank: '가상계좌',
+  trans: '계좌이체',
+  phone: '휴대폰 소액결제',
 };
 
 function one<T>(value: T | T[] | null | undefined) {
@@ -65,13 +88,14 @@ export default function InquiryDetails({
   content,
   bugDetails,
   paymentDetails,
-  paymentId,
+  linkedPayment,
   evidenceUrl,
 }: Props) {
   const subtypeLabel = inquirySubtypes[inquiryType].find((item) => item.value === inquirySubtype)?.label;
   const bug = one(bugDetails);
   const payment = one(paymentDetails);
   const snapshot = payment?.payment_snapshot;
+  const linked = one(linkedPayment);
 
   return (
     <Stack gap={2}>
@@ -106,24 +130,58 @@ export default function InquiryDetails({
           />
           <Detail label="화면에 표시된 메시지" value={payment.displayed_message} />
           <Detail label="실제로 발생한 상황" value={payment.actual_behavior} />
-          <Detail label="연결 결제 ID" value={paymentId} />
-          <Detail label="주문번호" value={snapshot?.order_no} />
           <Detail
             label="결제 금액"
             value={snapshot?.amount ? `${Number(snapshot.amount).toLocaleString('ko-KR')}원` : null}
           />
-          <Detail label="결제수단" value={snapshot?.payment_method} />
-          <Detail label="PG사" value={snapshot?.provider} />
-          <Detail label="결제 상태" value={snapshot?.status} />
+          <Detail
+            label="결제수단"
+            value={
+              snapshot?.payment_method
+                ? (paymentMethodLabels[String(snapshot.payment_method)] ?? String(snapshot.payment_method))
+                : null
+            }
+          />
+          <Detail
+            label="결제 상태"
+            value={snapshot?.status ? (paymentStatusLabels[String(snapshot.status)] ?? String(snapshot.status)) : null}
+          />
           <Detail
             label="승인 시각"
             value={snapshot?.approved_at ? new Date(String(snapshot.approved_at)).toLocaleString('ko-KR') : null}
           />
         </>
       ) : (
-        <Typography variant="body2" whiteSpace="pre-wrap">
-          {content}
-        </Typography>
+        <>
+          <Typography variant="body2" whiteSpace="pre-wrap">
+            {content}
+          </Typography>
+          {linked ? (
+            <>
+              <Detail label="주문번호" value={linked.order_no} />
+              <Detail
+                label="결제 금액"
+                value={linked.amount ? `${Number(linked.amount).toLocaleString('ko-KR')}원` : null}
+              />
+              <Detail
+                label="결제수단"
+                value={
+                  linked.payment_method
+                    ? (paymentMethodLabels[String(linked.payment_method)] ?? String(linked.payment_method))
+                    : null
+                }
+              />
+              <Detail
+                label="결제 상태"
+                value={linked.status ? (paymentStatusLabels[String(linked.status)] ?? String(linked.status)) : null}
+              />
+              <Detail
+                label="승인 시각"
+                value={linked.approved_at ? new Date(String(linked.approved_at)).toLocaleString('ko-KR') : null}
+              />
+            </>
+          ) : null}
+        </>
       )}
       {evidenceUrl ? (
         <Stack direction="row">

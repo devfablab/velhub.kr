@@ -273,15 +273,33 @@ export default function Opt() {
           <Typography variant="subtitle2">문의 날짜와 시간</Typography>
           <Typography variant="body2">{formatDateTimeDetail(inquiry.created_at)}</Typography>
         </Stack>
-        <InquiryDetails
-          inquiryType={inquiry.inquiry_type}
-          inquirySubtype={inquiry.inquiry_subtype}
-          content={inquiry.content}
-          bugDetails={inquiry.inquiry_bug_details}
-          paymentDetails={inquiry.inquiry_payment_details}
-          paymentId={inquiry.inquiry_orders?.[0]?.payment_id}
-          evidenceUrl={inquiry.evidenceUrl}
-        />
+        {(() => {
+          type LinkedOrder = {
+            payment_id: string;
+            payments?: {
+              order_no: string;
+              amount: number;
+              status: string;
+              payment_method: string;
+              approved_at: string;
+            };
+          };
+          const orders = inquiry.inquiry_orders as unknown as LinkedOrder | LinkedOrder[] | null;
+          const firstOrder = Array.isArray(orders) ? orders[0] : orders;
+
+          return (
+            <InquiryDetails
+              inquiryType={inquiry.inquiry_type}
+              inquirySubtype={inquiry.inquiry_subtype}
+              content={inquiry.content}
+              bugDetails={inquiry.inquiry_bug_details}
+              paymentDetails={inquiry.inquiry_payment_details}
+              linkedPayment={firstOrder?.payments}
+              paymentId={firstOrder?.payment_id}
+              evidenceUrl={inquiry.evidenceUrl}
+            />
+          );
+        })()}
         {inquiry.resolution_code ? (
           <Stack>
             <Typography variant="subtitle2">결과</Typography>
