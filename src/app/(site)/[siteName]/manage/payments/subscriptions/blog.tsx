@@ -8,6 +8,7 @@ import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   Divider,
   FormControlLabel,
+  InputAdornment,
   Stack,
   Table,
   TableBody,
@@ -18,6 +19,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -64,14 +66,6 @@ type BlogSubscriptionSaveResponse = {
   maxSeriesPrice?: number;
   error?: string;
 };
-
-function formatBlogSubscriptionPrice(value: number) {
-  return value.toLocaleString('ko-KR');
-}
-
-function getBlogSubscriptionPriceNumber(value: string) {
-  return Number(value.replace(/[^0-9]/g, ''));
-}
 
 function isValidBlogSubscriptionPrice(price: number, requiredMinPrice: number) {
   if (!Number.isInteger(price)) {
@@ -149,7 +143,7 @@ export default function Opt() {
         setIsBlogSubscriptionEnabled(Boolean(result.setting?.isEnabled));
         setRequiredMinPrice(nextRequiredMinPrice);
         setMaxSeriesPrice(result.setting?.maxSeriesPrice ?? 0);
-        setBlogSubscriptionPrice(formatBlogSubscriptionPrice(Math.max(nextPrice, nextRequiredMinPrice)));
+        setBlogSubscriptionPrice(formatCurrencyInput(Math.max(nextPrice, nextRequiredMinPrice)));
         setMembers(result.members ?? []);
         setBlogSubscriptionData(result);
       } catch (unknownError) {
@@ -180,17 +174,13 @@ export default function Opt() {
   }
 
   function handleBlogSubscriptionPriceChange(event: ChangeEvent<HTMLInputElement>) {
-    const nextPrice = getBlogSubscriptionPriceNumber(event.target.value);
+    const nextPrice = parseCurrencyInput(event.target.value);
 
     if (nextPrice > 100000) {
       return;
     }
 
-    if (nextPrice % 1000 !== 0) {
-      return;
-    }
-
-    setBlogSubscriptionPrice(formatBlogSubscriptionPrice(nextPrice));
+    setBlogSubscriptionPrice(formatCurrencyInput(nextPrice));
     setSuccessMessage('');
     setErrorMessage('');
   }
@@ -201,7 +191,7 @@ export default function Opt() {
       setErrorMessage('');
       setSuccessMessage('');
 
-      const price = getBlogSubscriptionPriceNumber(blogSubscriptionPrice);
+      const price = parseCurrencyInput(blogSubscriptionPrice);
 
       if (isBlogSubscriptionEnabled && !isValidBlogSubscriptionPrice(price, requiredMinPrice)) {
         throw new Error(
@@ -344,10 +334,16 @@ export default function Opt() {
           <TextField
             value={blogSubscriptionPrice}
             onChange={handleBlogSubscriptionPriceChange}
+            inputMode="numeric"
             helperText={`${requiredMinPrice.toLocaleString('ko-KR')}원부터 100,000원까지 1,000원 단위로 입력해 주세요.`}
             disabled={isSaving}
             fullWidth
             size="small"
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">원</InputAdornment>,
+              },
+            }}
           />
 
           <div>

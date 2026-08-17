@@ -30,6 +30,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../menu';
@@ -1019,6 +1020,7 @@ export default function Opt() {
                     <TextField
                       value={seriesKey}
                       onChange={handleSeriesKeyChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                       fullWidth
                       required
                       size="small"
@@ -1047,6 +1049,7 @@ export default function Opt() {
                     <TextField
                       value={seriesLabel}
                       onChange={handleSeriesLabelChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                       fullWidth
                       size="small"
                       slotProps={{
@@ -1255,6 +1258,7 @@ export default function Opt() {
                     <TextField
                       value={seriesKey}
                       onChange={handleSeriesKeyChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesKey, isCheckingKey)}
                       fullWidth
                       required
                       size="small"
@@ -1282,6 +1286,7 @@ export default function Opt() {
                     <TextField
                       value={seriesLabel}
                       onChange={handleSeriesLabelChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSeriesLabel, isCheckingLabel)}
                       fullWidth
                       size="small"
                       slotProps={{

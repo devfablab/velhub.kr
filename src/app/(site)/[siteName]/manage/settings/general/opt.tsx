@@ -25,6 +25,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -1037,6 +1038,7 @@ export default function Opt() {
                   <TextField
                     value={String(draftValue)}
                     onChange={handleSiteKeyChange}
+                    onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteKey, isCheckingSiteKey)}
                     fullWidth
                     size="small"
                     helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${String(draftValue).length} / 15`}
@@ -1213,6 +1215,7 @@ export default function Opt() {
                   <TextField
                     value={String(draftValue)}
                     onChange={handleSiteLabelChange}
+                    onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteLabel, isCheckingSiteLabel)}
                     fullWidth
                     size="small"
                     helperText={`${String(draftValue).length} / 10`}

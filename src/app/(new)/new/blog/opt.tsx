@@ -26,6 +26,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
@@ -472,6 +473,7 @@ export default function Opt() {
             <TextField
               value={siteKey}
               onChange={handleSiteKeyChange}
+              onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSiteKey, isCheckingSiteKey)}
               fullWidth
               helperText={`영문 소문자, 숫자, 하이픈('-')만 사용할 수 있습니다. ${siteKey.length} / 15`}
               size="small"
@@ -508,6 +510,9 @@ export default function Opt() {
             <TextField
               value={siteLabel}
               onChange={handleSiteLabelChange}
+              onKeyDown={(event) =>
+                runInputAdornmentAction(event, handleCheckSiteLabel, !siteLabel.trim() || isCheckingSiteLabel)
+              }
               fullWidth
               size="small"
               helperText={`입력하지 않으면 블로그 주소 기준으로 자동 생성됩니다. ${siteLabel.length} / 10`}

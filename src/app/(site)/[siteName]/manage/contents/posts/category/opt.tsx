@@ -32,6 +32,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
@@ -1060,6 +1061,7 @@ export default function Opt() {
                     <TextField
                       value={categoryKey}
                       onChange={handleCategoryKeyChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
                       fullWidth
                       required
                       size="medium"
@@ -1093,6 +1095,7 @@ export default function Opt() {
                     <TextField
                       value={categoryLabel}
                       onChange={handleCategoryLabelChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
                       fullWidth
                       size="medium"
                       slotProps={{
@@ -1225,6 +1228,7 @@ export default function Opt() {
                     <TextField
                       value={categoryKey}
                       onChange={handleCategoryKeyChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryKey, isCheckingKey)}
                       fullWidth
                       required
                       size="medium"
@@ -1258,6 +1262,7 @@ export default function Opt() {
                     <TextField
                       value={categoryLabel}
                       onChange={handleCategoryLabelChange}
+                      onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCategoryLabel, isCheckingLabel)}
                       fullWidth
                       size="medium"
                       slotProps={{

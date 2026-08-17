@@ -23,6 +23,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
@@ -93,13 +94,7 @@ type SeriesRow = {
   series: SeriesSubscriptionItem;
 };
 
-function formatPrice(value: number) {
-  return value.toLocaleString('ko-KR');
-}
-
-function getPriceNumber(value: string) {
-  return Number(value.replace(/[^0-9]/g, ''));
-}
+const formatPrice = formatCurrencyInput;
 
 function isValidPrice(price: number, minPrice: number, maxAllowedPrice: number) {
   if (!Number.isInteger(price)) {
@@ -321,7 +316,7 @@ export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanc
     const selectedSeries = findSeries(editingRow.boardId, editingRow.seriesId);
     const minPrice = selectedSeries?.setting.minPrice ?? 7000;
     const maxAllowedPrice = selectedSeries?.setting.maxAllowedPrice ?? 100000;
-    const nextPrice = getPriceNumber(event.target.value);
+    const nextPrice = parseCurrencyInput(event.target.value);
 
     if (nextPrice > 100000) {
       return;
@@ -402,7 +397,7 @@ export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanc
       setSuccessMessage('');
 
       const selectedSeries = findSeries(editingRow.boardId, editingRow.seriesId);
-      const nextPrice = getPriceNumber(editingRow.price);
+      const nextPrice = parseCurrencyInput(editingRow.price);
 
       if (!editingRow.boardId) {
         throw new Error('게시판을 선택해 주세요.');
@@ -594,6 +589,7 @@ export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanc
         <TextField
           value={editingRow.price}
           onChange={handleEditingPriceChange}
+          inputMode="numeric"
           fullWidth
           size="small"
           slotProps={{

@@ -6,6 +6,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Box, InputAdornment, Stack, styled, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ToastEditor from '@/components/editor/ToastEditor';
@@ -534,6 +535,7 @@ export default function Opt() {
                   placeholder="페이지 식별자 (필수)"
                   value={slug}
                   onChange={handleSlugChange}
+                  onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSlug, isCheckingSlug)}
                   fullWidth
                   size="medium"
                   helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}

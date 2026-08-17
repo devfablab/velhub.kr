@@ -33,6 +33,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { format, isValid } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -1303,6 +1304,7 @@ export default function Opt() {
                   placeholder="예) https://example.com/your-original-work"
                   value={copyrightOriginalUrlInput}
                   onChange={(changeEvent) => setCopyrightOriginalUrlInput(changeEvent.currentTarget.value)}
+                  onKeyDown={(event) => runInputAdornmentAction(event, handleAddCopyrightOriginalUrl)}
                   fullWidth
                   size="small"
                   slotProps={{

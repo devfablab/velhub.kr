@@ -22,7 +22,9 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { inquirySubtypes, inquiryTypeLabels, inquiryTypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } from '@/lib/memberships/catalog';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import Anchor from '@/components/Anchor';
 
 type PaymentRow = {
@@ -192,7 +194,7 @@ export default function Opt() {
           attemptedSiteId: selectedSite?.id,
           attemptedSeriesId: selectedSeriesId || undefined,
           attemptedPostId: selectedPostId || undefined,
-          attemptedAmount: attemptedAmount ? Number(attemptedAmount) : undefined,
+          attemptedAmount: attemptedAmount ? parseCurrencyInput(attemptedAmount) : undefined,
           displayedMessage,
           environment: {
             browserName: navigator.userAgent.match(/(Edg|Chrome|Firefox|Safari)\/?\s*([\d.]*)/i)?.[1] ?? 'unknown',
@@ -533,6 +535,9 @@ export default function Opt() {
                           size="small"
                           value={siteQuery}
                           onChange={(event) => setSiteQuery(event.target.value)}
+                          onKeyDown={(event) =>
+                            runInputAdornmentAction(event, searchSites, !siteQuery.trim() || searchingTargets)
+                          }
                           placeholder="사이트 이름의 일부를 입력해 주세요"
                           slotProps={{
                             htmlInput: { maxLength: 100 },
@@ -634,12 +639,16 @@ export default function Opt() {
                       <Typography variant="subtitle2">후원하려던 금액</Typography>
                       <TextField
                         required
-                        type="number"
                         fullWidth
                         size="small"
                         value={attemptedAmount}
-                        onChange={(event) => setAttemptedAmount(event.target.value)}
-                        slotProps={{ htmlInput: { min: 1 } }}
+                        onChange={(event) => setAttemptedAmount(formatCurrencyInput(event.target.value))}
+                        inputMode="numeric"
+                        slotProps={{
+                          input: {
+                            endAdornment: <InputAdornment position="end">원</InputAdornment>,
+                          },
+                        }}
                       />
                     </Stack>
                   ) : null}

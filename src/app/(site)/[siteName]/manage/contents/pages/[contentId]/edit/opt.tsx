@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -615,6 +616,7 @@ export default function Opt() {
                 <TextField
                   value={slug}
                   onChange={handleSlugChange}
+                  onKeyDown={(event) => runInputAdornmentAction(event, handleCheckSlug, isCheckingSlug)}
                   fullWidth
                   size="small"
                   helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/pages/${slug}`}

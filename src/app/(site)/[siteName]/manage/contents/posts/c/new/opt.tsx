@@ -19,6 +19,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Container from '../../../../menu';
@@ -511,6 +512,9 @@ export default function Opt() {
                     <TextField
                       value={boardKey}
                       onChange={handleBoardKeyChange}
+                      onKeyDown={(event) =>
+                        runInputAdornmentAction(event, handleCheckBoardKey, isChecking || !canCreateBoard)
+                      }
                       fullWidth
                       size="small"
                       helperText={`스텝 관리화면: ${baseUrl}/${siteName}/manage/contents/posts/c/${boardKey}`}
@@ -543,6 +547,9 @@ export default function Opt() {
                     <TextField
                       value={boardLabel}
                       onChange={handleBoardLabelChange}
+                      onKeyDown={(event) =>
+                        runInputAdornmentAction(event, handleCheckBoardLabel, isCheckingBoardLabel || !canCreateBoard)
+                      }
                       fullWidth
                       size="small"
                       slotProps={{

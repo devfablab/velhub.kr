@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentEmailDialog from './PaymentEmailDialog';
@@ -97,24 +98,6 @@ function isAdult(birthDate: string | null | undefined) {
   }
 
   return age >= 19;
-}
-
-function formatDonationAmount(value: number) {
-  if (!value) {
-    return '';
-  }
-
-  return value.toLocaleString('ko-KR');
-}
-
-function getDonationAmountNumber(value: string) {
-  const numberText = value.replace(/[^0-9]/g, '');
-
-  if (!numberText) {
-    return 0;
-  }
-
-  return Number(numberText);
 }
 
 function isValidDonationAmount(amount: number) {
@@ -288,13 +271,13 @@ export default function DonationButton(props: Props) {
   }
 
   function handleDonationAmountChange(event: ChangeEvent<HTMLInputElement>) {
-    const nextAmount = getDonationAmountNumber(event.target.value);
+    const nextAmount = parseCurrencyInput(event.target.value);
 
     if (nextAmount > 100000) {
       return;
     }
 
-    setDonationAmount(formatDonationAmount(nextAmount));
+    setDonationAmount(formatCurrencyInput(nextAmount));
     setErrorMessage('');
   }
 
@@ -303,7 +286,7 @@ export default function DonationButton(props: Props) {
       setErrorMessage('');
       updateProcessing(true);
 
-      const amount = getDonationAmountNumber(donationAmount);
+      const amount = parseCurrencyInput(donationAmount);
 
       if (!isValidDonationAmount(amount)) {
         throw new Error('후원금액은 1,000 원부터 100,000 원까지 1,000 원 단위로 입력해 주세요.');

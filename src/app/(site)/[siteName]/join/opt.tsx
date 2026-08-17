@@ -17,6 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -508,6 +509,9 @@ export default function Opt({ siteName }: Props) {
         placeholder="닉네임"
         value={nickname}
         onChange={handleNicknameChange}
+        onKeyDown={(event) =>
+          runInputAdornmentAction(event, handleCheckNickname, !nickname.trim() || isCheckingNickname)
+        }
         fullWidth
         size="small"
         error={Boolean(nicknameErrorMessage)}
