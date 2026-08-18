@@ -135,8 +135,8 @@ export default function Opt() {
     if (guardianIdentityVerificationId) {
       formData.set('identityVerificationId', guardianIdentityVerificationId);
     }
-    const isFamilyCertificate = 
-      inquiry?.information_request_type === 'family_relation_certificate' || 
+    const isFamilyCertificate =
+      inquiry?.information_request_type === 'family_relation_certificate' ||
       inquiry?.information_request_type === 'guardian_identity_and_family_relation_certificate';
     const endpoint = isFamilyCertificate ? 'family-relation-certificate' : 'evidence';
     const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}/${endpoint}`, {
@@ -169,10 +169,10 @@ export default function Opt() {
       if (!startResponse.ok || !request) {
         throw new Error(request?.message ?? '본인인증을 시작할 수 없습니다.');
       }
-      
+
       const result = await PortOne.requestIdentityVerification(request);
       const identityVerificationId = result?.identityVerificationId ?? request.identityVerificationId;
-      
+
       if (!identityVerificationId || result?.code) {
         await fetch('/api/identity/portone/fail', {
           method: 'POST',
@@ -185,18 +185,18 @@ export default function Opt() {
         });
         throw new Error(result?.message || '본인인증이 완료되지 않았습니다.');
       }
-      
+
       const successResponse = await fetch('/api/identity/portone/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identityVerificationId }),
       });
       const identity = (await successResponse.json().catch(() => null)) as { name: string; message?: string } | null;
-      
+
       if (!successResponse.ok || !identity) {
         throw new Error(identity?.message ?? '본인인증 정보를 확인할 수 없습니다.');
       }
-      
+
       setGuardianIdentityVerificationId(identityVerificationId);
       setGuardianIdentityName(identity.name);
       setAgreementOpen(false);
@@ -405,13 +405,27 @@ export default function Opt() {
             {[...inquiry.inquiry_messages]
               .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
               .map((message) => (
-                <Stack key={message.id} gap={0.5}>
+                <Stack
+                  key={message.id}
+                  gap={0.5}
+                  direction="column"
+                  justifyContent={message.sender_type === 'admin' ? 'flex-start' : 'flex-end'}
+                >
                   <Typography variant="subtitle2">
-                    {message.sender_type === 'admin' ? '관리자' : '나'} / {formatDateTimeDetail(message.created_at)}
+                    {message.sender_type === 'admin' ? '데브허브 컨시어지팀' : ''}
                   </Typography>
-                  <Typography variant="body2" whiteSpace="pre-wrap">
-                    {message.message}
-                  </Typography>
+                  <Stack
+                    gap={1}
+                    direction={message.sender_type === 'admin' ? 'row' : 'row-reverse'}
+                    alignItems="flex-end"
+                  >
+                    <div className="paper" style={{ maxWidth: '70%' }}>
+                      <Typography variant="body2" whiteSpace="pre-wrap">
+                        {message.message}
+                      </Typography>
+                    </div>
+                    <time style={{ fontSize: 12, opacity: 0.5 }}>{formatDateTimeDetail(message.created_at)}</time>
+                  </Stack>
                 </Stack>
               ))}
           </Stack>
@@ -538,7 +552,11 @@ export default function Opt() {
                 onChange={chooseFile}
               />
               <Stack direction="row" gap={1} alignItems="center">
-                <button type="button" className="button small action" onClick={() => certificateInputRef.current?.click()}>
+                <button
+                  type="button"
+                  className="button small action"
+                  onClick={() => certificateInputRef.current?.click()}
+                >
                   파일 선택
                 </button>
                 {file ? (
@@ -569,7 +587,7 @@ export default function Opt() {
           </Box>
         </div>
       ) : null}
-      
+
       <IdentityAgreement
         type="identity"
         open={agreementOpen}
