@@ -282,7 +282,10 @@ export default function Opt() {
               status: string;
               payment_method: string;
               approved_at: string;
+              refunded_amount: number;
+              refunded_at: string;
             };
+            payment_label: string | null;
           };
           const orders = inquiry.inquiry_orders as unknown as LinkedOrder | LinkedOrder[] | null;
           const firstOrder = Array.isArray(orders) ? orders[0] : orders;
@@ -295,7 +298,7 @@ export default function Opt() {
               bugDetails={inquiry.inquiry_bug_details}
               paymentDetails={inquiry.inquiry_payment_details}
               linkedPayment={firstOrder?.payments}
-              paymentId={firstOrder?.payment_id}
+              paymentLabel={firstOrder?.payment_label}
               evidenceUrl={inquiry.evidenceUrl}
             />
           );

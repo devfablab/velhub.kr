@@ -1,5 +1,6 @@
 import { Stack, Typography } from '@mui/material';
 import { inquirySubtypes, type InquiryType } from '@/lib/concierge/inquiries';
+import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 
 type BugDetail = {
@@ -32,6 +33,8 @@ type LinkedPayment = {
   payment_method: string | null;
   status: string | null;
   approved_at: string | null;
+  refunded_amount: number | null;
+  refunded_at: string | null;
 };
 
 type Props = {
@@ -41,7 +44,7 @@ type Props = {
   bugDetails?: BugDetail | BugDetail[] | null;
   paymentDetails?: PaymentDetail | PaymentDetail[] | null;
   linkedPayment?: LinkedPayment | LinkedPayment[] | null;
-  paymentId?: string | null;
+  paymentLabel?: string | null;
   evidenceUrl?: string | null;
 };
 
@@ -53,8 +56,11 @@ const recurrenceLabels: Record<string, string> = {
 };
 
 const paymentStatusLabels: Record<string, string> = {
+  ready: '결제 대기',
   paid: '결제 완료',
   failed: '결제 실패',
+  canceled: '결제 취소',
+  cancelled: '결제 취소',
   refunded: '환불 완료',
   partially_refunded: '부분 환불',
 };
@@ -64,6 +70,7 @@ const paymentMethodLabels: Record<string, string> = {
   vbank: '가상계좌',
   trans: '계좌이체',
   phone: '휴대폰 소액결제',
+  easy_pay: '간편결제',
 };
 
 function one<T>(value: T | T[] | null | undefined) {
@@ -82,6 +89,21 @@ function Detail({ label, value }: { label: string; value: unknown }) {
   );
 }
 
+function getPaymentStatusLabel(value: string | null | undefined) {
+  return value ? (paymentStatusLabels[value] ?? '확인 필요') : null;
+}
+
+function getPaymentMethodLabel(value: string | null | undefined) {
+  return value ? (paymentMethodLabels[value] ?? '확인 필요') : null;
+}
+
+function getFallbackPaymentLabel(payment: LinkedPayment | null) {
+  if (!payment) return null;
+  const amount = payment.amount === null ? null : `${Number(payment.amount).toLocaleString('ko-KR')}원`;
+  const orderNo = payment.order_no ? `(${payment.order_no})` : null;
+  return ['결제', amount, orderNo].filter(Boolean).join(' / ');
+}
+
 export default function InquiryDetails({
   inquiryType,
   inquirySubtype,
@@ -89,6 +111,7 @@ export default function InquiryDetails({
   bugDetails,
   paymentDetails,
   linkedPayment,
+  paymentLabel,
   evidenceUrl,
 }: Props) {
   const subtypeLabel = inquirySubtypes[inquiryType].find((item) => item.value === inquirySubtype)?.label;
@@ -96,6 +119,8 @@ export default function InquiryDetails({
   const payment = one(paymentDetails);
   const snapshot = payment?.payment_snapshot;
   const linked = one(linkedPayment);
+  const selectedPaymentLabel = paymentLabel ?? (linked ? payment?.attempted_product ?? null : null) ?? getFallbackPaymentLabel(linked);
+  const paymentInfo = snapshot ?? linked;
 
   return (
     <Stack gap={2}>
@@ -103,9 +128,7 @@ export default function InquiryDetails({
       {bug ? (
         <>
           <Detail label="화면 주소" value={bug.page_url as string | null} />
-          {bug.occurred_at ? (
-            <Detail label="발생 날짜와 시간" value={new Date(String(bug.occurred_at)).toLocaleString('ko-KR')} />
-          ) : null}
+          {bug.occurred_at ? <Detail label="발생 날짜와 시간" value={formatDateTimeDetail(bug.occurred_at)} /> : null}
           <Detail label="하려고 했던 작업" value={String(bug.attempted_action)} />
           <Detail label="실제로 발생한 문제" value={String(bug.actual_behavior)} />
           <Detail label="재현 빈도" value={recurrenceLabels[String(bug.recurrence)] ?? String(bug.recurrence)} />
@@ -125,7 +148,7 @@ export default function InquiryDetails({
       ) : payment ? (
         <>
           {inquiryType !== 'minor_purchase_cancellation' && payment.occurred_at ? (
-            <Detail label="발생 날짜와 시간" value={new Date(String(payment.occurred_at)).toLocaleString('ko-KR')} />
+            <Detail label="발생 날짜와 시간" value={formatDateTimeDetail(payment.occurred_at)} />
           ) : null}
           {inquiryType === 'minor_purchase_cancellation' && content ? (
             <Stack>
@@ -136,11 +159,11 @@ export default function InquiryDetails({
             </Stack>
           ) : null}
 
-          {inquiryType !== 'minor_purchase_cancellation' ? (
-            <Detail label="결제하려던 항목" value={String(payment.attempted_product)} />
+          {inquiryType !== 'minor_purchase_cancellation' && !linked ? (
+            <Detail label="결제하려던 항목" value={payment.attempted_product} />
           ) : null}
 
-          {inquiryType !== 'minor_purchase_cancellation' ? (
+          {inquiryType !== 'minor_purchase_cancellation' && !linked ? (
             <>
               <Detail
                 label="후원하려던 금액"
@@ -148,25 +171,59 @@ export default function InquiryDetails({
                   payment.attempted_amount ? `${Number(payment.attempted_amount).toLocaleString('ko-KR')}원` : null
                 }
               />
-              <Detail label="화면에 표시된 메시지" value={payment.displayed_message as string | null} />
-              <Detail label="실제로 발생한 상황" value={String(payment.actual_behavior)} />
+            </>
+          ) : null}
+          {inquiryType !== 'minor_purchase_cancellation' ? (
+            <>
+              <Detail label="화면에 표시된 메시지" value={payment.displayed_message} />
+              <Detail label="실제로 발생한 상황" value={payment.actual_behavior} />
             </>
           ) : null}
 
-          {snapshot ? (
+          {selectedPaymentLabel ? (
             <Detail
               label={inquiryType === 'minor_purchase_cancellation' ? '청약취소를 요청할 결제' : '문제가 발생한 결제'}
-              value={`${String(payment.attempted_product)} / ${Number(snapshot.amount).toLocaleString('ko-KR')}원 (${snapshot.order_no as string})`}
+              value={selectedPaymentLabel}
             />
+          ) : null}
+          {paymentInfo ? (
+            <>
+              <Detail label="결제수단" value={getPaymentMethodLabel(String(paymentInfo.payment_method ?? ''))} />
+              <Detail label="결제 상태" value={getPaymentStatusLabel(String(paymentInfo.status ?? ''))} />
+              {paymentInfo.approved_at ? (
+                <Detail label="승인 날짜와 시간" value={formatDateTimeDetail(String(paymentInfo.approved_at))} />
+              ) : null}
+              {Number(paymentInfo.refunded_amount ?? 0) > 0 ? (
+                <Detail label="취소 금액" value={`${Number(paymentInfo.refunded_amount).toLocaleString('ko-KR')}원`} />
+              ) : null}
+              {paymentInfo.refunded_at ? (
+                <Detail label="취소 날짜와 시간" value={formatDateTimeDetail(String(paymentInfo.refunded_at))} />
+              ) : null}
+            </>
           ) : null}
         </>
       ) : (
         <>
-          {linked ? (
+          {selectedPaymentLabel ? (
             <Detail
               label={inquiryType === 'minor_purchase_cancellation' ? '청약취소를 요청할 결제' : '문제가 발생한 결제'}
-              value={`${linked.amount ? `${Number(linked.amount).toLocaleString('ko-KR')}원 ` : ''}(${linked.order_no})`}
+              value={selectedPaymentLabel}
             />
+          ) : null}
+          {paymentInfo ? (
+            <>
+              <Detail label="결제수단" value={getPaymentMethodLabel(String(paymentInfo.payment_method ?? ''))} />
+              <Detail label="결제 상태" value={getPaymentStatusLabel(String(paymentInfo.status ?? ''))} />
+              {paymentInfo.approved_at ? (
+                <Detail label="승인 날짜와 시간" value={formatDateTimeDetail(String(paymentInfo.approved_at))} />
+              ) : null}
+              {Number(paymentInfo.refunded_amount ?? 0) > 0 ? (
+                <Detail label="취소 금액" value={`${Number(paymentInfo.refunded_amount).toLocaleString('ko-KR')}원`} />
+              ) : null}
+              {paymentInfo.refunded_at ? (
+                <Detail label="취소 날짜와 시간" value={formatDateTimeDetail(String(paymentInfo.refunded_at))} />
+              ) : null}
+            </>
           ) : null}
           <Stack>
             <Typography variant="subtitle2">문의내용</Typography>

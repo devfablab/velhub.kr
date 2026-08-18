@@ -94,6 +94,7 @@ export default function Opt() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [cancellationPayments, setCancellationPayments] = useState<PaymentRow[]>([]);
   const [cancellationAvailableAt, setCancellationAvailableAt] = useState<string | null>(null);
+  const [paymentLoadError, setPaymentLoadError] = useState('');
   const [inquiryType, setInquiryType] = useState<InquiryType>('service_question');
   const [inquirySubtype, setInquirySubtype] = useState(inquirySubtypes.service_question[0].value);
   const [title, setTitle] = useState('');
@@ -141,10 +142,11 @@ export default function Opt() {
       } | null;
 
       if (!cancellationResponse.ok || !paymentResponse.ok) {
-        setError(result?.error ?? '결제 내역을 불러오지 못했습니다.');
+        setPaymentLoadError(result?.error ?? '결제 내역을 불러오지 못했습니다.');
         return;
       }
 
+      setPaymentLoadError('');
       setCancellationPayments(result?.payments ?? []);
       setPayments(paymentResult?.payments ?? []);
       setCancellationAvailableAt(result?.cancellationAvailableAt ?? null);
@@ -165,9 +167,22 @@ export default function Opt() {
   const needsPost = attemptedPaymentKind === 'post_purchase';
   const isCancellationBlocked =
     isMinorCancellation && !!cancellationAvailableAt && new Date(cancellationAvailableAt).getTime() > Date.now();
+  const cancellationAvailableAtLabel = cancellationAvailableAt
+    ? new Date(cancellationAvailableAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
+    : '';
+  const inquiryUnavailableReason = isMinorCancellation
+    ? paymentLoadError || isCancellationBlocked
+      ? paymentLoadError || `다른 결제 건은 ${cancellationAvailableAtLabel}부터 신청할 수 있습니다.`
+      : !cancellationPayments.length
+        ? '청약취소를 신청할 수 있는 결제 내역이 없습니다.'
+        : ''
+    : paymentRequired
+      ? paymentLoadError || (!payments.length ? '문의할 수 있는 결제 내역이 없습니다.' : '')
+      : '';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (inquiryUnavailableReason) return;
     setError('');
     setIsSubmitting(true);
 
@@ -338,6 +353,7 @@ export default function Opt() {
                 const next = event.target.value as InquiryType;
                 setInquiryType(next);
                 setInquirySubtype(inquirySubtypes[next][0].value);
+                setPaymentId('');
               }}
             >
               {inquiryTypeOptions.map((option) => (
@@ -354,7 +370,10 @@ export default function Opt() {
               fullWidth
               size="small"
               value={inquirySubtype}
-              onChange={(event) => setInquirySubtype(event.target.value)}
+              onChange={(event) => {
+                setInquirySubtype(event.target.value);
+                setPaymentId('');
+              }}
             >
               {inquirySubtypes[inquiryType].map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -374,29 +393,24 @@ export default function Opt() {
                   <WarningAmberRoundedIcon />
                   <span>
                     다른 결제 건은{' '}
-                    {new Date(cancellationAvailableAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}부터 신청할
-                    수 있습니다.
+                    {cancellationAvailableAtLabel}부터 신청할 수 있습니다.
                   </span>
                 </p>
-              ) : (
+              ) : paymentLoadError || !cancellationPayments.length ? (
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>{inquiryUnavailableReason}</span>
+                </p>
+              ) : cancellationPayments.length ? (
                 <Stack>
                   <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>
-                  {cancellationPayments.length ? (
-                    <RadioGroup value={paymentId} onChange={(event) => setPaymentId(event.target.value)}>
-                      {cancellationPayments.map((payment) => (
-                        <FormControlLabel
-                          key={payment.id}
-                          value={payment.id}
-                          control={<Radio />}
-                          label={payment.label}
-                        />
-                      ))}
-                    </RadioGroup>
-                  ) : (
-                    <Typography variant="body2">청약취소를 신청할 수 있는 결제 내역이 없습니다.</Typography>
-                  )}
+                  <RadioGroup value={paymentId} onChange={(event) => setPaymentId(event.target.value)}>
+                    {cancellationPayments.map((payment) => (
+                      <FormControlLabel key={payment.id} value={payment.id} control={<Radio />} label={payment.label} />
+                    ))}
+                  </RadioGroup>
                 </Stack>
-              )}
+              ) : null}
             </Stack>
           ) : null}
           {isPaymentProblem ? (
@@ -422,9 +436,7 @@ export default function Opt() {
                         />
                       ))}
                     </RadioGroup>
-                  ) : (
-                    <Typography variant="body2">선택할 수 있는 결제 내역이 없습니다.</Typography>
-                  )}
+                  ) : null}
                 </Stack>
               ) : (
                 <Stack gap={2}>
@@ -665,6 +677,13 @@ export default function Opt() {
                   ) : null}
                 </Stack>
               )}
+              {inquiryUnavailableReason ? (
+                <p className="alert warning">
+                  <WarningAmberRoundedIcon />
+                  <span>{inquiryUnavailableReason}</span>
+                </p>
+              ) : (
+                <>
               <Stack gap={1}>
                 <Typography variant="subtitle2">문제가 발생한 날짜와 시간</Typography>
                 <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
@@ -709,6 +728,8 @@ export default function Opt() {
                   slotProps={{ htmlInput: { maxLength: 5000 } }}
                 />
               </Stack>
+                </>
+              )}
             </Stack>
           ) : null}
           {isBug ? (
@@ -800,7 +821,7 @@ export default function Opt() {
               </Stack>
             </Stack>
           ) : null}
-          {isBug || isPaymentProblem ? (
+          {isBug || (isPaymentProblem && !inquiryUnavailableReason) ? (
             <Stack gap={1}>
               <Typography variant="subtitle2">문제가 된 페이지 캡쳐 이미지 첨부</Typography>
               <p className="alert info">
@@ -828,7 +849,7 @@ export default function Opt() {
               {evidence ? <Typography variant="body2">{evidence.name}</Typography> : null}
             </Stack>
           ) : null}
-          {!isBug && !isPaymentProblem ? (
+          {!isBug && !isPaymentProblem && !inquiryUnavailableReason ? (
             <Stack gap={3}>
               <Stack gap={1}>
                 <Typography variant="subtitle2">제목</Typography>
@@ -856,7 +877,7 @@ export default function Opt() {
               </Stack>
             </Stack>
           ) : null}
-          {error ? (
+          {error && !inquiryUnavailableReason ? (
             <p className="alert error">
               <ErrorOutlineRoundedIcon />
               <span>{error}</span>
@@ -867,9 +888,11 @@ export default function Opt() {
           <Anchor href="/concierge/contact/inquiries" className="button medium close">
             뒤로가기
           </Anchor>
-          <button type="submit" className="button medium submit" disabled={isSubmitting || isCancellationBlocked}>
-            {isSubmitting ? '접수 중' : '문의 접수'}
-          </button>
+          {!inquiryUnavailableReason ? (
+            <button type="submit" className="button medium submit" disabled={isSubmitting}>
+              {isSubmitting ? '접수 중' : '문의 접수'}
+            </button>
+          ) : null}
         </Stack>
       </Stack>
     </form>

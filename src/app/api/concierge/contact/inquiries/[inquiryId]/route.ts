@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ inquiryId:
   const { data, error } = await db
     .from('inquiries')
     .select(
-      'id, inquiry_type, inquiry_subtype, status, title, content, created_at, closed_at, resolution_code, resolution_summary, information_request_type, information_requested_at, information_due_at, payment_control_requested_at, payment_control_selected_at, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_orders(payment_id, payments(order_no, amount, status, payment_method, approved_at)), inquiry_bug_details(*), inquiry_payment_details(*), inquiry_messages(id, sender_type, message_type, message, created_at), inquiry_attachments(id, attachment_type, storage_path, storage_bucket, submitted_at, deleted_at)',
+      'id, inquiry_type, inquiry_subtype, status, title, content, created_at, closed_at, resolution_code, resolution_summary, information_request_type, information_requested_at, information_due_at, payment_control_requested_at, payment_control_selected_at, pg_cancellation_unavailable_at, manual_refund_ready_at, manual_refund_completed_at, inquiry_orders(payment_id, payment_label, payments(order_no, amount, status, payment_method, approved_at, refunded_amount, refunded_at)), inquiry_bug_details(*), inquiry_payment_details(*), inquiry_messages(id, sender_type, message_type, message, created_at), inquiry_attachments(id, attachment_type, storage_path, storage_bucket, submitted_at, deleted_at)',
     )
     .eq('id', inquiryId)
     .eq('requester_stigma_id', currentStigma.stigmaId)
