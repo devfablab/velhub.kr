@@ -14,6 +14,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Drawer,
   FormControlLabel,
   MenuItem,
@@ -26,6 +27,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import PortOne from '@portone/browser-sdk/v2';
 import {
   inquiryInformationRequestLabels,
   inquiryResolutionLabels,
@@ -39,6 +41,7 @@ import {
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import InquiryDetails from '@/components/concierge/InquiryDetails';
+import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import styles from '@/app/concierge.module.sass';
 
 type Inquiry = {
@@ -101,6 +104,10 @@ export default function Opt() {
   const [savingResponse, setSavingResponse] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [isWithdrawConfirmOpen, setIsWithdrawConfirmOpen] = useState(false);
+  const [guardianIdentityVerificationId, setGuardianIdentityVerificationId] = useState<string | null>(null);
+  const [guardianIdentityName, setGuardianIdentityName] = useState<string | null>(null);
+  const [agreementOpen, setAgreementOpen] = useState(false);
+  const [verifyingIdentity, setVerifyingIdentity] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -125,7 +132,12 @@ export default function Opt() {
     setUploading(true);
     const formData = new FormData();
     formData.set('file', file);
-    const isFamilyCertificate = inquiry?.information_request_type === 'family_relation_certificate';
+    if (guardianIdentityVerificationId) {
+      formData.set('identityVerificationId', guardianIdentityVerificationId);
+    }
+    const isFamilyCertificate = 
+      inquiry?.information_request_type === 'family_relation_certificate' || 
+      inquiry?.information_request_type === 'guardian_identity_and_family_relation_certificate';
     const endpoint = isFamilyCertificate ? 'family-relation-certificate' : 'evidence';
     const response = await fetch(`/api/concierge/contact/inquiries/${inquiryId}/${endpoint}`, {
       method: 'POST',
@@ -140,6 +152,77 @@ export default function Opt() {
       await load();
     }
     setUploading(false);
+  }
+
+  async function handleVerifyIdentity() {
+    if (verifyingIdentity) return;
+    setVerifyingIdentity(true);
+    setError('');
+    try {
+      const startResponse = await fetch('/api/identity/portone/start', { method: 'POST' });
+      const request = (await startResponse.json().catch(() => null)) as {
+        storeId: string;
+        channelKey: string;
+        identityVerificationId: string;
+        message?: string;
+      } | null;
+      if (!startResponse.ok || !request) {
+        throw new Error(request?.message ?? '본인인증을 시작할 수 없습니다.');
+      }
+      
+      const result = await PortOne.requestIdentityVerification(request);
+      const identityVerificationId = result?.identityVerificationId ?? request.identityVerificationId;
+      
+      if (!identityVerificationId || result?.code) {
+        await fetch('/api/identity/portone/fail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identityVerificationId: request.identityVerificationId,
+            code: result?.code,
+            message: result?.message,
+          }),
+        });
+        throw new Error(result?.message || '본인인증이 완료되지 않았습니다.');
+      }
+      
+      const successResponse = await fetch('/api/identity/portone/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identityVerificationId }),
+      });
+      const identity = (await successResponse.json().catch(() => null)) as { name: string; message?: string } | null;
+      
+      if (!successResponse.ok || !identity) {
+        throw new Error(identity?.message ?? '본인인증 정보를 확인할 수 없습니다.');
+      }
+      
+      setGuardianIdentityVerificationId(identityVerificationId);
+      setGuardianIdentityName(identity.name);
+      setAgreementOpen(false);
+      setSuccess('본인인증이 완료되었습니다.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '본인인증 중 오류가 발생했습니다.');
+    } finally {
+      setVerifyingIdentity(false);
+    }
+  }
+
+  async function handleAgreementConfirm() {
+    try {
+      const response = await fetch('/api/identity/agreement', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'identity' }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message ?? '동의 처리에 실패했습니다.');
+      }
+      await handleVerifyIdentity();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '동의 처리에 실패했습니다.');
+    }
   }
 
   async function saveResponse() {
@@ -245,6 +328,8 @@ export default function Opt() {
   const canUpload =
     (inquiry.status === 'info_requested' &&
       (inquiry.information_request_type === 'family_relation_certificate' ||
+        inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ||
+        inquiry.information_request_type === 'guardian_identity_verification' ||
         inquiry.information_request_type === 'evidence')) ||
     (inquiry.status === 'received' &&
       !inquiry.evidenceUrl &&
@@ -381,9 +466,12 @@ export default function Opt() {
       {canUpload ? (
         <div className="paper">
           <h2>
-            {inquiry.information_request_type === 'family_relation_certificate'
+            {inquiry.information_request_type === 'family_relation_certificate' ||
+            inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
               ? '가족관계증명서 제출'
-              : '증빙 파일 제출'}
+              : inquiry.information_request_type === 'guardian_identity_verification'
+                ? '법정대리인 본인인증'
+                : '증빙 파일 제출'}
           </h2>
           {searchParams.get('attachment') === 'failed' ? (
             <p className="alert error">
@@ -391,7 +479,8 @@ export default function Opt() {
               <span>문의는 접수됐지만 첨부 파일을 저장하지 못했습니다. 이 화면에서 다시 제출해 주세요.</span>
             </p>
           ) : null}
-          {inquiry.information_request_type === 'family_relation_certificate' ? (
+          {inquiry.information_request_type === 'family_relation_certificate' ||
+          inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ? (
             <>
               <Typography variant="body2">
                 대한민국 법원 전자가족관계등록시스템(efamily.scourt.go.kr)에서 발급받은 가족관계증명서 PDF를 제출해
@@ -402,36 +491,77 @@ export default function Opt() {
                 <span>3개월이 지난 가족관계증명서 제출은 반려사유가 됩니다.</span>
               </p>
             </>
+          ) : inquiry.information_request_type === 'guardian_identity_verification' ? (
+            <Typography variant="body2">결제 취소를 위해 법정대리인(부모님)의 본인인증을 완료해 주세요.</Typography>
           ) : (
             <Typography variant="body2">PDF, JPG, PNG 또는 WEBP 파일을 1MB 이하로 제출해 주세요.</Typography>
           )}
 
-          <VisuallyHiddenInput
-            ref={certificateInputRef}
-            type="file"
-            accept={
-              inquiry.information_request_type === 'family_relation_certificate'
-                ? 'application/pdf,.pdf'
-                : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
-            }
-            onChange={chooseFile}
-          />
-          <Stack direction="row" gap={1} alignItems="center">
-            <button type="button" className="button small action" onClick={() => certificateInputRef.current?.click()}>
-              파일 선택
-            </button>
-            {file ? (
-              <button type="button" className="button small danger" onClick={removeFile}>
-                파일 삭제
-              </button>
-            ) : null}
-          </Stack>
-          {file ? <Typography variant="body2">{file.name}</Typography> : null}
+          {inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ||
+          inquiry.information_request_type === 'guardian_identity_verification' ? (
+            <>
+              <Divider sx={{ my: 2 }} />
+              {inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ? (
+                <Typography variant="subtitle2">법정대리인 본인인증</Typography>
+              ) : null}
+              {inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ? (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  가족관계증명서 제출 전 부모님의 본인인증이 필요합니다.
+                </Typography>
+              ) : null}
+              <Stack direction="row" gap={1} alignItems="center" sx={{ mb: 2 }}>
+                <button
+                  type="button"
+                  className="button small action"
+                  disabled={verifyingIdentity || Boolean(guardianIdentityVerificationId)}
+                  onClick={() => setAgreementOpen(true)}
+                >
+                  {guardianIdentityVerificationId ? '본인인증 완료' : verifyingIdentity ? '처리 중' : '본인인증 진행'}
+                </button>
+                {guardianIdentityName ? <Typography variant="body2">{guardianIdentityName}</Typography> : null}
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+            </>
+          ) : null}
+
+          {inquiry.information_request_type !== 'guardian_identity_verification' ? (
+            <>
+              <VisuallyHiddenInput
+                ref={certificateInputRef}
+                type="file"
+                accept={
+                  inquiry.information_request_type === 'family_relation_certificate' ||
+                  inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
+                    ? 'application/pdf,.pdf'
+                    : 'application/pdf,.pdf,image/jpeg,.jpg,.jpeg,image/png,.png,image/webp,.webp'
+                }
+                onChange={chooseFile}
+              />
+              <Stack direction="row" gap={1} alignItems="center">
+                <button type="button" className="button small action" onClick={() => certificateInputRef.current?.click()}>
+                  파일 선택
+                </button>
+                {file ? (
+                  <button type="button" className="button small danger" onClick={removeFile}>
+                    파일 삭제
+                  </button>
+                ) : null}
+              </Stack>
+              {file ? <Typography variant="body2">{file.name}</Typography> : null}
+            </>
+          ) : null}
+
           <Box>
             <button
               type="button"
               className="button medium submit"
-              disabled={!file || uploading}
+              disabled={
+                uploading ||
+                (inquiry.information_request_type !== 'guardian_identity_verification' && !file) ||
+                ((inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ||
+                  inquiry.information_request_type === 'guardian_identity_verification') &&
+                  !guardianIdentityVerificationId)
+              }
               onClick={() => void upload()}
             >
               {uploading ? '제출 중' : '제출'}
@@ -439,6 +569,13 @@ export default function Opt() {
           </Box>
         </div>
       ) : null}
+      
+      <IdentityAgreement
+        type="identity"
+        open={agreementOpen}
+        onClose={() => setAgreementOpen(false)}
+        onConfirm={() => void handleAgreementConfirm()}
+      />
       {inquiry.information_request_type === 'payment_control' && !inquiry.payment_control_selected_at ? (
         <div className="paper">
           <h2>향후 결제 / 구매 / 후원 방침</h2>

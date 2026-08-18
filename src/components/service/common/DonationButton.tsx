@@ -163,7 +163,7 @@ function createRequestBody(props: Props, amount: number) {
 }
 
 export default function DonationButton(props: Props) {
-  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
+  const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const { buttonText = '후원하기', disabled = false, onProcessingChange } = props;
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -363,7 +363,12 @@ export default function DonationButton(props: Props) {
           }}
         />
 
-        {isMinor && (
+        {minorControlMode === 'guardian_auth_required' && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.</span>
+          </p>
+        )}
+        {isMinor && minorControlMode !== 'guardian_auth_required' && (
           <p className="alert warning" style={{ marginTop: '8px' }}>
             <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
           </p>
@@ -424,9 +429,7 @@ export default function DonationButton(props: Props) {
                 className="button medium submit"
                 onClick={() => void handleDonate()}
                 disabled={isProcessing}
-              >
-                후원
-              </button>
+              >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}</button>
             </Stack>
           </Stack>
         </Drawer>
@@ -446,9 +449,7 @@ export default function DonationButton(props: Props) {
               className="button medium submit"
               onClick={() => void handleDonate()}
               disabled={isProcessing}
-            >
-              후원
-            </button>
+            >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}</button>
           </DialogActions>
         </Dialog>
       )}

@@ -56,7 +56,7 @@ export async function enforceMinorPaymentControl(
   if (!matchesFather && !matchesMother)
     return {
       guardianIdentityVerificationId: null,
-      error: '확인된 법정대리인 정보와 일치하지 않아 결제할 수 없습니다.',
+      error: '본인인증 정보가 법정대리인의 정보와 다릅니다',
     };
   return { guardianIdentityVerificationId: identityVerificationId, error: null };
 }

@@ -230,7 +230,7 @@ export default function SubscriptionButton({
   selectedBoard,
   onStatusChange,
 }: Props) {
-  const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
+  const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const [isReady, setIsReady] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
   const [isMinor, setIsMinor] = useState(false);
@@ -748,11 +748,16 @@ export default function SubscriptionButton({
               {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
             </Stack>
             <PaymentTerms type="subscription" disabled={isProcessing} />
-            {isMinor && (
-              <p className="alert warning">
-                <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
-              </p>
-            )}
+            {minorControlMode === 'guardian_auth_required' && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.</span>
+          </p>
+        )}
+        {isMinor && minorControlMode !== 'guardian_auth_required' && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+          </p>
+        )}
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />
@@ -798,11 +803,16 @@ export default function SubscriptionButton({
               {isMinor && <Chip label="1개월 구독권" color="primary" size="small" />}
             </Stack>
             <PaymentTerms type="subscription" disabled={isProcessing} />
-            {isMinor && (
-              <p className="alert warning" style={{ marginTop: '12px' }}>
-                <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
-              </p>
-            )}
+            {minorControlMode === 'guardian_auth_required' && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.</span>
+          </p>
+        )}
+        {isMinor && minorControlMode !== 'guardian_auth_required' && (
+          <p className="alert warning" style={{ marginTop: '8px' }}>
+            <span>법정대리인 동의 없이 진행된 미성년자의 결제는 취소될 수 있습니다.</span>
+          </p>
+        )}
             {errorMessage ? (
               <p className="alert error">
                 <ErrorOutlineRoundedIcon />

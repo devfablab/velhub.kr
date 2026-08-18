@@ -22,6 +22,8 @@ export const inquiryInformationRequestTypes = [
   'text_response',
   'evidence',
   'family_relation_certificate',
+  'guardian_identity_verification',
+  'guardian_identity_and_family_relation_certificate',
   'payment_control',
   'refund_account',
 ] as const;
@@ -31,7 +33,9 @@ export type InquiryInformationRequestType = (typeof inquiryInformationRequestTyp
 export const inquiryInformationRequestLabels: Record<InquiryInformationRequestType, string> = {
   text_response: '답변 내용',
   evidence: '증빙 파일',
-  family_relation_certificate: '가족관계증명서 PDF',
+  family_relation_certificate: '가족관계증명서',
+  guardian_identity_verification: '법정대리인 본인인증',
+  guardian_identity_and_family_relation_certificate: '법정대리인 본인인증 & 가족관계증명서',
   payment_control: '향후 결제 / 구매 / 후원 방침',
   refund_account: '반환 계좌 정보',
 };

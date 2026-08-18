@@ -337,9 +337,5 @@ export function toSettlementPayload(data: ValidatedSettlementProfileInput) {
     account_holder: encrypt(data.account_holder),
     account_verified_at: null,
     updated_at: new Date().toISOString(),
-    guardian_name: null,
-    guardian_birth_date: null,
-    guardian_gender: null,
-    guardian_document_url: null,
   };
 }

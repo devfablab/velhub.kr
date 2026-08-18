@@ -61,18 +61,13 @@ export async function GET(_: NextRequest, context: RouteContext) {
 
   let parent = null;
   if (inquiry.inquiry_type === 'minor_purchase_cancellation') {
-    const { data: requester } = await supabaseAdmin
-      .from('stigmas')
-      .select('user_id')
-      .eq('id', inquiry.requester_stigma_id)
-      .maybeSingle();
-    const { data: identity } = requester
+    const { data: identity } = inquiry.requester_stigma_id
       ? await supabaseAdmin
           .from('chorogons')
           .select(
-            'father_name, father_birth_date, mother_name, mother_birth_date, parent_relationship_document_url, parent_relationship_document_bucket, parent_relationship_verified_at',
+            'father_name, father_birth_date, mother_name, mother_birth_date, parent_relationship_document_url, parent_relationship_verified_at',
           )
-          .eq('user_id', requester.user_id)
+          .eq('user_id', inquiry.requester_stigma_id)
           .maybeSingle()
       : { data: null };
     const decode = (value: string | null) => {
@@ -92,9 +87,9 @@ export async function GET(_: NextRequest, context: RouteContext) {
     if (documentPath) {
       for (const bucket of activeAttachment?.storage_bucket
         ? [activeAttachment.storage_bucket]
-        : identity?.parent_relationship_document_bucket
-          ? [identity.parent_relationship_document_bucket]
-          : ['business-license', 'family-relation-certificates']) {
+        : identity?.parent_relationship_document_url
+          ? ['business-license', 'family-relation-certificates']
+          : []) {
         const { data: signed } = await supabaseAdmin.storage.from(bucket).createSignedUrl(documentPath, 600);
         if (signed?.signedUrl) {
           certificateUrl = signed.signedUrl;
@@ -102,16 +97,16 @@ export async function GET(_: NextRequest, context: RouteContext) {
         }
       }
     }
-    parent = identity
-      ? {
-          fatherName: decode(identity.father_name),
-          fatherBirthDate: decode(identity.father_birth_date),
-          motherName: decode(identity.mother_name),
-          motherBirthDate: decode(identity.mother_birth_date),
-          verifiedAt: identity.parent_relationship_verified_at,
-          certificateUrl,
-        }
-      : null;
+    if (identity || certificateUrl) {
+      parent = {
+        fatherName: identity ? decode(identity.father_name) : '',
+        fatherBirthDate: identity ? decode(identity.father_birth_date) : '',
+        motherName: identity ? decode(identity.mother_name) : '',
+        motherBirthDate: identity ? decode(identity.mother_birth_date) : '',
+        verifiedAt: identity?.parent_relationship_verified_at ?? null,
+        certificateUrl,
+      };
+    }
   }
   const { data: adjustments } = await supabaseAdmin
     .from('creator_settlement_adjustments')
@@ -160,9 +155,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return Response.json({ error: '종결 결과와 안내 내용을 입력해 주세요.' }, { status: 400 });
   }
 
+  let finalRequestMessage = informationRequestMessage;
+  if (status === 'info_requested' && !finalRequestMessage && informationRequestType) {
+    if (informationRequestType === 'guardian_identity_and_family_relation_certificate') {
+      finalRequestMessage = '법정대리인 본인인증 및 가족관계증명서 제출이 필요합니다.';
+    } else if (informationRequestType === 'guardian_identity_verification') {
+      finalRequestMessage = '결제 취소를 위해 법정대리인의 본인인증 완료가 필요합니다.';
+    } else if (informationRequestType === 'family_relation_certificate') {
+      finalRequestMessage = '법정대리인 확인을 위한 가족관계증명서 제출이 필요합니다.';
+    }
+  }
+
   if (
     status === 'info_requested' &&
-    (!isInquiryInformationRequestType(informationRequestType) || !informationRequestMessage)
+    (!isInquiryInformationRequestType(informationRequestType) || !finalRequestMessage)
   ) {
     return Response.json({ error: '요청할 추가 정보의 종류와 내용을 입력해 주세요.' }, { status: 400 });
   }
@@ -189,7 +195,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     info_requested: ['reviewing', 'closed'],
   };
   const isLegacyInformationRequestRepair =
-    existingInquiry.status === 'info_requested' && status === 'info_requested' && Boolean(informationRequestMessage);
+    existingInquiry.status === 'info_requested' && status === 'info_requested' && Boolean(finalRequestMessage);
   if (!isLegacyInformationRequestRepair && !allowedNextStatuses[existingInquiry.status]?.includes(status)) {
     return Response.json({ error: '현재 상태에서 선택한 상태로 변경할 수 없습니다.' }, { status: 400 });
   }
@@ -256,7 +262,8 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   const { error: updateError } = await supabaseAdmin.from('inquiries').update(updateValues).eq('id', inquiryId);
 
   if (updateError) {
-    return Response.json({ error: '문의 상태를 변경하지 못했습니다.' }, { status: 500 });
+    console.error('Inquiries update error:', updateError);
+    return Response.json({ error: `문의 상태를 변경하지 못했습니다. (${updateError.message})` }, { status: 500 });
   }
   if (status === 'info_requested') {
     const { error: messageError } = await supabaseAdmin.from('inquiry_messages').insert({
@@ -264,7 +271,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       sender_type: 'admin',
       sender_stigma_id: currentStigma.stigmaId,
       message_type: 'information_request',
-      message: informationRequestMessage,
+      message: finalRequestMessage,
     });
     if (messageError) {
       await supabaseAdmin
@@ -305,7 +312,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     previous_status: existingInquiry.status,
     next_status: status,
     changed_by_stigma_id: currentStigma.stigmaId,
-    reason: status === 'info_requested' ? informationRequestMessage : resolutionSummary || null,
+    reason: status === 'info_requested' ? finalRequestMessage : resolutionSummary || null,
   });
 
   return Response.json({ ok: true });

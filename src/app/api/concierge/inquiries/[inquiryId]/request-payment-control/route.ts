@@ -16,16 +16,11 @@ export async function POST(_: Request, { params }: { params: Promise<{ inquiryId
     return Response.json({ error: '결제 방침을 요청할 수 없는 문의입니다.' }, { status: 400 });
   if (inquiry.payment_control_requested_at || inquiry.payment_control_selected_at)
     return Response.json({ error: '이미 결제 방침 선택을 요청했습니다.' }, { status: 400 });
-  const { data: requester } = await db
-    .from('stigmas')
-    .select('user_id')
-    .eq('id', inquiry.requester_stigma_id)
-    .maybeSingle();
-  const { data: identity } = requester
+  const { data: identity } = inquiry.requester_stigma_id
     ? await db
         .from('chorogons')
         .select('parent_relationship_verified_at')
-        .eq('user_id', requester.user_id)
+        .eq('user_id', inquiry.requester_stigma_id)
         .maybeSingle()
     : { data: null };
   if (!identity?.parent_relationship_verified_at)

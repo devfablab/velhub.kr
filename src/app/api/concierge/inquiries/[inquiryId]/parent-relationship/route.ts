@@ -41,16 +41,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .eq('attachment_type', 'family_relation_certificate')
     .is('deleted_at', null)
     .maybeSingle();
-  const { data: stigma } = await db
-    .from('stigmas')
-    .select('user_id')
-    .eq('id', inquiry.requester_stigma_id)
-    .maybeSingle();
-  if (!stigma) return Response.json({ error: '계정 정보를 찾을 수 없습니다.' }, { status: 404 });
   const { data: existingIdentity } = await db
     .from('chorogons')
-    .select('parent_relationship_document_url, parent_relationship_document_bucket')
-    .eq('user_id', stigma.user_id)
+    .select('parent_relationship_document_url')
+    .eq('user_id', inquiry.requester_stigma_id)
     .maybeSingle();
   const documentPath = attachment?.storage_path ?? existingIdentity?.parent_relationship_document_url;
   if (!documentPath) return Response.json({ error: '확인할 가족관계증명서가 없습니다.' }, { status: 400 });
@@ -59,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       inquiry_id: inquiryId,
       attachment_type: 'family_relation_certificate',
       storage_path: documentPath,
-      storage_bucket: existingIdentity?.parent_relationship_document_bucket ?? 'family-relation-certificates',
+      storage_bucket: 'family-relation-certificates',
       mime_type: 'application/pdf',
       submitted_by_stigma_id: admin.stigmaId,
     });
@@ -72,14 +66,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       mother_name: motherName ? encrypt(motherName) : null,
       mother_birth_date: motherBirthDate ? encrypt(motherBirthDate) : null,
       parent_relationship_document_url: documentPath,
-      parent_relationship_document_bucket:
-        attachment?.storage_bucket ??
-        existingIdentity?.parent_relationship_document_bucket ??
-        'family-relation-certificates',
       parent_relationship_verified_at: new Date().toISOString(),
       parent_relationship_verified_by: admin.stigmaId,
     })
-    .eq('user_id', stigma.user_id);
-  if (error) return Response.json({ error: '부 / 모 확인 정보를 저장하지 못했습니다.' }, { status: 500 });
+    .eq('user_id', inquiry.requester_stigma_id);
+
+  if (error) {
+    console.error('update error:', error);
+    return Response.json({ error: '부 / 모 확인 정보를 저장하지 못했습니다.', detail: error }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }

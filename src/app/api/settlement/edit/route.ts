@@ -225,7 +225,6 @@ export async function PATCH(request: NextRequest) {
       const guardianGender = validatedInput.data.guardian_gender?.toUpperCase();
       const parentUpdate = {
         parent_relationship_document_url: validatedInput.data.guardian_document_url,
-        parent_relationship_document_bucket: FAMILY_RELATION_CERTIFICATE_BUCKET,
         parent_relationship_verified_at: null,
         parent_relationship_verified_by: null,
         ...(guardianGender === 'MALE' || guardianGender === 'M'

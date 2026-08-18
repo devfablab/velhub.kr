@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Chip, MenuItem, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryInformationRequestLabels,
   inquiryResolutionLabels,
@@ -92,6 +92,7 @@ export default function Opt() {
   const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
   const [parentVerifiedAt, setParentVerifiedAt] = useState<string | null>(null);
   const [pgCancellationCheckRequired, setPgCancellationCheckRequired] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/concierge/inquiries/${params.inquiryId}`, { cache: 'no-store' });
@@ -153,6 +154,7 @@ export default function Opt() {
   }
 
   async function saveParents() {
+    setIsSaving(true);
     const response = await fetch(`/api/concierge/inquiries/${params.inquiryId}/parent-relationship`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -162,16 +164,24 @@ export default function Opt() {
     if (!response.ok) setError(result?.error ?? '부 / 모 확인 정보를 저장하지 못했습니다.');
     else {
       setError('');
+      setSnackbarMessage('부모 확인 정보를 성공적으로 저장했습니다.');
       await load();
     }
+    setIsSaving(false);
   }
 
   async function requestPaymentControl() {
+    setIsSaving(true);
     const response = await fetch(`/api/concierge/inquiries/${params.inquiryId}/request-payment-control`, {
       method: 'POST',
     });
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
     if (!response.ok) setError(result?.error ?? '결제 방침 선택을 요청하지 못했습니다.');
+    else {
+      setSnackbarMessage('결제 방침 선택 요청을 전송했습니다.');
+      await load();
+    }
+    setIsSaving(false);
   }
 
   async function approveCancellation() {
@@ -320,10 +330,12 @@ export default function Opt() {
           <h2>부모 정보 입력</h2>
           {certificateUrl ? (
             <Stack gap={2}>
-              <Anchor href={certificateUrl} className="button small action">
-                가족관계증명서 PDF 확인
-              </Anchor>
-              <Stack>
+              <Stack direction="row">
+                <Anchor href={certificateUrl} className="button small action">
+                  가족관계증명서 PDF 확인
+                </Anchor>
+              </Stack>
+              <Stack gap={1}>
                 <Typography variant="subtitle2">부 성명</Typography>
                 <TextField
                   fullWidth
@@ -332,7 +344,7 @@ export default function Opt() {
                   onChange={(event) => setFatherName(event.target.value)}
                 />
               </Stack>
-              <Stack>
+              <Stack gap={1}>
                 <Typography variant="subtitle2">부 생년월일</Typography>
                 <TextField
                   fullWidth
@@ -341,7 +353,7 @@ export default function Opt() {
                   onChange={(event) => setFatherBirthDate(event.target.value)}
                 />
               </Stack>
-              <Stack>
+              <Stack gap={1}>
                 <Typography variant="subtitle2">모 성명</Typography>
                 <TextField
                   fullWidth
@@ -350,7 +362,7 @@ export default function Opt() {
                   onChange={(event) => setMotherName(event.target.value)}
                 />
               </Stack>
-              <Stack>
+              <Stack gap={1}>
                 <Typography variant="subtitle2">모 생년월일</Typography>
                 <TextField
                   fullWidth
@@ -358,14 +370,16 @@ export default function Opt() {
                   value={motherBirthDate}
                   onChange={(event) => setMotherBirthDate(event.target.value)}
                 />
-                <button type="button" className="button medium submit" onClick={() => void saveParents()}>
-                  부모 확인 정보 저장
-                </button>
-                {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
-                  <button type="button" className="button medium action" onClick={() => void requestPaymentControl()}>
-                    향후 결제 방침 선택 요청
+                <Stack direction="row" justifyContent="flex-end" gap={2}>
+                  <button type="button" className="button small submit" disabled={isSaving} onClick={() => void saveParents()}>
+                    부모 확인 정보 저장
                   </button>
-                ) : null}
+                  {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
+                    <button type="button" className="button small action" disabled={isSaving} onClick={() => void requestPaymentControl()}>
+                      향후 결제 방침 선택 요청
+                    </button>
+                  ) : null}
+                </Stack>
               </Stack>
             </Stack>
           ) : (
@@ -436,7 +450,20 @@ export default function Opt() {
                   {['bug_report', 'payment_refund_error'].includes(inquiry.inquiry_type) ? (
                     <MenuItem value="evidence">{inquiryInformationRequestLabels.evidence}</MenuItem>
                   ) : null}
-                  {inquiry.inquiry_type === 'minor_purchase_cancellation' ? (
+                  {inquiry.inquiry_type === 'minor_purchase_cancellation' &&
+                  ((!parentVerifiedAt && !certificateUrl) || (parentVerifiedAt && certificateUrl)) ? (
+                    <MenuItem value="guardian_identity_and_family_relation_certificate">
+                      {inquiryInformationRequestLabels.guardian_identity_and_family_relation_certificate}
+                    </MenuItem>
+                  ) : null}
+                  {inquiry.inquiry_type === 'minor_purchase_cancellation' &&
+                  ((!parentVerifiedAt && certificateUrl) || (parentVerifiedAt && certificateUrl)) ? (
+                    <MenuItem value="guardian_identity_verification">
+                      {inquiryInformationRequestLabels.guardian_identity_verification}
+                    </MenuItem>
+                  ) : null}
+                  {inquiry.inquiry_type === 'minor_purchase_cancellation' &&
+                  ((parentVerifiedAt && !certificateUrl) || (parentVerifiedAt && certificateUrl)) ? (
                     <MenuItem value="family_relation_certificate">
                       {inquiryInformationRequestLabels.family_relation_certificate}
                     </MenuItem>
@@ -445,17 +472,25 @@ export default function Opt() {
                     <MenuItem value="refund_account">{inquiryInformationRequestLabels.refund_account}</MenuItem>
                   ) : null}
                 </TextField>
-                <Typography variant="subtitle2">요청 내용</Typography>
-                <TextField
-                  required
-                  multiline
-                  minRows={4}
-                  fullWidth
-                  size="small"
-                  value={informationRequestMessage}
-                  onChange={(event) => setInformationRequestMessage(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 10000 } }}
-                />
+                {![
+                  'guardian_identity_and_family_relation_certificate',
+                  'guardian_identity_verification',
+                  'family_relation_certificate',
+                ].includes(informationRequestType) ? (
+                  <>
+                    <Typography variant="subtitle2">요청 내용</Typography>
+                    <TextField
+                      required
+                      multiline
+                      minRows={4}
+                      fullWidth
+                      size="small"
+                      value={informationRequestMessage}
+                      onChange={(event) => setInformationRequestMessage(event.target.value)}
+                      slotProps={{ htmlInput: { maxLength: 10000 } }}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
             {error ? (
@@ -530,6 +565,15 @@ export default function Opt() {
           뒤로가기
         </Anchor>
       </Stack>
+      {inquiry.status !== 'closed' ? (
+        <Snackbar
+          open={Boolean(snackbarMessage)}
+          autoHideDuration={2700}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          message={snackbarMessage}
+          onClose={() => setSnackbarMessage('')}
+        />
+      ) : null}
     </div>
   );
 }

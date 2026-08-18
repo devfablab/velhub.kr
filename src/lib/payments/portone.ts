@@ -186,7 +186,7 @@ function createPortOneApiError(responseData: unknown, fallbackMessage: string) {
   if (isPortOneErrorResponse(responseData)) {
     return new PortOneApiError({
       code: responseData.code ?? responseData.type ?? 'PORTONE_API_ERROR',
-      message: responseData.message ?? fallbackMessage,
+      message: responseData.message ?? (typeof responseData.pgMessage === 'string' ? responseData.pgMessage : fallbackMessage),
       rawData: responseData,
     });
   }
