@@ -559,7 +559,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const requestBody = (await request.json()) as RequestBody;
 
     const siteName = normalizeText(requestBody.siteName).toLowerCase();
-    const action =
+    let action: 'draft' | 'publish' | 'update' | 'unknown' =
       requestBody.action === 'draft' ||
       requestBody.action === 'publish' ||
       requestBody.action === 'update' ||
@@ -621,6 +621,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const rhizomeData = rhizome.data;
+
+    // 블로그 글 수정 화면에서는 기존 출간·예약 시각을 바꾸지 않습니다.
+    if (rhizomeData.site_type === 'blog') {
+      action = 'update';
+    }
 
     const session = await verifySession({
       siteId: rhizomeData.id,
@@ -1107,7 +1112,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       updatePayload.edited_at = null;
     }
 
-    if (currentPost.data.published_status === 'published' && action === 'update') {
+    if (
+      action === 'update' &&
+      (rhizomeData.site_type === 'blog' || currentPost.data.published_status === 'published')
+    ) {
       updatePayload.edited_at = nowIsoString;
     }
 

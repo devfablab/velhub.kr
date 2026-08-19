@@ -9,8 +9,6 @@ import {
   FormControlLabel,
   ListItemText,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
   Stack,
   styled,
@@ -20,10 +18,6 @@ import {
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { ko } from 'date-fns/locale/ko';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -36,9 +30,6 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
-
-type PublishTimeMode = 'now' | 'scheduled';
-type PublishedStatus = 'draft' | 'published' | 'unknown';
 
 type StatusResponse = {
   hasBoard: boolean;
@@ -74,8 +65,6 @@ type SeriesRow = {
 
 type ContentResponse = {
   content?: {
-    published_status: string;
-    published_at: string;
     id: string;
     slug: string;
     subject: string;
@@ -216,14 +205,6 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
   throw new Error(maxSizeMessage);
 }
 
-function normalizePublishedStatus(value: string | null | undefined): PublishedStatus {
-  if (value === 'draft' || value === 'published' || value === 'unknown') {
-    return value;
-  }
-
-  return 'published';
-}
-
 export default function Opt() {
   const router = useRouter();
   const params = useParams();
@@ -261,11 +242,6 @@ export default function Opt() {
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
   const [isComment, setIsComment] = useState(false);
-  const [publishedStatus, setPublishedStatus] = useState<PublishedStatus>('published');
-  const [publishedAt, setPublishedAt] = useState<string | null>(null);
-  const [canEditPublishTime, setCanEditPublishTime] = useState(true);
-  const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
-  const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -363,32 +339,6 @@ export default function Opt() {
         setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
         setSelectedSeriesKey(contentResult.series?.series_key || '');
         setIsSeriesLocked(Boolean(contentResult.series?.series_key));
-        const contentPublishedStatus = normalizePublishedStatus(contentResult.content.published_status);
-        const contentPublishedAt = contentResult.content.published_at;
-        const contentPublishedAtDate = contentPublishedAt ? new Date(contentPublishedAt) : null;
-        const hasValidPublishedAt = contentPublishedAtDate !== null && !Number.isNaN(contentPublishedAtDate.getTime());
-        const isFutureScheduledPost =
-          contentPublishedStatus === 'unknown' && hasValidPublishedAt && contentPublishedAtDate.getTime() > Date.now();
-        const isPastScheduledPost =
-          contentPublishedStatus === 'unknown' && hasValidPublishedAt && contentPublishedAtDate.getTime() <= Date.now();
-
-        setPublishedStatus(contentPublishedStatus);
-        setPublishedAt(contentPublishedAt);
-
-        if (isFutureScheduledPost) {
-          setCanEditPublishTime(true);
-          setPublishTimeMode('scheduled');
-          setScheduledPublishedAt(contentPublishedAtDate);
-        } else if (isPastScheduledPost) {
-          setCanEditPublishTime(false);
-          setPublishTimeMode('scheduled');
-          setScheduledPublishedAt(contentPublishedAtDate);
-        } else {
-          setCanEditPublishTime(true);
-          setPublishTimeMode('now');
-          setScheduledPublishedAt(null);
-        }
-
         if (contentResult.content.thumbnail_image) {
           const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
           const imagePath = contentResult.content.thumbnail_image;
@@ -414,53 +364,6 @@ export default function Opt() {
 
     void loadData();
   }, [contentId, siteName]);
-
-  function handlePublishTimeModeChange(event: InputChangeEvent) {
-    const nextValue = event.currentTarget.value;
-
-    if (nextValue !== 'now' && nextValue !== 'scheduled') {
-      return;
-    }
-
-    setPublishTimeMode(nextValue);
-
-    if (nextValue === 'now') {
-      setScheduledPublishedAt(null);
-    }
-
-    setErrorMessage('');
-  }
-
-  function getScheduledPublishedAtIsoString() {
-    if (!scheduledPublishedAt) {
-      return '';
-    }
-
-    const nextDate = new Date(scheduledPublishedAt);
-    nextDate.setSeconds(0, 0);
-
-    if (Number.isNaN(nextDate.getTime())) {
-      return '';
-    }
-
-    return nextDate.toISOString();
-  }
-
-  function getSubmitAction() {
-    if (!canEditPublishTime) {
-      return 'update';
-    }
-
-    if (publishTimeMode === 'scheduled') {
-      return 'unknown';
-    }
-
-    if (publishedStatus === 'unknown' || publishedStatus === 'draft') {
-      return 'publish';
-    }
-
-    return 'update';
-  }
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -697,14 +600,6 @@ export default function Opt() {
       return;
     }
 
-    const action = getSubmitAction();
-    const nextPublishedAt = publishTimeMode === 'scheduled' ? getScheduledPublishedAtIsoString() : '';
-
-    if (canEditPublishTime && publishTimeMode === 'scheduled' && !nextPublishedAt) {
-      setErrorMessage('예약 날짜와 시간을 선택해주세요.');
-      return;
-    }
-
     setErrorMessage('');
     setIsSubmitting(true);
 
@@ -719,7 +614,7 @@ export default function Opt() {
         credentials: 'include',
         body: JSON.stringify({
           siteName,
-          action,
+          action: 'update',
           subject,
           summary,
           contentHtml: uploadedEditorContent.contentHtml,
@@ -729,7 +624,6 @@ export default function Opt() {
           thumbnailHeight,
           categories: selectedCategories,
           seriesKey: selectedSeriesKey || null,
-          publishedAt: action === 'unknown' ? nextPublishedAt : null,
           isComment: commentProvider === 'none' ? false : isComment,
         }),
       });
@@ -902,37 +796,6 @@ export default function Opt() {
                   onUploadImage={handleUploadEditorImage}
                 />
               </Stack>
-
-              {canEditPublishTime ? (
-                <>
-                  <Stack gap={1}>
-                    <Typography variant="subtitle2">블로그 글 출간시간 선택 *</Typography>
-                    <RadioGroup value={publishTimeMode} onChange={handlePublishTimeModeChange}>
-                      <FormControlLabel value="now" control={<Radio />} label="현재 시각으로 등록하기" />
-                      <FormControlLabel value="scheduled" control={<Radio />} label="지정한 날짜와 시간으로 예약" />
-                    </RadioGroup>
-                  </Stack>
-
-                  {publishTimeMode === 'scheduled' ? (
-                    <Stack gap={1}>
-                      <Typography variant="subtitle2">날짜 및 시간 예약</Typography>
-                      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                        <DateTimePicker
-                          value={scheduledPublishedAt}
-                          onChange={(nextValue) => setScheduledPublishedAt(nextValue)}
-                          ampm={false}
-                          slotProps={{
-                            textField: {
-                              fullWidth: true,
-                              size: 'small',
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </Stack>
-                  ) : null}
-                </>
-              ) : null}
 
               {commentProvider !== 'none' ? (
                 <FormControlLabel
