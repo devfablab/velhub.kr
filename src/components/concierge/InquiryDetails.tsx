@@ -119,8 +119,8 @@ export default function InquiryDetails({
   const payment = one(paymentDetails);
   const snapshot = payment?.payment_snapshot;
   const linked = one(linkedPayment);
-  const selectedPaymentLabel = paymentLabel ?? (linked ? payment?.attempted_product ?? null : null) ?? getFallbackPaymentLabel(linked);
-  const paymentInfo = snapshot ?? linked;
+  const selectedPaymentLabel = paymentLabel ?? (linked ? (payment?.attempted_product ?? getFallbackPaymentLabel(linked)) : null);
+  const paymentInfo = (snapshot ?? linked) as Partial<LinkedPayment> | null;
 
   return (
     <Stack gap={2}>

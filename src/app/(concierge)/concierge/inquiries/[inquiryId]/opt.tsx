@@ -313,13 +313,25 @@ export default function Opt() {
             {[...inquiry.inquiry_messages]
               .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
               .map((message) => (
-                <Stack key={message.id} gap={0.5}>
-                  <Typography variant="subtitle2">
-                    {message.sender_type === 'admin' ? '관리자' : '문의자'} / {formatDateTimeDetail(message.created_at)}
-                  </Typography>
-                  <Typography variant="body2" whiteSpace="pre-wrap">
-                    {message.message}
-                  </Typography>
+                <Stack
+                  key={message.id}
+                  gap={0.5}
+                  direction="column"
+                  justifyContent={message.sender_type === 'admin' ? 'flex-end' : 'flex-start'}
+                >
+                  <Typography variant="subtitle2">{message.sender_type === 'admin' ? '' : '유저'}</Typography>
+                  <Stack
+                    gap={1}
+                    direction={message.sender_type === 'admin' ? 'row-reverse' : 'row'}
+                    alignItems="flex-end"
+                  >
+                    <div className="paper" style={{ maxWidth: '70%' }}>
+                      <Typography variant="body2" whiteSpace="pre-wrap">
+                        {message.message}
+                      </Typography>
+                    </div>
+                    <time style={{ fontSize: 12, opacity: 0.5 }}>{formatDateTimeDetail(message.created_at)}</time>
+                  </Stack>
                 </Stack>
               ))}
           </Stack>
@@ -371,11 +383,21 @@ export default function Opt() {
                   onChange={(event) => setMotherBirthDate(event.target.value)}
                 />
                 <Stack direction="row" justifyContent="flex-end" gap={2}>
-                  <button type="button" className="button small submit" disabled={isSaving} onClick={() => void saveParents()}>
+                  <button
+                    type="button"
+                    className="button small submit"
+                    disabled={isSaving}
+                    onClick={() => void saveParents()}
+                  >
                     부모 확인 정보 저장
                   </button>
                   {parentVerifiedAt && !inquiry.payment_control_requested_at ? (
-                    <button type="button" className="button small action" disabled={isSaving} onClick={() => void requestPaymentControl()}>
+                    <button
+                      type="button"
+                      className="button small action"
+                      disabled={isSaving}
+                      onClick={() => void requestPaymentControl()}
+                    >
                       향후 결제 방침 선택 요청
                     </button>
                   ) : null}
