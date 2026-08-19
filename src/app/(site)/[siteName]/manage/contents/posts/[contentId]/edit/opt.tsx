@@ -810,12 +810,12 @@ export default function Opt() {
                 </Anchor>
                 {isMobile ? (
                   <div className={styles['button-top']}>
-                    <button type="submit" className={`button ${styles.button}`}>
+                    <button type="submit" className={`button ${styles.button}`} disabled={isSubmitting}>
                       저장
                     </button>
                   </div>
                 ) : (
-                  <button type="submit" className="button medium submit">
+                  <button type="submit" className="button medium submit" disabled={isSubmitting}>
                     저장
                   </button>
                 )}

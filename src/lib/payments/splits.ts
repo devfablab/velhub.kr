@@ -42,6 +42,32 @@ async function hasPaymentSplits({
   return Boolean(splitsResult.data?.length);
 }
 
+async function getPlatformPaymentSplitRate({
+  supabaseAdmin,
+  siteId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  siteId: string;
+}) {
+  const siteResult = await supabaseAdmin.from('rhizomes').select('site_type').eq('id', siteId).maybeSingle();
+
+  if (siteResult.error || !siteResult.data) {
+    throw new Error('사이트 정산 기준을 확인하지 못했습니다.');
+  }
+
+  if (siteResult.data.site_type !== 'blog') {
+    return 17;
+  }
+
+  const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', siteId).maybeSingle();
+
+  if (blogResult.error || !blogResult.data) {
+    throw new Error('블로그 정산 기준을 확인하지 못했습니다.');
+  }
+
+  return blogResult.data.blog_type === 'team' ? 12 : 17;
+}
+
 export async function createOwnerPaymentSplits({
   supabaseAdmin,
   paymentId,
@@ -61,7 +87,8 @@ export async function createOwnerPaymentSplits({
     return;
   }
 
-  const platformAmount = Math.floor(amount * 0.17);
+  const platformRate = await getPlatformPaymentSplitRate({ supabaseAdmin, siteId });
+  const platformAmount = Math.floor((amount * platformRate) / 100);
   const siteOwnerAmount = amount - platformAmount;
 
   const insertResult = await supabaseAdmin.from('payment_splits').insert([
@@ -73,7 +100,7 @@ export async function createOwnerPaymentSplits({
       post_id: postId,
       receiver_user_id: null,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.PLATFORM,
-      rate: 17,
+      rate: platformRate,
       amount: platformAmount,
     },
     {
@@ -84,7 +111,7 @@ export async function createOwnerPaymentSplits({
       post_id: postId,
       receiver_user_id: siteOwnerStigmaId,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
-      rate: 83,
+      rate: 100 - platformRate,
       amount: siteOwnerAmount,
     },
   ]);
@@ -114,7 +141,8 @@ export async function createPostPaymentSplits({
     return;
   }
 
-  const platformAmount = Math.floor(amount * 0.17);
+  const platformRate = await getPlatformPaymentSplitRate({ supabaseAdmin, siteId });
+  const platformAmount = Math.floor((amount * platformRate) / 100);
 
   if (siteOwnerStigmaId === postAuthorStigmaId) {
     const receiverAmount = amount - platformAmount;
@@ -128,7 +156,7 @@ export async function createPostPaymentSplits({
         post_id: postId,
         receiver_user_id: null,
         receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.PLATFORM,
-        rate: 17,
+        rate: platformRate,
         amount: platformAmount,
       },
       {
@@ -139,7 +167,7 @@ export async function createPostPaymentSplits({
         post_id: postId,
         receiver_user_id: siteOwnerStigmaId,
         receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
-        rate: 83,
+        rate: 100 - platformRate,
         amount: receiverAmount,
       },
     ]);
@@ -163,7 +191,7 @@ export async function createPostPaymentSplits({
       post_id: postId,
       receiver_user_id: null,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.PLATFORM,
-      rate: 17,
+      rate: platformRate,
       amount: platformAmount,
     },
     {
@@ -185,7 +213,7 @@ export async function createPostPaymentSplits({
       post_id: postId,
       receiver_user_id: siteOwnerStigmaId,
       receiver_type: PAYMENT_SPLIT_RECEIVER_TYPE.SITE_OWNER,
-      rate: 26,
+      rate: 100 - platformRate - 57,
       amount: siteOwnerAmount,
     },
   ]);

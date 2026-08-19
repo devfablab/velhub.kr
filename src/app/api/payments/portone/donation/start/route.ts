@@ -256,15 +256,6 @@ async function getDonationTarget({
     throw new Error('일반 또는 갤러리 게시판의 연재만 후원할 수 있습니다.');
   }
 
-  if (site.site_type === 'blog') {
-    const supabaseAdmin = getSupabaseAdmin();
-    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle();
-
-    if (blogResult.data?.blog_type === 'team') {
-      throw new Error('팀 블로그 연재는 후원을 받을 수 없습니다.');
-    }
-  }
-
   const series = await getSeriesByName({
     siteId: site.id,
     boardId: board.id,

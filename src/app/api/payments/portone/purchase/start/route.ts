@@ -153,14 +153,6 @@ async function getPurchaseTarget({
     throw new Error('현재 구매할 수 없는 사이트입니다.');
   }
 
-  if (site.site_type === 'blog') {
-    const blogResult = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle();
-
-    if (blogResult.data?.blog_type === 'team') {
-      throw new Error('팀 블로그의 연재글은 소장(구매)할 수 없습니다.');
-    }
-  }
-
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label, board_type')
