@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 
 type IdentityVerificationRequest = {
   storeId: string;
@@ -60,43 +61,80 @@ export default function IdentityVerificationButton({
   const [agreementOpen, setAgreementOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState('');
+  const [bypassModalOpen, setBypassModalOpen] = useState(false);
+  const [pendingRequest, setPendingRequest] = useState<IdentityVerificationRequest | null>(null);
 
   const handleVerify = async () => {
-    if (isProcessing) {
-      return;
-    }
-
+    if (isProcessing) return;
     setIsProcessing(true);
 
     try {
       const request = await sendJson<IdentityVerificationRequest>('/api/identity/portone/start');
-      const result = await PortOne.requestIdentityVerification(request);
-      const identityVerificationId = result?.identityVerificationId ?? request.identityVerificationId;
-
-      if (!identityVerificationId || result?.code) {
-        await sendJson('/api/identity/portone/fail', {
-          identityVerificationId: request.identityVerificationId,
-          code: result?.code,
-          message: result?.message,
-        });
-        throw new Error(result?.message || '본인인증이 완료되지 않았습니다.');
-      }
-
-      const identity = await sendJson<IdentityVerificationSuccessResponse>('/api/identity/portone/success', {
-        identityVerificationId,
-      });
-      setAgreementOpen(false);
-      setMessage('본인인증이 완료되었습니다.');
-
-      if (onVerified) {
-        onVerified(identity);
+      if (process.env.NEXT_PUBLIC_APP_ENV === 'test') {
+        setPendingRequest(request);
+        setBypassModalOpen(true);
       } else {
-        window.location.reload();
+        await executePortOne(request);
       }
     } catch (error) {
       setMessage(getMessage(error));
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleBypassConfirm = async (bypass: boolean, mockTxId?: string) => {
+    setBypassModalOpen(false);
+    if (!pendingRequest) return;
+    
+    setIsProcessing(true);
+    try {
+      if (bypass && mockTxId) {
+        const identity = await sendJson<IdentityVerificationSuccessResponse>('/api/identity/portone/success', {
+          identityVerificationId: pendingRequest.identityVerificationId,
+          mockTxId,
+        });
+        setAgreementOpen(false);
+        setMessage('본인인증이 완료되었습니다.');
+        if (onVerified) {
+          onVerified(identity);
+        } else {
+          window.location.reload();
+        }
+      } else {
+        await executePortOne(pendingRequest);
+      }
+    } catch (error) {
+      setMessage(getMessage(error));
+    } finally {
+      setIsProcessing(false);
+      setPendingRequest(null);
+    }
+  };
+
+  const executePortOne = async (request: IdentityVerificationRequest) => {
+    const result = await PortOne.requestIdentityVerification(request);
+    const identityVerificationId = result?.identityVerificationId ?? request.identityVerificationId;
+
+    if (!identityVerificationId || result?.code) {
+      await sendJson('/api/identity/portone/fail', {
+        identityVerificationId: request.identityVerificationId,
+        code: result?.code,
+        message: result?.message,
+      });
+      throw new Error(result?.message || '본인인증이 완료되지 않았습니다.');
+    }
+
+    const identity = await sendJson<IdentityVerificationSuccessResponse>('/api/identity/portone/success', {
+      identityVerificationId,
+    });
+    setAgreementOpen(false);
+    setMessage('본인인증이 완료되었습니다.');
+
+    if (onVerified) {
+      onVerified(identity);
+    } else {
+      window.location.reload();
     }
   };
 
@@ -119,6 +157,11 @@ export default function IdentityVerificationButton({
         open={agreementOpen}
         onClose={() => setAgreementOpen(false)}
         onConfirm={() => void handleAgreementConfirm()}
+      />
+      <DevIdentityBypassModal
+        open={bypassModalOpen}
+        onClose={() => { setBypassModalOpen(false); setIsProcessing(false); }}
+        onConfirm={(bypass, mockTxId) => void handleBypassConfirm(bypass, mockTxId)}
       />
       <Snackbar
         open={Boolean(message)}

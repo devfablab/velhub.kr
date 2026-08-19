@@ -8,6 +8,7 @@ import { maskEmail } from '@/lib/utils';
 
 type SuccessRequestBody = {
   identityVerificationId?: string;
+  mockTxId?: string;
 };
 
 function isValidIdentityVerificationId(identityVerificationId: string, userId: string) {
@@ -80,15 +81,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
   }
 
-  const portOneVerification = await getPortOneIdentityVerification(identityVerificationId);
+  const supabaseAdmin = getSupabaseAdmin();
+  let verifiedIdentity = extractVerifiedIdentity(identityVerificationId, await getPortOneIdentityVerification(identityVerificationId));
 
-  const verifiedIdentity = extractVerifiedIdentity(identityVerificationId, portOneVerification);
+  if (process.env.NEXT_PUBLIC_APP_ENV === 'test' && body?.mockTxId) {
+    const { data: mock } = await supabaseAdmin.from('mock_identities').select('*').eq('verification_tx_id', body.mockTxId).single();
+    if (mock) {
+      verifiedIdentity = {
+        identityVerificationId,
+        name: mock.name,
+        birthDate: mock.birth_date.replace(/\D/g, '').slice(0, 8),
+        gender: mock.gender,
+        ci: mock.ci,
+        di: mock.ci,
+      };
+    }
+  }
 
   if (!verifiedIdentity) {
     return NextResponse.json({ message: '본인인증 결과를 확인할 수 없습니다.' }, { status: 400 });
   }
 
-  const supabaseAdmin = getSupabaseAdmin();
   const { data: stigma, error: stigmaError } = await supabaseAdmin
     .from('stigmas')
     .select('id')

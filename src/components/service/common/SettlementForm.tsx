@@ -22,6 +22,7 @@ import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/opt
 import Anchor from '@/components/Anchor';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
 
@@ -200,6 +201,8 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
   const [guardianDocumentFile, setGuardianDocumentFile] = useState<File | null>(null);
   const [isGuardianVerifying, setIsGuardianVerifying] = useState(false);
   const [guardianErrorMessage, setGuardianErrorMessage] = useState('');
+  const [bypassModalOpen, setBypassModalOpen] = useState(false);
+  const [pendingGuardianRequest, setPendingGuardianRequest] = useState<{ storeId: string; channelKey: string; identityVerificationId: string; } | null>(null);
   const guardianDocumentRef = useRef<HTMLInputElement>(null);
 
   const isApproved = settlement?.status === 'approved';
@@ -252,36 +255,64 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
         throw new Error('법정대리인 본인인증을 시작할 수 없습니다.');
       }
 
-      // Step 2: Open PortOne identity verification popup
-      const PortOne = (await import('@portone/browser-sdk/v2')).default;
-      const result = await PortOne.requestIdentityVerification(startData);
-      const identityVerificationId = result?.identityVerificationId ?? startData.identityVerificationId;
-
-      if (!identityVerificationId || result?.code) {
-        throw new Error(result?.message || '법정대리인 본인인증이 완료되지 않았습니다.');
+      if (process.env.NEXT_PUBLIC_APP_ENV === 'test') {
+        setPendingGuardianRequest(startData);
+        setBypassModalOpen(true);
+      } else {
+        await executeGuardianPortOne(startData);
       }
+    } catch (error) {
+      setGuardianErrorMessage(getMessage(error));
+      setIsGuardianVerifying(false);
+    }
+  };
 
-      // Step 3: Verify with server (checks guardian is adult)
-      const verifyRes = await fetch('/api/identity/portone/guardian', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ identityVerificationId }),
-      });
-      const verifyData = (await verifyRes.json().catch(() => null)) as GuardianIdentity | { message?: string } | null;
+  const handleGuardianBypassConfirm = async (bypass: boolean, mockTxId?: string) => {
+    setBypassModalOpen(false);
+    if (!pendingGuardianRequest) return;
 
-      if (!verifyRes.ok) {
-        throw new Error(
-          (verifyData as { message?: string })?.message ?? '법정대리인 본인인증 결과를 확인할 수 없습니다.',
-        );
+    try {
+      if (bypass && mockTxId) {
+        const verifyRes = await fetch('/api/identity/portone/guardian', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ identityVerificationId: pendingGuardianRequest.identityVerificationId, mockTxId }),
+        });
+        const verifyData = (await verifyRes.json().catch(() => null)) as GuardianIdentity | { message?: string } | null;
+        if (!verifyRes.ok || !verifyData) {
+          throw new Error((verifyData as { message?: string })?.message || '본인인증을 실패했습니다.');
+        }
+        setGuardianIdentity(verifyData as GuardianIdentity);
+      } else {
+        await executeGuardianPortOne(pendingGuardianRequest);
       }
-
-      setGuardianIdentity(verifyData as GuardianIdentity);
     } catch (error) {
       setGuardianErrorMessage(getMessage(error));
     } finally {
       setIsGuardianVerifying(false);
+      setPendingGuardianRequest(null);
     }
+  };
+
+  const executeGuardianPortOne = async (startData: { storeId: string; channelKey: string; identityVerificationId: string; }) => {
+    const PortOne = (await import('@portone/browser-sdk/v2')).default;
+    const result = await PortOne.requestIdentityVerification(startData);
+    const identityVerificationId = result?.identityVerificationId ?? startData.identityVerificationId;
+    if (!identityVerificationId || result?.code) {
+      throw new Error(result?.message || '법정대리인 본인인증이 완료되지 않았습니다.');
+    }
+    const verifyRes = await fetch('/api/identity/portone/guardian', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ identityVerificationId }),
+    });
+    const verifyData = (await verifyRes.json().catch(() => null)) as GuardianIdentity | { message?: string } | null;
+    if (!verifyRes.ok || !verifyData) {
+      throw new Error((verifyData as { message?: string })?.message || '본인인증을 실패했습니다.');
+    }
+    setGuardianIdentity(verifyData as GuardianIdentity);
   };
 
   const handleGuardianDocumentChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -807,6 +838,11 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
         open={settlementAgreementOpen}
         onClose={() => setSettlementAgreementOpen(false)}
         showAgreementCheck={false}
+      />
+      <DevIdentityBypassModal
+        open={bypassModalOpen}
+        onClose={() => { setBypassModalOpen(false); setIsGuardianVerifying(false); }}
+        onConfirm={(bypass, mockTxId) => void handleGuardianBypassConfirm(bypass, mockTxId)}
       />
     </>
   );
