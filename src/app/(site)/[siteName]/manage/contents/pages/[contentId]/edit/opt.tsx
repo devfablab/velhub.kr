@@ -542,7 +542,7 @@ export default function Opt() {
 
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
 
-      const response = await fetch(`/api/boards/${boardName}/${contentId}/edit`, {
+      const response = await fetch(`/api/manage/contents/pages/${contentId}/edit`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

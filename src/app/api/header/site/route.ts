@@ -369,6 +369,17 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
     const siteType = isSiteType(site.site_type) ? site.site_type : null;
 
+    const blogResult =
+      siteType === 'blog'
+        ? await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle()
+        : { data: null, error: null };
+
+    if (blogResult.error) {
+      return Response.json({ error: '블로그 유형을 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const blogType = blogResult.data?.blog_type ?? null;
+
     const blogFontSettings = await getBlogFontSettings(site.id, siteType);
 
     await processVisit(site.id, request);
@@ -381,6 +392,7 @@ export async function GET(request: Request) {
       return Response.json({
         siteName: site.site_key,
         siteType,
+        blogType,
         themeType: site.theme_type,
         blogFontSettings,
         isLoggedIn: false,
@@ -590,6 +602,7 @@ export async function GET(request: Request) {
     return Response.json({
       siteName: site.site_key,
       siteType,
+      blogType,
       themeType: site.theme_type,
       blogFontSettings,
       isLoggedIn: true,

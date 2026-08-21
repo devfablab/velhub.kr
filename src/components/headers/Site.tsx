@@ -48,6 +48,7 @@ type HeaderResponse = {
   siteName: string | null;
   siteLabel: string | null;
   siteType: SiteType | null;
+  blogType: string | null;
   themeType: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
@@ -245,6 +246,7 @@ export default function HeaderSite() {
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
   const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [blogType, setBlogType] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: null,
     email: null,
@@ -341,6 +343,7 @@ export default function HeaderSite() {
       if (!response.ok || !('isLoggedIn' in result)) {
         clearBlogFontSettings();
         setSiteType(null);
+        setBlogType(null);
         setUserProfile({
           name: null,
           email: null,
@@ -367,6 +370,7 @@ export default function HeaderSite() {
       applyColorSet(result.themeType);
       applyBlogFontSettings(result.siteType, result.blogFontSettings);
       setSiteType(result.siteType);
+      setBlogType(result.blogType);
 
       setUserProfile({
         name: result.userName,
@@ -520,6 +524,7 @@ export default function HeaderSite() {
                     <NavManage
                       siteName={siteName}
                       siteType={siteType}
+                      isTeamBlog={blogType === 'team'}
                       isSiteStaff={isSiteStaff}
                       siteRole={userProfile.siteRole}
                       globalRole={userProfile.globalRole}
@@ -569,6 +574,7 @@ export default function HeaderSite() {
                         <NavManage
                           siteName={siteName}
                           siteType={siteType}
+                          isTeamBlog={blogType === 'team'}
                           isSiteStaff={isSiteStaff}
                           siteRole={userProfile.siteRole}
                           globalRole={userProfile.globalRole}

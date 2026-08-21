@@ -178,12 +178,13 @@ function isCommunityManagerRestrictedPath(pathname: string, siteName: string) {
 }
 
 function isBlogManagerRestrictedPath(pathname: string, siteName: string) {
-  return startsWithAny(pathname, [
-    `/${siteName}/manage/join`,
-    `/${siteName}/manage/members`,
-    `/${siteName}/manage/design/community`,
-    `/${siteName}/manage/contents/posts/c`,
-  ]);
+  return (
+    startsWithAny(pathname, [
+      `/${siteName}/manage/join`,
+      `/${siteName}/manage/members`,
+      `/${siteName}/manage/design/community`,
+    ]) || pathname.startsWith(`/${siteName}/manage/contents/posts/c/`)
+  );
 }
 
 function isCommunityBoardRoleRestrictedPath(pathname: string, siteName: string) {

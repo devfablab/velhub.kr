@@ -56,6 +56,20 @@ export async function POST(request: Request) {
       return Response.json({ error: '블로그 사이트만 사용할 수 있습니다.' }, { status: 403 });
     }
 
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', siteResult.data.id)
+      .maybeSingle();
+
+    if (blogResult.error) {
+      return Response.json({ error: '블로그 유형을 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (blogResult.data?.blog_type !== 'team') {
+      return Response.json({ error: '팀원 관리는 팀 블로그에서만 사용할 수 있습니다.' }, { status: 403 });
+    }
+
     const session = await verifySession({ siteId: siteResult.data.id });
 
     if (!session.authUserId || !session.stigmaId || !session.rhizomeStigmaId) {

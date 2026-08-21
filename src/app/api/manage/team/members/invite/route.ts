@@ -147,6 +147,24 @@ async function checkAccess(siteName: string) {
     } as const;
   }
 
+  const blog = await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', rhizome.data.id).maybeSingle();
+
+  if (blog.error) {
+    return {
+      ok: false,
+      status: 500,
+      error: '블로그 유형을 확인하지 못했습니다.',
+    } as const;
+  }
+
+  if (blog.data?.blog_type !== 'team') {
+    return {
+      ok: false,
+      status: 403,
+      error: '팀원 초대는 팀 블로그에서만 사용할 수 있습니다.',
+    } as const;
+  }
+
   const session = await verifySession({
     siteId: rhizome.data.id,
   });

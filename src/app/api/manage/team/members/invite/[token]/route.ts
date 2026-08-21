@@ -127,6 +127,20 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '블로그 사이트만 접근할 수 있습니다.' }, { status: 403 });
     }
 
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', rhizome.data.id)
+      .maybeSingle();
+
+    if (blogResult.error) {
+      return Response.json({ error: '블로그 유형을 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (blogResult.data?.blog_type !== 'team') {
+      return Response.json({ error: '팀 블로그 초대장이 아닙니다.' }, { status: 403 });
+    }
+
     if (rhizome.data.site_key !== siteName) {
       return Response.json({ error: '초대장 정보가 올바르지 않습니다.' }, { status: 403 });
     }
@@ -259,6 +273,20 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (rhizome.error || !rhizome.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const blogResult = await supabaseAdmin
+      .from('blogs')
+      .select('blog_type')
+      .eq('site_id', rhizome.data.id)
+      .maybeSingle();
+
+    if (blogResult.error) {
+      return Response.json({ error: '블로그 유형을 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (blogResult.data?.blog_type !== 'team') {
+      return Response.json({ error: '팀 블로그 초대장이 아닙니다.' }, { status: 403 });
     }
 
     if (rhizome.data.site_key !== siteName) {
