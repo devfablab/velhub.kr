@@ -175,24 +175,21 @@ export default function FooterSite() {
   }
 
   return (
-    <>
-      <footer className={styles.footer}>
-        <div className="container">
-          <div className={`content ${styles.content}`}>
-            <div className={`${styles.loves} ${styles['loves-site']}`}>
-              <p className={styles.copyright}>
-                <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
-              </p>
-              <p className={styles.love}>
-                <Anchor href="/" style={{ color: 'hotpink' }}>
-                  <FavoriteRoundedIcon /> <span>velhub</span>
-                </Anchor>
-              </p>
-            </div>
+    <footer className={styles.footer}>
+      <div className="container">
+        <div className={`content ${styles.content}`}>
+          <div className={`${styles.loves} ${styles['loves-site']}`}>
+            <p className={styles.copyright}>
+              <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
+            </p>
+            <p className={styles.love}>
+              <Anchor href="/" style={{ color: 'hotpink' }}>
+                <FavoriteRoundedIcon /> <span>velhub</span>
+              </Anchor>
+            </p>
           </div>
         </div>
-      </footer>
-
+      </div>
       {isMobile ? (
         <Drawer anchor="bottom" open={Boolean(ownerTransfer)} className="VhiDrawer-bottom">
           <h2>운영자 교체</h2>
@@ -293,6 +290,6 @@ export default function FooterSite() {
           </DialogActions>
         </Dialog>
       )}
-    </>
+    </footer>
   );
 }
