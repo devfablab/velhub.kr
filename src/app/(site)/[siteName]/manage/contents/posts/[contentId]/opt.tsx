@@ -562,16 +562,9 @@ export default function Opt() {
 
                   <Stack direction="row" gap={3}>
                     <Stack direction="row" gap={1}>
-                      <Typography variant="subtitle2">작성</Typography>
-                      <Typography variant="body2">{formatDate(post.created_at)}</Typography>
+                      <Typography variant="subtitle2">게시</Typography>
+                      <Typography variant="body2">{formatDate(post.published_at ?? post.created_at)}</Typography>
                     </Stack>
-
-                    {post.published_at ? (
-                      <Stack direction="row" gap={1}>
-                        <Typography variant="subtitle2">게시</Typography>
-                        <Typography variant="body2">{formatDate(post.published_at)}</Typography>
-                      </Stack>
-                    ) : null}
 
                     {post.edited_at ? (
                       <Stack direction="row" gap={1}>

@@ -135,22 +135,8 @@ type DialogMode = 'delete' | 'restore' | null;
 
 const SIZE_OPTIONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
 
-function getUnknownPostChipLabel(publishedAt: string | null) {
-  if (!publishedAt) {
-    return '예약글';
-  }
-
-  const publishedAtDate = new Date(publishedAt);
-
-  if (Number.isNaN(publishedAtDate.getTime())) {
-    return '예약글';
-  }
-
-  if (publishedAtDate.getTime() > Date.now()) {
-    return '예약글';
-  }
-
-  return `${publishedAtDate.getFullYear()}년 ${publishedAtDate.getMonth() + 1}월 ${publishedAtDate.getDate()}일에 공개됨`;
+function getUnknownPostChipLabel() {
+  return '예약글';
 }
 
 function parsePage(value: string | null) {
@@ -984,7 +970,7 @@ export default function Opt() {
                       />
                     </TableCell>
                     <TableCell>제목</TableCell>
-                    <TableCell>작성일</TableCell>
+                    <TableCell>게시일</TableCell>
                     <TableCell>작성자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
                     <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
@@ -1006,7 +992,7 @@ export default function Opt() {
                       <TableCell>
                         <Stack direction="row" gap={1}>
                           {post.published_status === 'unknown' ? (
-                            <Chip label={getUnknownPostChipLabel(post.published_at)} color="warning" size="small" />
+                            <Chip label={getUnknownPostChipLabel()} color="warning" size="small" />
                           ) : null}
                           <Anchor className="link-normal" href={`/${siteName}/manage/contents/posts/${post.slug}?ti=i`}>
                             {post.subject}
@@ -1014,7 +1000,7 @@ export default function Opt() {
                         </Stack>
                       </TableCell>
 
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.created_at)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.published_at ?? post.created_at)}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.author_name}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.closed_by_name || ''}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>

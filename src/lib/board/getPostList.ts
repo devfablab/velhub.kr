@@ -8,6 +8,7 @@ type PostListSort = 'latest' | 'post_count';
 type GetPostListOptions = {
   siteId: string;
   siteKey: string;
+  siteType: string;
   boardId?: string | null;
   page: number;
   size: number;
@@ -241,6 +242,7 @@ function normalizePostImages(value: unknown): PostImage[] | null {
 
 export async function getPostList({
   siteId,
+  siteType,
   boardId = null,
   page,
   size,
@@ -254,6 +256,7 @@ export async function getPostList({
 }: GetPostListOptions): Promise<GetPostListResult> {
   const supabaseAdmin = getSupabaseAdmin();
   const isStaff = sessionCase === 'staff';
+  const canViewFutureScheduledPosts = isStaff || (siteType === 'blog' && sessionCase === 'member');
   const from = (page - 1) * size;
   const to = from + size - 1;
   const searchKeyword = normalizeText(keyword);
@@ -321,22 +324,20 @@ export async function getPostList({
 
     const nowIsoString = new Date().toISOString();
 
+    const publishedVisibility = [
+      'published_status.eq.published',
+      `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`,
+    ];
+
     if (stigmaId) {
-      postsQuery = postsQuery.or(
-        [
-          'published_status.eq.published',
-          `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`,
-          `and(published_status.eq.draft,user_id.eq.${stigmaId})`,
-          `and(published_status.eq.unknown,user_id.eq.${stigmaId})`,
-        ].join(','),
-      );
-    } else {
-      postsQuery = postsQuery.or(
-        ['published_status.eq.published', `and(published_status.eq.unknown,published_at.lte.${nowIsoString})`].join(
-          ',',
-        ),
-      );
+      publishedVisibility.push(`and(published_status.eq.draft,user_id.eq.${stigmaId})`);
     }
+
+    if (canViewFutureScheduledPosts) {
+      publishedVisibility.push(`and(published_status.eq.unknown,published_at.gt.${nowIsoString})`);
+    }
+
+    postsQuery = postsQuery.or(publishedVisibility.join(','));
   }
 
   if (searchKeyword) {

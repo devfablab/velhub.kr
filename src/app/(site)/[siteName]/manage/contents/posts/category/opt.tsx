@@ -290,10 +290,6 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogSuccessMessage, setDialogSuccessMessage] = useState('');
-  const [isKeyChecked, setIsKeyChecked] = useState(false);
-  const [isLabelChecked, setIsLabelChecked] = useState(false);
-  const [checkedCategoryKey, setCheckedCategoryKey] = useState('');
-  const [checkedCategoryLabel, setCheckedCategoryLabel] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
 
   const sortedCategories = useMemo(() => {
@@ -373,10 +369,6 @@ export default function Opt() {
     setThumbnailImageUrl('');
     setDialogErrorMessage('');
     setDialogSuccessMessage('');
-    setIsKeyChecked(false);
-    setIsLabelChecked(false);
-    setCheckedCategoryKey('');
-    setCheckedCategoryLabel('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -423,10 +415,6 @@ export default function Opt() {
       setSummary(result.category.summary || '');
       setThumbnailImage(nextThumbnailImage);
       setThumbnailImageUrl(getCategoryImageUrl(nextThumbnailImage));
-      setIsKeyChecked(true);
-      setIsLabelChecked(true);
-      setCheckedCategoryKey(result.category.category_key);
-      setCheckedCategoryLabel(result.category.category_label);
       setDialogMode('edit');
 
       if (fileInputRef.current) {
@@ -462,8 +450,6 @@ export default function Opt() {
     setCategoryKey(event.currentTarget.value);
     setDialogErrorMessage('');
     setDialogSuccessMessage('');
-    setIsKeyChecked(false);
-    setCheckedCategoryKey('');
   }
 
   function handleCategoryLabelChange(event: InputChangeEvent) {
@@ -474,13 +460,8 @@ export default function Opt() {
     setDialogSuccessMessage('');
 
     if (!normalizeText(nextValue)) {
-      setIsLabelChecked(true);
-      setCheckedCategoryLabel('');
       return;
     }
-
-    setIsLabelChecked(false);
-    setCheckedCategoryLabel('');
   }
 
   function handleSummaryChange(event: InputChangeEvent) {
@@ -603,8 +584,6 @@ export default function Opt() {
         '카테고리 식별자는 2자 이상 16자 이하여야 하며, 영소문자/숫자/하이픈/언더스코어만 사용할 수 있고, 최소 한 글자의 영문자를 포함해야 합니다.',
       );
       setDialogSuccessMessage('');
-      setIsKeyChecked(false);
-      setCheckedCategoryKey('');
       return;
     }
 
@@ -636,15 +615,11 @@ export default function Opt() {
       if (!result.available) {
         setDialogErrorMessage('이미 존재하는 카테고리 식별자입니다.');
         setDialogSuccessMessage('');
-        setIsKeyChecked(false);
-        setCheckedCategoryKey('');
         return;
       }
 
       setDialogErrorMessage('');
       setDialogSuccessMessage('사용 가능한 카테고리 식별자입니다.');
-      setIsKeyChecked(true);
-      setCheckedCategoryKey(nextCategoryKey);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setDialogErrorMessage(unknownError.message || '카테고리 식별자 중복 확인에 실패했습니다.');
@@ -652,8 +627,6 @@ export default function Opt() {
         setDialogErrorMessage('카테고리 식별자 중복 확인에 실패했습니다.');
       }
       setDialogSuccessMessage('');
-      setIsKeyChecked(false);
-      setCheckedCategoryKey('');
     } finally {
       setIsCheckingKey(false);
     }
@@ -667,8 +640,6 @@ export default function Opt() {
     const nextCategoryLabel = normalizeText(categoryLabel);
 
     if (!nextCategoryLabel) {
-      setIsLabelChecked(true);
-      setCheckedCategoryLabel('');
       setDialogErrorMessage('');
       setDialogSuccessMessage('카테고리명을 입력하지 않으면 식별자 기준으로 자동 등록됩니다.');
       return;
@@ -702,15 +673,11 @@ export default function Opt() {
       if (!result.available) {
         setDialogErrorMessage('이미 존재하는 카테고리명입니다.');
         setDialogSuccessMessage('');
-        setIsLabelChecked(false);
-        setCheckedCategoryLabel('');
         return;
       }
 
       setDialogErrorMessage('');
       setDialogSuccessMessage('사용 가능한 카테고리명입니다.');
-      setIsLabelChecked(true);
-      setCheckedCategoryLabel(nextCategoryLabel);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setDialogErrorMessage(unknownError.message || '카테고리명 중복 확인에 실패했습니다.');
@@ -718,8 +685,6 @@ export default function Opt() {
         setDialogErrorMessage('카테고리명 중복 확인에 실패했습니다.');
       }
       setDialogSuccessMessage('');
-      setIsLabelChecked(false);
-      setCheckedCategoryLabel('');
     } finally {
       setIsCheckingLabel(false);
     }
@@ -809,20 +774,6 @@ export default function Opt() {
       setDialogErrorMessage('카테고리 식별자를 입력해주세요.');
       setDialogSuccessMessage('');
       return;
-    }
-
-    if (!isKeyChecked || checkedCategoryKey !== nextCategoryKey) {
-      setDialogErrorMessage('카테고리 식별자 중복 검사를 해주세요.');
-      setDialogSuccessMessage('');
-      return;
-    }
-
-    if (nextCategoryLabel) {
-      if (!isLabelChecked || checkedCategoryLabel !== nextCategoryLabel) {
-        setDialogErrorMessage('카테고리명 중복 검사를 해주세요.');
-        setDialogSuccessMessage('');
-        return;
-      }
     }
 
     try {

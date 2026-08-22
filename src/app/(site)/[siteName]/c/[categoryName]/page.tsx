@@ -115,6 +115,7 @@ export default async function Page(context: RouteContext) {
   const postList = await getPostList({
     siteId: rhizome.data.id,
     siteKey: normalizedSiteName,
+    siteType: rhizome.data.site_type,
     boardId: categoryData.board_id,
     page: currentPage,
     size: 10,

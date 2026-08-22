@@ -131,6 +131,7 @@ export default async function Page(context: RouteContext) {
     const blogPostList = await getPostList({
       siteId: rhizome.id,
       siteKey: normalizedSiteName,
+      siteType: rhizome.site_type,
       boardId: blogBoard.id,
       page: 1,
       size: 10,
@@ -207,6 +208,7 @@ export default async function Page(context: RouteContext) {
             const postList = await getPostList({
               siteId: rhizome.id,
               siteKey: normalizedSiteName,
+              siteType: rhizome.site_type,
               boardId: board.id,
               page: 1,
               size: getBoardContentSize(board.board_type),

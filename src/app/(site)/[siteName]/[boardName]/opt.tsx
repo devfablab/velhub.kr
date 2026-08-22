@@ -690,7 +690,9 @@ export default function Opt({ isCommunity }: Props) {
                         </div>
                         <div className="tail">
                           <cite aria-label="작성자">{content.author_name}</cite>
-                          <time aria-label="작성일">{formatTimeAgo(content.created_at)}</time>
+                          <time aria-label={isCommunity ? '작성일' : '게시일'}>
+                            {formatTimeAgo(content.published_at ?? content.created_at)}
+                          </time>
                         </div>
                       </Anchor>
                     </li>
@@ -708,7 +710,7 @@ export default function Opt({ isCommunity }: Props) {
                     <tr>
                       <th className="long-cell">제목</th>
                       <th className="long-cell">{isCommunity ? '작성자' : '작가'}</th>
-                      <th>{isCommunity ? '작성일' : '출간일'}</th>
+                      <th>{isCommunity ? '작성일' : '게시일'}</th>
                     </tr>
                   </thead>
 
@@ -767,7 +769,7 @@ export default function Opt({ isCommunity }: Props) {
                         <td className="long-cell">
                           <cite>{content.author_name}</cite>
                         </td>
-                        <td>{formatTimeAgo(content.created_at)}</td>
+                        <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -812,7 +814,7 @@ export default function Opt({ isCommunity }: Props) {
                         <div className={styles.tail}>
                           <time>
                             {formatTimeAgo(
-                              content.published_status === 'published' ? content.published_at : content.created_at,
+                              content.published_at ?? content.created_at,
                             )}
                           </time>
                           {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -855,7 +857,7 @@ export default function Opt({ isCommunity }: Props) {
                       <div className={styles.tail}>
                         <time>
                           {formatTimeAgo(
-                            content.published_status === 'published' ? content.published_at : content.created_at,
+                            content.published_at ?? content.created_at,
                           )}
                         </time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -886,7 +888,7 @@ export default function Opt({ isCommunity }: Props) {
                       <cite>{content.author_name}</cite>
                       <time className={styles.item}>
                         {formatTimeAgo(
-                          content.published_status === 'published' ? content.published_at : content.created_at,
+                          content.published_at ?? content.created_at,
                         )}
                       </time>
                       {content.comment_count > 0 ? (
@@ -936,7 +938,7 @@ export default function Opt({ isCommunity }: Props) {
                       <div className={styles.tail}>
                         <time>
                           {formatTimeAgo(
-                            content.published_status === 'published' ? content.published_at : content.created_at,
+                            content.published_at ?? content.created_at,
                           )}
                         </time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
@@ -988,10 +990,8 @@ export default function Opt({ isCommunity }: Props) {
                         </div>
                         <div className="tail">
                           <cite aria-label="작성자">{content.author_name}</cite>
-                          <time aria-label="작성일">
-                            {formatTimeAgo(
-                              content.published_status === 'published' ? content.published_at : content.created_at,
-                            )}
+                          <time aria-label={isCommunity ? '작성일' : '게시일'}>
+                            {formatTimeAgo(content.published_at ?? content.created_at)}
                           </time>
                           <span>
                             <VisibilityOutlinedIcon aria-label="조회수" sx={{ width: 14, height: 14 }} />
@@ -1015,7 +1015,7 @@ export default function Opt({ isCommunity }: Props) {
                     <tr>
                       <th className="long-cell">제목</th>
                       <th className="long-cell">작성자</th>
-                      <th>작성일</th>
+                      <th>{isCommunity ? '작성일' : '게시일'}</th>
                       <th>조회수</th>
                     </tr>
                   </thead>
@@ -1064,7 +1064,7 @@ export default function Opt({ isCommunity }: Props) {
                         </td>
                         <td>
                           {formatTimeAgo(
-                            content.published_status === 'published' ? content.published_at : content.created_at,
+                            content.published_at ?? content.created_at,
                           )}
                         </td>
                         <td>{content.post_count}</td>

@@ -114,6 +114,7 @@ export async function GET(request: Request) {
           const postList = await getPostList({
             siteId: rhizomeData.id,
             siteKey: siteName,
+            siteType: rhizomeData.site_type,
             boardId: board.id,
             page: 1,
             size: getBoardContentSize(board.board_type),

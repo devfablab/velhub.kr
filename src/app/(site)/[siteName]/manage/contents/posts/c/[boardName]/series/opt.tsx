@@ -435,43 +435,14 @@ export default function Opt() {
     setIsUserDialogOpen(false);
   }
 
-  type AgeCheckResponse = {
-    isAdult?: boolean;
-    error?: string;
-  };
-
-  async function handleSelectUser(user: SeriesUserSearchRow) {
+  function handleSelectUser(user: SeriesUserSearchRow) {
     if (!user.isAuthor) {
       setSnackbarMessage('작가가 아니어서 지정할 수 없습니다.');
       return;
     }
 
-    try {
-      const response = await fetch(`/api/identity/portone/status`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as AgeCheckResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '사용자 나이를 확인하지 못했습니다.');
-      }
-
-      if (!result.isAdult) {
-        setSnackbarMessage('만 19세 미만은 선택할 수 없습니다');
-        return;
-      }
-
-      setSelectedUser(user);
-      setIsUserDialogOpen(false);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setSnackbarMessage(unknownError.message || '사용자 나이를 확인하지 못했습니다.');
-      } else {
-        setSnackbarMessage('사용자 나이를 확인하지 못했습니다.');
-      }
-    }
+    setSelectedUser(user);
+    setIsUserDialogOpen(false);
   }
 
   function handleClearUser() {

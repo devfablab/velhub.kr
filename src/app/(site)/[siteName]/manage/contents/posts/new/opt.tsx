@@ -629,7 +629,7 @@ export default function Opt() {
         throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
-      if (ti === 'i') router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
+      if (ti === 'i' || publishTimeMode === 'scheduled') router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
       else router.replace(`/${siteName}/b/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {

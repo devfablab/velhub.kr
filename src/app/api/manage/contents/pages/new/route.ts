@@ -68,6 +68,19 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    const existingPageResult = await supabaseAdmin
+      .from('pages')
+      .select('id', { count: 'exact', head: true })
+      .eq('site_id', rhizome.data.id);
+
+    if (existingPageResult.error) {
+      return Response.json({ error: '기존 페이지를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if ((existingPageResult.count ?? 0) > 0) {
+      return Response.json({ error: '페이지는 사이트당 하나만 만들 수 있습니다.' }, { status: 400 });
+    }
+
     const page = await supabaseAdmin.rpc('create_page_with_board', {
       p_site_id: rhizome.data.id,
       p_user_id: session.stigmaId,

@@ -52,7 +52,7 @@ export async function GET(request: Request) {
 
     const rhizome = await supabaseAdmin
       .from('rhizomes')
-      .select('id, visibility_type, is_shutdown')
+      .select('id, site_type, visibility_type, is_shutdown')
       .eq('site_key', siteName)
       .maybeSingle();
 
@@ -78,6 +78,7 @@ export async function GET(request: Request) {
     const result = await getPostList({
       siteId: rhizome.data.id,
       siteKey: siteName,
+      siteType: rhizome.data.site_type,
       boardId: null,
       page,
       size,

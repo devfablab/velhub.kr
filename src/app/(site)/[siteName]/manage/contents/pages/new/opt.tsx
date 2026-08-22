@@ -459,12 +459,7 @@ export default function Opt() {
 
       const uploadedEditorContent = await uploadEditorImagesIfNeeded();
 
-      const targetUrl =
-        statusResult.hasBoard && statusResult.boardName
-          ? `/api/boards/${statusResult.boardName}/new`
-          : '/api/manage/contents/pages/new';
-
-      const createResponse = await fetch(targetUrl, {
+      const createResponse = await fetch('/api/manage/contents/pages/new', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

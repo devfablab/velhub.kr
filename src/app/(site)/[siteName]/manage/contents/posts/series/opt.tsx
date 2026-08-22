@@ -272,7 +272,9 @@ export default function Opt() {
           throw new Error('블로그 게시판을 찾을 수 없습니다.');
         }
 
-        const response = await fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
+        const boardName = normalizeText(statusResult.boardName) || 'b';
+
+        const response = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
           method: 'GET',
           credentials: 'include',
         });

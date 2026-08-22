@@ -246,6 +246,7 @@ async function getAuthorNameMap(siteId: string, userIds: string[]) {
 
 async function getSeriesFilteredPostList({
   siteId,
+  siteType,
   board,
   page,
   size,
@@ -257,6 +258,7 @@ async function getSeriesFilteredPostList({
   selectedSeries,
 }: {
   siteId: string;
+  siteType: string;
   board: BoardRow;
   page: number;
   size: number;
@@ -285,6 +287,10 @@ async function getSeriesFilteredPostList({
     postsQuery = postsQuery.eq('is_closed', true);
   } else if (sessionCase === 'staff') {
     postsQuery = postsQuery.eq('is_closed', false);
+  } else if (siteType === 'blog' && sessionCase === 'member') {
+    postsQuery = postsQuery
+      .eq('is_closed', false)
+      .or('published_status.eq.published,published_status.eq.unknown');
   } else {
     postsQuery = postsQuery.eq('is_closed', false).eq('published_status', 'published');
   }
@@ -552,6 +558,7 @@ export async function GET(request: Request, context: RouteContext) {
     const result = selectedSeries
       ? await getSeriesFilteredPostList({
           siteId: rhizome.data.id,
+          siteType: rhizome.data.site_type,
           board: boardData,
           page,
           size,
@@ -562,9 +569,10 @@ export async function GET(request: Request, context: RouteContext) {
           includePin,
           selectedSeries,
         })
-      : await getPostList({
+        : await getPostList({
           siteId: rhizome.data.id,
           siteKey: siteName,
+          siteType: rhizome.data.site_type,
           boardId: boardData.id,
           page,
           size,

@@ -1142,6 +1142,11 @@ export default function Opt({ isCommunity }: Props) {
                         {series.is_completed ? ' (완결)' : null}]
                       </small>
                     ) : null}
+                    {content.published_status === 'unknown' &&
+                    content.published_at &&
+                    new Date(content.published_at).getTime() > Date.now() ? (
+                      <small>(예약글)</small>
+                    ) : null}
                     {!isFeedBoard ? <strong>{content.subject}</strong> : null}
                   </h3>
 
@@ -1173,7 +1178,7 @@ export default function Opt({ isCommunity }: Props) {
                         ) : null}
                       </div>
                       <div className={styles.datetime}>
-                        <span aria-label="작성일">
+                        <span aria-label="게시일">
                           {formatDateTimeDetail(content.published_at || content.created_at)}
                         </span>
                         {content.edited_at ? <span>{`(수정됨)`}</span> : null}

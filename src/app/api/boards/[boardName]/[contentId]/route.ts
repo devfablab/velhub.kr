@@ -1076,6 +1076,12 @@ export async function GET(request: Request, context: RouteContext) {
     const postData = post.data;
 
     const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
+    const canViewFutureScheduledPost =
+      isStaff || (rhizomeData.site_type === 'blog' && session.case === 'member');
+    const isFutureScheduledPost =
+      postData.published_status === 'unknown' &&
+      Boolean(postData.published_at) &&
+      new Date(postData.published_at as string).getTime() > Date.now();
 
     if (postData.is_closed === true && isAuthor) {
       return NextResponse.json({ error: '삭제된 글입니다.' }, { status: 400 });
@@ -1087,6 +1093,10 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (postData.published_status === 'draft' && !isAuthor && !canManageContent) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    if (isFutureScheduledPost && !canViewFutureScheduledPost) {
+      return NextResponse.json({ error: '아직 게시되지 않은 예약글입니다.' }, { status: 403 });
     }
 
     const boardSeriesCountResult = await supabaseAdmin
