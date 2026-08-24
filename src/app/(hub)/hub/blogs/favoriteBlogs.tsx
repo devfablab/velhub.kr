@@ -37,15 +37,12 @@ export default function FavoriteBlogs() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Modals state
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
   const [isMoveSitesOpen, setIsMoveSitesOpen] = useState(false);
 
-  // Selection state
   const [selectedSiteIds, setSelectedSiteIds] = useState<Set<string>>(new Set());
 
-  // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<FavoriteBlogRow | null>(null);
   const [dragOverItem, setDragOverItem] = useState<FavoriteBlogRow | null>(null);
 
@@ -75,7 +72,6 @@ export default function FavoriteBlogs() {
     void loadData();
   }, []);
 
-  // --- Folder Management API Wrappers ---
   const handleAddFolder = async (label: string) => {
     await fetch('/api/hub/favorite-folders', {
       method: 'POST',
@@ -116,7 +112,6 @@ export default function FavoriteBlogs() {
     await loadData();
   };
 
-  // --- Drag and Drop ---
   const handleDragStart = (e: React.DragEvent, item: FavoriteBlogRow) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -137,7 +132,6 @@ export default function FavoriteBlogs() {
       return;
     }
 
-    // Reorder locally
     const folderBlogs = blogs.filter((b) => b.folderId === item.folderId).sort((a, b) => a.sortOrder - b.sortOrder);
     const draggedIndex = folderBlogs.findIndex((b) => b.id === draggedItem.id);
     const dropIndex = folderBlogs.findIndex((b) => b.id === item.id);
@@ -145,14 +139,12 @@ export default function FavoriteBlogs() {
     folderBlogs.splice(draggedIndex, 1);
     folderBlogs.splice(dropIndex, 0, draggedItem);
 
-    // Assign new sortOrders
     const updates = folderBlogs.map((b, index) => ({
       id: b.id,
       folder_id: b.folderId,
       sort_order: index,
     }));
 
-    // Optimistic update
     setBlogs((prev) => {
       const newBlogs = [...prev];
       updates.forEach((u) => {
@@ -165,7 +157,6 @@ export default function FavoriteBlogs() {
     setDraggedItem(null);
     setDragOverItem(null);
 
-    // Persist
     await fetch('/api/hub/blog-favorites/move', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -173,7 +164,6 @@ export default function FavoriteBlogs() {
     });
   };
 
-  // --- Render Helpers ---
   const renderSite = (blog: FavoriteBlogRow) => (
     <div
       key={blog.id}

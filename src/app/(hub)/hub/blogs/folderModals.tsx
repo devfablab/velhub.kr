@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from 'react';
 
 type Folder = {
@@ -46,7 +47,6 @@ export default function FolderModals({
     }
   }, [editFolder]);
 
-  // Handle Add Folder
   const handleAddFolder = async () => {
     if (!addLabel.trim() || isLoading) return;
     setIsLoading(true);
@@ -56,7 +56,6 @@ export default function FolderModals({
     setIsLoading(false);
   };
 
-  // Handle Edit Folder
   const handleEditFolder = async () => {
     if (!editLabel.trim() || !editFolder || isLoading) return;
     setIsLoading(true);
@@ -65,7 +64,6 @@ export default function FolderModals({
     setIsLoading(false);
   };
 
-  // Handle Delete Folder
   const handleDeleteFolder = async () => {
     if (!editFolder || isLoading) return;
     setIsLoading(true);
@@ -75,7 +73,6 @@ export default function FolderModals({
     setIsLoading(false);
   };
 
-  // Handle Move Sites
   const handleMoveSites = async () => {
     if (isLoading) return;
     setIsLoading(true);
@@ -86,7 +83,6 @@ export default function FolderModals({
 
   return (
     <>
-      {/* Add Folder Modal */}
       {isAddFolderOpen && (
         <dialog open className="dialog-layer">
           <div className="dialog-content">
@@ -117,7 +113,6 @@ export default function FolderModals({
         </dialog>
       )}
 
-      {/* Edit Folder Modal */}
       {editFolder && !isDeleteConfirmOpen && (
         <dialog open className="dialog-layer">
           <div className="dialog-content">
@@ -153,7 +148,6 @@ export default function FolderModals({
         </dialog>
       )}
 
-      {/* Delete Confirm Modal */}
       {isDeleteConfirmOpen && editFolder && (
         <dialog open className="dialog-layer">
           <div className="dialog-content">
@@ -171,7 +165,6 @@ export default function FolderModals({
         </dialog>
       )}
 
-      {/* Move Sites Modal */}
       {isMoveSitesOpen && (
         <dialog open className="dialog-layer">
           <div className="dialog-content">
@@ -202,7 +195,6 @@ export default function FolderModals({
         </dialog>
       )}
 
-      {/* Background Dim (if any dialog is open) */}
       {(isAddFolderOpen || editFolder || isMoveSitesOpen) && (
         <div
           className="dialog-backdrop"

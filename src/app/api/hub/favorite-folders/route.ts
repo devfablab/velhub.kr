@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  // 1. Get favorite folders
   const { data: folders, error: foldersError } = await supabaseAdmin
     .from('favorite_folders')
     .select('id, label, is_default, created_at')

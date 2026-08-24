@@ -64,7 +64,7 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     if (seriesIds.length > 0) {
       postsQuery = postsQuery.in('series_id', seriesIds);
     } else {
-      postsQuery = null as any; // No series, so no posts
+      postsQuery = null as any;
     }
   }
 

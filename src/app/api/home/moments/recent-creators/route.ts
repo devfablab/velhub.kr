@@ -46,7 +46,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ posts: [] });
     }
 
-    // 신규 작가들의 실제 게시물(posts) 가져오기
     const { data: recentPostsResult, error: postsError } = await supabaseAdmin
       .from('posts')
       .select(
@@ -63,7 +62,6 @@ export async function GET(request: Request) {
 
     if (postsError) throw postsError;
 
-    // 중복 제거: 한 유저당 가장 최근 게시물 1개만 남기기
     const uniqueUserPostsMap = new Map();
     (recentPostsResult || []).forEach((post: any) => {
       if (!uniqueUserPostsMap.has(post.user_id)) {

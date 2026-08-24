@@ -309,7 +309,6 @@ export async function completeAccountWithdrawal({
     }
   }
 
-  // 1. Mark stigma as completed
   const stigmaResult = await supabaseAdmin
     .from('stigmas')
     .update({
@@ -322,14 +321,12 @@ export async function completeAccountWithdrawal({
     throw new Error('계정 탈퇴 확정 처리에 실패했습니다.');
   }
 
-  // 2. Delete row from public.particles table
   const particleDeleteResult = await supabaseAdmin.from('particles').delete().eq('id', authUserId);
 
   if (particleDeleteResult.error) {
     console.error('[account-withdrawal] particle delete error', particleDeleteResult.error);
   }
 
-  // 3. Delete user from Supabase Auth (auth.users)
   const authDeleteResult = await supabaseAdmin.auth.admin.deleteUser(authUserId);
 
   if (authDeleteResult.error) {

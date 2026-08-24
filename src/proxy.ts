@@ -521,7 +521,12 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/hub') ||
     pathname.startsWith('/creator') ||
     pathname.startsWith('/memberships') ||
-    pathname.startsWith('/user')
+    pathname.startsWith('/user') ||
+    pathname.startsWith('/concierge/contact/inquiries') ||
+    pathname.startsWith('/concierge/inquiries') ||
+    pathname.startsWith('/concierge/rights/inquery') ||
+    pathname.startsWith('/concierge/help/inquery') ||
+    pathname.startsWith('/concierge/reports')
   ) {
     if (!isLoggedIn) {
       return redirectWithPath(request, '/auth/sign-in');

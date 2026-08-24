@@ -369,24 +369,36 @@ export async function GET(request: Request) {
     const site = siteResult.data as SiteRow;
     const siteType = isSiteType(site.site_type) ? site.site_type : null;
 
-    const blogResult =
+    let blogType: string | null = null;
+    let blogFontSettings = null;
+
+    const [blogRes, _, session] = await Promise.all([
       siteType === 'blog'
-        ? await supabaseAdmin.from('blogs').select('blog_type').eq('site_id', site.id).maybeSingle()
-        : { data: null, error: null };
+        ? supabaseAdmin
+            .from('blogs')
+            .select(
+              'blog_type, subject_font_family, subject_letter_spacing, subject_line_height, description_font_family, description_letter_spacing, description_line_height, description_font_size, description_margin',
+            )
+            .eq('site_id', site.id)
+            .maybeSingle()
+        : Promise.resolve(null),
+      processVisit(site.id, request),
+      verifySession({ siteId: site.id }),
+    ]);
 
-    if (blogResult.error) {
-      return Response.json({ error: '블로그 유형을 불러오지 못했습니다.' }, { status: 500 });
+    if (siteType === 'blog' && blogRes?.data) {
+      blogType = blogRes.data.blog_type;
+      blogFontSettings = {
+        subjectFontFamily: blogRes.data.subject_font_family,
+        subjectLetterSpacing: blogRes.data.subject_letter_spacing,
+        subjectLineHeight: blogRes.data.subject_line_height,
+        descriptionFontFamily: blogRes.data.description_font_family,
+        descriptionLetterSpacing: blogRes.data.description_letter_spacing,
+        descriptionLineHeight: blogRes.data.description_line_height,
+        descriptionFontSize: blogRes.data.description_font_size,
+        descriptionMargin: blogRes.data.description_margin,
+      };
     }
-
-    const blogType = blogResult.data?.blog_type ?? null;
-
-    const blogFontSettings = await getBlogFontSettings(site.id, siteType);
-
-    await processVisit(site.id, request);
-
-    const session = await verifySession({
-      siteId: site.id,
-    });
 
     if (!session.authUserId) {
       return Response.json({
@@ -413,61 +425,50 @@ export async function GET(request: Request) {
       });
     }
 
-    if ((session.case === 'staff' || session.case === 'member') && session.rhizomeStigmaId) {
-      const checkinResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('last_checkin_at, checkin_count')
-        .eq('id', session.rhizomeStigmaId)
-        .maybeSingle();
-
-      if (checkinResult.error || !checkinResult.data) {
-        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      const checkin = checkinResult.data as CheckinRow;
-      const nowIsoString = new Date().toISOString();
-
-      const nextCheckinCount = shouldIncreaseCheckin(checkin.last_checkin_at)
-        ? (Number(checkin.checkin_count ?? 0) || 0) + 1
-        : Number(checkin.checkin_count ?? 0) || 0;
-
-      const updateCheckinResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .update({
-          last_checkin_at: nowIsoString,
-          checkin_count: nextCheckinCount,
-        })
-        .eq('id', session.rhizomeStigmaId);
-
-      if (updateCheckinResult.error) {
-        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-    }
-
-    const accountResult = await supabaseAdmin
-      .from('stigmas')
-      .select('email, payment_email, user_name, avatar, role')
-      .eq('id', session.stigmaId)
-      .maybeSingle();
+    const [accountResult, rhizomeStigmaResult, sessionClaims, libraryStatus] = await Promise.all([
+      supabaseAdmin
+        .from('stigmas')
+        .select('email, payment_email, user_name, avatar, role')
+        .eq('id', session.stigmaId)
+        .maybeSingle(),
+      session.rhizomeStigmaId
+        ? supabaseAdmin
+            .from('rhizome_stigmas')
+            .select('role, nickname, is_approval, last_checkin_at, checkin_count')
+            .eq('id', session.rhizomeStigmaId)
+            .maybeSingle()
+        : Promise.resolve(null),
+      getSessionClaims(),
+      getLibraryStatus(session.stigmaId),
+    ]);
 
     if (accountResult.error || !accountResult.data) {
       return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
 
+    const account = accountResult.data as AccountRow;
     let membership: MembershipRow | null = null;
+    let checkin: CheckinRow | null = null;
 
-    if (session.rhizomeStigmaId) {
-      const membershipResult = await supabaseAdmin
-        .from('rhizome_stigmas')
-        .select('role, nickname, is_approval')
-        .eq('id', session.rhizomeStigmaId)
-        .maybeSingle();
+    if (rhizomeStigmaResult?.data) {
+      membership = rhizomeStigmaResult.data as MembershipRow;
+      checkin = rhizomeStigmaResult.data as CheckinRow;
 
-      if (membershipResult.error) {
-        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
+      if (session.case === 'staff' || session.case === 'member') {
+        const nowIsoString = new Date().toISOString();
+        const nextCheckinCount = shouldIncreaseCheckin(checkin.last_checkin_at)
+          ? (Number(checkin.checkin_count ?? 0) || 0) + 1
+          : Number(checkin.checkin_count ?? 0) || 0;
+
+        supabaseAdmin
+          .from('rhizome_stigmas')
+          .update({
+            last_checkin_at: nowIsoString,
+            checkin_count: nextCheckinCount,
+          })
+          .eq('id', session.rhizomeStigmaId)
+          .then();
       }
-
-      membership = (membershipResult.data ?? null) as MembershipRow | null;
     }
 
     let siteRole: string | null = null;
@@ -491,85 +492,52 @@ export async function GET(request: Request) {
             .select('id')
             .eq('site_id', site.id)
             .maybeSingle();
+          if (communityResult.data) {
+            const communityManageRoleResult = await supabaseAdmin
+              .from('community_manage_role')
+              .select('role, board_id')
+              .eq('community_id', communityResult.data.id)
+              .eq('manager_id', session.rhizomeStigmaId);
 
-          if (communityResult.error || !communityResult.data) {
-            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-          }
+            const communityManageRoles = (communityManageRoleResult.data ?? []) as CommunityManageRoleRow[];
+            const boardIds = communityManageRoles.map((r) => normalizeText(r.board_id)).filter(Boolean);
 
-          const communityManageRoleResult = await supabaseAdmin
-            .from('community_manage_role')
-            .select('role, board_id')
-            .eq('community_id', communityResult.data.id)
-            .eq('manager_id', session.rhizomeStigmaId);
+            let boardLabelMap = new Map();
+            if (boardIds.length > 0) {
+              const boardsResult = await supabaseAdmin
+                .from('boards')
+                .select('id, board_label')
+                .eq('site_id', site.id)
+                .in('id', boardIds);
+              boardLabelMap = new Map(
+                ((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, normalizeText(board.board_label)]),
+              );
+            }
 
-          if (communityManageRoleResult.error) {
-            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-          }
+            const roles = communityManageRoles
+              .map((r) => ({
+                role: normalizeText(r.role).toLowerCase(),
+                boardLabel: boardLabelMap.get(normalizeText(r.board_id)) || null,
+              }))
+              .filter(({ role }) => Boolean(role));
 
-          const communityManageRoles = (communityManageRoleResult.data ?? []) as CommunityManageRoleRow[];
-          const boardIds = communityManageRoles
-            .map((communityManageRole) => normalizeText(communityManageRole.board_id))
-            .filter(Boolean);
-          const boardsResult = boardIds.length
-            ? await supabaseAdmin.from('boards').select('id, board_label').eq('site_id', site.id).in('id', boardIds)
-            : { data: [], error: null };
+            const primaryRole = [...roles].sort(
+              (a, b) => getCommunityRolePriority(b.role) - getCommunityRolePriority(a.role),
+            )[0];
 
-          if (boardsResult.error) {
-            return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-          }
-
-          const boardLabelMap = new Map(
-            ((boardsResult.data ?? []) as BoardRow[]).map((board) => [board.id, normalizeText(board.board_label)]),
-          );
-          const roles = communityManageRoles
-            .map((communityManageRole) => ({
-              role: normalizeText(communityManageRole.role).toLowerCase(),
-              boardLabel: boardLabelMap.get(normalizeText(communityManageRole.board_id)) || null,
-            }))
-            .filter(({ role }) => Boolean(role));
-          const primaryRole = [...roles].sort(
-            (firstRole, secondRole) =>
-              getCommunityRolePriority(secondRole.role) - getCommunityRolePriority(firstRole.role),
-          )[0];
-
-          siteRole = primaryRole?.role || 'member';
-          siteRoleLabels = roles.map(({ role, boardLabel }) => getSiteRoleLabel(role, boardLabel));
-
-          if (siteRoleLabels.length === 0) {
-            siteRoleLabels = [getSiteRoleLabel(siteRole)];
+            siteRole = primaryRole?.role || 'member';
+            siteRoleLabels = roles.map(({ role, boardLabel }) => getSiteRoleLabel(role, boardLabel));
+            if (siteRoleLabels.length === 0) siteRoleLabels = [getSiteRoleLabel(siteRole)];
           }
         }
       }
     }
 
-    const sessionClaims = await getSessionClaims();
+    let inviteHref: string | null = null;
     const inviteEmail = normalizeText(sessionClaims?.email).toLowerCase();
 
     if (!membership && inviteEmail) {
       const nowIsoString = new Date().toISOString();
-
-      const inviteResult = await supabaseAdmin
-        .from('invite')
-        .select('id')
-        .eq('site_id', site.id)
-        .eq('email', inviteEmail)
-        .in('role', ['member', 'manager'])
-        .eq('status', 'pending')
-        .is('cancelled_at', null)
-        .is('joined_at', null)
-        .gt('expires_at', nowIsoString)
-        .limit(1);
-
-      if (inviteResult.error) {
-        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-    }
-
-    let inviteHref: string | null = null;
-
-    if (!membership && inviteEmail) {
-      const nowIsoString = new Date().toISOString();
-
       const inviteResult = await supabaseAdmin
         .from('invite')
         .select('token')
@@ -584,11 +552,7 @@ export async function GET(request: Request) {
         .limit(1)
         .maybeSingle();
 
-      if (inviteResult.error) {
-        return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      if (inviteResult.data) {
+      if (inviteResult.data?.token) {
         inviteHref =
           siteType === 'blog'
             ? `/${site.site_key}/invite-blog/${inviteResult.data.token}`
@@ -596,7 +560,6 @@ export async function GET(request: Request) {
       }
     }
 
-    const account = accountResult.data as AccountRow;
     const isApproval = membership?.is_approval === true ? true : membership?.is_approval === false ? false : null;
 
     return Response.json({
@@ -621,13 +584,12 @@ export async function GET(request: Request) {
       siteLabel: site.site_label,
       profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
       profileLogoUrl: getPublicUrl('site-logo', site.profile_logo),
-      ...(await getLibraryStatus(session.stigmaId)),
+      ...libraryStatus,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message || '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
-
     return Response.json({ error: '헤더 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 }

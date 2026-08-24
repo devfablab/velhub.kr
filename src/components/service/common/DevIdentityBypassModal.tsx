@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -49,7 +50,6 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
     }
   }, [bypass, identities.length]);
 
-  // Reset state when opened/closed
   useEffect(() => {
     if (!open) {
       setBypass(false);
@@ -86,7 +86,8 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
                     control={<Radio size="small" />}
                     label={
                       <Typography variant="body2" color={m.used ? 'text.secondary' : 'text.primary'}>
-                        {m.name} / {m.birth_date} / {m.gender} {m.used && <strong style={{ color: 'red' }}>(사용됨)</strong>}
+                        {m.name} / {m.birth_date} / {m.gender}{' '}
+                        {m.used && <strong style={{ color: 'red' }}>(사용됨)</strong>}
                       </Typography>
                     }
                   />
@@ -100,11 +101,7 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
         <Button onClick={onClose} color="inherit">
           취소
         </Button>
-        <Button
-          onClick={handleSubmit}
-          className="button action"
-          disabled={bypass && !selectedTxId}
-        >
+        <Button onClick={handleSubmit} className="button action" disabled={bypass && !selectedTxId}>
           {bypass ? '가짜 데이터로 인증하기' : '원래대로 진행'}
         </Button>
       </DialogActions>

@@ -62,7 +62,7 @@ export async function GET() {
       .eq('user_id', session.stigmaId)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
-      .limit(500); // Increased limit to 500 for folder management
+      .limit(500);
 
     if (favoritesResult.error) {
       return Response.json({ error: '즐겨찾는 블로그 목록을 불러오지 못했습니다.' }, { status: 500 });

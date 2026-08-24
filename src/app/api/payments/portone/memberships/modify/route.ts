@@ -182,9 +182,6 @@ export async function POST(request: Request) {
   const existingMemberships = existingMembershipResult.data ?? [];
   const existingTypes = new Set(existingMemberships.map((membership) => membership.membership_type));
 
-  // Find which existing memberships need to be canceled and refunded.
-  // If the new purchase contains creator/owner/all_in_one, we cancel existing creator/owner/all_in_one.
-  // If it contains affetto, we cancel existing affetto.
   const hasCreatorFamily = normalizedPurchases.some((p) => ['owner', 'creator', 'all_in_one'].includes(p.type));
   const hasAffettoFamily = normalizedPurchases.some((p) => p.type === 'affetto');
 
@@ -193,11 +190,6 @@ export async function POST(request: Request) {
     if (hasAffettoFamily && m.membership_type === 'affetto') return true;
     return false;
   });
-
-  if (membershipsToCancel.length === 0) {
-    // If there's nothing to cancel, this should just be a normal start.
-    // But we'll allow it just to proceed.
-  }
 
   const needsOwner = normalizedPurchases.some(
     (purchase) => purchase.type === 'owner' || purchase.type === 'all_in_one',

@@ -622,7 +622,6 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const rhizomeData = rhizome.data;
 
-    // 블로그 글 수정 화면에서는 기존 출간·예약 시각을 바꾸지 않습니다.
     if (rhizomeData.site_type === 'blog') {
       action = 'update';
     }

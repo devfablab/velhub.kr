@@ -202,7 +202,11 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
   const [isGuardianVerifying, setIsGuardianVerifying] = useState(false);
   const [guardianErrorMessage, setGuardianErrorMessage] = useState('');
   const [bypassModalOpen, setBypassModalOpen] = useState(false);
-  const [pendingGuardianRequest, setPendingGuardianRequest] = useState<{ storeId: string; channelKey: string; identityVerificationId: string; } | null>(null);
+  const [pendingGuardianRequest, setPendingGuardianRequest] = useState<{
+    storeId: string;
+    channelKey: string;
+    identityVerificationId: string;
+  } | null>(null);
   const guardianDocumentRef = useRef<HTMLInputElement>(null);
 
   const isApproved = settlement?.status === 'approved';
@@ -238,7 +242,6 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
     setIsGuardianVerifying(true);
     setGuardianErrorMessage('');
     try {
-      // Step 1: Get PortOne request params
       const startRes = await fetch('/api/identity/portone/guardian', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -295,7 +298,11 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
     }
   };
 
-  const executeGuardianPortOne = async (startData: { storeId: string; channelKey: string; identityVerificationId: string; }) => {
+  const executeGuardianPortOne = async (startData: {
+    storeId: string;
+    channelKey: string;
+    identityVerificationId: string;
+  }) => {
     const PortOne = (await import('@portone/browser-sdk/v2')).default;
     const result = await PortOne.requestIdentityVerification(startData);
     const identityVerificationId = result?.identityVerificationId ?? startData.identityVerificationId;
@@ -841,7 +848,10 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
       />
       <DevIdentityBypassModal
         open={bypassModalOpen}
-        onClose={() => { setBypassModalOpen(false); setIsGuardianVerifying(false); }}
+        onClose={() => {
+          setBypassModalOpen(false);
+          setIsGuardianVerifying(false);
+        }}
         onConfirm={(bypass, mockTxId) => void handleGuardianBypassConfirm(bypass, mockTxId)}
       />
     </>

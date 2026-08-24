@@ -23,7 +23,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  // Validate ownership
   const folderId = (await params).folderId;
   const { data: folder, error: checkError } = await supabaseAdmin
     .from('favorite_folders')
@@ -60,7 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const supabaseAdmin = getSupabaseAdmin();
 
   const folderId = (await params).folderId;
-  // Validate ownership
+
   const { data: folder, error: checkError } = await supabaseAdmin
     .from('favorite_folders')
     .select('id, is_default')
@@ -72,7 +71,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: 'Folder not found or unauthorized' }, { status: 404 });
   }
 
-  // Delete the folder. ON DELETE SET NULL will handle moving items to the default folder.
   const { error } = await supabaseAdmin.from('favorite_folders').delete().eq('id', folderId);
 
   if (error) {

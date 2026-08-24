@@ -52,44 +52,58 @@ export async function GET(request: Request) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    const owner = await supabaseAdmin.from('stigmas').select('id').eq('id', rhizome.data.owner_id).maybeSingle();
+    const siteId = rhizome.data.id;
+    const ownerId = rhizome.data.owner_id;
+    const siteType = rhizome.data.site_type;
 
-    if (owner.error) {
-      return Response.json({ error: '운영자 정보를 불러오지 못했습니다.' }, { status: 500 });
+    const promises: Promise<any>[] = [];
+
+    if (ownerId) {
+      promises.push(
+        supabaseAdmin
+          .from('chorogons')
+          .select('birth_date, birth_date_dummy, identity_verified_at')
+          .eq('user_id', ownerId)
+          .maybeSingle(),
+      );
+    } else {
+      promises.push(Promise.resolve(null));
     }
+
+    promises.push(
+      supabaseAdmin
+        .from('boards')
+        .select('id, board_type, board_key, board_label, sort_order')
+        .eq('site_id', siteId)
+        .order('sort_order', { ascending: true }),
+    );
+
+    if (siteType === 'community') {
+      promises.push(
+        supabaseAdmin
+          .from('communities')
+          .select('join_accept_status, join_accept_start_day, join_accept_end_day')
+          .eq('site_id', siteId)
+          .maybeSingle(),
+      );
+    } else {
+      promises.push(Promise.resolve(null));
+    }
+
+    const [chorogonRes, boardsRes, communityRes] = await Promise.all(promises);
 
     let purchaseAvailable = false;
-
-    if (owner.data?.id) {
-      const chorogon = await supabaseAdmin
-        .from('chorogons')
-        .select('birth_date, birth_date_dummy, identity_verified_at')
-        .eq('user_id', owner.data.id)
-        .maybeSingle();
-
-      if (chorogon.error) {
-        return Response.json({ error: '운영자 인증 정보를 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      if (chorogon.data?.identity_verified_at) {
-        const birthDate = getChorogonBirthDate(chorogon.data);
-
-        purchaseAvailable = isAdult(birthDate);
-      }
+    if (chorogonRes && !chorogonRes.error && chorogonRes.data?.identity_verified_at) {
+      const birthDate = getChorogonBirthDate(chorogonRes.data);
+      purchaseAvailable = isAdult(birthDate);
     }
 
-    const boards = await supabaseAdmin
-      .from('boards')
-      .select('id, board_type, board_key, board_label, sort_order')
-      .eq('site_id', rhizome.data.id)
-      .order('sort_order', { ascending: true });
-
-    if (boards.error) {
+    if (boardsRes?.error) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardRows = boards.data ?? [];
-    const pageBoardIds = boardRows.filter((board) => board.board_type === 'page').map((board) => board.id);
+    const boardRows = boardsRes?.data ?? [];
+    const pageBoardIds = boardRows.filter((board: any) => board.board_type === 'page').map((board: any) => board.id);
     const pageSubjectMap = new Map<string, string>();
     const pageSlugMap = new Map<string, string>();
 
@@ -100,17 +114,14 @@ export async function GET(request: Request) {
         .in('board_id', pageBoardIds)
         .order('sort_order', { ascending: true });
 
-      if (pages.error) {
-        return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
-      }
-
-      for (const page of pages.data ?? []) {
-        if (!pageSubjectMap.has(page.board_id)) {
-          pageSubjectMap.set(page.board_id, page.subject ?? '');
-        }
-
-        if (!pageSlugMap.has(page.board_id)) {
-          pageSlugMap.set(page.board_id, page.slug ?? '');
+      if (!pages.error) {
+        for (const page of pages.data ?? []) {
+          if (!pageSubjectMap.has(page.board_id)) {
+            pageSubjectMap.set(page.board_id, page.subject ?? '');
+          }
+          if (!pageSlugMap.has(page.board_id)) {
+            pageSlugMap.set(page.board_id, page.slug ?? '');
+          }
         }
       }
     }
@@ -119,18 +130,10 @@ export async function GET(request: Request) {
     let joinAcceptStartDay: string | null = null;
     let joinAcceptEndDay: string | null = null;
 
-    if (rhizome.data.site_type === 'community') {
-      const community = await supabaseAdmin
-        .from('communities')
-        .select('join_accept_status, join_accept_start_day, join_accept_end_day')
-        .eq('site_id', rhizome.data.id)
-        .maybeSingle();
-
-      if (!community.error && community.data) {
-        joinAcceptStatus = community.data.join_accept_status;
-        joinAcceptStartDay = community.data.join_accept_start_day;
-        joinAcceptEndDay = community.data.join_accept_end_day;
-      }
+    if (communityRes && !communityRes.error && communityRes.data) {
+      joinAcceptStatus = communityRes.data.join_accept_status;
+      joinAcceptStartDay = communityRes.data.join_accept_start_day;
+      joinAcceptEndDay = communityRes.data.join_accept_end_day;
     }
 
     return Response.json({
@@ -147,7 +150,7 @@ export async function GET(request: Request) {
         join_accept_start_day: joinAcceptStartDay,
         join_accept_end_day: joinAcceptEndDay,
       },
-      menus: boardRows.map((board) => ({
+      menus: boardRows.map((board: any) => ({
         id: board.id,
         board_type: board.board_type,
         board_label: board.board_label,
@@ -166,7 +169,6 @@ export async function GET(request: Request) {
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message || '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
-
     return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
   }
 }

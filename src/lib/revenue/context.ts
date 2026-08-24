@@ -67,7 +67,6 @@ async function getRevenueIdentity() {
     stigmaId: stigma.id,
     isAuthor: authorState.isAuthor,
     isSettlementError: authorState.isSettlementError,
-    // 현재 결제 분배 데이터는 auth user id를 사용합니다. 이전 데이터와의 호환을 위해 stigma id도 함께 조회합니다.
     recipientUserIds: [...new Set([sessionClaims.userId, stigma.id])],
   };
 }
