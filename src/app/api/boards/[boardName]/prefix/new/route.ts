@@ -57,7 +57,7 @@ export async function POST(request: Request, context: RouteContext) {
 
     const board = await supabaseAdmin
       .from('boards')
-      .select('id, post_type')
+      .select('id, board_type, post_type')
       .eq('site_id', rhizome.data.id)
       .eq('board_key', normalizedBoardName)
       .maybeSingle();
@@ -68,6 +68,10 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (rhizome.data.site_type !== 'community') {
       return Response.json({ error: '커뮤니티에서만 말머리를 사용할 수 있습니다.' }, { status: 403 });
+    }
+
+    if (board.data.board_type === 'youtube') {
+      return Response.json({ error: '유튜브 게시판에서는 말머리를 사용할 수 없습니다.' }, { status: 403 });
     }
 
     if (board.data.post_type !== 'prefix') {

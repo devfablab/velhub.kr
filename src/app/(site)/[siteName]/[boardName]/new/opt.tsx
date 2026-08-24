@@ -634,6 +634,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
+  const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
 
@@ -823,7 +824,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
         }
 
         const nextBoardType = boardResult.board?.board_type ?? 'basic';
-        const nextPostType = boardResult.board?.post_type ?? 'none';
+        const nextPostType = nextBoardType === 'youtube' ? 'none' : (boardResult.board?.post_type ?? 'none');
         const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
 
         setBoardType(nextBoardType);
@@ -1732,14 +1733,14 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
           youtubeUrl: isYoutubeBoard ? youtubeUrl : null,
           youtubeCreatedAt: isYoutubeBoard && youtubeCreatedAt ? youtubeCreatedAt : null,
           images: isGalleryBoard || isFeedBoard ? uploadedImages : [],
-          poll: isBasicBoard ? pollPayload : null,
+          poll: canUsePollAndDraw ? pollPayload : null,
           seriesKey: selectedSeriesKey || null,
           prefixId: selectedPrefixId || null,
           isComment,
           isPin: canPinPost ? isPin : false,
-          drawType: isBasicBoard ? drawPayload.drawType : null,
-          drawLimit: isBasicBoard ? drawPayload.drawLimit : null,
-          drawEndsAt: isBasicBoard ? drawPayload.drawEndsAt : null,
+          drawType: canUsePollAndDraw ? drawPayload.drawType : null,
+          drawLimit: canUsePollAndDraw ? drawPayload.drawLimit : null,
+          drawEndsAt: canUsePollAndDraw ? drawPayload.drawEndsAt : null,
         }),
       });
 
@@ -2042,7 +2043,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                         </div>
                       ) : null}
 
-                      {isBasicBoard ? (
+                      {canUsePollAndDraw ? (
                         <div className={styles.image}>
                           <button
                             type="button"
@@ -2055,7 +2056,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                         </div>
                       ) : null}
 
-                      {isBasicBoard ? (
+                      {canUsePollAndDraw ? (
                         <div className={styles.image}>
                           <button
                             type="button"

@@ -687,9 +687,9 @@ export async function PATCH(request: Request, context: RouteContext) {
     let resolvedDrawEndsAt: string | null = null;
 
     if (requestedDrawType) {
-      if (rhizomeData.site_type !== 'community' || board.data.board_type !== 'basic') {
+      if (rhizomeData.site_type !== 'community' || board.data.board_type === 'page') {
         return Response.json(
-          { error: '커뮤니티 기본 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' },
+          { error: '커뮤니티 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' },
           { status: 400 },
         );
       }
@@ -813,6 +813,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       categoryIds = categoryKeys.map((categoryKey) => categoryMap.get(categoryKey) as string);
     }
 
+    if (rhizomeData.site_type === 'community' && board.data.board_type === 'youtube' && (seriesKey || prefixId)) {
+      return Response.json({ error: '유튜브 게시판에서는 연재와 말머리를 사용할 수 없습니다.' }, { status: 400 });
+    }
+
     let seriesId: string | null = currentPost.data.series_id ?? null;
 
     if (board.data.post_type === 'series' || board.data.post_type === 'both') {
@@ -891,7 +895,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     let finalYoutubeId = youtubeId || null;
     let finalYoutubeCreatedAt = youtubeCreatedAt || null;
     let finalImages = images.length > 0 ? images : null;
-    let finalPoll = poll && typeof poll === 'object' ? poll : null;
+    const finalPoll = poll && typeof poll === 'object' ? poll : null;
 
     if (board.data.board_type === 'basic') {
       finalSummary = null;
@@ -916,7 +920,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       finalYoutubeUrl = null;
       finalYoutubeId = null;
       finalYoutubeCreatedAt = null;
-      finalPoll = null;
       finalContentSimple = null;
 
       if (action !== 'draft') {
@@ -935,7 +938,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       finalContentMarkdown = null;
       finalContentSimple = null;
       finalImages = null;
-      finalPoll = null;
 
       if (action !== 'draft') {
         if (!finalSubject) {
@@ -970,7 +972,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       finalYoutubeUrl = null;
       finalYoutubeId = null;
       finalYoutubeCreatedAt = null;
-      finalPoll = null;
       finalSubject = buildFeedSubject(finalContentSimple ?? '');
 
       if (action !== 'draft') {

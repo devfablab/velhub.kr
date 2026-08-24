@@ -1111,14 +1111,23 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardSeriesCount = boardSeriesCountResult.count ?? 0;
 
-    const paidContentAccess = await getPaidContentAccess({
-      supabaseAdmin,
-      stigmaId: session.stigmaId,
-      siteId: rhizomeData.id,
-      boardId: boardData.id,
-      seriesId: postData.series_id,
-      postId: postData.id,
-    });
+    const isYoutubeCommunityBoard = rhizomeData.site_type === 'community' && boardData.board_type === 'youtube';
+    const paidContentAccess: PaidContentAccess = isYoutubeCommunityBoard
+      ? {
+          is_purchase_required: false,
+          purchase_post_price: 0,
+          has_subscription_series: false,
+          has_purchase_post: false,
+          can_view_paid_content: true,
+        }
+      : await getPaidContentAccess({
+          supabaseAdmin,
+          stigmaId: session.stigmaId,
+          siteId: rhizomeData.id,
+          boardId: boardData.id,
+          seriesId: postData.series_id,
+          postId: postData.id,
+        });
 
     const shouldShowPaidPreview = paidContentAccess.is_purchase_required && !paidContentAccess.can_view_paid_content;
 
@@ -1238,7 +1247,7 @@ export async function GET(request: Request, context: RouteContext) {
       href: string;
     }> = [];
 
-    if (postData.series_id) {
+    if (postData.series_id && !isYoutubeCommunityBoard) {
       const seriesResult = await supabaseAdmin
         .from('board_series')
         .select(
@@ -1288,7 +1297,7 @@ export async function GET(request: Request, context: RouteContext) {
     let prefixes: Array<{ id: string; prefix_label: string }> = [];
     let prefixLabel: string | null = null;
 
-    if (boardData.post_type === 'prefix') {
+    if (boardData.post_type === 'prefix' && !isYoutubeCommunityBoard) {
       const prefixResult = await supabaseAdmin
         .from('board_prefixes')
         .select('id, prefix_label')
@@ -1341,7 +1350,8 @@ export async function GET(request: Request, context: RouteContext) {
     const postCount = typeof postData.post_count === 'number' ? Number(postData.post_count) : 0;
     const thumbnailImageUrl = getPublicPostImageUrl(postData.thumbnail_image);
     const isPostDonationAvailable =
-      rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id));
+      !isYoutubeCommunityBoard &&
+      (rhizomeData.site_type === 'blog' || (boardSeriesCount >= 2 && Boolean(postData.series_id)));
 
     return NextResponse.json({
       board: boardData,

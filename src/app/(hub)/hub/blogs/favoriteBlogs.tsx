@@ -61,8 +61,8 @@ export default function FavoriteBlogs() {
 
       setBlogs(Array.isArray(blogsResult.blogs) ? blogsResult.blogs : []);
       setFolders(foldersResult.folders || []);
-    } catch (e: any) {
-      setErrorMessage(e.message || '오류가 발생했습니다.');
+    } catch (unknownError) {
+      setErrorMessage(unknownError instanceof Error ? unknownError.message : '오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -112,20 +112,20 @@ export default function FavoriteBlogs() {
     await loadData();
   };
 
-  const handleDragStart = (e: React.DragEvent, item: FavoriteBlogRow) => {
+  const handleDragStart = (event: React.DragEvent, item: FavoriteBlogRow) => {
     setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent, item: FavoriteBlogRow) => {
-    e.preventDefault();
+  const handleDragOver = (event: React.DragEvent, item: FavoriteBlogRow) => {
+    event.preventDefault();
     if (draggedItem && draggedItem.folderId === item.folderId && draggedItem.id !== item.id) {
       setDragOverItem(item);
     }
   };
 
-  const handleDrop = async (e: React.DragEvent, item: FavoriteBlogRow) => {
-    e.preventDefault();
+  const handleDrop = async (event: React.DragEvent, item: FavoriteBlogRow) => {
+    event.preventDefault();
     if (!draggedItem || draggedItem.folderId !== item.folderId || draggedItem.id === item.id) {
       setDraggedItem(null);
       setDragOverItem(null);
@@ -177,9 +177,9 @@ export default function FavoriteBlogs() {
       <input
         type="checkbox"
         checked={selectedSiteIds.has(blog.id)}
-        onChange={(e) => {
+        onChange={(event) => {
           const newSet = new Set(selectedSiteIds);
-          if (e.target.checked) newSet.add(blog.id);
+          if (event.target.checked) newSet.add(blog.id);
           else newSet.delete(blog.id);
           setSelectedSiteIds(newSet);
         }}

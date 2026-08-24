@@ -2,6 +2,35 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type SiteRow = {
+  site_key: string;
+  site_label: string;
+  summary: string | null;
+  site_type: string;
+  profile_picture: string | null;
+  promotion_image: string | null;
+  created_at: string;
+  post_count: Array<{ count: number }> | null;
+};
+
+type PostRow = {
+  subject: string | null;
+  summary: string | null;
+  content_html: string | null;
+  images: Array<{ path: string }> | null;
+  published_at: string | null;
+  slug: number | null;
+  user_id: string;
+  site: Array<Pick<SiteRow, 'site_key' | 'site_label' | 'site_type' | 'profile_picture' | 'promotion_image'>>;
+  board: Array<{ board_key: string; board_type: string }>;
+};
+
+type StigmaRow = {
+  id: string;
+  user_name: string | null;
+  avatar: string | null;
+};
+
 function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
   if (!normalizedPath) return null;
@@ -58,21 +87,22 @@ export async function GET(request: Request) {
     if (sitesResult.error) throw sitesResult.error;
     if (postsResult.error) throw postsResult.error;
 
-    const userIds = Array.from(new Set((postsResult.data || []).map((p: any) => p.user_id).filter(Boolean)));
-    const stigmasMap = new Map();
+    const postRows = (postsResult.data ?? []) as PostRow[];
+    const userIds = Array.from(new Set(postRows.map((post) => post.user_id).filter(Boolean)));
+    const stigmasMap = new Map<string, StigmaRow>();
 
     if (userIds.length > 0) {
       const { data: stigmas } = await supabaseAdmin.from('stigmas').select('id, user_name, avatar').in('id', userIds);
 
       if (stigmas) {
-        stigmas.forEach((s) => stigmasMap.set(s.id, s));
+        stigmas.forEach((stigma) => stigmasMap.set(stigma.id, stigma as StigmaRow));
       }
     }
 
     const { decrypt } = await import('@/lib/encryption/decrypt');
 
-    const sites = (sitesResult.data || [])
-      .map((site: any) => ({
+    const sites = ((sitesResult.data ?? []) as SiteRow[])
+      .map((site) => ({
         site_key: site.site_key,
         site_label: site.site_label,
         summary: site.summary,
@@ -84,8 +114,10 @@ export async function GET(request: Request) {
       }))
       .slice(0, limit);
 
-    const posts = (postsResult.data || [])
-      .map((post: any) => {
+    const posts = postRows
+      .map((post) => {
+        const site = post.site[0] ?? null;
+        const board = post.board[0] ?? null;
         const stigma = stigmasMap.get(post.user_id);
         let authorName = '';
         if (stigma?.user_name) {
@@ -97,14 +129,14 @@ export async function GET(request: Request) {
         }
 
         return {
-          site_key: post.site?.site_key,
-          site_label: post.site?.site_label,
-          site_type: post.site?.site_type,
-          profile_picture: getPublicImageUrl('avatar', post.site?.profile_picture),
-          promotion_image: getPublicImageUrl('promotion-image', post.site?.promotion_image),
+          site_key: site?.site_key,
+          site_label: site?.site_label,
+          site_type: site?.site_type,
+          profile_picture: getPublicImageUrl('avatar', site?.profile_picture),
+          promotion_image: getPublicImageUrl('promotion-image', site?.promotion_image),
           slug: post.slug,
-          board_key: post.board?.board_key,
-          board_type: post.board?.board_type,
+          board_key: board?.board_key,
+          board_type: board?.board_type,
           author_name: authorName,
           author_avatar: getPublicImageUrl('avatar', stigma?.avatar),
           published_at: post.published_at,

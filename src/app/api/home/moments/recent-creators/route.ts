@@ -2,6 +2,33 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type PostRow = {
+  subject: string | null;
+  summary: string | null;
+  content_html: string | null;
+  images: Array<{ path: string }> | null;
+  published_at: string | null;
+  slug: number | null;
+  user_id: string;
+  post_count: number | null;
+  thumbnail_image: string | null;
+  youtube_id: string | null;
+  site: Array<{
+    site_key: string;
+    site_label: string;
+    site_type: string;
+    profile_picture: string | null;
+    promotion_image: string | null;
+  }>;
+  board: Array<{ board_key: string; board_type: string }>;
+};
+
+type StigmaRow = {
+  id: string;
+  user_name: string | null;
+  avatar: string | null;
+};
+
 function getPublicImageUrl(bucket: string, path: string | null | undefined) {
   const normalizedPath = normalizeText(path);
   if (!normalizedPath) return null;
@@ -62,16 +89,16 @@ export async function GET(request: Request) {
 
     if (postsError) throw postsError;
 
-    const uniqueUserPostsMap = new Map();
-    (recentPostsResult || []).forEach((post: any) => {
+    const uniqueUserPostsMap = new Map<string, PostRow>();
+    ((recentPostsResult ?? []) as PostRow[]).forEach((post) => {
       if (!uniqueUserPostsMap.has(post.user_id)) {
         uniqueUserPostsMap.set(post.user_id, post);
       }
     });
     const uniqueRecentPosts = Array.from(uniqueUserPostsMap.values());
 
-    const postUserIds = Array.from(new Set(uniqueRecentPosts.map((p: any) => p.user_id).filter(Boolean)));
-    const stigmasMap = new Map();
+    const postUserIds = Array.from(new Set(uniqueRecentPosts.map((post) => post.user_id).filter(Boolean)));
+    const stigmasMap = new Map<string, StigmaRow>();
 
     if (postUserIds.length > 0) {
       const { data: stigmas } = await supabaseAdmin
@@ -80,13 +107,15 @@ export async function GET(request: Request) {
         .in('id', postUserIds);
 
       if (stigmas) {
-        stigmas.forEach((s) => stigmasMap.set(s.id, s));
+        stigmas.forEach((stigma) => stigmasMap.set(stigma.id, stigma as StigmaRow));
       }
     }
 
     const { decrypt } = await import('@/lib/encryption/decrypt');
 
-    const posts = uniqueRecentPosts.map((post: any) => {
+    const posts = uniqueRecentPosts.map((post) => {
+      const site = post.site[0] ?? null;
+      const board = post.board[0] ?? null;
       const stigma = stigmasMap.get(post.user_id);
       let authorName = '';
       if (stigma?.user_name) {
@@ -98,14 +127,14 @@ export async function GET(request: Request) {
       }
 
       return {
-        site_key: post.site?.site_key,
-        site_label: post.site?.site_label,
-        site_type: post.site?.site_type,
-        profile_picture: getPublicImageUrl('avatar', post.site?.profile_picture),
-        promotion_image: getPublicImageUrl('promotion-image', post.site?.promotion_image),
+        site_key: site?.site_key,
+        site_label: site?.site_label,
+        site_type: site?.site_type,
+        profile_picture: getPublicImageUrl('avatar', site?.profile_picture),
+        promotion_image: getPublicImageUrl('promotion-image', site?.promotion_image),
         slug: post.slug,
-        board_key: post.board?.board_key,
-        board_type: post.board?.board_type,
+        board_key: board?.board_key,
+        board_type: board?.board_type,
         author_name: authorName,
         author_avatar: getPublicImageUrl('avatar', stigma?.avatar),
         published_at: post.published_at,

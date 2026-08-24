@@ -170,6 +170,10 @@ async function getPurchaseTarget({
 
   const board = boardResult.data as BoardRow;
 
+  if (site.site_type === 'community' && !['basic', 'gallery'].includes(board.board_type)) {
+    throw new Error('일반 또는 갤러리 게시판의 연재 글만 구매할 수 있습니다.');
+  }
+
   if (!contentId || !isNumericSlug(contentId)) {
     throw new Error('contentId가 유효하지 않습니다.');
   }

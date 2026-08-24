@@ -2,6 +2,14 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
+type BoardRow = {
+  id: string;
+  board_type: string;
+  board_key: string;
+  board_label: string;
+  sort_order: number;
+};
+
 function onlyDigits(value: string | null | undefined) {
   return normalizeText(value).replace(/\D/g, '');
 }
@@ -56,41 +64,38 @@ export async function GET(request: Request) {
     const ownerId = rhizome.data.owner_id;
     const siteType = rhizome.data.site_type;
 
-    const promises: Promise<any>[] = [];
-
-    if (ownerId) {
-      promises.push(
-        supabaseAdmin
-          .from('chorogons')
-          .select('birth_date, birth_date_dummy, identity_verified_at')
-          .eq('user_id', ownerId)
-          .maybeSingle(),
-      );
-    } else {
-      promises.push(Promise.resolve(null));
-    }
-
-    promises.push(
-      supabaseAdmin
+    const chorogonPromise = ownerId
+      ? (async () => {
+          return await supabaseAdmin
+            .from('chorogons')
+            .select('birth_date, birth_date_dummy, identity_verified_at')
+            .eq('user_id', ownerId)
+            .maybeSingle();
+        })()
+      : Promise.resolve(null);
+    const boardsPromise = (async () => {
+      return await supabaseAdmin
         .from('boards')
         .select('id, board_type, board_key, board_label, sort_order')
         .eq('site_id', siteId)
-        .order('sort_order', { ascending: true }),
-    );
+        .order('sort_order', { ascending: true });
+    })();
+    const communityPromise =
+      siteType === 'community'
+        ? (async () => {
+            return await supabaseAdmin
+              .from('communities')
+              .select('join_accept_status, join_accept_start_day, join_accept_end_day')
+              .eq('site_id', siteId)
+              .maybeSingle();
+          })()
+        : Promise.resolve(null);
 
-    if (siteType === 'community') {
-      promises.push(
-        supabaseAdmin
-          .from('communities')
-          .select('join_accept_status, join_accept_start_day, join_accept_end_day')
-          .eq('site_id', siteId)
-          .maybeSingle(),
-      );
-    } else {
-      promises.push(Promise.resolve(null));
-    }
-
-    const [chorogonRes, boardsRes, communityRes] = await Promise.all(promises);
+    const [chorogonRes, boardsRes, communityRes] = await Promise.all([
+      chorogonPromise,
+      boardsPromise,
+      communityPromise,
+    ]);
 
     let purchaseAvailable = false;
     if (chorogonRes && !chorogonRes.error && chorogonRes.data?.identity_verified_at) {
@@ -102,8 +107,8 @@ export async function GET(request: Request) {
       return Response.json({ error: '메뉴 설정을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const boardRows = boardsRes?.data ?? [];
-    const pageBoardIds = boardRows.filter((board: any) => board.board_type === 'page').map((board: any) => board.id);
+    const boardRows = (boardsRes?.data ?? []) as BoardRow[];
+    const pageBoardIds = boardRows.filter((board) => board.board_type === 'page').map((board) => board.id);
     const pageSubjectMap = new Map<string, string>();
     const pageSlugMap = new Map<string, string>();
 
@@ -150,7 +155,7 @@ export async function GET(request: Request) {
         join_accept_start_day: joinAcceptStartDay,
         join_accept_end_day: joinAcceptEndDay,
       },
-      menus: boardRows.map((board: any) => ({
+      menus: boardRows.map((board) => ({
         id: board.id,
         board_type: board.board_type,
         board_label: board.board_label,

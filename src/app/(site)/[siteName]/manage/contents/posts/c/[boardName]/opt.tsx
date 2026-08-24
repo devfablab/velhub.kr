@@ -71,6 +71,7 @@ type BoardResponse = {
     id: string;
     board_key: string;
     board_label: string;
+    board_type: 'basic' | 'gallery' | 'youtube' | 'feed' | 'page';
     created_at?: string;
     post_per_page?: number | null;
     post_type: 'none' | 'prefix' | 'series';
@@ -267,10 +268,6 @@ export default function Opt() {
 
     const nextQuery = nextSearchParams.toString();
     return nextQuery ? `${pathname}?${nextQuery}` : pathname;
-  }
-
-  function handleMoveToPrefixManage() {
-    router.push(`/${siteName}/manage/contents/posts/c/${boardName}/prefix`);
   }
 
   function handleToggleAllCurrentPage() {
@@ -490,7 +487,7 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
             <Stack direction="row" gap={1}>
-              {board?.post_type === 'prefix' ? (
+              {board?.board_type !== 'youtube' && board?.post_type === 'prefix' ? (
                 <Anchor
                   className="button small action"
                   href={`/${siteName}/manage/contents/posts/c/${boardName}/prefix`}
@@ -498,7 +495,7 @@ export default function Opt() {
                   말머리 관리
                 </Anchor>
               ) : null}
-              {board?.post_type === 'series' && canManageBoardSettings ? (
+              {board?.board_type !== 'youtube' && board?.post_type === 'series' && canManageBoardSettings ? (
                 <Anchor
                   className="button small action"
                   href={`/${siteName}/manage/contents/posts/c/${boardName}/series`}

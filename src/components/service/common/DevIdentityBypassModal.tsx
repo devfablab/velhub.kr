@@ -70,7 +70,7 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
       <DialogTitle>개발용 본인인증 바이패스</DialogTitle>
       <DialogContent dividers>
         <FormControlLabel
-          control={<Checkbox checked={bypass} onChange={(e) => setBypass(e.target.checked)} />}
+          control={<Checkbox checked={bypass} onChange={(event) => setBypass(event.target.checked)} />}
           label="본인인증 바이패스 (훼이크 DB 사용)"
         />
         {bypass && (
@@ -78,7 +78,7 @@ export default function DevIdentityBypassModal({ open, onClose, onConfirm }: Pro
             {isLoading ? (
               <Typography>로딩 중...</Typography>
             ) : (
-              <RadioGroup value={selectedTxId} onChange={(e) => setSelectedTxId(e.target.value)}>
+              <RadioGroup value={selectedTxId} onChange={(event) => setSelectedTxId(event.target.value)}>
                 {identities.map((m) => (
                   <FormControlLabel
                     key={m.id}

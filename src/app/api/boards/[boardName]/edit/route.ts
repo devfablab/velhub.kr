@@ -144,6 +144,10 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    if (currentBoard.data.board_type === 'youtube' && postType !== 'none') {
+      return Response.json({ error: '유튜브 게시판에서는 연재와 말머리를 설정할 수 없습니다.' }, { status: 400 });
+    }
+
     const denylist = await supabaseAdmin.from('denylist_other').select('word').eq('word', boardKey).maybeSingle();
 
     if (denylist.error) {

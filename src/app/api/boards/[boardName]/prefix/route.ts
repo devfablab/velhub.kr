@@ -46,6 +46,10 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '커뮤니티에서만 말머리를 사용할 수 있습니다.' }, { status: 403 });
     }
 
+    if (board.data.board_type === 'youtube') {
+      return Response.json({ error: '유튜브 게시판에서는 말머리를 사용할 수 없습니다.' }, { status: 403 });
+    }
+
     if (board.data.post_type !== 'prefix') {
       return Response.json({ error: '말머리형 게시판이 아닙니다.' }, { status: 403 });
     }

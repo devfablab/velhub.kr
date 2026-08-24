@@ -92,7 +92,7 @@ export default function FolderModals({
                 type="text"
                 placeholder="폴더 이름 입력"
                 value={addLabel}
-                onChange={(e) => setAddLabel(e.target.value)}
+                onChange={(event) => setAddLabel(event.target.value)}
                 style={{ width: '100%', padding: '8px' }}
               />
             </div>
@@ -122,7 +122,7 @@ export default function FolderModals({
                 type="text"
                 placeholder="폴더 이름 입력"
                 value={editLabel}
-                onChange={(e) => setEditLabel(e.target.value)}
+                onChange={(event) => setEditLabel(event.target.value)}
                 style={{ width: '100%', padding: '8px' }}
               />
             </div>
@@ -172,7 +172,7 @@ export default function FolderModals({
             <div style={{ margin: '16px 0' }}>
               <select
                 value={selectedFolderId || ''}
-                onChange={(e) => setSelectedFolderId(e.target.value || null)}
+                onChange={(event) => setSelectedFolderId(event.target.value || null)}
                 style={{ width: '100%', padding: '8px' }}
               >
                 <option value="">기본 폴더</option>

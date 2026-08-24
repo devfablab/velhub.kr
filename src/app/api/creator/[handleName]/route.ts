@@ -60,15 +60,13 @@ export async function GET(_: Request, context: { params: Promise<{ handleName: s
     .eq('published_status', 'published')
     .eq('is_closed', false);
 
-  if (tab === 'series') {
-    if (seriesIds.length > 0) {
-      postsQuery = postsQuery.in('series_id', seriesIds);
-    } else {
-      postsQuery = null as any;
-    }
+  const shouldQueryPosts = tab !== 'series' || seriesIds.length > 0;
+
+  if (tab === 'series' && seriesIds.length > 0) {
+    postsQuery = postsQuery.in('series_id', seriesIds);
   }
 
-  const postsResult = postsQuery
+  const postsResult = shouldQueryPosts
     ? await postsQuery.order('published_at', { ascending: false }).range(from, from + 49)
     : { data: [], error: null, count: 0 };
 

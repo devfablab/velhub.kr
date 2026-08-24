@@ -20,9 +20,9 @@ import {
 } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
 import Anchor from '@/components/Anchor';
+import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
-import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
 
 type SettlementType = 'individual' | 'individual_business' | 'corporation' | 'business';
 

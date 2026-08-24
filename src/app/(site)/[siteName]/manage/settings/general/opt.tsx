@@ -1108,8 +1108,8 @@ export default function Opt() {
               <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
                 <TextField
                   value={String(draftValue)}
-                  onChange={(e) => {
-                    setDraftValue(e.target.value);
+                  onChange={(event) => {
+                    setDraftValue(event.target.value);
                     setErrorMessage('');
                   }}
                   fullWidth
@@ -1161,7 +1161,7 @@ export default function Opt() {
                 <Stack direction={isMobile ? 'column' : 'row'} gap={1} alignItems="center">
                   <Select
                     value={String(draftValue)}
-                    onChange={(e) => setDraftValue(e.target.value)}
+                    onChange={(event) => setDraftValue(event.target.value)}
                     size="small"
                     fullWidth
                     disabled={!hasOwnerDomainFeature}
