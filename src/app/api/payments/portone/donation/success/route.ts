@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
+import { getPaymentCustomerName } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import {
   assertPortOnePaidPayment,
@@ -62,7 +63,6 @@ type SeriesRow = {
 type StigmaRow = {
   id: string;
   user_id: string;
-  email?: string | null;
 };
 
 type ExistingPaymentRow = {
@@ -82,6 +82,8 @@ type PortOnePaymentConfirmResult = {
   transactionId?: string | null;
   rawData?: unknown;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateDonationAmount(amount: number) {
   if (!Number.isInteger(amount)) {
@@ -364,15 +366,16 @@ async function sendDonationPaymentEmail({
   }
 }
 
-async function getStigmaEmail({ supabaseAdmin, stigmaId }: { supabaseAdmin: SupabaseAdminClient; stigmaId: string }) {
-  const stigmaResult = await supabaseAdmin.from('stigmas').select('email').eq('id', stigmaId).maybeSingle();
+async function getDonationPaymentEmail(authUserId: string) {
+  try {
+    const paymentEmail = normalizeText(await getPaymentCustomerName(authUserId)).toLowerCase();
 
-  if (stigmaResult.error) {
-    console.error('[payments/donation] buyer email lookup error', stigmaResult.error);
+    return EMAIL_PATTERN.test(paymentEmail) ? paymentEmail : null;
+  } catch (unknownError) {
+    console.error('[payments/donation] buyer payment email lookup error', unknownError);
+
     return null;
   }
-
-  return normalizeText((stigmaResult.data as StigmaRow | null)?.email);
 }
 
 export async function POST(request: NextRequest) {
@@ -449,6 +452,18 @@ export async function POST(request: NextRequest) {
           seriesId,
         })
       : null;
+
+    if (series) {
+      const hasSeriesSubscription = await hasValidSeriesSubscription({
+        supabaseAdmin,
+        subscriberId: session.stigmaId,
+        seriesId: series.id,
+      });
+
+      if (!hasSeriesSubscription) {
+        return Response.json({ error: '연재 구독 중인 회원만 연재 후원을 할 수 있습니다.' }, { status: 403 });
+      }
+    }
 
     const siteOwnerStigmaId = await getStigmaId({
       supabaseAdmin,
@@ -545,12 +560,7 @@ export async function POST(request: NextRequest) {
       amount: confirmResult.totalAmount,
     });
 
-    const buyerEmail = session.stigmaId
-      ? await getStigmaEmail({
-          supabaseAdmin,
-          stigmaId: session.stigmaId,
-        })
-      : null;
+    const buyerEmail = await getDonationPaymentEmail(session.authUserId);
 
     if (buyerEmail) {
       try {

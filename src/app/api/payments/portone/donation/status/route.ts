@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server';
-import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { getPaymentCustomerName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
   try {
     const siteName = normalizeText(request.nextUrl.searchParams.get('siteName')).toLowerCase();
     const targetType = normalizeText(request.nextUrl.searchParams.get('targetType')).toLowerCase();
+    const boardName = normalizeText(request.nextUrl.searchParams.get('boardName')).toLowerCase();
+    const seriesName = normalizeText(request.nextUrl.searchParams.get('seriesName')).toLowerCase();
 
     if (!siteName) {
       return Response.json({
@@ -110,6 +112,53 @@ export async function GET(request: NextRequest) {
       });
 
       if (!hasBlogSubscription) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+    }
+
+    if (targetType === PAYMENT_TARGET_TYPE.SERIES) {
+      if (!session.stigmaId || !boardName || !seriesName) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      const boardResult = await supabaseAdmin
+        .from('boards')
+        .select('id')
+        .eq('site_id', site.id)
+        .eq('board_key', boardName)
+        .maybeSingle();
+
+      if (boardResult.error || !boardResult.data) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      const seriesResult = await supabaseAdmin
+        .from('board_series')
+        .select('id')
+        .eq('site_id', site.id)
+        .eq('board_id', boardResult.data.id)
+        .eq('series_key', seriesName)
+        .maybeSingle();
+
+      if (seriesResult.error || !seriesResult.data) {
+        return Response.json({
+          isEnabled: false,
+        });
+      }
+
+      const hasSeriesSubscription = await hasValidSeriesSubscription({
+        supabaseAdmin,
+        subscriberId: session.stigmaId,
+        seriesId: seriesResult.data.id,
+      });
+
+      if (!hasSeriesSubscription) {
         return Response.json({
           isEnabled: false,
         });

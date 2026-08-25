@@ -26,8 +26,6 @@ import {
   DialogTitle,
   Drawer,
   Snackbar,
-  Stack,
-  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -361,6 +359,7 @@ export default function Opt({ isCommunity }: Props) {
   const boardName = normalizeText(params.boardName).toLowerCase();
   const contentId = normalizeText(params.contentId);
   const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
+  const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
   const [board, setBoard] = useState<BoardInfo | null>(null);
   const [content, setContent] = useState<PostContent | null>(null);
@@ -379,7 +378,6 @@ export default function Opt({ isCommunity }: Props) {
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
-  const [purchasePromptOpen, setPurchasePromptOpen] = useState(false);
 
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
@@ -425,14 +423,6 @@ export default function Opt({ isCommunity }: Props) {
 
   function closeGalleryViewer() {
     setGalleryViewerOpen(false);
-  }
-
-  function openPurchasePrompt() {
-    setPurchasePromptOpen(true);
-  }
-
-  function closePurchasePrompt() {
-    setPurchasePromptOpen(false);
   }
 
   function showPreviousGalleryImage() {
@@ -594,9 +584,19 @@ export default function Opt({ isCommunity }: Props) {
       try {
         setErrorMessage('');
 
-        const contentUrl = categoryName
-          ? `/api/boards/${boardName}/${contentId}?siteName=${siteName}&categoryName=${categoryName}`
-          : `/api/boards/${boardName}/${contentId}?siteName=${siteName}`;
+        const contentQuery = new URLSearchParams({
+          siteName,
+        });
+
+        if (categoryName) {
+          contentQuery.set('categoryName', categoryName);
+        }
+
+        if (seriesName) {
+          contentQuery.set('seriesName', seriesName);
+        }
+
+        const contentUrl = `/api/boards/${boardName}/${contentId}?${contentQuery.toString()}`;
 
         const response = await fetch(contentUrl, {
           method: 'GET',
@@ -650,7 +650,7 @@ export default function Opt({ isCommunity }: Props) {
     }
 
     void loadContent();
-  }, [siteName, boardName, contentId, categoryName]);
+  }, [siteName, boardName, contentId, categoryName, seriesName]);
 
   async function loadPollResult(nextBoardName: string, nextContentId: string) {
     try {
@@ -772,7 +772,7 @@ export default function Opt({ isCommunity }: Props) {
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
-  const listHref = categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
+  const listHref = seriesName ? `/${siteName}/s/${seriesName}` : categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
   const isSubscriptionSeriesPost = series?.is_subscription === true;
 
   const canPurchasePost =
@@ -971,43 +971,25 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const postPurchaseButton = canPurchasePost ? (
-    <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} />
+    <PostPurchaseButton
+      siteName={siteName}
+      boardName={boardName}
+      contentId={content.slug}
+      price={content.purchase_post_price}
+    />
   ) : null;
 
   const paidContentMoreButton = canPurchasePost ? (
     <div className={styles.action}>
-      <button type="button" className="button small action" onClick={openPurchasePrompt}>
-        더 보기
-      </button>
-      {isMobile ? (
-        <Drawer anchor="bottom" open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDrawer-bottom">
-          <h2>포스팅 소장하기</h2>
-          <button type="button" className="close-button" onClick={closePurchasePrompt}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            <Typography variant="body2">더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</Typography>
-            <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDialog">
-          <DialogTitle className={styles['dialog-title']}>포스팅 소장하기</DialogTitle>
-          <button type="button" className="close-button" onClick={closePurchasePrompt}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3} className={styles['dialog-content']}>
-            <Typography variant="body2">더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</Typography>
-            <PostPurchaseButton
-              siteName={siteName}
-              boardName={boardName}
-              contentId={content.slug}
-              buttonText="구매"
-              popup={true}
-            />
-          </Stack>
-        </Dialog>
-      )}
+      <PostPurchaseButton
+        siteName={siteName}
+        boardName={boardName}
+        contentId={content.slug}
+        price={content.purchase_post_price}
+        buttonText="더 보기"
+        buttonClassName="button small action"
+        hideButtonIcon
+      />
     </div>
   ) : null;
 
@@ -1020,7 +1002,7 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   return (
-    <Container pageBack={`/${siteName}/${boardName}`} pageTitle="글 보기" pageFin>
+    <Container pageBack={listHref} pageTitle="글 보기" pageFin>
       <div className="container">
         {isCommunity && !isMobile ? (
           <aside>
@@ -1089,7 +1071,10 @@ export default function Opt({ isCommunity }: Props) {
               <div className="paper">
                 <header className={styles['content-header']}>
                   <div className={styles['content-board-name']}>
-                    <Anchor href={`/${siteName}/${board.board_key}`} className={styles['board-link']}>
+                    <Anchor
+                      href={seriesName ? `/${siteName}/s/${seriesName}` : `/${siteName}/${board.board_key}`}
+                      className={styles['board-link']}
+                    >
                       {board.board_type === 'blog' ? (
                         <span>{selectedCategory ? selectedCategory.category_label : '글 목록'}</span>
                       ) : (

@@ -1,12 +1,4 @@
-import { cancelPortOnePayment } from '@/lib/payments/portone';
-import { calculateSubscriptionRefundAmount } from '@/lib/payments/refunds';
-import {
-  PAYMENT_STATUS,
-  PAYMENT_TARGET_TYPE,
-  PAYMENT_TYPE,
-  SUBSCRIPTION_STATUS,
-  SUBSCRIPTION_TYPE,
-} from '@/lib/payments/types';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -58,16 +50,6 @@ type SubscriptionRow = {
   last_payment_id: string | null;
 };
 
-type PaymentRow = {
-  id: string;
-  payment_key: string | null;
-  amount: number;
-  refunded_amount: number;
-  status: 'paid' | 'failed' | 'partially_refunded' | 'refunded';
-  approved_at: string | null;
-  created_at: string;
-};
-
 function getTargetType(value: string): SubscriptionTargetType | null {
   if (value === 'series' || value === 'site') {
     return value;
@@ -82,14 +64,6 @@ function getSubscriptionType(targetType: SubscriptionTargetType) {
   }
 
   return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
-}
-
-function getPaymentType(targetType: SubscriptionTargetType) {
-  if (targetType === 'site') {
-    return PAYMENT_TYPE.SUBSCRIPTION_SITE;
-  }
-
-  return PAYMENT_TYPE.SUBSCRIPTION_SERIES;
 }
 
 function getPaymentTargetType(targetType: SubscriptionTargetType) {
@@ -165,53 +139,6 @@ async function getSubscriptionTarget({
   };
 }
 
-async function getLastPayment({
-  supabaseAdmin,
-  subscription,
-  stigmaId,
-  paymentType,
-  paymentTargetType,
-  targetId,
-}: {
-  supabaseAdmin: SupabaseAdminClient;
-  subscription: SubscriptionRow;
-  stigmaId: string;
-  paymentType: string;
-  paymentTargetType: string;
-  targetId: string;
-}) {
-  if (subscription.last_payment_id) {
-    const paymentResult = await supabaseAdmin
-      .from('payments')
-      .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-      .eq('id', subscription.last_payment_id)
-      .maybeSingle();
-
-    if (paymentResult.error) {
-      throw new Error('결제 정보를 확인하지 못했습니다.');
-    }
-
-    return (paymentResult.data as PaymentRow | null) ?? null;
-  }
-
-  const paymentResult = await supabaseAdmin
-    .from('payments')
-    .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
-    .eq('buyer_user_id', stigmaId)
-    .eq('payment_type', paymentType)
-    .eq('target_type', paymentTargetType)
-    .eq('target_id', targetId)
-    .in('status', [PAYMENT_STATUS.PAID, PAYMENT_STATUS.PARTIALLY_REFUNDED])
-    .order('created_at', { ascending: false })
-    .limit(1);
-
-  if (paymentResult.error) {
-    throw new Error('결제 정보를 확인하지 못했습니다.');
-  }
-
-  return ((paymentResult.data ?? [])[0] as PaymentRow | undefined) ?? null;
-}
-
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CancelSubscriptionBody;
@@ -269,10 +196,8 @@ export async function POST(request: Request) {
     });
 
     const subscriptionType = getSubscriptionType(targetType);
-    const paymentType = getPaymentType(targetType);
     const paymentTargetType = getPaymentTargetType(targetType);
-    const now = new Date();
-    const nowText = now.toISOString();
+    const nowText = new Date().toISOString();
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
@@ -317,114 +242,11 @@ export async function POST(request: Request) {
       return Response.json({ error: '이미 취소된 구독입니다.' }, { status: 400 });
     }
 
-    const payment = await getLastPayment({
-      supabaseAdmin,
-      subscription,
-      stigmaId: session.stigmaId ?? '',
-      paymentType,
-      paymentTargetType,
-      targetId: subscriptionTarget.targetId,
-    });
-
-    if (!payment) {
-      const subscriptionUpdateResult = await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          canceled_at: nowText,
-          next_billing_at: null,
-          updated_at: nowText,
-        })
-        .eq('id', subscription.id);
-
-      if (subscriptionUpdateResult.error) {
-        console.error(subscriptionUpdateResult.error);
-
-        return Response.json({ error: '구독을 취소하지 못했습니다.' }, { status: 500 });
-      }
-
-      return Response.json({
-        ok: true,
-        mode: 'cancel_scheduled',
-        refundAmount: 0,
-        retainedAmount: subscription.price,
-      });
-    }
-
-    if (payment.status === PAYMENT_STATUS.REFUNDED) {
-      return Response.json({ error: '이미 환불된 결제입니다.' }, { status: 400 });
-    }
-
-    if (payment.refunded_amount > 0) {
-      return Response.json({ error: '이미 일부 환불된 결제입니다.' }, { status: 400 });
-    }
-
-    const paidAt = payment.approved_at ?? payment.created_at;
-    const refundCalculation = calculateSubscriptionRefundAmount({
-      amount: payment.amount,
-      paidAt,
-      now,
-    });
-
-    if (!refundCalculation.isRefundable) {
-      const subscriptionUpdateResult = await supabaseAdmin
-        .from('subscriptions')
-        .update({
-          next_billing_at: null,
-          canceled_at: nowText,
-          updated_at: nowText,
-        })
-        .eq('id', subscription.id);
-
-      if (subscriptionUpdateResult.error) {
-        console.error(subscriptionUpdateResult.error);
-
-        return Response.json({ error: '구독 취소를 예약하지 못했습니다.' }, { status: 500 });
-      }
-
-      return Response.json({
-        ok: true,
-        mode: 'cancel_scheduled',
-        refundAmount: 0,
-        retainedAmount: payment.amount,
-      });
-    }
-
-    if (!payment.payment_key) {
-      return Response.json({ error: '결제 취소에 필요한 paymentId가 없습니다.' }, { status: 400 });
-    }
-
-    const cancelResult = await cancelPortOnePayment({
-      paymentId: payment.payment_key,
-      cancelReason: '연재 구독 환불',
-      cancelAmount: refundCalculation.isFullRefund ? undefined : refundCalculation.refundAmount,
-    });
-
-    const paymentStatus =
-      refundCalculation.refundAmount >= payment.amount ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED;
-
-    const paymentUpdateResult = await supabaseAdmin
-      .from('payments')
-      .update({
-        status: paymentStatus,
-        refunded_amount: refundCalculation.refundAmount,
-        refunded_at: nowText,
-        raw_data: cancelResult,
-      })
-      .eq('id', payment.id);
-
-    if (paymentUpdateResult.error) {
-      console.error(paymentUpdateResult.error);
-
-      return Response.json({ error: '결제 환불 정보를 저장하지 못했습니다.' }, { status: 500 });
-    }
-
     const subscriptionUpdateResult = await supabaseAdmin
       .from('subscriptions')
       .update({
-        status: SUBSCRIPTION_STATUS.CANCELED,
         next_billing_at: null,
         canceled_at: nowText,
-        expired_at: nowText,
         updated_at: nowText,
       })
       .eq('id', subscription.id);
@@ -432,15 +254,14 @@ export async function POST(request: Request) {
     if (subscriptionUpdateResult.error) {
       console.error(subscriptionUpdateResult.error);
 
-      return Response.json({ error: '구독 정보를 갱신하지 못했습니다.' }, { status: 500 });
+      return Response.json({ error: '구독 취소를 예약하지 못했습니다.' }, { status: 500 });
     }
 
     return Response.json({
       ok: true,
-      mode: refundCalculation.isFullRefund ? 'full_refund' : 'partial_refund',
-      refundAmount: refundCalculation.refundAmount,
-      retainedAmount: refundCalculation.retainedAmount,
-      usedDays: refundCalculation.usedDays,
+      mode: 'cancel_scheduled',
+      refundAmount: 0,
+      retainedAmount: subscription.price,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

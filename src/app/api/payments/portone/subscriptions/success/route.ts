@@ -88,7 +88,7 @@ type SubscriptionRow = {
 type SubscriptionTarget = {
   targetId: string;
   targetLabel: string | null;
-  boardId: string;
+  boardId: string | null;
   seriesId: string | null;
   isSubscriptionTarget: boolean;
 };
@@ -296,7 +296,7 @@ async function getSubscriptionTarget({
     return {
       targetId: siteId,
       targetLabel: siteResult.data.site_label,
-      boardId: '',
+      boardId: null,
       seriesId: null,
       isSubscriptionTarget: true,
     };

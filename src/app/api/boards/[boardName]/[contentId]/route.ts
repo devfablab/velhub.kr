@@ -247,14 +247,31 @@ function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
   };
 }
 
-function getPostHref(siteName: string, boardKey: string, slug: number | string, categoryName: string) {
+function getPostHref(
+  siteName: string,
+  boardKey: string,
+  slug: number | string,
+  categoryName: string,
+  seriesName = '',
+) {
   const href = `/${siteName}/${boardKey}/${slug}`;
+  const searchParams = new URLSearchParams();
 
-  if (!categoryName) {
+  if (categoryName) {
+    searchParams.set('categoryName', categoryName);
+  }
+
+  if (seriesName) {
+    searchParams.set('seriesName', seriesName);
+  }
+
+  const queryString = searchParams.toString();
+
+  if (!queryString) {
     return href;
   }
 
-  return `${href}?categoryName=${categoryName}`;
+  return `${href}?${queryString}`;
 }
 
 function shuffleItems<T>(items: T[]) {
@@ -518,6 +535,9 @@ async function getAdjacentPosts({
   boardKey,
   currentIdx,
   categoryName,
+  seriesId,
+  seriesName,
+  currentSeriesIdx,
   isStaff,
 }: {
   siteId: string;
@@ -526,6 +546,9 @@ async function getAdjacentPosts({
   boardKey: string;
   currentIdx: number;
   categoryName: string;
+  seriesId: string | null;
+  seriesName: string;
+  currentSeriesIdx: number | null;
   isStaff: boolean;
 }) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -560,14 +583,18 @@ async function getAdjacentPosts({
     };
   }
 
+  const useSeriesNavigation = Boolean(seriesId && seriesName && currentSeriesIdx !== null);
+  const orderColumn = useSeriesNavigation ? 'series_idx' : 'idx';
+  const currentOrder = useSeriesNavigation ? currentSeriesIdx! : currentIdx;
+
   let previousQuery = supabaseAdmin
     .from('posts')
     .select('slug, subject')
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('published_status', 'published')
-    .gt('idx', currentIdx)
-    .order('idx', { ascending: true })
+    .gt(orderColumn, currentOrder)
+    .order(orderColumn, { ascending: true })
     .limit(1);
 
   let nextQuery = supabaseAdmin
@@ -576,9 +603,14 @@ async function getAdjacentPosts({
     .eq('site_id', siteId)
     .eq('board_id', boardId)
     .eq('published_status', 'published')
-    .lt('idx', currentIdx)
-    .order('idx', { ascending: false })
+    .lt(orderColumn, currentOrder)
+    .order(orderColumn, { ascending: false })
     .limit(1);
+
+  if (useSeriesNavigation) {
+    previousQuery = previousQuery.eq('series_id', seriesId!);
+    nextQuery = nextQuery.eq('series_id', seriesId!);
+  }
 
   if (!isStaff) {
     previousQuery = previousQuery.eq('is_closed', false);
@@ -601,14 +633,14 @@ async function getAdjacentPosts({
       ? {
           slug: String(previousResult.data.slug),
           subject: previousResult.data.subject,
-          href: getPostHref(siteName, boardKey, previousResult.data.slug, categoryName),
+          href: getPostHref(siteName, boardKey, previousResult.data.slug, categoryName, seriesName),
         }
       : null,
     nextPost: nextResult.data
       ? {
           slug: String(nextResult.data.slug),
           subject: nextResult.data.subject,
-          href: getPostHref(siteName, boardKey, nextResult.data.slug, categoryName),
+          href: getPostHref(siteName, boardKey, nextResult.data.slug, categoryName, seriesName),
         }
       : null,
     selectedCategory,
@@ -955,6 +987,7 @@ export async function GET(request: Request, context: RouteContext) {
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
     const categoryName = normalizeText(requestUrl.searchParams.get('categoryName')).toLowerCase();
+    const seriesName = normalizeText(requestUrl.searchParams.get('seriesName')).toLowerCase();
 
     if (!siteName) {
       return NextResponse.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
@@ -1289,7 +1322,13 @@ export async function GET(request: Request, context: RouteContext) {
           slug: String(seriesContent.slug),
           subject: normalizeText(seriesContent.subject),
           series_idx: Number(seriesContent.series_idx),
-          href: `/${siteName}/${boardData.board_key}/${seriesContent.slug}`,
+          href: getPostHref(
+            siteName,
+            boardData.board_key,
+            seriesContent.slug,
+            '',
+            series?.series_key === seriesName ? seriesName : '',
+          ),
         }));
       }
     }
@@ -1344,6 +1383,9 @@ export async function GET(request: Request, context: RouteContext) {
       boardKey: boardData.board_key,
       currentIdx: postData.idx,
       categoryName,
+      seriesId: series?.series_key === seriesName ? series.id : null,
+      seriesName: series?.series_key === seriesName ? seriesName : '',
+      currentSeriesIdx: series?.series_key === seriesName ? postData.series_idx : null,
       isStaff,
     });
 

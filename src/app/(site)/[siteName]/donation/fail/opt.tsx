@@ -42,6 +42,10 @@ export default function Opt() {
         const paymentType = normalizeText(searchParams.get('paymentType'));
         const targetType = normalizeText(searchParams.get('targetType'));
         const siteId = normalizeText(searchParams.get('siteId'));
+        const boardId = normalizeText(searchParams.get('boardId'));
+        const boardName = normalizeText(searchParams.get('boardName'));
+        const seriesId = normalizeText(searchParams.get('seriesId'));
+        const seriesName = normalizeText(searchParams.get('seriesName'));
         const amountText = normalizeText(searchParams.get('amount'));
         const amount = Number(amountText);
 
@@ -62,6 +66,10 @@ export default function Opt() {
             message,
             siteId,
             targetType,
+            boardId,
+            boardName,
+            seriesId,
+            seriesName,
             amount,
           }),
         });

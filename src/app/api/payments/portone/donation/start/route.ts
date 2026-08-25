@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { hasValidBlogSubscription } from '@/lib/payments/blogDonation';
+import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
@@ -322,6 +322,18 @@ export async function POST(request: NextRequest) {
 
       if (!hasBlogSubscription) {
         return Response.json({ error: '블로그 구독 중인 회원만 블로그 후원을 할 수 있습니다.' }, { status: 403 });
+      }
+    }
+
+    if (target.targetType === 'series') {
+      const hasSeriesSubscription = await hasValidSeriesSubscription({
+        supabaseAdmin: getSupabaseAdmin(),
+        subscriberId: session.stigmaId,
+        seriesId: target.series.id,
+      });
+
+      if (!hasSeriesSubscription) {
+        return Response.json({ error: '연재 구독 중인 회원만 연재 후원을 할 수 있습니다.' }, { status: 403 });
       }
     }
 

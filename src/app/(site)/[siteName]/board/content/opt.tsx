@@ -27,7 +27,6 @@ import {
   DialogTitle,
   Drawer,
   Snackbar,
-  Stack,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -358,7 +357,6 @@ export default function Opt({ isCommunity }: Props) {
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
-  const [purchasePromptOpen, setPurchasePromptOpen] = useState(false);
 
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
@@ -406,14 +404,6 @@ export default function Opt({ isCommunity }: Props) {
 
   function closeGalleryViewer() {
     setGalleryViewerOpen(false);
-  }
-
-  function openPurchasePrompt() {
-    setPurchasePromptOpen(true);
-  }
-
-  function closePurchasePrompt() {
-    setPurchasePromptOpen(false);
   }
 
   function showPreviousGalleryImage() {
@@ -946,53 +936,25 @@ export default function Opt({ isCommunity }: Props) {
     ) : null;
 
   const postPurchaseButton = canPurchasePost ? (
-    <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} />
+    <PostPurchaseButton
+      siteName={siteName}
+      boardName={boardName}
+      contentId={content.slug}
+      price={content.purchase_post_price}
+    />
   ) : null;
 
   const paidContentMoreButton = canPurchasePost ? (
     <div className={styles.action}>
-      <button type="button" className="button small action" onClick={openPurchasePrompt}>
-        더 보기
-      </button>
-      {isMobile ? (
-        <Drawer anchor="bottom" open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDrawer-bottom">
-          <h2>포스팅 소장하기</h2>
-          <button type="button" className="close-button" onClick={closePurchasePrompt}>
-            <CloseRoundedIcon />
-          </button>
-          <Stack gap={3}>
-            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
-            <Stack direction="column" spacing={1.5}>
-              <button type="button" className="button medium cancel" onClick={closePurchasePrompt}>
-                취소
-              </button>
-              <PostPurchaseButton siteName={siteName} boardName={boardName} contentId={content.slug} popup={true} />
-            </Stack>
-          </Stack>
-        </Drawer>
-      ) : (
-        <Dialog open={purchasePromptOpen} onClose={closePurchasePrompt} className="VhiDialog">
-          <DialogTitle className={styles['dialog-title']}>포스팅 소장하기</DialogTitle>
-          <button type="button" className="close-button" onClick={closePurchasePrompt}>
-            <CloseRoundedIcon />
-          </button>
-          <DialogContent className={styles['dialog-content']}>
-            <p>더 보시려면 포스팅 구매가 필요합니다. 구매하시겠어요?</p>
-          </DialogContent>
-          <DialogActions>
-            <button type="button" className="button medium close" onClick={closePurchasePrompt}>
-              취소
-            </button>
-            <PostPurchaseButton
-              siteName={siteName}
-              boardName={boardName}
-              contentId={content.slug}
-              buttonText="구매"
-              popup={true}
-            />
-          </DialogActions>
-        </Dialog>
-      )}
+      <PostPurchaseButton
+        siteName={siteName}
+        boardName={boardName}
+        contentId={content.slug}
+        price={content.purchase_post_price}
+        buttonText="더 보기"
+        buttonClassName="button small action"
+        hideButtonIcon
+      />
     </div>
   ) : null;
 

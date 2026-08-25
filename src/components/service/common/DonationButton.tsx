@@ -182,6 +182,8 @@ export default function DonationButton(props: Props) {
   const isMobile = !isNotMobile;
   const donationTitle = getDonationTitle(props);
   const donationTargetType = getTargetType(props);
+  const seriesBoardName = props.targetType === 'series' ? props.boardName : '';
+  const seriesName = props.targetType === 'series' ? props.seriesName : '';
 
   useEffect(() => {
     async function checkDonationStatus() {
@@ -190,6 +192,11 @@ export default function DonationButton(props: Props) {
           siteName: props.siteName,
           targetType: donationTargetType,
         });
+
+        if (donationTargetType === 'series') {
+          statusParams.set('boardName', seriesBoardName);
+          statusParams.set('seriesName', seriesName);
+        }
 
         const [identityResponse, donationStatusResponse] = await Promise.all([
           fetch('/api/identity/portone/status', {
@@ -224,7 +231,7 @@ export default function DonationButton(props: Props) {
     return () => {
       setCanShowDonationButton(true);
     };
-  }, [donationTargetType, props.siteName]);
+  }, [donationTargetType, props.siteName, props.targetType, seriesBoardName, seriesName]);
 
   if (!canShowDonationButton || !isMinorControlLoaded || isBlocked) {
     return null;
@@ -261,6 +268,11 @@ export default function DonationButton(props: Props) {
 
   function handleCloseIdentityDialog() {
     setIsIdentityDialogOpen(false);
+  }
+
+  function handleIdentityVerified() {
+    handleCloseIdentityDialog();
+    window.requestAnimationFrame(() => window.location.reload());
   }
 
   function handlePaymentEmailSaved(savedPaymentEmail: string) {
@@ -468,7 +480,7 @@ export default function DonationButton(props: Props) {
           <Stack gap={3}>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
           </Stack>
         </Drawer>
@@ -478,7 +490,7 @@ export default function DonationButton(props: Props) {
           <DialogContent dividers>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
           </DialogContent>
           <DialogActions>

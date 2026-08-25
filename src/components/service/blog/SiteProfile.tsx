@@ -214,6 +214,7 @@ export default function SiteProfile() {
   const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(null);
   const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>('none');
   const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
+  const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
   const [isBlogSubscriptionProcessing, setIsBlogSubscriptionProcessing] = useState(false);
   const [isDonationEnabled, setIsDonationEnabled] = useState(false);
@@ -359,6 +360,11 @@ export default function SiteProfile() {
     setIsIdentityDialogOpen(false);
   }
 
+  function handleIdentityVerified() {
+    handleCloseIdentityDialog();
+    window.requestAnimationFrame(() => window.location.reload());
+  }
+
   function handleOpenBlogSubscriptionDialog() {
     setBlogSubscriptionErrorMessage('');
     setIsBlogSubscriptionDialogOpen(true);
@@ -370,6 +376,19 @@ export default function SiteProfile() {
     }
 
     setIsBlogSubscriptionDialogOpen(false);
+  }
+
+  function handleOpenBlogSubscriptionCancelDialog() {
+    setBlogSubscriptionErrorMessage('');
+    setIsBlogSubscriptionCancelDialogOpen(true);
+  }
+
+  function handleCloseBlogSubscriptionCancelDialog() {
+    if (isBlogSubscriptionProcessing) {
+      return;
+    }
+
+    setIsBlogSubscriptionCancelDialogOpen(false);
   }
 
   async function handleJoinBlogSubscription() {
@@ -509,6 +528,7 @@ export default function SiteProfile() {
       }
 
       setBlogSubscriptionStatus(result.mode === 'cancel_scheduled' ? 'scheduled_cancel' : 'canceled');
+      setIsBlogSubscriptionCancelDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 취소를 처리하지 못했습니다.');
@@ -544,6 +564,7 @@ export default function SiteProfile() {
       }
 
       setBlogSubscriptionStatus('active');
+      setIsBlogSubscriptionDialogOpen(false);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 유지를 처리하지 못했습니다.');
@@ -557,12 +578,12 @@ export default function SiteProfile() {
 
   function handleBlogSubscriptionButtonClick() {
     if (blogSubscriptionStatus === 'active' || blogSubscriptionStatus === 'past_due') {
-      void handleCancelBlogSubscription();
+      handleOpenBlogSubscriptionCancelDialog();
       return;
     }
 
     if (blogSubscriptionStatus === 'scheduled_cancel') {
-      void handleResumeBlogSubscription();
+      handleOpenBlogSubscriptionDialog();
       return;
     }
 
@@ -592,6 +613,8 @@ export default function SiteProfile() {
   if (!siteInfo) {
     return null;
   }
+
+  const isResumingScheduledBlogSubscription = blogSubscriptionStatus === 'scheduled_cancel';
 
   return (
     <div className={styles['site-profile']}>
@@ -684,6 +707,109 @@ export default function SiteProfile() {
       {isMobile ? (
         <Drawer
           anchor="bottom"
+          open={isBlogSubscriptionCancelDialogOpen}
+          onClose={handleCloseBlogSubscriptionCancelDialog}
+          className="VhiDrawer-bottom"
+        >
+          <h2>블로그 구독 취소</h2>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseBlogSubscriptionCancelDialog}
+            aria-label="닫기"
+            disabled={isBlogSubscriptionProcessing}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">블로그 구독을 취소하시겠어요?</Typography>
+              <Typography variant="body2">
+                지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.
+              </Typography>
+              {blogSubscriptionErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{blogSubscriptionErrorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium close"
+                onClick={handleCloseBlogSubscriptionCancelDialog}
+                disabled={isBlogSubscriptionProcessing}
+              >
+                계속 이용하기
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                onClick={() => void handleCancelBlogSubscription()}
+                disabled={isBlogSubscriptionProcessing}
+              >
+                구독 취소하기
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={isBlogSubscriptionCancelDialogOpen}
+          onClose={handleCloseBlogSubscriptionCancelDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
+          <DialogTitle>블로그 구독 취소</DialogTitle>
+          <button
+            type="button"
+            className="close-button"
+            onClick={handleCloseBlogSubscriptionCancelDialog}
+            aria-label="닫기"
+            disabled={isBlogSubscriptionProcessing}
+          >
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>
+            <Stack gap={1}>
+              <Typography variant="subtitle2">블로그 구독을 취소하시겠어요?</Typography>
+              <Typography variant="body2">
+                지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.
+              </Typography>
+              {blogSubscriptionErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{blogSubscriptionErrorMessage}</span>
+                </p>
+              ) : null}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              onClick={handleCloseBlogSubscriptionCancelDialog}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              계속 이용하기
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              onClick={() => void handleCancelBlogSubscription()}
+              disabled={isBlogSubscriptionProcessing}
+            >
+              구독 취소하기
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
           open={isIdentityDialogOpen}
           onClose={handleCloseIdentityDialog}
           className="VhiDrawer-bottom"
@@ -696,7 +822,7 @@ export default function SiteProfile() {
           <Stack gap={3}>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
 
             <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
@@ -720,7 +846,7 @@ export default function SiteProfile() {
           <DialogContent>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
           </DialogContent>
 
@@ -742,6 +868,8 @@ export default function SiteProfile() {
           <h2>
             {isMinor
               ? '1개월 구독권'
+              : isResumingScheduledBlogSubscription
+                ? '블로그 구독 유지하기'
               : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
                 ? '블로그 구독 재가입'
                 : '블로그 구독 가입'}
@@ -750,12 +878,25 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
-            <Typography variant="body2">
-              {isMinor
-                ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
-            </Typography>
-            <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+            {isResumingScheduledBlogSubscription ? (
+              <Stack gap={1}>
+                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
+                <Typography variant="body2">
+                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도 매월
+                  자동 결제됩니다.
+                </Typography>
+              </Stack>
+            ) : (
+              <>
+                <Typography variant="body2">
+                  {isMinor
+                    ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                    : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
+                </Typography>
+                <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+              </>
+            )}
 
             {blogSubscriptionErrorMessage ? (
               <p className="alert error">
@@ -775,10 +916,10 @@ export default function SiteProfile() {
               <button
                 type="button"
                 className="button medium submit"
-                onClick={handleJoinBlogSubscription}
+                onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
                 disabled={isBlogSubscriptionProcessing}
               >
-                가입하기
+                {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
               </button>
             </Stack>
           </Stack>
@@ -794,6 +935,8 @@ export default function SiteProfile() {
           <DialogTitle>
             {isMinor
               ? '1개월 구독권'
+              : isResumingScheduledBlogSubscription
+                ? '블로그 구독 유지하기'
               : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
                 ? '블로그 구독 재가입'
                 : '블로그 구독 가입'}
@@ -802,10 +945,25 @@ export default function SiteProfile() {
             <CloseRoundedIcon />
           </button>
           <DialogContent>
-            <Typography variant="body2">
-              월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?
-            </Typography>
-            <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+            {isResumingScheduledBlogSubscription ? (
+              <Stack gap={1}>
+                <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
+                <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
+                <Typography variant="body2">
+                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도 매월
+                  자동 결제됩니다.
+                </Typography>
+              </Stack>
+            ) : (
+              <>
+                <Typography variant="body2">
+                  {isMinor
+                    ? `1개월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)} 단건 결제로 블로그 구독을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
+                    : `월 ${formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원에 블로그 구독을 가입하시겠어요?`}
+                </Typography>
+                <PaymentTerms type="subscription" disabled={isBlogSubscriptionProcessing} />
+              </>
+            )}
 
             {blogSubscriptionErrorMessage ? (
               <p className="alert error">
@@ -826,10 +984,10 @@ export default function SiteProfile() {
             <button
               type="button"
               className="button medium submit"
-              onClick={handleJoinBlogSubscription}
+              onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
               disabled={isBlogSubscriptionProcessing}
             >
-              가입하기
+              {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
             </button>
           </DialogActions>
         </Dialog>

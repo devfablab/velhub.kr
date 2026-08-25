@@ -9,6 +9,8 @@ type BlogSubscriptionRow = {
   expired_at: string | null;
 };
 
+type SeriesSubscriptionRow = BlogSubscriptionRow;
+
 export async function hasValidBlogSubscription({
   supabaseAdmin,
   subscriberId,
@@ -33,6 +35,42 @@ export async function hasValidBlogSubscription({
   }
 
   const subscription = ((subscriptionResult.data ?? [])[0] as BlogSubscriptionRow | undefined) ?? null;
+
+  if (!subscription || subscription.expired_at || !subscription.current_period_end) {
+    return false;
+  }
+
+  if (subscription.status !== SUBSCRIPTION_STATUS.TRIALING && subscription.status !== SUBSCRIPTION_STATUS.ACTIVE) {
+    return false;
+  }
+
+  return new Date(subscription.current_period_end).getTime() > Date.now();
+}
+
+export async function hasValidSeriesSubscription({
+  supabaseAdmin,
+  subscriberId,
+  seriesId,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  subscriberId: string;
+  seriesId: string;
+}) {
+  const subscriptionResult = await supabaseAdmin
+    .from('subscriptions')
+    .select('status, current_period_end, expired_at')
+    .eq('subscriber_user_id', subscriberId)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', seriesId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (subscriptionResult.error) {
+    throw new Error('연재 구독 상태를 확인하지 못했습니다.');
+  }
+
+  const subscription = ((subscriptionResult.data ?? [])[0] as SeriesSubscriptionRow | undefined) ?? null;
 
   if (!subscription || subscription.expired_at || !subscription.current_period_end) {
     return false;

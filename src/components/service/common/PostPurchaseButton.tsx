@@ -41,7 +41,10 @@ type Props = {
   siteName: string;
   boardName: string;
   contentId: string;
+  price: number;
   buttonText?: string;
+  buttonClassName?: string;
+  hideButtonIcon?: boolean;
   popup?: boolean;
   disabled?: boolean;
   redirectUrl?: string;
@@ -131,7 +134,18 @@ function getFailUrl({ siteName, boardName, contentId, failUrl }: Props) {
 
 export default function PostPurchaseButton(props: Props) {
   const { mode: minorControlMode, isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
-  const { siteName, boardName, contentId, popup, disabled = false, onProcessingChange } = props;
+  const {
+    siteName,
+    boardName,
+    contentId,
+    price,
+    buttonText,
+    buttonClassName,
+    hideButtonIcon = false,
+    popup,
+    disabled = false,
+    onProcessingChange,
+  } = props;
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -231,6 +245,11 @@ export default function PostPurchaseButton(props: Props) {
     setIsIdentityDialogOpen(false);
   }
 
+  function handleIdentityVerified() {
+    handleCloseIdentityDialog();
+    window.requestAnimationFrame(() => window.location.reload());
+  }
+
   async function handlePurchase(guardianIdentityVerificationId?: string) {
     try {
       setErrorMessage('');
@@ -328,6 +347,11 @@ export default function PostPurchaseButton(props: Props) {
     return null;
   }
 
+  const purchaseButtonLabel = minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 소장' : '포스팅 소장';
+  const triggerButtonLabel = buttonText ?? purchaseButtonLabel;
+  const triggerButtonClassName = buttonClassName ?? styles.button;
+  const purchaseQuestion = `포스팅을 ${price.toLocaleString('ko-KR')} 원에 소장하시겠어요?`;
+
   return (
     <>
       {popup ? (
@@ -340,20 +364,20 @@ export default function PostPurchaseButton(props: Props) {
               onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
             >
-              {popup ? null : <SellOutlinedIcon />}
-              <strong>{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 소장' : '포스팅 소장'}</strong>
+              {popup || hideButtonIcon ? null : <SellOutlinedIcon />}
+              <strong>{purchaseButtonLabel}</strong>
             </button>
           </Stack>
         </>
       ) : (
         <button
           type="button"
-          className={popup ? 'button medium submit' : styles.button}
+          className={popup ? 'button medium submit' : triggerButtonClassName}
           onClick={handleOpenConfirm}
           disabled={disabled || isProcessing}
         >
-          {popup ? null : <SellOutlinedIcon />}
-          <strong>{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 소장' : '포스팅 소장'}</strong>
+          {hideButtonIcon ? null : <SellOutlinedIcon />}
+          <strong>{triggerButtonLabel}</strong>
         </button>
       )}
 
@@ -366,7 +390,7 @@ export default function PostPurchaseButton(props: Props) {
 
           <Stack gap={3}>
             <Stack>
-              <Typography variant="body2">포스팅을 소장하시겠어요?</Typography>
+              <Typography variant="body2">{purchaseQuestion}</Typography>
               {renderPurchaseConsent()}
             </Stack>
 
@@ -402,7 +426,7 @@ export default function PostPurchaseButton(props: Props) {
 
           <DialogContent>
             <Stack>
-              <Typography variant="body2">포스팅을 소장하시겠어요?</Typography>
+              <Typography variant="body2">{purchaseQuestion}</Typography>
               {renderPurchaseConsent()}
             </Stack>
           </DialogContent>
@@ -446,7 +470,7 @@ export default function PostPurchaseButton(props: Props) {
           <Stack gap={3}>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
           </Stack>
         </Drawer>
@@ -456,7 +480,7 @@ export default function PostPurchaseButton(props: Props) {
           <DialogContent dividers>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
-              <IdentityVerificationButton />
+              <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
           </DialogContent>
           <DialogActions>

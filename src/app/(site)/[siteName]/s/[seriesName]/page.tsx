@@ -1,11 +1,14 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Chip } from '@mui/material';
+import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSeriesPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import DonationButton from '@/components/service/common/DonationButton';
+import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -30,6 +33,7 @@ type SeriesRow = {
   site_id: string;
   last_published_at: string | null;
   is_completed: boolean;
+  is_subscription: boolean | null;
   user_id: string | null;
   boards: {
     board_key: string;
@@ -117,6 +121,7 @@ export default async function Page(context: RouteContext) {
         site_id,
         last_published_at,
         is_completed,
+        is_subscription,
         user_id,
         boards (
           board_key,
@@ -134,6 +139,15 @@ export default async function Page(context: RouteContext) {
   }
 
   const seriesData = series.data as SeriesRow;
+  const seriesSubscriptionSetting = await supabaseAdmin
+    .from('subscription_settings')
+    .select('is_enabled')
+    .eq('target_type', PAYMENT_TARGET_TYPE.SERIES)
+    .eq('target_id', seriesData.id)
+    .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
+    .maybeSingle();
+  const isSeriesSubscriptionEnabled =
+    seriesData.is_subscription === true && seriesSubscriptionSetting.data?.is_enabled === true;
   const from = (currentPage - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
@@ -187,6 +201,32 @@ export default async function Page(context: RouteContext) {
               {seriesData.is_completed ? <Chip label="완결" size="small" className={styles.em} /> : null}
             </div>
             {seriesData.summary ? <p>{seriesData.summary}</p> : null}
+            {seriesData.boards ? (
+              <div className={styles['series-actions']}>
+                <SubscriptionButton
+                  siteName={normalizedSiteName}
+                  boardName={seriesData.boards.board_key}
+                  board={{
+                    id: seriesData.board_id,
+                    board_key: seriesData.boards.board_key,
+                    board_label: seriesData.boards.board_label,
+                  }}
+                  selectedSeries={{
+                    series_key: seriesData.series_key,
+                    series_label: seriesData.series_label,
+                  }}
+                  selectedBoard
+                  isEnabledByServer={isSeriesSubscriptionEnabled}
+                />
+                <DonationButton
+                  siteName={normalizedSiteName}
+                  targetType="series"
+                  boardName={seriesData.boards.board_key}
+                  seriesName={seriesData.series_key}
+                  buttonText="연재 후원"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="paper">

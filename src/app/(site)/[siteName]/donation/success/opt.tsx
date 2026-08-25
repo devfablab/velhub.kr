@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -15,7 +15,6 @@ type DonationSuccessResponse = {
 
 export default function Opt() {
   const params = useParams();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const boardName = normalizeText(searchParams.get('boardName'));
@@ -45,6 +44,7 @@ export default function Opt() {
         const siteId = normalizeText(searchParams.get('siteId'));
         const targetType = normalizeText(searchParams.get('targetType'));
         const boardId = normalizeText(searchParams.get('boardId'));
+        const seriesId = normalizeText(searchParams.get('seriesId'));
         const guardianIdentityVerificationId = normalizeText(searchParams.get('guardianIdentityVerificationId'));
 
         if (!paymentKey || !orderId || !amountText || !siteId) {
@@ -71,6 +71,7 @@ export default function Opt() {
             siteId,
             targetType,
             boardId,
+            seriesId,
             guardianIdentityVerificationId,
           }),
         });
@@ -136,7 +137,7 @@ export default function Opt() {
               <Anchor
                 type="button"
                 className="button medium action"
-                href={`/${siteName}/${boardName}?series=${seriesName}`}
+                href={`/${siteName}/s/${seriesName}`}
               >
                 연재로 돌아가기
               </Anchor>
