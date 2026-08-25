@@ -74,6 +74,14 @@ function formatDateTime(value: string | null) {
   }).format(new Date(value));
 }
 
+function getPaymentTypeLabel(payment: SubscriptionPayment) {
+  if (payment.subscription?.canceledAt && payment.subscription.nextBillingAt === null && payment.status === 'paid') {
+    return `1개월 ${payment.paymentTypeLabel} 단건 결제`;
+  }
+
+  return payment.paymentTypeLabel;
+}
+
 async function getSubscriptionsPurchase() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -186,8 +194,8 @@ export default async function Page() {
                       return (
                         <TableRow key={payment.id}>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.siteLabel}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.targetLabel ?? '-'}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.paymentTypeLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.targetLabel || '-'}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{getPaymentTypeLabel(payment)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>
                             <BillingPopup paymentId={payment.id} detail={payment.detail}>
                               {payment.statusLabel}

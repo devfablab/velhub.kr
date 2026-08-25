@@ -70,7 +70,7 @@ const SUCCESS_PAYMENT_STATUSES: string[] = [
   PAYMENT_STATUS.REFUNDED,
 ];
 
-const SUBSCRIPTION_PAYMENT_TYPES = [PAYMENT_TYPE.SUBSCRIPTION_SERIES];
+const SUBSCRIPTION_PAYMENT_TYPES = [PAYMENT_TYPE.SUBSCRIPTION_SITE, PAYMENT_TYPE.SUBSCRIPTION_SERIES];
 
 function normalizePaymentStatus(status: string) {
   return normalizeText(status).toLowerCase();
@@ -133,6 +133,8 @@ function getSubscriptionStatusLabel(status: string, canceledAt: string | null, e
 
 function getSubscriptionPaymentTypeLabel(paymentType: string) {
   switch (paymentType) {
+    case PAYMENT_TYPE.SUBSCRIPTION_SITE:
+      return '블로그 구독';
     case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return '연재 구독';
     default:
@@ -142,6 +144,8 @@ function getSubscriptionPaymentTypeLabel(paymentType: string) {
 
 function getSubscriptionTypeByPaymentType(paymentType: string) {
   switch (paymentType) {
+    case PAYMENT_TYPE.SUBSCRIPTION_SITE:
+      return SUBSCRIPTION_TYPE.SUBSCRIPTION_SITE;
     case PAYMENT_TYPE.SUBSCRIPTION_SERIES:
       return SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES;
     default:
@@ -182,6 +186,16 @@ function createSubscriptionDisplayInfo({
     return {
       site: series ? (siteById.get(series.site_id) ?? null) : null,
       targetLabel: series?.series_label || series?.series_key || '연재 확인 필요',
+      paymentTypeLabel,
+    };
+  }
+
+  if (payment.target_type === PAYMENT_TARGET_TYPE.SITE && payment.target_id) {
+    const site = siteById.get(payment.target_id) ?? null;
+
+    return {
+      site,
+      targetLabel: '',
       paymentTypeLabel,
     };
   }
@@ -331,7 +345,6 @@ export async function GET() {
           )
           .eq('subscriber_user_id', session.stigmaId)
           .in('target_id', subscriptionTargetIds)
-          .eq('subscription_type', SUBSCRIPTION_TYPE.SUBSCRIPTION_SERIES)
           .order('created_at', { ascending: false })
       : { data: [], error: null };
 
@@ -352,7 +365,15 @@ export async function GET() {
       }
     });
 
-    const siteIds = Array.from(new Set(seriesList.map((series) => series.site_id))).filter(Boolean);
+    const siteIds = Array.from(
+      new Set([
+        ...seriesList.map((series) => series.site_id),
+        ...payments
+          .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.SITE)
+          .map((payment) => payment.target_id)
+          .filter((siteId): siteId is string => Boolean(siteId)),
+      ]),
+    );
 
     const sitesResult = siteIds.length
       ? await supabaseAdmin.from('rhizomes').select('id, site_key, site_label, site_type').in('id', siteIds)
@@ -394,6 +415,7 @@ export async function GET() {
           siteLabel: site?.site_label ?? null,
           siteType: site?.site_type ?? null,
           paymentType: payment.payment_type,
+          paymentTypeLabel: displayInfo.paymentTypeLabel,
           targetType: payment.target_type,
           targetId: payment.target_id,
           targetLabel: displayInfo.targetLabel,

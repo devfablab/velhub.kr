@@ -1,4 +1,5 @@
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Container from '../../menu';
 import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
@@ -90,6 +91,8 @@ async function getBlogSubscriptionPurchase() {
 }
 
 export default async function Page() {
+  redirect('/hub/purchase/subscriptions');
+
   let result: BlogSubscriptionResponse;
 
   try {
