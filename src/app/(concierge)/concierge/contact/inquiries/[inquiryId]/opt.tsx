@@ -55,6 +55,7 @@ type Inquiry = {
   payment_control_selected_at: string | null;
   pg_cancellation_unavailable_at: string | null;
   manual_refund_ready_at: string | null;
+  parentRelationshipVerifiedAt: string | null;
   inquiry_subtype: string | null;
   inquiry_orders: { payment_id: string }[];
   inquiry_bug_details: Parameters<typeof InquiryDetails>[0]['bugDetails'];
@@ -594,7 +595,17 @@ export default function Opt() {
         onClose={() => setAgreementOpen(false)}
         onConfirm={() => void handleAgreementConfirm()}
       />
-      {inquiry.information_request_type === 'payment_control' && !inquiry.payment_control_selected_at ? (
+      {inquiry.information_request_type === 'payment_control' &&
+      !inquiry.payment_control_selected_at &&
+      !inquiry.parentRelationshipVerifiedAt ? (
+        <p className="alert info">
+          <InfoOutlineRoundedIcon />
+          <span>부 또는 모 관계를 확인한 뒤에 향후 결제 / 구매 / 후원 방침을 선택할 수 있습니다.</span>
+        </p>
+      ) : null}
+      {inquiry.information_request_type === 'payment_control' &&
+      !inquiry.payment_control_selected_at &&
+      inquiry.parentRelationshipVerifiedAt ? (
         <div className="paper">
           <h2>향후 결제 / 구매 / 후원 방침</h2>
           <Typography variant="body2">청약취소 처리 후 만 19세가 되기 전까지 적용할 방침을 선택해 주세요.</Typography>

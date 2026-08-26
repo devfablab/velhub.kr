@@ -15,11 +15,22 @@ export async function GET(_: Request, { params }: { params: Promise<{ inquiryId:
     .eq('requester_stigma_id', currentStigma.stigmaId)
     .maybeSingle();
   if (error || !data) return Response.json({ error: '문의를 찾을 수 없습니다.' }, { status: 404 });
+  const { data: identity } = await db
+    .from('chorogons')
+    .select('parent_relationship_verified_at')
+    .eq('user_id', currentStigma.stigmaId)
+    .maybeSingle();
   const evidence = data.inquiry_attachments.find(
     (item) => !item.deleted_at && ['bug_evidence', 'payment_evidence'].includes(item.attachment_type),
   );
   const { data: signed } = evidence
     ? await db.storage.from(evidence.storage_bucket).createSignedUrl(evidence.storage_path, 600)
     : { data: null };
-  return Response.json({ inquiry: { ...data, evidenceUrl: signed?.signedUrl ?? null } });
+  return Response.json({
+    inquiry: {
+      ...data,
+      evidenceUrl: signed?.signedUrl ?? null,
+      parentRelationshipVerifiedAt: identity?.parent_relationship_verified_at ?? null,
+    },
+  });
 }

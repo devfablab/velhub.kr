@@ -298,7 +298,6 @@ export async function POST(request: Request) {
       p_summary: trimmedSummary,
       p_visibility_type: visibilityType,
       p_theme_type: themeType,
-      p_plan_type: null,
       p_is_shutdown: false,
       p_comment_provider: commentProvider,
     });
