@@ -716,7 +716,7 @@ export default function MembershipPlan() {
             <Typography variant="body2">
               {isMinorUser
                 ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제로 멤버십을 이용하시겠어요? 기간이 끝나면 다시 결제해야 합니다.`
-                : `멤버십을 월 ${formatMembershipPrice(selectedPrice)} 원에 구독하시겠어요?`}
+                : `멤버십을 월 ${formatMembershipPrice(selectedPrice)}에 구독하시겠어요?`}
             </Typography>
           </Stack>
           <PaymentTerms type="subscription" disabled={isSubmitting} />
