@@ -72,8 +72,7 @@ export default function ReportButton({
   const [completed, setCompleted] = useState(false);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const menuOpen = Boolean(menuAnchorElement);
   const guidelineReportItems = guidelineReportItemsByTargetType[targetType];

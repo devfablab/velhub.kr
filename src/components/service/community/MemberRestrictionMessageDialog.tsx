@@ -81,7 +81,7 @@ export default function MemberRestrictionMessageDialog({
   onSent,
 }: Props) {
   const theme = useTheme();
-  const isDialog = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [response, setResponse] = useState<MemberRestrictionMessagesResponse | null>(null);
   const [messageText, setMessageText] = useState('');
   const [openedAt, setOpenedAt] = useState('');
@@ -226,7 +226,7 @@ export default function MemberRestrictionMessageDialog({
 
   return (
     <>
-      {isDialog ? (
+      {!isMobile ? (
         <Dialog open={open} onClose={closeDialog} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>소명 메시지</DialogTitle>
           <button type="button" className="close-button" onClick={closeDialog} disabled={saving}>

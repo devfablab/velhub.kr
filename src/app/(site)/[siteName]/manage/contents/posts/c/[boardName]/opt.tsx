@@ -130,8 +130,7 @@ export default function Opt() {
   const boardName = normalizeText(params.boardName);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [board, setBoard] = useState<BoardResponse['board'] | null>(null);
   const [canManageBoardSettings, setCanManageBoardSettings] = useState(false);

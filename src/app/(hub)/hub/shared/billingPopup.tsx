@@ -11,6 +11,7 @@ import {
   Snackbar,
   Stack,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import styles from '@/app/hub.module.sass';
 
@@ -96,7 +97,8 @@ function getExtraRows(detail: BillingPopupDetail) {
 }
 
 export default function BillingPopup({ paymentId, detail, children }: BillingPopupProps) {
-  const isMobile = useMediaQuery('(max-width: 600px)');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [isOpen, setIsOpen] = useState(false);
   const [isRefunding, setIsRefunding] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');

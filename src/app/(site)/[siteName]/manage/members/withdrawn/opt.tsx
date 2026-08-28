@@ -103,8 +103,7 @@ export default function Opt() {
   const [messageUser, setMessageUser] = useState<WithdrawnUserRow | null>(null);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const loadUsers = useCallback(async () => {
     const response = await fetch(`/api/manage/members/withdrawn?siteName=${siteName}`, {

@@ -186,8 +186,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [managers, setManagers] = useState<ManagerItem[]>([]);
@@ -1453,6 +1452,16 @@ export default function Opt() {
                     </Stack>
                   ) : null}
                 </Stack>
+                <Stack direction="column" gap={1.5}>
+                  <button
+                    type="button"
+                    className="button medium cancel"
+                    onClick={closeSearchDialog}
+                    disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
+                  >
+                    닫기
+                  </button>
+                </Stack>
               </Stack>
             </Drawer>
           ) : (
@@ -1660,6 +1669,16 @@ export default function Opt() {
                   ) : null}
                 </Stack>
               </DialogContent>
+              <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={closeSearchDialog}
+                  disabled={isSearching || isSubmittingNew || isSubmittingMove || isSubmittingOwnerTransfer}
+                >
+                  닫기
+                </button>
+              </DialogActions>
             </Dialog>
           )}
 
@@ -1671,6 +1690,15 @@ export default function Opt() {
               className="VhiDrawer-bottom"
             >
               <h2>운영자 교체</h2>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeOwnerTransferConfirm}
+                aria-label="운영자 교체 닫기"
+                disabled={isSubmittingOwnerTransfer}
+              >
+                <CloseRoundedIcon />
+              </button>
               <Stack gap={3}>
                 <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
                 <button
@@ -1680,6 +1708,14 @@ export default function Opt() {
                   disabled={isSubmittingOwnerTransfer}
                 >
                   확인
+                </button>
+                <button
+                  type="button"
+                  className="button medium cancel"
+                  onClick={closeOwnerTransferConfirm}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  닫기
                 </button>
               </Stack>
             </Drawer>
@@ -1692,10 +1728,27 @@ export default function Opt() {
               className="VhiDialog"
             >
               <DialogTitle>운영자 교체</DialogTitle>
+              <button
+                type="button"
+                className="close-button"
+                onClick={closeOwnerTransferConfirm}
+                aria-label="운영자 교체 닫기"
+                disabled={isSubmittingOwnerTransfer}
+              >
+                <CloseRoundedIcon />
+              </button>
               <DialogContent>
                 <Typography variant="body2">선택한 멤버가 수락하면 교체 됩니다.</Typography>
               </DialogContent>
               <DialogActions>
+                <button
+                  type="button"
+                  className="button medium close"
+                  onClick={closeOwnerTransferConfirm}
+                  disabled={isSubmittingOwnerTransfer}
+                >
+                  닫기
+                </button>
                 <button
                   type="button"
                   className="button medium submit"
@@ -1727,6 +1780,16 @@ export default function Opt() {
                     <CloseRoundedIcon />
                   </button>
                   {managerEditContent}
+                  <Stack direction="column" gap={1.5}>
+                    <button
+                      type="button"
+                      className="button medium cancel"
+                      onClick={closeManagerEdit}
+                      disabled={isSubmittingDelete || isSubmittingMove}
+                    >
+                      닫기
+                    </button>
+                  </Stack>
                 </Drawer>
               ) : (
                 <Dialog
@@ -1746,6 +1809,16 @@ export default function Opt() {
                     <CloseRoundedIcon />
                   </button>
                   <DialogContent>{managerEditContent}</DialogContent>
+                  <DialogActions>
+                    <button
+                      type="button"
+                      className="button medium close"
+                      onClick={closeManagerEdit}
+                      disabled={isSubmittingDelete || isSubmittingMove}
+                    >
+                      닫기
+                    </button>
+                  </DialogActions>
                 </Dialog>
               )}
             </>

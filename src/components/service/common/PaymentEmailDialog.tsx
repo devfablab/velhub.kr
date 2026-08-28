@@ -34,7 +34,7 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const theme = useTheme();
-  const isMobile = !useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   function handleClose() {
     if (isSaving) return;

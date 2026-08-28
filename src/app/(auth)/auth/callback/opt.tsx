@@ -64,8 +64,7 @@ export default function Opt() {
   const [returnPath, setReturnPath] = useState<string | null>(null);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     let isCancelled = false;

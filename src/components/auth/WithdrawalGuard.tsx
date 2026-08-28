@@ -26,7 +26,7 @@ export default function WithdrawalGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const theme = useTheme();
-  const isMobile = !useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { isReady, isAuthenticated, authVersion } = useAuthState();
   const [status, setStatus] = useState<string | null>(null);
   const [isCanceling, setIsCanceling] = useState(false);

@@ -207,7 +207,7 @@ function ContentViewer({ response }: { response: ContentResponse }) {
 
 export default function Opt() {
   const theme = useTheme();
-  const isDialog = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [items, setItems] = useState<GuidelineAppealItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoginRequired, setIsLoginRequired] = useState(false);
@@ -474,7 +474,7 @@ export default function Opt() {
         </div>
       )}
 
-      {isDialog ? (
+      {!isMobile ? (
         <Dialog open={Boolean(contentItem)} onClose={closeContent} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>콘텐츠 보기</DialogTitle>
           <button type="button" className="close-button" onClick={closeContent}>
@@ -502,7 +502,7 @@ export default function Opt() {
         </Drawer>
       )}
 
-      {isDialog ? (
+      {!isMobile ? (
         <Dialog open={Boolean(messageItem)} onClose={closeMessages} maxWidth="lg" fullWidth className="VhiDialog">
           <DialogTitle>소명 메시지</DialogTitle>
           <button type="button" className="close-button" onClick={closeMessages} disabled={messageSaving}>

@@ -257,8 +257,7 @@ export default function Opt() {
   const theme = useTheme();
   const isNotTablet = useMediaQuery(theme.breakpoints.up('lg'));
   const isTablet = !isNotTablet;
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1367,7 +1366,7 @@ export default function Opt() {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs">
+            <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs" className="VhiDialog">
               <DialogTitle>카테고리 삭제</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>
                 <CloseRoundedIcon />

@@ -47,7 +47,7 @@ export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const theme = useTheme();
-  const isMobile = !useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
   const [ownerTransfer, setOwnerTransfer] = useState<OwnerTransferItem | null>(null);

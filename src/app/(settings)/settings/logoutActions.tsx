@@ -34,8 +34,7 @@ export default function LogoutActions() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);
@@ -178,7 +177,7 @@ export default function LogoutActions() {
             <Stack direction="column" spacing={1.5}>
               <button
                 type="button"
-                className="button small cancel"
+                className="button medium cancel"
                 onClick={handleCloseConfirm}
                 disabled={isLoggingOutAllDevices}
               >
@@ -207,7 +206,7 @@ export default function LogoutActions() {
           <DialogActions>
             <button
               type="button"
-              className="button small close"
+              className="button medium close"
               onClick={handleCloseConfirm}
               disabled={isLoggingOutAllDevices}
             >

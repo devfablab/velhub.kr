@@ -484,7 +484,7 @@ function ContentEditor({
 
 export default function Opt() {
   const theme = useTheme();
-  const isDialog = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [items, setItems] = useState<AppealCenterItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoginRequired, setIsLoginRequired] = useState(false);
@@ -838,157 +838,86 @@ export default function Opt() {
         </div>
       )}
 
-      <Dialog open={Boolean(opinionItem)} onClose={closeOpinion} maxWidth="lg" fullWidth className="VhiDialog">
-        <DialogTitle>소명 의견서 제출</DialogTitle>
-        <button className="close-button" onClick={closeOpinion}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          {opinionItem?.appeal ? (
-            <Stack gap={2}>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">신고 대상 URL</Typography>
-                <Typography sx={{ wordBreak: 'break-all' }}>{opinionItem.reportUrl}</Typography>
-              </Stack>
-              {opinionItem.targetType === 'comment' ? (
+      {isMobile ? (
+        <Drawer anchor="bottom" open={Boolean(opinionItem)} onClose={closeOpinion} className="VhiDrawer-bottom">
+          <h2>소명 의견서 제출</h2>
+          <button className="close-button" onClick={closeOpinion}>
+            <CloseRoundedIcon />
+          </button>
+          <Stack gap={3}>
+            {opinionItem?.appeal ? (
+              <Stack gap={2}>
                 <Stack gap={0.5}>
-                  <Typography variant="subtitle2">댓글 내용</Typography>
-                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                    {opinionItem.commentContent}
+                  <Typography variant="subtitle2">신고 대상 URL</Typography>
+                  <Typography sx={{ wordBreak: 'break-all' }}>{opinionItem.reportUrl}</Typography>
+                </Stack>
+                {opinionItem.targetType === 'comment' ? (
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">댓글 내용</Typography>
+                    <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {opinionItem.commentContent}
+                    </Typography>
+                  </Stack>
+                ) : null}
+                {opinionItem.reportDetails.map((detail) => (
+                  <Stack key={detail.label} gap={0.5}>
+                    <Typography variant="subtitle2">{detail.label}</Typography>
+                    <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.value}</Typography>
+                  </Stack>
+                ))}
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">처리 내용 및 사유</Typography>
+                  <Typography>
+                    {getAppealTreatmentMessage({
+                      category: opinionItem.category,
+                      deletionReason: opinionItem.appeal.deletionReason,
+                      targetType: opinionItem.targetType,
+                    })}
                   </Typography>
                 </Stack>
-              ) : null}
-              {opinionItem.reportDetails.map((detail) => (
-                <Stack key={detail.label} gap={0.5}>
-                  <Typography variant="subtitle2">{detail.label}</Typography>
-                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.value}</Typography>
-                </Stack>
-              ))}
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">처리 내용 및 사유</Typography>
-                <Typography>
-                  {getAppealTreatmentMessage({
-                    category: opinionItem.category,
-                    deletionReason: opinionItem.appeal.deletionReason,
-                    targetType: opinionItem.targetType,
-                  })}
-                </Typography>
-              </Stack>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">제출 자료 요지</Typography>
-                <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {opinionItem.appeal.submissionSummary}
-                </Typography>
-              </Stack>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">삭제 사유</Typography>
-                <Typography>{getDeletionReasonLabel(opinionItem)}</Typography>
-              </Stack>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">소명 요청사항</Typography>
-                <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                  {opinionItem.appeal.appealRequest}
-                </Typography>
-              </Stack>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">소명 제출 기한</Typography>
-                <Typography>{`${opinionItem.deadlineStartedOn}부터 ${opinionItem.deadlineEndedOn}까지`}</Typography>
-              </Stack>
-              <FormControl fullWidth required>
-                <Select
-                  displayEmpty
-                  value={opinionPosition}
-                  size="small"
-                  onChange={(event) => setOpinionPosition(event.target.value)}
-                >
-                  <MenuItem value="" disabled>
-                    소명 입장 선택
-                  </MenuItem>
-                  {appealOpinionPositionOptions[opinionItem.category].map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분 *</Typography>
-                <TextField
-                  aria-label="인정하거나 이의를 제기하는 부분"
-                  value={disputedParts}
-                  onChange={(event) => setDisputedParts(event.currentTarget.value)}
-                  multiline
-                  minRows={4}
-                  fullWidth
-                  required
-                  size="small"
-                />
-              </Stack>
-              {visibleOpinionFields.map((field) =>
-                field.type === 'select' ? (
-                  <FormControl key={field.key} fullWidth required>
-                    <Select
-                      displayEmpty
-                      size="small"
-                      value={opinionValues[field.key] ?? ''}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setOpinionValues((current) => ({ ...current, [field.key]: value }));
-                      }}
-                    >
-                      <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
-                      {field.options?.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <Typography variant="caption">{field.helperText}</Typography>
-                  </FormControl>
-                ) : (
-                  <Stack key={field.key} gap={0.5}>
-                    <Typography variant="subtitle2">{field.label} *</Typography>
-                    <TextField
-                      aria-label={field.label}
-                      helperText={field.helperText}
-                      value={opinionValues[field.key] ?? ''}
-                      onChange={(event) => {
-                        const value = event.currentTarget.value;
-                        setOpinionValues((current) => ({ ...current, [field.key]: value }));
-                      }}
-                      multiline
-                      minRows={4}
-                      fullWidth
-                      required
-                      size="small"
-                    />
-                  </Stack>
-                ),
-              )}
-              <FormControl fullWidth required>
-                <Select
-                  displayEmpty
-                  size="small"
-                  value={contentRequest}
-                  onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
-                >
-                  <MenuItem value="" disabled>
-                    게시물 · 댓글 처리 요청 선택
-                  </MenuItem>
-                  {Object.entries(reportAppealContentRequestLabels).map(([value, label]) => (
-                    <MenuItem key={value} value={value}>
-                      {label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {contentRequest === 'edit_and_review' ? (
                 <Stack gap={0.5}>
-                  <Typography variant="subtitle2">수정 예정 내용 *</Typography>
+                  <Typography variant="subtitle2">제출 자료 요지</Typography>
+                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {opinionItem.appeal.submissionSummary}
+                  </Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">삭제 사유</Typography>
+                  <Typography>{getDeletionReasonLabel(opinionItem)}</Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">소명 요청사항</Typography>
+                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {opinionItem.appeal.appealRequest}
+                  </Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">소명 제출 기한</Typography>
+                  <Typography>{`${opinionItem.deadlineStartedOn}부터 ${opinionItem.deadlineEndedOn}까지`}</Typography>
+                </Stack>
+                <FormControl fullWidth required>
+                  <Select
+                    displayEmpty
+                    value={opinionPosition}
+                    size="small"
+                    onChange={(event) => setOpinionPosition(event.target.value)}
+                  >
+                    <MenuItem value="" disabled>
+                      소명 입장 선택
+                    </MenuItem>
+                    {appealOpinionPositionOptions[opinionItem.category].map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분 *</Typography>
                   <TextField
-                    aria-label="수정 예정 내용"
-                    value={modificationContent}
-                    onChange={(event) => setModificationContent(event.currentTarget.value)}
+                    aria-label="인정하거나 이의를 제기하는 부분"
+                    value={disputedParts}
+                    onChange={(event) => setDisputedParts(event.currentTarget.value)}
                     multiline
                     minRows={4}
                     fullWidth
@@ -996,78 +925,324 @@ export default function Opt() {
                     size="small"
                   />
                 </Stack>
-              ) : null}
-              <Stack gap={0.5}>
-                <Typography variant="subtitle2">첨부자료</Typography>
-                {opinionFile ? (
-                  <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2">{opinionFile.name}</Typography>
-                    <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
-                      파일 삭제
-                    </button>
-                  </Stack>
-                ) : (
-                  <Box>
-                    <Button component="label" className="button small action">
-                      파일 추가
-                      <VisuallyHiddenInput
-                        type="file"
-                        accept="application/pdf,.pdf"
+                {visibleOpinionFields.map((field) =>
+                  field.type === 'select' ? (
+                    <FormControl key={field.key} fullWidth required>
+                      <Select
+                        displayEmpty
+                        size="small"
+                        value={opinionValues[field.key] ?? ''}
                         onChange={(event) => {
-                          setOpinionFile(event.currentTarget.files?.[0] ?? null);
-                          event.currentTarget.value = '';
+                          const value = event.target.value;
+                          setOpinionValues((current) => ({ ...current, [field.key]: value }));
                         }}
+                      >
+                        <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
+                        {field.options?.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography variant="caption">{field.helperText}</Typography>
+                    </FormControl>
+                  ) : (
+                    <Stack key={field.key} gap={0.5}>
+                      <Typography variant="subtitle2">{field.label} *</Typography>
+                      <TextField
+                        aria-label={field.label}
+                        helperText={field.helperText}
+                        value={opinionValues[field.key] ?? ''}
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                        }}
+                        multiline
+                        minRows={4}
+                        fullWidth
+                        required
+                        size="small"
                       />
-                    </Button>
-                  </Box>
+                    </Stack>
+                  ),
                 )}
-                <p className="alert warning">
-                  <WarningAmberRoundedIcon />
-                  <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
-                </p>
+                <FormControl fullWidth required>
+                  <Select
+                    displayEmpty
+                    size="small"
+                    value={contentRequest}
+                    onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
+                  >
+                    <MenuItem value="" disabled>
+                      게시물 · 댓글 처리 요청 선택
+                    </MenuItem>
+                    {Object.entries(reportAppealContentRequestLabels).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>
+                        {label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {contentRequest === 'edit_and_review' ? (
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">수정 예정 내용 *</Typography>
+                    <TextField
+                      aria-label="수정 예정 내용"
+                      value={modificationContent}
+                      onChange={(event) => setModificationContent(event.currentTarget.value)}
+                      multiline
+                      minRows={4}
+                      fullWidth
+                      required
+                      size="small"
+                    />
+                  </Stack>
+                ) : null}
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">첨부자료</Typography>
+                  {opinionFile ? (
+                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                      <Typography variant="body2">{opinionFile.name}</Typography>
+                      <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
+                        파일 삭제
+                      </button>
+                    </Stack>
+                  ) : (
+                    <Box>
+                      <Button component="label" className="button small action">
+                        파일 추가
+                        <VisuallyHiddenInput
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          onChange={(event) => {
+                            setOpinionFile(event.currentTarget.files?.[0] ?? null);
+                            event.currentTarget.value = '';
+                          }}
+                        />
+                      </Button>
+                    </Box>
+                  )}
+                  <p className="alert warning">
+                    <WarningAmberRoundedIcon />
+                    <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
+                  </p>
+                </Stack>
               </Stack>
+            ) : null}
+            <Stack direction="column" spacing={1.5}>
+              <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeOpinion}>
+                취소
+              </button>
+              <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
+                제출
+              </button>
             </Stack>
-          ) : null}
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
-            취소
-          </button>
-          <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
-            제출
-          </button>
-        </DialogActions>
-      </Dialog>
-
-      {isDialog ? (
-        <Dialog open={Boolean(contentItem)} onClose={closeContent} maxWidth="lg" fullWidth className="VhiDialog">
-          <DialogTitle>{contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}</DialogTitle>
-          <button className="close-button" onClick={closeContent}>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={Boolean(opinionItem)} onClose={closeOpinion} maxWidth="lg" fullWidth className="VhiDialog">
+          <DialogTitle>소명 의견서 제출</DialogTitle>
+          <button className="close-button" onClick={closeOpinion}>
             <CloseRoundedIcon />
           </button>
-          <DialogContent>{contentBody}</DialogContent>
+          <DialogContent>
+            {opinionItem?.appeal ? (
+              <Stack gap={2}>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">신고 대상 URL</Typography>
+                  <Typography sx={{ wordBreak: 'break-all' }}>{opinionItem.reportUrl}</Typography>
+                </Stack>
+                {opinionItem.targetType === 'comment' ? (
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">댓글 내용</Typography>
+                    <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                      {opinionItem.commentContent}
+                    </Typography>
+                  </Stack>
+                ) : null}
+                {opinionItem.reportDetails.map((detail) => (
+                  <Stack key={detail.label} gap={0.5}>
+                    <Typography variant="subtitle2">{detail.label}</Typography>
+                    <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{detail.value}</Typography>
+                  </Stack>
+                ))}
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">처리 내용 및 사유</Typography>
+                  <Typography>
+                    {getAppealTreatmentMessage({
+                      category: opinionItem.category,
+                      deletionReason: opinionItem.appeal.deletionReason,
+                      targetType: opinionItem.targetType,
+                    })}
+                  </Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">제출 자료 요지</Typography>
+                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {opinionItem.appeal.submissionSummary}
+                  </Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">삭제 사유</Typography>
+                  <Typography>{getDeletionReasonLabel(opinionItem)}</Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">소명 요청사항</Typography>
+                  <Typography sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    {opinionItem.appeal.appealRequest}
+                  </Typography>
+                </Stack>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">소명 제출 기한</Typography>
+                  <Typography>{`${opinionItem.deadlineStartedOn}부터 ${opinionItem.deadlineEndedOn}까지`}</Typography>
+                </Stack>
+                <FormControl fullWidth required>
+                  <Select
+                    displayEmpty
+                    value={opinionPosition}
+                    size="small"
+                    onChange={(event) => setOpinionPosition(event.target.value)}
+                  >
+                    <MenuItem value="" disabled>
+                      소명 입장 선택
+                    </MenuItem>
+                    {appealOpinionPositionOptions[opinionItem.category].map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">인정하거나 이의를 제기하는 부분 *</Typography>
+                  <TextField
+                    aria-label="인정하거나 이의를 제기하는 부분"
+                    value={disputedParts}
+                    onChange={(event) => setDisputedParts(event.currentTarget.value)}
+                    multiline
+                    minRows={4}
+                    fullWidth
+                    required
+                    size="small"
+                  />
+                </Stack>
+                {visibleOpinionFields.map((field) =>
+                  field.type === 'select' ? (
+                    <FormControl key={field.key} fullWidth required>
+                      <Select
+                        displayEmpty
+                        size="small"
+                        value={opinionValues[field.key] ?? ''}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                        }}
+                      >
+                        <MenuItem value="" disabled>{`${field.label} 선택`}</MenuItem>
+                        {field.options?.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <Typography variant="caption">{field.helperText}</Typography>
+                    </FormControl>
+                  ) : (
+                    <Stack key={field.key} gap={0.5}>
+                      <Typography variant="subtitle2">{field.label} *</Typography>
+                      <TextField
+                        aria-label={field.label}
+                        helperText={field.helperText}
+                        value={opinionValues[field.key] ?? ''}
+                        onChange={(event) => {
+                          const value = event.currentTarget.value;
+                          setOpinionValues((current) => ({ ...current, [field.key]: value }));
+                        }}
+                        multiline
+                        minRows={4}
+                        fullWidth
+                        required
+                        size="small"
+                      />
+                    </Stack>
+                  ),
+                )}
+                <FormControl fullWidth required>
+                  <Select
+                    displayEmpty
+                    size="small"
+                    value={contentRequest}
+                    onChange={(event) => setContentRequest(event.target.value as ReportAppealContentRequest)}
+                  >
+                    <MenuItem value="" disabled>
+                      게시물 · 댓글 처리 요청 선택
+                    </MenuItem>
+                    {Object.entries(reportAppealContentRequestLabels).map(([value, label]) => (
+                      <MenuItem key={value} value={value}>
+                        {label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {contentRequest === 'edit_and_review' ? (
+                  <Stack gap={0.5}>
+                    <Typography variant="subtitle2">수정 예정 내용 *</Typography>
+                    <TextField
+                      aria-label="수정 예정 내용"
+                      value={modificationContent}
+                      onChange={(event) => setModificationContent(event.currentTarget.value)}
+                      multiline
+                      minRows={4}
+                      fullWidth
+                      required
+                      size="small"
+                    />
+                  </Stack>
+                ) : null}
+                <Stack gap={0.5}>
+                  <Typography variant="subtitle2">첨부자료</Typography>
+                  {opinionFile ? (
+                    <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
+                      <Typography variant="body2">{opinionFile.name}</Typography>
+                      <button type="button" className="button small danger" onClick={() => setOpinionFile(null)}>
+                        파일 삭제
+                      </button>
+                    </Stack>
+                  ) : (
+                    <Box>
+                      <Button component="label" className="button small action">
+                        파일 추가
+                        <VisuallyHiddenInput
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          onChange={(event) => {
+                            setOpinionFile(event.currentTarget.files?.[0] ?? null);
+                            event.currentTarget.value = '';
+                          }}
+                        />
+                      </Button>
+                    </Box>
+                  )}
+                  <p className="alert warning">
+                    <WarningAmberRoundedIcon />
+                    <span>10MB 미만의 PDF 파일 1개만 첨부할 수 있습니다.</span>
+                  </p>
+                </Stack>
+              </Stack>
+            ) : null}
+          </DialogContent>
           <DialogActions>
-            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeContent}>
-              닫기
+            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeOpinion}>
+              취소
             </button>
-            {contentResponse?.canEdit ? (
-              <button type="button" className="button medium submit" disabled={actionLoading} onClick={saveContent}>
-                수정 저장
-              </button>
-            ) : null}
-            {contentItem?.canRequestEditReview ? (
-              <button
-                type="button"
-                className="button medium submit"
-                disabled={actionLoading}
-                onClick={() => setEditReviewDialogItem(contentItem)}
-              >
-                수정 확인 요청
-              </button>
-            ) : null}
+            <button type="button" className="button medium submit" disabled={actionLoading} onClick={submitOpinion}>
+              제출
+            </button>
           </DialogActions>
         </Dialog>
-      ) : (
+      )}
+
+      {isMobile ? (
         <Drawer anchor="bottom" open={Boolean(contentItem)} onClose={closeContent} className="VhiDrawer-bottom">
           <h2>{contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}</h2>
           <button type="button" className="close-button" onClick={closeContent} aria-label="닫기">
@@ -1097,45 +1272,112 @@ export default function Opt() {
             </Stack>
           </Stack>
         </Drawer>
+      ) : (
+        <Dialog open={Boolean(contentItem)} onClose={closeContent} maxWidth="lg" fullWidth className="VhiDialog">
+          <DialogTitle>{contentResponse?.canEdit ? '콘텐츠 수정' : '콘텐츠 보기'}</DialogTitle>
+          <button className="close-button" onClick={closeContent}>
+            <CloseRoundedIcon />
+          </button>
+          <DialogContent>{contentBody}</DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" disabled={actionLoading} onClick={closeContent}>
+              닫기
+            </button>
+            {contentResponse?.canEdit ? (
+              <button type="button" className="button medium submit" disabled={actionLoading} onClick={saveContent}>
+                수정 저장
+              </button>
+            ) : null}
+            {contentItem?.canRequestEditReview ? (
+              <button
+                type="button"
+                className="button medium submit"
+                disabled={actionLoading}
+                onClick={() => setEditReviewDialogItem(contentItem)}
+              >
+                수정 확인 요청
+              </button>
+            ) : null}
+          </DialogActions>
+        </Dialog>
       )}
 
-      <Dialog
-        open={Boolean(editReviewDialogItem)}
-        onClose={() => setEditReviewDialogItem(null)}
-        maxWidth="sm"
-        fullWidth
-        className="VhiDialog"
-      >
-        <DialogTitle>수정 확인 요청</DialogTitle>
-        <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
-          <CloseRoundedIcon />
-        </button>
-        <DialogContent>
-          <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <button
-            type="button"
-            className="button medium close"
-            disabled={actionLoading}
-            onClick={() => setEditReviewDialogItem(null)}
-          >
-            취소
+      {isMobile ? (
+        <Drawer
+          anchor="bottom"
+          open={Boolean(editReviewDialogItem)}
+          onClose={() => setEditReviewDialogItem(null)}
+          className="VhiDrawer-bottom"
+        >
+          <h2>수정 확인 요청</h2>
+          <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
+            <CloseRoundedIcon />
           </button>
-          <button
-            type="button"
-            className="button medium submit"
-            disabled={actionLoading || !editReviewDialogItem}
-            onClick={() => {
-              if (editReviewDialogItem) {
-                void requestEditReview(editReviewDialogItem);
-              }
-            }}
-          >
-            요청
+          <Stack gap={3}>
+            <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
+            <Stack direction="column" spacing={1.5}>
+              <button
+                type="button"
+                className="button medium cancel"
+                disabled={actionLoading}
+                onClick={() => setEditReviewDialogItem(null)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="button medium submit"
+                disabled={actionLoading || !editReviewDialogItem}
+                onClick={() => {
+                  if (editReviewDialogItem) {
+                    void requestEditReview(editReviewDialogItem);
+                  }
+                }}
+              >
+                요청
+              </button>
+            </Stack>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog
+          open={Boolean(editReviewDialogItem)}
+          onClose={() => setEditReviewDialogItem(null)}
+          maxWidth="sm"
+          fullWidth
+          className="VhiDialog"
+        >
+          <DialogTitle>수정 확인 요청</DialogTitle>
+          <button className="close-button" onClick={() => setEditReviewDialogItem(null)}>
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <DialogContent>
+            <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button
+              type="button"
+              className="button medium close"
+              disabled={actionLoading}
+              onClick={() => setEditReviewDialogItem(null)}
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              className="button medium submit"
+              disabled={actionLoading || !editReviewDialogItem}
+              onClick={() => {
+                if (editReviewDialogItem) {
+                  void requestEditReview(editReviewDialogItem);
+                }
+              }}
+            >
+              요청
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       <Snackbar
         open={Boolean(snackbarMessage)}

@@ -426,7 +426,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   const siteName = getRouteParam(params.siteName);
 
   const theme = useTheme();
-  const useDrawer = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [showPast, setShowPast] = useState(false);
@@ -1010,7 +1010,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </div>
         ) : null}
 
-        {useDrawer ? (
+        {isMobile ? (
           <Drawer anchor="bottom" open={Boolean(selectedReport)} onClose={handleClose} className="VhiDrawer-bottom">
             <h2>신고 처리</h2>
             <button type="button" className="close-button" onClick={handleClose} disabled={saving}>
@@ -1066,7 +1066,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </Dialog>
         )}
 
-        {useDrawer ? (
+        {isMobile ? (
           <Drawer
             anchor="bottom"
             open={Boolean(messageReport)}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -12,9 +13,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   Grid,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import styles from '@/app/settings.module.sass';
@@ -25,6 +29,8 @@ type WithdrawalResponse = {
 };
 
 export default function WithdrawalActions() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const router = useRouter();
   const supabase = getSupabaseBrowser();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -117,20 +123,41 @@ export default function WithdrawalActions() {
         </AccordionDetails>
       </Accordion>
 
-      <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
-        <DialogTitle>데브허브 탈퇴</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
-            취소
+      {isMobile ? (
+        <Drawer anchor="bottom" open={isConfirmOpen} onClose={handleCloseConfirm} className="VhiDrawer-bottom">
+          <h2>데브허브 탈퇴</h2>
+          <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
+            <CloseRoundedIcon />
           </button>
-          <button type="button" className="button medium warning" onClick={handleSubmit} disabled={isSubmitting}>
-            탈퇴 신청
+          <Stack gap={3}>
+            <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
+            <button type="button" className="button medium warning" onClick={handleSubmit} disabled={isSubmitting}>
+              탈퇴 신청
+            </button>
+            <button type="button" className="button medium cancel" onClick={handleCloseConfirm} disabled={isSubmitting}>
+              취소
+            </button>
+          </Stack>
+        </Drawer>
+      ) : (
+        <Dialog open={isConfirmOpen} onClose={handleCloseConfirm} fullWidth maxWidth="xs" className="VhiDialog">
+          <DialogTitle>데브허브 탈퇴</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseConfirm} disabled={isSubmitting}>
+            <CloseRoundedIcon />
           </button>
-        </DialogActions>
-      </Dialog>
+          <DialogContent>
+            <Typography variant="body2">탈퇴를 신청하시겠어요?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <button type="button" className="button medium close" onClick={handleCloseConfirm} disabled={isSubmitting}>
+              취소
+            </button>
+            <button type="button" className="button medium warning" onClick={handleSubmit} disabled={isSubmitting}>
+              탈퇴 신청
+            </button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Grid>
   );
 }

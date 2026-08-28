@@ -85,8 +85,7 @@ export default function Opt() {
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 

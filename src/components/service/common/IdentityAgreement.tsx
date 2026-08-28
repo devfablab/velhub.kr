@@ -162,7 +162,7 @@ export default function IdentityAgreement({
   showAgreementCheck = true,
 }: IdentityAgreementProps) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [isAgreed, setIsAgreed] = useState(false);
   const title = type === 'identity' ? '본인인증 이용안내' : '정산정보 수집 · 이용 안내';
   const agreementLabel = type === 'identity' ? '[필수] 본인인증 이용안내 동의' : '[필수] 정산정보 수집 · 이용 동의';

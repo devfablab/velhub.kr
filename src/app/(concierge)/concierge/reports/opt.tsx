@@ -28,6 +28,7 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
   useTheme,
 } from '@mui/material';
 import type { SelectChangeEvent } from '@mui/material/Select';
@@ -285,6 +286,8 @@ function ReportDetails({ report }: { report: ConciergeReportItem }) {
 }
 
 export default function Opt() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [reports, setReports] = useState<ConciergeReportItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);

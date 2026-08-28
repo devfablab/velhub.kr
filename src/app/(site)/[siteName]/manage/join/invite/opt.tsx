@@ -91,8 +91,7 @@ export default function Opt() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   async function loadInvites() {
     const response = await fetch(`/api/manage/join/invite?siteName=${siteName}`, {

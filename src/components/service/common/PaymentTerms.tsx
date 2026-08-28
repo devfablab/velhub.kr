@@ -68,8 +68,7 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
   const [open, setOpen] = useState(false);
   const terms = TERMS[type];
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   return (
     <>

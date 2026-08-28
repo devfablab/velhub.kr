@@ -30,8 +30,7 @@ export default function Verify2fa() {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const verifyCodeInputRef = useRef<HTMLInputElement | null>(null);
   const submitTimeoutRef = useRef<number | null>(null);

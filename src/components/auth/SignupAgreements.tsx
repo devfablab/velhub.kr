@@ -102,7 +102,7 @@ function PrivacyContent() {
 
 function PrivacyAgreement({ checked, onChange }: { checked: boolean; onChange: (value: boolean) => void }) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [open, setOpen] = useState(false);
 
   return (

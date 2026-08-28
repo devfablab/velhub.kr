@@ -265,8 +265,7 @@ export default function SubscriptionButton({
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     let ignore = false;
@@ -971,11 +970,17 @@ export default function SubscriptionButton({
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
               <IdentityVerificationButton onVerified={handleIdentityVerified} />
             </Stack>
+            <button type="button" className="button medium cancel" onClick={handleCloseIdentityDialog}>
+              닫기
+            </button>
           </Stack>
         </Drawer>
       ) : (
-        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs">
+        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs" className="VhiDialog">
           <DialogTitle>본인인증 필요</DialogTitle>
+          <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
+            <CloseRoundedIcon />
+          </button>
           <DialogContent dividers>
             <Stack gap={1}>
               <Typography variant="subtitle2">결제를 하기 위해서는 본인인증을 하셔야 합니다.</Typography>
@@ -983,8 +988,8 @@ export default function SubscriptionButton({
             </Stack>
           </DialogContent>
           <DialogActions>
-            <button type="button" className="button small default" onClick={handleCloseIdentityDialog}>
-              취소
+            <button type="button" className="button medium close" onClick={handleCloseIdentityDialog}>
+              닫기
             </button>
           </DialogActions>
         </Dialog>

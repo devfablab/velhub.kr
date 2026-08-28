@@ -226,8 +226,7 @@ export default function SiteProfile() {
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     async function loadIdentity() {

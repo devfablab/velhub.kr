@@ -168,8 +168,7 @@ export default function Opt() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const theme = useTheme();
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   async function loadTeams() {
     const response = await fetch(`/api/manage/team/members?siteName=${siteName}`, {

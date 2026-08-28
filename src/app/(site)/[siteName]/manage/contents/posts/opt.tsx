@@ -248,8 +248,7 @@ export default function Opt() {
   const theme = useTheme();
   const isNotTablet = useMediaQuery(theme.breakpoints.up('lg'));
   const isTablet = !isNotTablet;
-  const isNotMobile = useMediaQuery(theme.breakpoints.up('sm'));
-  const isMobile = !isNotMobile;
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [siteType, setSiteType] = useState<SiteType | null>(null);
   const [isStaff, setIsStaff] = useState(false);
@@ -766,7 +765,7 @@ export default function Opt() {
     return (
       <div className={`container ${styles.container}`}>
         <div className={`${styles.content} content`}>
-          {isNotMobile && (
+          {!isMobile && (
             <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               게시판 목록
             </Typography>

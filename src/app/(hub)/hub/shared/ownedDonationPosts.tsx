@@ -254,7 +254,7 @@ function PostPreview({ response, errorMessage }: { response: ContentResponse | n
 
 export default function OwnedDonationPosts({ siteType }: Props) {
   const theme = useTheme();
-  const isDialog = useMediaQuery(theme.breakpoints.up('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -384,7 +384,7 @@ export default function OwnedDonationPosts({ siteType }: Props) {
         </ol>
       </div>
 
-      {isDialog ? (
+      {!isMobile ? (
         <Dialog
           open={Boolean(selectedPost)}
           onClose={closePreview}

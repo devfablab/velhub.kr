@@ -5,7 +5,19 @@ import { useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
+import {
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Snackbar,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import {
   formatMembershipPrice,
@@ -173,6 +185,8 @@ function getAge(birthDate: string | null | undefined) {
 }
 
 export default function MembershipPlan() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const searchParams = useSearchParams();
   const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
