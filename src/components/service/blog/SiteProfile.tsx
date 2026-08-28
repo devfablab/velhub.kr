@@ -405,8 +405,8 @@ export default function SiteProfile() {
         body: JSON.stringify({
           siteName,
           targetType: 'site',
-          successUrl: `/${siteName}/blog-subscription/success`,
-          failUrl: `/${siteName}/blog-subscription/fail`,
+          successUrl: `/${siteName}/subscription/success`,
+          failUrl: `/${siteName}/subscription/fail`,
         }),
       });
 
@@ -870,9 +870,9 @@ export default function SiteProfile() {
               ? '1개월 구독권'
               : isResumingScheduledBlogSubscription
                 ? '블로그 구독 유지하기'
-              : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
-                ? '블로그 구독 재가입'
-                : '블로그 구독 가입'}
+                : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
+                  ? '블로그 구독 재가입'
+                  : '블로그 구독 가입'}
           </h2>
           <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
             <CloseRoundedIcon />
@@ -883,8 +883,8 @@ export default function SiteProfile() {
                 <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
                 <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
                 <Typography variant="body2">
-                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도 매월
-                  자동 결제됩니다.
+                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도
+                  매월 자동 결제됩니다.
                 </Typography>
               </Stack>
             ) : (
@@ -916,7 +916,9 @@ export default function SiteProfile() {
               <button
                 type="button"
                 className="button medium submit"
-                onClick={isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription}
+                onClick={
+                  isResumingScheduledBlogSubscription ? handleResumeBlogSubscription : handleJoinBlogSubscription
+                }
                 disabled={isBlogSubscriptionProcessing}
               >
                 {isResumingScheduledBlogSubscription ? '구독 유지하기' : '가입하기'}
@@ -937,9 +939,9 @@ export default function SiteProfile() {
               ? '1개월 구독권'
               : isResumingScheduledBlogSubscription
                 ? '블로그 구독 유지하기'
-              : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
-                ? '블로그 구독 재가입'
-                : '블로그 구독 가입'}
+                : blogSubscriptionStatus === 'canceled' || blogSubscriptionStatus === 'expired'
+                  ? '블로그 구독 재가입'
+                  : '블로그 구독 가입'}
           </DialogTitle>
           <button className="close-button" onClick={handleCloseBlogSubscriptionDialog}>
             <CloseRoundedIcon />
@@ -950,8 +952,8 @@ export default function SiteProfile() {
                 <Typography variant="subtitle2">구독 취소를 철회할까요?</Typography>
                 <Typography variant="body2">현재 이용 기간은 그대로 이용할 수 있습니다.</Typography>
                 <Typography variant="body2">
-                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도 매월
-                  자동 결제됩니다.
+                  다음 결제일에 월 {formatBlogSubscriptionPrice(blogSubscriptionPrice ?? 0)}원이 자동 결제되며, 이후에도
+                  매월 자동 결제됩니다.
                 </Typography>
               </Stack>
             ) : (
