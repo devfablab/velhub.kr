@@ -59,6 +59,63 @@
         time
           opacity: .7
 
+    &.reports
+      gap: ds.rem(18)
+
+      > p
+        margin: ds.rem(22) 0
+
+      .report-list
+        display: flex
+        flex-direction: column
+        gap: ds.rem(10)
+
+        li
+          display: flex
+          flex-direction: column
+          gap: ds.rem(7)
+          padding: ds.rem(16)
+          border: 1px solid ds.$hex-tertiary
+          border-radius: ds.rem(10)
+
+          html[data-theme="yellow-dark"] &
+            border-color: rgb(ds.$rgb-tertiary, .55)
+
+          > p
+            text-align: left
+            font-size: ds.rem(15)
+
+          time
+            color: ds.$hex-secondary
+            font-size: ds.rem(13)
+
+      .report-heading
+        display: flex
+        justify-content: space-between
+        align-items: center
+        gap: ds.rem(8)
+
+        strong
+          @include ds.fw(neo, 700)
+          color: ds.$hex-primary
+
+          html[data-theme="yellow-dark"] &
+            color: ds.$hex-bright
+
+        span
+          color: ds.$hex-secondary
+          font-size: ds.rem(14)
+
+      .report-target
+        color: ds.$hex-secondary
+        font-size: ds.rem(14)
+
+        a
+          text-decoration: underline
+
+      .report-result
+        color: ds.$hex-secondary
+
     .type-summary
       gap: ds.rem(2)
 
