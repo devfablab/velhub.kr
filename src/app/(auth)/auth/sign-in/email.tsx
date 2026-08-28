@@ -18,6 +18,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import HCaptchaBox from './hCaptcha';
@@ -133,6 +134,8 @@ export default function EmailSignIn() {
 
       throw new Error(signInResult.error ?? '로그인 중 오류가 발생했습니다.');
     }
+
+    clearChannelWorksCookies();
 
     const setSessionResult = await supabase.auth.setSession({
       access_token: signInResult.accessToken,

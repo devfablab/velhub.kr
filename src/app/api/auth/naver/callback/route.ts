@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import crypto from 'crypto';
+import { clearChannelWorksResponseCookies } from '@/lib/channelWorks/cookies.server';
 import { encrypt } from '@/lib/encryption/encrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
@@ -439,6 +440,7 @@ export async function GET(request: NextRequest) {
     const redirectUrl = getRedirectAfterNaverLogin(request, parsedState);
     const response = NextResponse.redirect(redirectUrl);
 
+    clearChannelWorksResponseCookies(request, response);
     response.cookies.delete('velhub-naver-state');
 
     return response;

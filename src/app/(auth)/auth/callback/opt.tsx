@@ -15,6 +15,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { clearChannelWorksCookies } from '@/lib/channelWorks/cookies';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -233,6 +234,8 @@ export default function Opt() {
       try {
         const supabase = getSupabaseBrowser();
         const authSession = await waitForSession();
+
+        clearChannelWorksCookies();
 
         sessionStorage.removeItem('auth:social-provider');
 
