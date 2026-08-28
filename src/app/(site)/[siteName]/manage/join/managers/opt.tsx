@@ -68,6 +68,7 @@ type MemberSearchItem = {
   nickname: string;
   email: string;
   userName: string;
+  isOwner: boolean;
   manageRoles: ManagerItem[];
 };
 
@@ -174,6 +175,10 @@ function formatDateTime(value: string | null) {
 
 function isBoardRole(role: ManagerRole) {
   return role === 'board-general-manager' || role === 'board-assistant-manager';
+}
+
+function getInitialBoardRole(board: BoardItem | null | undefined) {
+  return board && board.boardGeneralManagerCount > 0 ? 'board-assistant-manager' : 'board-general-manager';
 }
 
 export default function Opt() {
@@ -559,6 +564,12 @@ export default function Opt() {
   }
 
   function handleSelectSearchMember(memberId: string) {
+    const member = searchResults.find((item) => item.rhizomeStigmaId === memberId);
+
+    if (searchMode === 'manager' && member && (member.isOwner || member.manageRoles.length > 0)) {
+      return;
+    }
+
     setSelectedSearchMemberId(memberId);
     setSearchDialogErrorMessage('');
   }
@@ -1294,6 +1305,9 @@ export default function Opt() {
                                 <Radio
                                   checked={selectedSearchMemberId === member.rhizomeStigmaId}
                                   onChange={() => handleSelectSearchMember(member.rhizomeStigmaId)}
+                                  disabled={
+                                    searchMode === 'manager' && (member.isOwner || member.manageRoles.length > 0)
+                                  }
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
@@ -1301,7 +1315,9 @@ export default function Opt() {
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.manageRoles.length > 0
+                                {member.isOwner
+                                  ? '운영자'
+                                  : member.manageRoles.length > 0
                                   ? member.manageRoles
                                       .map((role) =>
                                         role.boardLabel
@@ -1366,8 +1382,11 @@ export default function Opt() {
                                 select
                                 value={assignBoardId}
                                 onChange={(event) => {
-                                  setAssignBoardId(event.target.value);
-                                  setAssignBoardRole('board-general-manager');
+                                  const nextBoardId = event.target.value;
+                                  const nextBoard = boards.find((board) => board.boardId === nextBoardId);
+
+                                  setAssignBoardId(nextBoardId);
+                                  setAssignBoardRole(getInitialBoardRole(nextBoard));
                                 }}
                                 size="small"
                               >
@@ -1394,7 +1413,13 @@ export default function Opt() {
                                   size="small"
                                   fullWidth
                                 >
-                                  <MenuItem value="board-general-manager">개별 게시판 총괄 매니저</MenuItem>
+                                  <MenuItem
+                                    value="board-general-manager"
+                                    disabled={selectedAssignBoard.boardGeneralManagerCount > 0}
+                                  >
+                                    개별 게시판 총괄 매니저
+                                    {selectedAssignBoard.boardGeneralManagerCount > 0 ? ' (지정됨)' : ''}
+                                  </MenuItem>
                                   <MenuItem value="board-assistant-manager">개별 게시판 부 매니저</MenuItem>
                                 </TextField>
                               </Stack>
@@ -1486,6 +1511,9 @@ export default function Opt() {
                                 <Radio
                                   checked={selectedSearchMemberId === member.rhizomeStigmaId}
                                   onChange={() => handleSelectSearchMember(member.rhizomeStigmaId)}
+                                  disabled={
+                                    searchMode === 'manager' && (member.isOwner || member.manageRoles.length > 0)
+                                  }
                                 />
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
@@ -1493,7 +1521,9 @@ export default function Opt() {
                               </TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>{member.email}</TableCell>
                               <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                                {member.manageRoles.length > 0
+                                {member.isOwner
+                                  ? '운영자'
+                                  : member.manageRoles.length > 0
                                   ? member.manageRoles
                                       .map((role) =>
                                         role.boardLabel
@@ -1558,8 +1588,11 @@ export default function Opt() {
                               select
                               value={assignBoardId}
                               onChange={(event) => {
-                                setAssignBoardId(event.target.value);
-                                setAssignBoardRole('board-general-manager');
+                                const nextBoardId = event.target.value;
+                                const nextBoard = boards.find((board) => board.boardId === nextBoardId);
+
+                                setAssignBoardId(nextBoardId);
+                                setAssignBoardRole(getInitialBoardRole(nextBoard));
                               }}
                               size="small"
                               fullWidth
@@ -1587,7 +1620,13 @@ export default function Opt() {
                                 size="small"
                                 sx={{ minWidth: 240 }}
                               >
-                                <MenuItem value="board-general-manager">개별 게시판 총괄 매니저</MenuItem>
+                                <MenuItem
+                                  value="board-general-manager"
+                                  disabled={selectedAssignBoard.boardGeneralManagerCount > 0}
+                                >
+                                  개별 게시판 총괄 매니저
+                                  {selectedAssignBoard.boardGeneralManagerCount > 0 ? ' (지정됨)' : ''}
+                                </MenuItem>
                                 <MenuItem value="board-assistant-manager">개별 게시판 부 매니저</MenuItem>
                               </TextField>
                             </Stack>

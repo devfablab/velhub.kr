@@ -62,6 +62,7 @@ export async function GET(request: Request) {
         nickname: member.nickname,
         email: member.email,
         userName: member.userName,
+        isOwner: member.userId === access.rhizome.owner_id,
         manageRoles: managerMap.get(member.rhizomeStigmaId) ?? [],
       })),
     });

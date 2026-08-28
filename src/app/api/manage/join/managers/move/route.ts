@@ -287,15 +287,10 @@ export async function PATCH(request: Request) {
 
       const targetWasManager = normalizeText(memberResult.data.role) === 'manager';
 
-      const duplicateTarget = managerRows.find(
-        (row) =>
-          row.manager_id === managerId &&
-          normalizeText(row.role) === 'board-general-manager' &&
-          normalizeText(row.board_id) === normalizeText(sourceRow.board_id),
-      );
+      const existingTargetManagerRow = managerRows.find((row) => row.manager_id === managerId);
 
-      if (duplicateTarget) {
-        return Response.json({ error: '이미 해당 게시판의 총괄 매니저입니다.' }, { status: 400 });
+      if (existingTargetManagerRow) {
+        return Response.json({ error: '이미 이 사이트의 매니저로 지정된 멤버입니다.' }, { status: 400 });
       }
 
       const updateSource = await access.supabaseAdmin
@@ -437,16 +432,12 @@ export async function PATCH(request: Request) {
         }
       }
 
-      const duplicateRow = managerRows.find(
-        (row) =>
-          row.id !== sourceRow.id &&
-          row.manager_id === sourceRow.manager_id &&
-          normalizeText(row.role) === role &&
-          normalizeText(row.board_id) === (boardId || ''),
+      const anotherManagerRow = managerRows.find(
+        (row) => row.id !== sourceRow.id && row.manager_id === sourceRow.manager_id,
       );
 
-      if (duplicateRow) {
-        return Response.json({ error: '이미 동일한 매니저 권한이 있습니다.' }, { status: 400 });
+      if (anotherManagerRow) {
+        return Response.json({ error: '이미 이 사이트에서 다른 매니저 역할을 맡고 있습니다.' }, { status: 400 });
       }
 
       const updateResult = await access.supabaseAdmin

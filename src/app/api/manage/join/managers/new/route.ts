@@ -150,18 +150,13 @@ export async function POST(request: Request) {
 
     const wasManager = normalizeText(memberResult.data.role) === 'manager';
 
-    const duplicateRow = managerRows.find(
-      (row) =>
-        row.manager_id === managerId &&
-        normalizeText(row.role) === role &&
-        normalizeText(row.board_id) === (boardId || ''),
-    );
+    const existingManagerRow = managerRows.find((row) => row.manager_id === managerId);
 
-    if (duplicateRow) {
-      return Response.json({ error: '이미 동일한 매니저 권한이 있습니다.' }, { status: 400 });
+    if (existingManagerRow) {
+      return Response.json({ error: '이미 이 사이트의 매니저로 지정된 멤버입니다.' }, { status: 400 });
     }
 
-    if (role === 'board-assistant-manager') {
+    if (isBoardRequiredRole(role)) {
       const boardResult = await access.supabaseAdmin
         .from('boards')
         .select('id')
@@ -172,6 +167,16 @@ export async function POST(request: Request) {
       if (boardResult.error || !boardResult.data) {
         return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
       }
+    }
+
+    if (
+      role === 'board-general-manager' &&
+      managerRows.some(
+        (row) =>
+          normalizeText(row.role) === 'board-general-manager' && normalizeText(row.board_id) === boardId,
+      )
+    ) {
+      return Response.json({ error: '이미 해당 게시판의 총괄 매니저가 있습니다.' }, { status: 400 });
     }
 
     const insertResult = await access.supabaseAdmin
