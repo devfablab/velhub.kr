@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import HeaderSettings from '@/components/headers/Settings';
+import ChannelWorks from '@/components/service/common/ChannelWorks';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -41,6 +42,7 @@ export default function RootLayout({
     <>
       <HeaderSettings />
       {children}
+      <ChannelWorks />
     </>
   );
 }

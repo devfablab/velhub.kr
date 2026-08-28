@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import ChannelWorks from '@/components/service/common/ChannelWorks';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -36,5 +37,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <>
+      {children}
+      <ChannelWorks />
+    </>
+  );
 }

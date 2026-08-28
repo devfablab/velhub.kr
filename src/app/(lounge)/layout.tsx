@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Footer from '@/components/footers/Footer';
 import HeaderLounge from '@/components/headers/Lounge';
+import ChannelWorks from '@/components/service/common/ChannelWorks';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -43,6 +44,7 @@ export default function RootLayout({
       <HeaderLounge />
       {children}
       <Footer />
+      <ChannelWorks />
     </>
   );
 }
