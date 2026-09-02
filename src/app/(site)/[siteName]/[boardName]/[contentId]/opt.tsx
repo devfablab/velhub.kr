@@ -11,7 +11,6 @@ import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -45,6 +44,7 @@ import UserInfo from '@/components/service/community/UserInfo';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -752,7 +752,7 @@ export default function Opt({ isCommunity }: Props) {
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
             </div>
           </div>
@@ -772,7 +772,11 @@ export default function Opt({ isCommunity }: Props) {
   const hashtags = normalizeHashtags(content.hashtags);
   const authorRoleLabel = getAuthorRoleLabel(content.author_role);
   const feedLinkPreviewUrls = isFeedBoard && content.content_simple ? extractUrls(content.content_simple) : [];
-  const listHref = seriesName ? `/${siteName}/s/${seriesName}` : categoryName ? `/${siteName}/c/${categoryName}` : `/${siteName}/${boardName}`;
+  const listHref = seriesName
+    ? `/${siteName}/s/${seriesName}`
+    : categoryName
+      ? `/${siteName}/c/${categoryName}`
+      : `/${siteName}/${boardName}`;
   const isSubscriptionSeriesPost = series?.is_subscription === true;
 
   const canPurchasePost =

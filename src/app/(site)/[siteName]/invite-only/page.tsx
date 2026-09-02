@@ -1,6 +1,6 @@
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Typography } from '@mui/material';
 import InviteButton from '@/components/service/common/InviteButton';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
@@ -10,7 +10,7 @@ export default function Page() {
       <div className="container">
         <div className={`${styles.content} content`}>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <Typography variant="h6" component="h2" sx={{ marginBottom: 2 }}>
               초대 전용 사이트
             </Typography>

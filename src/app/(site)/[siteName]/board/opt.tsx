@@ -7,7 +7,6 @@ import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRound
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -21,6 +20,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import UserInfo from '@/components/service/community/UserInfo';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -256,7 +256,7 @@ export default function Opt({ isCommunity }: Props) {
             <span>최신글 보기</span>
           </h2>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <p>{errorMessage}</p>
           </div>
         </div>
@@ -269,7 +269,7 @@ export default function Opt({ isCommunity }: Props) {
       <div className="container">
         <div className={`${styles.content} content`}>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <p>페이지를 찾을 수 없어요! 🥹</p>
           </div>
         </div>

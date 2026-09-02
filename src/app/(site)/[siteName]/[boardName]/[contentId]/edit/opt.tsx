@@ -13,7 +13,6 @@ import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import {
   Checkbox,
@@ -50,6 +49,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -1874,7 +1874,7 @@ export default function Opt({ isCommunity }: Props) {
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>{errorMessage}</p>
             </div>
           </div>
@@ -1889,7 +1889,7 @@ export default function Opt({ isCommunity }: Props) {
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>페이지를 찾을 수 없어요! 🥹</p>
             </div>
           </div>
@@ -1906,7 +1906,7 @@ export default function Opt({ isCommunity }: Props) {
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>접근권한이 없어요 🥹</p>
             </div>
           </div>

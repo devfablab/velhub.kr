@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -314,7 +314,7 @@ export default function Opt({ handleName }: { handleName: string }) {
         <div className={styles.container}>
           <div className={`content ${styles.content}`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p className="alert error">
                 <span>{message}</span>
               </p>

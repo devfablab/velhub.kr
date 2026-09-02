@@ -1,6 +1,6 @@
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Stack } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { ServiceErrorIcon } from '@/components/Svgs';
 
 export default function NotFound() {
   return (
@@ -8,7 +8,7 @@ export default function NotFound() {
       <div className="container">
         <div className="content">
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <h2>NOT FOUND PAGE</h2>
             <p>삭제되었거나 존재하지 않는 페이지입니다.</p>
             <Stack direction="row" justifyContent="center">

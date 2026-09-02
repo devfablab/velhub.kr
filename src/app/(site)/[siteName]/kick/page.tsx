@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { Stack, Typography } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
@@ -65,7 +65,7 @@ export default function Page() {
       <div className="container">
         <div className={`${styles.content} content`}>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <h2>강제 탈퇴</h2>
 
             {errorMessage ? (

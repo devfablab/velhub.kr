@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -104,7 +104,7 @@ export default function Opt() {
           <div className={`content ${styles.content}`}>
             <h1>작가 핸들네임 설정</h1>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <Typography variant="h6" component="h2" sx={{ marginBottom: 2 }}>
                 작가 핸들네임 설정
               </Typography>

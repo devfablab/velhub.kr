@@ -12,7 +12,6 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import TurnedInNotRoundedIcon from '@mui/icons-material/TurnedInNotRounded';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -46,6 +45,7 @@ import UserInfo from '@/components/service/community/UserInfo';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -726,7 +726,7 @@ export default function Opt({ isCommunity }: Props) {
               <span>글 보기</span>
             </h2>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>{errorMessage || '게시글 정보를 불러오지 못했습니다.'}</p>
             </div>
           </div>
@@ -1029,7 +1029,9 @@ export default function Opt({ isCommunity }: Props) {
                   ) : null}
                   {content.published_status === 'unknown' &&
                   content.published_at &&
-                  new Date(content.published_at).getTime() > Date.now() ? <small>(예약글)</small> : null}
+                  new Date(content.published_at).getTime() > Date.now() ? (
+                    <small>(예약글)</small>
+                  ) : null}
                   {!isFeedBoard ? <strong>{content.subject}</strong> : null}
                 </h3>
 

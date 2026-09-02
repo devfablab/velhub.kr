@@ -13,7 +13,6 @@ import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import PushPinRoundedIcon from '@mui/icons-material/PushPinRounded';
 import SearchIcon from '@mui/icons-material/Search';
@@ -32,6 +31,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import UserInfo from '@/components/service/community/UserInfo';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
@@ -458,7 +458,7 @@ export default function Opt({ isCommunity }: Props) {
         <div className="container">
           <div className={`${styles.content} content`}>
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p>{errorMessage}</p>
             </div>
           </div>
@@ -812,11 +812,7 @@ export default function Opt({ isCommunity }: Props) {
                           <cite>{content.author_name}</cite>
                         </div>
                         <div className={styles.tail}>
-                          <time>
-                            {formatTimeAgo(
-                              content.published_at ?? content.created_at,
-                            )}
-                          </time>
+                          <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                           {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
                           <span>조회 {content.post_count}</span>
                         </div>
@@ -855,11 +851,7 @@ export default function Opt({ isCommunity }: Props) {
                         <cite>{content.author_name}</cite>
                       </div>
                       <div className={styles.tail}>
-                        <time>
-                          {formatTimeAgo(
-                            content.published_at ?? content.created_at,
-                          )}
-                        </time>
+                        <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
                         <span>조회 {content.post_count}</span>
                       </div>
@@ -886,11 +878,7 @@ export default function Opt({ isCommunity }: Props) {
                         {content.published_status === 'draft' ? <em>(임시글)</em> : null}
                       </span>
                       <cite>{content.author_name}</cite>
-                      <time className={styles.item}>
-                        {formatTimeAgo(
-                          content.published_at ?? content.created_at,
-                        )}
-                      </time>
+                      <time className={styles.item}>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                       {content.comment_count > 0 ? (
                         <span className={styles.item}>댓글 {content.comment_count}</span>
                       ) : null}
@@ -936,11 +924,7 @@ export default function Opt({ isCommunity }: Props) {
                         <cite>{content.author_name}</cite>
                       </div>
                       <div className={styles.tail}>
-                        <time>
-                          {formatTimeAgo(
-                            content.published_at ?? content.created_at,
-                          )}
-                        </time>
+                        <time>{formatTimeAgo(content.published_at ?? content.created_at)}</time>
                         {content.comment_count > 0 ? <span>댓글 {content.comment_count}</span> : null}
                         <span>조회 {content.post_count}</span>
                       </div>
@@ -1062,11 +1046,7 @@ export default function Opt({ isCommunity }: Props) {
                         <td className="long-cell">
                           <cite>{content.author_name}</cite>
                         </td>
-                        <td>
-                          {formatTimeAgo(
-                            content.published_at ?? content.created_at,
-                          )}
-                        </td>
+                        <td>{formatTimeAgo(content.published_at ?? content.created_at)}</td>
                         <td>{content.post_count}</td>
                       </tr>
                     ))}

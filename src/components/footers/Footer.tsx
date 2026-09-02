@@ -51,8 +51,8 @@ export default function Footer() {
                   <dd>데브런닷스튜디오</dd>
                 </div>
                 <div>
-                  <dt>대표자명</dt>
-                  <dd>고종길</dd>
+                  <dt>호스팅서비스제공자</dt>
+                  <dd>Vercel Inc. & Supabase Inc.</dd>
                 </div>
               </div>
               <div>
@@ -66,6 +66,10 @@ export default function Footer() {
                 </div>
               </div>
               <div>
+                <div>
+                  <dt>대표자명</dt>
+                  <dd>고종길</dd>
+                </div>
                 <div>
                   <dt>주소</dt>
                   <dd>

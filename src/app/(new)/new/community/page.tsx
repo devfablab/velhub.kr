@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
@@ -9,6 +7,7 @@ import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
 
@@ -114,14 +113,14 @@ export default async function Page() {
               ) : null}
               {isUnder14 ? (
                 <p className="alert warning">
-                  <WarningAmberRoundedIcon />
+                  <ServiceErrorIcon />
                   <span>커뮤니티는 데브허브 정책상 만 14세 이상부터 만들 수 있어요. 😭</span>
                 </p>
               ) : null}
             </div>
           ) : !canCreateSite ? (
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p className="alert error">
                 <span>{blockMessage}</span>
               </p>

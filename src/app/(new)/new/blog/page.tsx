@@ -1,32 +1,15 @@
 import { Metadata } from 'next';
-import { cookies, headers } from 'next/headers';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { hasMembershipFeature } from '@/lib/memberships/features';
 import { originTitle, Seo } from '@/lib/seo';
 import { getCurrentStigma } from '@/lib/session/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import Anchor from '@/components/Anchor';
-import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Opt from './opt';
 import styles from '@/app/new.module.sass';
 
-type Identity = {
-  name: string;
-  birth_date: string;
-  gender: string;
-  identity_verified_at: string;
-};
-
-type IdentityStatusResponse = {
-  exists: boolean;
-  identity: Identity | null;
-};
-
 export async function generateMetadata(): Promise<Metadata> {
   const timestamp = Date.now();
-
   return Seo({
     pageTitles: `블로그 개설 - ${originTitle}`,
     pageTitle: `블로그 개설`,
@@ -36,74 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-function onlyDigits(value: string | null | undefined) {
-  return String(value ?? '').replace(/\D/g, '');
-}
-
-function isAdult(birthDate: string | null | undefined) {
-  const digits = onlyDigits(birthDate);
-
-  if (digits.length !== 8) {
-    return false;
-  }
-
-  const year = Number(digits.slice(0, 4));
-  const month = Number(digits.slice(4, 6));
-  const day = Number(digits.slice(6, 8));
-  const today = new Date();
-  const birthdayThisYear = new Date(today.getFullYear(), month - 1, day);
-  let age = today.getFullYear() - year;
-
-  if (today < birthdayThisYear) {
-    age -= 1;
-  }
-
-  return age >= 19;
-}
-
-async function getBaseUrl() {
-  const headersList = await headers();
-  const host = headersList.get('host');
-  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
-
-  if (!host) {
-    return null;
-  }
-
-  return `${protocol}://${host}`;
-}
-
-async function getIdentityStatus(baseUrl: string, cookieHeader: string) {
-  const response = await fetch(`${baseUrl}/api/identity/portone/status`, {
-    method: 'GET',
-    headers: {
-      Cookie: cookieHeader,
-    },
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  return (await response.json().catch(() => null)) as IdentityStatusResponse | null;
-}
-
 export default async function Page() {
-  const cookieStore = await cookies();
-  const baseUrl = await getBaseUrl();
-  const cookieHeader = cookieStore.toString();
-
-  let hasIdentity = false;
-  const isMinor = false;
-
-  if (baseUrl) {
-    const identityStatus = await getIdentityStatus(baseUrl, cookieHeader);
-    const identity = identityStatus?.exists ? identityStatus.identity : null;
-
-    hasIdentity = Boolean(identity);
-  }
-
   let canCreateSite = true;
   let blockMessage = '';
 
@@ -130,10 +46,9 @@ export default async function Page() {
       <div className={styles.container}>
         <div className={`content ${styles.content}`}>
           <h1>블로그 개설</h1>
-
           {!canCreateSite ? (
             <div className="paper page-error">
-              <NearbyErrorRoundedIcon />
+              <ServiceErrorIcon />
               <p className="alert error">
                 <span>{blockMessage}</span>
               </p>

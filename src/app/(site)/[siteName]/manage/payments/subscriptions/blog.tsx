@@ -4,7 +4,6 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   Divider,
   FormControlLabel,
@@ -58,6 +57,7 @@ type BlogSubscriptionResponse = {
 };
 
 import SettlementForm from '@/components/service/common/SettlementForm';
+import { ServiceErrorIcon } from '@/components/Svgs';
 
 type BlogSubscriptionSaveResponse = {
   ok?: boolean;
@@ -250,7 +250,7 @@ export default function Opt() {
   if (errorMessage === '블로그 구독은 블로그에서만 사용할 수 있습니다.') {
     return (
       <div className="paper page-error">
-        <NearbyErrorRoundedIcon />
+        <ServiceErrorIcon />
         <p>{errorMessage}</p>
       </div>
     );

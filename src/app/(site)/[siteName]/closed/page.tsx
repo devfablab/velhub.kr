@@ -1,7 +1,7 @@
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import { getCurrentStigma, getRhizomeStigma, getSiteByName } from '@/lib/session/utils';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
 
@@ -24,7 +24,7 @@ export default async function Page({ params }: PageProps) {
       <div className="container">
         <div className={`${styles.content} content`}>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <h2>운영 중단</h2>
             <p>해당 사이트는 운영자의 사정에 의해 운영 중단되었습니다.</p>
             {isOwner ? (

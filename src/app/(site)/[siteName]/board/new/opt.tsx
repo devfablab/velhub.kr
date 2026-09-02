@@ -10,7 +10,6 @@ import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
-import NearbyErrorRoundedIcon from '@mui/icons-material/NearbyErrorRounded';
 import {
   Checkbox,
   Dialog,
@@ -47,6 +46,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
+import { ServiceErrorIcon } from '@/components/Svgs';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -1793,7 +1793,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <span>새글 쓰기</span>
           </h2>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <p>글을 작성할 수 있는 게시판이 없습니다.</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>
               게시판으로 이동
@@ -1819,7 +1819,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <span>새글 쓰기</span>
           </h2>
           <div className="paper page-error">
-            <NearbyErrorRoundedIcon />
+            <ServiceErrorIcon />
             <p>{writePolicyMessage}</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>
               게시판으로 이동
