@@ -1011,6 +1011,21 @@ body
       @include ds.fw(pre, 700)
 
   .viewer, .toastui-editor-contents
+    h1, h2, h3, h4, h5, h6
+      margin-top: ds.rem(23)
+      color: ds.$hex-primary
+      font-weight: 700
+      font-variation-settings: "wght" 700
+
+      &:first-of-type
+        margin-top: 0
+
+    h1, h2, h3, h4
+      font-size: calc(var(--blog-description-font-size) * 1.125)
+
+    h5, h6
+      font-size: var(--blog-description-font-size)
+
     p
       color: ds.$hex-secondary
       line-height: 1.37
@@ -1021,6 +1036,9 @@ body
         font-size: var(--blog-description-font-size)
 
   .dark-viewer .viewer, .toastui-editor-dark .toastui-editor-contents
+    h1, h2, h3, h4, h5, h6
+      color: ds.$hex-bright
+
     p
       color: ds.$hex-light
 

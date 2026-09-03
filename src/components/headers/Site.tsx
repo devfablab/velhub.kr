@@ -100,6 +100,17 @@ type BlogFontSettings = {
   descriptionMargin: number | null;
 };
 
+const DEFAULT_BLOG_FONT_SETTINGS = {
+  subjectFontFamily: 'neo',
+  subjectLetterSpacing: -0.005,
+  subjectLineHeight: 1.5,
+  descriptionFontFamily: 'pre',
+  descriptionLetterSpacing: -0.005,
+  descriptionLineHeight: 1.5,
+  descriptionFontSize: 16,
+  descriptionMargin: 16,
+};
+
 function getBlogFontFamily(value: string | null) {
   if (value === 'neo') {
     return 'var(--neo)';
@@ -135,14 +146,14 @@ function setCssVariable(name: string, value: string | number | null) {
 
 function clearBlogFontSettings() {
   document.documentElement.removeAttribute('data-site-type');
-  document.documentElement.style.removeProperty('--blog-subject-font-family');
-  document.documentElement.style.removeProperty('--blog-subject-letter-spacing');
-  document.documentElement.style.removeProperty('--blog-subject-line-height');
-  document.documentElement.style.removeProperty('--blog-description-font-family');
-  document.documentElement.style.removeProperty('--blog-description-letter-spacing');
-  document.documentElement.style.removeProperty('--blog-description-line-height');
-  document.documentElement.style.removeProperty('--blog-description-font-size');
-  document.documentElement.style.removeProperty('--blog-description-margin');
+  setCssVariable('--blog-subject-font-family', getBlogFontFamily(DEFAULT_BLOG_FONT_SETTINGS.subjectFontFamily));
+  setCssVariable('--blog-subject-letter-spacing', `${DEFAULT_BLOG_FONT_SETTINGS.subjectLetterSpacing}em`);
+  setCssVariable('--blog-subject-line-height', DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight);
+  setCssVariable('--blog-description-font-family', getBlogFontFamily(DEFAULT_BLOG_FONT_SETTINGS.descriptionFontFamily));
+  setCssVariable('--blog-description-letter-spacing', `${DEFAULT_BLOG_FONT_SETTINGS.descriptionLetterSpacing}em`);
+  setCssVariable('--blog-description-line-height', DEFAULT_BLOG_FONT_SETTINGS.descriptionLineHeight);
+  setCssVariable('--blog-description-font-size', `${DEFAULT_BLOG_FONT_SETTINGS.descriptionFontSize}px`);
+  setCssVariable('--blog-description-margin', `${DEFAULT_BLOG_FONT_SETTINGS.descriptionMargin}px`);
 }
 
 function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: BlogFontSettings | null) {
@@ -153,34 +164,35 @@ function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: Blog
 
   document.documentElement.setAttribute('data-site-type', 'blog');
 
-  setCssVariable('--blog-subject-font-family', getBlogFontFamily(blogFontSettings?.subjectFontFamily ?? null));
+  setCssVariable(
+    '--blog-subject-font-family',
+    getBlogFontFamily(blogFontSettings?.subjectFontFamily ?? DEFAULT_BLOG_FONT_SETTINGS.subjectFontFamily),
+  );
   setCssVariable(
     '--blog-subject-letter-spacing',
-    blogFontSettings?.subjectLetterSpacing !== null && blogFontSettings?.subjectLetterSpacing !== undefined
-      ? `${blogFontSettings.subjectLetterSpacing}em`
-      : null,
+    `${blogFontSettings?.subjectLetterSpacing ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLetterSpacing}em`,
   );
-  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? null);
+  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight);
 
-  setCssVariable('--blog-description-font-family', getBlogFontFamily(blogFontSettings?.descriptionFontFamily ?? null));
+  setCssVariable(
+    '--blog-description-font-family',
+    getBlogFontFamily(blogFontSettings?.descriptionFontFamily ?? DEFAULT_BLOG_FONT_SETTINGS.descriptionFontFamily),
+  );
   setCssVariable(
     '--blog-description-letter-spacing',
-    blogFontSettings?.descriptionLetterSpacing !== null && blogFontSettings?.descriptionLetterSpacing !== undefined
-      ? `${blogFontSettings.descriptionLetterSpacing}em`
-      : null,
+    `${blogFontSettings?.descriptionLetterSpacing ?? DEFAULT_BLOG_FONT_SETTINGS.descriptionLetterSpacing}em`,
   );
-  setCssVariable('--blog-description-line-height', blogFontSettings?.descriptionLineHeight ?? null);
+  setCssVariable(
+    '--blog-description-line-height',
+    blogFontSettings?.descriptionLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.descriptionLineHeight,
+  );
   setCssVariable(
     '--blog-description-font-size',
-    blogFontSettings?.descriptionFontSize !== null && blogFontSettings?.descriptionFontSize !== undefined
-      ? `${blogFontSettings.descriptionFontSize}px`
-      : null,
+    `${blogFontSettings?.descriptionFontSize ?? DEFAULT_BLOG_FONT_SETTINGS.descriptionFontSize}px`,
   );
   setCssVariable(
     '--blog-description-margin',
-    blogFontSettings?.descriptionMargin !== null && blogFontSettings?.descriptionMargin !== undefined
-      ? `${blogFontSettings.descriptionMargin}px`
-      : null,
+    `${blogFontSettings?.descriptionMargin ?? DEFAULT_BLOG_FONT_SETTINGS.descriptionMargin}px`,
   );
 }
 

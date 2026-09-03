@@ -87,6 +87,12 @@ const ALLOWED_TAGS = new Set([
   'figure',
   'figcaption',
   'hr',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
 ]);
 
 function getViewerValue(contentHtml: string | null, contentMarkdown: string | null, markdownStatus: string | null) {
