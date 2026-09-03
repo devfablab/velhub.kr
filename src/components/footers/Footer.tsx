@@ -21,13 +21,13 @@ export default function Footer() {
               <li className={styles['parents-item']}>
                 <ul className={styles.children}>
                   <li>
-                    <Anchor href="/luvelhub">이용안내</Anchor>
-                  </li>
-                  <li>
-                    <Anchor href="/concierge">고객센터</Anchor>
+                    <Anchor href="/luvelhub/c/quincy">이용안내</Anchor>
                   </li>
                   <li>
                     <Anchor href="/luvelhub/c/notice">공지사항</Anchor>
+                  </li>
+                  <li>
+                    <Anchor href="/concierge">고객센터</Anchor>
                   </li>
                 </ul>
               </li>
