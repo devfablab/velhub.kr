@@ -68,9 +68,22 @@
     .pages
       display: flex
 
-      @include ds.mq(maxExtraSmall)
+      @include ds.mq(maxSmall)
         flex-direction: column
         gap: ds.rem(27)
+
+      .copyrights
+        @include ds.mq(minMedium)
+          width: 50%
+
+        .copyright
+          strong
+            @include ds.fw(neo, 800)
+
+        > p
+          @include ds.fw(neo, 800)
+          font-size: ds.rem(12)
+          opacity: .5
 
       .aodn
         display: flex
@@ -122,7 +135,7 @@
           &:nth-of-type(2)
             .children
               li:nth-of-type(2)
-                a
+                a, button
                   @include ds.fw(pre, 700)
                   color: ds.$hex-bright
 
@@ -134,7 +147,11 @@
             @include ds.mq(minSmall)
               gap: ds.rem(12)
 
-            a
+            button
+              padding: 0
+              background-color: transparent
+
+            a, button
               color: ds.$hex-light
               opacity: 0.7
               font-size: ds.rem(14)

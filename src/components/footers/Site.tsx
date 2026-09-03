@@ -43,6 +43,26 @@ type SiteHeaderResponse = {
   inviteHref?: string | null;
 };
 
+function openTerms(url: string) {
+  window.open(
+    url,
+    'terms-post',
+    [
+      'popup=yes',
+      'width=960',
+      'height=760',
+      'left=80',
+      'top=80',
+      'resizable=yes',
+      'scrollbars=yes',
+      'toolbar=no',
+      'menubar=no',
+      'location=no',
+      'status=no',
+    ].join(','),
+  );
+}
+
 export default function FooterSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
@@ -178,15 +198,92 @@ export default function FooterSite() {
     <footer className={styles.footer}>
       <div className="container">
         <div className={`content ${styles.content}`}>
-          <div className={`${styles.loves} ${styles['loves-site']}`}>
-            <p className={styles.copyright}>
-              <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
-            </p>
-            <p className={styles.love}>
-              <Anchor href="/" style={{ color: 'hotpink' }}>
-                <FavoriteRoundedIcon /> <span>velhub</span>
-              </Anchor>
-            </p>
+          <div className={styles.pages}>
+            <div className={styles.copyrights}>
+              <div className={`${styles.loves} ${styles['loves-site']}`}>
+                <p className={styles.copyright}>
+                  <span>&copy;</span> <strong>{siteInfo.site_label}</strong> <span>All rights reserved.</span>
+                </p>
+                <p className={styles.love}>
+                  <Anchor href="/" style={{ color: 'hotpink' }}>
+                    <FavoriteRoundedIcon /> <span>velhub</span>
+                  </Anchor>
+                </p>
+              </div>
+              <p className={styles.note}>
+                {siteInfo.site_label}에 게시된 콘텐츠의 저작권은 각 작성자 또는 별도 표시된 권리자에게 있습니다.
+              </p>
+            </div>
+            <ul className={styles['parents-items']}>
+              <li className={styles['parents-item']}>
+                <ul className={styles.children}>
+                  <li>
+                    <Anchor href="/">데브허브 라운지</Anchor>
+                  </li>
+                </ul>
+              </li>
+              <li className={styles['parents-item']}>
+                <ul className={styles.children}>
+                  <li>
+                    <button type="button" onClick={() => openTerms('/luvelhub/b/3220865262')}>
+                      데브허브 이용약관
+                    </button>
+                  </li>
+                  <li>
+                    <button type="button" onClick={() => openTerms('/luvelhub/b/3220865264')}>
+                      데브허브 개인정보처리방침
+                    </button>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.legals}>
+            <dl>
+              <div>
+                <div>
+                  <dt>플랫폼 운영</dt>
+                  <dd>데브런닷스튜디오</dd>
+                </div>
+                <div>
+                  <dt>호스팅서비스제공자</dt>
+                  <dd>Vercel Inc. & Supabase Inc.</dd>
+                </div>
+              </div>
+              <div>
+                <div>
+                  <dt>사업자등록번호</dt>
+                  <dd>319-21-01382</dd>
+                </div>
+                <div>
+                  <dt>통신판매업 신고번호</dt>
+                  <dd>2026-서울관악-</dd>
+                </div>
+              </div>
+              <div>
+                <div>
+                  <dt>데브런닷스튜디오 대표</dt>
+                  <dd>고종길</dd>
+                </div>
+                <div>
+                  <dt>주소</dt>
+                  <dd>
+                    <address>서울시 관악구 조원로 20길 10</address>
+                  </dd>
+                </div>
+                <div>
+                  <dt>연락처</dt>
+                  <dd>010 7154 5796</dd>
+                </div>
+              </div>
+            </dl>
+            <div>
+              <p>
+                데브허브 플랫폼 내 서비스 명칭, 로고, 디자인 및 화면 구성의 무단 복제 · 전송 · 배포 · 스크래핑 등은 관련
+                법령에 따라 금지됩니다.
+              </p>
+              <p>{siteInfo.site_label} 및 작성자/작가가 게시한 콘텐츠의 권리는 해당 권리자에게 있습니다.</p>
+            </div>
           </div>
         </div>
       </div>
