@@ -9,7 +9,6 @@ type SiteType = 'blog' | 'community';
 type NavManageProps = {
   siteName: string;
   siteType: SiteType;
-  isTeamBlog: boolean;
   siteRole: string | null;
   globalRole: string | null;
   isSiteStaff: boolean;
@@ -44,7 +43,6 @@ function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null, gl
 export default function NavManage({
   siteName,
   siteType,
-  isTeamBlog,
   siteRole,
   globalRole,
   isSiteStaff,
@@ -58,7 +56,7 @@ export default function NavManage({
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   const navItems: StaffNavItem[] = [
-    ...(showAllManageMenus && (siteType !== 'blog' || isTeamBlog)
+    ...(showAllManageMenus
       ? [
           {
             label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보',

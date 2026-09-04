@@ -69,7 +69,6 @@ type HeaderResponse = {
   siteName: string | null;
   siteLabel: string | null;
   siteType: SiteType | null;
-  blogType: string | null;
   themeType: string;
   profilePictureUrl: string | null;
   profileLogoUrl: string | null;
@@ -526,7 +525,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [siteType, setSiteType] = useState<SiteType | null>(null);
-  const [blogType, setBlogType] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
     name: null,
     email: null,
@@ -612,7 +610,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       applyColorSet(result.themeType);
       applyBlogFontSettings(result.siteType, result.blogFontSettings);
       setSiteType(result.siteType);
-      setBlogType(result.blogType);
 
       setUserProfile({
         name: result.userName,
@@ -914,7 +911,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
                         <DrawerManage
                           siteName={siteName}
                           siteType={siteType}
-                          isTeamBlog={blogType === 'team'}
                           siteRole={userProfile.siteRole}
                           globalRole={userProfile.globalRole}
                           onClose={handleCloseProfileDrawer}

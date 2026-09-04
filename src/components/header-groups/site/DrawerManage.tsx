@@ -17,7 +17,6 @@ type SiteType = 'blog' | 'community';
 type Props = {
   siteName: string;
   siteType: SiteType | null;
-  isTeamBlog: boolean;
   siteRole: string | null;
   globalRole: string | null;
   onClose: () => void;
@@ -39,7 +38,7 @@ function canAccessAllManageMenus(siteType: SiteType | null, siteRole: string | n
   return false;
 }
 
-export default function DrawerManage({ siteName, siteType, isTeamBlog, siteRole, globalRole, onClose }: Props) {
+export default function DrawerManage({ siteName, siteType, siteRole, globalRole, onClose }: Props) {
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
 
   return (
@@ -51,7 +50,7 @@ export default function DrawerManage({ siteName, siteType, isTeamBlog, siteRole,
         </Anchor>
       </MenuItem>
 
-      {showAllManageMenus && (siteType !== 'blog' || isTeamBlog) ? (
+      {showAllManageMenus ? (
         <MenuItem onClick={onClose}>
           <Anchor href={`/${siteName}/manage/settings`}>
             {siteType === 'blog' ? <ArticleOutlinedIcon fontSize="small" /> : <InterestsRoundedIcon fontSize="small" />}
