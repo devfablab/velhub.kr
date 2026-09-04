@@ -7,6 +7,10 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   InputAdornment,
   MenuItem,
@@ -149,6 +153,7 @@ export default function Opt() {
   const [promotionImageUrl, setPromotionImageUrl] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isTeamMemberBlogTypeDialogOpen, setIsTeamMemberBlogTypeDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -489,6 +494,16 @@ export default function Opt() {
       const result = await response.json();
 
       if (!response.ok) {
+        if (
+          field === 'blog_type' &&
+          nextValue === 'personal' &&
+          result.error === '매니저나 팀원이 존재하는 경우 1인 블로그로 변경할 수 없습니다.'
+        ) {
+          setIsTeamMemberBlogTypeDialogOpen(true);
+          setIsSubmitting(false);
+          return false;
+        }
+
         throw new Error(result.error ?? '사이트 정보 수정에 실패했습니다.');
       }
 
@@ -1164,7 +1179,6 @@ export default function Opt() {
                     onChange={(event) => setDraftValue(event.target.value)}
                     size="small"
                     fullWidth
-                    disabled={!hasOwnerDomainFeature}
                   >
                     <MenuItem value="personal">1인 블로그</MenuItem>
                     <MenuItem value="team">팀 블로그</MenuItem>
@@ -1181,7 +1195,7 @@ export default function Opt() {
                       type="button"
                       className={`button ${isMobile ? 'small' : 'medium'} submit`}
                       onClick={() => void saveField('blog_type')}
-                      disabled={isSubmitting || !hasOwnerDomainFeature}
+                      disabled={isSubmitting}
                     >
                       수정 완료
                     </button>
@@ -1194,16 +1208,10 @@ export default function Opt() {
                     type="button"
                     className="button small action"
                     onClick={() => startEdit('blog_type', blogType || 'personal')}
-                    disabled={!hasOwnerDomainFeature}
                   >
                     수정
                   </button>
                 </Stack>
-              )}
-              {!hasOwnerDomainFeature && editingField !== 'blog_type' && (
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                  팀 블로그 설정은 오너 멤버십 전용 기능입니다.
-                </Typography>
               )}
             </div>
           )}
@@ -1566,6 +1574,21 @@ export default function Opt() {
           </div>
         </div>
       </div>
+      <Dialog
+        open={isTeamMemberBlogTypeDialogOpen}
+        onClose={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        className="VhiDialog"
+      >
+        <DialogTitle>블로그 타입 변경 안내</DialogTitle>
+        <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>
+        <DialogActions>
+          <button type="button" className="button medium submit" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
+            확인
+          </button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
