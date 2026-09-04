@@ -69,9 +69,9 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset=".167" stop-color="#f6e6c1" />
-        <stop offset=".73" stop-color="#faedd0" />
-        <stop offset="1" stop-color="#fdf0d5" />
+        <stop offset=".167" stopColor="#f6e6c1" />
+        <stop offset=".73" stopColor="#faedd0" />
+        <stop offset="1" stopColor="#fdf0d5" />
       </radialGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHa_vhYQU7Faibw9_gr1)"
@@ -85,9 +85,9 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset=".167" stop-color="#f6e6c1" />
-        <stop offset=".73" stop-color="#faedd0" />
-        <stop offset="1" stop-color="#fdf0d5" />
+        <stop offset=".167" stopColor="#f6e6c1" />
+        <stop offset=".73" stopColor="#faedd0" />
+        <stop offset="1" stopColor="#fdf0d5" />
       </radialGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHb_vhYQU7Faibw9_gr2)"
@@ -102,8 +102,8 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#51c0e6" />
-        <stop offset="1" stop-color="#66dff3" />
+        <stop offset="0" stopColor="#51c0e6" />
+        <stop offset="1" stopColor="#66dff3" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHc_vhYQU7Faibw9_gr3)"
@@ -130,8 +130,8 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#51c0e6" />
-        <stop offset="1" stop-color="#66dff3" />
+        <stop offset="0" stopColor="#51c0e6" />
+        <stop offset="1" stopColor="#66dff3" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHd_vhYQU7Faibw9_gr4)"
@@ -148,8 +148,8 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#51c0e6" />
-        <stop offset="1" stop-color="#66dff3" />
+        <stop offset="0" stopColor="#51c0e6" />
+        <stop offset="1" stopColor="#66dff3" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHe_vhYQU7Faibw9_gr5)"
@@ -164,8 +164,8 @@ export function ServiceErrorIcon() {
         gradientTransform="matrix(1 0 0 -1 0 64)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#51c0e6" />
-        <stop offset="1" stop-color="#66dff3" />
+        <stop offset="0" stopColor="#51c0e6" />
+        <stop offset="1" stopColor="#66dff3" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHf_vhYQU7Faibw9_gr6)"
@@ -184,8 +184,8 @@ export function ServiceErrorIcon() {
         gradientTransform="rotate(-90 -215876.612 207883.857) scale(108.3314)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#6cc9ea" />
-        <stop offset="1" stop-color="#7fe4f5" />
+        <stop offset="0" stopColor="#6cc9ea" />
+        <stop offset="1" stopColor="#7fe4f5" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHg_vhYQU7Faibw9_gr7)"
@@ -204,8 +204,8 @@ export function ServiceErrorIcon() {
         gradientTransform="rotate(-90 -215876.612 207883.857) scale(108.3314)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#64c6e9" />
-        <stop offset="1" stop-color="#76e2f4" />
+        <stop offset="0" stopColor="#64c6e9" />
+        <stop offset="1" stopColor="#76e2f4" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHh_vhYQU7Faibw9_gr8)"
@@ -220,8 +220,8 @@ export function ServiceErrorIcon() {
         gradientTransform="rotate(-90 -77137 74290.172) scale(38.7166)"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0" stop-color="#64c6e9" />
-        <stop offset="1" stop-color="#76e2f4" />
+        <stop offset="0" stopColor="#64c6e9" />
+        <stop offset="1" stopColor="#76e2f4" />
       </linearGradient>
       <path
         fill="url(#7xfULB1DgBbjL0moiiHiHi_vhYQU7Faibw9_gr9)"
