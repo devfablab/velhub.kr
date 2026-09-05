@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type Post = {
@@ -56,11 +56,7 @@ export default function Opt() {
   }, [load, page]);
 
   if (message)
-    return (
-      <Typography variant="body2" color="error">
-        {message}
-      </Typography>
-    );
+    return <ScreenState kind="error">{message}</ScreenState>;
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 20);
@@ -96,10 +92,7 @@ export default function Opt() {
           </TableBody>
         </Table>
       ) : (
-        <div className="paper page-info">
-          <ServiceNoDataIcon />
-          <p>작성한 글이 없습니다.</p>
-        </div>
+        <ScreenState>작성한 글이 없습니다.</ScreenState>
       )}
 
       {totalPages > 1 ? (

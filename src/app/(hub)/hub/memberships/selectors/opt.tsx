@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Snackbar, Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type Site = { id: string; siteKey: string; siteLabel: string; siteType: string };
@@ -44,10 +43,7 @@ function SelectorGroup({
           </RadioGroup>
         </FormControl>
       ) : (
-        <p className="alert warning">
-          <WarningAmberRoundedIcon />
-          <span>선택할 수 있는 대상이 없습니다.</span>
-        </p>
+        <ScreenState kind="warning">선택할 수 있는 대상이 없습니다.</ScreenState>
       )}
     </section>
   );
@@ -121,12 +117,9 @@ export default function MembershipSelectors() {
     return (
       <section className={`paper ${styles.paper}`}>
         <h2>라운지 노출</h2>
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>
-            {fetchError || '데이터를 불러오지 못했습니다.'} 일시적인 문제일 수 있으니 잠시 후 다시 시도해 주세요.
-          </span>
-        </p>
+        <ScreenState kind="error">
+          {fetchError || '데이터를 불러오지 못했습니다.'} 일시적인 문제일 수 있으니 잠시 후 다시 시도해 주세요.
+        </ScreenState>
         <button type="button" className="button small warning" onClick={loadData}>
           다시 시도
         </button>
@@ -137,10 +130,9 @@ export default function MembershipSelectors() {
   if (!data.features.ownerLounge && !data.features.creatorLounge) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <p className="alert warning">
-          <WarningAmberRoundedIcon />
-          <span>라운지에 사이트나 연재글을 노출하려면 먼저 오너 멤버십 또는 크리에이터 멤버십 가입이 필요합니다.</span>
-        </p>
+        <ScreenState kind="warning">
+          라운지에 사이트나 연재글을 노출하려면 먼저 오너 멤버십 또는 크리에이터 멤버십 가입이 필요합니다.
+        </ScreenState>
         <Stack direction="row">
           <Anchor href="/memberships/creator" className="button small action">
             자세히 알아보기
@@ -210,10 +202,7 @@ export default function MembershipSelectors() {
             </button>
           </Stack>
         ) : (
-          <p className="alert warning">
-            <WarningAmberRoundedIcon />
-            <span>라운지 노출 기능을 이용 중인 멤버십이 없습니다.</span>
-          </p>
+          <ScreenState kind="warning">라운지 노출 기능을 이용 중인 멤버십이 없습니다.</ScreenState>
         )}
       </Stack>
       <Snackbar

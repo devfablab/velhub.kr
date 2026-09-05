@@ -25,7 +25,7 @@ import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Avatar, Box, Stack, styled, TextField, Typography } from '@mui/material';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { ServiceErrorIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -463,12 +463,7 @@ export default function Opt({ handleName }: { handleName: string }) {
       <main className={styles['my-library']}>
         <div className={styles.container}>
           <div className={`content ${styles.content}`}>
-            <div className="paper page-error">
-              <ServiceErrorIcon />
-              <p className="alert error">
-                <span>{message}</span>
-              </p>
-            </div>
+            <ScreenState kind="error">{message}</ScreenState>
           </div>
         </div>
       </main>
@@ -582,7 +577,7 @@ export default function Opt({ handleName }: { handleName: string }) {
                 ))}
               </ul>
             ) : (
-              <Typography variant="body2">작성한 글이 없습니다.</Typography>
+              <ScreenState>작성한 글이 없습니다.</ScreenState>
             )}
             {totalPages > 1 ? (
               <Stack direction="row" justifyContent="center" gap={1}>

@@ -41,6 +41,7 @@ import {
 import { formatDate, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -804,9 +805,7 @@ export default function Opt() {
           ) : null}
 
           {boards.length === 0 ? (
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">게시판이 없습니다.</Typography>
-            </div>
+            <ScreenState>게시판이 없습니다.</ScreenState>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBoardDragEnd}>
@@ -948,13 +947,10 @@ export default function Opt() {
           </Stack>
         ) : null}
 
-        {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+        {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
         {posts.length === 0 ? (
-          <p className="alert warning">
-            <WarningAmberRoundedIcon />
-            <span>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}</span>
-          </p>
+          <ScreenState>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}</ScreenState>
         ) : (
           <Box sx={{ position: 'relative' }}>
             <div className={`paper paper-p0 ${styles.paper}`}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type PendingJoinRow = {
@@ -67,7 +68,7 @@ export default function PendingJoin() {
   if (errorMessage) {
     return (
       <section className={`paper ${styles.paper} ${styles.pending}`}>
-        <p>{errorMessage}</p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
   }

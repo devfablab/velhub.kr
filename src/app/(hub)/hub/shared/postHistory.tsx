@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -82,7 +83,7 @@ export default function PostHistory({ siteType, type }: Props) {
   if (errorMessage) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <p>{errorMessage}</p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
   }

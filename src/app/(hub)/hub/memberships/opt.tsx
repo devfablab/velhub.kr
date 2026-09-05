@@ -11,7 +11,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Drawer,
   Snackbar,
   Stack,
   Typography,
@@ -32,6 +31,7 @@ import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type Eligibility = {
@@ -281,7 +281,7 @@ export default function MembershipPlan() {
   if (!isLoading && (isUnder14Age || isBlocked)) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <div className="paper page-error">
+        <div className="paper page-warning">
           <WarningAmberRoundedIcon />
           <h2>멤버십</h2>
           <p>
@@ -488,10 +488,7 @@ export default function MembershipPlan() {
                 ))}
               </Stack>
             ) : (
-              <p className="alert warning">
-                <WarningAmberRoundedIcon />
-                <span>등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</span>
-              </p>
+              <ScreenState kind="warning">등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</ScreenState>
             )}
           </Stack>
           <div>

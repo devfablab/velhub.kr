@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import ScreenState from '@/components/service/ScreenState';
 import FolderModals from './folderModals';
 import styles from '@/app/hub.module.sass';
 
@@ -210,7 +211,7 @@ export default function FavoriteBlogs() {
   if (errorMessage)
     return (
       <section className={`paper ${styles.paper}`}>
-        <p>{errorMessage}</p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
   if (blogs.length === 0) return null;
@@ -247,7 +248,7 @@ export default function FavoriteBlogs() {
           {defaultFolderBlogs.length > 0 ? (
             defaultFolderBlogs.map(renderSite)
           ) : (
-            <p style={{ color: '#888' }}>항목이 없습니다.</p>
+            <ScreenState>항목이 없습니다.</ScreenState>
           )}
         </div>
 
@@ -264,7 +265,7 @@ export default function FavoriteBlogs() {
                   폴더 수정
                 </button>
               </div>
-              {folderBlogs.length > 0 ? folderBlogs.map(renderSite) : <p style={{ color: '#888' }}>항목이 없습니다.</p>}
+              {folderBlogs.length > 0 ? folderBlogs.map(renderSite) : <ScreenState>항목이 없습니다.</ScreenState>}
             </div>
           );
         })}

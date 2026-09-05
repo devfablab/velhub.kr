@@ -3,12 +3,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SettlementForm from '@/components/service/common/SettlementForm';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
 type RevenueSummaryResponse = {
@@ -97,10 +97,7 @@ export default function RevenueSummary({
     return (
       <div className={`container ${styles.container}`}>
         <div className={`${styles.content} content`}>
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
+          <ScreenState kind="error">{errorMessage}</ScreenState>
         </div>
       </div>
     );

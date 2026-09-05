@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { originTitle, Seo } from '@/lib/seo';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import Aside from '../aside';
 import List from '../list';
@@ -28,24 +29,42 @@ export default async function Page() {
   let supportCreatorsData = null;
   let supportCreatorsListData = null;
   let recentCreatorsData = null;
+  let supportCreatorsError = '';
+  let supportCreatorsListError = '';
+  let recentCreatorsError = '';
 
   try {
     const supportCreatorsResponse = await fetch(`${baseUrl}/api/home/moments/support?limit=10`, {
       cache: 'no-store',
     });
-    if (supportCreatorsResponse.ok) supportCreatorsData = await supportCreatorsResponse.json();
+    if (supportCreatorsResponse.ok) {
+      supportCreatorsData = await supportCreatorsResponse.json();
+    } else {
+      supportCreatorsError = '서포트 작가를 불러오지 못했습니다.';
+    }
 
     const supportCreatorsListResponse = await fetch(`${baseUrl}/api/home/moments/support?limit=100`, {
       cache: 'no-store',
     });
-    if (supportCreatorsListResponse.ok) supportCreatorsListData = await supportCreatorsListResponse.json();
+    if (supportCreatorsListResponse.ok) {
+      supportCreatorsListData = await supportCreatorsListResponse.json();
+    } else {
+      supportCreatorsListError = '서포트 크리에이터를 불러오지 못했습니다.';
+    }
 
     const recentCreatorsResponse = await fetch(`${baseUrl}/api/home/moments/recent-creators?limit=100`, {
       cache: 'no-store',
     });
-    if (recentCreatorsResponse.ok) recentCreatorsData = await recentCreatorsResponse.json();
+    if (recentCreatorsResponse.ok) {
+      recentCreatorsData = await recentCreatorsResponse.json();
+    } else {
+      recentCreatorsError = '최근 승인된 작가를 불러오지 못했습니다.';
+    }
   } catch (error) {
     console.error('Fetch Failed:', error);
+    supportCreatorsError ||= '서포트 작가를 불러오지 못했습니다.';
+    supportCreatorsListError ||= '서포트 크리에이터를 불러오지 못했습니다.';
+    recentCreatorsError ||= '최근 승인된 작가를 불러오지 못했습니다.';
   }
 
   return (
@@ -54,38 +73,38 @@ export default async function Page() {
         <div className={`content ${styles.content}`}>
           <section>
             <h2>서포트 작가전 🚀</h2>
-            {supportCreatorsData && (supportCreatorsData.sites || supportCreatorsData.posts) ? (
+            {supportCreatorsError ? (
+              <ScreenState kind="error">{supportCreatorsError}</ScreenState>
+            ) : supportCreatorsData && (supportCreatorsData.sites || supportCreatorsData.posts) ? (
               <Slick
                 sitesHitsData={supportCreatorsData.sites ? supportCreatorsData : undefined}
                 postsData={supportCreatorsData.posts ? supportCreatorsData : undefined}
               />
             ) : (
-              <div className="paper">
-                <p>아직 등록된 서포트 작가가 없습니다.</p>
-              </div>
+              <ScreenState>아직 등록된 서포트 작가가 없습니다.</ScreenState>
             )}
           </section>
           <section>
             <h2>서포트 크리에이터 ✨</h2>
-            {supportCreatorsListData && (supportCreatorsListData.sites || supportCreatorsListData.posts) ? (
+            {supportCreatorsListError ? (
+              <ScreenState kind="error">{supportCreatorsListError}</ScreenState>
+            ) : supportCreatorsListData && (supportCreatorsListData.sites || supportCreatorsListData.posts) ? (
               <List
                 postsData={supportCreatorsListData.posts ? supportCreatorsListData : undefined}
                 orderType="newest"
               />
             ) : (
-              <div className="paper">
-                <p>아직 등록된 서포트 크리에이터가 없습니다.</p>
-              </div>
+              <ScreenState>아직 등록된 서포트 크리에이터가 없습니다.</ScreenState>
             )}
           </section>
           <section>
             <h2>작가들에게 무슨 일이 있나요? 🧐</h2>
-            {recentCreatorsData && recentCreatorsData.posts ? (
+            {recentCreatorsError ? (
+              <ScreenState kind="error">{recentCreatorsError}</ScreenState>
+            ) : recentCreatorsData && recentCreatorsData.posts ? (
               <List postsData={recentCreatorsData} orderType="newest" />
             ) : (
-              <div className="paper">
-                <p>최근 승인된 작가가 없습니다.</p>
-              </div>
+              <ScreenState>최근 승인된 작가가 없습니다.</ScreenState>
             )}
           </section>
         </div>

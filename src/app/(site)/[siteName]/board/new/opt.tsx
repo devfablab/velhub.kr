@@ -46,7 +46,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
-import { ServiceErrorIcon } from '@/components/Svgs';
+import { ServiceNoDataIcon, ServiceWarningIcon } from '@/components/Svgs';
 import styles from '@/app/board.module.sass';
 
 type Props = {
@@ -1792,8 +1792,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <ListAltOutlinedIcon />
             <span>새글 쓰기</span>
           </h2>
-          <div className="paper page-error">
-            <ServiceErrorIcon />
+          <div className="paper page-info">
+            <ServiceNoDataIcon />
             <p>글을 작성할 수 있는 게시판이 없습니다.</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>
               게시판으로 이동
@@ -1818,8 +1818,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             <ListAltOutlinedIcon />
             <span>새글 쓰기</span>
           </h2>
-          <div className="paper page-error">
-            <ServiceErrorIcon />
+          <div className="paper page-warning">
+            <ServiceWarningIcon />
             <p>{writePolicyMessage}</p>
             <Anchor className="button medium action" href={`/${siteName}/board`}>
               게시판으로 이동

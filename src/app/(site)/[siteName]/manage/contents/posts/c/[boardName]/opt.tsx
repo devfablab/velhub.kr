@@ -35,6 +35,7 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -596,7 +597,10 @@ export default function Opt() {
 
           <Box sx={{ position: 'relative' }}>
             <div className={`paper paper-p0 ${styles.paper}`}>
-              <Table size="small">
+              {contents.length === 0 ? (
+                <ScreenState>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}</ScreenState>
+              ) : (
+                <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell padding="checkbox">
@@ -692,16 +696,9 @@ export default function Opt() {
                       </TableCell>
                     </TableRow>
                   ))}
-
-                  {contents.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={10} align="center">
-                        {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
                 </TableBody>
-              </Table>
+                </Table>
+              )}
 
               <Backdrop
                 open={isFetching}

@@ -20,6 +20,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
 import UserInfo from '@/components/service/community/UserInfo';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import styles from '@/app/board.module.sass';
 
@@ -332,9 +333,11 @@ export default function Opt({ isCommunity }: Props) {
         </div>
 
         {contents.length === 0 ? (
-          <div className="paper paper-error">
-            {isSearchMode ? '검색 결과가 없습니다.' : '등록된 게시글이 없습니다.'}
-          </div>
+          isSearchMode ? (
+            <div className="paper paper-error">검색 결과가 없습니다.</div>
+          ) : (
+            <ScreenState>등록된 게시글이 없습니다.</ScreenState>
+          )
         ) : isSearchMode ? (
           <div className="paper">
             {isMobile ? (

@@ -341,7 +341,6 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
       if (!response.ok || !('isLoggedIn' in result)) {
         clearBlogFontSettings();
         setSiteType(null);
-        setBlogType(null);
         setUserProfile({
           name: null,
           email: null,

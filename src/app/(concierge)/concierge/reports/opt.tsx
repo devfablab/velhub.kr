@@ -48,6 +48,7 @@ import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
+import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type ReportsResponse = {
@@ -296,6 +297,7 @@ export default function Opt() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isListError, setIsListError] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const [reporterDialogOpen, setReporterDialogOpen] = useState(false);
@@ -322,6 +324,7 @@ export default function Opt() {
       try {
         setLoading(true);
         setErrorMessage('');
+        setIsListError(false);
 
         const searchParams = new URLSearchParams({ page: String(page) });
 
@@ -345,6 +348,7 @@ export default function Opt() {
           setReports([]);
           setTotal(0);
           setErrorMessage(result.error ?? '신고 목록을 불러오지 못했습니다.');
+          setIsListError(true);
           return;
         }
 
@@ -354,6 +358,7 @@ export default function Opt() {
         setReports([]);
         setTotal(0);
         setErrorMessage('신고 목록을 불러오지 못했습니다.');
+        setIsListError(true);
       } finally {
         setLoading(false);
       }
@@ -697,7 +702,9 @@ export default function Opt() {
         </FormControl>
       </Stack>
 
-      {errorMessage ? (
+      {errorMessage && isListError ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+
+      {errorMessage && !isListError ? (
         <p className="alert warning">
           <WarningAmberRoundedIcon />
           <span>{errorMessage}</span>
@@ -710,7 +717,8 @@ export default function Opt() {
         </Stack>
       ) : (
         <>
-          <div className="paper">
+          {!isListError && reports.length === 0 ? <ScreenState>신고 내역이 없습니다.</ScreenState> : null}
+          {!isListError && reports.length > 0 ? <div className="paper">
             <Table>
               <TableHead>
                 <TableRow>
@@ -893,24 +901,17 @@ export default function Opt() {
                     <TableCell sx={cellSx}>{report.handledAt ? formatDateTimeDetail(report.handledAt) : '-'}</TableCell>
                   </TableRow>
                 ))}
-                {reports.length === 0 ? (
-                  <TableRow>
-                    <TableCell sx={cellSx} colSpan={14} align="center">
-                      신고 내역이 없습니다.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
               </TableBody>
             </Table>
-          </div>
-          <TablePagination
+          </div> : null}
+          {!isListError && reports.length > 0 ? <TablePagination
             component="div"
             count={total}
             page={page}
             rowsPerPage={50}
             rowsPerPageOptions={[50]}
             onPageChange={(_, nextPage) => setPage(nextPage)}
-          />
+          /> : null}
         </>
       )}
 

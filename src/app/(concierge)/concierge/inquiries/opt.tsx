@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Tab, Tabs, Typography } from '@mui/material';
+import { Tab, Tabs } from '@mui/material';
 import {
   inquiryStatusLabels,
   inquirySubtypes,
@@ -11,6 +11,7 @@ import {
   type InquiryType,
 } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/concierge.module.sass';
 
 type InquiryRow = {
@@ -55,30 +56,28 @@ export default function Opt() {
           <Tab key={value} value={value} label={inquiryTypeLabels[value]} />
         ))}
       </Tabs>
-      <div className={`paper ${styles['inquiry-items']}`}>
-        {error ? (
-          <Typography variant="body2" color="error">
-            {error}
-          </Typography>
-        ) : null}
-        {!error && inquiries.length === 0 ? <Typography variant="body2">문의가 없습니다.</Typography> : null}
-        {inquiries.map((inquiry) => (
-          <Anchor
-            href={`/concierge/inquiries/${inquiry.id}`}
-            key={inquiry.id}
-            className={`paper ${styles['inquiry-item']}`}
-          >
-            {inquiry.title ? <strong>{inquiry.title}</strong> : null}
-            <span>{inquiry.requesterActivityName} 님</span>
-            <span>
-              {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
-                inquiryTypeLabels[inquiry.inquiry_type]}{' '}
-              / {inquiryStatusLabels[inquiry.status]}
-            </span>
-            <time>{new Date(inquiry.created_at).toLocaleDateString('ko-KR')}</time>
-          </Anchor>
-        ))}
-      </div>
+      {error ? <ScreenState kind="error">{error}</ScreenState> : null}
+      {!error && inquiries.length === 0 ? <ScreenState>문의가 없습니다.</ScreenState> : null}
+      {inquiries.length > 0 ? (
+        <div className={`paper ${styles['inquiry-items']}`}>
+          {inquiries.map((inquiry) => (
+            <Anchor
+              href={`/concierge/inquiries/${inquiry.id}`}
+              key={inquiry.id}
+              className={`paper ${styles['inquiry-item']}`}
+            >
+              {inquiry.title ? <strong>{inquiry.title}</strong> : null}
+              <span>{inquiry.requesterActivityName} 님</span>
+              <span>
+                {inquirySubtypes[inquiry.inquiry_type].find((item) => item.value === inquiry.inquiry_subtype)?.label ??
+                  inquiryTypeLabels[inquiry.inquiry_type]}{' '}
+                / {inquiryStatusLabels[inquiry.status]}
+              </span>
+              <time>{new Date(inquiry.created_at).toLocaleDateString('ko-KR')}</time>
+            </Anchor>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

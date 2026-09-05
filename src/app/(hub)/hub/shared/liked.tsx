@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -81,7 +81,7 @@ export default function Liked({ siteType }: Props) {
   if (errorMessage) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <p>{errorMessage}</p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
   }
@@ -90,10 +90,7 @@ export default function Liked({ siteType }: Props) {
     <section className={`paper ${styles.paper} ${styles.likey}`}>
       <h2>좋아요 👍</h2>
       {postLikes.length === 0 && commentLikes.length === 0 ? (
-        <div className="paper page-info">
-          <ServiceNoDataIcon />
-          <p>하나도 맘에 든 글이 없으셨나봐요 😭</p>
-        </div>
+        <ScreenState>하나도 맘에 든 글이 없으셨나봐요 😭</ScreenState>
       ) : (
         <div className={`paper ${styles['likey-sites']}`}>
           {postLikes.length > 0 ? (

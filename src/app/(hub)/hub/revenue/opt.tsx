@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SettlementForm from '@/components/service/common/SettlementForm';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceWarningIcon } from '@/components/Svgs';
 import RevenueList from '@/app/(site)/[siteName]/payments/RevenueList';
 import RevenueSummary from '@/app/(site)/[siteName]/payments/RevenueSummary';
@@ -131,12 +131,7 @@ export default function RevenueHub() {
           </div>
         ) : null}
 
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
+        {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
         {!isLoading && !errorMessage && sites.length === 0 ? (
           <>

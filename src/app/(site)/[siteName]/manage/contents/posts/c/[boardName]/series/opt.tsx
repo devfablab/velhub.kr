@@ -33,6 +33,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -908,13 +909,10 @@ export default function Opt() {
             </button>
           </Stack>
 
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
           {sortedSeries.length === 0 ? (
-            <p className="alert info">
-              <InfoOutlineRoundedIcon />
-              <span>등록된 연재가 없습니다.</span>
-            </p>
+            <ScreenState>등록된 연재가 없습니다.</ScreenState>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <Table size="small">

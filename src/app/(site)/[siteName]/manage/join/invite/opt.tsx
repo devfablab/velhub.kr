@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -297,8 +298,11 @@ export default function Opt() {
             </button>
           </Stack>
 
-          <div className={`paper paper-p0 ${styles.paper}`}>
-            <Table size="small">
+          {sortedInvites.length === 0 ? (
+            <ScreenState>생성된 초대가 없습니다.</ScreenState>
+          ) : (
+            <div className={`paper paper-p0 ${styles.paper}`}>
+              <Table size="small">
               <TableHead>
                 <TableRow>
                   <TableCell>초대 이메일</TableCell>
@@ -326,17 +330,10 @@ export default function Opt() {
                     </TableCell>
                   </TableRow>
                 ))}
-
-                {sortedInvites.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      생성된 초대가 없습니다.
-                    </TableCell>
-                  </TableRow>
-                ) : null}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          )}
 
           {isMobile ? (
             <Drawer

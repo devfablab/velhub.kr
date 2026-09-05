@@ -5,13 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -220,7 +218,7 @@ export default function Opt() {
           ) : null}
 
           {pages.length === 0 ? (
-            <div className={`paper paper-error ${styles.paper}`}>페이지가 아직 없습니다</div>
+            <ScreenState>페이지가 아직 없습니다</ScreenState>
           ) : pages.length === 1 ? (
             <div className={`paper ${styles.paper}`}>
               {pages.map((page: PageRow) => (

@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Button,
@@ -22,6 +20,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
 type RevenueListType = 'transactions' | 'refunds' | 'scheduled' | 'confirmed' | 'completed';
@@ -365,12 +364,7 @@ export default function RevenueList({
           </Stack>
         </Stack>
 
-        {errorMessage ? (
-          <p className="alert error">
-            <ErrorOutlineRoundedIcon />
-            <span>{errorMessage}</span>
-          </p>
-        ) : null}
+        {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
         {!responseData && !errorMessage ? (
           <div className={`paper ${styles.paper}`}>
@@ -383,10 +377,7 @@ export default function RevenueList({
         {responseData ? (
           <>
             {responseData.items.length === 0 ? (
-              <div className="paper page-error">
-                <WarningAmberRoundedIcon />
-                <span>데이터가 없습니다</span>
-              </div>
+              <ScreenState>데이터가 없습니다</ScreenState>
             ) : (
               <div className="paper paper-p0">
                 <Table>

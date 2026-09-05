@@ -7,6 +7,7 @@ import { formatDateSimple, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from './menu';
 import styles from '@/app/manage.module.sass';
 
@@ -181,9 +182,7 @@ export default function Opt() {
       <Container pageEnterance>
         <div className={`container ${styles.container}`}>
           <div className={`${styles.content} content`}>
-            <div className={`paper paper-error ${styles.paper}`}>
-              {errorMessage || '사이트 정보를 불러오지 못했습니다'}
-            </div>
+            <ScreenState kind="error">{errorMessage || '사이트 정보를 불러오지 못했습니다'}</ScreenState>
           </div>
         </div>
       </Container>

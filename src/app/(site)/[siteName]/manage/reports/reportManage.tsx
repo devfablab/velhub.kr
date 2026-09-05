@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Box,
   Button,
@@ -44,6 +43,7 @@ import {
 } from '@/lib/reports/manage';
 import { formatTimeAgo } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 
 type PostImage = {
@@ -432,6 +432,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   const [showPast, setShowPast] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isListError, setIsListError] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [nextStatus, setNextStatus] = useState<ReportStatus | ''>('');
   const [saving, setSaving] = useState(false);
@@ -450,6 +451,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   const loadReports = useCallback(async () => {
     setLoading(true);
     setErrorMessage('');
+    setIsListError(false);
 
     const searchParams = new URLSearchParams({
       siteName,
@@ -469,6 +471,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
 
     if (!response.ok || result.error) {
       setErrorMessage(result.error ?? '신고 목록을 불러오지 못했습니다.');
+      setIsListError(true);
       setReports([]);
       return;
     }
@@ -830,7 +833,9 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </button>
         </Box>
 
-        {errorMessage ? (
+        {errorMessage && isListError ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+
+        {errorMessage && !isListError ? (
           <p className="alert error">
             <ErrorOutlineRoundedIcon />
             <span>{errorMessage}</span>
@@ -846,10 +851,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
         ) : null}
 
         {!loading && reports.length === 0 ? (
-          <p className="alert info">
-            <InfoOutlineRoundedIcon />
-            <span>신고 내역이 없습니다.</span>
-          </p>
+          <ScreenState>신고 내역이 없습니다.</ScreenState>
         ) : null}
 
         {!loading && reports.length > 0 ? (

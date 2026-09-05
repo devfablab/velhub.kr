@@ -19,15 +19,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, FormControlLabel, Snackbar, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -352,10 +349,7 @@ export default function Opt() {
           ) : (
             <>
               {items.length === 0 ? (
-                <p className="alert error">
-                  <ErrorOutlineRoundedIcon />
-                  <span>등록된 게시판이 없습니다.</span>
-                </p>
+                <ScreenState>등록된 게시판이 없습니다.</ScreenState>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>

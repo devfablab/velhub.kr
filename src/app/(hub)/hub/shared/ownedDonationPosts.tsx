@@ -7,6 +7,7 @@ import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/uti
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
+import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import boardStyles from '@/app/board.module.sass';
 import styles from '@/app/hub.module.sass';
@@ -346,7 +347,7 @@ export default function OwnedDonationPosts({ siteType }: Props) {
   if (errorMessage) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <p>{errorMessage}</p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       </section>
     );
   }

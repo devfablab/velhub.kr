@@ -30,6 +30,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -977,8 +978,11 @@ export default function Opt() {
             </button>
           </Stack>
 
-          <div className={`paper paper-p0 ${styles.paper}`}>
-            <Table>
+          {managers.length === 0 ? (
+            <ScreenState>등록된 매니저가 없습니다.</ScreenState>
+          ) : (
+            <div className={`paper paper-p0 ${styles.paper}`}>
+              <Table>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
@@ -988,12 +992,7 @@ export default function Opt() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {managers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4}>등록된 매니저가 없습니다.</TableCell>
-                  </TableRow>
-                ) : (
-                  managers.map((manager) => {
+                {managers.map((manager) => {
                     const isSelected = selectedManagerRoleId === manager.manageRoleId;
 
                     return (
@@ -1020,11 +1019,11 @@ export default function Opt() {
                         </TableCell>
                       </TableRow>
                     );
-                  })
-                )}
+                  })}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          )}
 
           {isMobile ? (
             <Drawer anchor="bottom" open={isIconDialogOpen} onClose={closeIconDialog} className="VhiDrawer-bottom">

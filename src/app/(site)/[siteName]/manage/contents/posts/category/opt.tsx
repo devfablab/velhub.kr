@@ -9,7 +9,6 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Button,
@@ -35,6 +34,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -949,10 +949,7 @@ export default function Opt() {
           ) : null}
 
           {sortedCategories.length === 0 ? (
-            <p className="alert warning">
-              <WarningAmberRoundedIcon />
-              <span>등록된 카테고리가 없습니다.</span>
-            </p>
+            <ScreenState>등록된 카테고리가 없습니다.</ScreenState>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

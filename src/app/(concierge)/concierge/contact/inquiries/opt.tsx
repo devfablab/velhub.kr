@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Stack } from '@mui/material';
 import {
   inquiryStatusLabels,
@@ -11,7 +10,7 @@ import {
   type InquiryType,
 } from '@/lib/concierge/inquiries';
 import Anchor from '@/components/Anchor';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/concierge.module.sass';
 
 type InquiryRow = {
@@ -49,16 +48,10 @@ export default function Opt() {
   return (
     <div className={styles.inquiry}>
       {error ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{error}</span>
-        </p>
+        <ScreenState kind="error">{error}</ScreenState>
       ) : null}
       {!error && inquiries.length === 0 ? (
-        <div className="paper page-info">
-          <ServiceNoDataIcon />
-          <p>문의 내역이 없습니다.</p>
-        </div>
+        <ScreenState>문의 내역이 없습니다.</ScreenState>
       ) : null}
       {inquiries.length > 0 ? (
         <div className={`paper ${styles['inquiry-items']}`}>

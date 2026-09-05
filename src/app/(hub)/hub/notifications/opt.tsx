@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type NotificationItem = {
@@ -25,6 +25,7 @@ export default function Opt() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
   const [isReadingAll, setIsReadingAll] = useState(false);
 
   async function loadNotifications() {
@@ -43,6 +44,7 @@ export default function Opt() {
       }
 
       setItems(result.items ?? []);
+      setHasLoadedNotifications(true);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '알림을 불러오지 못했습니다.');
@@ -155,13 +157,12 @@ export default function Opt() {
         </button>
       </div>
 
-      {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+      {errorMessage && !hasLoadedNotifications ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
+
+      {errorMessage && hasLoadedNotifications ? <p className="alert error">{errorMessage}</p> : null}
 
       {items.length === 0 ? (
-        <div className="paper page-info">
-          <ServiceNoDataIcon />
-          <p>새로운 알림이 없어요. 🤫</p>
-        </div>
+        <ScreenState>새로운 알림이 없어요. 🤫</ScreenState>
       ) : (
         <ul className={styles.notifications}>
           {items.map((item) => (

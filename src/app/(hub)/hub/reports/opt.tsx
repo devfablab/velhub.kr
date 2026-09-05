@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { ServiceNoDataIcon } from '@/components/Svgs';
+import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type ReportTarget = {
@@ -97,17 +96,11 @@ export default function Opt() {
       </div>
 
       {errorMessage ? (
-        <p className="alert error">
-          <ErrorOutlineRoundedIcon />
-          <span>{errorMessage}</span>
-        </p>
+        <ScreenState kind="error">{errorMessage}</ScreenState>
       ) : null}
 
       {items.length === 0 ? (
-        <div className="paper page-info">
-          <ServiceNoDataIcon />
-          <p>신고내역이 없습니다. 🙂</p>
-        </div>
+        <ScreenState>신고내역이 없습니다. 🙂</ScreenState>
       ) : (
         <ul className={styles['report-list']}>
           {items.map((item) => (

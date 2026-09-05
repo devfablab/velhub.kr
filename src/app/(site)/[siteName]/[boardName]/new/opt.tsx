@@ -50,7 +50,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
-import { ServiceErrorIcon } from '@/components/Svgs';
+import { ServiceErrorIcon, ServiceNoDataIcon, ServiceWarningIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -1808,8 +1808,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             </aside>
           ) : null}
           <div className={`${styles.content} content`}>
-            <div className="paper page-error">
-              <ServiceErrorIcon />
+            <div className="paper page-info">
+              <ServiceNoDataIcon />
               <p>페이지를 찾을 수 없어요! 🥹</p>
               <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
                 블로그 목록으로 이동
@@ -1832,8 +1832,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
             </aside>
           ) : null}
           <div className={`${styles.content} content`}>
-            <div className="paper page-error">
-              <ServiceErrorIcon />
+            <div className="paper page-warning">
+              <ServiceWarningIcon />
               <p>글을 작성할 수 있는 게시판이 없습니다.</p>
               <Anchor className="button medium action" href={`/${siteName}/${boardName}`}>
                 게시판으로 이동

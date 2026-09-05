@@ -6,6 +6,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -163,7 +164,10 @@ export default async function Page(context: RouteContext) {
                 ))}
               </div>
             ) : (
-              <p>등록된 글이 없습니다.</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>등록된 글이 없습니다.</p>
+              </div>
             )}
 
             {postList.totalPage > 1 ? (

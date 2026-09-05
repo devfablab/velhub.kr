@@ -31,6 +31,7 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -358,12 +359,10 @@ export default function Opt() {
             <span />
           </Stack>
 
-          {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
+          {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
           {sortedPrefixes.length === 0 ? (
-            <div className={`paper ${styles.paper}`}>
-              <Typography variant="subtitle2">등록된 말머리가 없습니다.</Typography>
-            </div>
+            <ScreenState>등록된 말머리가 없습니다.</ScreenState>
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <Table>

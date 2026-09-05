@@ -585,7 +585,6 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       if (!response.ok || !('isLoggedIn' in result)) {
         clearBlogFontSettings();
         setSiteType(null);
-        setBlogType(null);
         setUserProfile({
           name: null,
           email: null,

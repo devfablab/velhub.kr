@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Stack, useMediaQuery, useTheme } from '@mui/material';
 import { PostListItem } from '@/lib/board/getPostList';
 import Anchor from '@/components/Anchor';
@@ -11,6 +10,7 @@ import PostCountTableList from '@/components/service/community/PostCountTableLis
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
+import { ServiceNoDataIcon, ServiceWarningIcon } from '@/components/Svgs';
 import Container from './menu';
 import styles from '@/app/board.module.sass';
 
@@ -206,9 +206,9 @@ export default function Community({ siteName, homeBoards }: Props) {
 
         <div className={`content ${styles.content} ${styles['home-content']} `}>
           {homeBoards.length === 0 ? (
-            <div className="paper page-error">
-              <WarningAmberRoundedIcon />
-              <span>매니저가 홈을 꾸미기 전입니다</span>
+            <div className="paper page-warning">
+              <ServiceWarningIcon />
+              <p>매니저가 홈을 꾸미기 전입니다</p>
             </div>
           ) : (
             homeBoards.map((homeBoard) => (
@@ -228,7 +228,10 @@ export default function Community({ siteName, homeBoards }: Props) {
                 {homeBoard.contents.length > 0 ? (
                   renderBoardContents(siteName, homeBoard)
                 ) : (
-                  <p>등록된 글이 없습니다. 😭</p>
+                  <div className="paper page-info">
+                    <ServiceNoDataIcon />
+                    <p>등록된 글이 없습니다. 😭</p>
+                  </div>
                 )}
               </div>
             ))

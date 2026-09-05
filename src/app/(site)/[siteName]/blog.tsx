@@ -5,6 +5,7 @@ import type { PostListItem } from '@/lib/board/getPostList';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
+import ScreenState from '@/components/service/ScreenState';
 import Container from './menu';
 import styles from '@/app/board.module.sass';
 
@@ -59,9 +60,7 @@ export default function Blog(props: Props) {
         <div className="container">
           <div className={`content ${styles.content} ${styles['blog-content']} `}>
             <SiteProfile />
-            <div className="paper">
-              <p>출간된 글이 없습니다. 😭</p>
-            </div>
+            <ScreenState>출간된 글이 없습니다. 😭</ScreenState>
           </div>
         </div>
       </Container>
@@ -73,9 +72,7 @@ export default function Blog(props: Props) {
         <div className={`content ${styles.content} ${styles['blog-content']} `}>
           <SiteProfile />
           {props.blogContents.length === 0 ? (
-            <div className="paper">
-              <p>출간된 글이 없습니다. 😭</p>
-            </div>
+            <ScreenState>출간된 글이 없습니다. 😭</ScreenState>
           ) : (
             <div className={`paper ${styles.blog}`}>
               <ol>

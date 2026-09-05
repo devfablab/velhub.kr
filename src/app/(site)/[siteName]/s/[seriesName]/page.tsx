@@ -9,6 +9,7 @@ import Anchor from '@/components/Anchor';
 import SiteProfile from '@/components/service/blog/SiteProfile';
 import DonationButton from '@/components/service/common/DonationButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
 
@@ -256,7 +257,10 @@ export default async function Page(context: RouteContext) {
                 ))}
               </div>
             ) : (
-              <p>등록된 글이 없습니다.</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>등록된 글이 없습니다.</p>
+              </div>
             )}
 
             {totalPage > 1 ? (
