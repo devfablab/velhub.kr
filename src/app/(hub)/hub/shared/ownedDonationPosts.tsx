@@ -302,7 +302,7 @@ export default function OwnedDonationPosts({ siteType }: Props) {
         setContentErrorMessage('');
 
         const response = await fetch(
-          `/api/boards/${encodeURIComponent(selectedPost!.boardName)}/${encodeURIComponent(selectedPost!.contentId)}?siteName=${encodeURIComponent(selectedPost!.siteName)}`,
+          `/api/boards/${selectedPost!.boardName}/${selectedPost!.contentId}?siteName=${selectedPost!.siteName}`,
           {
             method: 'GET',
             credentials: 'include',

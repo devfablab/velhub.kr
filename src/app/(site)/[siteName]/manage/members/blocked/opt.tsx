@@ -587,7 +587,7 @@ export default function Opt() {
             open={Boolean(messageUser)}
             endpoint={
               messageUser
-                ? `/api/manage/members/restriction-messages/${messageUser.userId}/block?siteName=${encodeURIComponent(siteName)}`
+                ? `/api/manage/members/restriction-messages/${messageUser.userId}/block?siteName=${siteName}`
                 : ''
             }
             ownSenderType="staff"

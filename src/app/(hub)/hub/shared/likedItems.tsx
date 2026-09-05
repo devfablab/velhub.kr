@@ -5,6 +5,7 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ModeCommentOutlinedIcon from '@mui/icons-material/ModeCommentOutlined';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -129,7 +130,10 @@ export default function LikedItems({ siteType }: Props) {
             ))}
           </ol>
         ) : (
-          <p>좋아요 누른 글이 없습니다.</p>
+          <div className="paper page-info">
+            <ServiceNoDataIcon />
+            <p>좋아요 누른 글이 없습니다.</p>
+          </div>
         )
       ) : null}
 
@@ -150,7 +154,10 @@ export default function LikedItems({ siteType }: Props) {
             ))}
           </ol>
         ) : (
-          <p>좋아요 누른 댓글이 없습니다.</p>
+          <div className="paper page-info">
+            <ServiceNoDataIcon />
+            <p>좋아요 누른 댓글이 없습니다.</p>
+          </div>
         )
       ) : null}
     </section>

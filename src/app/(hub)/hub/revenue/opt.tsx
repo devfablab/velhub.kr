@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SettlementForm from '@/components/service/common/SettlementForm';
+import { ServiceWarningIcon } from '@/components/Svgs';
 import RevenueList from '@/app/(site)/[siteName]/payments/RevenueList';
 import RevenueSummary from '@/app/(site)/[siteName]/payments/RevenueSummary';
 import styles from '@/app/hub.module.sass';
@@ -140,16 +140,16 @@ export default function RevenueHub() {
 
         {!isLoading && !errorMessage && sites.length === 0 ? (
           <>
-            <p className="alert warning">
-              <WarningAmberRoundedIcon />
-              <span>
+            <div className="paper page-warning">
+              <ServiceWarningIcon />
+              <p>
                 {isSettlementError
                   ? '정산 정보에 문제가 있습니다. 아래 양식에서 정산 정보를 올바르게 업데이트해 주세요.'
                   : isAuthor === false
                     ? '작가가 아니어서 정산 데이터가 없습니다.'
                     : '정산 데이터가 없습니다.'}
-              </span>
-            </p>
+              </p>
+            </div>
             {isSettlementError ? (
               <div className="paper" style={{ marginTop: '16px' }}>
                 <SettlementForm onSuccess={() => void loadSites()} />

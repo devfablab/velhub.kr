@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
 import BillingMethods from './billingMethods';
 import Content from './tab';
@@ -159,7 +160,10 @@ export default async function Page() {
               <p>포스팅 소장, 구독, 후원 등 결제 유형별 누적 결제 금액입니다.</p>
             </div>
             {result.summary.amountByType.length === 0 ? (
-              <p>결제 내역이 없습니다.</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>결제 내역이 없습니다 🙂</p>
+              </div>
             ) : (
               <dl className={`paper ${styles['type-summary']}`}>
                 {result.summary.amountByType.map((item) => (
@@ -181,7 +185,7 @@ export default async function Page() {
             <h2>최근 결제내역</h2>
             {result.recentPayments.length ? (
               <TableContainer className={styles.items}>
-                <Table size="small" aria-label="최근 결제내역">
+                <Table size="small" summary="최근 결제내역">
                   <TableHead>
                     <TableRow>
                       <TableCell component="th" scope="col">
@@ -232,7 +236,10 @@ export default async function Page() {
                 </Table>
               </TableContainer>
             ) : (
-              <p>결제 내역이 없습니다.</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>결제 내역이 없습니다 🙂</p>
+              </div>
             )}
           </section>
         </Content>

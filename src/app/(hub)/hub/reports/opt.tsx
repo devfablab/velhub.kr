@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
 type ReportTarget = {
@@ -31,11 +32,9 @@ type ReportsResponse = {
 };
 
 function ReportTargetSummary({ item }: { item: ReportItem }) {
-  const links = [
-    item.site,
-    item.board,
-    item.post ? { name: item.post.title, href: item.post.href } : null,
-  ].filter((target): target is ReportTarget => Boolean(target));
+  const links = [item.site, item.board, item.post ? { name: item.post.title, href: item.post.href } : null].filter(
+    (target): target is ReportTarget => Boolean(target),
+  );
 
   if (links.length === 0 && !item.comment) {
     return null;
@@ -75,7 +74,9 @@ export default function Opt() {
         setItems(result.items ?? []);
       } catch (unknownError) {
         setErrorMessage(
-          unknownError instanceof Error ? unknownError.message || '신고 내역을 불러오지 못했습니다.' : '신고 내역을 불러오지 못했습니다.',
+          unknownError instanceof Error
+            ? unknownError.message || '신고 내역을 불러오지 못했습니다.'
+            : '신고 내역을 불러오지 못했습니다.',
         );
       } finally {
         setIsLoading(false);
@@ -93,9 +94,6 @@ export default function Opt() {
     <section className={`paper ${styles.paper} ${styles.reports}`}>
       <div className={styles.headline}>
         <h2>신고 내역</h2>
-        <Anchor href="/concierge/guideline" className="button medium action">
-          신고센터로 이동
-        </Anchor>
       </div>
 
       {errorMessage ? (
@@ -106,7 +104,10 @@ export default function Opt() {
       ) : null}
 
       {items.length === 0 ? (
-        <p>접수한 신고가 없습니다.</p>
+        <div className="paper page-info">
+          <ServiceNoDataIcon />
+          <p>신고내역이 없습니다. 🙂</p>
+        </div>
       ) : (
         <ul className={styles['report-list']}>
           {items.map((item) => (

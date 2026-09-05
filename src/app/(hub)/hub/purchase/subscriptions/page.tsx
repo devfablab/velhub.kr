@@ -1,5 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import BillingPopup, { BillingPopupDetail } from '../../shared/billingPopup';
 import Content from '../tab';
@@ -212,7 +213,10 @@ export default async function Page() {
                 </Table>
               </TableContainer>
             ) : (
-              <p>구독 결제내역이 없습니다.</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>구독 결제내역이 없습니다.</p>
+              </div>
             )}
           </section>
         </Content>

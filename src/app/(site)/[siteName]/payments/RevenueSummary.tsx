@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -73,7 +74,7 @@ export default function RevenueSummary({
     setSummary(null);
     setErrorMessage('');
 
-    const response = await fetch(`${apiPath}?siteName=${encodeURIComponent(siteName)}`, {
+    const response = await fetch(`${apiPath}?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
     });

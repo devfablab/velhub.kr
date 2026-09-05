@@ -31,6 +31,10 @@ const secondaryMenus = [
     label: '알림내역',
   },
   {
+    href: '/hub/reports',
+    label: '신고 내역',
+  },
+  {
     href: '/hub/revenue',
     label: '수입/정산',
   },

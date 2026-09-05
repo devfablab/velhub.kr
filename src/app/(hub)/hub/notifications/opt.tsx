@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
 type NotificationItem = {
@@ -157,7 +158,10 @@ export default function Opt() {
       {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
 
       {items.length === 0 ? (
-        <p>새로운 알림이 없습니다.</p>
+        <div className="paper page-info">
+          <ServiceNoDataIcon />
+          <p>새로운 알림이 없어요. 🤫</p>
+        </div>
       ) : (
         <ul className={styles.notifications}>
           {items.map((item) => (

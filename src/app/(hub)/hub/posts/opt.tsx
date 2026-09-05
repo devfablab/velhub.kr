@@ -3,6 +3,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { ServiceNoDataIcon } from '@/components/Svgs';
+import styles from '@/app/hub.module.sass';
 
 type Post = {
   id: string;
@@ -64,64 +66,65 @@ export default function Opt() {
   const totalPages = Math.ceil(data.total / 20);
 
   return (
-    <Stack gap={4}>
-      <Stack gap={2}>
-        <Typography variant="h6">내가 쓴 글</Typography>
-        {data.posts.length ? (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트</TableCell>
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>게시일</TableCell>
+    <section className={`paper ${styles.paper} ${styles.reports}`}>
+      <div className={styles.headline}>
+        <h2>내가 쓴 글</h2>
+      </div>
+      {data.posts.length ? (
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>연재</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>사이트</TableCell>
+              <TableCell sx={{ whiteSpace: 'nowrap' }}>게시일</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {data.posts.map((post) => (
+              <TableRow key={post.id}>
+                <TableCell>{post.seriesLabel}</TableCell>
+                <TableCell>
+                  <button type="button" className="button small action" onClick={() => openPost(post.url)}>
+                    {post.subject}
+                  </button>
+                </TableCell>
+                <TableCell>{post.siteLabel}</TableCell>
+                <TableCell>{post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}</TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.posts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell>{post.seriesLabel}</TableCell>
-                  <TableCell>
-                    <button type="button" className="button small action" onClick={() => openPost(post.url)}>
-                      {post.subject}
-                    </button>
-                  </TableCell>
-                  <TableCell>{post.siteLabel}</TableCell>
-                  <TableCell>
-                    {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('ko-KR') : '-'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Typography variant="body2">작성한 글이 없습니다.</Typography>
-        )}
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <div className="paper page-info">
+          <ServiceNoDataIcon />
+          <p>작성한 글이 없습니다.</p>
+        </div>
+      )}
 
-        {totalPages > 1 ? (
-          <Stack direction="row" justifyContent="center" gap={1}>
-            <button
-              type="button"
-              className="button small action"
-              disabled={page <= 1}
-              onClick={() => setPage((current) => current - 1)}
-            >
-              이전
-            </button>
-            <Typography variant="body2">
-              {page} / {totalPages}
-            </Typography>
-            <button
-              type="button"
-              className="button small action"
-              disabled={page >= totalPages}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              다음
-            </button>
-          </Stack>
-        ) : null}
-      </Stack>
-    </Stack>
+      {totalPages > 1 ? (
+        <Stack direction="row" justifyContent="center" gap={1}>
+          <button
+            type="button"
+            className="button small action"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => current - 1)}
+          >
+            이전
+          </button>
+          <Typography variant="body2">
+            {page} / {totalPages}
+          </Typography>
+          <button
+            type="button"
+            className="button small action"
+            disabled={page >= totalPages}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            다음
+          </button>
+        </Stack>
+      ) : null}
+    </section>
   );
 }

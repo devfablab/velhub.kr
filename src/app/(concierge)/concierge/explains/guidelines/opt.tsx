@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Dialog,
@@ -32,6 +31,7 @@ import { formatDateTimeDetail, formatTimeAgo, normalizeText } from '@/lib/utils'
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 
 type ItemsResponse = {
   items?: GuidelineAppealItem[];
@@ -430,7 +430,7 @@ export default function Opt() {
         </Stack>
       ) : isLoginRequired ? null : items.length === 0 ? (
         <div className="paper page-info">
-          <InfoOutlineRoundedIcon />
+          <ServiceNoDataIcon />
           <p>가이드라인 소명내역이 없습니다.</p>
         </div>
       ) : (

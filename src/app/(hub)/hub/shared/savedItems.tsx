@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import styles from '@/app/hub.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -90,7 +91,12 @@ export default function SavedItems({ siteType }: Props) {
         </div>
       ) : null}
 
-      {!errorMessage && posts.length === 0 ? <p>저장한 글이 없습니다.</p> : null}
+      {!errorMessage && posts.length === 0 ? (
+        <div className="paper page-info">
+          <ServiceNoDataIcon />
+          <p>저장한 글이 없습니다.</p>
+        </div>
+      ) : null}
     </section>
   );
 }

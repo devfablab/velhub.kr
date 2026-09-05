@@ -18,7 +18,7 @@ export async function detectAdult(siteName: string) {
       credentials: 'include',
       cache: 'no-store',
     }),
-    fetch(`/api/site/public?siteName=${encodeURIComponent(siteName)}`, {
+    fetch(`/api/site/public?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
       cache: 'no-store',

@@ -44,7 +44,7 @@ export async function detectAdult(siteName: string): Promise<boolean> {
       },
       cache: 'no-store',
     }),
-    fetch(`${baseUrl}/api/site/public?siteName=${encodeURIComponent(siteName)}`, {
+    fetch(`${baseUrl}/api/site/public?siteName=${siteName}`, {
       method: 'GET',
       credentials: 'include',
       headers: {

@@ -2,7 +2,6 @@
 
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
@@ -49,6 +48,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 
 type ItemsResponse = {
   items?: AppealCenterItem[];
@@ -766,7 +766,7 @@ export default function Opt() {
         </Stack>
       ) : isLoginRequired ? null : items.length === 0 ? (
         <div className="paper page-info">
-          <InfoOutlineRoundedIcon />
+          <ServiceNoDataIcon />
           <p>소명내역이 없습니다.</p>
         </div>
       ) : (

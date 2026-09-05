@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
+import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
 import Liked from '../shared/liked';
@@ -91,7 +92,10 @@ export default async function SectionJoinSites() {
             <JoinSites siteType="blog" joinSites={joinSites} />
           ) : (
             <section className={`paper ${styles.paper}`}>
-              <p>참여중인 블로그가 없어요 🫠</p>
+              <div className="paper page-info">
+                <ServiceNoDataIcon />
+                <p>참여중인 블로그가 없어요 🫠</p>
+              </div>
             </section>
           )}
           <FavoriteBlogs />

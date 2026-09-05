@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js';
 import '@toast-ui/editor/dist/i18n/ko-kr';
 import { Editor } from '@toast-ui/react-editor';
@@ -40,6 +42,7 @@ export default function ToastEditorClient({
   onUploadImage,
 }: Props) {
   const editorReference = useRef<Editor | null>(null);
+  const [imageErrorMessage, setImageErrorMessage] = useState('');
 
   function syncEditorValue() {
     const instance = editorReference.current?.getInstance();
@@ -91,47 +94,69 @@ export default function ToastEditorClient({
   }, [editorInitialValue]);
 
   return (
-    <Editor
-      ref={editorReference}
-      initialValue={editorInitialValue}
-      initialEditType={initialEditType}
-      previewStyle="vertical"
-      height="527px"
-      language="ko-KR"
-      placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
-      usageStatistics={false}
-      hideModeSwitch={hideModeSwitch}
-      theme={themeMode === 'dark' ? 'dark' : undefined}
-      toolbarItems={toolbarItems}
-      plugins={plugins}
-      customHTMLSanitizer={(html: string) => html}
-      hooks={
-        onUploadImage
-          ? {
-              addImageBlobHook: async (blob: Blob | File, callback: (url: string, altText?: string) => void) => {
-                if (!ACCEPTED_IMAGE_TYPES.includes(blob.type)) {
-                  alert('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+    <>
+      <Editor
+        ref={editorReference}
+        initialValue={editorInitialValue}
+        initialEditType={initialEditType}
+        previewStyle="vertical"
+        height="527px"
+        language="ko-KR"
+        placeholder="당신의 이야기에 모두가 귀 기울이고 있습니다..."
+        usageStatistics={false}
+        hideModeSwitch={hideModeSwitch}
+        theme={themeMode === 'dark' ? 'dark' : undefined}
+        toolbarItems={toolbarItems}
+        plugins={plugins}
+        customHTMLSanitizer={(html: string) => html}
+        hooks={
+          onUploadImage
+            ? {
+                addImageBlobHook: async (blob: Blob | File, callback: (url: string, altText?: string) => void) => {
+                  if (!ACCEPTED_IMAGE_TYPES.includes(blob.type)) {
+                    setImageErrorMessage('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+                    return false;
+                  }
+
+                  if (blob.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
+                    setImageErrorMessage('이미지는 1MB 이하로 등록해주세요.');
+                    return false;
+                  }
+
+                  const imageUrl = await onUploadImage(blob);
+
+                  if (!imageUrl) {
+                    return false;
+                  }
+
+                  callback(imageUrl, 'image');
                   return false;
-                }
-
-                if (blob.size > MAX_EDITOR_IMAGE_FILE_SIZE) {
-                  alert('이미지는 1MB 이하로 등록해주세요.');
-                  return false;
-                }
-
-                const imageUrl = await onUploadImage(blob);
-
-                if (!imageUrl) {
-                  return false;
-                }
-
-                callback(imageUrl, 'image');
-                return false;
-              },
-            }
-          : undefined
-      }
-      onChange={syncEditorValue}
-    />
+                },
+              }
+            : undefined
+        }
+        onChange={syncEditorValue}
+      />
+      <Dialog
+        open={Boolean(imageErrorMessage)}
+        onClose={() => setImageErrorMessage('')}
+        fullWidth
+        maxWidth="xs"
+        className="VhiDialog"
+      >
+        <DialogTitle>이미지 등록 안내</DialogTitle>
+        <button type="button" className="close-button" onClick={() => setImageErrorMessage('')}>
+          <CloseRoundedIcon />
+        </button>
+        <DialogContent>
+          <Typography>{imageErrorMessage}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <button type="button" className="button medium close" onClick={() => setImageErrorMessage('')}>
+            확인
+          </button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

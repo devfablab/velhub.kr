@@ -195,7 +195,7 @@ export default function NotificationButton({ isMobile }: Props) {
     }
 
     if (visibleItems.length === 0) {
-      return <li className={styles['notification-item']}>새로운 알림이 없습니다.</li>;
+      return <li className={styles['notification-item']}>새로운 알림이 없어요. 🤫</li>;
     }
 
     return (
