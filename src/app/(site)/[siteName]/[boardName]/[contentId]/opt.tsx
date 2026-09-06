@@ -7,6 +7,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
@@ -24,6 +25,9 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
+  MenuItem,
+  Select,
+  type SelectChangeEvent,
   Snackbar,
   useMediaQuery,
   useTheme,
@@ -61,6 +65,14 @@ type BoardInfo = {
   site_id: string;
   post_type: 'none' | 'prefix' | 'series' | null;
   is_subscription: boolean | null;
+};
+
+type MoveBoard = {
+  id: string;
+  board_key: string;
+  board_label: string;
+  board_type: BoardInfo['board_type'];
+  is_active: boolean;
 };
 
 type PostImage = {
@@ -248,6 +260,12 @@ type ContentResponse = {
   isAuthor: boolean;
   isStaff: boolean;
   canManageContent?: boolean;
+  canMovePost?: boolean;
+  error?: string;
+};
+
+type BoardListResponse = {
+  boards?: MoveBoard[];
   error?: string;
 };
 
@@ -370,6 +388,13 @@ export default function Opt({ isCommunity }: Props) {
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [canManageContent, setCanManageContent] = useState(false);
+  const [canMovePost, setCanMovePost] = useState(false);
+  const [isSeriesMoveDialogOpen, setIsSeriesMoveDialogOpen] = useState(false);
+  const [isPostMoveDialogOpen, setIsPostMoveDialogOpen] = useState(false);
+  const [moveBoards, setMoveBoards] = useState<MoveBoard[]>([]);
+  const [selectedMoveBoardKey, setSelectedMoveBoardKey] = useState('');
+  const [isLoadingMoveBoards, setIsLoadingMoveBoards] = useState(false);
+  const [moveBoardErrorMessage, setMoveBoardErrorMessage] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
@@ -423,6 +448,49 @@ export default function Opt({ isCommunity }: Props) {
 
   function closeGalleryViewer() {
     setGalleryViewerOpen(false);
+  }
+
+  async function openPostMoveDialog() {
+    if (series) {
+      setIsSeriesMoveDialogOpen(true);
+      return;
+    }
+
+    if (!board) {
+      return;
+    }
+
+    setSelectedMoveBoardKey(board.board_key);
+    setMoveBoardErrorMessage('');
+    setIsPostMoveDialogOpen(true);
+
+    try {
+      setIsLoadingMoveBoards(true);
+
+      const response = await fetch(`/api/boards?siteName=${encodeURIComponent(siteName)}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      const result = (await response.json()) as BoardListResponse;
+
+      if (!response.ok) {
+        throw new Error(result.error ?? '게시판 목록을 불러오지 못했습니다.');
+      }
+
+      setMoveBoards(
+        (result.boards ?? []).filter(
+          (moveBoard) => moveBoard.is_active && moveBoard.board_type !== 'page' && moveBoard.board_type !== 'blog',
+        ),
+      );
+    } catch (unknownError) {
+      setMoveBoardErrorMessage(
+        unknownError instanceof Error
+          ? unknownError.message || '게시판 목록을 불러오지 못했습니다.'
+          : '게시판 목록을 불러오지 못했습니다.',
+      );
+    } finally {
+      setIsLoadingMoveBoards(false);
+    }
   }
 
   function showPreviousGalleryImage() {
@@ -618,6 +686,7 @@ export default function Opt({ isCommunity }: Props) {
         setIsAuthor(result.isAuthor);
         setIsStaff(result.isStaff);
         setCanManageContent(result.canManageContent === true);
+        setCanMovePost(result.canMovePost === true);
         setSelectedCategory(result.selectedCategory ?? null);
         setDraw(result.draw ?? null);
         setIsLiked(result.postActions?.isLiked === true);
@@ -778,6 +847,7 @@ export default function Opt({ isCommunity }: Props) {
       ? `/${siteName}/c/${categoryName}`
       : `/${siteName}/${boardName}`;
   const isSubscriptionSeriesPost = series?.is_subscription === true;
+  const canShowPostMoveButton = isCommunity && !isPage && canMovePost;
 
   const canPurchasePost =
     (content.published_status === 'published' || content.published_status === 'unknown') &&
@@ -1521,6 +1591,14 @@ export default function Opt({ isCommunity }: Props) {
                   <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
                 </div>
               </div>
+              {canShowPostMoveButton ? (
+                <div className={styles.buttons}>
+                  <button type="button" className={styles.button} onClick={() => void openPostMoveDialog()}>
+                    <CompareArrowsRoundedIcon />
+                    <strong>글 이동</strong>
+                  </button>
+                </div>
+              ) : null}
             </div>
             {seriesList}
           </article>
@@ -1538,6 +1616,144 @@ export default function Opt({ isCommunity }: Props) {
               slug={content.slug}
             />
           ) : null}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isSeriesMoveDialogOpen}
+              onClose={() => setIsSeriesMoveDialogOpen(false)}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
+              <h2>글 이동</h2>
+              <button type="button" className="close-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+              <div className="VhiDrawer-bottom-content">
+                <p>연재글은 다른 게시판으로 이동시킬 수 없습니다.</p>
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="submit-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                  확인
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isSeriesMoveDialogOpen}
+              onClose={() => setIsSeriesMoveDialogOpen(false)}
+              className="vh-dialog vh-alert-dialog"
+            >
+              <DialogTitle>글 이동</DialogTitle>
+              <button type="button" className="close-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <p>연재글은 다른 게시판으로 이동시킬 수 없습니다.</p>
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="submit-button" onClick={() => setIsSeriesMoveDialogOpen(false)}>
+                  확인
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
+          {isMobile ? (
+            <Drawer
+              anchor="bottom"
+              open={isPostMoveDialogOpen}
+              onClose={() => setIsPostMoveDialogOpen(false)}
+              className="VhiDrawer-bottom VhiDrawer-bottom-service"
+            >
+              <h2>글 이동</h2>
+              <button type="button" className="close-button" onClick={() => setIsPostMoveDialogOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+              <div className="VhiDrawer-bottom-content">
+                <p>이동할 게시판을 선택해주세요.</p>
+                {isLoadingMoveBoards ? (
+                  <div className="loading-container">
+                    <LoadingIndicator />
+                  </div>
+                ) : moveBoardErrorMessage ? (
+                  <p className="error-message">{moveBoardErrorMessage}</p>
+                ) : (
+                  <div className={styles['move-board-select']}>
+                    <Select
+                      displayEmpty
+                      value={selectedMoveBoardKey}
+                      onChange={(event: SelectChangeEvent) => setSelectedMoveBoardKey(event.target.value)}
+                      className={styles['MuiInputBase-root']}
+                    >
+                      {moveBoards.map((moveBoard) => (
+                        <MenuItem key={moveBoard.id} value={moveBoard.board_key}>
+                          {moveBoard.board_label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="drawer-dialog-actions">
+                <button type="button" className="cancel-button" onClick={() => setIsPostMoveDialogOpen(false)}>
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="submit-button"
+                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards}
+                >
+                  이동
+                </button>
+              </div>
+            </Drawer>
+          ) : (
+            <Dialog
+              open={isPostMoveDialogOpen}
+              onClose={() => setIsPostMoveDialogOpen(false)}
+              className="vh-dialog vh-alert-dialog"
+            >
+              <DialogTitle>글 이동</DialogTitle>
+              <button type="button" className="close-button" onClick={() => setIsPostMoveDialogOpen(false)}>
+                <CloseRoundedIcon />
+              </button>
+              <DialogContent>
+                <p>이동할 게시판을 선택해주세요.</p>
+                {isLoadingMoveBoards ? (
+                  <div className="loading-container">
+                    <LoadingIndicator />
+                  </div>
+                ) : moveBoardErrorMessage ? (
+                  <p className="error-message">{moveBoardErrorMessage}</p>
+                ) : (
+                  <div className={styles['move-board-select']}>
+                    <Select
+                      displayEmpty
+                      value={selectedMoveBoardKey}
+                      onChange={(event: SelectChangeEvent) => setSelectedMoveBoardKey(event.target.value)}
+                      className={styles['MuiInputBase-root']}
+                    >
+                      {moveBoards.map((moveBoard) => (
+                        <MenuItem key={moveBoard.id} value={moveBoard.board_key}>
+                          {moveBoard.board_label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <button type="button" className="cancel-button" onClick={() => setIsPostMoveDialogOpen(false)}>
+                  취소
+                </button>
+                <button
+                  type="button"
+                  className="submit-button"
+                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards}
+                >
+                  이동
+                </button>
+              </DialogActions>
+            </Dialog>
+          )}
         </div>
         {isCommunity && !isMobile ? (
           <aside>

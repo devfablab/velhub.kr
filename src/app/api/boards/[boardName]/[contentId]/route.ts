@@ -1033,13 +1033,16 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardData = board.data;
     let canManageContent = isStaff || session.case === 'admin';
+    let canMovePost = false;
 
     if (rhizomeData.site_type === 'community' && !canManageContent) {
       try {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
         canManageContent = canManageCommunityBoardContents(access.actor, boardData.id);
+        canMovePost = access.actor.permissions.all_board_post_move;
       } catch {
         canManageContent = false;
+        canMovePost = false;
       }
     }
 
@@ -1454,6 +1457,7 @@ export async function GET(request: Request, context: RouteContext) {
       isAuthor,
       isStaff,
       canManageContent,
+      canMovePost: isAuthor || canMovePost,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
