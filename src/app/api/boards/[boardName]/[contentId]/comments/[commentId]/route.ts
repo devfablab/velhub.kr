@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import { decrypt } from '@/lib/encryption/decrypt';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -1243,8 +1244,21 @@ export async function DELETE(request: Request, context: RouteContext) {
 
     const isCommentAuthor = commentResult.data.user_id === session.stigmaId;
     const isStaff = session.case === 'staff' || session.case === 'admin';
+    let canManageComment = isStaff;
 
-    if (!isCommentAuthor && !isStaff) {
+    if (!canManageComment) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageComment =
+          access.actor.permissions.all_board_comment_delete ||
+          (access.actor.managedBoardIds.includes(boardResult.data.id) &&
+            access.actor.permissions.managed_board_comment_delete);
+      } catch {
+        canManageComment = false;
+      }
+    }
+
+    if (!isCommentAuthor && !canManageComment) {
       return Response.json({ error: '댓글을 삭제할 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -1252,7 +1266,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return Response.json({ error: '이미 삭제 처리된 댓글입니다.' }, { status: 400 });
     }
 
-    if (commentResult.data.is_locked && !isStaff) {
+    if (commentResult.data.is_locked && !canManageComment) {
       return Response.json({ error: '잠긴 댓글은 삭제할 수 없습니다.' }, { status: 403 });
     }
 
@@ -1265,7 +1279,7 @@ export async function DELETE(request: Request, context: RouteContext) {
         is_locked: false,
         deleted_by: session.stigmaId,
         deleted_at: deletedAt,
-        deleted_message: isStaff ? '매니저에 의한 삭제' : '작성자에 의한 삭제',
+        deleted_message: canManageComment ? '매니저에 의한 삭제' : '작성자에 의한 삭제',
       })
       .eq('id', normalizedCommentId)
       .select('id, is_deleted, is_locked, deleted_at')

@@ -129,7 +129,20 @@ export function canManageCommunityBoardSettings(actor: CommunityManagerActor, bo
   return (
     actor.communityRoles.includes('owner') ||
     actor.communityRoles.includes('community-manager') ||
+    actor.communityRoles.includes('board-manager') ||
     actor.managedBoardGeneralIds.includes(boardId)
+  );
+}
+
+export function canManageCommunityPages(actor: CommunityManagerActor) {
+  return actor.permissions.page_manage;
+}
+
+export function canManageAllCommunityBoards(actor: CommunityManagerActor) {
+  return (
+    actor.communityRoles.includes('owner') ||
+    actor.communityRoles.includes('community-manager') ||
+    actor.communityRoles.includes('board-manager')
   );
 }
 

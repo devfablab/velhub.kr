@@ -1,3 +1,4 @@
+import { canManageAllCommunityBoards, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -36,7 +37,18 @@ export async function DELETE(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.case !== 'admin' && session.case !== 'staff') {
+    let canManageBoards = session.case === 'admin' || session.case === 'staff';
+
+    if (!canManageBoards) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageBoards = canManageAllCommunityBoards(access.actor);
+      } catch {
+        canManageBoards = false;
+      }
+    }
+
+    if (!canManageBoards) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

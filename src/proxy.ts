@@ -18,6 +18,7 @@ type SessionRouteResult = {
   role?: string | null;
   siteType?: string | null;
   communityRoles?: CommunityManageRole[];
+  managedBoardKeys?: string[];
   siteRole?: string | null;
   invite?: boolean;
   inviteHref?: string | null;
@@ -199,6 +200,29 @@ function isCommunityBoardRoleRestrictedPath(pathname: string, siteName: string) 
   ]);
 }
 
+function isCommunityAssignedBoardManagerRestrictedPath(
+  pathname: string,
+  siteName: string,
+  managedBoardKeys: string[],
+) {
+  if (
+    isCommunityBoardRoleRestrictedPath(pathname, siteName) ||
+    pathname.startsWith(`/${siteName}/manage/contents/pages`)
+  ) {
+    return true;
+  }
+
+  const boardPathPrefix = `/${siteName}/manage/contents/posts/c/`;
+
+  if (!pathname.startsWith(boardPathPrefix)) {
+    return false;
+  }
+
+  const boardName = pathname.slice(boardPathPrefix.length).split('/').filter(Boolean)[0] ?? '';
+
+  return !boardName || boardName === 'new' || !managedBoardKeys.includes(boardName);
+}
+
 function isCommunityGeneralRoleRestrictedPath(pathname: string, siteName: string) {
   return pathname.startsWith(`/${siteName}/manage/contents/posts/c/new`);
 }
@@ -275,12 +299,14 @@ function getManageRedirectPath({
   siteType,
   baseRole,
   communityRoles,
+  managedBoardKeys,
 }: {
   pathname: string;
   siteName: string;
   siteType: string | null | undefined;
   baseRole: string | null | undefined;
   communityRoles: CommunityManageRole[];
+  managedBoardKeys: string[];
 }) {
   if (baseRole === 'admin') {
     return null;
@@ -312,13 +338,15 @@ function getManageRedirectPath({
       return `/${siteName}/manage`;
     }
 
-    if (
-      (manageLevel === 'board-manager' ||
-        manageLevel === 'board-general-manager' ||
-        manageLevel === 'board-assistant-manager') &&
-      isCommunityBoardRoleRestrictedPath(pathname, siteName)
-    ) {
+    if (manageLevel === 'board-manager' && isCommunityBoardRoleRestrictedPath(pathname, siteName)) {
       return `/${siteName}/manage`;
+    }
+
+    if (
+      (manageLevel === 'board-general-manager' || manageLevel === 'board-assistant-manager') &&
+      isCommunityAssignedBoardManagerRestrictedPath(pathname, siteName, managedBoardKeys)
+    ) {
+      return `/${siteName}/manage/contents/posts`;
     }
 
     if (
@@ -769,6 +797,7 @@ export async function proxy(request: NextRequest) {
       siteType: member.result.siteType,
       baseRole: member.result.role,
       communityRoles: member.result.communityRoles ?? [],
+      managedBoardKeys: member.result.managedBoardKeys ?? [],
     });
 
     if (redirectPath && pathname !== redirectPath) {

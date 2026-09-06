@@ -88,7 +88,7 @@ const permissionMap: Record<CommunityManageRoleType, CommunityManagePermissionMa
     site_edit: false,
     join_manage: false,
     member_manage: false,
-    page_manage: false,
+    page_manage: true,
 
     all_board_post_move: true,
     all_board_post_form_edit: true,

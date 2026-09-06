@@ -469,10 +469,13 @@ export default function Opt({ isCommunity }: Props) {
     try {
       setIsLoadingMoveBoards(true);
 
-      const response = await fetch(`/api/boards?siteName=${encodeURIComponent(siteName)}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `/api/boards?siteName=${encodeURIComponent(siteName)}${canManageContent ? '&manageContents=true' : ''}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        },
+      );
       const result = (await response.json()) as BoardListResponse;
 
       if (!response.ok) {
@@ -513,7 +516,11 @@ export default function Opt({ isCommunity }: Props) {
           body: JSON.stringify({ targetBoardKey: selectedMoveBoardKey }),
         },
       );
-      const result = (await response.json()) as { error?: string; content?: { slug?: number | string }; targetBoard?: { boardKey?: string } };
+      const result = (await response.json()) as {
+        error?: string;
+        content?: { slug?: number | string };
+        targetBoard?: { boardKey?: string };
+      };
 
       if (!response.ok || !result.targetBoard?.boardKey || result.content?.slug === undefined) {
         throw new Error(result.error ?? '글 이동에 실패했습니다.');
@@ -1640,7 +1647,8 @@ export default function Opt({ isCommunity }: Props) {
             </div>
             {seriesList}
           </article>
-          {(content.published_status === 'published' || content.published_status === 'unknown') && !content.is_closed ? (
+          {(content.published_status === 'published' || content.published_status === 'unknown') &&
+          !content.is_closed ? (
             <Comment
               siteName={siteName}
               boardName={boardName}
@@ -1737,7 +1745,12 @@ export default function Opt({ isCommunity }: Props) {
                 <button
                   type="button"
                   className="submit-button"
-                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards || isMovingPost}
+                  disabled={
+                    !selectedMoveBoardKey ||
+                    selectedMoveBoardKey === board.board_key ||
+                    isLoadingMoveBoards ||
+                    isMovingPost
+                  }
                   onClick={() => void movePostToSelectedBoard()}
                 >
                   이동
@@ -1786,7 +1799,12 @@ export default function Opt({ isCommunity }: Props) {
                 <button
                   type="button"
                   className="submit-button"
-                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards || isMovingPost}
+                  disabled={
+                    !selectedMoveBoardKey ||
+                    selectedMoveBoardKey === board.board_key ||
+                    isLoadingMoveBoards ||
+                    isMovingPost
+                  }
                   onClick={() => void movePostToSelectedBoard()}
                 >
                   이동

@@ -1,3 +1,4 @@
+import { canManageCommunityBoardSettings, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -81,10 +82,6 @@ export async function GET(request: Request, context: RouteContext) {
       siteId: rhizome.data.id,
     });
 
-    if (session.case !== 'admin' && session.case !== 'staff') {
-      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
-    }
-
     const board = await supabaseAdmin
       .from('boards')
       .select('id, board_type')
@@ -94,6 +91,21 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (board.error || !board.data) {
       return Response.json({ error: '게시판을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    let canManageBoard = session.case === 'admin' || session.case === 'staff';
+
+    if (!canManageBoard) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManageBoard = canManageCommunityBoardSettings(access.actor, board.data.id);
+      } catch {
+        canManageBoard = false;
+      }
+    }
+
+    if (!canManageBoard) {
+      return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     if (board.data.board_type === 'page' || (rhizome.data.site_type === 'community' && board.data.board_type === 'youtube')) {

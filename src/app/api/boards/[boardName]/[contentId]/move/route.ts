@@ -50,7 +50,11 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const rhizomeResult = await supabaseAdmin.from('rhizomes').select('id, site_type').eq('site_key', siteName).maybeSingle();
+    const rhizomeResult = await supabaseAdmin
+      .from('rhizomes')
+      .select('id, site_type')
+      .eq('site_key', siteName)
+      .maybeSingle();
 
     if (rhizomeResult.error || !rhizomeResult.data) {
       return Response.json({ error: '사이트를 찾을 수 없습니다.' }, { status: 404 });
@@ -91,15 +95,14 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '현재 게시판과 다른 게시판을 선택해주세요.' }, { status: 400 });
     }
 
-    if (
-      targetBoard.is_active !== true ||
-      targetBoard.board_type === 'page' ||
-      targetBoard.board_type === 'blog'
-    ) {
+    if (targetBoard.is_active !== true || targetBoard.board_type === 'page' || targetBoard.board_type === 'blog') {
       return Response.json({ error: '이동할 수 없는 게시판입니다.' }, { status: 400 });
     }
 
-    const postQuery = supabaseAdmin.from('posts').select('id, slug, user_id, series_id, is_closed').eq('board_id', sourceBoard.id);
+    const postQuery = supabaseAdmin
+      .from('posts')
+      .select('id, slug, user_id, series_id, is_closed')
+      .eq('board_id', sourceBoard.id);
     const postResult = isNumericSlug(normalizedContentId)
       ? await postQuery.eq('slug', Number(normalizedContentId)).maybeSingle()
       : await postQuery.eq('id', normalizedContentId).maybeSingle();
@@ -121,6 +124,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const isAuthor = post.user_id === currentStigma.stigmaId;
     const isAdmin = session.case === 'admin';
     let canMoveAllBoardPosts = false;
+    let canMoveManagedBoardPosts = false;
 
     if (!isAuthor && !isAdmin) {
       try {
@@ -130,12 +134,17 @@ export async function PATCH(request: Request, context: RouteContext) {
           access.actor.communityRoles.includes('community-manager') ||
           access.actor.communityRoles.includes('board-manager') ||
           access.actor.permissions.all_board_post_move;
+        canMoveManagedBoardPosts =
+          access.actor.permissions.managed_board_post_move &&
+          access.actor.managedBoardGeneralIds.includes(sourceBoard.id) &&
+          access.actor.managedBoardGeneralIds.includes(targetBoard.id);
       } catch {
         canMoveAllBoardPosts = false;
+        canMoveManagedBoardPosts = false;
       }
     }
 
-    if (!isAuthor && !isAdmin && !canMoveAllBoardPosts) {
+    if (!isAuthor && !isAdmin && !canMoveAllBoardPosts && !canMoveManagedBoardPosts) {
       return Response.json({ error: '글을 다른 게시판으로 이동할 권한이 없습니다.' }, { status: 403 });
     }
 
@@ -163,7 +172,10 @@ export async function PATCH(request: Request, context: RouteContext) {
     });
   } catch (unknownError) {
     return Response.json(
-      { error: unknownError instanceof Error ? unknownError.message || '글 이동에 실패했습니다.' : '글 이동에 실패했습니다.' },
+      {
+        error:
+          unknownError instanceof Error ? unknownError.message || '글 이동에 실패했습니다.' : '글 이동에 실패했습니다.',
+      },
       { status: 500 },
     );
   }

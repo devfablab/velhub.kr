@@ -9,6 +9,7 @@ type CommunityRow = {
 
 type CommunityManageRoleRow = {
   role: string | null;
+  board_id: string | null;
 };
 
 export async function GET(request: Request) {
@@ -180,7 +181,7 @@ export async function GET(request: Request) {
 
     const manageRoleResult = await supabaseAdmin
       .from('community_manage_role')
-      .select('role')
+      .select('role, board_id')
       .eq('community_id', community.id)
       .eq('manager_id', rhizomeStigma.id);
 
@@ -204,6 +205,35 @@ export async function GET(request: Request) {
       ...manageRoles,
     ];
 
+    const managedBoardIds = [
+      ...new Set(
+        ((manageRoleResult.data ?? []) as CommunityManageRoleRow[])
+          .filter((item) => {
+            const role = normalizeText(item.role);
+
+            return role === 'board-general-manager' || role === 'board-assistant-manager';
+          })
+          .map((item) => normalizeText(item.board_id))
+          .filter(Boolean),
+      ),
+    ];
+
+    const managedBoardResult =
+      managedBoardIds.length > 0
+        ? await supabaseAdmin.from('boards').select('board_key').eq('site_id', site.id).in('id', managedBoardIds)
+        : { data: [], error: null };
+
+    if (managedBoardResult.error) {
+      return Response.json(
+        {
+          ok: false,
+          status: 500,
+          error: '담당 게시판 권한을 불러오지 못했습니다.',
+        },
+        { status: 500 },
+      );
+    }
+
     return Response.json({
       ok: true,
       allow: true,
@@ -213,6 +243,9 @@ export async function GET(request: Request) {
       role: rhizomeStigma.role,
       siteType: site.siteType,
       communityRoles: [...new Set(communityRoles)],
+      managedBoardKeys: (managedBoardResult.data ?? [])
+        .map((item) => normalizeText(item.board_key))
+        .filter(Boolean),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

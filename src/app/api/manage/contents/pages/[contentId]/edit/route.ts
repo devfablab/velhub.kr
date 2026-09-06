@@ -1,3 +1,4 @@
+import { canManageCommunityPages, getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -40,7 +41,18 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const session = await verifySession({ siteId: rhizomeResult.data.id });
-    if (!session.authUserId || !session.stigmaId || (session.case !== 'admin' && session.case !== 'staff')) {
+    let canManagePages = session.case === 'admin' || session.case === 'staff';
+
+    if (!canManagePages) {
+      try {
+        const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
+        canManagePages = canManageCommunityPages(access.actor);
+      } catch {
+        canManagePages = false;
+      }
+    }
+
+    if (!session.authUserId || !session.stigmaId || !canManagePages) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 

@@ -62,7 +62,9 @@ export async function GET(request: Request) {
       try {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
         const canEditAllBoards =
-          access.actor.communityRoles.includes('owner') || access.actor.communityRoles.includes('community-manager');
+          access.actor.communityRoles.includes('owner') ||
+          access.actor.communityRoles.includes('community-manager') ||
+          access.actor.communityRoles.includes('board-manager');
 
         manageContents = {
           canCreateBoard: canEditAllBoards,

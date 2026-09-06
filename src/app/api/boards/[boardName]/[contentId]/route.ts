@@ -106,10 +106,7 @@ function getRegisteredPaidPreview({
   previewHtml: string | null;
   previewMarkdown: string | null;
 }) {
-  if (
-    !paidContentAccess.is_purchase_required ||
-    (boardType !== 'basic' && boardType !== 'gallery')
-  ) {
+  if (!paidContentAccess.is_purchase_required || (boardType !== 'basic' && boardType !== 'gallery')) {
     return null;
   }
 
@@ -276,13 +273,7 @@ function normalizeGiscusSettings(value: unknown): GiscusSettings | null {
   };
 }
 
-function getPostHref(
-  siteName: string,
-  boardKey: string,
-  slug: number | string,
-  categoryName: string,
-  seriesName = '',
-) {
+function getPostHref(siteName: string, boardKey: string, slug: number | string, categoryName: string, seriesName = '') {
   const href = `/${siteName}/${boardKey}/${slug}`;
   const searchParams = new URLSearchParams();
 
@@ -1102,7 +1093,9 @@ export async function GET(request: Request, context: RouteContext) {
           access.actor.communityRoles.includes('owner') ||
           access.actor.communityRoles.includes('community-manager') ||
           access.actor.communityRoles.includes('board-manager') ||
-          access.actor.permissions.all_board_post_move;
+          access.actor.permissions.all_board_post_move ||
+          (access.actor.permissions.managed_board_post_move &&
+            access.actor.managedBoardGeneralIds.includes(boardData.id));
       } catch {
         canManageContent = false;
         canMovePost = false;
@@ -1182,8 +1175,7 @@ export async function GET(request: Request, context: RouteContext) {
         stigmaId: session.stigmaId,
         postId: postData.id,
       }));
-    const canViewFutureScheduledPost =
-      isStaff || (rhizomeData.site_type === 'blog' && session.case === 'member');
+    const canViewFutureScheduledPost = isStaff || (rhizomeData.site_type === 'blog' && session.case === 'member');
     const isFutureScheduledPost =
       postData.published_status === 'unknown' &&
       Boolean(postData.published_at) &&
@@ -1247,14 +1239,15 @@ export async function GET(request: Request, context: RouteContext) {
       !isAuthor &&
       !canManageContent;
 
-    const paidContentPreviewText = shouldShowPaidPreview && !registeredPaidPreview
-      ? createPaidContentPreviewText({
-          summary: post.data.summary,
-          contentSimple: post.data.content_simple,
-          contentMarkdown: post.data.content_markdown,
-          contentHtml: post.data.content_html,
-        })
-      : null;
+    const paidContentPreviewText =
+      shouldShowPaidPreview && !registeredPaidPreview
+        ? createPaidContentPreviewText({
+            summary: post.data.summary,
+            contentSimple: post.data.content_simple,
+            contentMarkdown: post.data.content_markdown,
+            contentHtml: post.data.content_html,
+          })
+        : null;
 
     const canViewPaidContent =
       isAuthor || canManageContent || paidContentAccess.can_view_paid_content || hasDeletedPostPermanentPurchase;
@@ -1421,29 +1414,26 @@ export async function GET(request: Request, context: RouteContext) {
         }
 
         const permanentlyOwnedSeriesPostIds = new Set(
-          (permanentPurchaseResult.data ?? [])
-            .map((payment) => normalizeText(payment.target_id))
-            .filter(Boolean),
+          (permanentPurchaseResult.data ?? []).map((payment) => normalizeText(payment.target_id)).filter(Boolean),
         );
 
         seriesContents = allSeriesContents
           .filter(
-            (seriesContent) =>
-              seriesContent.is_closed === false || permanentlyOwnedSeriesPostIds.has(seriesContent.id),
+            (seriesContent) => seriesContent.is_closed === false || permanentlyOwnedSeriesPostIds.has(seriesContent.id),
           )
           .map((seriesContent) => ({
-          id: seriesContent.id,
-          slug: String(seriesContent.slug),
-          subject: normalizeText(seriesContent.subject),
-          series_idx: typeof seriesContent.series_idx === 'number' ? seriesContent.series_idx : null,
-          is_closed: seriesContent.is_closed === true,
-          href: getPostHref(
-            siteName,
-            boardData.board_key,
-            seriesContent.slug,
-            '',
-            series?.series_key === seriesName ? seriesName : '',
-          ),
+            id: seriesContent.id,
+            slug: String(seriesContent.slug),
+            subject: normalizeText(seriesContent.subject),
+            series_idx: typeof seriesContent.series_idx === 'number' ? seriesContent.series_idx : null,
+            is_closed: seriesContent.is_closed === true,
+            href: getPostHref(
+              siteName,
+              boardData.board_key,
+              seriesContent.slug,
+              '',
+              series?.series_key === seriesName ? seriesName : '',
+            ),
           }));
       }
     }
