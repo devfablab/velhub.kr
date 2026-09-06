@@ -425,6 +425,74 @@ function getShutdownRedirectPath({
   return `/${siteName}/unpaid`;
 }
 
+function getSecondaryRedirectPath({
+  pathname,
+  siteName,
+  siteType,
+}: {
+  pathname: string;
+  siteName: string;
+  siteType: string | null | undefined;
+}) {
+  const contentPostsPath = `/${siteName}/manage/contents/posts`;
+
+  const redirects: Record<string, string> = {
+    [`/${siteName}/manage/reports`]: `/${siteName}/manage/reports/boards`,
+    [`/${siteName}/manage/join`]: `/${siteName}/manage/join/conditions`,
+    [`/${siteName}/manage/members`]: `/${siteName}/manage/members/entirety`,
+    [`/${siteName}/manage/stats`]: `/${siteName}/manage/stats/dashboard`,
+    [`/${siteName}/manage/team`]: `/${siteName}/manage/team/members`,
+    [`/${siteName}/manage/contents`]: contentPostsPath,
+    [`/${siteName}/manage/payments/membership`]: `/${siteName}/manage/payments/subscriptions`,
+    [`/${siteName}/manage/payments`]: `/${siteName}/manage/payments/donation`,
+    [`/${siteName}/manage/settings`]: `/${siteName}/manage/settings/general`,
+  };
+
+  if (pathname === `/${siteName}/p`) {
+    return siteType === 'community' ? `/${siteName}/board` : `/${siteName}`;
+  }
+
+  if (pathname === `/${siteName}/info-blog` && siteType === 'community') {
+    return `/${siteName}`;
+  }
+
+  if (pathname === `/${siteName}/manage/design`) {
+    return siteType === 'community' ? `/${siteName}/manage/design/community/home` : `/${siteName}/manage/design/blog/fonts`;
+  }
+
+  if (
+    pathname === `${contentPostsPath}/new` ||
+    pathname === `${contentPostsPath}/category` ||
+    pathname === `${contentPostsPath}/series`
+  ) {
+    return contentPostsPath;
+  }
+
+  const contentPostPathPrefix = `${contentPostsPath}/`;
+
+  if (pathname.startsWith(contentPostPathPrefix)) {
+    const segments = pathname.slice(contentPostPathPrefix.length).split('/').filter(Boolean);
+
+    if (segments.length === 1 || (segments.length === 2 && segments[1] === 'edit')) {
+      return contentPostsPath;
+    }
+
+    if (segments[0] === 'c') {
+      if (segments.length === 2) {
+        if (segments[1] === 'new') {
+          return contentPostsPath;
+        }
+
+        return siteType === 'community' ? null : contentPostsPath;
+      }
+
+      return contentPostsPath;
+    }
+  }
+
+  return redirects[pathname] ?? null;
+}
+
 export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
 
@@ -438,7 +506,14 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    return response;
+  }
+
+  if (pathname === '/auth/verify-2fa') {
+    return redirectWithPath(request, '/');
+  }
+
+  if (pathname === '/auth/social-sign-up' && !isLoggedIn) {
+    return redirectWithPath(request, '/auth/sign-in');
   }
 
   if (
@@ -699,8 +774,6 @@ export async function proxy(request: NextRequest) {
     if (redirectPath && pathname !== redirectPath) {
       return redirectWithPath(request, redirectPath);
     }
-
-    return response;
   }
 
   if (isJoinPath(pathname) || isRejoinPath(pathname)) {
@@ -763,6 +836,23 @@ export async function proxy(request: NextRequest) {
     }
 
     return response;
+  }
+
+  if (isSitePath(pathname)) {
+    const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
+
+    if (siteName) {
+      const rhizomeState = await fetchRhizomeState(request, siteName);
+      const redirectPath = getSecondaryRedirectPath({
+        pathname,
+        siteName,
+        siteType: rhizomeState.result?.siteInfo?.site_type,
+      });
+
+      if (rhizomeState.response.ok && redirectPath && pathname !== redirectPath) {
+        return redirectWithPath(request, redirectPath);
+      }
+    }
   }
 
   return response;
