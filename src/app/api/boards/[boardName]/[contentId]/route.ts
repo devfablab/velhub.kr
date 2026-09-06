@@ -1168,6 +1168,23 @@ export async function GET(request: Request, context: RouteContext) {
     const postData = post.data;
 
     const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
+    let canDeleteContent = canManageContent || isAuthor;
+    let canEditContent = canManageContent || isAuthor;
+
+    if (rhizomeData.site_type === 'blog' && isAuthor && !isStaff) {
+      const memberRoleResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('site_id', rhizomeData.id)
+        .eq('user_id', session.stigmaId)
+        .maybeSingle();
+
+      const isBlogMember = memberRoleResult.data?.role === 'member';
+
+      canDeleteContent = isBlogMember;
+      canEditContent = isBlogMember;
+    }
+
     const hasDeletedPostPermanentPurchase =
       postData.is_closed === true &&
       (await hasPermanentPostPurchase({
@@ -1565,6 +1582,8 @@ export async function GET(request: Request, context: RouteContext) {
       isAuthor,
       isStaff,
       canManageContent,
+      canEditContent,
+      canDeleteContent,
       canMovePost: isAuthor || canMovePost,
     });
   } catch (unknownError) {

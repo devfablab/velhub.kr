@@ -105,12 +105,28 @@ export async function POST(request: Request) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (session.case !== 'admin' && session.case !== 'staff') {
+    if (session.case !== 'admin' && session.case !== 'staff' && session.case !== 'member') {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
     if (!session.authUserId || !session.stigmaId) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    }
+
+    const existingBlogBoard = await supabaseAdmin
+      .from('boards')
+      .select('id')
+      .eq('site_id', rhizome.data.id)
+      .eq('board_key', 'b')
+      .eq('board_type', 'blog')
+      .maybeSingle();
+
+    if (existingBlogBoard.error) {
+      return Response.json({ error: '블로그 게시판 상태를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    if (!existingBlogBoard.data && session.case === 'member') {
+      return Response.json({ error: '첫 글은 운영자 또는 매니저만 작성할 수 있습니다.' }, { status: 403 });
     }
 
     if (action === 'unknown' && !requestedPublishedAt) {

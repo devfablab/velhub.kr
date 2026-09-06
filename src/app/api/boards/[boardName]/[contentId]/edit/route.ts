@@ -686,6 +686,19 @@ export async function PATCH(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
+    if (rhizomeData.site_type === 'blog' && isAuthor && !isStaff) {
+      const memberRoleResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('site_id', rhizomeData.id)
+        .eq('user_id', session.stigmaId)
+        .maybeSingle();
+
+      if (memberRoleResult.data?.role !== 'member') {
+        return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+      }
+    }
+
     let resolvedDrawType: DrawType = null;
     let resolvedDrawLimit: number | null = null;
     let resolvedDrawEndsAt: string | null = null;

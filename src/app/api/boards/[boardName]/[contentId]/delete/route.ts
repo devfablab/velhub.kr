@@ -171,6 +171,18 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const isAuthor = post.data.user_id === currentStigma.stigmaId;
     let canManageContent = isStaff || session.case === 'admin';
+    let canDeleteOwnBlogPost = false;
+
+    if (rhizome.data.site_type === 'blog' && isAuthor && !isStaff) {
+      const memberRoleResult = await supabaseAdmin
+        .from('rhizome_stigmas')
+        .select('role')
+        .eq('site_id', rhizome.data.id)
+        .eq('user_id', currentStigma.stigmaId)
+        .maybeSingle();
+
+      canDeleteOwnBlogPost = memberRoleResult.data?.role === 'member';
+    }
 
     if (rhizome.data.site_type === 'community' && !canManageContent) {
       try {
@@ -183,7 +195,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (action === 'close') {
       if (rhizome.data.site_type === 'blog') {
-        if (!isAuthor && !isStaff) {
+        if (!isStaff && !canDeleteOwnBlogPost) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
       } else {

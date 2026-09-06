@@ -261,6 +261,8 @@ type ContentResponse = {
   isAuthor: boolean;
   isStaff: boolean;
   canManageContent?: boolean;
+  canEditContent?: boolean;
+  canDeleteContent?: boolean;
   canMovePost?: boolean;
   error?: string;
 };
@@ -389,6 +391,8 @@ export default function Opt({ isCommunity }: Props) {
   const [isAuthor, setIsAuthor] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [canManageContent, setCanManageContent] = useState(false);
+  const [canEditContent, setCanEditContent] = useState(false);
+  const [canDeleteContent, setCanDeleteContent] = useState(false);
   const [canMovePost, setCanMovePost] = useState(false);
   const [isSeriesMoveDialogOpen, setIsSeriesMoveDialogOpen] = useState(false);
   const [isPostMoveDialogOpen, setIsPostMoveDialogOpen] = useState(false);
@@ -729,6 +733,8 @@ export default function Opt({ isCommunity }: Props) {
         setIsAuthor(result.isAuthor);
         setIsStaff(result.isStaff);
         setCanManageContent(result.canManageContent === true);
+        setCanEditContent(result.canEditContent === true);
+        setCanDeleteContent(result.canDeleteContent === true);
         setCanMovePost(result.canMovePost === true);
         setSelectedCategory(result.selectedCategory ?? null);
         setDraw(result.draw ?? null);
@@ -873,8 +879,8 @@ export default function Opt({ isCommunity }: Props) {
     );
   }
 
-  const canEdit = (isAuthor && !content.is_closed) || (canManageContent && !content.is_locked);
-  const canDelete = (isAuthor || canManageContent) && !content.is_closed && !content.is_locked;
+  const canEdit = canEditContent && !content.is_closed && !(canManageContent && content.is_locked);
+  const canDelete = canDeleteContent && !content.is_closed && !content.is_locked;
   const isBasicBoard = board.board_type === 'basic';
   const isBlogBoard = board.board_type === 'blog';
   const isGalleryBoard = board.board_type === 'gallery';
