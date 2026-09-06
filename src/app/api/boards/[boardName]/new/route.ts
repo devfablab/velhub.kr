@@ -51,6 +51,8 @@ type RequestBody = {
   contentHtml?: string | null;
   contentMarkdown?: string | null;
   contentSimple?: string | null;
+  paidPreviewHtml?: string | null;
+  paidPreviewMarkdown?: string | null;
   thumbnailImage?: string | null;
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
@@ -563,6 +565,8 @@ export async function POST(request: Request, context: RouteContext) {
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const contentSimple = normalizeText(requestBody.contentSimple);
+    const paidPreviewHtml = typeof requestBody.paidPreviewHtml === 'string' ? requestBody.paidPreviewHtml.trim() : '';
+    const paidPreviewMarkdown = typeof requestBody.paidPreviewMarkdown === 'string' ? requestBody.paidPreviewMarkdown.trim() : '';
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     const youtubeUrl = normalizeText(requestBody.youtubeUrl);
     const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
@@ -747,6 +751,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     let seriesId: string | null = null;
+    let isSubscriptionSeries = false;
 
     if (seriesKey) {
       if (board.data.post_type !== 'series' && board.data.post_type !== 'both') {
@@ -755,7 +760,7 @@ export async function POST(request: Request, context: RouteContext) {
 
       const seriesResult = await supabaseAdmin
         .from('board_series')
-        .select('id, is_completed, user_id')
+        .select('id, is_completed, is_subscription, user_id')
         .eq('site_id', rhizomeData.id)
         .eq('board_id', board.data.id)
         .eq('series_key', seriesKey)
@@ -784,6 +789,7 @@ export async function POST(request: Request, context: RouteContext) {
       }
 
       seriesId = seriesResult.data.id;
+      isSubscriptionSeries = seriesResult.data.is_subscription === true;
     }
 
     let resolvedPrefixId: string | null = null;
@@ -910,6 +916,15 @@ export async function POST(request: Request, context: RouteContext) {
       }
     }
 
+    const finalPreviewHtml =
+      isSubscriptionSeries && (board.data.board_type === 'basic' || board.data.board_type === 'gallery')
+        ? paidPreviewHtml || null
+        : null;
+    const finalPreviewMarkdown =
+      isSubscriptionSeries && (board.data.board_type === 'basic' || board.data.board_type === 'gallery')
+        ? paidPreviewMarkdown || null
+        : null;
+
     if (action === 'unknown' && !requestedPublishedAt) {
       return Response.json({ error: '예약 출간 시간을 입력해주세요.' }, { status: 400 });
     }
@@ -954,6 +969,8 @@ export async function POST(request: Request, context: RouteContext) {
         content_html: finalContentHtml,
         content_markdown: finalContentMarkdown,
         content_simple: finalContentSimple,
+        preview_html: finalPreviewHtml,
+        preview_markdown: finalPreviewMarkdown,
         thumbnail_image: finalThumbnailImage,
         thumbnail_width: finalThumbnailWidth,
         thumbnail_height: finalThumbnailHeight,

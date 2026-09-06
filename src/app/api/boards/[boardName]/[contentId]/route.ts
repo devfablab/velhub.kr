@@ -95,6 +95,35 @@ type PaidContentAccess = {
   can_view_paid_content: boolean;
 };
 
+function getRegisteredPaidPreview({
+  boardType,
+  paidContentAccess,
+  previewHtml,
+  previewMarkdown,
+}: {
+  boardType: string;
+  paidContentAccess: PaidContentAccess;
+  previewHtml: string | null;
+  previewMarkdown: string | null;
+}) {
+  if (
+    !paidContentAccess.is_purchase_required ||
+    (boardType !== 'basic' && boardType !== 'gallery')
+  ) {
+    return null;
+  }
+
+  const html = normalizeText(previewHtml);
+  const markdown = normalizeText(previewMarkdown);
+
+  return html || markdown
+    ? {
+        html: html || null,
+        markdown: markdown || null,
+      }
+    : null;
+}
+
 const AVATAR_BUCKET = 'avatar';
 const LEVEL_ICON_BUCKET = 'lv-icon';
 const MANAGER_ICON_BUCKET = 'manager_icon';
@@ -1128,7 +1157,7 @@ export async function GET(request: Request, context: RouteContext) {
     const post = await supabaseAdmin
       .from('posts')
       .select(
-        'id, slug, subject, summary, content_html, content_markdown, content_simple, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
+        'id, slug, subject, summary, content_html, content_markdown, content_simple, preview_html, preview_markdown, edited_at, thumbnail_image, thumbnail_width, thumbnail_height, youtube_url, youtube_id, youtube_created_at, images, poll, hashtags, idx, series_idx, user_id, site_id, board_id, created_at, is_closed, closed_by, closed_at, closed_message, categories, series_id, prefix_id, published_status, published_at, is_comment, post_count, is_pin, draw_type, draw_limit, draw_ends_at, is_closed, is_locked',
       )
       .eq('site_id', rhizomeData.id)
       .eq('board_id', boardData.id)
@@ -1202,9 +1231,15 @@ export async function GET(request: Request, context: RouteContext) {
           postId: postData.id,
         });
 
+    const registeredPaidPreview = getRegisteredPaidPreview({
+      boardType: boardData.board_type,
+      paidContentAccess,
+      previewHtml: postData.preview_html,
+      previewMarkdown: postData.preview_markdown,
+    });
     const shouldShowPaidPreview = paidContentAccess.is_purchase_required && !paidContentAccess.can_view_paid_content;
 
-    const paidContentPreviewText = shouldShowPaidPreview
+    const paidContentPreviewText = shouldShowPaidPreview && !registeredPaidPreview
       ? createPaidContentPreviewText({
           summary: post.data.summary,
           contentSimple: post.data.content_simple,
@@ -1473,9 +1508,13 @@ export async function GET(request: Request, context: RouteContext) {
         ...postData,
         summary: shouldShowPaidPreview ? paidContentPreviewText : post.data.summary,
         content_html: shouldShowPaidPreview
-          ? createPaidContentPreviewHtml(paidContentPreviewText)
+          ? registeredPaidPreview
+            ? registeredPaidPreview.html
+            : createPaidContentPreviewHtml(paidContentPreviewText)
           : post.data.content_html,
-        content_markdown: shouldShowPaidPreview ? paidContentPreviewText : post.data.content_markdown,
+        content_markdown: shouldShowPaidPreview
+          ? registeredPaidPreview?.markdown || paidContentPreviewText
+          : post.data.content_markdown,
         content_simple: shouldShowPaidPreview ? paidContentPreviewText : post.data.content_simple,
         slug: String(postData.slug),
         author_name: author.name,
@@ -1504,6 +1543,8 @@ export async function GET(request: Request, context: RouteContext) {
         can_view_paid_content: canViewPaidContent,
         board_series_count: boardSeriesCount,
         is_post_donation_available: isPostDonationAvailable,
+        paid_preview_html: registeredPaidPreview?.html ?? null,
+        paid_preview_markdown: registeredPaidPreview?.markdown ?? null,
       },
       categories,
       series,

@@ -53,6 +53,8 @@ type RequestBody = {
   contentHtml?: string | null;
   contentMarkdown?: string | null;
   contentSimple?: string | null;
+  paidPreviewHtml?: string | null;
+  paidPreviewMarkdown?: string | null;
   thumbnailImage?: string | null;
   thumbnailWidth?: number | null;
   thumbnailHeight?: number | null;
@@ -572,6 +574,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     const contentHtml = normalizeText(requestBody.contentHtml);
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const contentSimple = normalizeText(requestBody.contentSimple);
+    const paidPreviewHtml = typeof requestBody.paidPreviewHtml === 'string' ? requestBody.paidPreviewHtml.trim() : '';
+    const paidPreviewMarkdown = typeof requestBody.paidPreviewMarkdown === 'string' ? requestBody.paidPreviewMarkdown.trim() : '';
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     const youtubeUrl = normalizeText(requestBody.youtubeUrl);
     const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
@@ -818,12 +822,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     let seriesId: string | null = currentPost.data.series_id ?? null;
+    let isSubscriptionSeries = false;
 
     if (board.data.post_type === 'series' || board.data.post_type === 'both') {
       if (seriesKey) {
         const seriesResult = await supabaseAdmin
           .from('board_series')
-          .select('id, is_completed, user_id')
+          .select('id, is_completed, is_subscription, user_id')
           .eq('site_id', rhizomeData.id)
           .eq('board_id', board.data.id)
           .eq('series_key', seriesKey)
@@ -852,6 +857,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
 
         seriesId = seriesResult.data.id;
+        isSubscriptionSeries = seriesResult.data.is_subscription === true;
       } else {
         seriesId = null;
       }
@@ -888,6 +894,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     let finalContentHtml = contentHtml || null;
     let finalContentMarkdown = contentMarkdown || null;
     let finalContentSimple = contentSimple || null;
+
     let finalThumbnailImage = thumbnailImage || null;
     let finalThumbnailWidth = thumbnailWidth;
     let finalThumbnailHeight = thumbnailHeight;
@@ -985,6 +992,15 @@ export async function PATCH(request: Request, context: RouteContext) {
       }
     }
 
+    const finalPreviewHtml =
+      isSubscriptionSeries && (board.data.board_type === 'basic' || board.data.board_type === 'gallery')
+        ? paidPreviewHtml || null
+        : null;
+    const finalPreviewMarkdown =
+      isSubscriptionSeries && (board.data.board_type === 'basic' || board.data.board_type === 'gallery')
+        ? paidPreviewMarkdown || null
+        : null;
+
     const nowIsoString = new Date().toISOString();
     const nextPublishedStatus =
       action === 'draft'
@@ -1019,6 +1035,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       content_html: string | null;
       content_markdown: string | null;
       content_simple: string | null;
+      preview_html: string | null;
+      preview_markdown: string | null;
       thumbnail_image: string | null;
       thumbnail_width: number | null;
       thumbnail_height: number | null;
@@ -1046,6 +1064,8 @@ export async function PATCH(request: Request, context: RouteContext) {
       content_html: finalContentHtml,
       content_markdown: finalContentMarkdown,
       content_simple: finalContentSimple,
+      preview_html: finalPreviewHtml,
+      preview_markdown: finalPreviewMarkdown,
       thumbnail_image: finalThumbnailImage,
       thumbnail_width: finalThumbnailWidth,
       thumbnail_height: finalThumbnailHeight,

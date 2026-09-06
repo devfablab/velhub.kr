@@ -90,7 +90,7 @@ export async function GET(request: Request, context: RouteContext) {
     const seriesResult = await supabaseAdmin
       .from('board_series')
       .select(
-        'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, user_id',
+        'id, created_at, series_key, series_label, summary, thumbnail_image, board_id, site_id, last_published_at, is_completed, is_subscription, user_id',
       )
       .eq('site_id', rhizome.data.id)
       .eq('board_id', board.id)
