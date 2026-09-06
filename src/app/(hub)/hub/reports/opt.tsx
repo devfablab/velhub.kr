@@ -95,9 +95,7 @@ export default function Opt() {
         <h2>신고 내역</h2>
       </div>
 
-      {errorMessage ? (
-        <ScreenState kind="error">{errorMessage}</ScreenState>
-      ) : null}
+      {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
       {items.length === 0 ? (
         <ScreenState>신고내역이 없습니다. 🙂</ScreenState>

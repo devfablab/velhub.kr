@@ -391,10 +391,7 @@ export default function Opt() {
               {isCancellationBlocked ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
-                  <span>
-                    다른 결제 건은{' '}
-                    {cancellationAvailableAtLabel}부터 신청할 수 있습니다.
-                  </span>
+                  <span>다른 결제 건은 {cancellationAvailableAtLabel}부터 신청할 수 있습니다.</span>
                 </p>
               ) : paymentLoadError || !cancellationPayments.length ? (
                 <p className="alert warning">
@@ -684,50 +681,50 @@ export default function Opt() {
                 </p>
               ) : (
                 <>
-              <Stack gap={1}>
-                <Typography variant="subtitle2">문제가 발생한 날짜와 시간</Typography>
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                  <DateTimePicker
-                    value={occurredAt}
-                    onChange={setOccurredAt}
-                    ampm={false}
-                    views={['year', 'month', 'day', 'hours', 'minutes']}
-                    format="yyyy년 MM월 dd일 HH시 mm분"
-                    slotProps={{
-                      textField: {
-                        required: true,
-                        fullWidth: true,
-                        size: 'small',
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              </Stack>
-              <Stack gap={1}>
-                <Typography variant="subtitle2">화면에 표시된 메시지</Typography>
-                <TextField
-                  multiline
-                  minRows={2}
-                  fullWidth
-                  size="small"
-                  value={displayedMessage}
-                  onChange={(event) => setDisplayedMessage(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 5000 } }}
-                />
-              </Stack>
-              <Stack gap={1}>
-                <Typography variant="subtitle2">실제로 발생한 상황</Typography>
-                <TextField
-                  required
-                  multiline
-                  minRows={5}
-                  fullWidth
-                  size="small"
-                  value={actualBehavior}
-                  onChange={(event) => setActualBehavior(event.target.value)}
-                  slotProps={{ htmlInput: { maxLength: 5000 } }}
-                />
-              </Stack>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">문제가 발생한 날짜와 시간</Typography>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                      <DateTimePicker
+                        value={occurredAt}
+                        onChange={setOccurredAt}
+                        ampm={false}
+                        views={['year', 'month', 'day', 'hours', 'minutes']}
+                        format="yyyy년 MM월 dd일 HH시 mm분"
+                        slotProps={{
+                          textField: {
+                            required: true,
+                            fullWidth: true,
+                            size: 'small',
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Stack>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">화면에 표시된 메시지</Typography>
+                    <TextField
+                      multiline
+                      minRows={2}
+                      fullWidth
+                      size="small"
+                      value={displayedMessage}
+                      onChange={(event) => setDisplayedMessage(event.target.value)}
+                      slotProps={{ htmlInput: { maxLength: 5000 } }}
+                    />
+                  </Stack>
+                  <Stack gap={1}>
+                    <Typography variant="subtitle2">실제로 발생한 상황</Typography>
+                    <TextField
+                      required
+                      multiline
+                      minRows={5}
+                      fullWidth
+                      size="small"
+                      value={actualBehavior}
+                      onChange={(event) => setActualBehavior(event.target.value)}
+                      slotProps={{ htmlInput: { maxLength: 5000 } }}
+                    />
+                  </Stack>
                 </>
               )}
             </Stack>

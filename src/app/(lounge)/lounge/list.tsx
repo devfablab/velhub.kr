@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 'use client';
 
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';

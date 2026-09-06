@@ -47,12 +47,8 @@ export default function Opt() {
 
   return (
     <div className={styles.inquiry}>
-      {error ? (
-        <ScreenState kind="error">{error}</ScreenState>
-      ) : null}
-      {!error && inquiries.length === 0 ? (
-        <ScreenState>문의 내역이 없습니다.</ScreenState>
-      ) : null}
+      {error ? <ScreenState kind="error">{error}</ScreenState> : null}
+      {!error && inquiries.length === 0 ? <ScreenState>문의 내역이 없습니다.</ScreenState> : null}
       {inquiries.length > 0 ? (
         <div className={`paper ${styles['inquiry-items']}`}>
           {inquiries.map((inquiry) => (

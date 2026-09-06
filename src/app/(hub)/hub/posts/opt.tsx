@@ -55,8 +55,7 @@ export default function Opt() {
     );
   }, [load, page]);
 
-  if (message)
-    return <ScreenState kind="error">{message}</ScreenState>;
+  if (message) return <ScreenState kind="error">{message}</ScreenState>;
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 20);

@@ -718,200 +718,206 @@ export default function Opt() {
       ) : (
         <>
           {!isListError && reports.length === 0 ? <ScreenState>신고 내역이 없습니다.</ScreenState> : null}
-          {!isListError && reports.length > 0 ? <div className="paper">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={cellSx}>사이트명</TableCell>
-                  <TableCell sx={cellSx}>게시판명</TableCell>
-                  <TableCell sx={cellSx}>게시물 제목</TableCell>
-                  <TableCell sx={cellSx}>댓글</TableCell>
-                  <TableCell sx={cellSx}>신고 주소</TableCell>
-                  <TableCell sx={cellSx}>신고명(위반내용)</TableCell>
-                  <TableCell sx={cellSx}>신고 내용</TableCell>
-                  <TableCell sx={cellSx}>신고자(이름)</TableCell>
-                  <TableCell sx={cellSx}>메모 횟수</TableCell>
-                  <TableCell sx={cellSx}>처리상태</TableCell>
-                  <TableCell sx={cellSx}>처리결과</TableCell>
-                  <TableCell sx={cellSx}>소명 상태</TableCell>
-                  <TableCell sx={cellSx}>처리상태 변경</TableCell>
-                  <TableCell sx={cellSx}>신고일</TableCell>
-                  <TableCell sx={cellSx}>처리일</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {reports.map((report) => (
-                  <TableRow key={`${report.reportType}-${report.id}`}>
-                    <TableCell sx={cellSx}>
-                      {report.site ? (
-                        <Anchor href={report.site.href} className="link">
-                          {report.site.name}
-                        </Anchor>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell sx={cellSx}>
-                      {report.board ? (
-                        <Anchor href={report.board.href} className="link">
-                          {report.board.name}
-                        </Anchor>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell sx={cellSx}>
-                      {report.post ? (
-                        <Anchor href={report.post.href} className="link">
-                          {truncate(report.post.title, 50)}
-                        </Anchor>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell sx={cellSx}>{report.comment ? truncate(report.comment.content, 150) : '-'}</TableCell>
-                    <TableCell sx={cellSx}>{report.reportUrl ?? '-'}</TableCell>
-                    <TableCell sx={cellSx}>
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <Chip label={report.reportTypeLabel} size="small" />
-                        <span>{report.reportName}</span>
-                      </Stack>
-                    </TableCell>
-                    <TableCell sx={cellSx}>
-                      {report.reportType === 'legal' || report.reportType === 'rights' ? (
+          {!isListError && reports.length > 0 ? (
+            <div className="paper">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={cellSx}>사이트명</TableCell>
+                    <TableCell sx={cellSx}>게시판명</TableCell>
+                    <TableCell sx={cellSx}>게시물 제목</TableCell>
+                    <TableCell sx={cellSx}>댓글</TableCell>
+                    <TableCell sx={cellSx}>신고 주소</TableCell>
+                    <TableCell sx={cellSx}>신고명(위반내용)</TableCell>
+                    <TableCell sx={cellSx}>신고 내용</TableCell>
+                    <TableCell sx={cellSx}>신고자(이름)</TableCell>
+                    <TableCell sx={cellSx}>메모 횟수</TableCell>
+                    <TableCell sx={cellSx}>처리상태</TableCell>
+                    <TableCell sx={cellSx}>처리결과</TableCell>
+                    <TableCell sx={cellSx}>소명 상태</TableCell>
+                    <TableCell sx={cellSx}>처리상태 변경</TableCell>
+                    <TableCell sx={cellSx}>신고일</TableCell>
+                    <TableCell sx={cellSx}>처리일</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {reports.map((report) => (
+                    <TableRow key={`${report.reportType}-${report.id}`}>
+                      <TableCell sx={cellSx}>
+                        {report.site ? (
+                          <Anchor href={report.site.href} className="link">
+                            {report.site.name}
+                          </Anchor>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell sx={cellSx}>
+                        {report.board ? (
+                          <Anchor href={report.board.href} className="link">
+                            {report.board.name}
+                          </Anchor>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell sx={cellSx}>
+                        {report.post ? (
+                          <Anchor href={report.post.href} className="link">
+                            {truncate(report.post.title, 50)}
+                          </Anchor>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell sx={cellSx}>{report.comment ? truncate(report.comment.content, 150) : '-'}</TableCell>
+                      <TableCell sx={cellSx}>{report.reportUrl ?? '-'}</TableCell>
+                      <TableCell sx={cellSx}>
+                        <Stack direction="row" gap={1} alignItems="center">
+                          <Chip label={report.reportTypeLabel} size="small" />
+                          <span>{report.reportName}</span>
+                        </Stack>
+                      </TableCell>
+                      <TableCell sx={cellSx}>
+                        {report.reportType === 'legal' || report.reportType === 'rights' ? (
+                          <button
+                            type="button"
+                            className="button small action"
+                            onClick={() => setDetailDialogReport(report)}
+                          >
+                            보기
+                          </button>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell sx={cellSx}>
                         <button
                           type="button"
                           className="button small action"
-                          onClick={() => setDetailDialogReport(report)}
+                          onClick={() => handleOpenReporterDialog(report)}
                         >
-                          보기
+                          {report.reporterName}님의 신고내역
                         </button>
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                    <TableCell sx={cellSx}>
-                      <button
-                        type="button"
-                        className="button small action"
-                        onClick={() => handleOpenReporterDialog(report)}
-                      >
-                        {report.reporterName}님의 신고내역
-                      </button>
-                    </TableCell>
-                    <TableCell sx={cellSx}>{report.messageCount.toLocaleString('ko-KR')}회</TableCell>
-                    <TableCell sx={cellSx}>{report.statusLabel}</TableCell>
-                    <TableCell sx={cellSx}>{report.handlingResultLabel ?? '-'}</TableCell>
-                    <TableCell sx={cellSx}>
-                      {report.appeal
-                        ? report.appeal.adminStatusLabel
-                        : report.appealCategory && (report.targetType === 'post' || report.targetType === 'comment')
-                          ? '소명 요청서 제출 전'
-                          : '-'}
-                    </TableCell>
-                    <TableCell sx={cellSx}>
-                      <Stack direction="row" gap={1}>
-                        {report.canDismiss ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            disabled={actionLoading}
-                            onClick={() => setStatusChangeDialog({ report, status: 'dismissed' })}
-                          >
-                            이상 없음
-                          </button>
-                        ) : null}
-                        {report.canComplete ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            disabled={actionLoading}
-                            onClick={() => setStatusChangeDialog({ report, status: 'completed' })}
-                          >
-                            처리완료
-                          </button>
-                        ) : null}
-                        {report.canCreateAppealRequest ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            disabled={actionLoading}
-                            onClick={() => handleOpenAppealDialog(report)}
-                          >
-                            소명 요청서 작성
-                          </button>
-                        ) : null}
-                        {report.appeal ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            disabled={actionLoading}
-                            onClick={() => handleOpenAppealDialog(report)}
-                          >
-                            {report.appeal.opinionSubmittedAt ? '소명 의견서' : '소명 요청서'}
-                          </button>
-                        ) : null}
-                        {report.canSendMessage ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            disabled={actionLoading}
-                            onClick={() => handleOpenMessageDialog(report)}
-                          >
-                            메모 보내기
-                          </button>
-                        ) : null}
-                        {report.reportType === 'rights' &&
-                        report.canSendMessage &&
-                        report.site &&
-                        report.messageCount >= 3 &&
-                        !report.site.isBlocked ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            disabled={actionLoading}
-                            onClick={() => setSiteActionDialog({ report, action: 'block' })}
-                          >
-                            사이트 차단
-                          </button>
-                        ) : null}
-                        {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            disabled={actionLoading}
-                            onClick={() => setSiteActionDialog({ report, action: 'unblock' })}
-                          >
-                            차단 해제
-                          </button>
-                        ) : null}
-                        {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            disabled={actionLoading}
-                            onClick={() => setSiteActionDialog({ report, action: 'close' })}
-                          >
-                            사이트 폐쇄
-                          </button>
-                        ) : null}
-                      </Stack>
-                    </TableCell>
-                    <TableCell sx={cellSx}>{formatDateTimeDetail(report.createdAt)}</TableCell>
-                    <TableCell sx={cellSx}>{report.handledAt ? formatDateTimeDetail(report.handledAt) : '-'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div> : null}
-          {!isListError && reports.length > 0 ? <TablePagination
-            component="div"
-            count={total}
-            page={page}
-            rowsPerPage={50}
-            rowsPerPageOptions={[50]}
-            onPageChange={(_, nextPage) => setPage(nextPage)}
-          /> : null}
+                      </TableCell>
+                      <TableCell sx={cellSx}>{report.messageCount.toLocaleString('ko-KR')}회</TableCell>
+                      <TableCell sx={cellSx}>{report.statusLabel}</TableCell>
+                      <TableCell sx={cellSx}>{report.handlingResultLabel ?? '-'}</TableCell>
+                      <TableCell sx={cellSx}>
+                        {report.appeal
+                          ? report.appeal.adminStatusLabel
+                          : report.appealCategory && (report.targetType === 'post' || report.targetType === 'comment')
+                            ? '소명 요청서 제출 전'
+                            : '-'}
+                      </TableCell>
+                      <TableCell sx={cellSx}>
+                        <Stack direction="row" gap={1}>
+                          {report.canDismiss ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              disabled={actionLoading}
+                              onClick={() => setStatusChangeDialog({ report, status: 'dismissed' })}
+                            >
+                              이상 없음
+                            </button>
+                          ) : null}
+                          {report.canComplete ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              disabled={actionLoading}
+                              onClick={() => setStatusChangeDialog({ report, status: 'completed' })}
+                            >
+                              처리완료
+                            </button>
+                          ) : null}
+                          {report.canCreateAppealRequest ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              disabled={actionLoading}
+                              onClick={() => handleOpenAppealDialog(report)}
+                            >
+                              소명 요청서 작성
+                            </button>
+                          ) : null}
+                          {report.appeal ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              disabled={actionLoading}
+                              onClick={() => handleOpenAppealDialog(report)}
+                            >
+                              {report.appeal.opinionSubmittedAt ? '소명 의견서' : '소명 요청서'}
+                            </button>
+                          ) : null}
+                          {report.canSendMessage ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              disabled={actionLoading}
+                              onClick={() => handleOpenMessageDialog(report)}
+                            >
+                              메모 보내기
+                            </button>
+                          ) : null}
+                          {report.reportType === 'rights' &&
+                          report.canSendMessage &&
+                          report.site &&
+                          report.messageCount >= 3 &&
+                          !report.site.isBlocked ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              disabled={actionLoading}
+                              onClick={() => setSiteActionDialog({ report, action: 'block' })}
+                            >
+                              사이트 차단
+                            </button>
+                          ) : null}
+                          {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
+                            <button
+                              type="button"
+                              className="button small action"
+                              disabled={actionLoading}
+                              onClick={() => setSiteActionDialog({ report, action: 'unblock' })}
+                            >
+                              차단 해제
+                            </button>
+                          ) : null}
+                          {report.reportType === 'rights' && report.canSendMessage && report.site?.isBlocked ? (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              disabled={actionLoading}
+                              onClick={() => setSiteActionDialog({ report, action: 'close' })}
+                            >
+                              사이트 폐쇄
+                            </button>
+                          ) : null}
+                        </Stack>
+                      </TableCell>
+                      <TableCell sx={cellSx}>{formatDateTimeDetail(report.createdAt)}</TableCell>
+                      <TableCell sx={cellSx}>
+                        {report.handledAt ? formatDateTimeDetail(report.handledAt) : '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : null}
+          {!isListError && reports.length > 0 ? (
+            <TablePagination
+              component="div"
+              count={total}
+              page={page}
+              rowsPerPage={50}
+              rowsPerPageOptions={[50]}
+              onPageChange={(_, nextPage) => setPage(nextPage)}
+            />
+          ) : null}
         </>
       )}
 
