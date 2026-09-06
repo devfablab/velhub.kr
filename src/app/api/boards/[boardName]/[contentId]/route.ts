@@ -1092,13 +1092,17 @@ export async function GET(request: Request, context: RouteContext) {
 
     const boardData = board.data;
     let canManageContent = isStaff || session.case === 'admin';
-    let canMovePost = false;
+    let canMovePost = session.case === 'admin';
 
-    if (rhizomeData.site_type === 'community' && !canManageContent) {
+    if (rhizomeData.site_type === 'community') {
       try {
         const access = await getCommunityManagerAccess(siteName, { requireManagerControlPermission: false });
-        canManageContent = canManageCommunityBoardContents(access.actor, boardData.id);
-        canMovePost = access.actor.permissions.all_board_post_move;
+        canManageContent = canManageContent || canManageCommunityBoardContents(access.actor, boardData.id);
+        canMovePost =
+          access.actor.communityRoles.includes('owner') ||
+          access.actor.communityRoles.includes('community-manager') ||
+          access.actor.communityRoles.includes('board-manager') ||
+          access.actor.permissions.all_board_post_move;
       } catch {
         canManageContent = false;
         canMovePost = false;
@@ -1237,7 +1241,11 @@ export async function GET(request: Request, context: RouteContext) {
       previewHtml: postData.preview_html,
       previewMarkdown: postData.preview_markdown,
     });
-    const shouldShowPaidPreview = paidContentAccess.is_purchase_required && !paidContentAccess.can_view_paid_content;
+    const shouldShowPaidPreview =
+      paidContentAccess.is_purchase_required &&
+      !paidContentAccess.can_view_paid_content &&
+      !isAuthor &&
+      !canManageContent;
 
     const paidContentPreviewText = shouldShowPaidPreview && !registeredPaidPreview
       ? createPaidContentPreviewText({

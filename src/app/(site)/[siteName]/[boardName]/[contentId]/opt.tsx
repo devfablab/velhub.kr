@@ -395,6 +395,7 @@ export default function Opt({ isCommunity }: Props) {
   const [moveBoards, setMoveBoards] = useState<MoveBoard[]>([]);
   const [selectedMoveBoardKey, setSelectedMoveBoardKey] = useState('');
   const [isLoadingMoveBoards, setIsLoadingMoveBoards] = useState(false);
+  const [isMovingPost, setIsMovingPost] = useState(false);
   const [moveBoardErrorMessage, setMoveBoardErrorMessage] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
@@ -491,6 +492,40 @@ export default function Opt({ isCommunity }: Props) {
       );
     } finally {
       setIsLoadingMoveBoards(false);
+    }
+  }
+
+  async function movePostToSelectedBoard() {
+    if (!board || !content || !selectedMoveBoardKey || selectedMoveBoardKey === board.board_key) {
+      return;
+    }
+
+    try {
+      setIsMovingPost(true);
+      setMoveBoardErrorMessage('');
+
+      const response = await fetch(
+        `/api/boards/${encodeURIComponent(boardName)}/${encodeURIComponent(contentId)}/move?siteName=${encodeURIComponent(siteName)}`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetBoardKey: selectedMoveBoardKey }),
+        },
+      );
+      const result = (await response.json()) as { error?: string; content?: { slug?: number | string }; targetBoard?: { boardKey?: string } };
+
+      if (!response.ok || !result.targetBoard?.boardKey || result.content?.slug === undefined) {
+        throw new Error(result.error ?? '글 이동에 실패했습니다.');
+      }
+
+      window.location.assign(`/${siteName}/${result.targetBoard.boardKey}/${result.content.slug}`);
+    } catch (unknownError) {
+      setMoveBoardErrorMessage(
+        unknownError instanceof Error ? unknownError.message || '글 이동에 실패했습니다.' : '글 이동에 실패했습니다.',
+      );
+    } finally {
+      setIsMovingPost(false);
     }
   }
 
@@ -1702,7 +1737,8 @@ export default function Opt({ isCommunity }: Props) {
                 <button
                   type="button"
                   className="submit-button"
-                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards}
+                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards || isMovingPost}
+                  onClick={() => void movePostToSelectedBoard()}
                 >
                   이동
                 </button>
@@ -1750,7 +1786,8 @@ export default function Opt({ isCommunity }: Props) {
                 <button
                   type="button"
                   className="submit-button"
-                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards}
+                  disabled={!selectedMoveBoardKey || selectedMoveBoardKey === board.board_key || isLoadingMoveBoards || isMovingPost}
+                  onClick={() => void movePostToSelectedBoard()}
                 >
                   이동
                 </button>
