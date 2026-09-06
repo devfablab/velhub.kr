@@ -458,7 +458,7 @@ export default function Opt() {
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
       <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {isMobile ? (
             <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               게시판 수정

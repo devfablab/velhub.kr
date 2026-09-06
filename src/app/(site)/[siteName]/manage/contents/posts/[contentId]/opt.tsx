@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
-import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
   Box,
   Checkbox,
@@ -502,7 +501,7 @@ export default function Opt() {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper ${styles.paper}`}>
               <div className="loading-container">
                 <LoadingIndicator />
@@ -517,7 +516,7 @@ export default function Opt() {
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
           {post ? (

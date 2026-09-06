@@ -395,7 +395,10 @@ function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: Blog
     '--blog-subject-letter-spacing',
     `${blogFontSettings?.subjectLetterSpacing ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLetterSpacing}em`,
   );
-  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight);
+  setCssVariable(
+    '--blog-subject-line-height',
+    blogFontSettings?.subjectLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight,
+  );
 
   setCssVariable(
     '--blog-description-font-family',
@@ -1002,7 +1005,10 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
       </header>
       <main style={{ marginTop: isMobile ? 47 : undefined }} className={styles.manage}>
         {tabMenuItems.length > 0 ? (
-          <div className={`container ${styles.tabs}`}>
+          <div
+            className={`container ${styles.tabs} ${menu === 'contents' ? styles['tab-contents'] : ''}`}
+            style={{ maxWidth: 'none' }}
+          >
             <ul className="content">
               {tabMenuItems.map((item) => {
                 const isCurrent = isCurrentTab(pathname, item);
@@ -1022,7 +1028,9 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
         {isMobile ? null : (
           <>
             {breadcrumbs.length > 0 && (
-              <div className={`container ${styles.breadcrumbs}`}>
+              <div
+                className={`container ${styles.breadcrumbs} ${menu === 'contents' ? styles['breadcrumb-contents'] : ''}`}
+              >
                 <Breadcrumbs
                   separator={<NavigateNextRoundedIcon fontSize="small" />}
                   aria-label="breadcrumb"

@@ -853,7 +853,7 @@ export default function Opt() {
         menu="contents"
       >
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper ${styles.paper}`}>
               <div className="loading-container">
                 <LoadingIndicator />
@@ -875,7 +875,7 @@ export default function Opt() {
         menu="contents"
       >
         <div className="container">
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper paper-error ${styles.paper}`}>수정하실 수 없습니다.</div>
             <Stack direction="row" justifyContent="space-between" gap={1} sx={{ p: 2 }}>
               <Anchor href={`/${siteName}/manage/contents/posts/c/${boardName}`} className="button medium cancel">
@@ -896,7 +896,7 @@ export default function Opt() {
         menu="contents"
       >
         <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']}`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             {isMobile ? (
               <Typography variant="h5" component="h2" sx={{ p: 2 }}>
                 글 수정

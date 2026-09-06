@@ -751,7 +751,7 @@ export default function Opt() {
   if (isLoading) {
     return (
       <div className={`container ${styles.container}`}>
-        <div className={`${styles.content} content`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           <div className={`paper ${styles.paper}`}>
             <div className="loading-container">
               <LoadingIndicator />
@@ -765,7 +765,7 @@ export default function Opt() {
   if (siteType === 'community') {
     return (
       <div className={`container ${styles.container}`}>
-        <div className={`${styles.content} content`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {!isMobile && (
             <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               게시판 목록
@@ -846,7 +846,7 @@ export default function Opt() {
 
   return (
     <div className={`container ${styles.container}`}>
-      <div className={`content ${styles.content} ${styles['content-manage']}`}>
+      <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
           <Stack direction="row" gap={1}>
             {posts.length >= 1 ? (
@@ -950,7 +950,9 @@ export default function Opt() {
         {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
         {posts.length === 0 ? (
-          <ScreenState>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}</ScreenState>
+          <ScreenState>
+            {currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '출간된 블로그 글이 없습니다.'}
+          </ScreenState>
         ) : (
           <Box sx={{ position: 'relative' }}>
             <div className={`paper paper-p0 ${styles.paper}`}>
@@ -995,7 +997,9 @@ export default function Opt() {
                         </Stack>
                       </TableCell>
 
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDate(post.published_at ?? post.created_at)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                        {formatDate(post.published_at ?? post.created_at)}
+                      </TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.author_name}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>{post.closed_by_name || ''}</TableCell>
                       <TableCell sx={{ whiteSpace: 'nowrap' }}>

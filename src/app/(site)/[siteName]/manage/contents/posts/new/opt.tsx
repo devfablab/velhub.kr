@@ -629,7 +629,8 @@ export default function Opt() {
         throw new Error('블로그 글 개설에 실패했습니다.');
       }
 
-      if (ti === 'i' || publishTimeMode === 'scheduled') router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
+      if (ti === 'i' || publishTimeMode === 'scheduled')
+        router.replace(`/${siteName}/manage/contents/posts/${createResult.slug}`);
       else router.replace(`/${siteName}/b/${createResult.slug}`);
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -645,7 +646,7 @@ export default function Opt() {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper ${styles.paper}`}>
               <div className="loading-container">
                 <LoadingIndicator />
@@ -661,7 +662,7 @@ export default function Opt() {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper paper-error ${styles.paper}`}>최초 글은 스텝만 작성 가능합니다</div>
             <Box>
               <Anchor href={`/${siteName}/manage/contents/posts`} className="button medium action">
@@ -677,7 +678,7 @@ export default function Opt() {
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {isMobile ? (
             <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               글쓰기

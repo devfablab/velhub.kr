@@ -962,6 +962,9 @@ main.manage
       @include ds.mq(minLarge)
         padding-top: ds.rem(23)
 
+    &.tab-contents ul
+      max-width: ds.rem(807)
+
     ul
       display: flex
       flex-direction: row
@@ -1023,6 +1026,10 @@ main.manage
     display: flex
     flex-direction: row
     padding-bottom: ds.rem(12)
+
+    &.breadcrumb-contents
+      nav[aria-label="breadcrumb"]
+        max-width: ds.rem(807)
 
     nav[aria-label="breadcrumb"]
       display: flex

@@ -469,7 +469,7 @@ export default function Opt() {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper ${styles.paper}`}>
               <div className="loading-container">
                 <LoadingIndicator />
@@ -484,7 +484,7 @@ export default function Opt() {
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, pm: 0 }}>
             <Stack direction="row" gap={1}>
               {board?.board_type !== 'youtube' && board?.post_type === 'prefix' ? (
@@ -601,102 +601,102 @@ export default function Opt() {
                 <ScreenState>{currentFilter === 'deleted' ? '삭제된 글이 없습니다.' : '글이 없습니다.'}</ScreenState>
               ) : (
                 <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isAllCurrentPageChecked}
-                        indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
-                        onChange={handleToggleAllCurrentPage}
-                      />
-                    </TableCell>
-                    <TableCell />
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>작성일</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>작성자</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
-                    <TableCell />
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {contents.map((content) => (
-                    <TableRow key={content.id}>
+                  <TableHead>
+                    <TableRow>
                       <TableCell padding="checkbox">
                         <Checkbox
-                          checked={selectedIds.includes(content.id)}
-                          onChange={() => handleToggleOne(content.id)}
+                          checked={isAllCurrentPageChecked}
+                          indeterminate={!isAllCurrentPageChecked && isSomeCurrentPageChecked}
+                          onChange={handleToggleAllCurrentPage}
                         />
                       </TableCell>
-
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
-                      </TableCell>
-
-                      <TableCell>
-                        <Stack direction="row" gap={1}>
-                          {content.published_status === 'draft' ? (
-                            <Chip label="임시저장글" color="warning" size="small" />
-                          ) : null}
-                          {content.prefix_label ? (
-                            <Chip label={content.prefix_label} size="small" variant="outlined" />
-                          ) : null}
-
-                          <Anchor
-                            href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
-                            className="link-normal"
-                          >
-                            {content.subject}
-                          </Anchor>
-                        </Stack>
-                      </TableCell>
-
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {typeof content.post_count === 'number' ? content.post_count : 0}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                        {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
-                      </TableCell>
-                      <TableCell sx={{ whiteSpace: 'nowrap', overflowWrap: 'anywhere' }}>
-                        {content.closed_message}
-                      </TableCell>
-
-                      <TableCell align="right">
-                        {content.is_closed ? (
-                          <>
-                            {!content.is_locked ? (
-                              <button
-                                type="button"
-                                className="button small action"
-                                onClick={() => handleOpenRestoreDialog(content)}
-                              >
-                                복구
-                              </button>
-                            ) : (
-                              <button type="button" className="button small action" disabled>
-                                복구 불가
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            className="button small danger"
-                            onClick={() => handleOpenSingleDeleteDialog(content)}
-                          >
-                            삭제
-                          </button>
-                        )}
-                      </TableCell>
+                      <TableCell />
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>제목</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>조회수</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>작성일</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>작성자</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제자</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제일</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>삭제사유</TableCell>
+                      <TableCell />
                     </TableRow>
-                  ))}
-                </TableBody>
+                  </TableHead>
+
+                  <TableBody>
+                    {contents.map((content) => (
+                      <TableRow key={content.id}>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={selectedIds.includes(content.id)}
+                            onChange={() => handleToggleOne(content.id)}
+                          />
+                        </TableCell>
+
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {content.is_pin ? <PushPinIcon fontSize="small" /> : (content.series_idx ?? content.idx)}
+                        </TableCell>
+
+                        <TableCell>
+                          <Stack direction="row" gap={1}>
+                            {content.published_status === 'draft' ? (
+                              <Chip label="임시저장글" color="warning" size="small" />
+                            ) : null}
+                            {content.prefix_label ? (
+                              <Chip label={content.prefix_label} size="small" variant="outlined" />
+                            ) : null}
+
+                            <Anchor
+                              href={`/${siteName}/manage/contents/posts/c/${boardName}/${content.slug}`}
+                              className="link-normal"
+                            >
+                              {content.subject}
+                            </Anchor>
+                          </Stack>
+                        </TableCell>
+
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {typeof content.post_count === 'number' ? content.post_count : 0}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeDetail(content.created_at)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.author_name}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{content.closed_by_name}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                          {content.closed_at ? formatDateTimeDetail(content.closed_at) : ''}
+                        </TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap', overflowWrap: 'anywhere' }}>
+                          {content.closed_message}
+                        </TableCell>
+
+                        <TableCell align="right">
+                          {content.is_closed ? (
+                            <>
+                              {!content.is_locked ? (
+                                <button
+                                  type="button"
+                                  className="button small action"
+                                  onClick={() => handleOpenRestoreDialog(content)}
+                                >
+                                  복구
+                                </button>
+                              ) : (
+                                <button type="button" className="button small action" disabled>
+                                  복구 불가
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={() => handleOpenSingleDeleteDialog(content)}
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
                 </Table>
               )}
 

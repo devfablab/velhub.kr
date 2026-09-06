@@ -906,7 +906,7 @@ export default function Opt() {
     return (
       <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
         <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
+          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
             <div className={`paper ${styles.paper}`}>
               <div className="loading-container">
                 <LoadingIndicator />
@@ -921,7 +921,7 @@ export default function Opt() {
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
       <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']}`}>
+        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
           {isMobile ? (
             <Typography variant="h6" component="h2" sx={{ p: 2 }}>
               카테고리 관리
@@ -1363,7 +1363,13 @@ export default function Opt() {
               </Stack>
             </Drawer>
           ) : (
-            <Dialog open={dialogMode === 'delete'} onClose={handleCloseDialog} fullWidth maxWidth="xs" className="VhiDialog">
+            <Dialog
+              open={dialogMode === 'delete'}
+              onClose={handleCloseDialog}
+              fullWidth
+              maxWidth="xs"
+              className="VhiDialog"
+            >
               <DialogTitle>카테고리 삭제</DialogTitle>
               <button className="close-button" onClick={handleCloseDialog} aria-label="닫기" disabled={isSubmitting}>
                 <CloseRoundedIcon />
