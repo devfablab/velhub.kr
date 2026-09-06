@@ -238,7 +238,15 @@ export async function GET(request: Request) {
         const paymentInfo = paymentInfoByPostId.get(post.id);
         const stigma = stigmaByAuthorId.get(normalizeText(post.user_id));
 
-        if (!site || !board || !paymentInfo || post.published_status !== 'published' || post.is_closed === true) {
+        const hasPermanentPurchase = paymentInfo?.kinds.has('owned') === true;
+
+        if (
+          !site ||
+          !board ||
+          !paymentInfo ||
+          post.published_status !== 'published' ||
+          (post.is_closed === true && !hasPermanentPurchase)
+        ) {
           return null;
         }
 
@@ -255,6 +263,7 @@ export async function GET(request: Request) {
           title: normalizeText(post.subject),
           authorName,
           createdAt: post.published_at || post.created_at,
+          isClosed: post.is_closed === true,
           kinds: [...paymentInfo.kinds],
           latestPaymentAt: paymentInfo.latestAt,
         };

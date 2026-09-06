@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Chip } from '@mui/material';
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, PAYMENT_TYPE, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSeriesPageMetadata } from '@/lib/seoSite';
+import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -56,6 +57,7 @@ type PostRow = {
   site_id: string;
   series_id: string | null;
   idx: number;
+  is_closed: boolean;
   boards: {
     board_key: string;
     board_label: string;
@@ -149,9 +151,6 @@ export default async function Page(context: RouteContext) {
     .maybeSingle();
   const isSeriesSubscriptionEnabled =
     seriesData.is_subscription === true && seriesSubscriptionSetting.data?.is_enabled === true;
-  const from = (currentPage - 1) * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
-
   const posts = await supabaseAdmin
     .from('posts')
     .select(
@@ -168,27 +167,53 @@ export default async function Page(context: RouteContext) {
         site_id,
         series_id,
         idx,
+        is_closed,
         boards (
           board_key,
           board_label
         )
       `,
-      { count: 'exact' },
     )
     .eq('site_id', rhizome.data.id)
     .eq('series_id', seriesData.id)
     .eq('published_status', 'published')
-    .eq('is_closed', false)
     .order('idx', { ascending: false })
-    .range(from, to)
     .overrideTypes<PostRow[], { merge: false }>();
 
   if (posts.error) {
     notFound();
   }
 
-  const contents = (posts.data ?? []) as PostRow[];
-  const totalCount = posts.count ?? 0;
+  const allPosts = (posts.data ?? []) as PostRow[];
+  const session = await verifySession({ siteId: rhizome.data.id });
+  const closedPostIds = allPosts.filter((post) => post.is_closed === true).map((post) => post.id);
+  const permanentPurchaseResult =
+    session.stigmaId && closedPostIds.length > 0
+      ? await supabaseAdmin
+          .from('payments')
+          .select('target_id')
+          .eq('buyer_user_id', session.stigmaId)
+          .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
+          .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+          .eq('status', PAYMENT_STATUS.PAID)
+          .in('target_id', closedPostIds)
+      : { data: [], error: null };
+
+  if (permanentPurchaseResult.error) {
+    notFound();
+  }
+
+  const permanentlyOwnedPostIds = new Set(
+    (permanentPurchaseResult.data ?? [])
+      .map((payment) => normalizeText(payment.target_id))
+      .filter(Boolean),
+  );
+  const visiblePosts = allPosts.filter(
+    (post) => post.is_closed === false || permanentlyOwnedPostIds.has(post.id),
+  );
+  const from = (currentPage - 1) * PAGE_SIZE;
+  const contents = visiblePosts.slice(from, from + PAGE_SIZE);
+  const totalCount = visiblePosts.length;
   const totalPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   return (
@@ -251,6 +276,7 @@ export default async function Page(context: RouteContext) {
                     <div className={styles.info}>
                       <div className={styles.subject}>
                         <strong>{content.subject}</strong>
+                        {content.is_closed ? <em>삭제된 연재글</em> : null}
                       </div>
                     </div>
                   </Anchor>

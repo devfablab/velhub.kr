@@ -528,6 +528,36 @@ async function getPaidContentAccess({
   };
 }
 
+async function hasPermanentPostPurchase({
+  supabaseAdmin,
+  stigmaId,
+  postId,
+}: {
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+  stigmaId: string | null;
+  postId: string;
+}) {
+  if (!stigmaId) {
+    return false;
+  }
+
+  const paymentResult = await supabaseAdmin
+    .from('payments')
+    .select('id')
+    .eq('buyer_user_id', stigmaId)
+    .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
+    .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+    .eq('target_id', postId)
+    .eq('status', PAYMENT_STATUS.PAID)
+    .limit(1);
+
+  if (paymentResult.error) {
+    throw new Error('포스팅 구매 내역을 확인하지 못했습니다.');
+  }
+
+  return (paymentResult.data ?? []).length > 0;
+}
+
 async function getAdjacentPosts({
   siteId,
   siteName,
@@ -1112,6 +1142,13 @@ export async function GET(request: Request, context: RouteContext) {
     const postData = post.data;
 
     const isAuthor = Boolean(session.stigmaId) && postData.user_id === session.stigmaId;
+    const hasDeletedPostPermanentPurchase =
+      postData.is_closed === true &&
+      (await hasPermanentPostPurchase({
+        supabaseAdmin,
+        stigmaId: session.stigmaId,
+        postId: postData.id,
+      }));
     const canViewFutureScheduledPost =
       isStaff || (rhizomeData.site_type === 'blog' && session.case === 'member');
     const isFutureScheduledPost =
@@ -1119,12 +1156,12 @@ export async function GET(request: Request, context: RouteContext) {
       Boolean(postData.published_at) &&
       new Date(postData.published_at as string).getTime() > Date.now();
 
-    if (postData.is_closed === true && isAuthor) {
+    if (postData.is_closed === true && isAuthor && !hasDeletedPostPermanentPurchase) {
       return NextResponse.json({ error: '삭제된 글입니다.' }, { status: 400 });
     }
 
-    if (postData.is_closed === true && !canManageContent) {
-      return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
+    if (postData.is_closed === true && !canManageContent && !hasDeletedPostPermanentPurchase) {
+      return NextResponse.json({ error: '삭제된 연재글입니다.' }, { status: 403 });
     }
 
     if (postData.published_status === 'draft' && !isAuthor && !canManageContent) {
@@ -1176,7 +1213,8 @@ export async function GET(request: Request, context: RouteContext) {
         })
       : null;
 
-    const canViewPaidContent = isAuthor || canManageContent || paidContentAccess.can_view_paid_content;
+    const canViewPaidContent =
+      isAuthor || canManageContent || paidContentAccess.can_view_paid_content || hasDeletedPostPermanentPurchase;
     let isGallerySubscriptionPreview = boardData.board_type === 'gallery' && paidContentAccess.has_subscription_series;
 
     const author = await getUserDisplayInfo(rhizomeData.id, boardData.id, postData.user_id);
@@ -1279,7 +1317,8 @@ export async function GET(request: Request, context: RouteContext) {
       id: string;
       slug: string;
       subject: string;
-      series_idx: number;
+      series_idx: number | null;
+      is_closed: boolean;
       href: string;
     }> = [];
 
@@ -1307,24 +1346,54 @@ export async function GET(request: Request, context: RouteContext) {
       if (series) {
         const seriesContentsResult = await supabaseAdmin
           .from('posts')
-          .select('id, slug, subject, series_idx')
+          .select('id, slug, subject, series_idx, is_closed')
           .eq('site_id', rhizomeData.id)
           .eq('board_id', boardData.id)
           .eq('series_id', series.id)
-          .eq('is_closed', false)
           .eq('published_status', 'published')
-          .not('series_idx', 'is', null)
-          .order('series_idx', { ascending: true });
+          .order('series_idx', { ascending: true, nullsFirst: false });
 
         if (seriesContentsResult.error) {
           return NextResponse.json({ error: '연재 글 목록을 불러오지 못했습니다.' }, { status: 500 });
         }
 
-        seriesContents = (seriesContentsResult.data ?? []).map((seriesContent) => ({
+        const allSeriesContents = seriesContentsResult.data ?? [];
+        const closedSeriesPostIds = allSeriesContents
+          .filter((seriesContent) => seriesContent.is_closed === true)
+          .map((seriesContent) => seriesContent.id);
+        const permanentPurchaseResult =
+          session.stigmaId && closedSeriesPostIds.length > 0
+            ? await supabaseAdmin
+                .from('payments')
+                .select('target_id')
+                .eq('buyer_user_id', session.stigmaId)
+                .eq('payment_type', PAYMENT_TYPE.PURCHASE_POST)
+                .eq('target_type', PAYMENT_TARGET_TYPE.POST)
+                .eq('status', PAYMENT_STATUS.PAID)
+                .in('target_id', closedSeriesPostIds)
+            : { data: [], error: null };
+
+        if (permanentPurchaseResult.error) {
+          return NextResponse.json({ error: '포스팅 구매 내역을 확인하지 못했습니다.' }, { status: 500 });
+        }
+
+        const permanentlyOwnedSeriesPostIds = new Set(
+          (permanentPurchaseResult.data ?? [])
+            .map((payment) => normalizeText(payment.target_id))
+            .filter(Boolean),
+        );
+
+        seriesContents = allSeriesContents
+          .filter(
+            (seriesContent) =>
+              seriesContent.is_closed === false || permanentlyOwnedSeriesPostIds.has(seriesContent.id),
+          )
+          .map((seriesContent) => ({
           id: seriesContent.id,
           slug: String(seriesContent.slug),
           subject: normalizeText(seriesContent.subject),
-          series_idx: Number(seriesContent.series_idx),
+          series_idx: typeof seriesContent.series_idx === 'number' ? seriesContent.series_idx : null,
+          is_closed: seriesContent.is_closed === true,
           href: getPostHref(
             siteName,
             boardData.board_key,
@@ -1332,7 +1401,7 @@ export async function GET(request: Request, context: RouteContext) {
             '',
             series?.series_key === seriesName ? seriesName : '',
           ),
-        }));
+          }));
       }
     }
 

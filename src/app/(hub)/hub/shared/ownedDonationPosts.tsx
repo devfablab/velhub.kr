@@ -26,6 +26,7 @@ type PostRow = {
   title: string;
   authorName: string;
   createdAt: string;
+  isClosed: boolean;
   kinds: PostKind[];
 };
 
@@ -368,6 +369,7 @@ export default function OwnedDonationPosts({ siteType }: Props) {
               <button type="button" onClick={() => setSelectedPost(post)}>
                 <span className={styles['owned-post-title']}>
                   <strong aria-label="글 제목">{post.title}</strong>
+                  {post.isClosed ? <em>삭제된 연재글</em> : null}
                   <span className={styles['owned-post-chips']}>
                     {post.kinds.map((kind) => (
                       <Chip key={kind} label={getKindLabel(kind)} size="small" />

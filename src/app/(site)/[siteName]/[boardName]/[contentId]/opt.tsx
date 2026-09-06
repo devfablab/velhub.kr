@@ -243,7 +243,8 @@ type SeriesContentItem = {
   id: string;
   slug: string;
   subject: string;
-  series_idx: number;
+  series_idx: number | null;
+  is_closed: boolean;
   href: string;
 };
 
@@ -870,7 +871,9 @@ export default function Opt({ isCommunity }: Props) {
               {seriesContents.map((seriesContent) => (
                 <li key={seriesContent.id}>
                   <Anchor href={seriesContent.href}>
-                    {seriesContent.series_idx}. {seriesContent.subject}
+                    {seriesContent.is_closed
+                      ? '삭제된 연재글'
+                      : `${seriesContent.series_idx ?? ''}. ${seriesContent.subject}`}
                   </Anchor>
                 </li>
               ))}
@@ -1602,7 +1605,7 @@ export default function Opt({ isCommunity }: Props) {
             </div>
             {seriesList}
           </article>
-          {content.published_status === 'published' || content.published_status === 'unknown' ? (
+          {(content.published_status === 'published' || content.published_status === 'unknown') && !content.is_closed ? (
             <Comment
               siteName={siteName}
               boardName={boardName}
