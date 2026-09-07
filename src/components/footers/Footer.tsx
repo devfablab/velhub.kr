@@ -21,23 +21,26 @@ export default function Footer() {
               <li className={styles['parents-item']}>
                 <ul className={styles.children}>
                   <li>
-                    <Anchor href="/luvelhub/c/quincy">이용안내</Anchor>
+                    <Anchor href="/luvelhub/b/3220865272?categoryName=quincy">데브허브 소개</Anchor>
+                  </li>
+                  <li>
+                    <Anchor href="/luvelhub">이용안내</Anchor>
                   </li>
                   <li>
                     <Anchor href="/luvelhub/c/notice">공지사항</Anchor>
-                  </li>
-                  <li>
-                    <Anchor href="/concierge">고객센터</Anchor>
                   </li>
                 </ul>
               </li>
               <li className={styles['parents-item']}>
                 <ul className={styles.children}>
                   <li>
-                    <Anchor href="/luvelhub/b/3220865262">이용약관</Anchor>
+                    <Anchor href="/luvelhub/b/3220865262?categoryName=terms">이용약관</Anchor>
                   </li>
                   <li>
-                    <Anchor href="/luvelhub/b/3220865264">개인정보처리방침</Anchor>
+                    <Anchor href="/luvelhub/b/3220865264?categoryName=terms">개인정보처리방침</Anchor>
+                  </li>
+                  <li>
+                    <Anchor href="/concierge">고객센터</Anchor>
                   </li>
                 </ul>
               </li>
