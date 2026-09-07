@@ -73,7 +73,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
       <div className={`${styles.slider} ${styles['slider-created-sites']}`}>
         <Slider {...settings}>
           {sitesCreatedData.sites.map((site) => (
-            <Anchor key={site.site_key} href={`/${site.site_key}`}>
+            <Anchor key={site.site_key} href={site.site_url}>
               <em>{site.site_type === 'blog' ? '블로그' : '커뮤니티'}</em>
               <strong>{site.site_label}</strong>
               <p>{site.summary}</p>
@@ -92,7 +92,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
           {sitesHitsData.sites.map((site) => (
             <div key={site.site_key}>
               <Anchor
-                href={`/${site.site_key}`}
+                href={site.site_url}
                 style={{
                   background: `${site.promotion_image ? `url(${site.promotion_image})` : 'url(/dummy.webp)'} no-repeat center / cover`,
                 }}
@@ -121,7 +121,7 @@ export default function Slick({ sitesCreatedData, sitesHitsData, postsData, isHu
           {postsData.posts.map((post) => (
             <div key={`${post.site_key}-${post.board_key}-${post.slug}`}>
               <Anchor
-                href={`/${post.site_key}/${post.board_key}/${post.slug}`}
+                href={post.site_url && post.slug ? `${post.site_url}/${post.board_key}/${post.slug}` : '#'}
                 style={{
                   aspectRatio:
                     post.board_type === 'gallery' || post.board_type === 'feed'

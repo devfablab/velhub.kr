@@ -1,8 +1,11 @@
 import { type NextRequest } from 'next/server';
+import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
 type RhizomeRow = {
+  owner_id: string | null;
   site_key: string;
   site_label: string;
   profile_picture: string | null;
@@ -13,6 +16,7 @@ type RhizomeRow = {
   promotion_image: string | null;
   member_count: number | null;
   post_count: number | null;
+  custom_domain: string | null;
 };
 
 function getPublicUrl(bucket: string, path: string | null | undefined) {
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('rhizomes')
       .select(
-        'id, site_key, site_label, profile_picture, summary, site_type, profile_logo, promotion_image, member_count, post_count, created_at',
+        'id, owner_id, site_key, site_label, profile_picture, summary, site_type, profile_logo, promotion_image, member_count, post_count, created_at, custom_domain',
       )
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false)
@@ -87,8 +91,21 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: '사이트 목록을 불러오지 못했습니다.' }, { status: 500 });
     }
 
-    const sites = (data as RhizomeRow[]).map((site) => ({
+    const sitesData = data as RhizomeRow[];
+    const ownerIds = [...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerDomainFeatures = new Map(
+      await Promise.all(
+        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
+      ),
+    );
+
+    const sites = sitesData.map((site) => ({
       site_key: site.site_key,
+      site_url: getPublicSiteUrl({
+        siteKey: site.site_key,
+        customDomain: site.custom_domain,
+        hasOwnerDomainFeature: ownerDomainFeatures.get(site.owner_id ?? '') === true,
+      }),
       site_label: site.site_label,
       profile_picture: getPublicUrl('profile_picture', site.profile_picture),
       summary: site.summary,

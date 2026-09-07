@@ -17,6 +17,7 @@ type LatestPostRow = {
 export type JoinSiteRow = {
   id: string;
   site_key: string;
+  site_url: string;
   site_label: string;
   site_type: string;
   profilePictureUrl: string | null;
@@ -78,7 +79,7 @@ export default function JoinSites({ siteType, joinSites }: Props) {
                 <em>{getRoleLabel(site.role)}</em>
                 <small className={styles[`operation-${site.operationalStatus}`]}>{site.operationalStatusLabel}</small>
               </div>
-              <Anchor href={`/${site.site_key}`} className="button action small">
+              <Anchor href={site.site_url} className="button action small">
                 {getSectionTitle(siteType)} 이동
               </Anchor>
             </div>
@@ -88,7 +89,7 @@ export default function JoinSites({ siteType, joinSites }: Props) {
                 <ol>
                   {site.latestPosts.map((post) => (
                     <li key={post.id}>
-                      <Anchor href={`/${site.site_key}${post.href}`}>
+                      <Anchor href={post.href}>
                         <span>
                           <strong aria-label="제목">{post.subject}</strong>
                           {post.commentCount > 0 ? <small aria-label="댓글 개수">({post.commentCount})</small> : null}

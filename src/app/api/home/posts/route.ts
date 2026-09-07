@@ -1,5 +1,7 @@
 import { type NextRequest } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
+import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     let rhizomesQuery = supabaseAdmin
       .from('rhizomes')
-      .select('id, site_key, site_label, site_type, profile_picture, promotion_image')
+      .select('id, owner_id, site_key, site_label, site_type, profile_picture, promotion_image, custom_domain')
       .eq('visibility_type', 'public')
       .eq('is_shutdown', false)
       .or('is_blocked.eq.false,is_blocked.is.null');
@@ -62,6 +64,12 @@ export async function GET(request: NextRequest) {
 
     const rhizomes = rhizomesResult.data;
     const rhizomeMap = new Map(rhizomes.map((rhizome) => [rhizome.id, rhizome]));
+    const ownerIds = [...new Set(rhizomes.map((rhizome) => rhizome.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerDomainFeatures = new Map(
+      await Promise.all(
+        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
+      ),
+    );
 
     const siteIds = rhizomes.map((rhizome) => rhizome.id);
 
@@ -160,6 +168,13 @@ export async function GET(request: NextRequest) {
 
       const base = {
         site_key: rhizome?.site_key,
+        site_url: rhizome
+          ? getPublicSiteUrl({
+              siteKey: rhizome.site_key,
+              customDomain: rhizome.custom_domain,
+              hasOwnerDomainFeature: ownerDomainFeatures.get(rhizome.owner_id) === true,
+            })
+          : null,
         site_label: rhizome?.site_label,
         site_type: rhizome?.site_type,
         profile_picture: getPublicImageUrl('avatar', rhizome?.profile_picture),

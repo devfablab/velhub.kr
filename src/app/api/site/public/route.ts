@@ -40,18 +40,20 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
     const siteName = normalizeText(requestUrl.searchParams.get('siteName')).toLowerCase();
+    const customDomain = normalizeText(requestUrl.searchParams.get('customDomain')).toLowerCase();
 
-    if (!siteName) {
-      return Response.json({ error: 'siteName이 유효하지 않습니다.' }, { status: 400 });
+    if (!siteName && !customDomain) {
+      return Response.json({ error: '사이트 주소가 유효하지 않습니다.' }, { status: 400 });
     }
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    const rhizome = await supabaseAdmin
+    let rhizomeQuery = supabaseAdmin
       .from('rhizomes')
-      .select('id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked, is_closed')
-      .eq('site_key', siteName)
-      .maybeSingle();
+      .select('id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked, is_closed, custom_domain');
+
+    rhizomeQuery = customDomain ? rhizomeQuery.eq('custom_domain', customDomain) : rhizomeQuery.eq('site_key', siteName);
+    const rhizome = await rhizomeQuery.maybeSingle();
 
     if (rhizome.error) {
       return Response.json({ error: '사이트 정보를 불러오지 못했습니다.' }, { status: 500 });
@@ -64,6 +66,8 @@ export async function GET(request: Request) {
     const siteId = rhizome.data.id;
     const ownerId = rhizome.data.owner_id;
     const siteType = rhizome.data.site_type;
+    const hasOwnerDomainPromise =
+      ownerId && rhizome.data.custom_domain ? hasMembershipFeature(ownerId, 'owner_domain') : Promise.resolve(false);
 
     const siteLimitPromise =
       ownerId && (siteType === 'blog' || siteType === 'community')
@@ -106,11 +110,12 @@ export async function GET(request: Request) {
           })()
         : Promise.resolve(null);
 
-    const [chorogonRes, boardsRes, communityRes, siteLimitResult] = await Promise.all([
+    const [chorogonRes, boardsRes, communityRes, siteLimitResult, hasOwnerDomainFeature] = await Promise.all([
       chorogonPromise,
       boardsPromise,
       communityPromise,
       siteLimitPromise,
+      hasOwnerDomainPromise,
     ]);
 
     const [hasUnlimitedSites, ownerSitesResult] = siteLimitResult ?? [false, null];
@@ -164,6 +169,8 @@ export async function GET(request: Request) {
     return Response.json({
       siteInfo: {
         site_key: rhizome.data.site_key,
+        custom_domain: rhizome.data.custom_domain,
+        has_owner_domain_feature: hasOwnerDomainFeature,
         site_type: rhizome.data.site_type,
         site_label: rhizome.data.site_label,
         visibility_type: rhizome.data.visibility_type,

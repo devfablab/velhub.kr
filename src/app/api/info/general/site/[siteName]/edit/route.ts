@@ -1,4 +1,6 @@
 import { getCommunityManagerAccess } from '@/lib/community/community-manager/utils';
+import { getCustomDomainError, normalizeCustomDomain } from '@/lib/customDomain';
+import { hasMembershipFeature } from '@/lib/memberships/features';
 import { cancelPortOnePayment } from '@/lib/payments/portone';
 import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
@@ -332,7 +334,30 @@ export async function POST(request: Request, context: RouteContext) {
 
       nextValue = requestBody.value;
     } else if (requestBody.field === 'custom_domain') {
-      nextValue = typeof requestBody.value === 'string' ? requestBody.value.trim() || null : null;
+      if (!(await hasMembershipFeature(access.rhizome.owner_id, 'owner_domain'))) {
+        return Response.json({ error: '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.' }, { status: 403 });
+      }
+
+      const normalizedValue = normalizeCustomDomain(typeof requestBody.value === 'string' ? requestBody.value : '');
+
+      if (!normalizedValue) {
+        nextValue = null;
+      } else {
+        const validationError = getCustomDomainError(normalizedValue);
+        if (validationError) return Response.json({ error: validationError }, { status: 400 });
+
+        const duplicate = await access.supabaseAdmin
+          .from('rhizomes')
+          .select('id')
+          .eq('custom_domain', normalizedValue)
+          .neq('id', access.rhizome.id)
+          .maybeSingle();
+
+        if (duplicate.error) return Response.json({ error: '커스텀 도메인 확인에 실패했습니다.' }, { status: 500 });
+        if (duplicate.data) return Response.json({ error: '이미 사용 중인 커스텀 도메인입니다.' }, { status: 400 });
+
+        nextValue = normalizedValue;
+      }
     } else if (requestBody.field === 'blog_type') {
       if (requestBody.value !== 'personal' && requestBody.value !== 'team') {
         return Response.json({ error: '블로그 타입 값이 올바르지 않습니다.' }, { status: 400 });

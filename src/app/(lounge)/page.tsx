@@ -10,6 +10,7 @@ import styles from '../page.module.sass';
 
 type SiteItem = {
   site_key: string;
+  site_url: string;
   site_label: string;
   profile_picture: string | null;
   summary: string | null;
@@ -21,6 +22,7 @@ type SiteItem = {
 
 type SitesCreatedData = {
   site_key: string;
+  site_url: string;
   site_label: string;
   summary: string | null;
   site_type: string;
@@ -29,6 +31,7 @@ type SitesCreatedData = {
 
 type SitesHitsData = {
   site_key: string;
+  site_url: string;
   site_label: string;
   profile_picture: string | null;
   summary: string | null;
@@ -41,6 +44,7 @@ type SitesHitsData = {
 
 type GalleryPost = {
   site_key: string;
+  site_url: string | null;
   site_label: string;
   site_type: string;
   profile_picture: string | null;
@@ -61,6 +65,7 @@ type GalleryPost = {
 
 type YoutubePost = {
   site_key: string;
+  site_url: string | null;
   site_label: string;
   site_type: string;
   profile_picture: string | null;
@@ -84,6 +89,7 @@ type YoutubePost = {
 
 type FeedPost = {
   site_key: string;
+  site_url: string | null;
   site_label: string;
   site_type: string;
   profile_picture: string | null;
@@ -102,6 +108,7 @@ type FeedPost = {
 
 type BasicOrBlogPost = {
   site_key: string;
+  site_url: string | null;
   site_label: string;
   site_type: string;
   profile_picture: string | null;

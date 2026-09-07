@@ -33,6 +33,9 @@ type SessionRouteResult = {
 
 type RhizomeStateResult = {
   siteInfo?: {
+    site_key?: string | null;
+    custom_domain?: string | null;
+    has_owner_domain_feature?: boolean | null;
     visibility_type?: string | null;
     is_shutdown?: boolean | null;
     is_blocked?: boolean | null;
@@ -142,6 +145,27 @@ function isSitePath(pathname: string) {
   }
 
   return pathname.startsWith('/');
+}
+
+function getRequestHostname(request: NextRequest) {
+  const forwardedHost = normalizeText(request.headers.get('x-forwarded-host')).split(',')[0]?.trim();
+  const host = forwardedHost || normalizeText(request.headers.get('host'));
+
+  return host.replace(/:\d+$/, '').toLowerCase();
+}
+
+function isCustomDomainHostname(hostname: string) {
+  return (
+    Boolean(hostname) &&
+    hostname !== 'localhost' &&
+    hostname !== '127.0.0.1' &&
+    !hostname.endsWith('.localhost') &&
+    !hostname.endsWith('.vercel.app') &&
+    hostname !== 'velhub.kr' &&
+    hostname !== 'www.velhub.kr' &&
+    hostname !== 'velhub.xyz' &&
+    hostname !== 'www.velhub.xyz'
+  );
 }
 
 function isInvitePath(pathname: string) {
@@ -399,10 +423,11 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
   };
 }
 
-async function fetchRhizomeState(request: NextRequest, siteName: string) {
+async function fetchRhizomeState(request: NextRequest, { siteName, customDomain }: { siteName?: string; customDomain?: string }) {
   const targetUrl = new URL('/api/site/public', request.url);
 
-  targetUrl.searchParams.set('siteName', siteName);
+  if (siteName) targetUrl.searchParams.set('siteName', siteName);
+  if (customDomain) targetUrl.searchParams.set('customDomain', customDomain);
 
   const routeResponse = await fetch(targetUrl, {
     method: 'GET',
@@ -423,6 +448,23 @@ async function fetchRhizomeState(request: NextRequest, siteName: string) {
     response: routeResponse,
     result,
   };
+}
+
+function rewriteCustomDomainRequest(
+  request: NextRequest,
+  response: NextResponse,
+  pathname: string,
+  siteName: string | null,
+) {
+  if (!siteName) return response;
+
+  const rewriteUrl = request.nextUrl.clone();
+  rewriteUrl.pathname = pathname;
+  const rewrittenResponse = NextResponse.rewrite(rewriteUrl);
+
+  response.cookies.getAll().forEach((cookie) => rewrittenResponse.cookies.set(cookie));
+
+  return rewrittenResponse;
 }
 
 function redirectWithPath(request: NextRequest, pathname: string) {
@@ -495,7 +537,32 @@ function getSecondaryRedirectPath({
 export async function proxy(request: NextRequest) {
   const { response, sessionClaims } = await updateSession(request);
 
-  const pathname = request.nextUrl.pathname;
+  let pathname = request.nextUrl.pathname;
+  let customDomainSiteName: string | null = null;
+
+  const hostname = getRequestHostname(request);
+  const canResolveCustomDomain =
+    isCustomDomainHostname(hostname) &&
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/_next') &&
+    !pathname.startsWith('/favicon') &&
+    !pathname.startsWith('/broken-image.jpg') &&
+    !pathname.startsWith('/dummy.webp') &&
+    !pathname.startsWith('/together.webp');
+
+  if (canResolveCustomDomain) {
+    const customDomainState = await fetchRhizomeState(request, { customDomain: hostname });
+    const siteKey = normalizeText(customDomainState.result?.siteInfo?.site_key).toLowerCase();
+
+    if (
+      customDomainState.response.ok &&
+      customDomainState.result?.siteInfo?.has_owner_domain_feature === true &&
+      siteKey
+    ) {
+      customDomainSiteName = siteKey;
+      pathname = `/${siteKey}${pathname === '/' ? '' : pathname}`;
+    }
+  }
   const isLoggedIn = Boolean(sessionClaims?.userId);
   const isAal1 = sessionClaims?.authenticationLevel === 'aal1';
   const hasTotp = sessionClaims?.hasTotp === true;
@@ -611,7 +678,7 @@ export async function proxy(request: NextRequest) {
 
   if (isSitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
-    const rhizomeState = await fetchRhizomeState(request, siteName);
+    const rhizomeState = await fetchRhizomeState(request, { siteName });
 
     if (rhizomeState.response.ok && rhizomeState.result?.siteInfo?.is_closed === true) {
       const closedPath = `/${siteName}/closed`;
@@ -620,7 +687,7 @@ export async function proxy(request: NextRequest) {
         return redirectWithPath(request, closedPath);
       }
 
-      return response;
+      return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
     }
 
     if (rhizomeState.response.ok && rhizomeState.result?.siteInfo?.is_membership_suspended === true) {
@@ -630,11 +697,11 @@ export async function proxy(request: NextRequest) {
         return redirectWithPath(request, suspendedPath);
       }
 
-      return response;
+      return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
     }
 
     if (isInvitePath(pathname)) {
-      return response;
+      return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
     }
 
     const member = isLoggedIn
@@ -654,7 +721,7 @@ export async function proxy(request: NextRequest) {
           !isRejoin
         ) {
           if (isInviteOnlyPath(pathname, siteName)) {
-            return response;
+            return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
           }
 
           if (!isLoggedIn) {
@@ -666,7 +733,7 @@ export async function proxy(request: NextRequest) {
           });
 
           if (member.response.ok && member.result?.ok) {
-            return response;
+            return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
           }
 
           const header = await fetchSessionRoute(request, '/api/header/site', {
@@ -714,7 +781,7 @@ export async function proxy(request: NextRequest) {
               return redirectWithPath(request, redirectPath);
             }
 
-            return response;
+            return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
           }
         }
       }
@@ -739,7 +806,7 @@ export async function proxy(request: NextRequest) {
             return redirectWithPath(request, memberRedirectTo);
           }
 
-          return response;
+          return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
         }
 
         if (isMemberStatus) {
@@ -793,7 +860,7 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, '/');
     }
 
-    const rhizomeState = await fetchRhizomeState(request, siteName);
+    const rhizomeState = await fetchRhizomeState(request, { siteName });
 
     if (!rhizomeState.response.ok || !rhizomeState.result?.siteInfo) {
       return redirectWithPath(request, '/');
@@ -834,7 +901,7 @@ export async function proxy(request: NextRequest) {
         return redirectWithPath(request, `/${siteName}`);
       }
 
-      return response;
+      return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
     }
 
     if (isRejoin) {
@@ -845,14 +912,14 @@ export async function proxy(request: NextRequest) {
       return redirectWithPath(request, `/${siteName}`);
     }
 
-    return response;
+    return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
   }
 
   if (isSitePath(pathname)) {
     const siteName = getSiteNameFromPath(pathname).trim().toLowerCase();
 
     if (siteName) {
-      const rhizomeState = await fetchRhizomeState(request, siteName);
+      const rhizomeState = await fetchRhizomeState(request, { siteName });
       const redirectPath = getSecondaryRedirectPath({
         pathname,
         siteName,
@@ -865,5 +932,5 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return response;
+  return rewriteCustomDomainRequest(request, response, pathname, customDomainSiteName);
 }

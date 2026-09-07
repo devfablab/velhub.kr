@@ -3,6 +3,7 @@
 import { type JSX, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -30,6 +31,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
+import { normalizeCustomDomain } from '@/lib/customDomain';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -88,6 +90,12 @@ type SiteKeyCheckResponse = {
 type SiteLabelCheckResponse = {
   ok?: boolean;
   normalizedSiteLabel?: string;
+  error?: string;
+};
+
+type CustomDomainCheckResponse = {
+  ok?: boolean;
+  customDomain?: string;
   error?: string;
 };
 
@@ -166,6 +174,12 @@ export default function Opt() {
   const [isSiteKeyAvailable, setIsSiteKeyAvailable] = useState(false);
   const [siteKeyCheckMessage, setSiteKeyCheckMessage] = useState('');
 
+  const [isCheckingCustomDomain, setIsCheckingCustomDomain] = useState(false);
+  const [checkedCustomDomain, setCheckedCustomDomain] = useState('');
+  const [isCustomDomainAvailable, setIsCustomDomainAvailable] = useState(false);
+  const [customDomainCheckMessage, setCustomDomainCheckMessage] = useState('');
+  const [customDomainCheckError, setCustomDomainCheckError] = useState(false);
+
   const [isCheckingSiteLabel, setIsCheckingSiteLabel] = useState(false);
   const [checkedSiteLabel, setCheckedSiteLabel] = useState('');
   const [isSiteLabelAvailable, setIsSiteLabelAvailable] = useState(false);
@@ -224,6 +238,13 @@ export default function Opt() {
     setSiteLabelCheckMessage('');
   }
 
+  function resetCustomDomainCheck() {
+    setCheckedCustomDomain('');
+    setIsCustomDomainAvailable(false);
+    setCustomDomainCheckMessage('');
+    setCustomDomainCheckError(false);
+  }
+
   function startEdit(field: EditableField, value: string | boolean | null) {
     setEditingField(field);
     setDraftValue(typeof value === 'boolean' ? value : (value ?? ''));
@@ -231,6 +252,7 @@ export default function Opt() {
     setSuccessMessage('');
     resetSiteKeyCheck();
     resetSiteLabelCheck();
+    resetCustomDomainCheck();
 
     if (field === 'site_key' && typeof value === 'string') {
       setCheckedSiteKey(value);
@@ -240,6 +262,13 @@ export default function Opt() {
     if (field === 'site_label' && typeof value === 'string') {
       setCheckedSiteLabel(value.trim());
       setIsSiteLabelAvailable(Boolean(value.trim()));
+    }
+
+    if (field === 'custom_domain' && typeof value === 'string' && value.trim()) {
+      const customDomain = normalizeCustomDomain(value);
+      setDraftValue(customDomain);
+      setCheckedCustomDomain(customDomain);
+      setIsCustomDomainAvailable(true);
     }
   }
 
@@ -253,6 +282,7 @@ export default function Opt() {
     setSuccessMessage('');
     resetSiteKeyCheck();
     resetSiteLabelCheck();
+    resetCustomDomainCheck();
   }
 
   function handleTextChange(event: InputChangeEvent | TextAreaChangeEvent) {
@@ -422,6 +452,44 @@ export default function Opt() {
     }
   }
 
+  async function handleCheckCustomDomain() {
+    if (isCheckingCustomDomain) return;
+
+    const customDomain = normalizeCustomDomain(String(draftValue));
+    setDraftValue(customDomain);
+    setErrorMessage('');
+    setSuccessMessage('');
+    resetCustomDomainCheck();
+
+    try {
+      setIsCheckingCustomDomain(true);
+      const response = await fetch('/api/site/check-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ customDomain, siteName }),
+      });
+      const result = (await response.json()) as CustomDomainCheckResponse;
+      const normalizedDomain = normalizeCustomDomain(result.customDomain ?? customDomain);
+      setDraftValue(normalizedDomain);
+
+      if (!response.ok || !result.ok) {
+        setCheckedCustomDomain(normalizedDomain);
+        setCustomDomainCheckError(true);
+        return;
+      }
+
+      setCheckedCustomDomain(normalizedDomain);
+      setIsCustomDomainAvailable(true);
+      setCustomDomainCheckMessage('사용 가능한 커스텀 도메인입니다.');
+    } catch (unknownError) {
+      setCustomDomainCheckError(true);
+      resetCustomDomainCheck();
+    } finally {
+      setIsCheckingCustomDomain(false);
+    }
+  }
+
   async function refreshInfo(nextSiteName?: string) {
     const targetSiteName = nextSiteName ?? siteName;
 
@@ -474,6 +542,16 @@ export default function Opt() {
       }
     }
 
+    if (field === 'custom_domain') {
+      const customDomain = normalizeCustomDomain(String(nextValue));
+
+      if (customDomain && (!isCustomDomainAvailable || checkedCustomDomain !== customDomain)) {
+        setErrorMessage('커스텀 도메인 중복 확인을 해주세요.');
+        setSuccessMessage('');
+        return false;
+      }
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
     setIsSubmitting(true);
@@ -517,6 +595,7 @@ export default function Opt() {
       setEditingField(null);
       resetSiteKeyCheck();
       resetSiteLabelCheck();
+      resetCustomDomainCheck();
       setSuccessMessage('저장되었습니다.');
       setIsSubmitting(false);
       return true;
@@ -1121,17 +1200,50 @@ export default function Opt() {
             <Typography variant="subtitle2">커스텀 도메인</Typography>
             {editingField === 'custom_domain' ? (
               <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
-                <TextField
-                  value={String(draftValue)}
-                  onChange={(event) => {
-                    setDraftValue(event.target.value);
-                    setErrorMessage('');
-                  }}
-                  fullWidth
-                  size="small"
-                  disabled={!hasOwnerDomainFeature}
-                  helperText={!hasOwnerDomainFeature ? '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.' : ''}
-                />
+                <Stack flex={1} minWidth={0}>
+                  <TextField
+                    value={String(draftValue)}
+                    onChange={(event) => {
+                      setDraftValue(normalizeCustomDomain(event.target.value));
+                      setErrorMessage('');
+                      setSuccessMessage('');
+                      resetCustomDomainCheck();
+                    }}
+                    onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCustomDomain, isCheckingCustomDomain)}
+                    fullWidth
+                    size="small"
+                    disabled={!hasOwnerDomainFeature}
+                    helperText={
+                      !hasOwnerDomainFeature
+                        ? '커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.'
+                        : '프로토콜 없이 입력해주세요. 예: example.com'
+                    }
+                    slotProps={{
+                      htmlInput: { maxLength: 253 },
+                      input: {
+                        startAdornment: <InputAdornment position="start">https://</InputAdornment>,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <button
+                              type="button"
+                              className="button small action"
+                              onClick={() => void handleCheckCustomDomain()}
+                              disabled={isCheckingCustomDomain}
+                            >
+                              중복 확인
+                            </button>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                  {customDomainCheckError ? (
+                    <p className="alert error">
+                      <ErrorOutlineRoundedIcon />
+                      <span>사용하실 수 없는 도메인입니다.</span>
+                    </p>
+                  ) : null}
+                </Stack>
                 <Stack gap={1} direction="row" justifyContent="flex-end">
                   <button
                     type="button"
@@ -1149,6 +1261,15 @@ export default function Opt() {
                     수정 완료
                   </button>
                 </Stack>
+                {customDomainCheckMessage ? (
+                  <Snackbar
+                    open={Boolean(customDomainCheckMessage)}
+                    message={customDomainCheckMessage}
+                    autoHideDuration={2700}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    onClose={() => setCustomDomainCheckMessage('')}
+                  />
+                ) : null}
               </Stack>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
@@ -1584,7 +1705,11 @@ export default function Opt() {
         <DialogTitle>블로그 타입 변경 안내</DialogTitle>
         <DialogContent>팀원 존재시 1인 블로그로 전환하실 수 없어요.</DialogContent>
         <DialogActions>
-          <button type="button" className="button medium submit" onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}>
+          <button
+            type="button"
+            className="button medium submit"
+            onClick={() => setIsTeamMemberBlogTypeDialogOpen(false)}
+          >
             확인
           </button>
         </DialogActions>

@@ -1,5 +1,7 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSessionClaims } from '@/lib/session';
+import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getPublicSiteContentUrl, getPublicSiteUrl } from '@/lib/siteUrl';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -50,6 +52,7 @@ type MembershipRow = {
 };
 
 type SiteRow = {
+  owner_id: string | null;
   id: string;
   site_key: string;
   site_label: string | null;
@@ -59,6 +62,7 @@ type SiteRow = {
   is_shutdown: boolean | null;
   is_blocked: boolean | null;
   is_closed: boolean | null;
+  custom_domain: string | null;
 };
 
 function getMembershipStatus(membership: MembershipRow): MembershipStatus | null {
@@ -216,7 +220,7 @@ export async function GET() {
         ? await supabaseAdmin
             .from('rhizomes')
             .select(
-              'id, site_key, site_label, site_type, profile_picture, profile_logo, is_shutdown, is_blocked, is_closed',
+              'id, owner_id, site_key, site_label, site_type, profile_picture, profile_logo, is_shutdown, is_blocked, is_closed, custom_domain',
             )
             .in('id', siteIds)
         : { data: [], error: null };
@@ -227,6 +231,12 @@ export async function GET() {
 
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteMap = new Map(sites.map((site) => [site.id, site]));
+    const ownerIds = [...new Set(sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerDomainFeatures = new Map(
+      await Promise.all(
+        ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),
+      ),
+    );
     const membershipMap = new Map(memberships.map((membership) => [membership.site_id, membership]));
 
     const joinSites = rpcSites
@@ -246,11 +256,16 @@ export async function GET() {
 
         const siteRow = siteMap.get(site.id);
         const operationalStatus = siteRow ? getOperationalStatus(siteRow) : 'normal';
+        const siteUrl = getPublicSiteUrl({
+          siteKey,
+          customDomain: siteRow?.custom_domain,
+          hasOwnerDomainFeature: ownerDomainFeatures.get(siteRow?.owner_id ?? '') === true,
+        });
 
         const latestPosts = (Array.isArray(site.latest_posts) ? site.latest_posts : []).map((post) => ({
           id: post.id,
           subject: normalizeText(post.subject),
-          href: `/${post.board_key}/${post.slug}`,
+          href: getPublicSiteContentUrl(siteUrl, `/${post.board_key}/${post.slug}`),
           authorName: getAuthorName(post),
           commentCount: Number(post.comment_count) || 0,
           publishedAt: post.published_at,
@@ -259,6 +274,7 @@ export async function GET() {
         return {
           id: site.id,
           site_key: siteKey,
+          site_url: siteUrl,
           site_label: siteLabel,
           site_type: normalizeText(site.site_type).toLowerCase(),
           profilePictureUrl: getPublicUrl('avatar', site.profile_picture),
@@ -275,6 +291,7 @@ export async function GET() {
         ): site is {
           id: string;
           site_key: string;
+          site_url: string;
           site_label: string;
           site_type: string;
           profilePictureUrl: string | null;
