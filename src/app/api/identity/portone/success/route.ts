@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
         name: mock.name,
         birthDate: mock.birth_date.replace(/\D/g, '').slice(0, 8),
         gender: mock.gender,
+        phoneNumber: null,
         ci: mock.ci,
         di: mock.ci,
       };

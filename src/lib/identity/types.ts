@@ -52,6 +52,7 @@ export type VerifiedIdentity = {
   name: string;
   birthDate: string;
   gender: string;
+  phoneNumber: string | null;
   ci: string | null;
   di: string | null;
 };

@@ -72,6 +72,7 @@ type SubscriptionStartResponse =
       channelKey: string;
       customerKey: string;
       customerName: string;
+      customerPhone: string;
       orderNo: string;
       orderName: string;
       amount: number;
@@ -489,6 +490,7 @@ export default function SubscriptionButton({
         !result.channelKey ||
         !result.customerKey ||
         !result.customerName ||
+        !result.customerPhone ||
         !result.orderNo ||
         !result.orderName ||
         !result.successUrl
@@ -508,6 +510,7 @@ export default function SubscriptionButton({
           customerId: result.customerKey,
           fullName: result.customerName,
           email: result.customerName,
+          phoneNumber: result.customerPhone,
         },
         redirectUrl: result.successUrl,
       })) as PortOneBillingKeyResponse | undefined;

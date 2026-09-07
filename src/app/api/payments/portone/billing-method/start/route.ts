@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import crypto from 'crypto';
-import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomerName, getPaymentCustomerPhone } from '@/lib/payments/customer';
+import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { getPortOneKpnSubscriptionChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import verifySession from '@/lib/session/verifySession';
 import { normalizeText } from '@/lib/utils';
@@ -10,13 +10,6 @@ type BillingMethodStartBody = {
   successUrl?: string;
   failUrl?: string;
 };
-
-function createOrderNo() {
-  const randomText = crypto.randomBytes(8).toString('hex');
-  const timestamp = Date.now();
-
-  return `VH-BILL-METHOD-${timestamp}-${randomText}`;
-}
 
 function getSafeRedirectUrl(request: NextRequest, url: string | undefined) {
   if (!url) {
@@ -47,12 +40,17 @@ export async function POST(request: NextRequest) {
 
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
+    const customerPhone = await getPaymentCustomerPhone(session.authUserId);
 
     if (!customerName) {
       return Response.json({ paymentEmailRequired: true });
     }
 
-    const orderNo = createOrderNo();
+    if (!customerPhone) {
+      return Response.json({ error: '본인인증된 휴대전화 번호를 확인하지 못했습니다.' }, { status: 400 });
+    }
+
+    const orderNo = createPaymentOrderNo('BILLING_METHOD');
 
     successUrl.searchParams.set('orderNo', orderNo);
     successUrl.searchParams.set('customerKey', customerKey);
@@ -64,6 +62,7 @@ export async function POST(request: NextRequest) {
       channelKey: getPortOneKpnSubscriptionChannelKey(),
       customerKey,
       customerName,
+      customerPhone,
       orderNo,
       orderName,
       successUrl: successUrl.toString(),

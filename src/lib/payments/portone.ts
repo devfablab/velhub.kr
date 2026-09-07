@@ -7,7 +7,7 @@ const PORTONE_PROVIDER = {
 
 type PortOneProvider = (typeof PORTONE_PROVIDER)[keyof typeof PORTONE_PROVIDER];
 
-const CURRENT_PORTONE_PROVIDER: PortOneProvider = PORTONE_PROVIDER.KPN;
+const CURRENT_PORTONE_PROVIDER: PortOneProvider = PORTONE_PROVIDER.INICIS;
 
 type PortOneErrorResponse = {
   type?: string;

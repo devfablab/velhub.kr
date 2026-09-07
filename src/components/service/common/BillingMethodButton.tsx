@@ -20,6 +20,7 @@ type BillingMethodStatusResponse = {
 type BillingMethodStartResponse =
   | {
       customerName: string | undefined;
+      customerPhone: string;
       storeId: string;
       channelKey: string;
       customerKey: string;
@@ -85,6 +86,7 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       !result.storeId ||
       !result.channelKey ||
       !result.customerKey ||
+      !result.customerPhone ||
       !result.orderNo ||
       !result.orderName ||
       !result.successUrl
@@ -102,6 +104,7 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
         customerId: result.customerKey,
         fullName: result.customerName,
         email: paymentEmail,
+        phoneNumber: result.customerPhone,
       },
       redirectUrl: result.successUrl,
     })) as PortOneBillingKeyResponse | undefined;

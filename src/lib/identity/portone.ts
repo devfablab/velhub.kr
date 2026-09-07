@@ -125,6 +125,7 @@ export function extractVerifiedIdentity(
   const name = getString(verifiedCustomer.name);
   const birthDate = normalizeBirthDate(getString(verifiedCustomer.birthDate));
   const gender = getString(verifiedCustomer.gender);
+  const phoneNumber = getString(verifiedCustomer.phoneNumber);
   const ci = getString(verifiedCustomer.ci) || getString(identityVerification.ci);
   const di = getString(verifiedCustomer.di) || getString(identityVerification.di);
 
@@ -137,6 +138,7 @@ export function extractVerifiedIdentity(
     name,
     birthDate,
     gender,
+    phoneNumber: phoneNumber || null,
     ci: ci || null,
     di: di || null,
   };

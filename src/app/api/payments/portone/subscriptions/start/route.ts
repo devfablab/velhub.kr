@@ -2,7 +2,7 @@ import { encrypt } from '@/lib/encryption/encrypt';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
-import { createCustomerKey, getPaymentCustomerName } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomerName, getPaymentCustomerPhone } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
@@ -571,9 +571,14 @@ export async function POST(request: Request) {
     });
     const customerKey = createCustomerKey(session.authUserId);
     const customerName = await getPaymentCustomerName(session.authUserId);
+    const customerPhone = await getPaymentCustomerPhone(session.authUserId);
 
     if (!customerName) {
       return Response.json({ paymentEmailRequired: true });
+    }
+
+    if (!customerPhone) {
+      return Response.json({ error: '본인인증된 휴대전화 번호를 확인하지 못했습니다.' }, { status: 400 });
     }
 
     const orderNo = createSubscriptionOrderNo(targetType);
@@ -637,6 +642,7 @@ export async function POST(request: Request) {
         channelKey: getPortOneKpnSubscriptionChannelKey(),
         customerKey,
         customerName,
+        customerPhone,
         orderNo,
         paymentId: createPortOnePaymentKey(orderNo),
         orderName,
