@@ -37,6 +37,7 @@ type RhizomeStateResult = {
     is_shutdown?: boolean | null;
     is_blocked?: boolean | null;
     is_closed?: boolean | null;
+    is_membership_suspended?: boolean | null;
     site_type?: string | null;
     join_accept_status?: string | null;
     join_accept_start_day?: string | null;
@@ -617,6 +618,16 @@ export async function proxy(request: NextRequest) {
 
       if (pathname !== closedPath) {
         return redirectWithPath(request, closedPath);
+      }
+
+      return response;
+    }
+
+    if (rhizomeState.response.ok && rhizomeState.result?.siteInfo?.is_membership_suspended === true) {
+      const suspendedPath = `/${siteName}/suspended`;
+
+      if (pathname !== suspendedPath) {
+        return redirectWithPath(request, suspendedPath);
       }
 
       return response;

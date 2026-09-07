@@ -1,4 +1,5 @@
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { hasMembershipFeature } from '@/lib/memberships/features';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -64,6 +65,20 @@ export async function GET(request: Request) {
     const ownerId = rhizome.data.owner_id;
     const siteType = rhizome.data.site_type;
 
+    const siteLimitPromise =
+      ownerId && (siteType === 'blog' || siteType === 'community')
+        ? Promise.all([
+            hasMembershipFeature(ownerId, 'owner_unlimited_sites'),
+            supabaseAdmin
+              .from('rhizomes')
+              .select('id')
+              .eq('owner_id', ownerId)
+              .eq('site_type', siteType)
+              .order('created_at', { ascending: true })
+              .order('id', { ascending: true }),
+          ])
+        : Promise.resolve(null);
+
     const chorogonPromise = ownerId
       ? (async () => {
           return await supabaseAdmin
@@ -91,11 +106,16 @@ export async function GET(request: Request) {
           })()
         : Promise.resolve(null);
 
-    const [chorogonRes, boardsRes, communityRes] = await Promise.all([
+    const [chorogonRes, boardsRes, communityRes, siteLimitResult] = await Promise.all([
       chorogonPromise,
       boardsPromise,
       communityPromise,
+      siteLimitPromise,
     ]);
+
+    const [hasUnlimitedSites, ownerSitesResult] = siteLimitResult ?? [false, null];
+    const ownerSiteIds = ownerSitesResult?.data?.map((site) => site.id) ?? [];
+    const isMembershipSuspended = !hasUnlimitedSites && ownerSiteIds.indexOf(siteId) > 0;
 
     let purchaseAvailable = false;
     if (chorogonRes && !chorogonRes.error && chorogonRes.data?.identity_verified_at) {
@@ -150,6 +170,7 @@ export async function GET(request: Request) {
         is_shutdown: rhizome.data.is_shutdown,
         is_blocked: rhizome.data.is_blocked,
         is_closed: rhizome.data.is_closed,
+        is_membership_suspended: isMembershipSuspended,
         purchase_available: purchaseAvailable,
         join_accept_status: joinAcceptStatus,
         join_accept_start_day: joinAcceptStartDay,

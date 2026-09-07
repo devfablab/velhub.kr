@@ -68,11 +68,17 @@ function getNotificationHref({
   site,
   board,
   post,
+  notificationType,
 }: {
   site: SiteRow | null;
   board: BoardRow | null;
   post: PostRow | null;
+  notificationType: string;
 }) {
+  if (notificationType === NOTIFICATION_TYPE.MEMBERSHIP_PAYMENT_FAILED) {
+    return '/hub/memberships';
+  }
+
   if (!site) {
     return null;
   }
@@ -308,6 +314,7 @@ export async function GET() {
             site,
             board,
             post,
+            notificationType: notification.notification_type,
           }),
           isRead: notification.is_read,
         },

@@ -10,7 +10,7 @@ export default function Page() {
           <div className="paper page-error">
             <ServiceErrorIcon />
             <h2>운영 중단 사이트</h2>
-            <p>해결될 떄까지 기다려 주세요.</p>
+            <p>현재 이용할 수 없는 사이트입니다.</p>
           </div>
         </div>
       </div>

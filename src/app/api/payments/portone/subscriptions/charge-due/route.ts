@@ -23,6 +23,7 @@ import {
   SUBSCRIPTION_STATUS,
   SUBSCRIPTION_TYPE,
 } from '@/lib/payments/types';
+import { NOTIFICATION_TYPE } from '@/lib/notifications/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 type SupabaseAdminClient = ReturnType<typeof getSupabaseAdmin>;
@@ -194,6 +195,24 @@ async function markPastDue({
 
   if (subscriptionUpdateResult.error) {
     console.error(subscriptionUpdateResult.error);
+  }
+
+  if (subscription.subscription_type === SUBSCRIPTION_TYPE.MEMBERSHIP) {
+    const notificationResult = await supabaseAdmin.from('notifications').insert({
+      user_id: subscription.subscriber_user_id,
+      send_user_id: null,
+      target_id: subscription.target_id,
+      send_site_id: null,
+      send_board_id: null,
+      send_series_id: null,
+      send_post_id: null,
+      notification_type: NOTIFICATION_TYPE.MEMBERSHIP_PAYMENT_FAILED,
+      is_read: false,
+    });
+
+    if (notificationResult.error) {
+      console.error(notificationResult.error);
+    }
   }
 }
 

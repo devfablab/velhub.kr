@@ -405,12 +405,14 @@ export default function MembershipPlan() {
 
     if (membership) {
       const isCanceled = membership.subscriptionStatus === 'canceled';
+      const isPastDue = membership.subscriptionStatus === 'past_due';
 
       return {
-        label: isCanceled ? '다음 결제 취소됨' : '유료 기능 이용 중',
+        label: isPastDue ? '결제 유예 중' : isCanceled ? '다음 결제 취소됨' : '유료 기능 이용 중',
         membership,
         isDirectMembership: true,
         isCanceled,
+        isPastDue,
       };
     }
 
@@ -420,6 +422,7 @@ export default function MembershipPlan() {
         membership: membershipByType.get('all_in_one'),
         isDirectMembership: false,
         isCanceled: false,
+        isPastDue: false,
       };
     }
 
@@ -428,6 +431,7 @@ export default function MembershipPlan() {
       membership: null,
       isDirectMembership: false,
       isCanceled: false,
+      isPastDue: false,
     };
   }
 
@@ -554,6 +558,15 @@ export default function MembershipPlan() {
                           </Typography>
                         ))}
                       </Stack>
+                    ) : null}
+                    {status.isPastDue ? (
+                      <p className="alert warning">
+                        <InfoOutlineRoundedIcon />
+                        <span>
+                          자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요. 유예 기간 안에 결제가
+                          완료되지 않으면 멤버십 기능 이용이 종료됩니다.
+                        </span>
+                      </p>
                     ) : null}
                     {!status.membership ? (
                       <>

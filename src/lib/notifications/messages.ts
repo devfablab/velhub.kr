@@ -285,6 +285,13 @@ export function getNotificationText(
     };
   }
 
+  if (notificationType === NOTIFICATION_TYPE.MEMBERSHIP_PAYMENT_FAILED) {
+    return {
+      title: '멤버십 자동결제 실패',
+      message: '자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요.',
+    };
+  }
+
   return {
     title: '즐겨찾기 블로그 새 글',
     message: `${siteLabel} 블로그에 「${postSubject}」 글이 올라왔습니다.`,

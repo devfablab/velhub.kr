@@ -1,10 +1,16 @@
+import { isMinor } from '@/lib/identity/age';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { getPastDueGraceDays } from '@/lib/payments/refunds';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { MEMBERSHIP_FEATURES, type MembershipFeatureKey } from './catalog';
 
 const featureKeys = new Set<MembershipFeatureKey>(MEMBERSHIP_FEATURES.map((feature) => feature.key));
 
-function isAvailableSubscription(subscription: { status: string; current_period_end: string | null }) {
+function isAvailableSubscription(
+  subscription: { status: string; current_period_end: string | null },
+  { isMinorUser }: { isMinorUser: boolean },
+) {
   if (
     subscription.status === SUBSCRIPTION_STATUS.ACTIVE ||
     subscription.status === SUBSCRIPTION_STATUS.TRIALING ||
@@ -13,11 +19,13 @@ function isAvailableSubscription(subscription: { status: string; current_period_
     return true;
   }
 
-  return (
-    subscription.status === SUBSCRIPTION_STATUS.CANCELED &&
-    !!subscription.current_period_end &&
-    new Date(subscription.current_period_end).getTime() > Date.now()
-  );
+  if (subscription.status !== SUBSCRIPTION_STATUS.CANCELED || !subscription.current_period_end) return false;
+
+  const periodEnd = new Date(subscription.current_period_end).getTime();
+  if (periodEnd > Date.now()) return true;
+
+  // 미성년 멤버십은 자동결제가 아닌 1개월 이용권이므로, 이용 종료 뒤에도 7일간 갱신 기회를 제공합니다.
+  return isMinorUser && periodEnd + getPastDueGraceDays() * 24 * 60 * 60 * 1000 > Date.now();
 }
 
 export async function getMembershipFeatures(stigmaId: string) {
@@ -34,7 +42,7 @@ export async function getMembershipFeatures(stigmaId: string) {
     return new Set<MembershipFeatureKey>();
   }
 
-  const [itemsResult, subscriptionsResult] = await Promise.all([
+  const [itemsResult, subscriptionsResult, identityResult] = await Promise.all([
     supabaseAdmin.from('membership_items').select('membership_id, plan_id').in('membership_id', membershipIds),
     supabaseAdmin
       .from('subscriptions')
@@ -42,14 +50,23 @@ export async function getMembershipFeatures(stigmaId: string) {
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
       .in('target_id', membershipIds),
+    supabaseAdmin
+      .from('chorogons')
+      .select('birth_date, birth_date_dummy')
+      .eq('user_id', stigmaId)
+      .maybeSingle(),
   ]);
 
-  if (itemsResult.error || subscriptionsResult.error) {
+  if (itemsResult.error || subscriptionsResult.error || identityResult.error) {
     throw new Error('멤버십 정보를 확인하지 못했습니다.');
   }
 
+  const isMinorUser = isMinor(getChorogonBirthDate(identityResult.data));
+
   const availableMembershipIds = new Set(
-    subscriptionsResult.data.filter(isAvailableSubscription).map((subscription) => subscription.target_id),
+    subscriptionsResult.data
+      .filter((subscription) => isAvailableSubscription(subscription, { isMinorUser }))
+      .map((subscription) => subscription.target_id),
   );
   const availablePlanIds = itemsResult.data
     .filter((item) => availableMembershipIds.has(item.membership_id))

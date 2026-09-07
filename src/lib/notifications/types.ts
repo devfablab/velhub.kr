@@ -41,6 +41,7 @@ export const NOTIFICATION_TYPE = {
   SERIES_SUBSCRIPTION_NEW_POST: 'series_subscription_new_post',
 
   FAVORITE_BLOG_NEW_POST: 'favorite_blog_new_post',
+  MEMBERSHIP_PAYMENT_FAILED: 'membership_payment_failed',
 } as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPE)[keyof typeof NOTIFICATION_TYPE];

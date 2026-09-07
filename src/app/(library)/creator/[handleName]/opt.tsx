@@ -536,8 +536,8 @@ export default function Opt({ handleName }: { handleName: string }) {
               </>
             )}
           </div>
-          <Stack gap={2}>
-            {data.hasCreatorPosts && (
+          {data.hasCreatorPosts ? (
+            <Stack gap={2}>
               <Stack direction="row" gap={1} sx={{ mb: 1 }}>
                 <button
                   type="button"
@@ -560,7 +560,6 @@ export default function Opt({ handleName }: { handleName: string }) {
                   연재글
                 </button>
               </Stack>
-            )}
 
             {data.posts.length ? (
               <ul className={`paper ${styles['user-posts']}`}>
@@ -602,7 +601,10 @@ export default function Opt({ handleName }: { handleName: string }) {
                 </button>
               </Stack>
             ) : null}
-          </Stack>
+            </Stack>
+          ) : (
+            <ScreenState kind="error">작가 개인 사정에 의해 이용이 중단된 프로필입니다.</ScreenState>
+          )}
         </div>
       </div>
     </main>
