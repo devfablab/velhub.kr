@@ -488,36 +488,6 @@ function getSecondaryRedirectPath({
     return siteType === 'community' ? `/${siteName}/manage/design/community/home` : `/${siteName}/manage/design/blog/fonts`;
   }
 
-  if (
-    pathname === `${contentPostsPath}/new` ||
-    pathname === `${contentPostsPath}/category` ||
-    pathname === `${contentPostsPath}/series`
-  ) {
-    return contentPostsPath;
-  }
-
-  const contentPostPathPrefix = `${contentPostsPath}/`;
-
-  if (pathname.startsWith(contentPostPathPrefix)) {
-    const segments = pathname.slice(contentPostPathPrefix.length).split('/').filter(Boolean);
-
-    if (segments.length === 1 || (segments.length === 2 && segments[1] === 'edit')) {
-      return contentPostsPath;
-    }
-
-    if (segments[0] === 'c') {
-      if (segments.length === 2) {
-        if (segments[1] === 'new') {
-          return contentPostsPath;
-        }
-
-        return siteType === 'community' ? null : contentPostsPath;
-      }
-
-      return contentPostsPath;
-    }
-  }
-
   return redirects[pathname] ?? null;
 }
 
