@@ -76,7 +76,7 @@ function getNotificationHref({
   notificationType: string;
 }) {
   if (notificationType === NOTIFICATION_TYPE.MEMBERSHIP_PAYMENT_FAILED) {
-    return '/hub/memberships';
+    return '/hub/purchase/memberships';
   }
 
   if (!site) {

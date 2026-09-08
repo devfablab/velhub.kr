@@ -591,6 +591,7 @@ export async function POST(request: Request) {
       .eq('user_id', session.stigmaId ?? '')
       .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true)
+      .order('created_at', { ascending: false })
       .limit(1);
 
     if (billingMethodResult.error) {

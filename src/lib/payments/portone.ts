@@ -74,7 +74,9 @@ export type PortOnePaymentResponse = {
 
 type PortOneBillingKeyCard = {
   issuer?: unknown;
+  bin?: unknown;
   type?: unknown;
+  ownerType?: unknown;
   number?: unknown;
   [key: string]: unknown;
 };
@@ -307,7 +309,8 @@ function getPortOneBillingMethodCandidates(billingKeyInfo: PortOneBillingKeyInfo
 }
 
 function parsePortOneBillingCardInfo(card: PortOneBillingKeyCard): PortOneBillingCardInfo | null {
-  const cardCompany = getStringValue(card.issuer);
+  const bin = getStringValue(card.bin);
+  const cardCompany = getStringValue(card.issuer) || getCardCompanyFromBin(bin) || 'CARD';
   const cardNumberMasked = getStringValue(card.number);
   const cardType = getStringValue(card.type);
 
@@ -321,6 +324,14 @@ function parsePortOneBillingCardInfo(card: PortOneBillingKeyCard): PortOneBillin
     cardType,
     ownerType: 'PERSONAL',
   };
+}
+
+function getCardCompanyFromBin(bin: string) {
+  const issuerByBin: Record<string, string> = {
+    '524727': 'HYUNDAI_CARD',
+  };
+
+  return issuerByBin[bin] ?? '';
 }
 
 export function getPortOneBillingCardInfo(billingKeyInfo: PortOneBillingKeyInfo): PortOneBillingCardInfo {

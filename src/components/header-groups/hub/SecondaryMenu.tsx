@@ -19,24 +19,28 @@ const secondaryMenus = [
     label: '커뮤니티 허브',
   },
   {
-    href: '/hub/memberships',
-    label: '멤버십',
+    href: '/hub/lounge',
+    label: '라운지',
+  },
+  {
+    href: '/hub/posts',
+    label: '포스트',
   },
   {
     href: '/hub/purchase',
     label: '구입내역',
   },
   {
-    href: '/hub/notifications',
-    label: '알림내역',
-  },
-  {
     href: '/hub/reports',
-    label: '신고 내역',
+    label: '신고관리',
   },
   {
     href: '/hub/revenue',
     label: '수입/정산',
+  },
+  {
+    href: '/hub/notifications',
+    label: '알림',
   },
 ];
 

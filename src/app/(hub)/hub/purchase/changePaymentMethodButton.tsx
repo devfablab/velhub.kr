@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import * as PortOne from '@portone/browser-sdk/v2';
+import DuplicateBillingMethodDialog from '@/components/service/common/DuplicateBillingMethodDialog';
 import styles from '@/app/hub.module.sass';
 
 type PortOneBillingKeyResponse = {
@@ -41,6 +42,7 @@ export default function ChangePaymentMethodButton() {
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isDuplicatePaymentMethodDialogOpen, setIsDuplicatePaymentMethodDialogOpen] = useState(false);
 
   const billingMethodMessage = getBillingMethodMessage(searchParams.get('billingMethod'), searchParams.get('message'));
 
@@ -89,6 +91,7 @@ export default function ChangePaymentMethodButton() {
         issueName: result.orderName,
         displayAmount: result.amount,
         currency: 'KRW',
+        offerPeriod: { interval: '1m' },
         customer: {
           customerId: result.customerKey,
           fullName: result.customerName,
@@ -123,10 +126,16 @@ export default function ChangePaymentMethodButton() {
         }),
       });
 
-      const successResult = (await successResponse.json()) as { error?: string };
+      const successResult = (await successResponse.json()) as { error?: string; duplicatePaymentMethod?: boolean };
 
       if (!successResponse.ok) {
         throw new Error(successResult.error ?? '결제수단을 변경하지 못했습니다.');
+      }
+
+      if (successResult.duplicatePaymentMethod) {
+        setIsProcessing(false);
+        setIsDuplicatePaymentMethodDialogOpen(true);
+        return;
       }
 
       window.location.href = '/hub/purchase?billingMethod=success';
@@ -148,6 +157,12 @@ export default function ChangePaymentMethodButton() {
       </button>
       {errorMessage ? <p role="status">{errorMessage}</p> : null}
       {!errorMessage && billingMethodMessage ? <p role="status">{billingMethodMessage}</p> : null}
+      <DuplicateBillingMethodDialog
+        open={isDuplicatePaymentMethodDialogOpen}
+        title="결제수단 변경"
+        onClose={() => setIsDuplicatePaymentMethodDialogOpen(false)}
+        onConfirm={() => (window.location.href = '/hub/purchase?billingMethod=success')}
+      />
     </div>
   );
 }

@@ -319,10 +319,16 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                   <span>커뮤니티 허브</span>
                 </Anchor>
               </MenuItem>
+              <MenuItem key="lounge" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/lounge">
+                  <LoyaltyOutlinedIcon fontSize="small" />
+                  <span>라운지</span>
+                </Anchor>
+              </MenuItem>
               <MenuItem key="posts" onClick={handleCloseProfileDrawer}>
                 <Anchor href="/hub/posts">
                   <EditOutlinedIcon fontSize="small" />
-                  <span>내가 쓴 글</span>
+                  <span>포스트</span>
                 </Anchor>
               </MenuItem>
               <MenuItem key="purchase" onClick={handleCloseProfileDrawer}>
@@ -331,16 +337,10 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                   <span>구입내역</span>
                 </Anchor>
               </MenuItem>
-              <MenuItem key="notifications" onClick={handleCloseProfileDrawer}>
-                <Anchor href="/hub/notifications">
-                  <NotificationsOutlinedIcon fontSize="small" />
-                  <span>알림내역</span>
-                </Anchor>
-              </MenuItem>
               <MenuItem key="reports" onClick={handleCloseProfileDrawer}>
                 <Anchor href="/hub/reports">
                   <ReportOutlinedIcon fontSize="small" />
-                  <span>신고 내역</span>
+                  <span>신고관리</span>
                 </Anchor>
               </MenuItem>
               <MenuItem key="revenue" onClick={handleCloseProfileDrawer}>
@@ -349,10 +349,10 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
                   <span>수입/정산</span>
                 </Anchor>
               </MenuItem>
-              <MenuItem key="memberships" onClick={handleCloseProfileDrawer}>
-                <Anchor href="/hub/memberships">
-                  <LoyaltyOutlinedIcon fontSize="small" />
-                  <span>멤버십 관리</span>
+              <MenuItem key="notifications" onClick={handleCloseProfileDrawer}>
+                <Anchor href="/hub/notifications">
+                  <NotificationsOutlinedIcon fontSize="small" />
+                  <span>알림</span>
                 </Anchor>
               </MenuItem>
 

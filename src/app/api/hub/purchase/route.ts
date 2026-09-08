@@ -265,8 +265,7 @@ export async function GET() {
           ].join(', '),
         )
         .eq('user_id', session.stigmaId)
-        .order('is_default', { ascending: false })
-        .order('updated_at', { ascending: false }),
+        .order('created_at', { ascending: false }),
     ]);
 
     if (paymentsResult.error) {
@@ -365,14 +364,14 @@ export async function GET() {
 
     return Response.json({
       summary: getSummary(payments),
-      billingMethods: billingMethods.map((billingMethod) => ({
+      billingMethods: billingMethods.map((billingMethod, index) => ({
         id: billingMethod.id,
         provider: billingMethod.provider,
         cardCompany: billingMethod.card_company,
         cardNumberLabel: formatCardNumber(billingMethod.card_number_masked),
         cardType: billingMethod.card_type,
         ownerType: billingMethod.owner_type,
-        isDefault: billingMethod.is_default,
+        isDefault: index === 0,
         createdAt: billingMethod.created_at,
         updatedAt: billingMethod.updated_at,
       })),

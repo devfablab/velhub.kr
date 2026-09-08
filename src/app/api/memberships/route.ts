@@ -21,9 +21,9 @@ export async function GET() {
       .order('updated_at', { ascending: false }),
     supabaseAdmin
       .from('subscription_billing_methods')
-      .select('id, card_company, card_number_masked, card_type, owner_type, is_default')
+      .select('id, card_company, card_number_masked, card_type, owner_type, is_default, created_at')
       .eq('user_id', currentStigma.stigmaId)
-      .order('is_default', { ascending: false }),
+      .order('created_at', { ascending: false }),
     getMembershipFeatures(currentStigma.stigmaId),
   ]);
 
@@ -111,13 +111,13 @@ export async function GET() {
       currentPeriodEnd: subscriptionByMembershipId.get(membership.id)?.currentPeriodEnd ?? null,
       createdAt: subscriptionByMembershipId.get(membership.id)?.createdAt ?? null,
     })),
-    billingMethods: (billingMethodResult.data ?? []).map((billingMethod) => ({
+    billingMethods: (billingMethodResult.data ?? []).map((billingMethod, index) => ({
       id: billingMethod.id as string,
       cardCompany: billingMethod.card_company as string | null,
       cardNumberMasked: billingMethod.card_number_masked as string | null,
       cardType: billingMethod.card_type as string | null,
       ownerType: billingMethod.owner_type as string | null,
-      isDefault: Boolean(billingMethod.is_default),
+      isDefault: index === 0,
     })),
   });
 }

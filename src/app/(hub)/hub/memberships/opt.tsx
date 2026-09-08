@@ -336,7 +336,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 결제를 완료하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships');
+      window.location.replace('/hub/purchase/memberships');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 결제를 완료하지 못했습니다.');
       setIsSubmitting(false);
@@ -365,7 +365,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 구독 상태를 변경하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships');
+      window.location.replace('/hub/purchase/memberships');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 구독 상태를 변경하지 못했습니다.');
       setIsChangingSubscription(false);
@@ -393,7 +393,7 @@ export default function MembershipPlan() {
         throw new Error(result.error || '멤버십 환불을 완료하지 못했습니다.');
       }
 
-      window.location.replace('/hub/memberships');
+      window.location.replace('/hub/purchase/memberships');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '멤버십 환불을 완료하지 못했습니다.');
       setIsChangingSubscription(false);

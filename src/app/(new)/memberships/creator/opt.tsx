@@ -339,7 +339,7 @@ export default function Opt() {
         ? { allInOne: allInOneSelection }
         : { owner: effectiveOwnerSelection, creator: effectiveCreatorSelection };
 
-    router.push(`/hub/memberships?selection=${encodeURIComponent(JSON.stringify(selection))}`);
+    router.push(`/hub/purchase/memberships?selection=${encodeURIComponent(JSON.stringify(selection))}`);
   }
 
   if (!eligibility && !errorMessage) return null;

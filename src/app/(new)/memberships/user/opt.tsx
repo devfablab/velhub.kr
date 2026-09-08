@@ -101,7 +101,7 @@ export default function Opt() {
   }
 
   function handleMoveToPlan() {
-    router.push(`/hub/memberships?selection=${encodeURIComponent(JSON.stringify({ affetto: selection }))}`);
+    router.push(`/hub/purchase/memberships?selection=${encodeURIComponent(JSON.stringify({ affetto: selection }))}`);
   }
 
   return (

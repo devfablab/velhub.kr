@@ -67,15 +67,15 @@ export default function Opt() {
         const result = (await response.json()) as ReportsResponse;
 
         if (!response.ok) {
-          throw new Error(result.error ?? '신고 내역을 불러오지 못했습니다.');
+          throw new Error(result.error ?? '신고관리 정보를 불러오지 못했습니다.');
         }
 
         setItems(result.items ?? []);
       } catch (unknownError) {
         setErrorMessage(
           unknownError instanceof Error
-            ? unknownError.message || '신고 내역을 불러오지 못했습니다.'
-            : '신고 내역을 불러오지 못했습니다.',
+            ? unknownError.message || '신고관리 정보를 불러오지 못했습니다.'
+            : '신고관리 정보를 불러오지 못했습니다.',
         );
       } finally {
         setIsLoading(false);
@@ -92,7 +92,7 @@ export default function Opt() {
   return (
     <section className={`paper ${styles.paper} ${styles.reports}`}>
       <div className={styles.headline}>
-        <h2>신고 내역</h2>
+        <h2>신고관리</h2>
       </div>
 
       {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}

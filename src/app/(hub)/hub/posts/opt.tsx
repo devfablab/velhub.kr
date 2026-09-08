@@ -45,14 +45,12 @@ export default function Opt() {
     setMessage('');
     const response = await fetch(`/api/hub/posts?page=${nextPage}`);
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.message ?? '내가 쓴 글을 불러오지 못했습니다.');
+    if (!response.ok) throw new Error(payload.message ?? '포스트를 불러오지 못했습니다.');
     setData(payload);
   }, []);
 
   useEffect(() => {
-    load(page).catch((error) =>
-      setMessage(error instanceof Error ? error.message : '내가 쓴 글을 불러오지 못했습니다.'),
-    );
+    load(page).catch((error) => setMessage(error instanceof Error ? error.message : '포스트를 불러오지 못했습니다.'));
   }, [load, page]);
 
   if (message) return <ScreenState kind="error">{message}</ScreenState>;
@@ -63,7 +61,7 @@ export default function Opt() {
   return (
     <section className={`paper ${styles.paper} ${styles.reports}`}>
       <div className={styles.headline}>
-        <h2>내가 쓴 글</h2>
+        <h2>포스트</h2>
       </div>
       {data.posts.length ? (
         <Table>
@@ -80,7 +78,7 @@ export default function Opt() {
               <TableRow key={post.id}>
                 <TableCell>{post.seriesLabel}</TableCell>
                 <TableCell>
-                  <button type="button" className="button small action" onClick={() => openPost(post.url)}>
+                  <button type="button" className="button link" onClick={() => openPost(post.url)}>
                     {post.subject}
                   </button>
                 </TableCell>

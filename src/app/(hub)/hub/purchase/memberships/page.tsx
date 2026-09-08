@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../../menu';
+import MembershipPlan from '../../memberships/opt';
 import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
@@ -49,6 +51,9 @@ export default async function Page() {
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
         <Content>
+          <Suspense fallback={null}>
+            <MembershipPlan />
+          </Suspense>
           <section className={`paper ${styles.paper}`}>
             <h2>멤버십 결제 요약</h2>
             <dl className={styles.summary}>

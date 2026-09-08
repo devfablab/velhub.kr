@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
+import { encrypt } from '@/lib/encryption/encrypt';
 import { createCustomerKey } from '@/lib/payments/customer';
 import { getCurrentPortOneProvider, getPortOneBillingCardInfo, getPortOneBillingKeyInfo } from '@/lib/payments/portone';
+import { SUBSCRIPTION_STATUS } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -15,7 +17,21 @@ type BillingMethodSuccessBody = {
 type BillingMethodRow = {
   id: string;
   is_default: boolean;
+  billing_key: string;
+  card_company: string | null;
+  card_number_masked: string | null;
+  card_type: string | null;
+  owner_type: string | null;
 };
+
+function isSameBillingCard(billingMethod: BillingMethodRow, cardInfo: ReturnType<typeof getPortOneBillingCardInfo>) {
+  return (
+    normalizeText(billingMethod.card_company) === normalizeText(cardInfo.cardCompany) &&
+    normalizeText(billingMethod.card_number_masked) === normalizeText(cardInfo.cardNumberMasked) &&
+    normalizeText(billingMethod.card_type) === normalizeText(cardInfo.cardType) &&
+    normalizeText(billingMethod.owner_type) === normalizeText(cardInfo.ownerType)
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     const existingBillingMethodResult = await supabaseAdmin
       .from('subscription_billing_methods')
-      .select('id, is_default')
+      .select('id, is_default, billing_key, card_company, card_number_masked, card_type, owner_type')
       .eq('user_id', session.stigmaId)
       .eq('provider', getCurrentPortOneProvider())
       .eq('billing_key', billingKey)
@@ -91,6 +107,18 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '등록된 결제 수단을 확인하지 못했습니다.' }, { status: 500 });
     }
 
+    const duplicateBillingMethodResult = await supabaseAdmin
+      .from('subscription_billing_methods')
+      .select('id, is_default, billing_key, card_company, card_number_masked, card_type, owner_type')
+      .eq('user_id', session.stigmaId)
+      .neq('billing_key', billingKey);
+
+    if (duplicateBillingMethodResult.error) {
+      console.error(duplicateBillingMethodResult.error);
+
+      return Response.json({ error: '기존 결제수단을 확인하지 못했습니다.' }, { status: 500 });
+    }
+
     const clearDefaultResult = await supabaseAdmin
       .from('subscription_billing_methods')
       .update({
@@ -98,7 +126,6 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', session.stigmaId)
-      .eq('provider', getCurrentPortOneProvider())
       .eq('is_default', true);
 
     if (clearDefaultResult.error) {
@@ -129,32 +156,61 @@ export async function POST(request: NextRequest) {
         return Response.json({ error: '결제 수단을 갱신하지 못했습니다.' }, { status: 500 });
       }
 
-      return Response.json({ ok: true });
+    } else {
+      const billingMethodInsertResult = await supabaseAdmin.from('subscription_billing_methods').insert({
+        user_id: session.stigmaId,
+        provider: getCurrentPortOneProvider(),
+        customer_key: customerKey,
+        billing_key: billingKey,
+        card_company: cardInfo.cardCompany,
+        card_number_masked: cardInfo.cardNumberMasked,
+        owner_type: cardInfo.ownerType,
+        card_type: cardInfo.cardType,
+        is_default: true,
+      });
+
+      if (billingMethodInsertResult.error) {
+        console.error(billingMethodInsertResult.error);
+
+        return Response.json({ error: '결제 수단을 저장하지 못했습니다.' }, { status: 500 });
+      }
     }
 
-    if (!session.stigmaId) {
-      return Response.json({ error: '로그인 정보가 올바르지 않습니다.' }, { status: 401 });
+    const duplicateBillingMethodIds = ((duplicateBillingMethodResult.data ?? []) as BillingMethodRow[])
+      .filter((billingMethod) => isSameBillingCard(billingMethod, cardInfo))
+      .map((billingMethod) => billingMethod.id);
+
+    if (duplicateBillingMethodIds.length) {
+      const duplicateDeleteResult = await supabaseAdmin
+        .from('subscription_billing_methods')
+        .delete()
+        .in('id', duplicateBillingMethodIds);
+
+      if (duplicateDeleteResult.error) {
+        console.error(duplicateDeleteResult.error);
+
+        return Response.json({ error: '이전 결제수단을 정리하지 못했습니다.' }, { status: 500 });
+      }
+
+      const subscriptionUpdateResult = await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          billing_key: encrypt(billingKey),
+          customer_key: customerKey,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('subscriber_user_id', session.stigmaId)
+        .in('status', [SUBSCRIPTION_STATUS.TRIALING, SUBSCRIPTION_STATUS.ACTIVE, SUBSCRIPTION_STATUS.PAST_DUE])
+        .is('expired_at', null);
+
+      if (subscriptionUpdateResult.error) {
+        console.error(subscriptionUpdateResult.error);
+
+        return Response.json({ error: '구독 결제수단을 변경하지 못했습니다.' }, { status: 500 });
+      }
     }
 
-    const billingMethodInsertResult = await supabaseAdmin.from('subscription_billing_methods').insert({
-      user_id: session.stigmaId,
-      provider: getCurrentPortOneProvider(),
-      customer_key: customerKey,
-      billing_key: billingKey,
-      card_company: cardInfo.cardCompany,
-      card_number_masked: cardInfo.cardNumberMasked,
-      owner_type: cardInfo.ownerType,
-      card_type: cardInfo.cardType,
-      is_default: true,
-    });
-
-    if (billingMethodInsertResult.error) {
-      console.error(billingMethodInsertResult.error);
-
-      return Response.json({ error: '결제 수단을 저장하지 못했습니다.' }, { status: 500 });
-    }
-
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, duplicatePaymentMethod: duplicateBillingMethodIds.length > 0 });
   } catch (unknownError) {
     if (unknownError instanceof Error) {
       return Response.json({ error: unknownError.message || '결제 수단을 추가하지 못했습니다.' }, { status: 500 });

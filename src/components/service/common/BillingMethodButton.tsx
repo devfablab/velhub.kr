@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
+import DuplicateBillingMethodDialog from './DuplicateBillingMethodDialog';
 import PaymentEmailDialog from './PaymentEmailDialog';
 
 type PortOneBillingKeyResponse = {
@@ -40,6 +41,7 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
+  const [isDuplicatePaymentMethodDialogOpen, setIsDuplicatePaymentMethodDialogOpen] = useState(false);
 
   async function getBillingMethodStatus() {
     const response = await fetch('/api/payments/portone/billing-method/status', {
@@ -100,6 +102,7 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       billingKeyMethod: 'CARD',
       issueId: result.orderNo,
       issueName: result.orderName,
+      offerPeriod: { interval: '1m' },
       customer: {
         customerId: result.customerKey,
         fullName: result.customerName,
@@ -135,10 +138,16 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       }),
     });
 
-    const successResult = (await successResponse.json()) as { error?: string };
+    const successResult = (await successResponse.json()) as { error?: string; duplicatePaymentMethod?: boolean };
 
     if (!successResponse.ok) {
       throw new Error(successResult.error ?? '결제 수단을 추가하지 못했습니다.');
+    }
+
+    if (successResult.duplicatePaymentMethod) {
+      setIsProcessing(false);
+      setIsDuplicatePaymentMethodDialogOpen(true);
+      return;
     }
 
     window.location.reload();
@@ -194,6 +203,13 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
         open={isPaymentEmailDialogOpen}
         onClose={() => setIsPaymentEmailDialogOpen(false)}
         onSaved={handlePaymentEmailSaved}
+      />
+
+      <DuplicateBillingMethodDialog
+        open={isDuplicatePaymentMethodDialogOpen}
+        title="결제수단 추가"
+        onClose={() => setIsDuplicatePaymentMethodDialogOpen(false)}
+        onConfirm={() => window.location.reload()}
       />
 
       <Snackbar

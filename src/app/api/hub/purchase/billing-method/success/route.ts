@@ -77,7 +77,6 @@ export async function GET(request: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', session.stigmaId)
-      .eq('provider', provider)
       .eq('is_default', true);
 
     if (defaultClearResult.error) {

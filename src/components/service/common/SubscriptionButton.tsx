@@ -506,6 +506,7 @@ export default function SubscriptionButton({
         issueName: result.orderName,
         displayAmount: result.amount,
         currency: 'KRW',
+        offerPeriod: { interval: '1m' },
         customer: {
           customerId: result.customerKey,
           fullName: result.customerName,

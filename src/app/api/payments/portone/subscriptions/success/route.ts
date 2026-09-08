@@ -495,16 +495,18 @@ export async function POST(request: Request) {
         customerKey: customerKey!,
       };
 
-      const existingDefaultBillingMethodResult = await supabaseAdmin
+      const clearDefaultBillingMethodResult = await supabaseAdmin
         .from('subscription_billing_methods')
-        .select('id, is_default')
+        .update({
+          is_default: false,
+          updated_at: nowText,
+        })
         .eq('user_id', session.stigmaId ?? '')
-        .eq('provider', getCurrentPortOneProvider())
         .eq('is_default', true)
-        .maybeSingle();
+        .select('id');
 
-      if (existingDefaultBillingMethodResult.error) {
-        console.error(existingDefaultBillingMethodResult.error);
+      if (clearDefaultBillingMethodResult.error) {
+        console.error(clearDefaultBillingMethodResult.error);
 
         return Response.json({ error: '기본 결제수단을 확인하지 못했습니다.' }, { status: 500 });
       }
@@ -534,7 +536,7 @@ export async function POST(request: Request) {
             card_number_masked: cardInfo.cardNumberMasked,
             owner_type: cardInfo.ownerType,
             card_type: cardInfo.cardType,
-            is_default: existingDefaultBillingMethodResult.data ? existingBillingMethod.is_default : true,
+            is_default: true,
             updated_at: nowText,
           })
           .eq('id', existingBillingMethod.id);
@@ -560,7 +562,7 @@ export async function POST(request: Request) {
             card_number_masked: cardInfo.cardNumberMasked,
             owner_type: cardInfo.ownerType,
             card_type: cardInfo.cardType,
-            is_default: !existingDefaultBillingMethodResult.data,
+            is_default: true,
           })
           .select('id')
           .single();

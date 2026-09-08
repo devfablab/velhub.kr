@@ -1,19 +1,19 @@
 import { Metadata } from 'next';
 import Container from '../menu';
-import Opt from './opt';
+import MembershipSelectors from '../memberships/selectors/opt';
 import styles from '@/app/hub.module.sass';
 
 export const metadata: Metadata = {
-  title: '알림 - 마이허브 - 데브허브',
-  description: '알림',
+  title: '라운지 - 마이허브 - 데브허브',
+  description: '라운지 노출 관리',
 };
 
-export default function NotificationsPage() {
+export default function LoungePage() {
   return (
-    <Container pageTitle="알림" pageBack="/hub">
+    <Container pageTitle="라운지" pageBack="/hub">
       <div className="container">
         <div className={`content ${styles.content} ${styles['hub-content']}`}>
-          <Opt />
+          <MembershipSelectors />
         </div>
       </div>
     </Container>

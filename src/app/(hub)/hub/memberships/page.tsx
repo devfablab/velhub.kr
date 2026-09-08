@@ -1,24 +1,13 @@
-import { Suspense } from 'react';
-import { Metadata } from 'next';
-import Container from '../menu';
-import MembershipPlan from './opt';
-import Content from './tab';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: '멤버십 관리 - 마이허브 - 데브허브',
-  description: '이용 중인 멤버십과 결제수단을 관리합니다.',
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default function Page() {
-  return (
-    <Container pageTitle="멤버십 관리" pageBack="/hub">
-      <div className="container">
-        <Content>
-          <Suspense fallback={null}>
-            <MembershipPlan />
-          </Suspense>
-        </Content>
-      </div>
-    </Container>
-  );
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const selection = Array.isArray(params.selection) ? params.selection[0] : params.selection;
+  const query = selection ? `?selection=${encodeURIComponent(selection)}` : '';
+
+  redirect(`/hub/purchase/memberships${query}`);
 }
