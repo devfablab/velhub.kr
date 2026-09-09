@@ -51,6 +51,7 @@ type PurchasePayment = {
   paymentMethod: string | null;
   approvedAt: string | null;
   createdAt: string;
+  refundedAt: string | null;
   refundableUntil: string | null;
   failureMessage: string | null;
 };
@@ -132,6 +133,32 @@ export default async function Page() {
     );
   }
 
+  const recentPaymentHistory = result.recentPayments.flatMap((payment) => {
+    const isRefunded = payment.refundedAmount > 0;
+    const paymentHistory = {
+      ...payment,
+      historyKey: `${payment.id}:payment`,
+      historyStatusLabel: isRefunded ? '결제 완료' : payment.statusLabel,
+      historyAmount: payment.amount,
+      historyAt: payment.approvedAt ?? payment.createdAt,
+    };
+
+    if (!isRefunded) {
+      return [paymentHistory];
+    }
+
+    return [
+      {
+        ...payment,
+        historyKey: `${payment.id}:refund`,
+        historyStatusLabel: payment.statusLabel,
+        historyAmount: payment.refundedAmount,
+        historyAt: payment.refundedAt ?? payment.approvedAt ?? payment.createdAt,
+      },
+      paymentHistory,
+    ];
+  });
+
   return (
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
@@ -183,7 +210,7 @@ export default async function Page() {
 
           <section className={`paper ${styles.paper} ${styles.history}`}>
             <h2>최근 결제내역</h2>
-            {result.recentPayments.length ? (
+            {recentPaymentHistory.length ? (
               <TableContainer className={styles.items}>
                 <Table size="small" summary="최근 결제내역">
                   <TableHead>
@@ -209,12 +236,9 @@ export default async function Page() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {result.recentPayments.map((payment) => {
-                      const isRefunded = payment.status === 'refunded';
-                      const isPartiallyRefunded = payment.status === 'partially_refunded';
-                      const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
+                    {recentPaymentHistory.map((payment) => {
                       return (
-                        <TableRow key={payment.id}>
+                        <TableRow key={payment.historyKey}>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>
                             <Anchor href={payment.siteHref}>{payment.siteLabel}</Anchor>
                           </TableCell>
@@ -222,12 +246,12 @@ export default async function Page() {
                             <Anchor href={payment.targetHref}>{payment.targetLabel}</Anchor>
                           </TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.paymentTypeLabel}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.statusLabel}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.historyStatusLabel}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                            {formatAmount(displayAmount)}
+                            {formatAmount(payment.historyAmount)}
                           </TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                            {formatDateTime(payment.approvedAt ?? payment.createdAt)}
+                            {formatDateTime(payment.historyAt)}
                           </TableCell>
                         </TableRow>
                       );

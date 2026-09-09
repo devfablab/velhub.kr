@@ -16,6 +16,7 @@ type PaymentRow = {
   payment_method: string | null;
   approved_at: string | null;
   created_at: string;
+  refunded_at: string | null;
   refundable_until: string | null;
   failure_message: string | null;
 };
@@ -242,6 +243,7 @@ export async function GET() {
             'payment_method',
             'approved_at',
             'created_at',
+            'refunded_at',
             'refundable_until',
             'failure_message',
           ].join(', '),
@@ -419,6 +421,7 @@ export async function GET() {
           paymentMethod: payment.payment_method ?? PAYMENT_METHOD.CARD,
           approvedAt: payment.approved_at,
           createdAt: payment.created_at,
+          refundedAt: payment.refunded_at,
           refundableUntil: payment.refundable_until,
           failureMessage: payment.failure_message,
         };

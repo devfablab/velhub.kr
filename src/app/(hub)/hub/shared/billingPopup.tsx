@@ -35,6 +35,9 @@ export type BillingPopupDetail = {
   refundedAt: string | null;
   refundableUntil: string | null;
   isRefundable: boolean;
+  canRequestMinorCancellation?: boolean;
+  canForceRefundForTest?: boolean;
+  historyKind?: 'payment' | 'failed' | 'refund';
 };
 
 type BillingPopupProps = {
@@ -85,6 +88,10 @@ function getExtraRows(detail: BillingPopupDetail) {
     return [{ label: '주문번호', value: detail.orderNo || '(알 수 없음)' }];
   }
 
+  if (detail.historyKind) {
+    return [];
+  }
+
   if (detail.status === 'refunded' || detail.status === 'partially_refunded') {
     return [{ label: '마지막 이용일', value: formatDateTime(detail.refundedAt) }];
   }
@@ -109,7 +116,14 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
     { label: '결제유형', value: detail.paymentTypeLabel },
     { label: '결제수단', value: detail.paymentMethodLabel },
     { label: '상태', value: detail.statusLabel },
-    { label: '결제일', value: formatDateTime(detail.approvedAt ?? detail.createdAt) },
+    {
+      label: detail.historyKind === 'refund' ? '환불일' : detail.historyKind === 'failed' ? '실패일' : '결제일',
+      value: formatDateTime(
+        detail.historyKind === 'refund'
+          ? (detail.refundedAt ?? detail.approvedAt ?? detail.createdAt)
+          : (detail.approvedAt ?? detail.createdAt),
+      ),
+    },
     ...getExtraRows(detail),
     { label: '금액', value: getAmountLabel(detail) },
   ];
@@ -131,6 +145,7 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         },
         body: JSON.stringify({
           paymentId,
+          forceTestRefund: true,
         }),
       });
 
@@ -150,6 +165,15 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
 
       setIsRefunding(false);
     }
+  }
+
+  function handleMinorCancellationRequest() {
+    window.location.assign(
+      `/concierge/contact/inquiries/new?${new URLSearchParams({
+        paymentId,
+        inquiryType: 'minor_purchase_cancellation',
+      }).toString()}`,
+    );
   }
 
   const content = (
@@ -178,9 +202,16 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
           <Stack gap={3}>
             {content}
             <Stack direction="column" spacing={1.5}>
-              {detail.detailType === 'donation' && detail.isRefundable ? (
+              {detail.detailType === 'donation' && detail.canForceRefundForTest ? (
                 <button type="button" className="button medium cancel" onClick={handleRefund} disabled={isRefunding}>
-                  환불받기
+                  테스트환경 강제 환불
+                </button>
+              ) : null}
+              {detail.detailType === 'donation' &&
+              !detail.canForceRefundForTest &&
+              detail.canRequestMinorCancellation ? (
+                <button type="button" className="button medium cancel" onClick={handleMinorCancellationRequest}>
+                  청약취소 신청
                 </button>
               ) : null}
               <button type="button" className="button medium submit" onClick={handleClose}>
@@ -197,9 +228,14 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
           </button>
           <DialogContent>{content}</DialogContent>
           <DialogActions>
-            {detail.detailType === 'donation' && detail.isRefundable ? (
+            {detail.detailType === 'donation' && detail.canForceRefundForTest ? (
               <button type="button" className="button medium close" onClick={handleRefund} disabled={isRefunding}>
-                환불받기
+                테스트환경 강제 환불
+              </button>
+            ) : null}
+            {detail.detailType === 'donation' && !detail.canForceRefundForTest && detail.canRequestMinorCancellation ? (
+              <button type="button" className="button medium close" onClick={handleMinorCancellationRequest}>
+                청약취소 신청
               </button>
             ) : null}
             <button type="button" className="button medium submit" onClick={handleClose}>

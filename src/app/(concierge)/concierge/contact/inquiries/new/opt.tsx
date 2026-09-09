@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -90,16 +90,24 @@ const VisuallyHiddenInput = styled('input')({
 
 export default function Opt() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedPaymentId = searchParams.get('paymentId')?.trim() ?? '';
+  const isAutoMinorCancellation =
+    searchParams.get('inquiryType') === 'minor_purchase_cancellation' && Boolean(requestedPaymentId);
   const evidenceInputRef = useRef<HTMLInputElement | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [cancellationPayments, setCancellationPayments] = useState<PaymentRow[]>([]);
   const [cancellationAvailableAt, setCancellationAvailableAt] = useState<string | null>(null);
   const [paymentLoadError, setPaymentLoadError] = useState('');
-  const [inquiryType, setInquiryType] = useState<InquiryType>('service_question');
-  const [inquirySubtype, setInquirySubtype] = useState(inquirySubtypes.service_question[0].value);
+  const [inquiryType, setInquiryType] = useState<InquiryType>(
+    isAutoMinorCancellation ? 'minor_purchase_cancellation' : 'service_question',
+  );
+  const [inquirySubtype, setInquirySubtype] = useState(
+    isAutoMinorCancellation ? 'minor_contract_cancellation' : inquirySubtypes.service_question[0].value,
+  );
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [paymentId, setPaymentId] = useState('');
+  const [paymentId, setPaymentId] = useState(requestedPaymentId);
   const [pageUrl, setPageUrl] = useState('');
   const [occurredAt, setOccurredAt] = useState<Date | null>(() => new Date());
   const [attemptedAction, setAttemptedAction] = useState('');
@@ -155,6 +163,13 @@ export default function Opt() {
     void loadPayments();
   }, []);
 
+  useEffect(() => {
+    if (!isAutoMinorCancellation) return;
+    setInquiryType('minor_purchase_cancellation');
+    setInquirySubtype('minor_contract_cancellation');
+    setPaymentId(requestedPaymentId);
+  }, [isAutoMinorCancellation, requestedPaymentId]);
+
   const isMinorCancellation = inquiryType === 'minor_purchase_cancellation';
   const isBug = inquiryType === 'bug_report';
   const isPaymentProblem = inquiryType === 'payment_refund_error';
@@ -170,12 +185,15 @@ export default function Opt() {
   const cancellationAvailableAtLabel = cancellationAvailableAt
     ? new Date(cancellationAvailableAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })
     : '';
+  const selectedCancellationPayment = cancellationPayments.find((payment) => payment.id === paymentId) ?? null;
   const inquiryUnavailableReason = isMinorCancellation
     ? paymentLoadError || isCancellationBlocked
       ? paymentLoadError || `다른 결제 건은 ${cancellationAvailableAtLabel}부터 신청할 수 있습니다.`
-      : !cancellationPayments.length
-        ? '청약취소를 신청할 수 있는 결제 내역이 없습니다.'
-        : ''
+      : isAutoMinorCancellation && !selectedCancellationPayment
+        ? '청약취소를 신청할 수 없는 결제입니다.'
+        : !cancellationPayments.length
+          ? '청약취소를 신청할 수 있는 결제 내역이 없습니다.'
+          : ''
     : paymentRequired
       ? paymentLoadError || (!payments.length ? '문의할 수 있는 결제 내역이 없습니다.' : '')
       : '';
@@ -342,46 +360,61 @@ export default function Opt() {
     <form onSubmit={submit}>
       <Stack direction="column" gap={3}>
         <div className="paper">
-          <Stack gap={1}>
-            <Typography variant="subtitle2">문의 유형</Typography>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              value={inquiryType}
-              onChange={(event) => {
-                const next = event.target.value as InquiryType;
-                setInquiryType(next);
-                setInquirySubtype(inquirySubtypes[next][0].value);
-                setPaymentId('');
-              }}
-            >
-              {inquiryTypeOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-          <Stack gap={1}>
-            <Typography variant="subtitle2">세부 유형</Typography>
-            <TextField
-              select
-              fullWidth
-              size="small"
-              value={inquirySubtype}
-              onChange={(event) => {
-                setInquirySubtype(event.target.value);
-                setPaymentId('');
-              }}
-            >
-              {inquirySubtypes[inquiryType].map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Stack>
+          {isAutoMinorCancellation ? (
+            <>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">문의 유형</Typography>
+                <Typography>미성년자 결제 청약취소</Typography>
+              </Stack>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">세부 유형</Typography>
+                <Typography>미성년자 결제 청약취소</Typography>
+              </Stack>
+            </>
+          ) : (
+            <>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">문의 유형</Typography>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={inquiryType}
+                  onChange={(event) => {
+                    const next = event.target.value as InquiryType;
+                    setInquiryType(next);
+                    setInquirySubtype(inquirySubtypes[next][0].value);
+                    setPaymentId('');
+                  }}
+                >
+                  {inquiryTypeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+              <Stack gap={1}>
+                <Typography variant="subtitle2">세부 유형</Typography>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  value={inquirySubtype}
+                  onChange={(event) => {
+                    setInquirySubtype(event.target.value);
+                    setPaymentId('');
+                  }}
+                >
+                  {inquirySubtypes[inquiryType].map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+            </>
+          )}
           {isMinorCancellation ? (
             <Stack gap={2}>
               <p className="alert info">
@@ -393,11 +426,17 @@ export default function Opt() {
                   <WarningAmberRoundedIcon />
                   <span>다른 결제 건은 {cancellationAvailableAtLabel}부터 신청할 수 있습니다.</span>
                 </p>
-              ) : paymentLoadError || !cancellationPayments.length ? (
+              ) : paymentLoadError ||
+                (isAutoMinorCancellation ? !selectedCancellationPayment : !cancellationPayments.length) ? (
                 <p className="alert warning">
                   <WarningAmberRoundedIcon />
-                  <span>{inquiryUnavailableReason}</span>
+                  <span>{paymentLoadError || '청약취소를 신청할 수 없는 결제입니다.'}</span>
                 </p>
+              ) : isAutoMinorCancellation && selectedCancellationPayment ? (
+                <Stack gap={1}>
+                  <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>
+                  <Typography>{selectedCancellationPayment.label}</Typography>
+                </Stack>
               ) : cancellationPayments.length ? (
                 <Stack>
                   <Typography variant="subtitle2">청약취소를 요청할 결제</Typography>

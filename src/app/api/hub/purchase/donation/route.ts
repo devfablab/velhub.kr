@@ -1,4 +1,5 @@
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
+import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -18,8 +19,11 @@ type PaymentRow = {
   payment_method: string | null;
   approved_at: string | null;
   created_at: string;
+  refunded_at: string | null;
   refundable_until: string | null;
   failure_message: string | null;
+  guardian_identity_verified: boolean | null;
+  raw_data: unknown;
 };
 
 type SiteRow = {
@@ -59,7 +63,11 @@ function normalizePaymentStatus(status: string) {
   return normalizeText(status).toLowerCase();
 }
 
-function getPaymentStatusLabel(status: string) {
+function getPaymentStatusLabel(status: string, paymentType?: string, isTestRefund = false) {
+  if (isTestRefund && normalizePaymentStatus(status) === 'refunded') {
+    return `${getDonationPaymentTypeLabel(paymentType ?? '')} 테스트 환불`;
+  }
+
   switch (normalizePaymentStatus(status)) {
     case 'paid':
       return '결제 완료';
@@ -101,16 +109,37 @@ function getDonationPaymentTypeLabel(paymentType: string) {
   }
 }
 
-function isRefundableDonation(payment: PaymentRow) {
-  if (normalizePaymentStatus(payment.status) !== 'paid') {
-    return false;
+function getAgeAtPayment(birthDate: string | null, approvedAt: string | null) {
+  const digits = birthDate?.replace(/\D/g, '') ?? '';
+  const paymentDate = approvedAt ? new Date(approvedAt) : null;
+  if (digits.length !== 8 || !paymentDate || Number.isNaN(paymentDate.getTime())) return null;
+
+  const paymentParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(paymentDate);
+  const values = Object.fromEntries(paymentParts.map((part) => [part.type, part.value]));
+  let age = Number(values.year) - Number(digits.slice(0, 4));
+  if (
+    Number(values.month) < Number(digits.slice(4, 6)) ||
+    (Number(values.month) === Number(digits.slice(4, 6)) && Number(values.day) < Number(digits.slice(6, 8)))
+  ) {
+    age -= 1;
   }
 
-  if (!payment.refundable_until) {
-    return false;
-  }
+  return age;
+}
 
-  return new Date(payment.refundable_until).getTime() > Date.now();
+function canRequestMinorDonationCancellation(payment: PaymentRow, birthDate: string | null) {
+  if (normalizePaymentStatus(payment.status) !== 'paid' || payment.guardian_identity_verified) return false;
+  const age = getAgeAtPayment(birthDate, payment.approved_at);
+  return age !== null && age >= 14 && age < 19;
+}
+
+function isTestRefund(rawData: unknown) {
+  return Boolean(rawData && typeof rawData === 'object' && 'test_refund' in rawData && rawData.test_refund === true);
 }
 
 function getSummary(payments: PaymentRow[]) {
@@ -206,6 +235,19 @@ export async function GET() {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    const identityResult = await supabaseAdmin
+      .from('chorogons')
+      .select('birth_date, birth_date_dummy')
+      .eq('user_id', session.stigmaId ?? '')
+      .maybeSingle();
+
+    if (identityResult.error) {
+      console.error(identityResult.error);
+      return Response.json({ error: '본인인증 정보를 불러오지 못했습니다.' }, { status: 500 });
+    }
+
+    const buyerBirthDate = getChorogonBirthDate(identityResult.data);
+
     const paymentsResult = await supabaseAdmin
       .from('payments')
       .select(
@@ -222,8 +264,11 @@ export async function GET() {
           'payment_method',
           'approved_at',
           'created_at',
+          'refunded_at',
           'refundable_until',
           'failure_message',
+          'guardian_identity_verified',
+          'raw_data',
         ].join(', '),
       )
       .eq('buyer_user_id', session.stigmaId ?? '')
@@ -292,6 +337,7 @@ export async function GET() {
       summary: getSummary(payments),
       payments: payments.map((payment) => {
         const paymentStatus = normalizePaymentStatus(payment.status);
+        const paymentIsTestRefund = isTestRefund(payment.raw_data);
         const displayInfo = createDonationDisplayInfo({
           payment,
           siteById,
@@ -316,10 +362,11 @@ export async function GET() {
           netAmount: payment.amount - (payment.refunded_amount ?? 0),
           currency: payment.currency ?? 'KRW',
           status: paymentStatus,
-          statusLabel: getPaymentStatusLabel(paymentStatus),
+          statusLabel: getPaymentStatusLabel(paymentStatus, payment.payment_type, paymentIsTestRefund),
           paymentMethod: payment.payment_method,
           approvedAt: payment.approved_at,
           createdAt: payment.created_at,
+          refundedAt: payment.refunded_at,
           refundableUntil: payment.refundable_until,
           failureMessage: payment.failure_message,
           detail: {
@@ -331,7 +378,7 @@ export async function GET() {
             approvedAt: payment.approved_at,
             createdAt: payment.created_at,
             status: paymentStatus,
-            statusLabel: getPaymentStatusLabel(paymentStatus),
+            statusLabel: getPaymentStatusLabel(paymentStatus, payment.payment_type, paymentIsTestRefund),
             amount: payment.amount,
             refundedAmount: payment.refunded_amount ?? 0,
             orderNo: payment.order_no,
@@ -339,10 +386,13 @@ export async function GET() {
             serviceEndsAt: null,
             refundedAt:
               paymentStatus === 'refunded' || paymentStatus === 'partially_refunded'
-                ? (payment.approved_at ?? payment.created_at)
+                ? (payment.refunded_at ?? payment.approved_at ?? payment.created_at)
                 : null,
             refundableUntil: payment.refundable_until,
-            isRefundable: isRefundableDonation(payment),
+            isRefundable: false,
+            canRequestMinorCancellation: canRequestMinorDonationCancellation(payment, buyerBirthDate),
+            canForceRefundForTest:
+              process.env.NEXT_PUBLIC_APP_ENV === 'test' && paymentStatus === 'paid' && !paymentIsTestRefund,
           },
         };
       }),

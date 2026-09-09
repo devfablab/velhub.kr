@@ -32,6 +32,7 @@ type SubscriptionPayment = {
   paymentMethod: string | null;
   approvedAt: string | null;
   createdAt: string;
+  refundedAt: string | null;
   refundableUntil: string | null;
   failureMessage: string | null;
   subscription: {
@@ -132,6 +133,44 @@ export default async function Page() {
     );
   }
 
+  const paymentHistory = result.payments.flatMap((payment) => {
+    const isRefunded = payment.refundedAmount > 0;
+    const paymentHistoryItem = {
+      ...payment,
+      historyKey: `${payment.id}:payment`,
+      historyStatusLabel: isRefunded ? '결제 완료' : payment.statusLabel,
+      historyAmount: payment.amount,
+      historyAt: payment.approvedAt ?? payment.createdAt,
+      historyDetail: {
+        ...payment.detail,
+        status: isRefunded ? 'paid' : payment.detail.status,
+        statusLabel: isRefunded ? '결제 완료' : payment.detail.statusLabel,
+        refundedAmount: isRefunded ? 0 : payment.detail.refundedAmount,
+        refundedAt: isRefunded ? null : payment.detail.refundedAt,
+        historyKind: isRefunded ? 'payment' : payment.status === 'failed' ? 'failed' : undefined,
+      } satisfies BillingPopupDetail,
+    };
+
+    if (!isRefunded) {
+      return [paymentHistoryItem];
+    }
+
+    return [
+      {
+        ...payment,
+        historyKey: `${payment.id}:refund`,
+        historyStatusLabel: payment.statusLabel,
+        historyAmount: payment.refundedAmount,
+        historyAt: payment.refundedAt ?? payment.approvedAt ?? payment.createdAt,
+        historyDetail: {
+          ...payment.detail,
+          historyKind: 'refund',
+        } satisfies BillingPopupDetail,
+      },
+      paymentHistoryItem,
+    ];
+  });
+
   return (
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
@@ -161,7 +200,7 @@ export default async function Page() {
           <section className={`paper ${styles.paper} ${styles.history}`}>
             <h2>구독 결제내역</h2>
 
-            {result.payments.length ? (
+            {paymentHistory.length ? (
               <TableContainer className={styles.items}>
                 <Table size="small" aria-label="구독 결제내역">
                   <TableHead>
@@ -187,25 +226,19 @@ export default async function Page() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {result.payments.map((payment) => {
-                      const isRefunded = payment.status === 'refunded';
-                      const isPartiallyRefunded = payment.status === 'partially_refunded';
-                      const displayAmount = isRefunded || isPartiallyRefunded ? payment.refundedAmount : payment.amount;
-
+                    {paymentHistory.map((payment) => {
                       return (
-                        <TableRow key={payment.id}>
+                        <TableRow key={payment.historyKey}>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.siteLabel}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.detail.targetLabel || '-'}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{getPaymentTypeLabel(payment)}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                            <BillingPopup paymentId={payment.id} detail={payment.detail}>
-                              {payment.statusLabel}
+                            <BillingPopup paymentId={payment.id} detail={payment.historyDetail}>
+                              {payment.historyStatusLabel}
                             </BillingPopup>
                           </TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(displayAmount)}</TableCell>
-                          <TableCell sx={{ whiteSpace: 'nowrap' }}>
-                            {formatDateTime(payment.approvedAt ?? payment.createdAt)}
-                          </TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAmount(payment.historyAmount)}</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTime(payment.historyAt)}</TableCell>
                         </TableRow>
                       );
                     })}

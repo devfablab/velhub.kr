@@ -6,6 +6,7 @@ import { normalizeText } from '@/lib/utils';
 
 type RefundDonationBody = {
   paymentId?: string;
+  forceTestRefund?: boolean;
 };
 
 type PaymentRow = {
@@ -19,12 +20,11 @@ type PaymentRow = {
   amount: number;
   refunded_amount: number | null;
   status: string;
-  refundable_until: string | null;
 };
 
 const DONATION_PAYMENT_TYPES = ['donation_site', 'donation_series', 'donation_post'];
 
-function isRefundableDonation(payment: PaymentRow) {
+function canForceRefundForTest(payment: PaymentRow) {
   if (!DONATION_PAYMENT_TYPES.includes(payment.payment_type)) {
     return false;
   }
@@ -37,11 +37,7 @@ function isRefundableDonation(payment: PaymentRow) {
     return false;
   }
 
-  if (!payment.refundable_until) {
-    return false;
-  }
-
-  return new Date(payment.refundable_until).getTime() > Date.now();
+  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -55,6 +51,10 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as RefundDonationBody;
     const paymentId = normalizeText(body.paymentId);
 
+    if (process.env.NEXT_PUBLIC_APP_ENV !== 'test' || body.forceTestRefund !== true) {
+      return Response.json({ error: '테스트 환경에서만 후원 강제 환불을 처리할 수 있습니다.' }, { status: 403 });
+    }
+
     if (!paymentId) {
       return Response.json({ error: '결제 정보가 없습니다.' }, { status: 400 });
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const paymentResult = await supabaseAdmin
       .from('payments')
       .select(
-        'id, buyer_user_id, payment_key, payment_type, target_type, target_id, order_no, amount, refunded_amount, status, refundable_until',
+        'id, buyer_user_id, payment_key, payment_type, target_type, target_id, order_no, amount, refunded_amount, status',
       )
       .eq('id', paymentId)
       .eq('buyer_user_id', session.stigmaId ?? '')
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '결제 정보를 찾을 수 없습니다.' }, { status: 404 });
     }
 
-    if (!isRefundableDonation(payment)) {
-      return Response.json({ error: '환불 가능한 후원 결제가 아닙니다.' }, { status: 400 });
+    if (!canForceRefundForTest(payment)) {
+      return Response.json({ error: '강제 환불 가능한 후원 결제가 아닙니다.' }, { status: 400 });
     }
 
     const refundedAmount = payment.refunded_amount ?? 0;
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     const cancelResult = await cancelPortOnePayment({
       paymentId: payment.payment_key as string,
-      cancelReason: '후원 환불 요청',
+      cancelReason: '후원 테스트 환불',
       cancelAmount: refundAmount,
     });
 
@@ -108,8 +108,10 @@ export async function POST(request: NextRequest) {
         status: nextRefundedAmount >= payment.amount ? 'refunded' : 'partially_refunded',
         refunded_amount: nextRefundedAmount,
         refunded_at: canceledAt,
-        updated_at: new Date().toISOString(),
-        raw_data: cancelResult,
+        raw_data: {
+          test_refund: true,
+          cancel_result: cancelResult,
+        },
       })
       .eq('id', payment.id)
       .eq('buyer_user_id', session.stigmaId ?? '');

@@ -21,7 +21,7 @@ export async function GET() {
   const db = getSupabaseAdmin();
   const paymentsResult = await db
     .from('payments')
-    .select('id,target_id,amount,refunded_amount,status,approved_at,created_at')
+    .select('id,target_id,amount,refunded_amount,status,approved_at,created_at,refunded_at')
     .eq('buyer_user_id', session.stigmaId)
     .eq('payment_type', PAYMENT_TYPE.MEMBERSHIP)
     .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)

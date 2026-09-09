@@ -19,6 +19,7 @@ type Result = {
     statusLabel: string;
     approved_at: string | null;
     created_at: string;
+    refunded_at: string | null;
   }>;
 };
 
@@ -47,6 +48,32 @@ async function getMemberships() {
 
 export default async function Page() {
   const result = await getMemberships();
+  const paymentHistory = result.payments.flatMap((payment) => {
+    const isRefunded = (payment.refunded_amount ?? 0) > 0;
+    const paymentHistoryItem = {
+      ...payment,
+      historyKey: `${payment.id}:payment`,
+      historyStatusLabel: isRefunded ? '결제 완료' : payment.statusLabel,
+      historyAmount: payment.amount,
+      historyAt: payment.approved_at ?? payment.created_at,
+    };
+
+    if (!isRefunded) {
+      return [paymentHistoryItem];
+    }
+
+    return [
+      {
+        ...payment,
+        historyKey: `${payment.id}:refund`,
+        historyStatusLabel: payment.statusLabel,
+        historyAmount: payment.refunded_amount ?? 0,
+        historyAt: payment.refunded_at ?? payment.approved_at ?? payment.created_at,
+      },
+      paymentHistoryItem,
+    ];
+  });
+
   return (
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
@@ -77,7 +104,7 @@ export default async function Page() {
           </section>
           <section className={`paper ${styles.paper} ${styles.history}`}>
             <h2>멤버십 결제내역</h2>
-            {result.payments.length ? (
+            {paymentHistory.length ? (
               <TableContainer className={styles.items}>
                 <Table size="small">
                   <TableHead>
@@ -90,15 +117,13 @@ export default async function Page() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {result.payments.map((payment) => (
-                      <TableRow key={payment.id}>
+                    {paymentHistory.map((payment) => (
+                      <TableRow key={payment.historyKey}>
                         <TableCell>{payment.membershipType}</TableCell>
                         <TableCell>{payment.features.join(' / ')}</TableCell>
-                        <TableCell>{payment.statusLabel}</TableCell>
-                        <TableCell>
-                          {money(payment.status === 'refunded' ? (payment.refunded_amount ?? 0) : payment.amount)}
-                        </TableCell>
-                        <TableCell>{dateTime(payment.approved_at ?? payment.created_at)}</TableCell>
+                        <TableCell>{payment.historyStatusLabel}</TableCell>
+                        <TableCell>{money(payment.historyAmount)}</TableCell>
+                        <TableCell>{dateTime(payment.historyAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

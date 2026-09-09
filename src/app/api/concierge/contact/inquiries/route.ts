@@ -25,7 +25,7 @@ function getKoreanDateParts(value: string) {
   return { year: Number(values.year), month: Number(values.month), day: Number(values.day) };
 }
 
-function wasMinorAtPayment(birthDate: string | null, approvedAt: string | null) {
+function isEligibleMinorDonationCancellation(birthDate: string | null, approvedAt: string | null) {
   const digits = birthDate?.replace(/\D/g, '') ?? '';
   const paymentDate = approvedAt ? getKoreanDateParts(approvedAt) : null;
   if (digits.length !== 8 || !paymentDate) return false;
@@ -34,7 +34,7 @@ function wasMinorAtPayment(birthDate: string | null, approvedAt: string | null) 
   const birthDay = Number(digits.slice(6, 8));
   let age = paymentDate.year - birthYear;
   if (paymentDate.month < birthMonth || (paymentDate.month === birthMonth && paymentDate.day < birthDay)) age -= 1;
-  return age >= 0 && age < 19;
+  return age >= 14 && age < 19;
 }
 
 async function getBuyerBirthDate(stigmaId: string) {
@@ -183,13 +183,18 @@ async function getPaymentOptions(stigmaId: string, cancellationOnly = true) {
     .order('created_at', { ascending: false })
     .limit(100);
   if (cancellationOnly)
-    paymentQuery = paymentQuery.eq('status', PAYMENT_STATUS.PAID).eq('guardian_identity_verified', false);
+    paymentQuery = paymentQuery
+      .eq('status', PAYMENT_STATUS.PAID)
+      .eq('guardian_identity_verified', false)
+      .in('payment_type', [PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES, PAYMENT_TYPE.DONATION_POST]);
   const { data: paymentRows, error } = await paymentQuery;
   if (error) throw error;
 
   const payments = cancellationOnly
     ? (paymentRows ?? []).filter(
-        (payment) => Number(payment.refunded_amount ?? 0) === 0 && wasMinorAtPayment(birthDate, payment.approved_at),
+        (payment) =>
+          Number(payment.refunded_amount ?? 0) === 0 &&
+          isEligibleMinorDonationCancellation(birthDate, payment.approved_at),
       )
     : (paymentRows ?? []);
   if (!payments.length) return [];
@@ -501,7 +506,7 @@ export async function POST(request: NextRequest) {
       );
     const { data: payment, error: paymentError } = await db
       .from('payments')
-      .select('id, buyer_user_id, status, refunded_amount, guardian_identity_verified, approved_at')
+      .select('id, buyer_user_id, payment_type, status, refunded_amount, guardian_identity_verified, approved_at')
       .eq('id', paymentId)
       .maybeSingle();
     const birthDate = await getBuyerBirthDate(currentStigma.stigmaId);
@@ -509,10 +514,13 @@ export async function POST(request: NextRequest) {
       paymentError ||
       !payment ||
       payment.buyer_user_id !== currentStigma.stigmaId ||
+      ![PAYMENT_TYPE.DONATION_SITE, PAYMENT_TYPE.DONATION_SERIES, PAYMENT_TYPE.DONATION_POST].includes(
+        payment.payment_type,
+      ) ||
       payment.status !== PAYMENT_STATUS.PAID ||
       Number(payment.refunded_amount ?? 0) !== 0 ||
       payment.guardian_identity_verified ||
-      !wasMinorAtPayment(birthDate, payment.approved_at)
+      !isEligibleMinorDonationCancellation(birthDate, payment.approved_at)
     )
       return Response.json({ error: '청약취소를 신청할 수 없는 결제입니다.' }, { status: 400 });
     const { data: linkedOrder } = await db
