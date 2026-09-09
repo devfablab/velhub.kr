@@ -850,9 +850,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </div>
         ) : null}
 
-        {!loading && reports.length === 0 ? (
-          <ScreenState>신고 내역이 없습니다.</ScreenState>
-        ) : null}
+        {!loading && reports.length === 0 ? <ScreenState>신고 내역이 없습니다.</ScreenState> : null}
 
         {!loading && reports.length > 0 ? (
           <div className={`paper ${styles.paper} paper-p0`}>

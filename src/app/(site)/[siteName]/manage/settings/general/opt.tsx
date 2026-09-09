@@ -1209,7 +1209,9 @@ export default function Opt() {
                       setSuccessMessage('');
                       resetCustomDomainCheck();
                     }}
-                    onKeyDown={(event) => runInputAdornmentAction(event, handleCheckCustomDomain, isCheckingCustomDomain)}
+                    onKeyDown={(event) =>
+                      runInputAdornmentAction(event, handleCheckCustomDomain, isCheckingCustomDomain)
+                    }
                     fullWidth
                     size="small"
                     disabled={!hasOwnerDomainFeature}

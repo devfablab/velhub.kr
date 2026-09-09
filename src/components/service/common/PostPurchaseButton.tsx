@@ -19,6 +19,7 @@ import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import IdentityVerificationButton from './IdentityVerificationButton';
+import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
 import styles from '@/app/board.module.sass';
 
@@ -35,6 +36,12 @@ type PostPurchaseStartResponse = {
   failUrl?: string;
   error?: string;
   guardianAuthRequired?: boolean;
+  paymentCustomerRequired?: boolean;
+  paymentEmailRequired?: boolean;
+  paymentPhoneRequired?: boolean;
+  customerEmail?: string;
+  customerPhone?: string;
+  customerName?: string;
 };
 
 type Props = {
@@ -155,6 +162,9 @@ export default function PostPurchaseButton(props: Props) {
   const [isMinor, setIsMinor] = useState(false);
   const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
+  const [isPaymentCustomerDialogOpen, setIsPaymentCustomerDialogOpen] = useState(false);
+  const [needsPaymentEmail, setNeedsPaymentEmail] = useState(true);
+  const [needsPaymentPhone, setNeedsPaymentPhone] = useState(true);
   const [purchaseAvailable, setPurchaseAvailable] = useState(false);
 
   const theme = useTheme();
@@ -274,6 +284,14 @@ export default function PostPurchaseButton(props: Props) {
       const result = (await response.json()) as PostPurchaseStartResponse;
 
       if (!response.ok) {
+        if (result.paymentCustomerRequired) {
+          updateProcessing(false);
+          setIsConfirmOpen(false);
+          setNeedsPaymentEmail(Boolean(result.paymentEmailRequired));
+          setNeedsPaymentPhone(Boolean(result.paymentPhoneRequired));
+          setIsPaymentCustomerDialogOpen(true);
+          return;
+        }
         if (result.guardianAuthRequired && !guardianIdentityVerificationId) {
           updateProcessing(false);
           await handlePurchase(await requestGuardianIdentityVerification());
@@ -293,6 +311,9 @@ export default function PostPurchaseButton(props: Props) {
         !result.paymentId ||
         !result.orderName ||
         !result.amount ||
+        !result.customerEmail ||
+        !result.customerPhone ||
+        !result.customerName ||
         !result.redirectUrl
       ) {
         throw new Error('포스팅 구매 결제 정보가 올바르지 않습니다.');
@@ -306,6 +327,11 @@ export default function PostPurchaseButton(props: Props) {
         totalAmount: result.amount,
         currency: 'CURRENCY_KRW',
         payMethod: 'CARD',
+        customer: {
+          fullName: result.customerName,
+          email: result.customerEmail,
+          phoneNumber: result.customerPhone,
+        },
         redirectUrl: result.redirectUrl,
         forceRedirect: true,
       });
@@ -326,7 +352,9 @@ export default function PostPurchaseButton(props: Props) {
         <PaymentTerms type="purchase" disabled={isProcessing} />
         {minorControlMode === 'guardian_auth_required' && (
           <p className="alert warning" style={{ marginTop: '8px' }}>
-            <span>결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.</span>
+            <span>
+              결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
+            </span>
           </p>
         )}
         {isMinor && minorControlMode !== 'guardian_auth_required' && (
@@ -353,6 +381,13 @@ export default function PostPurchaseButton(props: Props) {
 
   return (
     <>
+      <PaymentEmailDialog
+        open={isPaymentCustomerDialogOpen}
+        onClose={() => setIsPaymentCustomerDialogOpen(false)}
+        requireEmail={needsPaymentEmail}
+        requirePhone={needsPaymentPhone}
+        onSaved={() => void handlePurchase()}
+      />
       {popup ? (
         <>
           {renderPurchaseConsent()}
@@ -407,7 +442,9 @@ export default function PostPurchaseButton(props: Props) {
                 className="button medium submit"
                 onClick={() => void handlePurchase()}
                 disabled={disabled || isProcessing}
-              >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}</button>
+              >
+                {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
+              </button>
             </Stack>
           </Stack>
         </Drawer>
@@ -439,7 +476,9 @@ export default function PostPurchaseButton(props: Props) {
               className="button medium submit"
               onClick={() => void handlePurchase()}
               disabled={disabled || isProcessing}
-            >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}</button>
+            >
+              {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 결제' : '결제하기'}
+            </button>
           </DialogActions>
         </Dialog>
       )}
@@ -477,7 +516,13 @@ export default function PostPurchaseButton(props: Props) {
           </Stack>
         </Drawer>
       ) : (
-        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />

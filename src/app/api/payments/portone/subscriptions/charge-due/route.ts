@@ -1,5 +1,6 @@
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createNextMonthlyBillingPeriod } from '@/lib/payments/billingPeriod';
+import { getPaymentCustomer } from '@/lib/payments/customer';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import {
   assertPortOnePaidPayment,
@@ -216,14 +217,39 @@ async function markPastDue({
   }
 }
 
-async function requestDuePayment({ subscription, orderNo }: { subscription: SubscriptionRow; orderNo: string }) {
+async function requestDuePayment({
+  supabaseAdmin,
+  subscription,
+  orderNo,
+}: {
+  supabaseAdmin: SupabaseAdminClient;
+  subscription: SubscriptionRow;
+  orderNo: string;
+}) {
   const paymentKey = createPortOnePaymentKey(orderNo);
   const billingKey = decrypt(subscription.billing_key);
+  const stigmaResult = await supabaseAdmin
+    .from('stigmas')
+    .select('user_id')
+    .eq('id', subscription.subscriber_user_id)
+    .maybeSingle();
+
+  if (stigmaResult.error || !stigmaResult.data?.user_id) {
+    throw new Error('결제에 필요한 고객 정보를 확인하지 못했습니다.');
+  }
+
+  const customer = await getPaymentCustomer(stigmaResult.data.user_id);
+  if (!customer) {
+    throw new Error('결제에 필요한 고객 정보를 확인하지 못했습니다.');
+  }
 
   const paymentResponse = await requestPortOneBillingPayment({
     paymentId: paymentKey,
     billingKey,
     customerId: subscription.customer_key,
+    customerName: customer.name,
+    customerEmail: customer.email,
+    customerPhoneNumber: customer.phoneNumber,
     amount: subscription.price,
     orderName: getOrderName(subscription.subscription_type),
   });
@@ -300,6 +326,7 @@ async function chargeDue(request: Request): Promise<Response> {
 
     try {
       const duePayment = await requestDuePayment({
+        supabaseAdmin,
         subscription,
         orderNo,
       });

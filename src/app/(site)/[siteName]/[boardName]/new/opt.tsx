@@ -641,8 +641,7 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const isGalleryBoard = boardType === 'gallery';
   const isYoutubeBoard = boardType === 'youtube';
   const isFeedBoard = boardType === 'feed';
-  const canRegisterPaidPreview =
-    (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
+  const canRegisterPaidPreview = (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;

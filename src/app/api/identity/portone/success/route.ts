@@ -82,10 +82,17 @@ export async function POST(request: NextRequest) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  let verifiedIdentity = extractVerifiedIdentity(identityVerificationId, await getPortOneIdentityVerification(identityVerificationId));
+  let verifiedIdentity = extractVerifiedIdentity(
+    identityVerificationId,
+    await getPortOneIdentityVerification(identityVerificationId),
+  );
 
   if (process.env.NEXT_PUBLIC_APP_ENV === 'test' && body?.mockTxId) {
-    const { data: mock } = await supabaseAdmin.from('mock_identities').select('*').eq('verification_tx_id', body.mockTxId).single();
+    const { data: mock } = await supabaseAdmin
+      .from('mock_identities')
+      .select('*')
+      .eq('verification_tx_id', body.mockTxId)
+      .single();
     if (mock) {
       verifiedIdentity = {
         identityVerificationId,

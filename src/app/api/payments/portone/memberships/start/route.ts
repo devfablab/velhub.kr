@@ -4,7 +4,7 @@ import { isAtLeast14, isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
-import { createCustomerKey } from '@/lib/payments/customer';
+import { createCustomerKey, getPaymentCustomer } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';
 import {
@@ -86,18 +86,27 @@ async function requestMembershipBilling({
   amount,
   orderNo,
   orderName,
+  customerName,
+  customerEmail,
+  customerPhoneNumber,
 }: {
   billingKey: string;
   customerKey: string;
   amount: number;
   orderNo: string;
   orderName: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhoneNumber: string;
 }) {
   const paymentKey = createPortOnePaymentKey(orderNo);
   await requestPortOneBillingPayment({
     paymentId: paymentKey,
     billingKey,
     customerId: customerKey,
+    customerName,
+    customerEmail,
+    customerPhoneNumber,
     amount,
     orderName,
   });
@@ -255,6 +264,8 @@ export async function POST(request: Request) {
   const planIdByKey = new Map((planResult.data ?? []).map((plan) => [plan.plan_key, plan.id]));
   const billingMethod = billingMethodResult.data as { customer_key: string; billing_key: string };
   const customerKey = billingMethod.customer_key || createCustomerKey(currentStigma.userId);
+  const customer = await getPaymentCustomer(currentStigma.userId);
+  if (!customer) return NextResponse.json({ error: '결제에 필요한 고객 정보를 확인하지 못했습니다.' }, { status: 400 });
   const now = new Date();
   const billingAnchorDay = getBillingAnchorDay(now);
   const billingPeriod = createNextMonthlyBillingPeriod({ currentPeriodEnd: now, billingAnchorDay });
@@ -280,6 +291,9 @@ export async function POST(request: Request) {
         amount,
         orderNo,
         orderName,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        customerPhoneNumber: customer.phoneNumber,
       });
       completedPaymentKeys.push(billingPayment.paymentKey);
       const membershipResult = await supabaseAdmin

@@ -1,4 +1,6 @@
-import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
+import { cancelPortOnePayment } from '@/lib/payments/portone';
+import { calculateSubscriptionRefundAmount } from '@/lib/payments/refunds';
+import { PAYMENT_STATUS, PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
@@ -50,6 +52,16 @@ type SubscriptionRow = {
   last_payment_id: string | null;
 };
 
+type PaymentRow = {
+  id: string;
+  payment_key: string | null;
+  amount: number;
+  refunded_amount: number | null;
+  status: string;
+  approved_at: string | null;
+  created_at: string;
+};
+
 function getTargetType(value: string): SubscriptionTargetType | null {
   if (value === 'series' || value === 'site') {
     return value;
@@ -99,6 +111,7 @@ async function getSubscriptionTarget({
   const boardResult = await supabaseAdmin
     .from('boards')
     .select('id, board_key, board_label')
+    .eq('site_id', siteId)
     .eq('board_key', boardName)
     .maybeSingle();
 
@@ -119,6 +132,7 @@ async function getSubscriptionTarget({
   const seriesResult = await supabaseAdmin
     .from('board_series')
     .select('id, series_key, series_label')
+    .eq('site_id', siteId)
     .eq('board_id', board.id)
     .eq('series_key', seriesName)
     .maybeSingle();
@@ -236,6 +250,78 @@ export async function POST(request: Request) {
 
     if (!subscription) {
       return Response.json({ error: '취소할 구독을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const paymentResult = subscription.last_payment_id
+      ? await supabaseAdmin
+          .from('payments')
+          .select('id, payment_key, amount, refunded_amount, status, approved_at, created_at')
+          .eq('id', subscription.last_payment_id)
+          .maybeSingle()
+      : null;
+
+    if (paymentResult?.error) {
+      console.error(paymentResult.error);
+      return Response.json({ error: '구독 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const payment = (paymentResult?.data as PaymentRow | null | undefined) ?? null;
+    const refund = payment
+      ? calculateSubscriptionRefundAmount({
+          amount: payment.amount,
+          paidAt: payment.approved_at ?? payment.created_at,
+        })
+      : null;
+
+    if (payment && refund?.isRefundable && payment.status !== PAYMENT_STATUS.REFUNDED) {
+      if (!payment.payment_key) {
+        return Response.json({ error: '구독 환불에 필요한 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
+      }
+
+      const canceledPayment = await cancelPortOnePayment({
+        paymentId: payment.payment_key,
+        cancelReason: `${subscriptionTarget.targetLabel ?? '구독'} 구독 환불`,
+        cancelAmount: refund.isFullRefund ? undefined : refund.refundAmount,
+      });
+      const paymentStatus =
+        refund.refundAmount >= payment.amount ? PAYMENT_STATUS.REFUNDED : PAYMENT_STATUS.PARTIALLY_REFUNDED;
+      const paymentUpdateResult = await supabaseAdmin
+        .from('payments')
+        .update({
+          status: paymentStatus,
+          refunded_amount: refund.refundAmount,
+          refunded_at: nowText,
+          raw_data: canceledPayment,
+        })
+        .eq('id', payment.id);
+
+      if (paymentUpdateResult.error) {
+        console.error(paymentUpdateResult.error);
+        return Response.json({ error: '구독 환불 정보를 저장하지 못했습니다.' }, { status: 500 });
+      }
+
+      const subscriptionUpdateResult = await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          status: SUBSCRIPTION_STATUS.CANCELED,
+          next_billing_at: null,
+          canceled_at: nowText,
+          expired_at: nowText,
+          updated_at: nowText,
+        })
+        .eq('id', subscription.id);
+
+      if (subscriptionUpdateResult.error) {
+        console.error(subscriptionUpdateResult.error);
+        return Response.json({ error: '환불된 구독 정보를 저장하지 못했습니다.' }, { status: 500 });
+      }
+
+      return Response.json({
+        ok: true,
+        mode: 'refunded',
+        refundAmount: refund.refundAmount,
+        retainedAmount: refund.retainedAmount,
+      });
     }
 
     if (subscription.canceled_at && subscription.next_billing_at === null) {

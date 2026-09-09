@@ -81,7 +81,10 @@ type BlogSubscriptionStatusResponse = {
   isEnabled?: boolean;
   price?: number | null;
   subscriptionStatus?: BlogSubscriptionStatus;
+  isRefundableCancellation?: boolean;
+  refundAmount?: number;
   paymentEmail?: string | null;
+  paymentPhone?: string | null;
   error?: string;
 };
 
@@ -183,9 +186,9 @@ function formatBlogSubscriptionPrice(value: number) {
   return value.toLocaleString('ko-KR');
 }
 
-function getBlogSubscriptionButtonLabel(status: BlogSubscriptionStatus) {
+function getBlogSubscriptionButtonLabel(status: BlogSubscriptionStatus, isRefundableCancellation: boolean) {
   if (status === 'active' || status === 'past_due') {
-    return '블로그 구독 취소';
+    return isRefundableCancellation ? '블로그 구독 환불' : '블로그 구독 취소';
   }
 
   if (status === 'scheduled_cancel') {
@@ -197,6 +200,20 @@ function getBlogSubscriptionButtonLabel(status: BlogSubscriptionStatus) {
   }
 
   return '블로그 구독';
+}
+
+function getBlogSubscriptionCancelDescription({
+  isRefundableCancellation,
+  refundAmount,
+}: {
+  isRefundableCancellation: boolean;
+  refundAmount: number;
+}) {
+  if (isRefundableCancellation) {
+    return `지금 환불하면 ${formatBlogSubscriptionPrice(refundAmount)}원이 환불되며, 구독은 즉시 종료됩니다.`;
+  }
+
+  return '지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.';
 }
 
 export default function SiteProfile() {
@@ -214,6 +231,8 @@ export default function SiteProfile() {
   const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
   const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(null);
   const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>('none');
+  const [isBlogSubscriptionRefundable, setIsBlogSubscriptionRefundable] = useState(false);
+  const [blogSubscriptionRefundAmount, setBlogSubscriptionRefundAmount] = useState(0);
   const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
   const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
@@ -221,6 +240,7 @@ export default function SiteProfile() {
   const [isDonationEnabled, setIsDonationEnabled] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
   const [paymentEmail, setPaymentEmail] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
   const [isMinor, setIsMinor] = useState(false);
   const [isUnder14Age, setIsUnder14Age] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
@@ -268,7 +288,10 @@ export default function SiteProfile() {
       setIsBlogSubscriptionEnabled(Boolean(result.isEnabled));
       setBlogSubscriptionPrice(result.price ?? null);
       setBlogSubscriptionStatus(result.subscriptionStatus ?? 'none');
+      setIsBlogSubscriptionRefundable(Boolean(result.isRefundableCancellation));
+      setBlogSubscriptionRefundAmount(result.refundAmount ?? 0);
       setPaymentEmail(normalizeText(result.paymentEmail));
+      setPaymentPhone(normalizeText(result.paymentPhone));
     }
 
     async function loadDonationStatus() {
@@ -426,6 +449,7 @@ export default function SiteProfile() {
         setBlogSubscriptionStatus('active');
         setIsBlogSubscriptionDialogOpen(false);
         setIsBlogSubscriptionProcessing(false);
+        window.location.reload();
         return;
       }
 
@@ -496,6 +520,7 @@ export default function SiteProfile() {
       setBlogSubscriptionStatus('active');
       setIsBlogSubscriptionDialogOpen(false);
       setIsBlogSubscriptionProcessing(false);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 가입을 시작하지 못했습니다.');
@@ -531,7 +556,10 @@ export default function SiteProfile() {
       }
 
       setBlogSubscriptionStatus(result.mode === 'cancel_scheduled' ? 'scheduled_cancel' : 'canceled');
+      setIsBlogSubscriptionRefundable(false);
+      setBlogSubscriptionRefundAmount(0);
       setIsBlogSubscriptionCancelDialogOpen(false);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 취소를 처리하지 못했습니다.');
@@ -568,6 +596,7 @@ export default function SiteProfile() {
 
       setBlogSubscriptionStatus('active');
       setIsBlogSubscriptionDialogOpen(false);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setBlogSubscriptionErrorMessage(unknownError.message || '블로그 구독 유지를 처리하지 못했습니다.');
@@ -590,7 +619,7 @@ export default function SiteProfile() {
       return;
     }
 
-    if (!paymentEmail) {
+    if (!paymentEmail || !paymentPhone) {
       setIsPaymentEmailDialogOpen(true);
       return;
     }
@@ -598,8 +627,9 @@ export default function SiteProfile() {
     handleOpenBlogSubscriptionDialog();
   }
 
-  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+  function handlePaymentEmailSaved(savedPaymentEmail: string, savedPaymentPhone: string) {
     setPaymentEmail(savedPaymentEmail);
+    setPaymentPhone(savedPaymentPhone);
     handleOpenBlogSubscriptionDialog();
   }
 
@@ -681,7 +711,7 @@ export default function SiteProfile() {
               onClick={hasIdentity ? handleBlogSubscriptionButtonClick : handleOpenIdentityDialog}
               disabled={isDonationProcessing || isBlogSubscriptionProcessing}
             >
-              {getBlogSubscriptionButtonLabel(blogSubscriptionStatus)}
+              {getBlogSubscriptionButtonLabel(blogSubscriptionStatus, isBlogSubscriptionRefundable)}
             </button>
           ) : null}
         </div>
@@ -704,6 +734,8 @@ export default function SiteProfile() {
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}
         onClose={() => setIsPaymentEmailDialogOpen(false)}
+        requireEmail={!paymentEmail}
+        requirePhone={!paymentPhone}
         onSaved={handlePaymentEmailSaved}
       />
 
@@ -714,7 +746,7 @@ export default function SiteProfile() {
           onClose={handleCloseBlogSubscriptionCancelDialog}
           className="VhiDrawer-bottom"
         >
-          <h2>블로그 구독 취소</h2>
+          <h2>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</h2>
           <button
             type="button"
             className="close-button"
@@ -726,9 +758,14 @@ export default function SiteProfile() {
           </button>
           <Stack gap={3}>
             <Stack gap={1}>
-              <Typography variant="subtitle2">블로그 구독을 취소하시겠어요?</Typography>
+              <Typography variant="subtitle2">
+                {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
+              </Typography>
               <Typography variant="body2">
-                지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.
+                {getBlogSubscriptionCancelDescription({
+                  isRefundableCancellation: isBlogSubscriptionRefundable,
+                  refundAmount: blogSubscriptionRefundAmount,
+                })}
               </Typography>
               {blogSubscriptionErrorMessage ? (
                 <p className="alert error">
@@ -752,7 +789,7 @@ export default function SiteProfile() {
                 onClick={() => void handleCancelBlogSubscription()}
                 disabled={isBlogSubscriptionProcessing}
               >
-                구독 취소하기
+                {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
               </button>
             </Stack>
           </Stack>
@@ -765,7 +802,7 @@ export default function SiteProfile() {
           maxWidth="xs"
           className="VhiDialog"
         >
-          <DialogTitle>블로그 구독 취소</DialogTitle>
+          <DialogTitle>{isBlogSubscriptionRefundable ? '블로그 구독 환불' : '블로그 구독 취소'}</DialogTitle>
           <button
             type="button"
             className="close-button"
@@ -777,9 +814,14 @@ export default function SiteProfile() {
           </button>
           <DialogContent>
             <Stack gap={1}>
-              <Typography variant="subtitle2">블로그 구독을 취소하시겠어요?</Typography>
+              <Typography variant="subtitle2">
+                {isBlogSubscriptionRefundable ? '블로그 구독을 환불하시겠어요?' : '블로그 구독을 취소하시겠어요?'}
+              </Typography>
               <Typography variant="body2">
-                지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.
+                {getBlogSubscriptionCancelDescription({
+                  isRefundableCancellation: isBlogSubscriptionRefundable,
+                  refundAmount: blogSubscriptionRefundAmount,
+                })}
               </Typography>
               {blogSubscriptionErrorMessage ? (
                 <p className="alert error">
@@ -804,7 +846,7 @@ export default function SiteProfile() {
               onClick={() => void handleCancelBlogSubscription()}
               disabled={isBlogSubscriptionProcessing}
             >
-              구독 취소하기
+              {isBlogSubscriptionRefundable ? '환불하기' : '구독 취소하기'}
             </button>
           </DialogActions>
         </Dialog>

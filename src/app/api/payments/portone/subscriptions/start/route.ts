@@ -118,12 +118,16 @@ async function requestPortOneBillingPaymentCompat({
   amount,
   orderId,
   orderName,
+  customerName,
+  customerPhone,
 }: {
   billingKey: string;
   customerKey: string;
   amount: number;
   orderId: string;
   orderName: string;
+  customerName: string;
+  customerPhone: string;
 }) {
   const paymentKey = createPortOnePaymentKey(orderId);
 
@@ -131,6 +135,9 @@ async function requestPortOneBillingPaymentCompat({
     paymentId: paymentKey,
     billingKey,
     customerId: customerKey,
+    customerName,
+    customerEmail: customerName,
+    customerPhoneNumber: customerPhone,
     amount,
     orderName,
   });
@@ -633,7 +640,6 @@ export async function POST(request: Request) {
       return Response.json({ error: '결제/구매는 데브허브 정책상 만 14세 이상부터 가능해요. 😭' }, { status: 403 });
     }
 
-
     if (!billingMethod) {
       successUrl.searchParams.set('customerKey', customerKey);
 
@@ -701,6 +707,8 @@ export async function POST(request: Request) {
       amount: setting.price,
       orderId: orderNo,
       orderName,
+      customerName,
+      customerPhone,
     })) as PortOneBillingPaymentResult;
     const now = new Date();
     const refundableUntil = getRefundableUntil(now);

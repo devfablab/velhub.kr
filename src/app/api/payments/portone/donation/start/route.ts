@@ -3,6 +3,7 @@ import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/paym
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
+import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -281,6 +282,20 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const [paymentEmail, paymentPhone, customerName] = await Promise.all([
+      getPaymentCustomerName(session.authUserId),
+      getPaymentCustomerPhone(session.authUserId),
+      getPaymentCustomerRealName(session.authUserId),
+    ]);
+
+    if (!customerName) {
+      return Response.json({ error: '본인인증된 실명을 확인하지 못했습니다.' }, { status: 400 });
+    }
+
+    if (!paymentEmail || !paymentPhone) {
+      return Response.json({ error: '결제용 이메일 주소와 휴대폰 번호를 확인하지 못했습니다.' }, { status: 400 });
+    }
+
     const body = (await request.json()) as DonationStartBody;
     const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
     if (minorControl.error)
@@ -377,6 +392,9 @@ export async function POST(request: NextRequest) {
       paymentId,
       orderName: target.orderName,
       amount,
+      customerName,
+      paymentEmail,
+      paymentPhone,
       redirectUrl: successUrl.toString(),
       failUrl: failUrl.toString(),
     });

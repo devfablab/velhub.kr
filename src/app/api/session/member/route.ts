@@ -243,9 +243,7 @@ export async function GET(request: Request) {
       role: rhizomeStigma.role,
       siteType: site.siteType,
       communityRoles: [...new Set(communityRoles)],
-      managedBoardKeys: (managedBoardResult.data ?? [])
-        .map((item) => normalizeText(item.board_key))
-        .filter(Boolean),
+      managedBoardKeys: (managedBoardResult.data ?? []).map((item) => normalizeText(item.board_key)).filter(Boolean),
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

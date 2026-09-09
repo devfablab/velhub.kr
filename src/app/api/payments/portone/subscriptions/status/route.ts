@@ -1,4 +1,5 @@
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
+import { calculateSubscriptionRefundAmount } from '@/lib/payments/refunds';
 import { PAYMENT_TARGET_TYPE, SUBSCRIPTION_STATUS, SUBSCRIPTION_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -40,6 +41,14 @@ type SubscriptionRow = {
   next_billing_at: string | null;
   canceled_at: string | null;
   expired_at: string | null;
+  last_payment_id: string | null;
+};
+
+type PaymentRow = {
+  amount: number;
+  status: string;
+  approved_at: string | null;
+  created_at: string;
 };
 
 type TargetInfo = {
@@ -289,7 +298,7 @@ export async function GET(request: Request) {
 
     const subscriptionResult = await supabaseAdmin
       .from('subscriptions')
-      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at')
+      .select('id, status, current_period_end, next_billing_at, canceled_at, expired_at, last_payment_id')
       .eq('subscriber_user_id', session.stigmaId)
       .eq('subscription_type', subscriptionType)
       .eq('target_type', paymentTargetType)
@@ -304,6 +313,28 @@ export async function GET(request: Request) {
     }
 
     const subscription = ((subscriptionResult.data ?? [])[0] as SubscriptionRow | undefined) ?? null;
+    const subscriptionStatus = getSubscriptionStatus(subscription);
+    const paymentResult = subscription?.last_payment_id
+      ? await supabaseAdmin
+          .from('payments')
+          .select('amount, status, approved_at, created_at')
+          .eq('id', subscription.last_payment_id)
+          .maybeSingle()
+      : null;
+
+    if (paymentResult?.error) {
+      console.error(paymentResult.error);
+      return Response.json({ error: '구독 결제 정보를 확인하지 못했습니다.' }, { status: 500 });
+    }
+
+    const payment = (paymentResult?.data as PaymentRow | null | undefined) ?? null;
+    const refund =
+      payment && (subscriptionStatus === 'active' || subscriptionStatus === 'past_due')
+        ? calculateSubscriptionRefundAmount({
+            amount: payment.amount,
+            paidAt: payment.approved_at ?? payment.created_at,
+          })
+        : null;
 
     async function getPaymentEmail() {
       try {
@@ -318,12 +349,19 @@ export async function GET(request: Request) {
       }
     }
     const paymentEmail = await getPaymentEmail();
+    const [paymentPhone, customerName] = session.authUserId
+      ? await Promise.all([getPaymentCustomerPhone(session.authUserId), getPaymentCustomerRealName(session.authUserId)])
+      : [null, null];
 
     return Response.json({
       isEnabled: true,
       price: setting.price,
-      subscriptionStatus: getSubscriptionStatus(subscription),
+      subscriptionStatus,
+      isRefundableCancellation: Boolean(refund?.isRefundable),
+      refundAmount: refund?.refundAmount ?? 0,
       paymentEmail,
+      paymentPhone,
+      customerName,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

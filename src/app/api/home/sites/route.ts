@@ -92,7 +92,9 @@ export async function GET(request: NextRequest) {
     }
 
     const sitesData = data as RhizomeRow[];
-    const ownerIds = [...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerIds = [
+      ...new Set(sitesData.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
+    ];
     const ownerDomainFeatures = new Map(
       await Promise.all(
         ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),

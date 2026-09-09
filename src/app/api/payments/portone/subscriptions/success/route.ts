@@ -1,4 +1,5 @@
 import { encrypt } from '@/lib/encryption/encrypt';
+import { getPaymentCustomer } from '@/lib/payments/customer';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { isPaymentOrderNo } from '@/lib/payments/orderNo';
@@ -124,18 +125,27 @@ async function requestPortOneBillingPaymentCompat({
   amount,
   orderId,
   orderName,
+  customerName,
+  customerEmail,
+  customerPhoneNumber,
 }: {
   billingKey: string;
   customerKey: string;
   amount: number;
   orderId: string;
   orderName: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhoneNumber: string;
 }) {
   const paymentKey = createPortOnePaymentKey(orderId);
   const paymentResponse = await requestPortOneBillingPayment({
     paymentId: paymentKey,
     billingKey,
     customerId: customerKey,
+    customerName,
+    customerEmail,
+    customerPhoneNumber,
     amount,
     orderName,
   });
@@ -630,6 +640,10 @@ export async function POST(request: Request) {
         rawData: paymentResponse,
       };
     } else {
+      const customer = await getPaymentCustomer(session.authUserId);
+      if (!customer) {
+        return Response.json({ error: '결제에 필요한 고객 정보를 확인하지 못했습니다.' }, { status: 400 });
+      }
       const orderName = `${subscriptionTarget.targetLabel ?? (targetType === 'series' ? '연재' : '게시판')} 구독`;
       portOnePaymentResult = (await requestPortOneBillingPaymentCompat({
         billingKey: billingKey!,
@@ -637,6 +651,9 @@ export async function POST(request: Request) {
         amount: setting.price,
         orderId: orderNo,
         orderName,
+        customerName: customer.name,
+        customerEmail: customer.email,
+        customerPhoneNumber: customer.phoneNumber,
       })) as PortOneBillingPaymentResult;
     }
 

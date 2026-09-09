@@ -172,8 +172,7 @@ export async function POST(request: Request) {
     if (
       role === 'board-general-manager' &&
       managerRows.some(
-        (row) =>
-          normalizeText(row.role) === 'board-general-manager' && normalizeText(row.board_id) === boardId,
+        (row) => normalizeText(row.role) === 'board-general-manager' && normalizeText(row.board_id) === boardId,
       )
     ) {
       return Response.json({ error: '이미 해당 게시판의 총괄 매니저가 있습니다.' }, { status: 400 });

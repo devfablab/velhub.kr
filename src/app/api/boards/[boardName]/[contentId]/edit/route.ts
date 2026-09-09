@@ -575,7 +575,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     const contentMarkdown = normalizeText(requestBody.contentMarkdown);
     const contentSimple = normalizeText(requestBody.contentSimple);
     const paidPreviewHtml = typeof requestBody.paidPreviewHtml === 'string' ? requestBody.paidPreviewHtml.trim() : '';
-    const paidPreviewMarkdown = typeof requestBody.paidPreviewMarkdown === 'string' ? requestBody.paidPreviewMarkdown.trim() : '';
+    const paidPreviewMarkdown =
+      typeof requestBody.paidPreviewMarkdown === 'string' ? requestBody.paidPreviewMarkdown.trim() : '';
     const thumbnailImage = normalizeText(requestBody.thumbnailImage);
     const youtubeUrl = normalizeText(requestBody.youtubeUrl);
     const youtubeCreatedAt = normalizeText(requestBody.youtubeCreatedAt);
@@ -705,10 +706,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (requestedDrawType) {
       if (rhizomeData.site_type !== 'community' || board.data.board_type === 'page') {
-        return Response.json(
-          { error: '커뮤니티 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' },
-          { status: 400 },
-        );
+        return Response.json({ error: '커뮤니티 게시판에서만 추첨 이벤트를 설정할 수 있습니다.' }, { status: 400 });
       }
 
       if (!requestedDrawLimit) {

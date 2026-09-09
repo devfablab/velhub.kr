@@ -19,18 +19,28 @@ import { normalizeText } from '@/lib/utils';
 type PaymentEmailDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSaved: (paymentEmail: string) => void | Promise<void>;
+  requireEmail?: boolean;
+  requirePhone?: boolean;
+  onSaved: (paymentEmail: string, paymentPhone: string) => void | Promise<void>;
 };
 
 type PaymentEmailResponse = {
   paymentEmail?: string;
+  paymentPhone?: string;
   error?: string;
 };
 
 const PAYMENT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEmailDialogProps) {
+export default function PaymentEmailDialog({
+  open,
+  onClose,
+  requireEmail = true,
+  requirePhone = false,
+  onSaved,
+}: PaymentEmailDialogProps) {
   const [paymentEmail, setPaymentEmail] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const theme = useTheme();
@@ -40,6 +50,7 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
     if (isSaving) return;
 
     setPaymentEmail('');
+    setPaymentPhone('');
     setErrorMessage('');
     onClose();
   }
@@ -52,9 +63,14 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
   async function handleSave() {
     try {
       const normalizedPaymentEmail = normalizeText(paymentEmail).toLowerCase();
+      const normalizedPaymentPhone = paymentPhone.replace(/\D/g, '');
 
-      if (!PAYMENT_EMAIL_PATTERN.test(normalizedPaymentEmail)) {
+      if (requireEmail && !PAYMENT_EMAIL_PATTERN.test(normalizedPaymentEmail)) {
         throw new Error('이메일 형식이 올바르지 않습니다.');
+      }
+
+      if (requirePhone && !/^01[0-9]{8,9}$/.test(normalizedPaymentPhone)) {
+        throw new Error('휴대폰 번호 형식이 올바르지 않습니다.');
       }
 
       setIsSaving(true);
@@ -66,22 +82,26 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ paymentEmail: normalizedPaymentEmail }),
+        body: JSON.stringify({
+          ...(requireEmail ? { paymentEmail: normalizedPaymentEmail } : {}),
+          ...(requirePhone ? { paymentPhone: normalizedPaymentPhone } : {}),
+        }),
       });
       const result = (await response.json()) as PaymentEmailResponse;
 
-      if (!response.ok || !result.paymentEmail) {
-        throw new Error(result.error ?? '결제 이메일을 저장하지 못했습니다.');
+      if (!response.ok || (requireEmail && !result.paymentEmail) || (requirePhone && !result.paymentPhone)) {
+        throw new Error(result.error ?? '결제 정보를 저장하지 못했습니다.');
       }
 
       setPaymentEmail('');
+      setPaymentPhone('');
       onClose();
-      await onSaved(result.paymentEmail);
+      await onSaved(result.paymentEmail ?? '', result.paymentPhone ?? '');
     } catch (unknownError) {
       setErrorMessage(
         unknownError instanceof Error
-          ? unknownError.message || '결제 이메일을 저장하지 못했습니다.'
-          : '결제 이메일을 저장하지 못했습니다.',
+          ? unknownError.message || '결제 정보를 저장하지 못했습니다.'
+          : '결제 정보를 저장하지 못했습니다.',
       );
     } finally {
       setIsSaving(false);
@@ -91,16 +111,32 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
   function renderContent() {
     return (
       <Stack gap={2}>
-        <p>결제 과정에서 구매자를 식별하기 위해 실명 대신 사용하는 이메일 주소입니다.</p>
-        <TextField
-          type="email"
-          value={paymentEmail}
-          placeholder="이메일 주소"
-          onChange={handleChange}
-          disabled={isSaving}
-          fullWidth
-          size="small"
-        />
+        {requireEmail ? (
+          <TextField
+            type="email"
+            value={paymentEmail}
+            placeholder="결제용 이메일 주소"
+            onChange={handleChange}
+            disabled={isSaving}
+            fullWidth
+            size="small"
+          />
+        ) : null}
+        {requirePhone ? (
+          <TextField
+            type="tel"
+            value={paymentPhone}
+            placeholder="결제용 휴대폰 번호"
+            onChange={(event) => {
+              setPaymentPhone(event.target.value);
+              setErrorMessage('');
+            }}
+            disabled={isSaving}
+            inputMode="tel"
+            fullWidth
+            size="small"
+          />
+        ) : null}
         {errorMessage ? (
           <p className="alert error">
             <ErrorOutlineRoundedIcon />
@@ -114,7 +150,7 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
   if (isMobile) {
     return (
       <Drawer anchor="bottom" open={open} onClose={handleClose} className="VhiDrawer-bottom">
-        <h2>결제 이메일 입력</h2>
+        <h2>결제 정보 입력</h2>
         <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
           <CloseRoundedIcon />
         </button>
@@ -140,7 +176,7 @@ export default function PaymentEmailDialog({ open, onClose, onSaved }: PaymentEm
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs" className="VhiDialog">
-      <DialogTitle>결제 이메일 입력</DialogTitle>
+      <DialogTitle>결제 정보 입력</DialogTitle>
       <button type="button" className="close-button" onClick={handleClose} aria-label="닫기">
         <CloseRoundedIcon />
       </button>

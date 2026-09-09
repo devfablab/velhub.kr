@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { isAtLeast14 } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
+import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
@@ -274,6 +275,23 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
 
+    const [paymentEmail, paymentPhone, customerName] = await Promise.all([
+      getPaymentCustomerName(session.authUserId),
+      getPaymentCustomerPhone(session.authUserId),
+      getPaymentCustomerRealName(session.authUserId),
+    ]);
+
+    if (!paymentEmail || !paymentPhone || !customerName) {
+      return Response.json(
+        {
+          paymentCustomerRequired: true,
+          paymentEmailRequired: !paymentEmail,
+          paymentPhoneRequired: !paymentPhone,
+        },
+        { status: 400 },
+      );
+    }
+
     const body = (await request.json()) as PostPurchaseStartBody;
     const minorControl = await enforceMinorPaymentControl(session.stigmaId, body.guardianIdentityVerificationId);
     if (minorControl.error)
@@ -396,6 +414,9 @@ export async function POST(request: NextRequest) {
       paymentId,
       orderName: `${post.subject} 구매`,
       amount: postPurchasePrice,
+      customerEmail: paymentEmail,
+      customerPhone: paymentPhone,
+      customerName,
       redirectUrl: successUrl.toString(),
       failUrl: failUrl.toString(),
     });

@@ -33,6 +33,9 @@ type DonationStartResponse = {
   paymentId?: string;
   orderName?: string;
   amount?: number;
+  customerName?: string;
+  paymentEmail?: string;
+  paymentPhone?: string;
   redirectUrl?: string;
   error?: string;
   guardianAuthRequired?: boolean;
@@ -73,6 +76,8 @@ type IdentityStatusResponse = {
 type DonationStatusResponse = {
   isEnabled?: boolean;
   paymentEmail?: string | null;
+  paymentPhone?: string | null;
+  customerName?: string | null;
 };
 
 function onlyDigits(value: string | null | undefined) {
@@ -173,6 +178,8 @@ export default function DonationButton(props: Props) {
   const [canShowDonationButton, setCanShowDonationButton] = useState(false);
   const [hasIdentity, setHasIdentity] = useState(false);
   const [paymentEmail, setPaymentEmail] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [isMinor, setIsMinor] = useState(false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
@@ -220,6 +227,8 @@ export default function DonationButton(props: Props) {
 
         setCanShowDonationButton(Boolean(donationStatusResponse.ok && donationStatusResult.isEnabled));
         setPaymentEmail(donationStatusResponse.ok ? String(donationStatusResult.paymentEmail ?? '') : '');
+        setPaymentPhone(donationStatusResponse.ok ? String(donationStatusResult.paymentPhone ?? '') : '');
+        setCustomerName(donationStatusResponse.ok ? String(donationStatusResult.customerName ?? '') : '');
       } catch {
         setCanShowDonationButton(false);
       }
@@ -247,7 +256,7 @@ export default function DonationButton(props: Props) {
       return;
     }
 
-    if (!paymentEmail) {
+    if (!paymentEmail || !paymentPhone) {
       setIsPaymentEmailDialogOpen(true);
       return;
     }
@@ -274,8 +283,9 @@ export default function DonationButton(props: Props) {
     window.requestAnimationFrame(() => window.location.reload());
   }
 
-  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+  function handlePaymentEmailSaved(savedPaymentEmail: string, savedPaymentPhone: string) {
     setPaymentEmail(savedPaymentEmail);
+    setPaymentPhone(savedPaymentPhone);
     setDonationAmount('1,000');
     setErrorMessage('');
     setIsDialogOpen(true);
@@ -330,12 +340,15 @@ export default function DonationButton(props: Props) {
         !result.paymentId ||
         !result.orderName ||
         !result.amount ||
+        !result.customerName ||
+        !result.paymentEmail ||
+        !result.paymentPhone ||
         !result.redirectUrl
       ) {
         throw new Error('후원 결제 정보가 올바르지 않습니다.');
       }
 
-      await PortOne.requestPayment({
+      const paymentResult = await PortOne.requestPayment({
         storeId: result.storeId,
         channelKey: result.channelKey,
         paymentId: result.paymentId,
@@ -343,9 +356,18 @@ export default function DonationButton(props: Props) {
         totalAmount: result.amount,
         currency: 'CURRENCY_KRW',
         payMethod: 'CARD',
+        customer: {
+          fullName: result.customerName,
+          email: result.paymentEmail,
+          phoneNumber: result.paymentPhone,
+        },
         redirectUrl: result.redirectUrl,
         forceRedirect: true,
       });
+
+      if (paymentResult?.code) {
+        throw new Error(paymentResult.message || paymentResult.pgMessage || '결제 창을 열지 못했습니다.');
+      }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '후원을 시작하지 못했습니다.');
@@ -376,7 +398,9 @@ export default function DonationButton(props: Props) {
 
         {minorControlMode === 'guardian_auth_required' && (
           <p className="alert warning" style={{ marginTop: '8px' }}>
-            <span>결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.</span>
+            <span>
+              결제 방침에 따라 <strong>법정대리인(부모님)의 본인인증</strong>이 필요합니다.
+            </span>
           </p>
         )}
         {isMinor && minorControlMode !== 'guardian_auth_required' && (
@@ -415,6 +439,8 @@ export default function DonationButton(props: Props) {
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}
         onClose={() => setIsPaymentEmailDialogOpen(false)}
+        requireEmail={!paymentEmail}
+        requirePhone={!paymentPhone}
         onSaved={handlePaymentEmailSaved}
       />
 
@@ -440,7 +466,9 @@ export default function DonationButton(props: Props) {
                 className="button medium submit"
                 onClick={() => void handleDonate()}
                 disabled={isProcessing}
-              >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}</button>
+              >
+                {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
+              </button>
             </Stack>
           </Stack>
         </Drawer>
@@ -460,7 +488,9 @@ export default function DonationButton(props: Props) {
               className="button medium submit"
               onClick={() => void handleDonate()}
               disabled={isProcessing}
-            >{minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}</button>
+            >
+              {minorControlMode === 'guardian_auth_required' ? '부모님 인증하고 후원' : '후원'}
+            </button>
           </DialogActions>
         </Dialog>
       )}
@@ -487,7 +517,13 @@ export default function DonationButton(props: Props) {
           </Stack>
         </Drawer>
       ) : (
-        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />

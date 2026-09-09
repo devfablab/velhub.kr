@@ -303,34 +303,34 @@ export default function Opt() {
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>초대 이메일</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
-                  <TableCell>유효일</TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedInvites.map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
-                    <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
-                    <TableCell align="right">
-                      {invite.status === 'pending' ? (
-                        <button
-                          type="button"
-                          className="button small cancel"
-                          onClick={() => handleOpenCancelDialog(invite)}
-                        >
-                          취소
-                        </button>
-                      ) : null}
-                    </TableCell>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>초대 이메일</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>상태</TableCell>
+                    <TableCell>유효일</TableCell>
+                    <TableCell />
                   </TableRow>
-                ))}
-              </TableBody>
+                </TableHead>
+                <TableBody>
+                  {sortedInvites.map((invite) => (
+                    <TableRow key={invite.id}>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{invite.email}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{getInviteStatusLabel(invite.status)}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatDateTimeFull(invite.expires_at)}</TableCell>
+                      <TableCell align="right">
+                        {invite.status === 'pending' ? (
+                          <button
+                            type="button"
+                            className="button small cancel"
+                            onClick={() => handleOpenCancelDialog(invite)}
+                          >
+                            취소
+                          </button>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
               </Table>
             </div>
           )}

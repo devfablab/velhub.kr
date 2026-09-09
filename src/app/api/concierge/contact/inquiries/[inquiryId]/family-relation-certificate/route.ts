@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (isIdentityRequired && identityVerificationId) {
     const portOneVerification = await getPortOneIdentityVerification(identityVerificationId as string);
     verifiedIdentity = extractVerifiedIdentity(identityVerificationId as string, portOneVerification);
-    
+
     if (!verifiedIdentity) {
       return Response.json({ error: '법정대리인 본인인증 결과를 확인할 수 없습니다.' }, { status: 400 });
     }
@@ -166,10 +166,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     sender_type: 'requester',
     sender_stigma_id: currentStigma.stigmaId,
     message_type: 'information_response',
-    message: 
-      inquiry.information_request_type === 'guardian_identity_verification' ? '법정대리인 본인인증을 완료했습니다.' :
-      inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ? '법정대리인 본인인증 및 가족관계증명서 PDF를 제출했습니다.' : 
-      '가족관계증명서 PDF를 제출했습니다.',
+    message:
+      inquiry.information_request_type === 'guardian_identity_verification'
+        ? '법정대리인 본인인증을 완료했습니다.'
+        : inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
+          ? '법정대리인 본인인증 및 가족관계증명서 PDF를 제출했습니다.'
+          : '가족관계증명서 PDF를 제출했습니다.',
   });
 
   await supabaseAdmin
@@ -186,10 +188,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     previous_status: 'info_requested',
     next_status: 'reviewing',
     changed_by_stigma_id: currentStigma.stigmaId,
-    reason: 
-      inquiry.information_request_type === 'guardian_identity_verification' ? '법정대리인 본인인증 완료' :
-      inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate' ? '법정대리인 본인인증 및 가족관계증명서 PDF 제출' : 
-      '가족관계증명서 PDF 제출',
+    reason:
+      inquiry.information_request_type === 'guardian_identity_verification'
+        ? '법정대리인 본인인증 완료'
+        : inquiry.information_request_type === 'guardian_identity_and_family_relation_certificate'
+          ? '법정대리인 본인인증 및 가족관계증명서 PDF 제출'
+          : '가족관계증명서 PDF 제출',
   });
 
   return Response.json({ ok: true });

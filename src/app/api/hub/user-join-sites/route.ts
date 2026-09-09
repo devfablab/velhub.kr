@@ -231,7 +231,9 @@ export async function GET() {
 
     const sites = (sitesResult.data ?? []) as SiteRow[];
     const siteMap = new Map(sites.map((site) => [site.id, site]));
-    const ownerIds = [...new Set(sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerIds = [
+      ...new Set(sites.map((site) => site.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
+    ];
     const ownerDomainFeatures = new Map(
       await Promise.all(
         ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),

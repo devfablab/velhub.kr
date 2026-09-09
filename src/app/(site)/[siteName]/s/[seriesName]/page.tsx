@@ -204,13 +204,9 @@ export default async function Page(context: RouteContext) {
   }
 
   const permanentlyOwnedPostIds = new Set(
-    (permanentPurchaseResult.data ?? [])
-      .map((payment) => normalizeText(payment.target_id))
-      .filter(Boolean),
+    (permanentPurchaseResult.data ?? []).map((payment) => normalizeText(payment.target_id)).filter(Boolean),
   );
-  const visiblePosts = allPosts.filter(
-    (post) => post.is_closed === false || permanentlyOwnedPostIds.has(post.id),
-  );
+  const visiblePosts = allPosts.filter((post) => post.is_closed === false || permanentlyOwnedPostIds.has(post.id));
   const from = (currentPage - 1) * PAGE_SIZE;
   const contents = visiblePosts.slice(from, from + PAGE_SIZE);
   const totalCount = visiblePosts.length;

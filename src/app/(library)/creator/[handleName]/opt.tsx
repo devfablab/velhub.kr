@@ -561,46 +561,46 @@ export default function Opt({ handleName }: { handleName: string }) {
                 </button>
               </Stack>
 
-            {data.posts.length ? (
-              <ul className={`paper ${styles['user-posts']}`}>
-                {data.posts.map((post) => (
-                  <li key={post.id}>
-                    <button type="button" onClick={() => openPost(post.url)} className="paper">
-                      <strong>{post.subject}</strong>
-                      <span className={styles['post-label']}>
-                        <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
-                      </span>
-                      <time>{post.publishedAt ? formatTimeAgo(post.publishedAt) : '-'}</time>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <ScreenState>작성한 글이 없습니다.</ScreenState>
-            )}
-            {totalPages > 1 ? (
-              <Stack direction="row" justifyContent="center" gap={1}>
-                <button
-                  type="button"
-                  className="button small action"
-                  disabled={page <= 1}
-                  onClick={() => setPage((current) => current - 1)}
-                >
-                  이전
-                </button>
-                <Typography variant="body2">
-                  {page} / {totalPages}
-                </Typography>
-                <button
-                  type="button"
-                  className="button small action"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  다음
-                </button>
-              </Stack>
-            ) : null}
+              {data.posts.length ? (
+                <ul className={`paper ${styles['user-posts']}`}>
+                  {data.posts.map((post) => (
+                    <li key={post.id}>
+                      <button type="button" onClick={() => openPost(post.url)} className="paper">
+                        <strong>{post.subject}</strong>
+                        <span className={styles['post-label']}>
+                          <span>{post.seriesLabel}</span> / <span>{post.siteLabel}</span>
+                        </span>
+                        <time>{post.publishedAt ? formatTimeAgo(post.publishedAt) : '-'}</time>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ScreenState>작성한 글이 없습니다.</ScreenState>
+              )}
+              {totalPages > 1 ? (
+                <Stack direction="row" justifyContent="center" gap={1}>
+                  <button
+                    type="button"
+                    className="button small action"
+                    disabled={page <= 1}
+                    onClick={() => setPage((current) => current - 1)}
+                  >
+                    이전
+                  </button>
+                  <Typography variant="body2">
+                    {page} / {totalPages}
+                  </Typography>
+                  <button
+                    type="button"
+                    className="button small action"
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    다음
+                  </button>
+                </Stack>
+              ) : null}
             </Stack>
           ) : (
             <ScreenState kind="error">작가 개인 사정에 의해 이용이 중단된 프로필입니다.</ScreenState>

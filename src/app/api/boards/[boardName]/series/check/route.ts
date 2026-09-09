@@ -108,9 +108,17 @@ export async function GET(request: Request, context: RouteContext) {
       return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
     }
 
-    if (board.data.board_type === 'page' || (rhizome.data.site_type === 'community' && board.data.board_type === 'youtube')) {
+    if (
+      board.data.board_type === 'page' ||
+      (rhizome.data.site_type === 'community' && board.data.board_type === 'youtube')
+    ) {
       return Response.json(
-        { error: board.data.board_type === 'youtube' ? '유튜브 게시판에서는 연재를 사용할 수 없습니다.' : '페이지 게시판은 연재를 사용할 수 없습니다.' },
+        {
+          error:
+            board.data.board_type === 'youtube'
+              ? '유튜브 게시판에서는 연재를 사용할 수 없습니다.'
+              : '페이지 게시판은 연재를 사용할 수 없습니다.',
+        },
         { status: 403 },
       );
     }

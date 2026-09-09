@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
 import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE } from '@/lib/payments/types';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
@@ -178,11 +178,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const paymentEmail = await getPaymentEmail();
+    const [paymentEmail, paymentPhone, customerName] = await Promise.all([
+      getPaymentEmail(),
+      session.authUserId ? getPaymentCustomerPhone(session.authUserId) : Promise.resolve(null),
+      session.authUserId ? getPaymentCustomerRealName(session.authUserId) : Promise.resolve(null),
+    ]);
 
     return Response.json({
       isEnabled: true,
       paymentEmail,
+      paymentPhone,
+      customerName,
     });
   } catch (unknownError) {
     console.error(unknownError);

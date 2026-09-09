@@ -155,7 +155,6 @@ export async function POST(request: NextRequest) {
 
         return Response.json({ error: '결제 수단을 갱신하지 못했습니다.' }, { status: 500 });
       }
-
     } else {
       const billingMethodInsertResult = await supabaseAdmin.from('subscription_billing_methods').insert({
         user_id: session.stigmaId,

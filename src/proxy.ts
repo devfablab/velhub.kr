@@ -225,11 +225,7 @@ function isCommunityBoardRoleRestrictedPath(pathname: string, siteName: string) 
   ]);
 }
 
-function isCommunityAssignedBoardManagerRestrictedPath(
-  pathname: string,
-  siteName: string,
-  managedBoardKeys: string[],
-) {
+function isCommunityAssignedBoardManagerRestrictedPath(pathname: string, siteName: string, managedBoardKeys: string[]) {
   if (
     isCommunityBoardRoleRestrictedPath(pathname, siteName) ||
     pathname.startsWith(`/${siteName}/manage/contents/pages`)
@@ -423,7 +419,10 @@ async function fetchSessionRoute(request: NextRequest, pathname: string, query: 
   };
 }
 
-async function fetchRhizomeState(request: NextRequest, { siteName, customDomain }: { siteName?: string; customDomain?: string }) {
+async function fetchRhizomeState(
+  request: NextRequest,
+  { siteName, customDomain }: { siteName?: string; customDomain?: string },
+) {
   const targetUrl = new URL('/api/site/public', request.url);
 
   if (siteName) targetUrl.searchParams.set('siteName', siteName);
@@ -528,7 +527,9 @@ function getSecondaryRedirectPath({
   }
 
   if (pathname === `/${siteName}/manage/design`) {
-    return siteType === 'community' ? `/${siteName}/manage/design/community/home` : `/${siteName}/manage/design/blog/fonts`;
+    return siteType === 'community'
+      ? `/${siteName}/manage/design/community/home`
+      : `/${siteName}/manage/design/blog/fonts`;
   }
 
   return redirects[pathname] ?? null;
@@ -571,7 +572,6 @@ export async function proxy(request: NextRequest) {
     if (isLoggedIn) {
       return redirectWithPath(request, '/');
     }
-
   }
 
   if (pathname === '/auth/verify-2fa') {

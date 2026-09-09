@@ -171,7 +171,10 @@ function applyBlogFontSettings(siteType: SiteType | null, blogFontSettings: Blog
     '--blog-subject-letter-spacing',
     `${blogFontSettings?.subjectLetterSpacing ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLetterSpacing}em`,
   );
-  setCssVariable('--blog-subject-line-height', blogFontSettings?.subjectLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight);
+  setCssVariable(
+    '--blog-subject-line-height',
+    blogFontSettings?.subjectLineHeight ?? DEFAULT_BLOG_FONT_SETTINGS.subjectLineHeight,
+  );
 
   setCssVariable(
     '--blog-description-font-family',

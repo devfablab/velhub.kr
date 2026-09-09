@@ -40,6 +40,9 @@ type PortOneBillingKeyPaymentParams = {
   channelKey?: string;
   orderName: string;
   customerId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhoneNumber: string;
   amount: number;
 };
 
@@ -188,7 +191,8 @@ function createPortOneApiError(responseData: unknown, fallbackMessage: string) {
   if (isPortOneErrorResponse(responseData)) {
     return new PortOneApiError({
       code: responseData.code ?? responseData.type ?? 'PORTONE_API_ERROR',
-      message: responseData.message ?? (typeof responseData.pgMessage === 'string' ? responseData.pgMessage : fallbackMessage),
+      message:
+        responseData.message ?? (typeof responseData.pgMessage === 'string' ? responseData.pgMessage : fallbackMessage),
       rawData: responseData,
     });
   }
@@ -366,6 +370,9 @@ export async function requestPortOneBillingPayment({
   channelKey = getPortOneKpnSubscriptionChannelKey(),
   orderName,
   customerId,
+  customerName,
+  customerEmail,
+  customerPhoneNumber,
   amount,
 }: PortOneBillingKeyPaymentParams) {
   const responseData = await requestPortOneApi(
@@ -379,6 +386,11 @@ export async function requestPortOneBillingPayment({
         orderName,
         customer: {
           id: customerId,
+          name: {
+            full: customerName,
+          },
+          email: customerEmail,
+          phoneNumber: customerPhoneNumber,
         },
         amount: {
           total: amount,

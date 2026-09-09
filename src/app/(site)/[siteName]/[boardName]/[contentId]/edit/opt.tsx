@@ -738,8 +738,7 @@ export default function Opt({ isCommunity }: Props) {
     () => seriesList.find((series) => series.series_key === selectedSeriesKey) ?? null,
     [seriesList, selectedSeriesKey],
   );
-  const canRegisterPaidPreview =
-    (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
+  const canRegisterPaidPreview = (isBasicBoard || isGalleryBoard) && selectedSeries?.is_subscription === true;
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;

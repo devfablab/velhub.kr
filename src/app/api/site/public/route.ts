@@ -50,9 +50,13 @@ export async function GET(request: Request) {
 
     let rhizomeQuery = supabaseAdmin
       .from('rhizomes')
-      .select('id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked, is_closed, custom_domain');
+      .select(
+        'id, owner_id, site_key, site_label, site_type, visibility_type, is_shutdown, is_blocked, is_closed, custom_domain',
+      );
 
-    rhizomeQuery = customDomain ? rhizomeQuery.eq('custom_domain', customDomain) : rhizomeQuery.eq('site_key', siteName);
+    rhizomeQuery = customDomain
+      ? rhizomeQuery.eq('custom_domain', customDomain)
+      : rhizomeQuery.eq('site_key', siteName);
     const rhizome = await rhizomeQuery.maybeSingle();
 
     if (rhizome.error) {

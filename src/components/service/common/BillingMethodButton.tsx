@@ -15,6 +15,7 @@ type PortOneBillingKeyResponse = {
 
 type BillingMethodStatusResponse = {
   paymentEmail: string | null;
+  paymentPhone: string | null;
   error?: string;
 };
 
@@ -41,6 +42,8 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
+  const [needsPaymentEmail, setNeedsPaymentEmail] = useState(true);
+  const [needsPaymentPhone, setNeedsPaymentPhone] = useState(false);
   const [isDuplicatePaymentMethodDialogOpen, setIsDuplicatePaymentMethodDialogOpen] = useState(false);
 
   async function getBillingMethodStatus() {
@@ -55,7 +58,10 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       throw new Error(result.error || '결제 이메일을 확인하지 못했습니다.');
     }
 
-    return normalizeText(result.paymentEmail);
+    return {
+      paymentEmail: normalizeText(result.paymentEmail),
+      paymentPhone: normalizeText(result.paymentPhone),
+    };
   }
 
   async function startBillingMethodIssue(paymentEmail: string) {
@@ -158,10 +164,12 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       setIsProcessing(true);
       setErrorMessage('');
 
-      const paymentEmail = await getBillingMethodStatus();
+      const { paymentEmail, paymentPhone } = await getBillingMethodStatus();
 
-      if (!paymentEmail) {
+      if (!paymentEmail || !paymentPhone) {
         setIsProcessing(false);
+        setNeedsPaymentEmail(!paymentEmail);
+        setNeedsPaymentPhone(!paymentPhone);
         setIsPaymentEmailDialogOpen(true);
         return;
       }
@@ -202,6 +210,8 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}
         onClose={() => setIsPaymentEmailDialogOpen(false)}
+        requireEmail={needsPaymentEmail}
+        requirePhone={needsPaymentPhone}
         onSaved={handlePaymentEmailSaved}
       />
 

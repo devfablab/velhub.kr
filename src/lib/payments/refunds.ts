@@ -11,7 +11,7 @@ export type RefundCalculationResult = {
 };
 
 export function getPaymentPolicyDays() {
-  return process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 1 : 7;
+  return 7;
 }
 
 export function getPaymentPolicyMs() {
@@ -19,7 +19,7 @@ export function getPaymentPolicyMs() {
 }
 
 export function getPastDueGraceDays() {
-  return process.env.NEXT_PUBLIC_APP_ENV === 'test' ? 1 : 7;
+  return 7;
 }
 
 function getElapsedTime(startedAt: string | Date, now = new Date()) {

@@ -1,7 +1,16 @@
 'use client';
 
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Dialog, DialogActions, DialogContent, DialogTitle, Drawer, Stack, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  Stack,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 
 type Props = {
   open: boolean;

@@ -1,4 +1,4 @@
-import { getPaymentCustomerName } from '@/lib/payments/customer';
+import { getPaymentCustomerName, getPaymentCustomerPhone } from '@/lib/payments/customer';
 import verifySession from '@/lib/session/verifySession';
 
 export async function GET() {
@@ -8,19 +8,25 @@ export async function GET() {
     if (!session.authUserId) {
       return Response.json({
         paymentEmail: null,
+        paymentPhone: null,
       });
     }
 
-    const paymentEmail = await getPaymentCustomerName(session.authUserId);
+    const [paymentEmail, paymentPhone] = await Promise.all([
+      getPaymentCustomerName(session.authUserId),
+      getPaymentCustomerPhone(session.authUserId),
+    ]);
 
     return Response.json({
       paymentEmail,
+      paymentPhone,
     });
   } catch (unknownError) {
     console.error(unknownError);
 
     return Response.json({
       paymentEmail: null,
+      paymentPhone: null,
     });
   }
 }

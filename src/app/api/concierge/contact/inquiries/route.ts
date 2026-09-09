@@ -347,7 +347,7 @@ async function getPaymentOptions(stigmaId: string, cancellationOnly = true) {
           ? payment.target_id
           : (series?.siteId ?? board?.siteId ?? post?.site_id);
       const siteLabel = siteId ? siteMap.get(siteId) : null;
-      
+
       let hasSpecificLabel = false;
       if (siteLabel) {
         segments.push(siteLabel);
@@ -365,7 +365,13 @@ async function getPaymentOptions(stigmaId: string, cancellationOnly = true) {
         hasSpecificLabel = true;
       }
 
-      if (!hasSpecificLabel && typeof payment.raw_data === 'object' && payment.raw_data && 'orderName' in payment.raw_data && typeof payment.raw_data.orderName === 'string') {
+      if (
+        !hasSpecificLabel &&
+        typeof payment.raw_data === 'object' &&
+        payment.raw_data &&
+        'orderName' in payment.raw_data &&
+        typeof payment.raw_data.orderName === 'string'
+      ) {
         segments.push(payment.raw_data.orderName);
       } else {
         segments.push(getPaymentTypeLabel(payment.payment_type));

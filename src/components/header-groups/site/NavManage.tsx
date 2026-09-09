@@ -40,13 +40,7 @@ function canAccessAllManageMenus(siteType: SiteType, siteRole: string | null, gl
   return siteRole === 'owner' || siteRole === 'community-manager';
 }
 
-export default function NavManage({
-  siteName,
-  siteType,
-  siteRole,
-  globalRole,
-  isSiteStaff,
-}: NavManageProps) {
+export default function NavManage({ siteName, siteType, siteRole, globalRole, isSiteStaff }: NavManageProps) {
   const pathname = usePathname();
 
   if (!isSiteStaff) {

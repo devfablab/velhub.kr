@@ -50,11 +50,7 @@ export async function getMembershipFeatures(stigmaId: string) {
       .eq('subscription_type', SUBSCRIPTION_TYPE.MEMBERSHIP)
       .eq('target_type', PAYMENT_TARGET_TYPE.MEMBERSHIP)
       .in('target_id', membershipIds),
-    supabaseAdmin
-      .from('chorogons')
-      .select('birth_date, birth_date_dummy')
-      .eq('user_id', stigmaId)
-      .maybeSingle(),
+    supabaseAdmin.from('chorogons').select('birth_date, birth_date_dummy').eq('user_id', stigmaId).maybeSingle(),
   ]);
 
   if (itemsResult.error || subscriptionsResult.error || identityResult.error) {

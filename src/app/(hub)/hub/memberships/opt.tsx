@@ -563,8 +563,8 @@ export default function MembershipPlan() {
                       <p className="alert warning">
                         <InfoOutlineRoundedIcon />
                         <span>
-                          자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요. 유예 기간 안에 결제가
-                          완료되지 않으면 멤버십 기능 이용이 종료됩니다.
+                          자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요. 유예 기간 안에 결제가 완료되지
+                          않으면 멤버십 기능 이용이 종료됩니다.
                         </span>
                       </p>
                     ) : null}

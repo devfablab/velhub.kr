@@ -86,7 +86,7 @@ export default function IdentityVerificationButton({
   const handleBypassConfirm = async (bypass: boolean, mockTxId?: string) => {
     setBypassModalOpen(false);
     if (!pendingRequest) return;
-    
+
     setIsProcessing(true);
     try {
       if (bypass && mockTxId) {
@@ -160,7 +160,10 @@ export default function IdentityVerificationButton({
       />
       <DevIdentityBypassModal
         open={bypassModalOpen}
-        onClose={() => { setBypassModalOpen(false); setIsProcessing(false); }}
+        onClose={() => {
+          setBypassModalOpen(false);
+          setIsProcessing(false);
+        }}
         onConfirm={(bypass, mockTxId) => void handleBypassConfirm(bypass, mockTxId)}
       />
       <Snackbar

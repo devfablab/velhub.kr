@@ -64,7 +64,9 @@ export async function GET(request: NextRequest) {
 
     const rhizomes = rhizomesResult.data;
     const rhizomeMap = new Map(rhizomes.map((rhizome) => [rhizome.id, rhizome]));
-    const ownerIds = [...new Set(rhizomes.map((rhizome) => rhizome.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId)))];
+    const ownerIds = [
+      ...new Set(rhizomes.map((rhizome) => rhizome.owner_id).filter((ownerId): ownerId is string => Boolean(ownerId))),
+    ];
     const ownerDomainFeatures = new Map(
       await Promise.all(
         ownerIds.map(async (ownerId) => [ownerId, await hasMembershipFeature(ownerId, 'owner_domain')] as const),

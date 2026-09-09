@@ -3,7 +3,8 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 const statusLabel = (status: string) =>
-  ({ paid: '결제 완료', refunded: '환불 완료', partially_refunded: '부분 환불', failed: '결제 실패' })[status] ?? '확인 필요';
+  ({ paid: '결제 완료', refunded: '환불 완료', partially_refunded: '부분 환불', failed: '결제 실패' })[status] ??
+  '확인 필요';
 
 const membershipTypeLabel = (membershipType: string) =>
   ({
@@ -41,7 +42,9 @@ export async function GET() {
     return Response.json({ error: '멤버십 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const planIds = (itemsResult.data ?? []).map((item) => item.plan_id);
-  const plansResult = planIds.length ? await db.from('plans').select('id,plan_label').in('id', planIds) : { data: [], error: null };
+  const plansResult = planIds.length
+    ? await db.from('plans').select('id,plan_label').in('id', planIds)
+    : { data: [], error: null };
   if (plansResult.error) return Response.json({ error: '멤버십 기능 정보를 불러오지 못했습니다.' }, { status: 500 });
 
   const membershipById = new Map((membershipsResult.data ?? []).map((membership) => [membership.id, membership]));
@@ -52,7 +55,9 @@ export async function GET() {
     labels.push(planById.get(item.plan_id) ?? '기능 확인 필요');
     itemsByMembership.set(item.membership_id, labels);
   }
-  const successful = payments.filter((payment) => [PAYMENT_STATUS.PAID, PAYMENT_STATUS.REFUNDED, PAYMENT_STATUS.PARTIALLY_REFUNDED].includes(payment.status));
+  const successful = payments.filter((payment) =>
+    [PAYMENT_STATUS.PAID, PAYMENT_STATUS.REFUNDED, PAYMENT_STATUS.PARTIALLY_REFUNDED].includes(payment.status),
+  );
   const totalAmount = successful.reduce((sum, payment) => sum + payment.amount, 0);
   const refundedAmount = successful.reduce((sum, payment) => sum + (payment.refunded_amount ?? 0), 0);
   return Response.json({

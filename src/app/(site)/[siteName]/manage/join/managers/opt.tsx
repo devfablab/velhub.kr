@@ -983,16 +983,16 @@ export default function Opt() {
           ) : (
             <div className={`paper paper-p0 ${styles.paper}`}>
               <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>역할</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell>
-                  <TableCell sx={{ whiteSpace: 'nowrap' }}>선정일</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {managers.map((manager) => {
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>별명</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>역할</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>게시판</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>선정일</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {managers.map((manager) => {
                     const isSelected = selectedManagerRoleId === manager.manageRoleId;
 
                     return (
@@ -1020,7 +1020,7 @@ export default function Opt() {
                       </TableRow>
                     );
                   })}
-              </TableBody>
+                </TableBody>
               </Table>
             </div>
           )}
@@ -1316,14 +1316,14 @@ export default function Opt() {
                                 {member.isOwner
                                   ? '운영자'
                                   : member.manageRoles.length > 0
-                                  ? member.manageRoles
-                                      .map((role) =>
-                                        role.boardLabel
-                                          ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
-                                          : getRoleLabel(role.role),
-                                      )
-                                      .join(', ')
-                                  : ''}
+                                    ? member.manageRoles
+                                        .map((role) =>
+                                          role.boardLabel
+                                            ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
+                                            : getRoleLabel(role.role),
+                                        )
+                                        .join(', ')
+                                    : ''}
                               </TableCell>
                             </TableRow>
                           ))
@@ -1532,14 +1532,14 @@ export default function Opt() {
                                 {member.isOwner
                                   ? '운영자'
                                   : member.manageRoles.length > 0
-                                  ? member.manageRoles
-                                      .map((role) =>
-                                        role.boardLabel
-                                          ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
-                                          : getRoleLabel(role.role),
-                                      )
-                                      .join(', ')
-                                  : ''}
+                                    ? member.manageRoles
+                                        .map((role) =>
+                                          role.boardLabel
+                                            ? `${getRoleLabel(role.role)} / ${role.boardLabel}`
+                                            : getRoleLabel(role.role),
+                                        )
+                                        .join(', ')
+                                    : ''}
                               </TableCell>
                             </TableRow>
                           ))

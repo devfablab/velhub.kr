@@ -70,7 +70,10 @@ export async function GET(request: Request, context: RouteContext) {
         .maybeSingle();
 
       if (createBoardResult.error || !createBoardResult.data) {
-        return Response.json({ error: createBoardResult.error?.message || '블로그 게시판을 만들지 못했습니다.' }, { status: 500 });
+        return Response.json(
+          { error: createBoardResult.error?.message || '블로그 게시판을 만들지 못했습니다.' },
+          { status: 500 },
+        );
       }
 
       board = createBoardResult.data;
@@ -82,7 +85,12 @@ export async function GET(request: Request, context: RouteContext) {
 
     if (board.board_type === 'page' || (rhizome.data.site_type === 'community' && board.board_type === 'youtube')) {
       return Response.json(
-        { error: board.board_type === 'youtube' ? '유튜브 게시판에서는 연재를 사용할 수 없습니다.' : '페이지 게시판은 연재를 사용할 수 없습니다.' },
+        {
+          error:
+            board.board_type === 'youtube'
+              ? '유튜브 게시판에서는 연재를 사용할 수 없습니다.'
+              : '페이지 게시판은 연재를 사용할 수 없습니다.',
+        },
         { status: 403 },
       );
     }

@@ -288,9 +288,7 @@ async function getSeriesFilteredPostList({
   } else if (sessionCase === 'staff') {
     postsQuery = postsQuery.eq('is_closed', false);
   } else if (siteType === 'blog' && sessionCase === 'member') {
-    postsQuery = postsQuery
-      .eq('is_closed', false)
-      .or('published_status.eq.published,published_status.eq.unknown');
+    postsQuery = postsQuery.eq('is_closed', false).or('published_status.eq.published,published_status.eq.unknown');
   } else {
     postsQuery = postsQuery.eq('is_closed', false).eq('published_status', 'published');
   }
@@ -569,7 +567,7 @@ export async function GET(request: Request, context: RouteContext) {
           includePin,
           selectedSeries,
         })
-        : await getPostList({
+      : await getPostList({
           siteId: rhizome.data.id,
           siteKey: siteName,
           siteType: rhizome.data.site_type,

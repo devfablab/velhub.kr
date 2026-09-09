@@ -32,7 +32,12 @@ export async function POST(request: Request) {
     return Response.json({ ok: true, customDomain });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message || '커스텀 도메인 확인에 실패했습니다.' : '커스텀 도메인 확인에 실패했습니다.' },
+      {
+        error:
+          error instanceof Error
+            ? error.message || '커스텀 도메인 확인에 실패했습니다.'
+            : '커스텀 도메인 확인에 실패했습니다.',
+      },
       { status: 500 },
     );
   }

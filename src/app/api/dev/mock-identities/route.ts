@@ -7,7 +7,7 @@ export async function GET() {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
-  
+
   const { data: mocks, error } = await supabaseAdmin
     .from('mock_identities')
     .select('id, name, birth_date, gender, verification_tx_id')
@@ -24,14 +24,16 @@ export async function GET() {
 
   const usedTxIds = new Set((chorogons || []).map((c: { verification_tx_id: string }) => c.verification_tx_id));
 
-  const result = mocks.map((m: { id: string; name: string; birth_date: string; gender: string; verification_tx_id: string }) => ({
-    id: m.id,
-    name: m.name,
-    birth_date: m.birth_date,
-    gender: m.gender,
-    verification_tx_id: m.verification_tx_id,
-    used: usedTxIds.has(m.verification_tx_id),
-  }));
+  const result = mocks.map(
+    (m: { id: string; name: string; birth_date: string; gender: string; verification_tx_id: string }) => ({
+      id: m.id,
+      name: m.name,
+      birth_date: m.birth_date,
+      gender: m.gender,
+      verification_tx_id: m.verification_tx_id,
+      used: usedTxIds.has(m.verification_tx_id),
+    }),
+  );
 
   return NextResponse.json(result);
 }

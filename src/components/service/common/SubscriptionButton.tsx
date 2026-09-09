@@ -55,7 +55,10 @@ type SubscriptionStatusResponse = {
   price?: number | null;
   subscriptionStatus?: SubscriptionStatus;
   isRefundableCancellation?: boolean;
+  refundAmount?: number;
   paymentEmail?: string | null;
+  paymentPhone?: string | null;
+  customerName?: string | null;
   error?: string;
 };
 
@@ -214,11 +217,21 @@ function getDialogSubmitText(subscriptionStatus: SubscriptionStatus) {
   return '구독하기';
 }
 
-function getCancelDialogTitle() {
-  return '연재 구독 취소';
+function getCancelDialogTitle(isRefundableCancellation: boolean) {
+  return isRefundableCancellation ? '연재 구독 환불' : '연재 구독 취소';
 }
 
-function getCancelDialogDescription() {
+function getCancelDialogDescription({
+  isRefundableCancellation,
+  refundAmount,
+}: {
+  isRefundableCancellation: boolean;
+  refundAmount: number;
+}) {
+  if (isRefundableCancellation) {
+    return `지금 환불하면 ${formatPrice(refundAmount)} 원이 환불되며, 구독은 즉시 종료됩니다.`;
+  }
+
   return '지금 취소해도 현재 이용 기간은 그대로 사용할 수 있어요. 다음 결제일부터 자동 결제가 진행되지 않습니다.';
 }
 
@@ -239,6 +252,8 @@ export default function SubscriptionButton({
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
   const [paymentEmail, setPaymentEmail] = useState('');
+  const [paymentPhone, setPaymentPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
 
   const targetType: SubscriptionTargetType = 'series';
   const targetLabel = selectedSeries.series_label;
@@ -258,6 +273,8 @@ export default function SubscriptionButton({
 
   const [price, setPrice] = useState<number | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus>('none');
+  const [isRefundableCancellation, setIsRefundableCancellation] = useState(false);
+  const [refundAmount, setRefundAmount] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -328,6 +345,8 @@ export default function SubscriptionButton({
         setIsEnabled(false);
         setPrice(null);
         setSubscriptionStatus('none');
+        setIsRefundableCancellation(false);
+        setRefundAmount(0);
         onStatusChange?.('none');
 
         if (!board) {
@@ -350,7 +369,11 @@ export default function SubscriptionButton({
         setIsEnabled(Boolean(result.isEnabled));
         setPrice(result.price ?? null);
         setSubscriptionStatus(nextSubscriptionStatus);
+        setIsRefundableCancellation(Boolean(result.isRefundableCancellation));
+        setRefundAmount(result.refundAmount ?? 0);
         setPaymentEmail(String(result.paymentEmail ?? ''));
+        setPaymentPhone(String(result.paymentPhone ?? ''));
+        setCustomerName(String(result.customerName ?? ''));
         onStatusChange?.(nextSubscriptionStatus);
       } catch (unknownError) {
         if (unknownError instanceof Error) {
@@ -374,7 +397,7 @@ export default function SubscriptionButton({
       return;
     }
 
-    if (!paymentEmail) {
+    if (!paymentEmail || !paymentPhone) {
       setIsPaymentEmailDialogOpen(true);
       return;
     }
@@ -400,8 +423,9 @@ export default function SubscriptionButton({
     window.requestAnimationFrame(() => window.location.reload());
   }
 
-  function handlePaymentEmailSaved(savedPaymentEmail: string) {
+  function handlePaymentEmailSaved(savedPaymentEmail: string, savedPaymentPhone: string) {
     setPaymentEmail(savedPaymentEmail);
+    setPaymentPhone(savedPaymentPhone);
     setErrorMessage('');
     setIsDialogOpen(true);
   }
@@ -467,6 +491,7 @@ export default function SubscriptionButton({
         onStatusChange?.('active');
         setSuccessMessage(`앞으로 ${targetLabel} 월 ${formatPrice(price ?? 0)} 원 결제됩니다.`);
         setIsDialogOpen(false);
+        window.location.reload();
         return;
       }
 
@@ -479,6 +504,11 @@ export default function SubscriptionButton({
           totalAmount: result.amount,
           currency: 'CURRENCY_KRW',
           payMethod: 'CARD',
+          customer: {
+            fullName: customerName,
+            email: paymentEmail,
+            phoneNumber: paymentPhone,
+          },
           redirectUrl: result.successUrl,
           forceRedirect: true,
         });
@@ -555,6 +585,7 @@ export default function SubscriptionButton({
       onStatusChange?.('active');
       setIsDialogOpen(false);
       setSuccessMessage(`앞으로 ${targetLabel} 월 ${formatPrice(price ?? 0)} 원 결제됩니다.`);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '결제에 실패했습니다. 카드 한도 확인 및 유효기간 등을 확인하세요.');
@@ -600,10 +631,13 @@ export default function SubscriptionButton({
         onStatusChange?.('scheduled_cancel');
       } else {
         setSubscriptionStatus('canceled');
+        setIsRefundableCancellation(false);
+        setRefundAmount(0);
         onStatusChange?.('canceled');
       }
 
       setIsCancelDialogOpen(false);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '구독을 취소하지 못했습니다.');
@@ -647,6 +681,7 @@ export default function SubscriptionButton({
       setSubscriptionStatus('active');
       onStatusChange?.('active');
       setIsDialogOpen(false);
+      window.location.reload();
     } catch (unknownError) {
       if (unknownError instanceof Error) {
         setErrorMessage(unknownError.message || '구독 취소를 철회하지 못했습니다.');
@@ -677,6 +712,8 @@ export default function SubscriptionButton({
       <PaymentEmailDialog
         open={isPaymentEmailDialogOpen}
         onClose={() => setIsPaymentEmailDialogOpen(false)}
+        requireEmail={!paymentEmail}
+        requirePhone={!paymentPhone}
         onSaved={handlePaymentEmailSaved}
       />
 
@@ -700,7 +737,7 @@ export default function SubscriptionButton({
           disabled={isProcessing}
         >
           {selectedBoard ? null : <CreditCardOffOutlinedIcon />}
-          <strong>연재 구독 취소</strong>
+          <strong>{isRefundableCancellation ? '연재 구독 환불' : '연재 구독 취소'}</strong>
         </button>
       ) : null}
 
@@ -798,7 +835,9 @@ export default function SubscriptionButton({
               <button
                 type="button"
                 className="button medium submit"
-                onClick={() => void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())}
+                onClick={() =>
+                  void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
+                }
                 disabled={isProcessing}
               >
                 {getDialogSubmitText(subscriptionStatus)}
@@ -863,7 +902,9 @@ export default function SubscriptionButton({
             <button
               type="button"
               className="button medium submit"
-              onClick={() => void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())}
+              onClick={() =>
+                void (isResumingScheduledSubscription ? handleResumeSubscription() : handleStartSubscription())
+              }
               disabled={isProcessing}
             >
               {getDialogSubmitText(subscriptionStatus)}
@@ -879,14 +920,20 @@ export default function SubscriptionButton({
           onClose={handleCloseCancelDialog}
           className="VhiDrawer-bottom"
         >
-          <h2>{getCancelDialogTitle()}</h2>
+          <h2>{getCancelDialogTitle(isRefundableCancellation)}</h2>
           <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
           <Stack gap={3}>
             <Stack>
-              <Typography variant="subtitle2">{targetLabel} 구독을 취소하시겠어요?</Typography>
-              <Typography variant="body2">{getCancelDialogDescription()}</Typography>
+              <Typography variant="subtitle2">
+                {isRefundableCancellation
+                  ? `${targetLabel} 구독을 환불하시겠어요?`
+                  : `${targetLabel} 구독을 취소하시겠어요?`}
+              </Typography>
+              <Typography variant="body2">
+                {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
+              </Typography>
               {errorMessage ? (
                 <p className="alert error">
                   <ErrorOutlineRoundedIcon />
@@ -909,7 +956,7 @@ export default function SubscriptionButton({
                 onClick={handleCancelSubscription}
                 disabled={isProcessing}
               >
-                구독 취소
+                {isRefundableCancellation ? '환불하기' : '구독 취소'}
               </button>
             </Stack>
           </Stack>
@@ -921,14 +968,22 @@ export default function SubscriptionButton({
           aria-labelledby="subscription-cancel-dialog-title"
           className="VhiDialog"
         >
-          <DialogTitle id="subscription-cancel-dialog-title">{getCancelDialogTitle()}</DialogTitle>
+          <DialogTitle id="subscription-cancel-dialog-title">
+            {getCancelDialogTitle(isRefundableCancellation)}
+          </DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseCancelDialog} disabled={isProcessing}>
             <CloseRoundedIcon />
           </button>
           <DialogContent>
             <Stack>
-              <Typography variant="subtitle2">{targetLabel} 구독을 취소하시겠어요?</Typography>
-              <Typography variant="body2">{getCancelDialogDescription()}</Typography>
+              <Typography variant="subtitle2">
+                {isRefundableCancellation
+                  ? `${targetLabel} 구독을 환불하시겠어요?`
+                  : `${targetLabel} 구독을 취소하시겠어요?`}
+              </Typography>
+              <Typography variant="body2">
+                {getCancelDialogDescription({ isRefundableCancellation, refundAmount })}
+              </Typography>
               {errorMessage ? (
                 <p className="alert error">
                   <ErrorOutlineRoundedIcon />
@@ -952,7 +1007,7 @@ export default function SubscriptionButton({
               onClick={handleCancelSubscription}
               disabled={isProcessing}
             >
-              구독 취소
+              {isRefundableCancellation ? '환불하기' : '구독 취소'}
             </button>
           </DialogActions>
         </Dialog>
@@ -980,7 +1035,13 @@ export default function SubscriptionButton({
           </Stack>
         </Drawer>
       ) : (
-        <Dialog open={isIdentityDialogOpen} onClose={handleCloseIdentityDialog} fullWidth maxWidth="xs" className="VhiDialog">
+        <Dialog
+          open={isIdentityDialogOpen}
+          onClose={handleCloseIdentityDialog}
+          fullWidth
+          maxWidth="xs"
+          className="VhiDialog"
+        >
           <DialogTitle>본인인증 필요</DialogTitle>
           <button type="button" className="close-button" onClick={handleCloseIdentityDialog} aria-label="닫기">
             <CloseRoundedIcon />
