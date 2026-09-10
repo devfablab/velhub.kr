@@ -1632,7 +1632,9 @@ export default function Opt({ isCommunity }: Props) {
                 </div>
                 <div className={styles['button-purchase']}>
                   {paidContentActionButtons}
-                  <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
+                  {!isPage ? (
+                    <ReportButton targetType="post" siteName={siteName} boardName={boardName} contentId={contentId} />
+                  ) : null}
                 </div>
               </div>
               {canShowPostMoveButton ? (
