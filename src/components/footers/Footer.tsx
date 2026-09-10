@@ -80,8 +80,8 @@ export default function Footer() {
                   </dd>
                 </div>
                 <div>
-                  <dt>연락처</dt>
-                  <dd>010 7154 5796</dd>
+                  <dt>대표전화</dt>
+                  <dd>070-4577-7513</dd>
                 </div>
               </div>
             </dl>
