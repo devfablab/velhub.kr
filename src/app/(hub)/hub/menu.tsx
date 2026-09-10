@@ -240,7 +240,9 @@ export default function Container({ pageTitle, pageBack, children }: ContainerPr
           </IconButton>
           <h1>
             <span>데브공방 {pageTitle !== '마이허브' ? '- 마이허브 ' : null}</span>
-            <strong>{pageTitle}</strong>
+            <strong>
+              <span>{pageTitle}</span>
+            </strong>
           </h1>
           <div className={styles.iconbuttons}>
             <IconButton

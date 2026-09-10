@@ -790,7 +790,15 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
               <span>
                 {siteLabel} {pageEnterance ? null : '- 관리 홈 '}
               </span>
-              {pageEnterance ? <strong>관리 홈</strong> : <strong>{pageTitle}</strong>}
+              {pageEnterance ? (
+                <strong>
+                  <span>관리 홈</span>
+                </strong>
+              ) : (
+                <strong>
+                  <span>{pageTitle}</span>
+                </strong>
+              )}
             </h1>
             <div className={styles.iconbuttons}>
               <IconButton onClick={handleOpenProfileDrawer} sx={{ width: 40, height: 40 }}>
