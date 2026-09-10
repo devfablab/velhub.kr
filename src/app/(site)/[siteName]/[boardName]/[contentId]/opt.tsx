@@ -1227,37 +1227,30 @@ export default function Opt({ isCommunity }: Props) {
                         <PushPinRoundedIcon />
                       </i>
                     ) : null}
-                    {content.is_closed ? (
-                      content.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
-                        <small
-                          className="alert error"
-                          style={{
-                            padding: '2px 6px',
-                            fontSize: '12px',
-                            display: 'inline-block',
-                            verticalAlign: 'middle',
-                            marginRight: '4px',
-                          }}
-                        >
-                          정산 오류
-                        </small>
-                      ) : (
-                        <small>(삭제글)</small>
-                      )
+                    {!isFeedBoard ? (
+                      <strong>
+                        {content.is_closed ? (
+                          content.closed_message === '정산 정보 오류로 인한 임시 잠금' ? (
+                            <small className={styles.error}>정산 오류 </small>
+                          ) : (
+                            <small className={styles.error}>(삭제글) </small>
+                          )
+                        ) : null}
+                        {content.prefix_label ? <small>[{content.prefix_label}] </small> : null}
+                        {series ? (
+                          <small>
+                            [{series.series_label}
+                            {series.is_completed ? ' (완결) ' : null}]
+                          </small>
+                        ) : null}
+                        {content.published_status === 'unknown' &&
+                        content.published_at &&
+                        new Date(content.published_at).getTime() > Date.now() ? (
+                          <small>(예약글) </small>
+                        ) : null}
+                        {content.subject}
+                      </strong>
                     ) : null}
-                    {content.prefix_label ? <small>[{content.prefix_label}]</small> : null}
-                    {series ? (
-                      <small>
-                        [{series.series_label}
-                        {series.is_completed ? ' (완결)' : null}]
-                      </small>
-                    ) : null}
-                    {content.published_status === 'unknown' &&
-                    content.published_at &&
-                    new Date(content.published_at).getTime() > Date.now() ? (
-                      <small>(예약글)</small>
-                    ) : null}
-                    {!isFeedBoard ? <strong>{content.subject}</strong> : null}
                   </h3>
 
                   <div className={styles['author-profile']}>

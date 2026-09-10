@@ -537,7 +537,7 @@ header.header
   h1
     display: inline-flex
 
-    span
+    > span
       @include ds.screen-reader-only
 
       & ~ strong
@@ -547,13 +547,20 @@ header.header
       display: inline-flex
       align-items: center
       gap: ds.rem(5)
-      @include ds.fw(neo, 800)
-      font-size: ds.rem(18)
-      line-height: 1
       max-width: calc(100vw - ds.rem(240))
       max-height: ds.rem(24)
-      overflow: hidden
-      letter-spacing: -.05em
+
+      span
+        max-width: calc(100vw - ds.rem(237))
+        height: ds.rem(18)
+        overflow: hidden
+        letter-spacing: -.05em
+        @include ds.fw(neo, 800)
+        font-size: ds.rem(18)
+        line-height: 1
+
+        &.site-label
+          max-width: calc(100vw - ds.rem(157))
 
       > img
         max-width: calc(100vw - ds.rem(240))

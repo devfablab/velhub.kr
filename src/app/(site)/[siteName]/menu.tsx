@@ -490,7 +490,7 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
                   ) : (
                     <>
                       {profilePictureUrl ? <AppIconAvatar src={profilePictureUrl || null} alt="" size={18} /> : null}
-                      {siteLabel}
+                      <span className={profilePictureUrl ? undefined : styles['site-label']}>{siteLabel}</span>
                     </>
                   )}
                   {pageTitle}
@@ -498,7 +498,9 @@ export default function Container({ pageTitle, pageBack, pageFin, children }: Co
               ) : (
                 <>
                   <span>{siteLabel} </span>
-                  <strong>{pageTitle}</strong>
+                  <strong>
+                    <span>{pageTitle}</span>
+                  </strong>
                 </>
               )}
             </h1>
