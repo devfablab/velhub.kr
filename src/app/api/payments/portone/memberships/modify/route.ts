@@ -3,7 +3,6 @@ import { encrypt } from '@/lib/encryption/encrypt';
 import { isAtLeast14, isMinor } from '@/lib/identity/age';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getMembershipPlanKey, getMembershipPrice, type MembershipFeatureKey } from '@/lib/memberships/catalog';
-import { getMembershipFeatures } from '@/lib/memberships/features';
 import { createNextMonthlyBillingPeriod, getBillingAnchorDay } from '@/lib/payments/billingPeriod';
 import { createCustomerKey, getPaymentCustomer } from '@/lib/payments/customer';
 import { createPaymentOrderNo as createOrderNo } from '@/lib/payments/orderNo';

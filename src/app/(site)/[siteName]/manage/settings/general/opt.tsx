@@ -30,8 +30,8 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeCustomDomain } from '@/lib/customDomain';
+import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';

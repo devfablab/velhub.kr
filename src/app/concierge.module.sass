@@ -8,6 +8,21 @@
       @include ds.fw(neo, 800)
       font-size: ds.rem(18)
 
+    .help-paper
+      display: grid
+      margin-top: ds.rem(23)
+      grid-template-columns: repeat(1, 1fr)
+
+      @include ds.mq(minLarge)
+        grid-template-columns: repeat(2, 1fr)
+
+      @include ds.mq(minXExtraLarge)
+        grid-template-columns: repeat(3, 1fr)
+
+      svg
+        width: 100%
+        height: auto
+
 .Accordion
   padding: 0!important
   gap: 0
