@@ -82,14 +82,36 @@ function getPaymentStatusLabel(status: string, paymentType?: string, isTestRefun
   }
 }
 
-function getPaymentMethodLabel(paymentMethod: string | null) {
+function getPaymentCardTypeLabel(rawData: unknown) {
+  if (!rawData || typeof rawData !== 'object') return null;
+
+  const method = 'method' in rawData ? rawData.method : null;
+  if (!method || typeof method !== 'object' || !('card' in method)) return null;
+
+  const card = method.card;
+  if (!card || typeof card !== 'object' || !('type' in card) || typeof card.type !== 'string') return null;
+
+  switch (normalizeText(card.type).toLowerCase()) {
+    case 'credit':
+      return '신용카드';
+    case 'check':
+      return '체크카드';
+    default:
+      return '카드';
+  }
+}
+
+function getPaymentMethodLabel(paymentMethod: string | null, rawData: unknown) {
+  const cardTypeLabel = getPaymentCardTypeLabel(rawData);
+  if (cardTypeLabel) return cardTypeLabel;
+
   const normalizedPaymentMethod = normalizeText(paymentMethod).toLowerCase();
 
   if (!normalizedPaymentMethod) {
     return '결제수단 확인 필요';
   }
 
-  if (normalizedPaymentMethod === 'card') {
+  if (normalizedPaymentMethod === 'card' || normalizedPaymentMethod === 'paymentmethodcard') {
     return '카드';
   }
 
@@ -374,7 +396,7 @@ export async function GET() {
             siteLabel: site?.site_label || site?.site_key || '사이트 확인 필요',
             targetLabel: displayInfo.targetLabel,
             paymentTypeLabel: displayInfo.paymentTypeLabel,
-            paymentMethodLabel: getPaymentMethodLabel(payment.payment_method),
+            paymentMethodLabel: getPaymentMethodLabel(payment.payment_method, payment.raw_data),
             approvedAt: payment.approved_at,
             createdAt: payment.created_at,
             status: paymentStatus,

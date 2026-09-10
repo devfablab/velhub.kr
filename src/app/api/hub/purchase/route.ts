@@ -62,6 +62,11 @@ type PostRow = {
   subject: string;
 };
 
+type MembershipRow = {
+  id: string;
+  membership_type: string;
+};
+
 type PaymentDisplayInfo = {
   siteLabel: string;
   siteHref: string;
@@ -103,8 +108,25 @@ function getPaymentTypeLabel(paymentType: string) {
       return '포스팅 후원';
     case PAYMENT_TYPE.PURCHASE_POST:
       return '포스팅 구매';
+    case PAYMENT_TYPE.MEMBERSHIP:
+      return '멤버십';
     default:
       return '기타';
+  }
+}
+
+function getMembershipTypeLabel(membershipType: string | null | undefined) {
+  switch (membershipType) {
+    case 'owner':
+      return '오너 멤버십';
+    case 'creator':
+      return '크리에이터 멤버십';
+    case 'all_in_one':
+      return '올인원 멤버십';
+    case 'affetto':
+      return '독자 멤버십';
+    default:
+      return '멤버십';
   }
 }
 
@@ -142,6 +164,7 @@ function createPaymentDisplayInfo({
   seriesBoard,
   post,
   postBoard,
+  membership,
 }: {
   payment: PaymentRow;
   site: SiteRow | null | undefined;
@@ -149,6 +172,7 @@ function createPaymentDisplayInfo({
   seriesBoard?: BoardRow | null;
   post?: PostRow | null;
   postBoard?: BoardRow | null;
+  membership?: MembershipRow | null;
 }): PaymentDisplayInfo {
   const siteLabel = getSiteLabel(site);
   const siteHref = getSiteHref(site);
@@ -178,6 +202,15 @@ function createPaymentDisplayInfo({
       targetLabel: post?.subject || '포스팅 확인 필요',
       targetHref:
         post && postBoard && site?.site_key ? `/${site.site_key}/${postBoard.board_key}/${post.slug}` : siteHref,
+    };
+  }
+
+  if (payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP) {
+    return {
+      siteLabel: '데브허브',
+      siteHref: '/hub/memberships',
+      targetLabel: getMembershipTypeLabel(membership?.membership_type),
+      targetHref: '/hub/memberships',
     };
   }
 
@@ -300,7 +333,12 @@ export async function GET() {
       .map((payment) => payment.target_id)
       .filter((targetId): targetId is string => Boolean(targetId));
 
-    const [seriesResult, postResult] = await Promise.all([
+    const membershipTargetIds = payments
+      .filter((payment) => payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP)
+      .map((payment) => payment.target_id)
+      .filter((targetId): targetId is string => Boolean(targetId));
+
+    const [seriesResult, postResult, membershipsResult] = await Promise.all([
       seriesTargetIds.length
         ? supabaseAdmin
             .from('board_series')
@@ -310,10 +348,13 @@ export async function GET() {
       postTargetIds.length
         ? supabaseAdmin.from('posts').select('id, site_id, board_id, slug, subject').in('id', postTargetIds)
         : { data: [], error: null },
+      membershipTargetIds.length
+        ? supabaseAdmin.from('memberships').select('id, membership_type').in('id', membershipTargetIds)
+        : { data: [], error: null },
     ]);
 
-    if (seriesResult.error || postResult.error) {
-      console.error(seriesResult.error || postResult.error);
+    if (seriesResult.error || postResult.error || membershipsResult.error) {
+      console.error(seriesResult.error || postResult.error || membershipsResult.error);
 
       return Response.json({ error: '결제 대상 정보를 불러오지 못했습니다.' }, { status: 500 });
     }
@@ -321,6 +362,9 @@ export async function GET() {
     const boardMap = new Map<string, BoardRow>();
     const seriesMap = new Map(((seriesResult.data ?? []) as SeriesRow[]).map((series) => [series.id, series]));
     const postMap = new Map(((postResult.data ?? []) as PostRow[]).map((post) => [post.id, post]));
+    const membershipMap = new Map(
+      ((membershipsResult.data ?? []) as MembershipRow[]).map((membership) => [membership.id, membership]),
+    );
 
     const relatedBoardIds = Array.from(
       new Set([
@@ -384,6 +428,10 @@ export async function GET() {
             : null;
         const post =
           payment.target_type === PAYMENT_TARGET_TYPE.POST && payment.target_id ? postMap.get(payment.target_id) : null;
+        const membership =
+          payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP && payment.target_id
+            ? membershipMap.get(payment.target_id)
+            : null;
         const seriesBoard = series ? boardMap.get(series.board_id) : null;
         const postBoard = post ? boardMap.get(post.board_id) : null;
         const siteId =
@@ -399,6 +447,7 @@ export async function GET() {
           seriesBoard,
           post,
           postBoard,
+          membership,
         });
 
         return {
