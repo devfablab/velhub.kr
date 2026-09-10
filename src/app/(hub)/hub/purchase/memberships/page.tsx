@@ -78,9 +78,6 @@ export default async function Page() {
     <Container pageTitle="구입내역" pageBack="/hub">
       <div className="container">
         <Content>
-          <Suspense fallback={null}>
-            <MembershipPlan />
-          </Suspense>
           <section className={`paper ${styles.paper}`}>
             <h2>멤버십 결제 요약</h2>
             <dl className={styles.summary}>
@@ -119,11 +116,11 @@ export default async function Page() {
                   <TableBody>
                     {paymentHistory.map((payment) => (
                       <TableRow key={payment.historyKey}>
-                        <TableCell>{payment.membershipType}</TableCell>
-                        <TableCell>{payment.features.join(' / ')}</TableCell>
-                        <TableCell>{payment.historyStatusLabel}</TableCell>
-                        <TableCell>{money(payment.historyAmount)}</TableCell>
-                        <TableCell>{dateTime(payment.historyAt)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.membershipType}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.features.join(' / ')}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{payment.historyStatusLabel}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{money(payment.historyAmount)}</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>{dateTime(payment.historyAt)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -136,6 +133,9 @@ export default async function Page() {
               </div>
             )}
           </section>
+          <Suspense fallback={null}>
+            <MembershipPlan />
+          </Suspense>
         </Content>
       </div>
     </Container>

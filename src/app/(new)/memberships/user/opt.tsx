@@ -49,6 +49,14 @@ function applyThemeMode(themeMode: ThemeMode) {
 
 const features = getMembershipFeatures('affetto');
 
+const featureDescriptions: Partial<Record<MembershipFeatureKey, string>> = {
+  affetto_hide_ads: '데브허브와 이용 중인 사이트에서 광고를 숨깁니다.',
+  affetto_favorite_folders: '저장한 사이트와 글을 폴더별로 나누어 정리할 수 있습니다.',
+  affetto_my_posts: '여러 사이트에 작성한 글을 독자의 서재에서 모아보고, 수정하거나 삭제할 수 있습니다.',
+};
+
+const packageDescription = '광고 숨김 / 즐겨찾기 폴더 관리 / 내가 쓴 글 전체보기 및 관리';
+
 export default function Opt() {
   const router = useRouter();
   const [selection, setSelection] = useState<MembershipFeatureKey[]>([]);
@@ -135,19 +143,23 @@ export default function Opt() {
                   onClick={() => toggleFeature(feature.key)}
                 >
                   <Checkbox checked={selection.includes(feature.key)} tabIndex={-1} />
-                  <Typography variant="body2">{feature.label}</Typography>
+                  <span className={styles['membership-feature-description']}>
+                    <Typography variant="body2">{feature.label}</Typography>
+                    <Typography variant="caption">{featureDescriptions[feature.key]}</Typography>
+                  </span>
                   <Typography variant="body2">{formatMembershipPrice(feature.price)}</Typography>
                 </button>
               ))}
               <button type="button" className={styles['membership-package']} onClick={togglePackage}>
                 <Checkbox checked={isPackage} tabIndex={-1} />
-                <Stack gap={1} direction="row" justifyContent="space-between" alignItems="center">
+                <span className={styles['membership-package-description']}>
                   <Typography variant="subtitle2">통합</Typography>
-                  <Typography variant="body2">
-                    <del>{formatMembershipPrice(features.reduce((total, feature) => total + feature.price, 0))}</del>{' '}
-                    <strong>{formatMembershipPrice(AFFETTO_PACKAGE_PRICE)}</strong>
-                  </Typography>
-                </Stack>
+                  <Typography variant="caption">{packageDescription}</Typography>
+                </span>
+                <Typography variant="body2">
+                  <del>{formatMembershipPrice(features.reduce((total, feature) => total + feature.price, 0))}</del>{' '}
+                  <strong>{formatMembershipPrice(AFFETTO_PACKAGE_PRICE)}</strong>
+                </Typography>
               </button>
             </Stack>
           </div>

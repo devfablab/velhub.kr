@@ -64,6 +64,15 @@ function applyThemeMode(themeMode: ThemeMode) {
 const ownerFeatures = getMembershipFeatures('owner');
 const creatorFeatures = getMembershipFeatures('creator');
 
+const featureDescriptions: Partial<Record<MembershipFeatureKey, string>> = {
+  owner_lounge: '라운지에 사이트를 노출하여 새로운 방문자를 만날 수 있습니다.',
+  owner_domain: '보유한 도메인을 사이트 접속 주소로 연결할 수 있습니다.',
+  owner_unlimited_sites: '블로그와 커뮤니티를 2개 이상 개설할 수 있습니다.',
+  creator_lounge: '라운지에서 사이트와 연재글을 소개할 수 있습니다.',
+  creator_branding: '작가의 서재에 커버 이미지, 소개, 링크를 꾸밀 수 있습니다.',
+  creator_posts: '여러 사이트에 쓴 연재글을 작가의 서재에서 모아 보여줍니다.',
+};
+
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : '멤버십 이용 조건을 확인하지 못했습니다.';
 }
@@ -494,6 +503,7 @@ function MembershipCard({
 }: MembershipCardProps) {
   const regularPrice = features.reduce((total, feature) => total + (allInOne ? 3900 : feature.price), 0);
   const canSelectPaidFeatures = available && !isDisabled;
+  const packageDescription = features.map((feature) => feature.label).join(' / ');
 
   function renderFeature(feature: (typeof ownerFeatures)[number]) {
     return (
@@ -505,7 +515,10 @@ function MembershipCard({
         disabled={!canSelectPaidFeatures}
       >
         <Checkbox checked={selection.includes(feature.key)} tabIndex={-1} />
-        <Typography variant="body2">{feature.label}</Typography>
+        <span className={styles['membership-feature-description']}>
+          <Typography variant="body2">{feature.label}</Typography>
+          <Typography variant="caption">{featureDescriptions[feature.key]}</Typography>
+        </span>
         <Typography variant="body2">{formatMembershipPrice(allInOne ? 2900 : feature.price)}</Typography>
       </button>
     );
@@ -557,13 +570,13 @@ function MembershipCard({
               disabled={!canSelectPaidFeatures}
             >
               <Checkbox checked={isPackage} tabIndex={-1} />
-              <Stack gap={1} direction="row" justifyContent="space-between" alignItems="center">
+              <span className={styles['membership-package-description']}>
                 <Typography variant="subtitle2">통합</Typography>
-                <Typography variant="body2">
-                  <del>{formatMembershipPrice(regularPrice)}</del>{' '}
-                  <strong>{formatMembershipPrice(packagePrice)}</strong>
-                </Typography>
-              </Stack>
+                <Typography variant="caption">{packageDescription}</Typography>
+              </span>
+              <Typography variant="body2">
+                <del>{formatMembershipPrice(regularPrice)}</del> <strong>{formatMembershipPrice(packagePrice)}</strong>
+              </Typography>
             </button>
           </div>
         ) : null}
@@ -577,13 +590,13 @@ function MembershipCard({
               disabled={!canSelectPaidFeatures}
             >
               <Checkbox checked={isPackage} tabIndex={-1} />
-              <Stack gap={1} direction="row" justifyContent="space-between" alignItems="center">
+              <span className={styles['membership-package-description']}>
                 <Typography variant="subtitle2">통합</Typography>
-                <Typography variant="body2">
-                  <del>{formatMembershipPrice(regularPrice)}</del>{' '}
-                  <strong>{formatMembershipPrice(packagePrice)}</strong>
-                </Typography>
-              </Stack>
+                <Typography variant="caption">{packageDescription}</Typography>
+              </span>
+              <Typography variant="body2">
+                <del>{formatMembershipPrice(regularPrice)}</del> <strong>{formatMembershipPrice(packagePrice)}</strong>
+              </Typography>
             </button>
           </Stack>
         ) : null}

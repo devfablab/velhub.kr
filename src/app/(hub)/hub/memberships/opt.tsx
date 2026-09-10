@@ -550,15 +550,17 @@ export default function MembershipPlan() {
                         />
                       ) : null}
                     </Stack>
-                    {status.membership?.itemLabels.length ? (
-                      <Stack direction="column" gap={0.5}>
-                        {status.membership?.itemLabels.map((itemLabel) => (
-                          <Typography key={itemLabel} variant="body2">
-                            • {itemLabel}
-                          </Typography>
-                        ))}
-                      </Stack>
-                    ) : null}
+                    <Stack direction="column" gap={0.5}>
+                      {MEMBERSHIP_DESCRIPTIONS[type].map((itemLabel) => (
+                        <Typography
+                          key={itemLabel}
+                          variant="body2"
+                          sx={{ opacity: status.membership?.itemLabels.includes(itemLabel) ? 1 : 0.2 }}
+                        >
+                          • {itemLabel}
+                        </Typography>
+                      ))}
+                    </Stack>
                     {status.isPastDue ? (
                       <p className="alert warning">
                         <InfoOutlineRoundedIcon />
@@ -569,20 +571,11 @@ export default function MembershipPlan() {
                       </p>
                     ) : null}
                     {!status.membership ? (
-                      <>
-                        <Stack gap={0.5}>
-                          {MEMBERSHIP_DESCRIPTIONS[type].map((desc) => (
-                            <Typography key={desc} variant="body2" color="text.secondary">
-                              • {desc}
-                            </Typography>
-                          ))}
-                        </Stack>
-                        <Stack direction="row">
-                          <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
-                            자세히 알아보기
-                          </Anchor>
-                        </Stack>
-                      </>
+                      <Stack direction="row">
+                        <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
+                          자세히 알아보기
+                        </Anchor>
+                      </Stack>
                     ) : null}
                     {status.isDirectMembership && status.membership ? (
                       <Stack direction="row" gap={1} flexWrap="wrap">

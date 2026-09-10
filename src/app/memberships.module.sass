@@ -128,8 +128,24 @@
   .MuiCheckbox-root
     padding: 0
 
-  .MuiTypography-root:last-child
+  > .MuiTypography-root:last-child
     white-space: nowrap
+    color: ds.$hex-secondary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light
+
+.membership-feature-description,
+.membership-package-description
+  display: flex
+  min-width: 0
+  flex-direction: column
+  gap: ds.rem(3)
+
+  .MuiTypography-root:first-child
+    color: inherit
+
+  .MuiTypography-root:last-child
     color: ds.$hex-secondary
 
     html[data-theme="yellow-dark"] &
@@ -138,9 +154,6 @@
 .membership-package
   border-color: ds.$hex-accent !important
   background-color: rgba(ds.$rgb-accent, .1)
-
-  > div
-    grid-column: 2 / -1
 
   del
     margin-right: ds.rem(7)
