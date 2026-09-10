@@ -32,9 +32,11 @@ export async function generateMetadata(context: RouteContext) {
 
 export default async function Page(context: RouteContext) {
   const { siteName } = await context.params;
+  const { boardName = '' } = await context.searchParams;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
+  const normalizedBoardName = normalizeText(boardName).toLowerCase();
 
-  if (!normalizedSiteName) {
+  if (!normalizedSiteName || !normalizedBoardName) {
     notFound();
   }
 
@@ -42,7 +44,7 @@ export default async function Page(context: RouteContext) {
 
   const rhizomeResult = await supabaseAdmin
     .from('rhizomes')
-    .select('site_type')
+    .select('id, site_type')
     .eq('site_key', normalizedSiteName)
     .maybeSingle();
 
@@ -51,5 +53,21 @@ export default async function Page(context: RouteContext) {
   }
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
+
+  if (!isCommunity) {
+    notFound();
+  }
+
+  const boardResult = await supabaseAdmin
+    .from('boards')
+    .select('board_type')
+    .eq('site_id', rhizomeResult.data.id)
+    .eq('board_key', normalizedBoardName)
+    .maybeSingle();
+
+  if (boardResult.error || !boardResult.data || boardResult.data.board_type === 'page') {
+    notFound();
+  }
+
   return <Opt isCommunity={isCommunity} />;
 }
