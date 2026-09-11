@@ -26,6 +26,7 @@ import {
   DialogTitle,
   Drawer,
   Snackbar,
+  TextField,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -370,6 +371,7 @@ export default function Opt({ isCommunity }: Props) {
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
@@ -584,6 +586,13 @@ export default function Opt({ isCommunity }: Props) {
   async function deletePost() {
     if (isDeletingPost) return;
 
+    const requiresDeleteReason = canManageContent && !isAuthor;
+
+    if (requiresDeleteReason && deleteReason.trim().length < 10) {
+      setDeleteErrorMessage('삭제 사유를 10자 이상 입력해주세요.');
+      return;
+    }
+
     try {
       setIsDeletingPost(true);
       setDeleteErrorMessage('');
@@ -596,6 +605,7 @@ export default function Opt({ isCommunity }: Props) {
         credentials: 'include',
         body: JSON.stringify({
           action: 'close',
+          closedMessage: requiresDeleteReason ? deleteReason.trim() : undefined,
         }),
       });
 
@@ -737,6 +747,7 @@ export default function Opt({ isCommunity }: Props) {
 
   const canEdit = (isAuthor && !content.is_closed) || (canManageContent && !content.is_locked);
   const canDelete = (isAuthor || canManageContent) && !content.is_closed && !content.is_locked;
+  const requiresDeleteReason = canManageContent && !isAuthor;
   const isBasicBoard = board.board_type === 'basic';
   const isGalleryBoard = board.board_type === 'gallery';
   const isYoutubeBoard = board.board_type === 'youtube';
@@ -844,6 +855,7 @@ export default function Opt({ isCommunity }: Props) {
             className={`${styles.button} button`}
             onClick={() => {
               setDeleteErrorMessage('');
+              setDeleteReason('');
               setDeleteDialogOpen(true);
             }}
           >
@@ -868,6 +880,20 @@ export default function Opt({ isCommunity }: Props) {
                 <br />
                 삭제된 글은 매니저만 복구할 수 있습니다.
               </p>
+              {requiresDeleteReason ? (
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="삭제 사유"
+                  multiline
+                  minRows={3}
+                  required
+                  size="small"
+                  value={deleteReason}
+                  onChange={(event) => setDeleteReason(event.target.value)}
+                  helperText="삭제 사유를 10자 이상 입력해주세요."
+                />
+              ) : null}
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
             </div>
             <div className="drawer-dialog-actions">
@@ -900,6 +926,20 @@ export default function Opt({ isCommunity }: Props) {
                 <br />
                 삭제된 글은 매니저만 복구할 수 있습니다.
               </p>
+              {requiresDeleteReason ? (
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="삭제 사유"
+                  multiline
+                  minRows={3}
+                  required
+                  size="small"
+                  value={deleteReason}
+                  onChange={(event) => setDeleteReason(event.target.value)}
+                  helperText="삭제 사유를 10자 이상 입력해주세요."
+                />
+              ) : null}
               {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
             </DialogContent>
             <DialogActions>

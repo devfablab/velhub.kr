@@ -199,7 +199,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
       } else {
-        if (!canManageContent) {
+        if (!canManageContent && !isAuthor) {
           return Response.json({ error: '접근 권한이 없습니다.' }, { status: 403 });
         }
       }
@@ -208,7 +208,9 @@ export async function PATCH(request: Request, context: RouteContext) {
         return Response.json({ error: '이미 삭제된 게시물입니다.' }, { status: 400 });
       }
 
-      if (canManageContent && closedMessage.length < 10) {
+      const requiresClosedMessage = canManageContent && !isAuthor;
+
+      if (requiresClosedMessage && closedMessage.length < 10) {
         return Response.json({ error: '삭제 사유를 10자 이상 입력해주세요.' }, { status: 400 });
       }
 
@@ -218,7 +220,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           is_closed: true,
           closed_by: currentStigma.stigmaId,
           closed_at: new Date().toISOString(),
-          closed_message: canManageContent ? closedMessage : null,
+          closed_message: requiresClosedMessage ? closedMessage : null,
           series_idx: null,
         })
         .eq('id', post.data.id)

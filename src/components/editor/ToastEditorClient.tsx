@@ -108,7 +108,6 @@ export default function ToastEditorClient({
         theme={themeMode === 'dark' ? 'dark' : undefined}
         toolbarItems={toolbarItems}
         plugins={plugins}
-        customHTMLSanitizer={(html: string) => html}
         hooks={
           onUploadImage
             ? {
