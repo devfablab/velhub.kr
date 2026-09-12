@@ -271,14 +271,20 @@ export default function FooterSite() {
                     <address>서울시 관악구 조원로 20길 10</address>
                   </dd>
                 </div>
+              </div>
+              <div>
                 <div>
-                  <dt>대표전화</dt>
+                  <dt>대표 전화</dt>
                   <dd>070-4577-7513</dd>
+                </div>
+                <div>
+                  <dt>대표 이메일</dt>
+                  <dd>chloe@dev1stud.io</dd>
                 </div>
               </div>
             </dl>
             <div>
-              <p>이 사이트는 데브허브(Velhub) 플랫폼에서 운영됩니다.</p>
+              <p>이 사이트는 데브허브(velhub) 플랫폼에서 운영됩니다.</p>
               <p>
                 데브허브 플랫폼 내 서비스 명칭, 로고, 디자인 및 화면 구성의 무단 복제 · 전송 · 배포 · 스크래핑 등은 관련
                 법령에 따라 금지됩니다.

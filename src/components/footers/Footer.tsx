@@ -79,9 +79,15 @@ export default function Footer() {
                     <address>서울시 관악구 조원로 20길 10</address>
                   </dd>
                 </div>
+              </div>
+              <div>
                 <div>
-                  <dt>대표전화</dt>
+                  <dt>대표 전화</dt>
                   <dd>070-4577-7513</dd>
+                </div>
+                <div>
+                  <dt>대표 이메일</dt>
+                  <dd>chloe@dev1stud.io</dd>
                 </div>
               </div>
             </dl>
