@@ -49,6 +49,7 @@ import UserInfo from '@/components/service/community/UserInfo';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
 import YoutubeEmbed, { type YoutubePlayerHandle } from '@/components/service/YoutubeEmbed';
+import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
@@ -1424,7 +1425,14 @@ export default function Opt({ isCommunity }: Props) {
                 </div>
                 <div className="paper">
                   <strong>{`유튜브 공개: ${formatDateSimple(content.youtube_created_at)}`}</strong>
-                  {content.summary ? <div className={styles['content-simple']}>{content.summary}</div> : null}
+                  {content.summary ? (
+                    <div className={styles['content-simple']}>
+                      <YoutubeTimestampText
+                        value={content.summary}
+                        onTimestampClick={(seconds) => youtubePlayerReference.current?.seekTo(seconds)}
+                      />
+                    </div>
+                  ) : null}
                   {paidContentMoreButton}
                   {hashtags.length > 0 ? (
                     <div className={styles['content-tags']}>
@@ -1706,6 +1714,11 @@ export default function Opt({ isCommunity }: Props) {
               getYoutubeCurrentTime={
                 isYoutubeBoard && content.youtube_id
                   ? () => youtubePlayerReference.current?.getCurrentTime() ?? null
+                  : undefined
+              }
+              onYoutubeTimestampClick={
+                isYoutubeBoard && content.youtube_id
+                  ? (seconds) => youtubePlayerReference.current?.seekTo(seconds)
                   : undefined
               }
             />

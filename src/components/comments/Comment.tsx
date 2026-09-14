@@ -30,6 +30,7 @@ type Props = {
   title?: string | null;
   slug?: string | null;
   getYoutubeCurrentTime?: () => number | null;
+  onYoutubeTimestampClick?: (seconds: number) => void;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -46,6 +47,7 @@ export default function Comment({
   title,
   slug,
   getYoutubeCurrentTime,
+  onYoutubeTimestampClick,
 }: Props) {
   const disqusUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -65,6 +67,7 @@ export default function Comment({
           postAuthorId={postAuthorId}
           isCommentEnabled={isCommentEnabled}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
+          onYoutubeTimestampClick={onYoutubeTimestampClick}
         />
       );
     }
@@ -124,6 +127,7 @@ export default function Comment({
       postAuthorId={postAuthorId}
       isCommentEnabled={isCommentEnabled}
       getYoutubeCurrentTime={getYoutubeCurrentTime}
+      onYoutubeTimestampClick={onYoutubeTimestampClick}
     />
   );
 }

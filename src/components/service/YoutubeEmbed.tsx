@@ -14,6 +14,7 @@ type Props = {
 
 export type YoutubePlayerHandle = {
   getCurrentTime: () => number | null;
+  seekTo: (seconds: number) => boolean;
 };
 
 const youtubeOptions: YouTubeProps['opts'] = {
@@ -59,7 +60,17 @@ const YoutubeEmbed = forwardRef<YoutubePlayerHandle, Props>(function YoutubeEmbe
     return typeof currentTime === 'number' ? Math.floor(currentTime) : null;
   }
 
-  useImperativeHandle(reference, () => ({ getCurrentTime }));
+  function seekTo(seconds: number) {
+    if (!playerReference.current || !Number.isFinite(seconds) || seconds < 0) {
+      return false;
+    }
+
+    setIsThumbnailVisible(false);
+    playerReference.current.seekTo(Math.floor(seconds), true);
+    return true;
+  }
+
+  useImperativeHandle(reference, () => ({ getCurrentTime, seekTo }));
 
   return (
     <>

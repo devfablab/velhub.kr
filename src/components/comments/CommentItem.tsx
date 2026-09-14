@@ -14,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import CommentForm from '@/components/comments/CommentForm';
+import YoutubeTimestampText from '@/components/service/YoutubeTimestampText';
 import ReportButton from '../service/common/ReportButton';
 import styles from '@/app/comments.module.sass';
 
@@ -97,6 +98,7 @@ type Props = {
   avatarUrl: string;
   myPollChoiceLabel: string;
   getYoutubeCurrentTime?: () => number | null;
+  onYoutubeTimestampClick?: (seconds: number) => void;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
   onCreateReply: (parentId: string, content: string) => Promise<void>;
@@ -159,6 +161,7 @@ export default function CommentItem({
   avatarUrl,
   myPollChoiceLabel,
   getYoutubeCurrentTime,
+  onYoutubeTimestampClick,
   onReplyClick,
   onCancelReply,
   onCreateReply,
@@ -309,7 +312,13 @@ export default function CommentItem({
         ) : (
           <div className={styles['comment-content']}>
             {depth === 1 && comment.reply_to_author_name ? <strong>{comment.reply_to_author_name} </strong> : null}
-            <p>{comment.content}</p>
+            <p>
+              {onYoutubeTimestampClick ? (
+                <YoutubeTimestampText value={comment.content} onTimestampClick={onYoutubeTimestampClick} />
+              ) : (
+                comment.content
+              )}
+            </p>
             {comment.poll_choice ? <blockquote>선택한 항목: {comment.poll_choice.label}</blockquote> : null}
           </div>
         )}
@@ -384,6 +393,7 @@ export default function CommentItem({
                 avatarUrl={avatarUrl}
                 myPollChoiceLabel={myPollChoiceLabel}
                 getYoutubeCurrentTime={getYoutubeCurrentTime}
+                onYoutubeTimestampClick={onYoutubeTimestampClick}
               />
             ))}
           </div>

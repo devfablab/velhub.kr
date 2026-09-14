@@ -17,6 +17,7 @@ type Props = {
   postAuthorId: string;
   isCommentEnabled: boolean;
   getYoutubeCurrentTime?: () => number | null;
+  onYoutubeTimestampClick?: (seconds: number) => void;
 };
 
 type PollChoice = {
@@ -98,6 +99,7 @@ export default function CommentList({
   contentId,
   isCommentEnabled,
   getYoutubeCurrentTime,
+  onYoutubeTimestampClick,
 }: Props) {
   const [comments, setComments] = useState<CommentData[]>([]);
   const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
@@ -435,6 +437,7 @@ export default function CommentList({
               activeReplyTargetId={activeReplyTargetId}
               isSubmitting={isSubmitting}
               getYoutubeCurrentTime={getYoutubeCurrentTime}
+              onYoutubeTimestampClick={onYoutubeTimestampClick}
               onReplyClick={(targetComment) => setActiveReplyTargetId(targetComment.id)}
               onCancelReply={() => setActiveReplyTargetId('')}
               onCreateReply={(parentId, content) => createComment(content, parentId)}
