@@ -758,13 +758,7 @@ export default function Opt() {
                     </Stack>
                     <Stack gap={1}>
                       <Typography variant="subtitle2">유튜브 영상 주소 *</Typography>
-                      <TextField
-                        label="유튜브 영상 주소 (필수)"
-                        value={youtubeUrl}
-                        onChange={handleYoutubeUrlChange}
-                        fullWidth
-                        size="small"
-                      />
+                      <TextField value={youtubeUrl} onChange={handleYoutubeUrlChange} fullWidth size="small" />
                       <input type="hidden" value={youtubeId} />
                     </Stack>
                     <Stack gap={1}>

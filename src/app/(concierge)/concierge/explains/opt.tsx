@@ -337,7 +337,6 @@ function ContentEditor({
           <Stack gap={0.5}>
             <Typography variant="subtitle2">유튜브 영상 주소</Typography>
             <TextField
-              aria-label="유튜브 영상 주소"
               value={form.youtubeUrl}
               onChange={(event) => update('youtubeUrl', event.currentTarget.value)}
               fullWidth

@@ -46,6 +46,7 @@ import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
+import YoutubePreview from '@/components/service/YoutubePreview';
 import { ServiceNoDataIcon, ServiceWarningIcon } from '@/components/Svgs';
 import styles from '@/app/board.module.sass';
 
@@ -2042,14 +2043,17 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
                 ) : null}
 
                 {isYoutubeBoard ? (
-                  <div className="paper paper-p0">
-                    <textarea
-                      className={`${styles['content-simple']} ${styles['content-simple-youtube']}`}
-                      value={summary}
-                      placeholder="영상설명을 간단히 입력해주세요"
-                      onChange={(event) => setSummary(event.currentTarget.value)}
-                    />
-                  </div>
+                  <>
+                    <YoutubePreview videoId={youtubeId} value={youtubeUrl} />
+                    <div className="paper paper-p0">
+                      <textarea
+                        className={`${styles['content-simple']} ${styles['content-simple-youtube']}`}
+                        value={summary}
+                        placeholder="영상설명을 간단히 입력해주세요"
+                        onChange={(event) => setSummary(event.currentTarget.value)}
+                      />
+                    </div>
+                  </>
                 ) : null}
 
                 {isBasicBoard || isGalleryBoard ? (
