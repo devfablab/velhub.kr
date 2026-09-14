@@ -5,16 +5,27 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 
 type Props = {
+  onTimestampAdd?: (timestamp: string) => void;
   videoId: string;
   value: string;
 };
+
+function formatTimestamp(seconds: number) {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  const formattedMinutes = String(minutes).padStart(2, '0');
+  const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+
+  return hours > 0 ? `${hours}:${formattedMinutes}:${formattedSeconds}` : `${formattedMinutes}:${formattedSeconds}`;
+}
 
 type ValidationResult = {
   status: 'available' | 'empty' | 'unavailable';
   videoId?: string;
 };
 
-export default function YoutubePreview({ videoId, value }: Props) {
+export default function YoutubePreview({ onTimestampAdd, videoId, value }: Props) {
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
 
   useEffect(() => {
@@ -68,5 +79,10 @@ export default function YoutubePreview({ videoId, value }: Props) {
     );
   }
 
-  return <YoutubeEmbed videoId={validationResult.videoId ?? ''} />;
+  return (
+    <YoutubeEmbed
+      videoId={validationResult.videoId ?? ''}
+      onTimestampAdd={onTimestampAdd ? (seconds) => onTimestampAdd(formatTimestamp(seconds)) : undefined}
+    />
+  );
 }

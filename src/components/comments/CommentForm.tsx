@@ -98,7 +98,9 @@ export default function CommentForm({
               </button>
             ) : null}
 
-            <button type="button">타임스템프 추가</button>
+            <button type="button" className={styles['submit-button']}>
+              타임스템프 추가
+            </button>
 
             <button type="submit" disabled={isSubmitting} className={styles['submit-button']}>
               {submitLabel}

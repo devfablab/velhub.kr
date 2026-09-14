@@ -663,6 +663,7 @@ export default function Opt({ isCommunity }: Props) {
 
   const thumbnailDialogInputReference = useRef<HTMLInputElement | null>(null);
   const galleryDialogInputReference = useRef<HTMLInputElement | null>(null);
+  const youtubeSummaryReference = useRef<HTMLTextAreaElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
@@ -743,6 +744,22 @@ export default function Opt({ isCommunity }: Props) {
   const canUsePollAndDraw = ['basic', 'gallery', 'youtube', 'feed'].includes(boardType);
   const youtubeId = useMemo(() => getYoutubeId(youtubeUrl), [youtubeUrl]);
   const galleryDialogImageCount = galleryDialogImages.length + galleryDialogBlobImages.length;
+
+  function handleYoutubeTimestampAdd(timestamp: string) {
+    const textarea = youtubeSummaryReference.current;
+    if (!textarea) return;
+
+    const insertValue = ` ${timestamp} `;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    setSummary(`${summary.slice(0, selectionStart)}${insertValue}${summary.slice(selectionEnd)}`);
+
+    window.requestAnimationFrame(() => {
+      const nextCursorPosition = selectionStart + insertValue.length;
+      textarea.focus();
+      textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+    });
+  }
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -2154,9 +2171,14 @@ export default function Opt({ isCommunity }: Props) {
 
                   {isYoutubeBoard ? (
                     <>
-                      <YoutubePreview videoId={youtubeId} value={youtubeUrl} />
+                      <YoutubePreview
+                        videoId={youtubeId}
+                        value={youtubeUrl}
+                        onTimestampAdd={handleYoutubeTimestampAdd}
+                      />
                       <div className="paper paper-p0">
                         <textarea
+                          ref={youtubeSummaryReference}
                           className={`${styles['content-simple']} ${styles['content-simple-youtube-edit']}`}
                           value={summary}
                           placeholder="영상설명을 간단히 입력해주세요"
