@@ -38,6 +38,7 @@ import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
+import Anchor from '@/components/Anchor';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
@@ -1202,6 +1203,11 @@ export default function Opt() {
           </div>
           <div className={`paper ${styles.paper}`}>
             <Typography variant="subtitle2">커스텀 도메인</Typography>
+            {!hasOwnerDomainFeature && editingField !== 'custom_domain' && (
+              <Typography variant="body2" sx={{ display: 'block', mt: 1 }}>
+                커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.
+              </Typography>
+            )}
             {editingField === 'custom_domain' ? (
               <Stack direction={isMobile ? 'column' : 'row'} gap={1}>
                 <Stack flex={1} minWidth={0}>
@@ -1279,56 +1285,60 @@ export default function Opt() {
               </Stack>
             ) : (
               <Stack direction="column" gap={3}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ whiteSpace: 'nowrap' }}>도메인</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>{siteInfo.custom_domain || '미설정'}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-                <Stack direction="column" gap={1}>
-                  <p className="alert info">
-                    <InfoOutlineRoundedIcon />
-                    <span>아래와 같이 도메인 DNS 레코드를 추가하셔야 합니다.</span>
-                  </p>
+                {siteInfo.custom_domain ? (
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>유형</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>호스팅 이름</TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap' }}>값</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>도메인</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       <TableRow>
-                        <TableCell>CNAME</TableCell>
-                        <TableCell>{getCustomDomainHostName(siteInfo.custom_domain)}</TableCell>
-                        <TableCell>cname.vercel-dns.com</TableCell>
+                        <TableCell>{siteInfo.custom_domain}</TableCell>
                       </TableRow>
                     </TableBody>
                   </Table>
-                </Stack>
+                ) : null}
+                {hasOwnerDomainFeature || siteInfo.custom_domain !== null ? (
+                  <Stack direction="column" gap={1}>
+                    <p className="alert info">
+                      <InfoOutlineRoundedIcon />
+                      <span>아래와 같이 도메인 DNS 레코드를 추가하셔야 합니다.</span>
+                    </p>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>유형</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>호스팅 이름</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>값</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>CNAME</TableCell>
+                          <TableCell>{getCustomDomainHostName(siteInfo.custom_domain)}</TableCell>
+                          <TableCell>cname.vercel-dns.com</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </Stack>
+                ) : null}
                 <Stack direction="row" justifyContent="flex-end">
-                  <button
-                    type="button"
-                    className="button small action"
-                    onClick={() => startEdit('custom_domain', siteInfo.custom_domain)}
-                    disabled={!hasOwnerDomainFeature}
-                  >
-                    수정
-                  </button>
+                  {hasOwnerDomainFeature ? (
+                    <button
+                      type="button"
+                      className="button small action"
+                      onClick={() => startEdit('custom_domain', siteInfo.custom_domain)}
+                    >
+                      수정
+                    </button>
+                  ) : (
+                    <Anchor href="/memberships/creator" className="button small action">
+                      커스텀 도메인 설정하기
+                    </Anchor>
+                  )}
                 </Stack>
               </Stack>
-            )}
-            {!hasOwnerDomainFeature && editingField !== 'custom_domain' && (
-              <Typography variant="body2" sx={{ display: 'block', mt: 1 }}>
-                커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.
-              </Typography>
             )}
           </div>
           {siteInfo.site_type === 'blog' && (
