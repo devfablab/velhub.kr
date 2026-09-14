@@ -96,6 +96,7 @@ type Props = {
   isSubmitting: boolean;
   avatarUrl: string;
   myPollChoiceLabel: string;
+  getYoutubeCurrentTime?: () => number | null;
   onReplyClick: (comment: CommentData) => void;
   onCancelReply: () => void;
   onCreateReply: (parentId: string, content: string) => Promise<void>;
@@ -157,6 +158,7 @@ export default function CommentItem({
   isSubmitting,
   avatarUrl,
   myPollChoiceLabel,
+  getYoutubeCurrentTime,
   onReplyClick,
   onCancelReply,
   onCreateReply,
@@ -302,6 +304,7 @@ export default function CommentItem({
             onCancel={() => setIsEditing(false)}
             avatarUrl={avatarUrl}
             pollChoiceLabel={comment.poll_choice?.label}
+            getYoutubeCurrentTime={getYoutubeCurrentTime}
           />
         ) : (
           <div className={styles['comment-content']}>
@@ -353,6 +356,7 @@ export default function CommentItem({
             onCancel={onCancelReply}
             avatarUrl={avatarUrl}
             pollChoiceLabel={myPollChoiceLabel}
+            getYoutubeCurrentTime={getYoutubeCurrentTime}
           />
         ) : null}
 
@@ -379,6 +383,7 @@ export default function CommentItem({
                 onLike={onLike}
                 avatarUrl={avatarUrl}
                 myPollChoiceLabel={myPollChoiceLabel}
+                getYoutubeCurrentTime={getYoutubeCurrentTime}
               />
             ))}
           </div>

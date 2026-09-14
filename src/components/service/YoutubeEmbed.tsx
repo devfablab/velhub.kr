@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import YouTube, { type YouTubeEvent, type YouTubeProps } from 'react-youtube';
 import { ServiceTimelineIcon } from '../Svgs';
@@ -10,6 +10,10 @@ type Props = {
   videoId: string;
   thumbnailImage?: string;
   onTimestampAdd?: (seconds: number) => void;
+};
+
+export type YoutubePlayerHandle = {
+  getCurrentTime: () => number | null;
 };
 
 const youtubeOptions: YouTubeProps['opts'] = {
@@ -23,7 +27,10 @@ const youtubeOptions: YouTubeProps['opts'] = {
   },
 };
 
-export default function YoutubeEmbed({ videoId, thumbnailImage, onTimestampAdd }: Props) {
+const YoutubeEmbed = forwardRef<YoutubePlayerHandle, Props>(function YoutubeEmbed(
+  { videoId, thumbnailImage, onTimestampAdd },
+  reference,
+) {
   const playerReference = useRef<YouTubeEvent['target'] | null>(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [isThumbnailVisible, setIsThumbnailVisible] = useState(Boolean(thumbnailImage));
@@ -39,12 +46,20 @@ export default function YoutubeEmbed({ videoId, thumbnailImage, onTimestampAdd }
   }
 
   function handleTimestampAdd() {
-    const currentTime = playerReference.current?.getCurrentTime();
+    const currentTime = getCurrentTime();
 
     if (typeof currentTime === 'number') {
       onTimestampAdd?.(Math.floor(currentTime));
     }
   }
+
+  function getCurrentTime() {
+    const currentTime = playerReference.current?.getCurrentTime();
+
+    return typeof currentTime === 'number' ? Math.floor(currentTime) : null;
+  }
+
+  useImperativeHandle(reference, () => ({ getCurrentTime }));
 
   return (
     <>
@@ -80,4 +95,6 @@ export default function YoutubeEmbed({ videoId, thumbnailImage, onTimestampAdd }
       ) : null}
     </>
   );
-}
+});
+
+export default YoutubeEmbed;

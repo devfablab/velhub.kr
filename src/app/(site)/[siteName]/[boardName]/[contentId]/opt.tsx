@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -48,7 +48,7 @@ import TableList from '@/components/service/community/TableList';
 import UserInfo from '@/components/service/community/UserInfo';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import LinkPreview from '@/components/service/LinkPreview';
-import YoutubeEmbed from '@/components/service/YoutubeEmbed';
+import YoutubeEmbed, { type YoutubePlayerHandle } from '@/components/service/YoutubeEmbed';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../../menu';
 import styles from '@/app/board.module.sass';
@@ -424,6 +424,7 @@ export default function Opt({ isCommunity }: Props) {
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
+  const youtubePlayerReference = useRef<YoutubePlayerHandle | null>(null);
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -1416,6 +1417,7 @@ export default function Opt({ isCommunity }: Props) {
               <div className={`${styles['board-container']} ${styles['youtube-board']}`}>
                 <div className="paper paper-p0">
                   <YoutubeEmbed
+                    ref={youtubePlayerReference}
                     videoId={content.youtube_id}
                     thumbnailImage={content.thumbnail_image ? content.thumbnail_image_url : undefined}
                   />
@@ -1701,6 +1703,11 @@ export default function Opt({ isCommunity }: Props) {
               themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
               title={content.subject}
               slug={content.slug}
+              getYoutubeCurrentTime={
+                isYoutubeBoard && content.youtube_id
+                  ? () => youtubePlayerReference.current?.getCurrentTime() ?? null
+                  : undefined
+              }
             />
           ) : null}
           {isMobile ? (

@@ -12,6 +12,7 @@ type Props = {
   avatarUrl: string;
   pollChoiceLabel?: string;
   isSubmitting?: boolean;
+  getYoutubeCurrentTime?: () => number | null;
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
 };
@@ -25,6 +26,7 @@ export default function CommentForm({
   replyTargetName,
   avatarUrl,
   isSubmitting = false,
+  getYoutubeCurrentTime,
   onSubmit,
   onCancel,
 }: Props) {
@@ -48,6 +50,35 @@ export default function CommentForm({
     setContent(event.currentTarget.value);
 
     window.requestAnimationFrame(() => {
+      resizeTextarea();
+    });
+  }
+
+  function handleTimestampAdd() {
+    const currentTime = getYoutubeCurrentTime?.();
+    const textarea = textareaReference.current;
+
+    if (currentTime === null || currentTime === undefined || !textarea) {
+      return;
+    }
+
+    const hours = Math.floor(currentTime / 3600);
+    const minutes = Math.floor((currentTime % 3600) / 60);
+    const seconds = currentTime % 60;
+    const timestamp =
+      hours > 0
+        ? `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+        : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const nextContent = `${content.slice(0, selectionStart)} ${timestamp} ${content.slice(selectionEnd)}`;
+    const cursorPosition = selectionStart + timestamp.length + 2;
+
+    setContent(nextContent);
+
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
       resizeTextarea();
     });
   }
@@ -98,9 +129,16 @@ export default function CommentForm({
               </button>
             ) : null}
 
-            <button type="button" className={styles['submit-button']}>
-              타임스템프 추가
-            </button>
+            {getYoutubeCurrentTime ? (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                className={styles['submit-button']}
+                onClick={handleTimestampAdd}
+              >
+                타임스탬프 추가
+              </button>
+            ) : null}
 
             <button type="submit" disabled={isSubmitting} className={styles['submit-button']}>
               {submitLabel}
