@@ -120,6 +120,10 @@ function hasInvalidCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
+function getCustomDomainHostName(value: string | null) {
+  return normalizeCustomDomain(value).split('.')[0] || '-';
+}
+
 function isThemeType(value: string): value is ThemeType {
   return THEME_TYPES.includes(value as ThemeType);
 }
@@ -1185,7 +1189,7 @@ export default function Opt() {
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography>{siteInfo.site_key}</Typography>
+                <Typography variant="body2">{siteInfo.site_key}</Typography>
                 <button
                   type="button"
                   className="button small action"
@@ -1274,20 +1278,55 @@ export default function Opt() {
                 ) : null}
               </Stack>
             ) : (
-              <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography>{siteInfo.custom_domain || '미설정'}</Typography>
-                <button
-                  type="button"
-                  className="button small action"
-                  onClick={() => startEdit('custom_domain', siteInfo.custom_domain)}
-                  disabled={!hasOwnerDomainFeature}
-                >
-                  수정
-                </button>
+              <Stack direction="column" gap={3}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>도메인</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>{siteInfo.custom_domain || '미설정'}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <Stack direction="column" gap={1}>
+                  <p className="alert info">
+                    <InfoOutlineRoundedIcon />
+                    <span>아래와 같이 도메인 DNS 레코드를 추가하셔야 합니다.</span>
+                  </p>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>유형</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>호스팅 이름</TableCell>
+                        <TableCell sx={{ whiteSpace: 'nowrap' }}>값</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>CNAME</TableCell>
+                        <TableCell>{getCustomDomainHostName(siteInfo.custom_domain)}</TableCell>
+                        <TableCell>cname.vercel-dns.com</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </Stack>
+                <Stack direction="row" justifyContent="flex-end">
+                  <button
+                    type="button"
+                    className="button small action"
+                    onClick={() => startEdit('custom_domain', siteInfo.custom_domain)}
+                    disabled={!hasOwnerDomainFeature}
+                  >
+                    수정
+                  </button>
+                </Stack>
               </Stack>
             )}
             {!hasOwnerDomainFeature && editingField !== 'custom_domain' && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+              <Typography variant="body2" sx={{ display: 'block', mt: 1 }}>
                 커스텀 도메인 설정은 오너 멤버십 전용 기능입니다.
               </Typography>
             )}
@@ -1326,7 +1365,7 @@ export default function Opt() {
                 </Stack>
               ) : (
                 <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                  <Typography>{blogType === 'team' ? '팀 블로그' : '1인 블로그'}</Typography>
+                  <Typography variant="body2">{blogType === 'team' ? '팀 블로그' : '1인 블로그'}</Typography>
                   <button
                     type="button"
                     className="button small action"
@@ -1395,7 +1434,7 @@ export default function Opt() {
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography>{siteInfo.site_label ?? ''}</Typography>
+                <Typography variant="body2">{siteInfo.site_label ?? ''}</Typography>
                 <button
                   type="button"
                   className="button small action"
@@ -1443,7 +1482,7 @@ export default function Opt() {
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography>{siteInfo.summary ?? ''}</Typography>
+                <Typography variant="body2">{siteInfo.summary ?? ''}</Typography>
                 <button
                   type="button"
                   className="button small action"
@@ -1612,7 +1651,7 @@ export default function Opt() {
               </>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography>{siteInfo.theme_type}</Typography>
+                <Typography variant="body2">{siteInfo.theme_type}</Typography>
                 <button
                   type="button"
                   className="button small action"
@@ -1666,7 +1705,7 @@ export default function Opt() {
               </Stack>
             ) : (
               <Stack direction="row" gap={2} alignItems="center" justifyContent="space-between">
-                <Typography variant="subtitle2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
+                <Typography variant="body2">{siteInfo.visibility_type === 'public' ? '공개' : '비공개'}</Typography>
                 <button
                   type="button"
                   className="button small action"

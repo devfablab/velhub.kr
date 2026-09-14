@@ -469,6 +469,7 @@ export async function POST(request: Request, context: RouteContext) {
         return Response.json({ error: '블로그 타입 수정에 실패했습니다.' }, { status: 500 });
       }
     } else {
+      const isCustomDomainChanged = requestBody.field === 'custom_domain' && previousValue !== nextValue;
       const updateRhizome = await access.supabaseAdmin
         .from('rhizomes')
         .update({
@@ -478,6 +479,23 @@ export async function POST(request: Request, context: RouteContext) {
 
       if (updateRhizome.error) {
         return Response.json({ error: '사이트 정보 수정에 실패했습니다.' }, { status: 500 });
+      }
+
+      if (isCustomDomainChanged) {
+        const updateDomainSupport = await access.supabaseAdmin
+          .from('rhizomes')
+          .update({
+            custom_domain_support_status: 'unconfigured',
+            custom_domain_github_registered: false,
+            custom_domain_vercel_registered: false,
+            custom_domain_previous: typeof previousValue === 'string' ? previousValue : null,
+            custom_domain_requested_at: new Date().toISOString(),
+          })
+          .eq('id', access.rhizome.id);
+
+        if (updateDomainSupport.error && updateDomainSupport.error.code !== 'PGRST204') {
+          return Response.json({ error: '커스텀 도메인 지원 상태 초기화에 실패했습니다.' }, { status: 500 });
+        }
       }
     }
 
