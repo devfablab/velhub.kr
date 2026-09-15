@@ -33,12 +33,12 @@ import {
 import { normalizeCustomDomain } from '@/lib/customDomain';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
+import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
-import Anchor from '@/components/Anchor';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type TextAreaChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['textarea']['onChange']>>[0];
