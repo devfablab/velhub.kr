@@ -623,10 +623,12 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
     const textarea = youtubeSummaryReference.current;
     if (!textarea) return;
 
-    const insertValue = ` ${timestamp} `;
     const selectionStart = textarea.selectionStart;
     const selectionEnd = textarea.selectionEnd;
-    setSummary(`${summary.slice(0, selectionStart)}${insertValue}${summary.slice(selectionEnd)}`);
+    const summaryBeforeCursor = summary.slice(0, selectionStart);
+    const currentLineBeforeCursor = summaryBeforeCursor.slice(summaryBeforeCursor.lastIndexOf('\n') + 1);
+    const insertValue = `${currentLineBeforeCursor.trim() ? ' ' : ''}${timestamp} `;
+    setSummary(`${summaryBeforeCursor}${insertValue}${summary.slice(selectionEnd)}`);
 
     window.requestAnimationFrame(() => {
       const nextCursorPosition = selectionStart + insertValue.length;

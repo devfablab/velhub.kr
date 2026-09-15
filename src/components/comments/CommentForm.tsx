@@ -71,8 +71,11 @@ export default function CommentForm({
         : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     const selectionStart = textarea.selectionStart;
     const selectionEnd = textarea.selectionEnd;
-    const nextContent = `${content.slice(0, selectionStart)} ${timestamp} ${content.slice(selectionEnd)}`;
-    const cursorPosition = selectionStart + timestamp.length + 2;
+    const contentBeforeCursor = content.slice(0, selectionStart);
+    const currentLineBeforeCursor = contentBeforeCursor.slice(contentBeforeCursor.lastIndexOf('\n') + 1);
+    const insertValue = `${currentLineBeforeCursor.trim() ? ' ' : ''}${timestamp} `;
+    const nextContent = `${contentBeforeCursor}${insertValue}${content.slice(selectionEnd)}`;
+    const cursorPosition = selectionStart + insertValue.length;
 
     setContent(nextContent);
 
