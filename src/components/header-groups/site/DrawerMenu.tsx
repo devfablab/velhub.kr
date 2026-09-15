@@ -107,6 +107,7 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
   }, [siteName]);
 
   const allHref = `/${siteName}/board`;
+  const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
   const infoHref = `/${siteName}/info-blog`;
   const categoryHref = `/${siteName}/c`;
   const seriesHref = `/${siteName}/s`;
@@ -141,14 +142,14 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
             </Anchor>
           </MenuItem>
         </>
-      ) : (
+      ) : hasCommunityBoard ? (
         <MenuItem onClick={onClose}>
           <Anchor href={allHref}>
             <ListAltOutlinedIcon fontSize="small" />
             <span>게시판</span>
           </Anchor>
         </MenuItem>
-      )}
+      ) : null}
 
       {menus.map((menu) => {
         const href = getMenuHref(siteName, menu);

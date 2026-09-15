@@ -102,6 +102,9 @@ export default function Opt() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+  const boardCount = menus.filter((menu) => menu.board_type !== 'page').length;
+  const hasPage = menus.some((menu) => menu.board_type === 'page');
+  const canReorderMenus = boardCount >= 2 || (boardCount >= 1 && hasPage);
 
   useEffect(() => {
     async function loadMenus() {
@@ -287,46 +290,58 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack gap={2}>
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-            <p className="alert info" style={{ paddingTop: 23 }}>
-              <InfoOutlineRoundedIcon />
-              <span>메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.</span>
-            </p>
+            {canReorderMenus ? (
+              <>
+                <p className="alert info" style={{ paddingTop: 23 }}>
+                  <InfoOutlineRoundedIcon />
+                  <span>게시판과 페이지 메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’ 버튼을 누르세요.</span>
+                </p>
 
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-                <Stack gap={2}>
-                  <div className={`paper ${styles.paper}`}>
-                    <Typography>홈</Typography>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
+                    <Stack gap={2}>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>홈</Typography>
+                      </div>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>게시판</Typography>
+                      </div>
+
+                      {menus.map((menu) => (
+                        <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
+                      ))}
+                    </Stack>
+                  </SortableContext>
+                </DndContext>
+                {isMobile ? (
+                  <div className={styles['button-top']}>
+                    <button
+                      type="button"
+                      className={`button ${styles.button}`}
+                      onClick={() => void handleApply()}
+                      disabled={isSubmitting}
+                    >
+                      적용
+                    </button>
                   </div>
-
-                  {menus.map((menu) => (
-                    <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
-                  ))}
-                </Stack>
-              </SortableContext>
-            </DndContext>
-            {isMobile ? (
-              <div className={styles['button-top']}>
-                <button
-                  type="button"
-                  className={`button ${styles.button}`}
-                  onClick={() => void handleApply()}
-                  disabled={isSubmitting}
-                >
-                  적용
-                </button>
-              </div>
+                ) : (
+                  <Stack direction="row" justifyContent="flex-end">
+                    <button
+                      type="button"
+                      className="button medium submit"
+                      onClick={() => void handleApply()}
+                      disabled={isSubmitting}
+                    >
+                      적용
+                    </button>
+                  </Stack>
+                )}
+              </>
             ) : (
-              <Stack direction="row" justifyContent="flex-end">
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleApply()}
-                  disabled={isSubmitting}
-                >
-                  적용
-                </button>
-              </Stack>
+              <p className="alert info" style={{ paddingTop: 23 }}>
+                <InfoOutlineRoundedIcon />
+                <span>게시판이 2개 이상이거나 게시판과 페이지가 각각 1개 이상 있을 때 사용할 수 있습니다.</span>
+              </p>
             )}
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             {successMessage ? <div className={`paper paper-success ${styles.paper}`}>{successMessage}</div> : null}

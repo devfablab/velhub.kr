@@ -72,6 +72,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
 
   const allHref = `/${siteName}/board`;
   const isAllHrefCurrent = pathname === allHref || pathname.startsWith(`${allHref}/`);
+  const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
 
   const infoHref = `/${siteName}/info-blog`;
   const isInfoBlogHrefCurrent = pathname === infoHref;
@@ -123,7 +124,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
                 </Anchor>
               </li>
             </>
-          ) : (
+          ) : hasCommunityBoard ? (
             <li
               className={isAllHrefCurrent ? styles.current : undefined}
               aria-current={isAllHrefCurrent ? 'page' : false}
@@ -133,7 +134,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
                 <i />
               </Anchor>
             </li>
-          )}
+          ) : null}
 
           {menus.map((menu) => {
             const href = getMenuHref(siteName, menu);

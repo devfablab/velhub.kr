@@ -286,46 +286,63 @@ export default function Opt() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           <Stack gap={3}>
-            <p className="alert info" style={{ paddingTop: 23 }}>
-              <InfoOutlineRoundedIcon />
-              <span>메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.</span>
-            </p>
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
-                <Stack direction="column" gap={2}>
-                  <div className={`paper ${styles.paper}`}>
-                    <Typography>홈</Typography>
+            {menus.length > 1 ? (
+              <>
+                <p className="alert info" style={{ paddingTop: 23 }}>
+                  <InfoOutlineRoundedIcon />
+                  <span>메뉴를 원하는 위치로 끌어다 놓은 뒤 ‘적용’버튼을 누르세요.</span>
+                </p>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={menus.map((menu) => menu.id)} strategy={horizontalListSortingStrategy}>
+                    <Stack direction="column" gap={2}>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>홈</Typography>
+                      </div>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>블로그 소개</Typography>
+                      </div>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>카테고리</Typography>
+                      </div>
+                      <div className={`paper ${styles.paper}`}>
+                        <Typography>연재</Typography>
+                      </div>
+
+                      {menus.map((menu) => (
+                        <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
+                      ))}
+                    </Stack>
+                  </SortableContext>
+                </DndContext>
+                {isMobile ? (
+                  <div className={styles['button-top']}>
+                    <button
+                      type="button"
+                      className={`button ${styles.button}`}
+                      onClick={() => void handleApply()}
+                      disabled={isSubmitting}
+                    >
+                      적용
+                    </button>
                   </div>
-
-                  {menus.map((menu) => (
-                    <SortableItem key={menu.id} menu={menu} onOpenRenameDialog={handleOpenRenameDialog} />
-                  ))}
-                </Stack>
-              </SortableContext>
-            </DndContext>
-
-            {isMobile ? (
-              <div className={styles['button-top']}>
-                <button
-                  type="button"
-                  className={`button ${styles.button}`}
-                  onClick={() => void handleApply()}
-                  disabled={isSubmitting}
-                >
-                  적용
-                </button>
-              </div>
+                ) : (
+                  <Stack direction="row" justifyContent="flex-end">
+                    <button
+                      type="button"
+                      className="button medium submit"
+                      onClick={() => void handleApply()}
+                      disabled={isSubmitting}
+                    >
+                      적용
+                    </button>
+                  </Stack>
+                )}
+              </>
             ) : (
-              <Stack direction="row" justifyContent="flex-end">
-                <button
-                  type="button"
-                  className="button medium submit"
-                  onClick={() => void handleApply()}
-                  disabled={isSubmitting}
-                >
-                  적용
-                </button>
-              </Stack>
+              <p className="alert info" style={{ paddingTop: 23 }}>
+                <InfoOutlineRoundedIcon />
+                <span>글과 페이지가 있을 때에만 사용이 가능합니다.</span>
+              </p>
             )}
 
             {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
