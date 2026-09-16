@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import {
@@ -12,6 +15,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Drawer,
   useMediaQuery,
@@ -40,7 +44,9 @@ type Reply = {
   content_html: string;
   created_at: string;
   updated_at: string;
+  images: AttachedImage[];
 };
+type AttachedImage = { id: string; url: string; file?: File | null };
 type Data = {
   canEditPost?: boolean;
   canDeletePost?: boolean;
@@ -53,12 +59,182 @@ type Data = {
     author_name: string;
     author_avatar_url: string;
     created_at: string;
+    images: { id: string; url: string; width: number | null; height: number | null }[];
   };
   replies?: Reply[];
   isStaff?: boolean;
   currentStigmaId?: string;
+  isImageEnabled?: boolean;
   error?: string;
 };
+
+const MAX_IMAGE_COUNT = 5;
+const MAX_IMAGE_FILE_SIZE = 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+
+type PrivateImageDialogProps = {
+  images: AttachedImage[];
+  isMobile: boolean;
+  onApply: (images: AttachedImage[]) => void;
+  onClose: () => void;
+  open: boolean;
+};
+
+function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: PrivateImageDialogProps) {
+  const [dialogImages, setDialogImages] = useState<AttachedImage[]>(images);
+  const [message, setMessage] = useState('');
+  const imageInputReference = useRef<HTMLInputElement | null>(null);
+
+  function closeDialog() {
+    dialogImages.forEach((image) => {
+      if (image.file && !images.some((savedImage) => savedImage.id === image.id)) {
+        URL.revokeObjectURL(image.url);
+      }
+    });
+    setDialogImages([]);
+    setMessage('');
+    onClose();
+    if (imageInputReference.current) imageInputReference.current.value = '';
+  }
+
+  function applyDialog() {
+    images.forEach((image) => {
+      if (image.file && !dialogImages.some((dialogImage) => dialogImage.id === image.id)) {
+        URL.revokeObjectURL(image.url);
+      }
+    });
+    onApply(dialogImages);
+    setDialogImages([]);
+    setMessage('');
+    onClose();
+    if (imageInputReference.current) imageInputReference.current.value = '';
+  }
+
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const selectedFiles = Array.from(event.currentTarget.files ?? []);
+
+    if (selectedFiles.length === 0) return;
+    if (dialogImages.length + selectedFiles.length > MAX_IMAGE_COUNT) {
+      setMessage(`이미지는 ${MAX_IMAGE_COUNT}개를 초과할 수 없습니다.`);
+      event.currentTarget.value = '';
+      return;
+    }
+    if (selectedFiles.some((file) => !ACCEPTED_IMAGE_TYPES.includes(file.type))) {
+      setMessage('png, jpeg, webp 이미지만 등록할 수 있습니다.');
+      event.currentTarget.value = '';
+      return;
+    }
+    if (selectedFiles.some((file) => file.size > MAX_IMAGE_FILE_SIZE)) {
+      setMessage('이미지 한 장의 용량은 1MB 이하만 등록할 수 있습니다.');
+      event.currentTarget.value = '';
+      return;
+    }
+
+    setDialogImages((currentImages) => [
+      ...currentImages,
+      ...selectedFiles.map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) })),
+    ]);
+    setMessage('');
+    event.currentTarget.value = '';
+  }
+
+  function removeImage(imageId: string) {
+    setDialogImages((currentImages) => {
+      const targetImage = currentImages.find((image) => image.id === imageId);
+
+      if (targetImage?.file && !images.some((savedImage) => savedImage.id === imageId)) {
+        URL.revokeObjectURL(targetImage.url);
+      }
+
+      return currentImages.filter((image) => image.id !== imageId);
+    });
+  }
+
+  const uploader = (
+    <>
+      {message ? <DialogContentText className={styles['thumbnail-dialog-message']}>{message}</DialogContentText> : null}
+      <div className={styles['thumbnail-uploader']}>
+        <button
+          type="button"
+          className={styles['thumbnail-upload-button']}
+          onClick={() => imageInputReference.current?.click()}
+        >
+          <span>
+            이미지 추가 {dialogImages.length}/{MAX_IMAGE_COUNT}
+          </span>
+          <CollectionsOutlinedIcon />
+        </button>
+        <input
+          ref={imageInputReference}
+          type="file"
+          multiple
+          accept="image/png,image/jpeg,image/webp"
+          className={styles['thumbnail-file-input']}
+          onChange={handleImageChange}
+        />
+      </div>
+      {dialogImages.length > 0 ? (
+        <div className={styles['gallery-dialog-preview']}>
+          {dialogImages.map((image) => (
+            <div key={image.id} className={styles['gallery-dialog-preview-image']}>
+              <button
+                type="button"
+                onClick={() => removeImage(image.id)}
+                aria-label="이미지 삭제"
+                className={styles['gallery-dialog-remove-button']}
+              >
+                <CloseRoundedIcon />
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={image.url} alt="" />
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </>
+  );
+
+  return isMobile ? (
+    <Drawer
+      anchor="bottom"
+      open={open}
+      onClose={closeDialog}
+      className={`VhiDrawer-bottom VhiDrawer-bottom-service ${styles['thumbnail-dialog']}`}
+    >
+      <h2>첨부 이미지 업로드</h2>
+      <button type="button" className="close-button" onClick={closeDialog} aria-label="닫기">
+        <CloseRoundedIcon />
+      </button>
+      <div className={`VhiDrawer-bottom-content ${styles['thumbnail-dialog-content']}`}>{uploader}</div>
+      <div className="drawer-dialog-actions">
+        <button type="button" onClick={closeDialog} className="button medium cancel">
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={applyDialog}
+          disabled={dialogImages.length === 0}
+          className="button medium submit"
+        >
+          이미지 업로드
+        </button>
+      </div>
+    </Drawer>
+  ) : (
+    <Dialog open={open} onClose={closeDialog} className={`vh-dialog vh-alert-dialog ${styles['thumbnail-dialog']}`}>
+      <DialogTitle>첨부 이미지 업로드</DialogTitle>
+      <DialogContent className={styles['thumbnail-dialog-content']}>{uploader}</DialogContent>
+      <DialogActions>
+        <button type="button" onClick={closeDialog} className="cancel-button">
+          취소
+        </button>
+        <button type="button" onClick={applyDialog} disabled={dialogImages.length === 0}>
+          이미지 적용
+        </button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 
 export default function Opt() {
   const params = useParams();
@@ -67,11 +243,18 @@ export default function Opt() {
   const postId = normalizeText(params.postId);
   const [data, setData] = useState<Data>({});
   const [contentHtml, setContentHtml] = useState('');
+  const [replyImages, setReplyImages] = useState<AttachedImage[]>([]);
+  const [replyImageDialogOpen, setReplyImageDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingReplyId, setEditingReplyId] = useState('');
   const [editingReplyHtml, setEditingReplyHtml] = useState('');
+  const [editingReplyImages, setEditingReplyImages] = useState<AttachedImage[]>([]);
+  const [editingReplyImageDialogOpen, setEditingReplyImageDialogOpen] = useState(false);
   const [isSavingReply, setIsSavingReply] = useState(false);
   const [readyReplyEditorKey, setReadyReplyEditorKey] = useState('');
+  const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
+  const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
+  const [galleryImages, setGalleryImages] = useState<AttachedImage[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
@@ -118,14 +301,19 @@ export default function Opt() {
   async function reply() {
     if (isSaving) return;
     setIsSaving(true);
+    const formData = new FormData();
+    formData.set('contentHtml', contentHtml);
+    replyImages.forEach((image) => {
+      if (image.file) formData.append('images', image.file);
+    });
     const response = await fetch(`/api/private-board/${postId}?siteName=${siteName}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ contentHtml }),
+      body: formData,
     });
     if (response.ok) {
       setContentHtml('');
+      setReplyImages([]);
       await load();
     } else {
       const result = (await response.json()) as Data;
@@ -137,11 +325,40 @@ export default function Opt() {
   function startReplyEdit(reply: Reply) {
     setEditingReplyId(reply.id);
     setEditingReplyHtml(reply.content_html);
+    setEditingReplyImages(reply.images.map((image) => ({ ...image, file: null })));
   }
 
   function cancelReplyEdit() {
     setEditingReplyId('');
     setEditingReplyHtml('');
+    setEditingReplyImages([]);
+    setEditingReplyImageDialogOpen(false);
+  }
+
+  function openGalleryViewer(images: AttachedImage[], index: number) {
+    setGalleryImages(images);
+    setGalleryViewerIndex(index);
+    setGalleryViewerOpen(true);
+  }
+
+  function closeGalleryViewer() {
+    setGalleryViewerOpen(false);
+  }
+
+  function showPreviousGalleryImage() {
+    const imageCount = galleryImages.length;
+
+    if (!imageCount) return;
+
+    setGalleryViewerIndex((index) => (index <= 0 ? imageCount - 1 : index - 1));
+  }
+
+  function showNextGalleryImage() {
+    const imageCount = galleryImages.length;
+
+    if (!imageCount) return;
+
+    setGalleryViewerIndex((index) => (index >= imageCount - 1 ? 0 : index + 1));
   }
 
   async function updateReply(replyId: string) {
@@ -151,11 +368,19 @@ export default function Opt() {
     setData((value) => ({ ...value, error: undefined }));
 
     try {
+      const formData = new FormData();
+      formData.set('contentHtml', editingReplyHtml);
+      formData.set(
+        'retainedImageIds',
+        JSON.stringify(editingReplyImages.filter((image) => image.file === null).map((image) => image.id)),
+      );
+      editingReplyImages.forEach((image) => {
+        if (image.file) formData.append('images', image.file);
+      });
       const response = await fetch(`/api/private-board/${postId}/replies/${replyId}?siteName=${siteName}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ contentHtml: editingReplyHtml }),
+        body: formData,
       });
       const result = (await response.json()) as Data;
 
@@ -301,6 +526,58 @@ export default function Opt() {
                     themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                     className="viewer"
                   />
+                  {data.post?.images.length ? (
+                    <div className={styles['content-images']}>
+                      {data.post.images.map((image, index) => (
+                        <div key={image.id} className={styles['content-thumbnail-image']}>
+                          <button type="button" onClick={() => openGalleryViewer(data.post?.images ?? [], index)}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={image.url} alt="" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {galleryImages.length ? (
+                    <Dialog
+                      open={galleryViewerOpen}
+                      onClose={closeGalleryViewer}
+                      fullScreen
+                      className={`vh-dialog ${styles['gallery-viewer-dialog']}`}
+                    >
+                      <DialogTitle className={styles['dialog-title']}>{galleryViewerIndex + 1}번째 이미지</DialogTitle>
+                      <DialogContent className={styles['dialog-content']}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={galleryImages[galleryViewerIndex]?.url} alt="" />
+                      </DialogContent>
+                      <DialogActions className={styles['dialog-actions']}>
+                        <button
+                          type="button"
+                          onClick={showPreviousGalleryImage}
+                          className={`${styles['control-button']} ${styles['prev-button']}`}
+                          aria-label="이전 이미지"
+                        >
+                          <ArrowBackRoundedIcon />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={showNextGalleryImage}
+                          className={`${styles['control-button']} ${styles['next-button']}`}
+                          aria-label="다음 이미지"
+                        >
+                          <ArrowForwardRoundedIcon />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={closeGalleryViewer}
+                          className={styles['close-button']}
+                          aria-label="갤러리 닫기"
+                        >
+                          <CloseRoundedIcon />
+                        </button>
+                      </DialogActions>
+                    </Dialog>
+                  ) : null}
                 </div>
               </div>
             </article>
@@ -341,7 +618,7 @@ export default function Opt() {
                       </h3>
                       {reply.can_edit ? (
                         <button type="button" className={styles['edit-link']} onClick={() => startReplyEdit(reply)}>
-                          <span>답변 수정</span>
+                          <span>{reply.author_type === 'staff' ? '답변 수정' : '추가 문의 수정'}</span>
                           <EditNoteRoundedIcon />
                         </button>
                       ) : null}
@@ -374,7 +651,7 @@ export default function Opt() {
                       }}
                     >
                       <fieldset>
-                        <legend>운영자 답변 수정 폼</legend>
+                        <legend>{reply.author_type === 'staff' ? '운영자 답변 수정 폼' : '추가 문의 수정 폼'}</legend>
                         <div className={`${styles.editor} ${styles['editor-basic']} service-editor`}>
                           <ToastEditor
                             key={`reply-edit:${reply.id}`}
@@ -388,6 +665,17 @@ export default function Opt() {
                             onMarkdownChange={() => {}}
                           />
                         </div>
+                        {data.isImageEnabled ? (
+                          <div className="paper">
+                            <button
+                              type="button"
+                              className="button medium action"
+                              onClick={() => setEditingReplyImageDialogOpen(true)}
+                            >
+                              첨부 이미지 {editingReplyImages.length}/{MAX_IMAGE_COUNT}
+                            </button>
+                          </div>
+                        ) : null}
                         <div className={styles['button-group']}>
                           <button type="button" className={styles.link} onClick={cancelReplyEdit}>
                             취소
@@ -407,6 +695,18 @@ export default function Opt() {
                         themeMode={theme.palette.mode === 'dark' ? 'dark' : 'light'}
                         className="viewer"
                       />
+                      {reply.images.length ? (
+                        <div className={styles['content-images']}>
+                          {reply.images.map((image, index) => (
+                            <div key={image.id} className={styles['content-thumbnail-image']}>
+                              <button type="button" onClick={() => openGalleryViewer(reply.images, index)}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={image.url} alt="" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -446,6 +746,17 @@ export default function Opt() {
                     </div>
                   </fieldset>
                 </div>
+                {data.isImageEnabled ? (
+                  <div className="paper">
+                    <button
+                      type="button"
+                      className="button medium action"
+                      onClick={() => setReplyImageDialogOpen(true)}
+                    >
+                      첨부 이미지 {replyImages.length}/{MAX_IMAGE_COUNT}
+                    </button>
+                  </div>
+                ) : null}
                 {isReplyEditorReady ? (
                   <div className={styles['button-group']}>
                     <Anchor href={`/${siteName}/private`} className={`${styles.link} link`}>
@@ -467,6 +778,24 @@ export default function Opt() {
             )}
           </>
         )}
+        {replyImageDialogOpen ? (
+          <PrivateImageDialog
+            images={replyImages}
+            isMobile={isMobile}
+            onApply={setReplyImages}
+            onClose={() => setReplyImageDialogOpen(false)}
+            open
+          />
+        ) : null}
+        {editingReplyImageDialogOpen ? (
+          <PrivateImageDialog
+            images={editingReplyImages}
+            isMobile={isMobile}
+            onApply={setEditingReplyImages}
+            onClose={() => setEditingReplyImageDialogOpen(false)}
+            open
+          />
+        ) : null}
         {data.canDeletePost ? (
           isMobile ? (
             <Drawer
