@@ -10,6 +10,7 @@ import InterestsRoundedIcon from '@mui/icons-material/InterestsRounded';
 import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import LightOutlinedIcon from '@mui/icons-material/LightOutlined';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined';
 import WysiwygOutlinedIcon from '@mui/icons-material/WysiwygOutlined';
@@ -24,6 +25,7 @@ type Props = {
 
 type MenuResponse = {
   menus?: MenuRow[];
+  privateBoard?: { label: string } | null;
   error?: string;
 };
 
@@ -77,6 +79,7 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
 
 export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
   const [menus, setMenus] = useState<MenuRow[]>([]);
+  const [privateBoardLabel, setPrivateBoardLabel] = useState('');
 
   useEffect(() => {
     async function loadMenus() {
@@ -90,12 +93,15 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
 
         if (!response.ok) {
           setMenus([]);
+          setPrivateBoardLabel('');
           return;
         }
 
         setMenus(Array.isArray(result.menus) ? result.menus : []);
+        setPrivateBoardLabel(isBlog ? '' : (result.privateBoard?.label ?? ''));
       } catch {
         setMenus([]);
+        setPrivateBoardLabel('');
       }
     }
 
@@ -104,7 +110,7 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
     }
 
     void loadMenus();
-  }, [siteName]);
+  }, [isBlog, siteName]);
 
   const allHref = `/${siteName}/board`;
   const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
@@ -163,6 +169,14 @@ export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
           </MenuItem>
         );
       })}
+      {!isBlog && privateBoardLabel ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/private`}>
+            <LockOutlinedIcon fontSize="small" />
+            <span>{privateBoardLabel}</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
     </>
   );
 }

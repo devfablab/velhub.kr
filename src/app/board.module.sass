@@ -415,7 +415,7 @@
       display: flex
       justify-content: space-between
 
-      a
+      a, button
         display: inline-flex
         align-items: center
         gap: ds.rem(3)
@@ -432,12 +432,14 @@
           text-decoration: underline
 
       .edit-link
+        background-color: transparent
         height: ds.rem(27)
         border: 1px solid rgba(ds.$rgb-tertiary, .2)
         border-radius: ds.rem(7)
         padding: 0 ds.rem(7)
-        color: rgba(ds.$rgb-tertiary, 1)
+        @include ds.fw(pre, 600)
         font-size: ds.rem(14)
+        color: rgba(ds.$rgb-tertiary, 1)
 
     h3
       display: flex
@@ -2084,3 +2086,23 @@
     fieldset
       top: 0
       height: ds.rem(42)
+
+.privates
+  display: grid
+  grid-template-columns: repeat(2, 1fr)
+  gap: ds.rem(17)
+
+  h6
+    @include ds.fw(neo, 700)
+    font-size: ds.rem(16)
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
+  p
+    color: ds.$hex-secondary
+    opacity: .5
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-light

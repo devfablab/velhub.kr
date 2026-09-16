@@ -113,14 +113,22 @@ export async function GET(request: Request) {
               .maybeSingle();
           })()
         : Promise.resolve(null);
+    const privateBoardPromise =
+      siteType === 'community'
+        ? (async () => {
+            return await supabaseAdmin.from('private_boards').select('board_label').eq('site_id', siteId).maybeSingle();
+          })()
+        : Promise.resolve(null);
 
-    const [chorogonRes, boardsRes, communityRes, siteLimitResult, hasOwnerDomainFeature] = await Promise.all([
-      chorogonPromise,
-      boardsPromise,
-      communityPromise,
-      siteLimitPromise,
-      hasOwnerDomainPromise,
-    ]);
+    const [chorogonRes, boardsRes, communityRes, privateBoardRes, siteLimitResult, hasOwnerDomainFeature] =
+      await Promise.all([
+        chorogonPromise,
+        boardsPromise,
+        communityPromise,
+        privateBoardPromise,
+        siteLimitPromise,
+        hasOwnerDomainPromise,
+      ]);
 
     const [hasUnlimitedSites, ownerSitesResult] = siteLimitResult ?? [false, null];
     const ownerSiteIds = ownerSitesResult?.data?.map((site) => site.id) ?? [];
@@ -201,6 +209,7 @@ export async function GET(request: Request) {
         sort_order: board.sort_order,
         is_renameable: board.board_type === 'blog',
       })),
+      privateBoard: privateBoardRes?.data ? { label: privateBoardRes.data.board_label } : null,
     });
   } catch (unknownError) {
     if (unknownError instanceof Error) {

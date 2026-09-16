@@ -34,6 +34,10 @@ type BoardsResponse = {
   error?: string;
 };
 
+type Props = {
+  writeHref?: string;
+};
+
 function isWritePath(pathname: string, siteName: string) {
   const normalizedPathname = normalizeText(pathname);
   const normalizedSiteName = normalizeText(siteName);
@@ -83,7 +87,7 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
   return <FormatListNumberedOutlinedIcon sx={{ width: 16, height: 16 }} />;
 }
 
-export default function TableList() {
+export default function TableList({ writeHref }: Props) {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
@@ -97,7 +101,11 @@ export default function TableList() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const shouldShowWriteLink = useMemo(() => !isWritePath(pathname, siteName), [pathname, siteName]);
+  const resolvedWriteHref = writeHref ?? (boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`);
+  const shouldShowWriteLink = useMemo(
+    () => (writeHref ? normalizeText(pathname) !== writeHref : !isWritePath(pathname, siteName)),
+    [pathname, siteName, writeHref],
+  );
 
   const canWriteCurrentBoard = useMemo(() => {
     if (!boardName) {
@@ -170,7 +178,7 @@ export default function TableList() {
     <div className={`${styles['table-list']} paper`}>
       {shouldRenderWriteLink ? (
         <p className={styles.button}>
-          <Anchor href={boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`} className="button">
+          <Anchor href={resolvedWriteHref} className="button">
             글쓰기
           </Anchor>
         </p>

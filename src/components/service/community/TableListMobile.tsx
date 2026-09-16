@@ -42,6 +42,7 @@ type Props = {
   board?: BoardItem | null;
   selectedSeries?: SelectedSeries | null;
   isCommunity?: boolean;
+  writeHref?: string;
 };
 
 type BoardsResponse = {
@@ -82,7 +83,7 @@ function isWritePath(pathname: string, siteName: string) {
   return false;
 }
 
-export default function TableListMobile({ board = null, selectedSeries = null }: Props) {
+export default function TableListMobile({ board = null, selectedSeries = null, writeHref }: Props) {
   const params = useParams();
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
@@ -99,7 +100,11 @@ export default function TableListMobile({ board = null, selectedSeries = null }:
 
   const isMenuOpen = Boolean(menuAnchorEl);
 
-  const shouldShowWriteLink = useMemo(() => !isWritePath(pathname, siteName), [pathname, siteName]);
+  const resolvedWriteHref = writeHref ?? (boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`);
+  const shouldShowWriteLink = useMemo(
+    () => (writeHref ? normalizeText(pathname) !== writeHref : !isWritePath(pathname, siteName)),
+    [pathname, siteName, writeHref],
+  );
 
   const canWriteCurrentBoard = useMemo(() => {
     if (!boardName) {
@@ -242,7 +247,7 @@ export default function TableListMobile({ board = null, selectedSeries = null }:
       {shouldRenderWriteLink ? (
         <div className={styles['board-post']}>
           <ReportButton targetType="board" siteName={siteName} boardName={boardName} />
-          <Anchor href={boardName ? `/${siteName}/${boardName}/new` : `/${siteName}/board/new`} aria-label="글쓰기">
+          <Anchor href={resolvedWriteHref} aria-label="글쓰기">
             <EditRoundedIcon />
           </Anchor>
         </div>

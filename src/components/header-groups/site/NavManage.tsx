@@ -82,6 +82,15 @@ export default function NavManage({ siteName, siteType, siteRole, globalRole, is
       href: `/${siteName}/manage/contents`,
       startsWith: true,
     },
+    ...(showAllManageMenus && siteType === 'community'
+      ? [
+          {
+            label: '비공개 게시판',
+            href: `/${siteName}/manage/private`,
+            startsWith: true,
+          },
+        ]
+      : []),
     ...(showAllManageMenus
       ? [
           {

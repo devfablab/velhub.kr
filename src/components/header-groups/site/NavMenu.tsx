@@ -23,6 +23,7 @@ type MenuRow = {
 
 type MenuResponse = {
   menus?: MenuRow[];
+  privateBoard?: { label: string } | null;
   error?: string;
 };
 
@@ -38,6 +39,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const pathname = usePathname();
 
   const [menus, setMenus] = useState<MenuRow[]>([]);
+  const [privateBoardLabel, setPrivateBoardLabel] = useState('');
 
   useEffect(() => {
     async function loadMenus() {
@@ -51,12 +53,15 @@ export default function NavMenu({ siteName, isBlog }: Props) {
 
         if (!response.ok) {
           setMenus([]);
+          setPrivateBoardLabel('');
           return;
         }
 
         setMenus(Array.isArray(result.menus) ? result.menus : []);
+        setPrivateBoardLabel(isBlog ? '' : (result.privateBoard?.label ?? ''));
       } catch {
         setMenus([]);
+        setPrivateBoardLabel('');
       }
     }
 
@@ -65,7 +70,7 @@ export default function NavMenu({ siteName, isBlog }: Props) {
     }
 
     void loadMenus();
-  }, [siteName]);
+  }, [isBlog, siteName]);
 
   const homeHref = `/${siteName}`;
   const isHomeCurrent = pathname === homeHref;
@@ -73,6 +78,8 @@ export default function NavMenu({ siteName, isBlog }: Props) {
   const allHref = `/${siteName}/board`;
   const isAllHrefCurrent = pathname === allHref || pathname.startsWith(`${allHref}/`);
   const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');
+  const privateBoardHref = `/${siteName}/private`;
+  const isPrivateBoardCurrent = isCurrentPath(pathname, privateBoardHref);
 
   const infoHref = `/${siteName}/info-blog`;
   const isInfoBlogHrefCurrent = pathname === infoHref;
@@ -153,6 +160,17 @@ export default function NavMenu({ siteName, isBlog }: Props) {
               </li>
             );
           })}
+          {!isBlog && privateBoardLabel ? (
+            <li
+              className={isPrivateBoardCurrent ? styles.current : undefined}
+              aria-current={isPrivateBoardCurrent ? 'page' : false}
+            >
+              <Anchor href={privateBoardHref}>
+                <span>{privateBoardLabel}</span>
+                <i />
+              </Anchor>
+            </li>
+          ) : null}
           <li>
             <ReportButton targetType="site" siteName={siteName} />
           </li>

@@ -334,7 +334,7 @@ export default function Opt({ isCommunity }: Props) {
 
         {contents.length === 0 ? (
           isSearchMode ? (
-            <div className="paper paper-error">검색 결과가 없습니다.</div>
+            <ScreenState>검색 결과가 없습니다.</ScreenState>
           ) : (
             <ScreenState>등록된 게시글이 없습니다.</ScreenState>
           )

@@ -88,6 +88,15 @@ export default function DrawerManage({ siteName, siteType, siteRole, globalRole,
         </Anchor>
       </MenuItem>
 
+      {showAllManageMenus && siteType === 'community' ? (
+        <MenuItem onClick={onClose}>
+          <Anchor href={`/${siteName}/manage/private`}>
+            <ArticleOutlinedIcon fontSize="small" />
+            <span>비공개 게시판</span>
+          </Anchor>
+        </MenuItem>
+      ) : null}
+
       {showAllManageMenus ? (
         <>
           <MenuItem onClick={onClose}>

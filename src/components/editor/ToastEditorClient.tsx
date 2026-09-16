@@ -28,6 +28,7 @@ type Props = {
   onHtmlChange: (value: string) => void;
   onMarkdownChange: (value: string) => void;
   onUploadImage?: (file: Blob | File) => Promise<string>;
+  onReady?: () => void;
 };
 
 export default function ToastEditorClient({
@@ -40,6 +41,7 @@ export default function ToastEditorClient({
   onHtmlChange,
   onMarkdownChange,
   onUploadImage,
+  onReady,
 }: Props) {
   const editorReference = useRef<Editor | null>(null);
   const [imageErrorMessage, setImageErrorMessage] = useState('');
@@ -92,6 +94,10 @@ export default function ToastEditorClient({
     syncEditorValue();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editorInitialValue]);
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   return (
     <>
