@@ -412,10 +412,14 @@
             font-size: ds.rem(11)
             line-height: 1
             color: ds.$hex-secondary
-            background-color: rgba(ds.$rgb-tertiary, .12)
+            border: 1px solid rgba(ds.$rgb-tertiary, .12)
+
+            html[data-theme="yellow-dark"] &
+              color: ds.$hex-light
+              border: 1px solid rgba(ds.$rgb-tertiary, .3)
 
             &.operation-normal
-              color: ds.$hex-action
+              color: ds.$hex-accent
 
             &.operation-payment_failed, &.operation-blocked, &.operation-closed
               color: ds.$hex-warning
