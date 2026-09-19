@@ -10,6 +10,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Avatar,
   Dialog,
@@ -712,7 +713,12 @@ export default function Opt() {
                 </div>
               </article>
             ))}
-            {data.error ? <p className="alert error">{data.error}</p> : null}
+            {data.error ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{data.error}</span>
+              </p>
+            ) : null}
 
             {canReply ? (
               <>
@@ -810,7 +816,12 @@ export default function Opt() {
               </button>
               <div className="VhiDrawer-bottom-content">
                 <p>정말로 글을 삭제하시겠습니까?</p>
-                {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+                {deleteErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{deleteErrorMessage}</span>
+                  </p>
+                ) : null}
               </div>
               <div className="drawer-dialog-actions">
                 <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
@@ -838,7 +849,12 @@ export default function Opt() {
               </button>
               <DialogContent className={styles['dialog-content']}>
                 <p>정말로 글을 삭제하시겠습니까?</p>
-                {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+                {deleteErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{deleteErrorMessage}</span>
+                  </p>
+                ) : null}
               </DialogContent>
               <DialogActions>
                 <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import {
   Dialog,
@@ -303,7 +304,12 @@ export default function FooterSite() {
           <h2>운영자 교체</h2>
           <Stack gap={3}>
             <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
-            {ownerTransferError ? <p className="alert error">{ownerTransferError}</p> : null}
+            {ownerTransferError ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{ownerTransferError}</span>
+              </p>
+            ) : null}
             <Stack direction="column" gap={1.5}>
               <button
                 type="button"
@@ -329,7 +335,12 @@ export default function FooterSite() {
           <DialogTitle>운영자 교체</DialogTitle>
           <DialogContent>
             <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
-            {ownerTransferError ? <p className="alert error">{ownerTransferError}</p> : null}
+            {ownerTransferError ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{ownerTransferError}</span>
+              </p>
+            ) : null}
           </DialogContent>
           <DialogActions>
             <button

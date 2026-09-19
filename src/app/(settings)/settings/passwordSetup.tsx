@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -163,7 +164,12 @@ export default function PasswordSetup() {
               비밀번호 설정 메일 보내기
             </button>
 
-            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
             <Snackbar
               open={Boolean(successMessage)}
               message={successMessage}

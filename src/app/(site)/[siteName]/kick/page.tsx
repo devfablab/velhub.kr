@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -70,6 +71,7 @@ export default function Page() {
 
             {errorMessage ? (
               <p className="alert error">
+                <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
             ) : null}

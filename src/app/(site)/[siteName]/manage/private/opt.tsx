@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import {
   Checkbox,
@@ -158,7 +159,10 @@ export default function Opt() {
     return (
       <Container pageTitle="비공개 게시판" pageBack={`/${siteName}/manage`}>
         <div className={`container ${styles.container}`}>
-          <p className="alert error">커뮤니티에서만 사용할 수 있습니다.</p>
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>커뮤니티에서만 사용할 수 있습니다.</span>
+          </p>
         </div>
       </Container>
     );

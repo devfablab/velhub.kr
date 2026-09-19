@@ -2,6 +2,7 @@
 
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {
   Dialog,
   DialogActions,
@@ -137,7 +138,12 @@ export default function WithdrawalGuard({ children }: { children: ReactNode }) {
             <Typography variant="body2">
               탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
             </Typography>
-            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
             <Stack direction="column" gap={1.5}>
               <button
                 type="button"
@@ -165,7 +171,12 @@ export default function WithdrawalGuard({ children }: { children: ReactNode }) {
             <Typography variant="body2">
               탈퇴 신청일로부터 30일이 지나면 탈퇴가 확정됩니다. 계속 이용하려면 탈퇴 신청을 취소해주세요.
             </Typography>
-            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
           </DialogContent>
           <DialogActions>
             <button

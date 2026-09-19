@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
@@ -159,7 +160,12 @@ export default function Opt() {
 
       {errorMessage && !hasLoadedNotifications ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
-      {errorMessage && hasLoadedNotifications ? <p className="alert error">{errorMessage}</p> : null}
+      {errorMessage && hasLoadedNotifications ? (
+        <p className="alert error">
+          <ErrorOutlineRoundedIcon />
+          <span>{errorMessage}</span>
+        </p>
+      ) : null}
 
       {items.length === 0 ? (
         <ScreenState>새로운 알림이 없어요. 🤫</ScreenState>

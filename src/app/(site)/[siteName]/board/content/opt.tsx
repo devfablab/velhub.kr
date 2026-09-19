@@ -9,6 +9,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
@@ -896,7 +897,12 @@ export default function Opt({ isCommunity }: Props) {
                   helperText="삭제 사유를 10자 이상 입력해주세요."
                 />
               ) : null}
-              {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+              {deleteErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{deleteErrorMessage}</span>
+                </p>
+              ) : null}
             </div>
             <div className="drawer-dialog-actions">
               <button type="button" className="cancel-button" onClick={() => setDeleteDialogOpen(false)}>
@@ -942,7 +948,12 @@ export default function Opt({ isCommunity }: Props) {
                   helperText="삭제 사유를 10자 이상 입력해주세요."
                 />
               ) : null}
-              {deleteErrorMessage ? <p className="alert error">{deleteErrorMessage}</p> : null}
+              {deleteErrorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{deleteErrorMessage}</span>
+                </p>
+              ) : null}
             </DialogContent>
             <DialogActions>
               <button type="button" className="button medium close" onClick={() => setDeleteDialogOpen(false)}>

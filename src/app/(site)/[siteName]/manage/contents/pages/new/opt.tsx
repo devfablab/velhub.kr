@@ -559,7 +559,7 @@ export default function Opt() {
                 {slugMessage ? (
                   <p className={`alert ${isSlugAvailable ? 'info' : 'error'}`}>
                     {isSlugAvailable ? <InfoOutlineRoundedIcon /> : <ErrorOutlineRoundedIcon />}
-                    {slugMessage}
+                    <span>{slugMessage}</span>
                   </p>
                 ) : null}
               </Stack>

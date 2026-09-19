@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
@@ -122,6 +123,7 @@ export default async function Page() {
             <div className="paper page-error">
               <ServiceErrorIcon />
               <p className="alert error">
+                <ErrorOutlineRoundedIcon />
                 <span>{blockMessage}</span>
               </p>
               <Anchor href={`/memberships/creator`} className="button medium submit">

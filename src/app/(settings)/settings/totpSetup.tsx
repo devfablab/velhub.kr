@@ -2,6 +2,7 @@
 'use client';
 
 import { type JSX, useEffect, useMemo, useState } from 'react';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
@@ -365,7 +366,12 @@ export default function TotpSetup() {
               </button>
             )}
 
-            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
             <Snackbar
               open={Boolean(successMessage)}
               message={successMessage}

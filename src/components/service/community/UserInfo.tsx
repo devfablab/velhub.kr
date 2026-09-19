@@ -3,6 +3,7 @@
 import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { DialogActions, DialogContent, DialogTitle, Drawer, Typography, useMediaQuery, useTheme } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
@@ -487,6 +488,7 @@ export default function UserInfo() {
                 <Typography variant="subtitle2">정말로 커뮤니티를 탈퇴하시겠어요?</Typography>
                 {withdrawErrorMessage ? (
                   <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
                     <span>{withdrawErrorMessage}</span>
                   </p>
                 ) : null}
@@ -540,6 +542,7 @@ export default function UserInfo() {
 
                 {withdrawErrorMessage ? (
                   <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
                     <span>{withdrawErrorMessage}</span>
                   </p>
                 ) : null}

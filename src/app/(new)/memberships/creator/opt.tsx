@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Checkbox, Radio, Snackbar, Stack, Typography } from '@mui/material';
 import {
   formatMembershipPrice,
@@ -363,7 +364,12 @@ export default function Opt() {
               원하는 기능을 선택해 주세요. 기본 기능은 자동으로 이용할 수 있습니다.
             </Typography>
           </Stack>
-          {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+          {errorMessage ? (
+            <p className="alert error">
+              <ErrorOutlineRoundedIcon />
+              <span>{errorMessage}</span>
+            </p>
+          ) : null}
 
           <Stack gap={3}>
             <Stack gap={1}>
@@ -552,7 +558,12 @@ function MembershipCard({
           </Stack>
           <Typography variant="body2">{basic}</Typography>
         </Stack>
-        {!available && disabledMessage ? <p className="alert error">{disabledMessage}</p> : null}
+        {!available && disabledMessage ? (
+          <p className="alert error">
+            <ErrorOutlineRoundedIcon />
+            <span>{disabledMessage}</span>
+          </p>
+        ) : null}
         {available && allInOne ? (
           <div className={styles['membership-all-in-one-features']}>
             <Stack gap={1}>

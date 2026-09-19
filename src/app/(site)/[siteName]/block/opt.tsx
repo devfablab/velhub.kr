@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
@@ -75,6 +76,7 @@ export default function Opt() {
 
             {errorMessage ? (
               <p className="alert error">
+                <ErrorOutlineRoundedIcon />
                 <span>{errorMessage}</span>
               </p>
             ) : null}

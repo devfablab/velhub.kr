@@ -265,7 +265,12 @@ export default function PasswordChange() {
                 비밀번호 변경
               </button>
 
-              {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+              {errorMessage ? (
+                <p className="alert error">
+                  <ErrorOutlineRoundedIcon />
+                  <span>{errorMessage}</span>
+                </p>
+              ) : null}
               <Snackbar
                 open={Boolean(successMessage)}
                 message={successMessage}

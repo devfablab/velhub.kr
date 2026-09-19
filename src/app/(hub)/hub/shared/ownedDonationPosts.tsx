@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Chip, Dialog, DialogContent, DialogTitle, Drawer, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateSimple, formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -214,7 +215,12 @@ function ContentBody({ board, content }: { board: BoardInfo; content: PostConten
 
 function PostPreview({ response, errorMessage }: { response: ContentResponse | null; errorMessage: string }) {
   if (errorMessage) {
-    return <p className="alert error">{errorMessage}</p>;
+    return (
+      <p className="alert error">
+        <ErrorOutlineRoundedIcon />
+        <span>{errorMessage}</span>
+      </p>
+    );
   }
 
   if (!response?.board || !response.content) {

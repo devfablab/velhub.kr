@@ -582,7 +582,12 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
       {isFormOpen && identity ? (
         <div className="paper">
           <Stack gap={2}>
-            {errorMessage ? <p className="alert error">{errorMessage}</p> : null}
+            {errorMessage ? (
+              <p className="alert error">
+                <ErrorOutlineRoundedIcon />
+                <span>{errorMessage}</span>
+              </p>
+            ) : null}
             <Stack gap={1}>
               <Typography variant="subtitle2">개인/기업 선택</Typography>
               <RadioGroup
@@ -781,7 +786,12 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
                     </button>
                   </div>
                 )}
-                {guardianErrorMessage ? <p className="alert error">{guardianErrorMessage}</p> : null}
+                {guardianErrorMessage ? (
+                  <p className="alert error">
+                    <ErrorOutlineRoundedIcon />
+                    <span>{guardianErrorMessage}</span>
+                  </p>
+                ) : null}
                 <Divider />
                 <Stack gap={1}>
                   <Typography variant="subtitle2">가족관계증명서 첨부</Typography>
