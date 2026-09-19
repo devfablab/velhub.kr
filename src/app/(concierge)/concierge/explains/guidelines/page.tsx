@@ -1,5 +1,9 @@
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { Stack } from '@mui/material';
+import type { GuidelineAppealItem } from '@/lib/reports/guidelineAppeals';
+import { loadGuidelineAppealItems } from '@/lib/reports/guidelineAppealServer';
+import { getCurrentStigma } from '@/lib/session/utils';
 import Anchor from '@/components/Anchor';
 import Container from '../../menu';
 import Opt from './opt';
@@ -10,7 +14,23 @@ export const metadata: Metadata = {
   description: '소명센터 가이드라인 위반',
 };
 
-export default function Page() {
+export default async function Page() {
+  const current = await getCurrentStigma();
+  const headersList = await headers();
+  const host = headersList.get('x-forwarded-host') ?? headersList.get('host');
+  const protocol = headersList.get('x-forwarded-proto') ?? 'http';
+  let initialItems: GuidelineAppealItem[] = [];
+  let initialError = '';
+
+  if (current && host) {
+    try {
+      initialItems = await loadGuidelineAppealItems({ stigmaId: current.stigmaId, origin: `${protocol}://${host}` });
+    } catch (unknownError) {
+      initialError =
+        unknownError instanceof Error ? unknownError.message : '가이드라인 소명 내역을 불러오지 못했습니다.';
+    }
+  }
+
   return (
     <Container>
       <div className={`container ${styles.container}`}>
@@ -21,7 +41,7 @@ export default function Page() {
               이전화면으로 이동
             </Anchor>
           </Stack>
-          <Opt />
+          <Opt initialItems={initialItems} initialError={initialError} initialLoginRequired={!current} />
         </div>
       </div>
     </Container>

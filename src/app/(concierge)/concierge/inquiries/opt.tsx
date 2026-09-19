@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Tab, Tabs } from '@mui/material';
 import {
   inquiryStatusLabels,
@@ -25,12 +25,24 @@ type InquiryRow = {
   requesterActivityName: string;
 };
 
-export default function Opt() {
+export default function Opt({
+  initialInquiries,
+  initialError,
+}: {
+  initialInquiries: InquiryRow[];
+  initialError: string;
+}) {
   const [type, setType] = useState<InquiryType>('service_question');
-  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
-  const [error, setError] = useState('');
+  const [inquiries, setInquiries] = useState<InquiryRow[]>(initialInquiries);
+  const [error, setError] = useState(initialError);
+  const hasInitialData = useRef(true);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
+
     let cancelled = false;
     async function load() {
       const response = await fetch(`/api/concierge/inquiries?type=${type}`, { cache: 'no-store' });

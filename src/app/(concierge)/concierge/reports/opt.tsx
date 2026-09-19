@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -286,19 +286,28 @@ function ReportDetails({ report }: { report: ConciergeReportItem }) {
   );
 }
 
-export default function Opt() {
+export default function Opt({
+  initialReports,
+  initialTotal,
+  initialError,
+}: {
+  initialReports: ConciergeReportItem[];
+  initialTotal: number;
+  initialError: string;
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [reports, setReports] = useState<ConciergeReportItem[]>([]);
-  const [total, setTotal] = useState(0);
+  const [reports, setReports] = useState<ConciergeReportItem[]>(initialReports);
+  const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(0);
   const [targetType, setTargetType] = useState<ReportTargetType | ''>('');
   const [reportType, setReportType] = useState<ConciergeReportType | ''>('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isListError, setIsListError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isListError, setIsListError] = useState(Boolean(initialError));
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const hasInitialData = useRef(true);
 
   const [reporterDialogOpen, setReporterDialogOpen] = useState(false);
   const [reporterLoading, setReporterLoading] = useState(false);
@@ -367,6 +376,11 @@ export default function Opt() {
   );
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
+
     void loadReports();
   }, [loadReports]);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -481,14 +481,22 @@ function ContentEditor({
   );
 }
 
-export default function Opt() {
+export default function Opt({
+  initialItems,
+  initialError,
+  initialLoginRequired,
+}: {
+  initialItems: AppealCenterItem[];
+  initialError: string;
+  initialLoginRequired: boolean;
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [items, setItems] = useState<AppealCenterItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isLoginRequired, setIsLoginRequired] = useState(false);
+  const [items, setItems] = useState<AppealCenterItem[]>(initialItems);
+  const [loading, setLoading] = useState(false);
+  const [isLoginRequired, setIsLoginRequired] = useState(initialLoginRequired);
   const [actionLoading, setActionLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [opinionItem, setOpinionItem] = useState<AppealCenterItem | null>(null);
   const [opinionPosition, setOpinionPosition] = useState('');
@@ -502,6 +510,7 @@ export default function Opt() {
   const [contentForm, setContentForm] = useState<ContentForm | null>(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [editReviewDialogItem, setEditReviewDialogItem] = useState<AppealCenterItem | null>(null);
+  const hasInitialData = useRef(true);
 
   const loadItems = useCallback(async () => {
     try {
@@ -538,6 +547,11 @@ export default function Opt() {
   }, []);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
+
     void loadItems();
   }, [loadItems]);
 

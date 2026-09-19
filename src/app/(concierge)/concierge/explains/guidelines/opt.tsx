@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import {
@@ -205,13 +205,21 @@ function ContentViewer({ response }: { response: ContentResponse }) {
   );
 }
 
-export default function Opt() {
+export default function Opt({
+  initialItems,
+  initialError,
+  initialLoginRequired,
+}: {
+  initialItems: GuidelineAppealItem[];
+  initialError: string;
+  initialLoginRequired: boolean;
+}) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [items, setItems] = useState<GuidelineAppealItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isLoginRequired, setIsLoginRequired] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [items, setItems] = useState<GuidelineAppealItem[]>(initialItems);
+  const [loading, setLoading] = useState(false);
+  const [isLoginRequired, setIsLoginRequired] = useState(initialLoginRequired);
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [contentItem, setContentItem] = useState<GuidelineAppealItem | null>(null);
   const [contentResponse, setContentResponse] = useState<ContentResponse | null>(null);
@@ -222,6 +230,7 @@ export default function Opt() {
   const [messageOpenedAt, setMessageOpenedAt] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
   const [messageSaving, setMessageSaving] = useState(false);
+  const hasInitialData = useRef(true);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -253,6 +262,11 @@ export default function Opt() {
   }, []);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadItems();
   }, [loadItems]);

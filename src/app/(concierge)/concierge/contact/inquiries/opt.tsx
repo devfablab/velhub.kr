@@ -1,6 +1,4 @@
 'use client';
-
-import { useEffect, useState } from 'react';
 import { Stack } from '@mui/material';
 import {
   inquiryStatusLabels,
@@ -22,28 +20,15 @@ type InquiryRow = {
   inquiry_subtype: string | null;
 };
 
-export default function Opt() {
-  const [inquiries, setInquiries] = useState<InquiryRow[]>([]);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    async function load() {
-      const response = await fetch('/api/concierge/contact/inquiries', { cache: 'no-store' });
-      const result = (await response.json().catch(() => null)) as {
-        inquiries?: InquiryRow[];
-        error?: string;
-      } | null;
-
-      if (!response.ok) {
-        setError(result?.error ?? '문의 내역을 불러오지 못했습니다.');
-        return;
-      }
-
-      setInquiries(result?.inquiries ?? []);
-    }
-
-    void load();
-  }, []);
+export default function Opt({
+  initialInquiries,
+  initialError,
+}: {
+  initialInquiries: InquiryRow[];
+  initialError: string;
+}) {
+  const inquiries = initialInquiries;
+  const error = initialError;
 
   return (
     <div className={styles.inquiry}>
