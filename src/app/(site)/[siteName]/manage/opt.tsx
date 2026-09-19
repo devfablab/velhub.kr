@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
-import { getManageTabMenuItems, type ManageMenuKind } from '@/lib/manage/menu';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
+import { useSiteHeader } from '../SiteHeaderContext';
 import Container from './menu';
 import styles from '@/app/manage.module.sass';
 
@@ -46,6 +46,7 @@ function canAccessAllManageMenus(siteType: string, siteRole: string | null, glob
 export default function Opt({ initialData, initialError }: { initialData: StaffResponse | null; initialError: string }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const siteHeader = useSiteHeader();
   const hasInitialData = useRef(Boolean(initialData));
 
   const [isLoading, setIsLoading] = useState(false);
@@ -57,8 +58,8 @@ export default function Opt({ initialData, initialError }: { initialData: StaffR
   const [ownerName, setOwnerName] = useState(initialData?.site?.ownerName ?? '');
   const [memberCount, setMemberCount] = useState(initialData?.stats?.memberCount ?? 0);
   const [postCount, setPostCount] = useState(initialData?.stats?.postCount ?? 0);
-  const [siteRole, setSiteRole] = useState<string | null>(null);
-  const [globalRole, setGlobalRole] = useState<string | null>(null);
+  const [siteRole, setSiteRole] = useState<string | null>(siteHeader?.siteRole ?? null);
+  const [globalRole, setGlobalRole] = useState<string | null>(siteHeader?.globalRole ?? null);
 
   useEffect(() => {
     if (hasInitialData.current) return;
@@ -126,16 +127,25 @@ export default function Opt({ initialData, initialError }: { initialData: StaffR
   }, [siteName]);
 
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
-  const currentSiteType = siteType === 'blog' ? 'blog' : 'community';
-
-  const menuGroups: ManageMenuKind[] = [
-    ...(showAllManageMenus ? (['settings'] as ManageMenuKind[]) : []),
-    ...(showAllManageMenus && siteType === 'community' ? (['join'] as ManageMenuKind[]) : []),
-    ...(showAllManageMenus ? ([siteType === 'blog' ? 'team' : 'members'] as ManageMenuKind[]) : []),
-    'contents',
-    ...(showAllManageMenus ? (['reports', 'design', 'payments', 'stats'] as ManageMenuKind[]) : []),
+  const menuItems = [
+    ...(showAllManageMenus
+      ? [{ href: `/${siteName}/manage/settings`, label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보' }]
+      : []),
+    ...(showAllManageMenus && siteType === 'community' ? [{ href: `/${siteName}/manage/join`, label: '가입 관리' }] : []),
+    ...(showAllManageMenus
+      ? [{ href: `/${siteName}/manage/${siteType === 'blog' ? 'team' : 'members'}`, label: siteType === 'blog' ? '팀원 관리' : '멤버 관리' }]
+      : []),
+    { href: `/${siteName}/manage/contents/posts`, label: '콘텐츠 관리' },
+    ...(showAllManageMenus && siteType === 'community' ? [{ href: `/${siteName}/manage/private`, label: '비공개 게시판' }] : []),
+    ...(showAllManageMenus
+      ? [
+          { href: `/${siteName}/manage/reports`, label: '신고 관리' },
+          { href: siteType === 'blog' ? `/${siteName}/manage/design/blog/fonts` : `/${siteName}/manage/design/community/home`, label: '디자인' },
+          { href: `/${siteName}/manage/payments`, label: '결제' },
+          { href: `/${siteName}/manage/stats`, label: '통계' },
+        ]
+      : []),
   ];
-  const tabItems = menuGroups.flatMap((menu) => getManageTabMenuItems(menu, siteName, currentSiteType));
 
   if (isLoading) {
     return (
@@ -191,10 +201,10 @@ export default function Opt({ initialData, initialError }: { initialData: StaffR
           </div>
           <div className={`paper ${styles.paper} ${styles.menu}`}>
             <ul>
-              {tabItems.map((tabItem) => (
-                <li key={tabItem.href}>
-                  <Anchor href={tabItem.href}>
-                    <span>{tabItem.label}</span>
+              {menuItems.map((menuItem) => (
+                <li key={menuItem.href}>
+                  <Anchor href={menuItem.href}>
+                    <span>{menuItem.label}</span>
                     <NavigateNextRoundedIcon />
                   </Anchor>
                 </li>
