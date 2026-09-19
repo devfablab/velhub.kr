@@ -722,7 +722,7 @@ export default function Opt() {
             <Typography variant="subtitle2">
               이 문의를 철회하시겠어요? 철회한 문의는 다시 처리할 수 없습니다.
             </Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

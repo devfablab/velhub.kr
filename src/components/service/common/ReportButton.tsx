@@ -317,7 +317,7 @@ export default function ReportButton({
           <Stack gap={3}>
             {renderContent()}
 
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" onClick={handleClose} disabled={submitting}>
                 {completed ? '닫기' : '취소'}
               </button>

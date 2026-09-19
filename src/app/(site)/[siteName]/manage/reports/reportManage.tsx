@@ -1020,7 +1020,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             <Stack gap={3}>
               {detailContent}
 
-              <Stack direction="column" spacing={1.5}>
+              <Stack direction="column" gap={1.5}>
                 <button type="button" className="button medium cancel" onClick={handleClose} disabled={saving}>
                   닫기
                 </button>
@@ -1081,7 +1081,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
             <Stack gap={3}>
               {messageContent}
 
-              <Stack direction="column" spacing={1.5}>
+              <Stack direction="column" gap={1.5}>
                 <button
                   type="button"
                   className="button medium cancel"

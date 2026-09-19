@@ -3,6 +3,9 @@
     max-width: ds.rem(1313)
     width: 100%
 
+    &.minimal
+      max-width: ds.rem(807)
+
     h1
       padding-bottom: ds.rem(17)
       @include ds.fw(neo, 800)
@@ -186,7 +189,7 @@
       width: ds.rem(38)!important
       height: ds.rem(38)!important
 
-.concierge-card-copy
+.concierge-card-content
   min-width: 0
 
   h3
@@ -253,3 +256,13 @@
 
         html[data-theme="yellow-dark"] &
           color: ds.$hex-light
+
+.form-group
+  display: grid
+  grid-template-columns: repeat(1, 1fr)
+  gap: ds.rem(12)
+  width: 100%
+  letter-spacing: -.025em
+
+  @include ds.mq(minMedium)
+    grid-template-columns: repeat(2, 1fr)

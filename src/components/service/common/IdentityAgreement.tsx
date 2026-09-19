@@ -203,7 +203,7 @@ export default function IdentityAgreement({
           <CloseRoundedIcon />
         </button>
         {content}
-        <Stack direction="column" spacing={1.5}>
+        <Stack direction="column" gap={1.5}>
           {actions}
         </Stack>
       </Drawer>

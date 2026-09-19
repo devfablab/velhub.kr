@@ -72,7 +72,7 @@ function ConciergeCard({ href, title, description, icon }: ConciergeCardProps) {
       <span className={styles['concierge-card-icon']} aria-hidden="true">
         {icon}
       </span>
-      <Stack className={styles['concierge-card-copy']} gap={1}>
+      <Stack className={styles['concierge-card-content']} gap={1}>
         <Typography component="h3" variant="subtitle2">
           {title}
         </Typography>

@@ -381,7 +381,7 @@ export default function DonationButton(props: Props) {
 
   function renderDonationForm() {
     return (
-      <Stack spacing={2}>
+      <Stack gap={2}>
         <TextField
           value={donationAmount}
           onChange={handleDonationAmountChange}
@@ -452,7 +452,7 @@ export default function DonationButton(props: Props) {
           </button>
           <Stack gap={3}>
             {renderDonationForm()}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

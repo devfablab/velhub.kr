@@ -174,7 +174,7 @@ export default function LogoutActions() {
           </button>
           <Stack gap={3}>
             <Typography variant="subtitle2">모든 디바이스에서 로그아웃하시겠어요?</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

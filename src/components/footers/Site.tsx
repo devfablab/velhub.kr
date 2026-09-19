@@ -304,7 +304,7 @@ export default function FooterSite() {
           <Stack gap={3}>
             <Typography variant="body2">운영자 요청을 받았습니다.</Typography>
             {ownerTransferError ? <p className="alert error">{ownerTransferError}</p> : null}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"
@@ -362,7 +362,7 @@ export default function FooterSite() {
           <h2>가입</h2>
           <Stack gap={3}>
             <Typography variant="body2">초대에 응하시겠어요?</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" onClick={() => setIsInvitePromptOpen(false)}>
                 둘러보기
               </button>

@@ -2,9 +2,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import BalanceOutlinedIcon from '@mui/icons-material/BalanceOutlined';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
+import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import InterestsOutlinedIcon from '@mui/icons-material/InterestsOutlined';
@@ -13,12 +16,14 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import QuestionAnswerOutlinedIcon from '@mui/icons-material/QuestionAnswerOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SettingsBrightnessOutlinedIcon from '@mui/icons-material/SettingsBrightnessOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import {
   Avatar,
@@ -340,7 +345,7 @@ export default function Container({ children }: ContainerProps) {
                 </MenuItem>
                 <MenuItem key="guideline" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/guideline">
-                    <ReportOutlinedIcon fontSize="small" />
+                    <GavelOutlinedIcon fontSize="small" />
                     <span>가이드라인</span>
                   </Anchor>
                 </MenuItem>
@@ -352,19 +357,25 @@ export default function Container({ children }: ContainerProps) {
                 </MenuItem>
                 <MenuItem key="contact" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/contact">
-                    <SupportAgentOutlinedIcon fontSize="small" />
+                    <MailOutlineIcon fontSize="small" />
                     <span>문의하기</span>
+                  </Anchor>
+                </MenuItem>
+                <MenuItem key="partnerships" onClick={handleCloseProfileDrawer}>
+                  <Anchor href="/concierge/partnerships">
+                    <BusinessCenterOutlinedIcon fontSize="small" />
+                    <span>제휴 제안</span>
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="rights" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/rights">
-                    <ReportOutlinedIcon fontSize="small" />
+                    <ShieldOutlinedIcon fontSize="small" />
                     <span>권리보호센터</span>
                   </Anchor>
                 </MenuItem>
                 <MenuItem key="explains" onClick={handleCloseProfileDrawer}>
                   <Anchor href="/concierge/explains">
-                    <ReportOutlinedIcon fontSize="small" />
+                    <BalanceOutlinedIcon fontSize="small" />
                     <span>소명센터</span>
                   </Anchor>
                 </MenuItem>

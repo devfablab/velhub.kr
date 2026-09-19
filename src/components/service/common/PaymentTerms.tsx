@@ -92,7 +92,7 @@ export default function PaymentTerms({ type, disabled = false }: Props) {
                 </Typography>
               ))}
             </Stack>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" onClick={() => setOpen(false)}>
                 닫기
               </button>

@@ -774,7 +774,7 @@ export default function SiteProfile() {
                 </p>
               ) : null}
             </Stack>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium close"
@@ -949,7 +949,7 @@ export default function SiteProfile() {
                 <span>{blogSubscriptionErrorMessage}</span>
               </p>
             ) : null}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

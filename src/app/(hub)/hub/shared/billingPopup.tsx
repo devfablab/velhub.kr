@@ -201,7 +201,7 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
           </button>
           <Stack gap={3}>
             {content}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               {detail.detailType === 'donation' && detail.canForceRefundForTest ? (
                 <button type="button" className="button medium cancel" onClick={handleRefund} disabled={isRefunding}>
                   테스트환경 강제 환불

@@ -1028,7 +1028,7 @@ export default function Opt() {
                 </Stack>
               </Stack>
             ) : null}
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button type="button" className="button medium cancel" disabled={actionLoading} onClick={closeOpinion}>
                 취소
               </button>
@@ -1314,7 +1314,7 @@ export default function Opt() {
           </button>
           <Stack gap={3}>
             <Typography>수정을 완료하고 데브허브 컨시어지팀에 확인을 요청하시겠습니까?</Typography>
-            <Stack direction="column" spacing={1.5}>
+            <Stack direction="column" gap={1.5}>
               <button
                 type="button"
                 className="button medium cancel"

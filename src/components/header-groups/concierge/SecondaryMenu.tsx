@@ -23,6 +23,10 @@ const secondaryMenus = [
     label: '문의하기',
   },
   {
+    href: '/concierge/partnerships',
+    label: '제휴 제안',
+  },
+  {
     href: '/concierge/help',
     label: '신고센터',
   },
