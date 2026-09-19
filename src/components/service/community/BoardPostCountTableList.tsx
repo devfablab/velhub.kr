@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
@@ -19,22 +19,27 @@ type BoardItem = {
   board_label: string;
 };
 
-type BoardPostCountResponse = {
+export type BoardPostCountResponse = {
   contents?: BoardPostCountItem[];
   board: BoardItem;
   error?: string;
 };
 
-export default function BoardPostCountTableList() {
+export default function BoardPostCountTableList({ initialData }: { initialData?: BoardPostCountResponse | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
 
-  const [contents, setContents] = useState<BoardPostCountItem[]>([]);
-  const [boards, setBoards] = useState<BoardItem>();
+  const initialRouteKey = useRef(`${siteName}:${boardName}`);
+  const hasInitialData = useRef(Boolean(initialData));
+  const [contents, setContents] = useState<BoardPostCountItem[]>(initialData?.contents ?? []);
+  const [boards, setBoards] = useState<BoardItem | undefined>(initialData?.board);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    const routeKey = `${siteName}:${boardName}`;
+    if (hasInitialData.current && initialRouteKey.current === routeKey) return;
+    initialRouteKey.current = routeKey;
     async function loadContents() {
       try {
         setErrorMessage('');

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
 type PostCountItem = {
@@ -23,11 +24,16 @@ type PostCountResponse = {
 export default function PostCountTableList() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const initialData = useSiteInitialData();
+  const initialSiteName = useRef(siteName);
+  const hasInitialData = useRef(Boolean(initialData));
 
-  const [contents, setContents] = useState<PostCountItem[]>([]);
+  const [contents, setContents] = useState<PostCountItem[]>(initialData?.postCountContents ?? []);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    if (initialSiteName.current === siteName && hasInitialData.current) return;
+    initialSiteName.current = siteName;
     async function loadContents() {
       try {
         setErrorMessage('');

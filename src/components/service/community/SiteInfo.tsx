@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
 type SiteInfoData = {
@@ -101,14 +103,20 @@ function isManagerRole(siteRole: string | null) {
 export default function SiteInfo() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const initialData = useSiteInitialData();
+  const header = useSiteHeader();
+  const initialSiteName = useRef(siteName);
+  const hasInitialData = useRef(Boolean(initialData?.communitySiteInfo));
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfoData | null>(null);
-  const [communityLinks, setCommunityLinks] = useState<CommunityLink[]>([]);
-  const [siteRole, setSiteRole] = useState<string | null>(null);
+  const [siteInfo, setSiteInfo] = useState<SiteInfoData | null>(initialData?.communitySiteInfo as SiteInfoData | null);
+  const [communityLinks, setCommunityLinks] = useState<CommunityLink[]>(initialData?.communityLinks as CommunityLink[]);
+  const [siteRole, setSiteRole] = useState<string | null>(header?.siteRole ?? null);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
+    if (initialSiteName.current === siteName && hasInitialData.current) return;
+    initialSiteName.current = siteName;
     async function loadSiteInfo() {
       try {
         setErrorMessage('');

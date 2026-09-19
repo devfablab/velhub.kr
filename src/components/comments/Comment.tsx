@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import Giscus from '@giscus/react';
 import { DiscussionEmbed } from 'disqus-react';
 import CommentList from '@/components/comments/CommentList';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 type GiscusInputPosition = 'top' | 'bottom';
@@ -31,6 +32,7 @@ type Props = {
   slug?: string | null;
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
+  initialData?: CommentsResponse | null;
 };
 
 const DISQUS_SHORTNAME = process.env.NEXT_PUBLIC_DISQUS_SHORTNAME ?? '';
@@ -48,6 +50,7 @@ export default function Comment({
   slug,
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
+  initialData,
 }: Props) {
   const disqusUrl = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -68,6 +71,7 @@ export default function Comment({
           isCommentEnabled={isCommentEnabled}
           getYoutubeCurrentTime={getYoutubeCurrentTime}
           onYoutubeTimestampClick={onYoutubeTimestampClick}
+          initialData={initialData}
         />
       );
     }
@@ -128,6 +132,7 @@ export default function Comment({
       isCommentEnabled={isCommentEnabled}
       getYoutubeCurrentTime={getYoutubeCurrentTime}
       onYoutubeTimestampClick={onYoutubeTimestampClick}
+      initialData={initialData}
     />
   );
 }

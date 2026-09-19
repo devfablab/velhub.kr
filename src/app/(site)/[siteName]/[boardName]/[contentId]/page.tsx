@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Opt, { type ContentResponse } from './opt';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 
 type RouteContext = {
   params: Promise<{
@@ -54,6 +55,7 @@ export default async function Page(context: SearchContext) {
   if (typeof searchParams.categoryName === 'string' && searchParams.categoryName) queryParams.set('categoryName', searchParams.categoryName);
   if (typeof searchParams.seriesName === 'string' && searchParams.seriesName) queryParams.set('seriesName', searchParams.seriesName);
   const initial = await getSiteApiData<ContentResponse>(`/api/boards/${boardName.toLowerCase()}/${contentId}?${queryParams.toString()}`, '게시글 정보를 불러오지 못했습니다.');
+  const initialComments = await getSiteApiData<CommentsResponse>(`/api/boards/${boardName.toLowerCase()}/${contentId}/comments?siteName=${encodeURIComponent(normalizedSiteName)}`, '댓글 목록을 불러오지 못했습니다.');
 
-  return <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} />;
+  return <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} initialComments={initialComments.data} />;
 }

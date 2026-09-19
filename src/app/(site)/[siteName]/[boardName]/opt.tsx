@@ -27,6 +27,7 @@ import FabNew from '@/components/service/common/FabNew';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
 import BoardPostCountTableList from '@/components/service/community/BoardPostCountTableList';
+import type { BoardPostCountResponse } from '@/components/service/community/BoardPostCountTableList';
 import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import TableListMobile from '@/components/service/community/TableListMobile';
@@ -40,6 +41,7 @@ type Props = {
   isCommunity: boolean;
   initialData: BoardListResponse | null;
   initialError: string;
+  initialPopularPosts: BoardPostCountResponse | null;
 };
 
 type BoardItem = {
@@ -265,7 +267,7 @@ function YoutubeThumbnailImage({ content }: { content: PostItem }) {
   );
 }
 
-export default function Opt({ isCommunity, initialData, initialError }: Props) {
+export default function Opt({ isCommunity, initialData, initialError, initialPopularPosts }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -288,7 +290,7 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
-  const isInitialLoad = useRef(true);
+  const initialRouteKey = useRef(`${siteName}:${boardName}:${searchParams.toString()}`);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
@@ -370,10 +372,12 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   }
 
   useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
+    const routeKey = `${siteName}:${boardName}:${searchParams.toString()}`;
+
+    if (initialRouteKey.current === routeKey) {
       return;
     }
+    initialRouteKey.current = routeKey;
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
     const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
@@ -1116,7 +1120,7 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
         {isCommunity && !isTablet ? (
           <aside>
             <UserInfo />
-            <BoardPostCountTableList />
+            <BoardPostCountTableList initialData={initialPopularPosts} />
           </aside>
         ) : null}
       </div>

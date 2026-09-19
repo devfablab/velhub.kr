@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '../../Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
 type BoardItem = {
@@ -92,9 +93,14 @@ export default function TableList({ writeHref }: Props) {
   const pathname = usePathname();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName);
+  const initialData = useSiteInitialData();
+  const initialSiteName = useRef(siteName);
+  const hasInitialData = useRef(Boolean(initialData));
 
-  const [boards, setBoards] = useState<BoardItem[]>([]);
-  const [writeBoards, setWriteBoards] = useState<BoardItem[]>([]);
+  const [boards, setBoards] = useState<BoardItem[]>(() =>
+    (initialData?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page'),
+  );
+  const [writeBoards, setWriteBoards] = useState<BoardItem[]>(initialData?.writeBoards ?? []);
   const [alertMessage, setAlertMessage] = useState('');
 
   const theme = useTheme();
@@ -118,6 +124,8 @@ export default function TableList({ writeHref }: Props) {
   const shouldRenderWriteLink = shouldShowWriteLink && canWriteCurrentBoard;
 
   useEffect(() => {
+    if (initialSiteName.current === siteName && hasInitialData.current) return;
+    initialSiteName.current = siteName;
     async function loadBoards() {
       try {
         setAlertMessage('');

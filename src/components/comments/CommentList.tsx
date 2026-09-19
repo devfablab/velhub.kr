@@ -18,6 +18,7 @@ type Props = {
   isCommentEnabled: boolean;
   getYoutubeCurrentTime?: () => number | null;
   onYoutubeTimestampClick?: (seconds: number) => void;
+  initialData?: CommentsResponse | null;
 };
 
 type PollChoice = {
@@ -25,7 +26,7 @@ type PollChoice = {
   label: string;
 };
 
-type CommentsResponse = {
+export type CommentsResponse = {
   comments?: CommentData[];
   mySelfAvatarUrl?: string;
   myPollChoice?: PollChoice | null;
@@ -100,16 +101,17 @@ export default function CommentList({
   isCommentEnabled,
   getYoutubeCurrentTime,
   onYoutubeTimestampClick,
+  initialData,
 }: Props) {
-  const [comments, setComments] = useState<CommentData[]>([]);
-  const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState('');
-  const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(null);
-  const [canWrite, setCanWrite] = useState(false);
-  const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(null);
-  const [canManageComment, setCanManageComment] = useState(false);
-  const [isStaff, setIsStaff] = useState('');
+  const [comments, setComments] = useState<CommentData[]>(initialData?.comments ?? []);
+  const [mySelfAvatarUrl, setMySelfAvatarUrl] = useState(initialData?.mySelfAvatarUrl ?? '');
+  const [myPollChoice, setMyPollChoice] = useState<PollChoice | null>(initialData?.myPollChoice ?? null);
+  const [canWrite, setCanWrite] = useState(initialData?.actions?.canWrite === true);
+  const [canWriteReason, setCanWriteReason] = useState<'guest' | 'policy' | 'hidden' | null>(initialData?.actions?.canWriteReason ?? null);
+  const [canManageComment, setCanManageComment] = useState(initialData?.actions?.canManageComment === true);
+  const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? '');
   const [activeReplyTargetId, setActiveReplyTargetId] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -148,6 +150,7 @@ export default function CommentList({
   }
 
   useEffect(() => {
+    if (initialData) return;
     void loadComments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteName, boardName, contentId]);

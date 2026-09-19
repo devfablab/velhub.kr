@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -9,6 +9,7 @@ import Avatar from '@mui/material/Avatar';
 import Dialog from '@mui/material/Dialog';
 import { formatDate, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/aside.module.sass';
 
 type UserInfoStatus =
@@ -57,15 +58,19 @@ export default function UserInfo() {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
+  const initialData = useSiteInitialData();
+  const initialResponse = initialData?.communityUserInfo as UserInfoResponse | null;
+  const initialSiteName = useRef(siteName);
+  const hasInitialData = useRef(Boolean(initialResponse?.status));
 
-  const [status, setStatus] = useState<UserInfoStatus | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
-  const [blockReason, setBlockReason] = useState('');
-  const [inviteHref, setInviteHref] = useState('');
+  const [status, setStatus] = useState<UserInfoStatus | null>(initialResponse?.status ?? null);
+  const [userInfo, setUserInfo] = useState<UserInfoData | null>(initialResponse?.status === 'active' ? (initialResponse.userInfo ?? null) : null);
+  const [blockReason, setBlockReason] = useState(initialResponse?.blockReason ?? '');
+  const [inviteHref, setInviteHref] = useState(initialResponse?.inviteHref ?? '');
   const [errorMessage, setErrorMessage] = useState('');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(initialResponse?.status === 'active' ? (initialResponse.userInfo?.nickname ?? '') : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
   const [isWithdrawSubmitting, setIsWithdrawSubmitting] = useState(false);
@@ -119,6 +124,8 @@ export default function UserInfo() {
   }
 
   useEffect(() => {
+    if (initialSiteName.current === siteName && hasInitialData.current) return;
+    initialSiteName.current = siteName;
     if (!siteName) {
       return;
     }

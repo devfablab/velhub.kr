@@ -37,6 +37,7 @@ import Avatar from '@mui/material/Avatar';
 import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
@@ -59,6 +60,7 @@ type Props = {
   isCommunity: boolean;
   initialData: ContentResponse | null;
   initialError: string;
+  initialComments: CommentsResponse | null;
 };
 
 type BoardInfo = {
@@ -377,7 +379,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity, initialData, initialError }: Props) {
+export default function Opt({ isCommunity, initialData, initialError, initialComments }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -1742,6 +1744,7 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
                   ? (seconds) => youtubePlayerReference.current?.seekTo(seconds)
                   : undefined
               }
+              initialData={initialComments}
             />
           ) : null}
           {isMobile ? (

@@ -138,7 +138,7 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
-  const isInitialLoad = useRef(true);
+  const initialRouteKey = useRef(`${siteName}:${searchParams.toString()}`);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
@@ -203,10 +203,12 @@ export default function Opt({ isCommunity, initialData, initialError }: Props) {
   }
 
   useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
+    const routeKey = `${siteName}:${searchParams.toString()}`;
+
+    if (initialRouteKey.current === routeKey) {
       return;
     }
+    initialRouteKey.current = routeKey;
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
 

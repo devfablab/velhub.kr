@@ -32,6 +32,7 @@ import PaymentEmailDialog from '@/components/service/common/PaymentEmailDialog';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import IdentityVerificationButton from '../common/IdentityVerificationButton';
 import styles from '@/app/aside.module.sass';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
 type SiteInfo = {
   site_label: string | null;
@@ -219,13 +220,15 @@ function getBlogSubscriptionCancelDescription({
 export default function SiteProfile() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
+  const initialData = useSiteInitialData();
+  const initialProfile = initialData?.blogProfile as SiteProfileResponse | null;
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(null);
-  const [blogType, setBlogType] = useState<string | null>(null);
-  const [profilePictureUrl, setProfilePictureUrl] = useState('');
-  const [profileLogoUrl, setProfileLogoUrl] = useState('');
+  const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(initialProfile?.siteInfo ?? null);
+  const [blogType, setBlogType] = useState<string | null>(initialProfile?.blogType ?? null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(initialProfile?.profilePictureUrl ?? '');
+  const [profileLogoUrl, setProfileLogoUrl] = useState(initialProfile?.profileLogoUrl ?? '');
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialProfile);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
   const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
