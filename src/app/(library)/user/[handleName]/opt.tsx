@@ -24,7 +24,7 @@ type UserProfile = {
   coverImage: string | null;
   introduction: string | null;
 };
-type Response = {
+export type Response = {
   user: UserProfile & { activityName: string; profileImage: string | null };
   posts: Post[];
   total: number;
@@ -248,11 +248,20 @@ function openPost(url: string) {
   );
 }
 
-export default function Opt({ handleName }: { handleName: string }) {
-  const [data, setData] = useState<Response | null>(null);
+export default function Opt({
+  handleName,
+  initialData,
+  initialError,
+}: {
+  handleName: string;
+  initialData: Response | null;
+  initialError: string;
+}) {
+  const [data, setData] = useState<Response | null>(initialData);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialError);
+  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -305,6 +314,10 @@ export default function Opt({ handleName }: { handleName: string }) {
   }, [isMounted]);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
     void load(page);
   }, [load, page]);
 

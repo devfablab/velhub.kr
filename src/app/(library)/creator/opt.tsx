@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { BANK_OPTIONS, BUSINESS_INCOME_CODE_OPTIONS } from '@/lib/settlement/options';
@@ -8,6 +8,7 @@ import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import SettlementForm from '@/components/service/common/SettlementForm';
+import ScreenState from '@/components/service/ScreenState';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -34,7 +35,7 @@ type Settlement = {
   status: string | null;
 };
 
-type SettlementResponse = {
+export type SettlementResponse = {
   exists: boolean;
   identity: Identity | null;
   settlement: Settlement | null;
@@ -150,13 +151,22 @@ async function getSettlement() {
   return data as SettlementResponse;
 }
 
-export default function Opt() {
-  const [identity, setIdentity] = useState<Identity | null>(null);
-  const [settlement, setSettlement] = useState<Settlement | null>(null);
-  const [paymentEmail, setPaymentEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isFormOpen, setIsFormOpen] = useState(false);
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: SettlementResponse | null;
+  initialError: string;
+}) {
+  const [identity, setIdentity] = useState<Identity | null>(initialData?.identity ?? null);
+  const [settlement, setSettlement] = useState<Settlement | null>(initialData?.settlement ?? null);
+  const [paymentEmail, setPaymentEmail] = useState(initialData?.paymentEmail ?? '');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isFormOpen, setIsFormOpen] = useState(
+    Boolean(initialData?.identity && !initialData.settlement && !isUnder14(initialData.identity.birth_date)),
+  );
+  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -178,6 +188,10 @@ export default function Opt() {
   };
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
     void load();
   }, []);
 
@@ -217,6 +231,10 @@ export default function Opt() {
   const isUnder14Age = Boolean(identity && isUnder14(identity.birth_date));
 
   const content = (() => {
+    if (errorMessage) {
+      return <ScreenState kind="error">{errorMessage}</ScreenState>;
+    }
+
     if (isLoading) {
       return (
         <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>

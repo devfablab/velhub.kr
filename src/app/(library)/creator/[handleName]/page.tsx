@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
+import Opt, { Response } from './opt';
 
 type Props = { params: Promise<{ handleName: string }> };
 
@@ -39,5 +40,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { handleName } = await params;
-  return <Opt handleName={handleName} />;
+  let initialData: (Response & { hasCreatorPosts?: boolean }) | null = null;
+  let initialError = '';
+  try {
+    const headerList = await headers();
+    const response = await fetch(
+      `${headerList.get('x-forwarded-proto') || 'http'}://${headerList.get('host')}/api/creator/${handleName}?page=1&tab=all`,
+      { cache: 'no-store' },
+    );
+    const result = (await response.json()) as Response & { hasCreatorPosts?: boolean; message?: string };
+    if (!response.ok) throw new Error(result.message ?? '작가 정보를 불러오지 못했습니다.');
+    initialData = result;
+  } catch (error) {
+    initialError = error instanceof Error ? error.message : '작가 정보를 불러오지 못했습니다.';
+  }
+  return <Opt handleName={handleName} initialData={initialData} initialError={initialError} />;
 }

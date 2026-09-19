@@ -45,7 +45,7 @@ type CreatorProfile = {
   introduction: string | null;
   links: CreatorLink[];
 };
-type Response = {
+export type Response = {
   creator: CreatorProfile & { activityName: string; profileImage: string | null };
   hasBranding?: boolean;
   posts: Post[];
@@ -397,12 +397,21 @@ function openPost(url: string) {
   );
 }
 
-export default function Opt({ handleName }: { handleName: string }) {
-  const [data, setData] = useState<(Response & { hasCreatorPosts?: boolean }) | null>(null);
+export default function Opt({
+  handleName,
+  initialData,
+  initialError,
+}: {
+  handleName: string;
+  initialData: (Response & { hasCreatorPosts?: boolean }) | null;
+  initialError: string;
+}) {
+  const [data, setData] = useState<(Response & { hasCreatorPosts?: boolean }) | null>(initialData);
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState<'all' | 'series'>('all');
   const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialError);
+  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
 
@@ -422,6 +431,10 @@ export default function Opt({ handleName }: { handleName: string }) {
   );
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
     void load(page, tab);
   }, [load, page, tab]);
 

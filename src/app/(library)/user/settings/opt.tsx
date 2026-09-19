@@ -40,25 +40,14 @@ function applyThemeMode(themeMode: ThemeMode) {
   document.documentElement.setAttribute('data-theme', `yellow-${getResolvedThemeMode(themeMode)}`);
 }
 
-export default function Opt() {
+export default function Opt({ initialReady, initialError }: { initialReady: boolean; initialError: string }) {
   const [handleName, setHandleName] = useState('');
-  const [ready, setReady] = useState(false);
+  const [ready] = useState(initialReady);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(initialError);
   const [baseUrl, setBaseUrl] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const { themeMode, setThemeMode } = useThemeMode();
-
-  useEffect(() => {
-    fetch('/api/user/profile')
-      .then(async (response) => {
-        const payload = await response.json();
-        if (!response.ok) throw new Error(payload.message ?? '독자 정보를 불러오지 못했습니다.');
-        if (payload.user?.handleName) window.location.replace(`/user/${payload.user.handleName}`);
-        setReady(true);
-      })
-      .catch((error) => setMessage(error instanceof Error ? error.message : '독자 정보를 불러오지 못했습니다.'));
-  }, []);
 
   useEffect(() => {
     setBaseUrl(window.location.origin);
