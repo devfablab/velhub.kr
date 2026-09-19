@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
+import { getManageTabMenuItems, type ManageMenuKind } from '@/lib/manage/menu';
 import { formatDateSimple, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
@@ -24,12 +25,6 @@ type StaffResponse = {
     postCount: number;
   };
   error?: string;
-};
-
-type TabItems = {
-  label: string;
-  href: string;
-  startsWith?: boolean;
 };
 
 function canAccessAllManageMenus(siteType: string, siteRole: string | null, globalRole: string | null) {
@@ -129,37 +124,16 @@ export default function Opt() {
   }, [siteName]);
 
   const showAllManageMenus = canAccessAllManageMenus(siteType, siteRole, globalRole);
+  const currentSiteType = siteType === 'blog' ? 'blog' : 'community';
 
-  const tabItems: TabItems[] = [
-    ...(showAllManageMenus
-      ? [{ label: siteType === 'blog' ? '블로그 정보' : '커뮤니티 정보', href: `/${siteName}/manage/settings` }]
-      : []),
-    ...(showAllManageMenus && siteType === 'community'
-      ? [{ label: '가입 관리', href: `/${siteName}/manage/join` }]
-      : []),
-    ...(showAllManageMenus
-      ? [
-          {
-            label: siteType === 'blog' ? '팀원 관리' : '멤버 관리',
-            href: siteType === 'blog' ? `/${siteName}/manage/team` : `/${siteName}/manage/members`,
-          },
-        ]
-      : []),
-    { label: '콘텐츠 관리', href: `/${siteName}/manage/contents` },
-    ...(showAllManageMenus
-      ? [
-          { label: '신고 관리', href: `/${siteName}/manage/reports` },
-          {
-            label: '디자인',
-            href:
-              siteType === 'blog'
-                ? `/${siteName}/manage/design/blog/fonts`
-                : `/${siteName}/manage/design/community/home`,
-          },
-          { label: '통계', href: `/${siteName}/manage/stats` },
-        ]
-      : []),
+  const menuGroups: ManageMenuKind[] = [
+    ...(showAllManageMenus ? (['settings'] as ManageMenuKind[]) : []),
+    ...(showAllManageMenus && siteType === 'community' ? (['join'] as ManageMenuKind[]) : []),
+    ...(showAllManageMenus ? ([siteType === 'blog' ? 'team' : 'members'] as ManageMenuKind[]) : []),
+    'contents',
+    ...(showAllManageMenus ? (['reports', 'design', 'payments', 'stats'] as ManageMenuKind[]) : []),
   ];
+  const tabItems = menuGroups.flatMap((menu) => getManageTabMenuItems(menu, siteName, currentSiteType));
 
   if (isLoading) {
     return (
