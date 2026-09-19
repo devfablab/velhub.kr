@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -11,45 +11,22 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
-export default function PasswordSetup() {
+export default function PasswordSetup({
+  initialHasPassword,
+  initialError,
+}: {
+  initialHasPassword: boolean;
+  initialError: string;
+}) {
   const supabase = getSupabaseBrowser();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasPassword, setHasPassword] = useState(true);
+  const [isLoading] = useState(false);
+  const [hasPassword] = useState(initialHasPassword);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function loadPasswordStatus() {
-      try {
-        const response = await fetch('/api/auth/password/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '비밀번호 상태를 확인하지 못했습니다.');
-        }
-
-        setHasPassword(Boolean(result.hasPassword));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '비밀번호 상태를 확인하지 못했습니다.');
-        } else {
-          setErrorMessage('비밀번호 상태를 확인하지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPasswordStatus();
-  }, []);
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);

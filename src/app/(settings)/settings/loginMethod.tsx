@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -23,48 +23,30 @@ type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['o
 
 type DefaultLoginMethod = 'email' | 'social';
 
-export default function LoginMethod() {
-  const [email, setEmail] = useState('');
-  const [selectedLoginMethod, setSelectedLoginMethod] = useState<DefaultLoginMethod>('email');
-  const [savedLoginMethod, setSavedLoginMethod] = useState<DefaultLoginMethod>('email');
-  const [canChangeDefaultLoginMethod, setCanChangeDefaultLoginMethod] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export default function LoginMethod({
+  initialData,
+  initialError,
+}: {
+  initialData: {
+    email?: string;
+    defaultLoginMethod?: DefaultLoginMethod;
+    canChangeDefaultLoginMethod?: boolean;
+  } | null;
+  initialError: string;
+}) {
+  const email = initialData?.email ?? '';
+  const [selectedLoginMethod, setSelectedLoginMethod] = useState<DefaultLoginMethod>(
+    initialData?.defaultLoginMethod ?? 'email',
+  );
+  const [savedLoginMethod, setSavedLoginMethod] = useState<DefaultLoginMethod>(
+    initialData?.defaultLoginMethod ?? 'email',
+  );
+  const canChangeDefaultLoginMethod = Boolean(initialData?.canChangeDefaultLoginMethod);
+  const [isLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    async function loadLoginMethod() {
-      try {
-        const response = await fetch('/api/auth/default-login-method', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '기본 로그인 방식을 확인하지 못했습니다.');
-        }
-
-        setEmail(result.email ?? '');
-        setSelectedLoginMethod(result.defaultLoginMethod);
-        setSavedLoginMethod(result.defaultLoginMethod);
-        setCanChangeDefaultLoginMethod(Boolean(result.canChangeDefaultLoginMethod));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '기본 로그인 방식을 확인하지 못했습니다.');
-        } else {
-          setErrorMessage('기본 로그인 방식을 확인하지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadLoginMethod();
-  }, []);
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);

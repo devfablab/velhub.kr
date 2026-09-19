@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -39,20 +38,28 @@ type PendingSetup = {
   qrCodeSvg: string;
 };
 
-export default function TotpSetup() {
+export default function TotpSetup({
+  initialCurrentLevel,
+  initialFactors,
+  initialError,
+}: {
+  initialCurrentLevel: AssuranceLevel;
+  initialFactors: TotpFactor[];
+  initialError: string;
+}) {
   const supabase = getSupabaseBrowser();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSetting, setIsSetting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  const [currentLevel, setCurrentLevel] = useState<AssuranceLevel>(null);
-  const [totpFactors, setTotpFactors] = useState<TotpFactor[]>([]);
+  const [currentLevel, setCurrentLevel] = useState<AssuranceLevel>(initialCurrentLevel);
+  const [totpFactors, setTotpFactors] = useState<TotpFactor[]>(initialFactors);
   const [pendingSetup, setPendingSetup] = useState<PendingSetup | null>(null);
 
   const [verifyCode, setVerifyCode] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
 
   const qrCodeImageSource = useMemo(() => {
@@ -100,10 +107,6 @@ export default function TotpSetup() {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    void loadTotpState();
-  }, []);
 
   function handleAccordionChange(_event: React.SyntheticEvent, expanded: boolean) {
     setIsExpanded(expanded);

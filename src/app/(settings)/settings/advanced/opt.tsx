@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormControlLabel, FormLabel, Stack } from '@mui/material';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
@@ -15,51 +15,20 @@ type AdvancedUserResponse = {
   error?: string;
 };
 
-export default function Opt() {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: AdvancedUserResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [autoLogin, setAutoLogin] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [autoLogin, setAutoLogin] = useState(initialData?.profile?.auto_login ?? true);
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    async function loadInfo() {
-      try {
-        setErrorMessage('');
-        setSuccessMessage('');
-
-        const response = await fetch('/api/info/advanced/user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as AdvancedUserResponse;
-
-        if (response.status === 401) {
-          router.replace('/');
-          return;
-        }
-
-        if (!response.ok || !result.profile) {
-          throw new Error(result.error ?? '추가 설정 정보를 불러오지 못했습니다.');
-        }
-
-        setAutoLogin(result.profile.auto_login);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '추가 설정 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('추가 설정 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadInfo();
-  }, [router]);
 
   function handleAutoLoginChange(event: React.ChangeEvent<HTMLInputElement>) {
     setAutoLogin(event.currentTarget.checked);

@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -13,49 +13,26 @@ import styles from '@/app/settings.module.sass';
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-export default function PasswordChange() {
+export default function PasswordChange({
+  initialHasPassword,
+  initialError,
+}: {
+  initialHasPassword: boolean;
+  initialError: string;
+}) {
   const router = useRouter();
   const supabase = getSupabaseBrowser();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasPassword, setHasPassword] = useState(false);
+  const [isLoading] = useState(false);
+  const [hasPassword] = useState(initialHasPassword);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [nextPassword, setNextPassword] = useState('');
   const [nextPasswordConfirm, setNextPasswordConfirm] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function loadPasswordStatus() {
-      try {
-        const response = await fetch('/api/auth/password/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '비밀번호 상태를 확인하지 못했습니다.');
-        }
-
-        setHasPassword(Boolean(result.hasPassword));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '비밀번호 상태를 확인하지 못했습니다.');
-        } else {
-          setErrorMessage('비밀번호 상태를 확인하지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPasswordStatus();
-  }, []);
 
   function handleCurrentPasswordChange(event: InputChangeEvent) {
     setCurrentPassword(event.currentTarget.value);

@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type JSX, useRef, useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
@@ -41,20 +41,26 @@ function isExternalAvatarValue(value: string) {
   return value.startsWith('http://') || value.startsWith('https://');
 }
 
-export default function UserInfo() {
+export default function UserInfo({
+  initialData,
+  initialError,
+}: {
+  initialData: { userName?: string; avatar?: string; avatarUrl?: string; bio?: string } | null;
+  initialError: string;
+}) {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const supabase = getSupabaseBrowser();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const [userName, setUserName] = useState('');
-  const [avatar, setAvatar] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [bio, setBio] = useState('');
+  const [userName, setUserName] = useState(initialData?.userName ?? '');
+  const [avatar, setAvatar] = useState(initialData?.avatar ?? '');
+  const [avatarUrl, setAvatarUrl] = useState(initialData?.avatarUrl ?? '');
+  const [bio, setBio] = useState(initialData?.bio ?? '');
 
-  const [userNameDraft, setUserNameDraft] = useState('');
-  const [bioDraft, setBioDraft] = useState('');
+  const [userNameDraft, setUserNameDraft] = useState(initialData?.userName ?? '');
+  const [bioDraft, setBioDraft] = useState(initialData?.bio ?? '');
 
   const [isEditingUserName, setIsEditingUserName] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
@@ -63,43 +69,8 @@ export default function UserInfo() {
   const [isSubmittingUserName, setIsSubmittingUserName] = useState(false);
   const [isSubmittingBio, setIsSubmittingBio] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    async function loadBasicInfo() {
-      try {
-        const response = await fetch('/api/info/general/user', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '기본정보를 불러오지 못했습니다.');
-        }
-
-        setUserName(result.userName ?? '');
-        setAvatar(result.avatar ?? '');
-        setAvatarUrl(result.avatarUrl ?? '');
-        setBio(result.bio ?? '');
-
-        setUserNameDraft(result.userName ?? '');
-        setBioDraft(result.bio ?? '');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '기본정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('기본정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadBasicInfo();
-  }, []);
 
   function getAvatarDisplayUrl() {
     const value = avatarUrl || avatar;
