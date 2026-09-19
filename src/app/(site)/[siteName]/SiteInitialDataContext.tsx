@@ -10,6 +10,16 @@ type Board = {
   is_active: boolean;
 };
 
+type SiteMenu = {
+  id: string;
+  board_type: string;
+  board_label: string;
+  slug: string;
+  display_label: string;
+  sort_order: number;
+  is_renameable: boolean;
+};
+
 type InitialData = {
   boards: Board[];
   writeBoards: Board[];
@@ -18,6 +28,8 @@ type InitialData = {
   communityLinks: unknown[];
   communityUserInfo: unknown;
   blogProfile: unknown;
+  siteMenus: SiteMenu[];
+  privateBoardLabel: string;
 };
 
 const SiteInitialDataContext = createContext<InitialData | null>(null);

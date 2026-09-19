@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import FooterSite from '@/components/footers/Site';
-import HeaderSite from '@/components/headers/Site';
 
 export const metadata: Metadata = {
   applicationName: '데브허브',
@@ -40,7 +39,6 @@ export default function RootLayout({
 }>) {
   return (
     <>
-      <HeaderSite />
       {children}
       <FooterSite />
     </>

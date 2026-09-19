@@ -27,6 +27,31 @@ header.header
       .top
         height: ds.rem(47)
 
+        .gnb
+          flex: 1 1 auto
+          min-width: 0
+
+          h1
+            flex: 0 0 auto
+
+          .navigationbar
+            flex: 1 1 auto
+            min-width: 0
+            overflow-x: auto
+            scrollbar-width: none
+
+            &::-webkit-scrollbar
+              display: none
+
+            nav
+              flex: 0 0 auto
+
+              ol
+                width: max-content
+
+        .iconbuttons
+          flex: 0 0 auto
+
         h1
           a
             img, svg
@@ -222,7 +247,8 @@ header.header
 
         li
           display: inline-flex
-          height: ds.rem(30)
+          align-items: flex-end
+          height: ds.rem(40)
 
           &:hover, &:focus-visible, &.current
             a
@@ -240,7 +266,7 @@ header.header
 
             span
               display: inline-flex
-              padding: ds.rem(7) 0 ds.rem(5)
+              padding: ds.rem(7) 0 ds.rem(10)
               @include ds.fw(neo, 700)
               font-size: ds.rem(16)
               line-height: 1

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Anchor from '@/components/Anchor';
 import ReportButton from '@/components/service/common/ReportButton';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/header.module.sass';
 
 type Props = {
@@ -37,11 +38,16 @@ function isCurrentPath(pathname: string, href: string) {
 
 export default function NavMenu({ siteName, isBlog }: Props) {
   const pathname = usePathname();
+  const initialData = useSiteInitialData();
 
-  const [menus, setMenus] = useState<MenuRow[]>([]);
-  const [privateBoardLabel, setPrivateBoardLabel] = useState('');
+  const [menus, setMenus] = useState<MenuRow[]>(initialData?.siteMenus ?? []);
+  const [privateBoardLabel, setPrivateBoardLabel] = useState(initialData?.privateBoardLabel ?? '');
 
   useEffect(() => {
+    if (initialData) {
+      return;
+    }
+
     async function loadMenus() {
       try {
         const response = await fetch(`/api/site/public?siteName=${siteName}`, {
