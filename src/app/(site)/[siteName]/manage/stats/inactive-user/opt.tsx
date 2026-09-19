@@ -26,7 +26,7 @@ type InactiveChartRow = {
   cumulativeInactiveCount: number;
 };
 
-type InactiveStatsResponse = {
+export type InactiveStatsResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
@@ -249,21 +249,25 @@ function InactiveAreaChart({ title, data, dataKey }: InactiveAreaChartProps) {
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: InactiveStatsResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const yearOptions = createYearOptions();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(!initialData && !initialError);
   const [isChartLoading, setIsChartLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
   const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'week' });
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
-  const [inactiveStats, setInactiveStats] = useState<InactiveStatsResponse | null>(null);
+  const [inactiveStats, setInactiveStats] = useState<InactiveStatsResponse | null>(initialData);
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function loadInactiveStats() {
       try {
         const isFirstLoad = !inactiveStats;

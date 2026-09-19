@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -109,13 +109,15 @@ type ReportItem = {
   } | null;
 };
 
-type ReportListResponse = {
+export type ReportListResponse = {
   reports?: ReportItem[];
   error?: string;
 };
 
 type ReportManageProps = {
   targetType: ReportManageTargetType;
+  initialData: ReportListResponse | null;
+  initialError: string;
 };
 
 type AppealMessagesResponse = {
@@ -421,18 +423,18 @@ function renderPostDetail(post: NonNullable<ReportItem['post']>, boardType: stri
   );
 }
 
-export default function ReportManage({ targetType }: ReportManageProps) {
+export default function ReportManage({ targetType, initialData, initialError }: ReportManageProps) {
   const params = useParams<{ siteName?: string | string[] }>();
   const siteName = getRouteParam(params.siteName);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>(initialData?.reports ?? []);
   const [showPast, setShowPast] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isListError, setIsListError] = useState(false);
+  const [loading, setLoading] = useState(!initialData && !initialError);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isListError, setIsListError] = useState(Boolean(initialError));
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
   const [nextStatus, setNextStatus] = useState<ReportStatus | ''>('');
   const [saving, setSaving] = useState(false);
@@ -445,6 +447,7 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
   const [finalSaving, setFinalSaving] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const hasInitialData = useRef(Boolean(initialData || initialError));
 
   const statusOptions = useMemo(() => getStatusOptions(targetType), [targetType]);
 
@@ -480,6 +483,11 @@ export default function ReportManage({ targetType }: ReportManageProps) {
   }, [showPast, siteName, targetType]);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
+
     if (!siteName) {
       return;
     }

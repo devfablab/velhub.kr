@@ -39,7 +39,7 @@ type HotPost = {
   seriesLabel: string | null;
 };
 
-type HotPostResponse = {
+export type HotPostResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
@@ -213,21 +213,25 @@ function DateSelectGroup({ title, value, yearOptions, onChange }: DateSelectGrou
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: HotPostResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const yearOptions = createYearOptions();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(!initialData && !initialError);
   const [isListLoading, setIsListLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('today');
   const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'today' });
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
-  const [hotPostStats, setHotPostStats] = useState<HotPostResponse | null>(null);
+  const [hotPostStats, setHotPostStats] = useState<HotPostResponse | null>(initialData);
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function loadHotPosts() {
       try {
         const isFirstLoad = !hotPostStats;

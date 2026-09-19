@@ -21,7 +21,7 @@ type PopularPost = {
   boardLabel: string | null;
 };
 
-type DashboardResponse = {
+export type DashboardResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
@@ -96,15 +96,19 @@ function getPostHref(siteName: string, post: PopularPost) {
   return `/${siteName}/${post.boardKey}/${post.slug}`;
 }
 
-export default function Opt() {
+type OptProps = { initialData: DashboardResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(initialData);
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function loadDashboard() {
       try {
         setErrorMessage('');

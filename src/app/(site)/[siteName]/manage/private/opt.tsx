@@ -32,7 +32,7 @@ type Category = {
   label: string;
 };
 
-type BoardResponse = {
+export type BoardResponse = {
   siteType?: string | null;
   board?: { id: string; board_label: string; is_image_enabled: boolean } | null;
   categories?: { id: string; category_label: string }[];
@@ -44,21 +44,31 @@ type Notice = {
   message: string;
 };
 
-export default function Opt() {
+type OptProps = { initialData: BoardResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSaving, setIsSaving] = useState(false);
-  const [isCommunity, setIsCommunity] = useState(true);
-  const [isInstalled, setIsInstalled] = useState(false);
-  const [boardLabel, setBoardLabel] = useState('');
-  const [isImageEnabled, setIsImageEnabled] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([{ id: null, label: '분류없음' }]);
-  const [notice, setNotice] = useState<Notice | null>(null);
+  const [isCommunity, setIsCommunity] = useState(initialData?.siteType === 'community');
+  const [isInstalled, setIsInstalled] = useState(Boolean(initialData?.board));
+  const [boardLabel, setBoardLabel] = useState(initialData?.board?.board_label ?? '');
+  const [isImageEnabled, setIsImageEnabled] = useState(initialData?.board?.is_image_enabled ?? true);
+  const [categories, setCategories] = useState<Category[]>(
+    initialData?.categories?.length
+      ? initialData.categories.map((category) => ({ id: category.id, label: category.category_label }))
+      : [{ id: null, label: '분류없음' }],
+  );
+  const [notice, setNotice] = useState<Notice | null>(
+    initialError ? { title: '불러오기 실패', message: initialError } : null,
+  );
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function load() {
       try {
         const response = await fetch(`/api/private-board/manage?siteName=${siteName}`, { credentials: 'include' });

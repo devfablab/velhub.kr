@@ -26,7 +26,7 @@ type JoinChartRow = {
   cumulativeJoinCount: number;
 };
 
-type JoinStatsResponse = {
+export type JoinStatsResponse = {
   site?: {
     siteName: string;
     siteLabel: string | null;
@@ -248,21 +248,25 @@ function JoinAreaChart({ title, data, dataKey }: JoinAreaChartProps) {
   );
 }
 
-export default function Opt() {
+type OptProps = { initialData: JoinStatsResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const yearOptions = createYearOptions();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(!initialData && !initialError);
   const [isChartLoading, setIsChartLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('week');
   const [appliedRequest, setAppliedRequest] = useState<AppliedRequest>({ range: 'week' });
   const [startDate, setStartDate] = useState<DateValue>(() => getDateBefore(29));
   const [endDate, setEndDate] = useState<DateValue>(() => getTodayDateValue());
-  const [joinStats, setJoinStats] = useState<JoinStatsResponse | null>(null);
+  const [joinStats, setJoinStats] = useState<JoinStatsResponse | null>(initialData);
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function loadJoinStats() {
       try {
         const isFirstLoad = !joinStats;

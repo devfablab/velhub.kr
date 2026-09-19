@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import { getManageTabMenuItems, type ManageMenuKind } from '@/lib/manage/menu';
@@ -12,7 +12,7 @@ import ScreenState from '@/components/service/ScreenState';
 import Container from './menu';
 import styles from '@/app/manage.module.sass';
 
-type StaffResponse = {
+export type StaffResponse = {
   site?: {
     avatar: string | null;
     name: string | null;
@@ -43,23 +43,25 @@ function canAccessAllManageMenus(siteType: string, siteRole: string | null, glob
   return false;
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError }: { initialData: StaffResponse | null; initialError: string }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const hasInitialData = useRef(Boolean(initialData));
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [siteAvatar, setSiteAvatar] = useState<string | null>(null);
-  const [siteType, setSiteType] = useState('');
-  const [siteNameText, setSiteNameText] = useState('');
-  const [siteCreatedAt, setSiteCreatedAt] = useState<string | null>(null);
-  const [ownerName, setOwnerName] = useState('');
-  const [memberCount, setMemberCount] = useState(0);
-  const [postCount, setPostCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [siteAvatar, setSiteAvatar] = useState<string | null>(initialData?.site?.avatar ?? null);
+  const [siteType, setSiteType] = useState(initialData?.site?.siteType ?? '');
+  const [siteNameText, setSiteNameText] = useState(initialData?.site?.name ?? '');
+  const [siteCreatedAt, setSiteCreatedAt] = useState<string | null>(initialData?.site?.createdAt ?? null);
+  const [ownerName, setOwnerName] = useState(initialData?.site?.ownerName ?? '');
+  const [memberCount, setMemberCount] = useState(initialData?.stats?.memberCount ?? 0);
+  const [postCount, setPostCount] = useState(initialData?.stats?.postCount ?? 0);
   const [siteRole, setSiteRole] = useState<string | null>(null);
   const [globalRole, setGlobalRole] = useState<string | null>(null);
 
   useEffect(() => {
+    if (hasInitialData.current) return;
     async function loadData() {
       try {
         setErrorMessage('');

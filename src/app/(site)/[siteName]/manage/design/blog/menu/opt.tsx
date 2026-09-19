@@ -80,7 +80,10 @@ function SortableItem({ menu, onOpenRenameDialog }: SortableItemProps) {
   );
 }
 
-export default function Opt() {
+export type InitialMenuResponse = { menus?: MenuRow[]; error?: string };
+type OptProps = { initialData: InitialMenuResponse | null; initialError: string };
+
+export default function Opt({ initialData, initialError }: OptProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -91,11 +94,11 @@ export default function Opt() {
 
   const params = useParams();
   const siteName = normalizeText(params.siteName);
-  const [menus, setMenus] = useState<MenuRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [menus, setMenus] = useState<MenuRow[]>(initialData?.menus ?? []);
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [renameTarget, setRenameTarget] = useState<MenuRow | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -104,6 +107,8 @@ export default function Opt() {
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
+    if (initialData || initialError) return;
+
     async function loadMenus() {
       try {
         const response = await fetch(`/api/manage/design/shared/menu?siteName=${siteName}`, {

@@ -46,10 +46,12 @@ type SitesRow = {
   google_search: string | null;
 };
 
-type GetResponse = {
+export type AdvancedSitesResponse = {
   sites?: SitesRow;
   error?: string;
 };
+
+export type AdvancedInfoResponse = { siteInfo?: SiteInfoInfo; error?: string };
 
 type EditResponse = {
   ok?: boolean;
@@ -59,7 +61,13 @@ type EditResponse = {
 
 type VisibilityMember = 'public' | 'private';
 
-export default function Opt() {
+type OptProps = {
+  initialInfo: AdvancedInfoResponse | null;
+  initialSites: AdvancedSitesResponse | null;
+  initialError: string;
+};
+
+export default function Opt({ initialInfo, initialSites, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -67,17 +75,19 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialError && (!initialInfo || !initialSites));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(null);
+  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(initialInfo?.siteInfo ?? null);
 
-  const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>('public');
-  const [searchKeywords, setSearchKeywords] = useState('');
-  const [googleAnalytics, setGoogleAnalytics] = useState('');
-  const [googleSearch, setGoogleSearch] = useState('');
+  const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>(
+    initialSites?.sites?.visibility_member === 'private' ? 'private' : 'public',
+  );
+  const [searchKeywords, setSearchKeywords] = useState(initialSites?.sites?.search_keywords ?? '');
+  const [googleAnalytics, setGoogleAnalytics] = useState(initialSites?.sites?.google_analytics ?? '');
+  const [googleSearch, setGoogleSearch] = useState(initialSites?.sites?.google_search ?? '');
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   async function loadInfo() {
@@ -111,7 +121,7 @@ export default function Opt() {
       credentials: 'include',
     });
 
-    const result = (await response.json()) as GetResponse;
+    const result = (await response.json()) as AdvancedSitesResponse;
 
     if (!response.ok) {
       throw new Error(result.error ?? 'sites 정보를 불러오지 못했습니다.');
@@ -128,6 +138,8 @@ export default function Opt() {
   }
 
   useEffect(() => {
+    if (initialInfo && initialSites) return;
+
     async function init() {
       try {
         setErrorMessage('');

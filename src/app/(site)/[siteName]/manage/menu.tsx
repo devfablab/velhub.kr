@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -46,6 +46,7 @@ import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
 import DrawerManage from '@/components/header-groups/site/DrawerManage';
 import DrawerMenu from '@/components/header-groups/site/DrawerMenu';
 import DrawerPayments from '@/components/header-groups/site/DrawerPayments';
+import { useSiteHeader } from '../SiteHeaderContext';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
@@ -521,28 +522,30 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
   const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
-  const [siteLabel, setSiteLabel] = useState('');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
+  const initialHeader = useSiteHeader();
+  const hasInitialHeader = useRef(Boolean(initialHeader));
+  const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
   const [isAdult, setIsAdult] = useState<boolean>(false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [siteType, setSiteType] = useState<SiteType | null>(initialHeader?.siteType ?? null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-    isLoggedIn: false,
-    globalRole: null,
-    siteRole: null,
-    nickname: null,
-    isApproval: null,
-    invite: false,
-    join: false,
-    isAuthor: false,
-    creatorHandleName: null,
-    userHandleName: null,
-    hasAffettoMyPosts: false,
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isLoggedIn: initialHeader?.isLoggedIn ?? false,
+    globalRole: initialHeader?.globalRole ?? null,
+    siteRole: initialHeader?.siteRole ?? null,
+    nickname: initialHeader?.nickname ?? null,
+    isApproval: initialHeader?.isApproval ?? null,
+    invite: initialHeader?.invite ?? false,
+    join: initialHeader?.join ?? false,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   });
 
   useEffect(() => {
@@ -573,6 +576,15 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   }, [isMounted, themeMode]);
 
   useEffect(() => {
+    if (hasInitialHeader.current) {
+      hasInitialHeader.current = false;
+      if (initialHeader) {
+        applyColorSet(initialHeader.themeType);
+        applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
+      }
+      void detectAdult(siteName).then(setIsAdult);
+      return;
+    }
     async function loadHeader() {
       if (!siteName) {
         return;
