@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import * as PortOne from '@portone/browser-sdk/v2';
 import { normalizeText } from '@/lib/utils';
+import PopupMessage from '@/components/PopupMessage';
 import DuplicateBillingMethodDialog from './DuplicateBillingMethodDialog';
 import PaymentEmailDialog from './PaymentEmailDialog';
 
@@ -222,15 +223,11 @@ export default function BillingMethodButton({ siteId }: BillingMethodButtonProps
         onConfirm={() => window.location.reload()}
       />
 
-      <Snackbar
+      <PopupMessage
         open={Boolean(normalizeText(errorMessage))}
         message={errorMessage}
-        autoHideDuration={3000}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
         onClose={() => setErrorMessage('')}
+        kind="error"
       />
     </>
   );

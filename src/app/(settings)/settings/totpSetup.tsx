@@ -13,13 +13,13 @@ import {
   Box,
   Chip,
   Grid,
-  Snackbar,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -372,14 +372,9 @@ export default function TotpSetup() {
                 <span>{errorMessage}</span>
               </p>
             ) : null}
-            <Snackbar
+            <PopupMessage
               open={Boolean(successMessage)}
               message={successMessage}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-              }}
-              autoHideDuration={2700}
               onClose={() => setSuccessMessage('')}
             />
           </Stack>

@@ -18,7 +18,6 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   styled,
   TextField,
@@ -29,6 +28,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import PopupMessage from '@/components/PopupMessage';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/new.module.sass';
 
@@ -748,16 +748,7 @@ export default function Opt() {
         </button>
       </div>
 
-      <Snackbar
-        open={Boolean(successMessage)}
-        message={successMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMessage('')}
-      />
+      <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
 
       {isMobile ? (
         <Drawer anchor="bottom" open={isCancelDialogOpen} onClose={closeCancelDialog} className="VhiDrawer-bottom">

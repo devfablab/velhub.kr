@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Chip, MenuItem, Snackbar, Stack, TextField, Typography } from '@mui/material';
+import { Chip, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import {
   inquiryInformationRequestLabels,
   inquiryResolutionLabels,
@@ -19,6 +19,7 @@ import {
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import InquiryDetails from '@/components/concierge/InquiryDetails';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/concierge.module.sass';
 
 type Inquiry = {
@@ -588,10 +589,8 @@ export default function Opt() {
         </Anchor>
       </Stack>
       {inquiry.status !== 'closed' ? (
-        <Snackbar
+        <PopupMessage
           open={Boolean(snackbarMessage)}
-          autoHideDuration={2700}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           message={snackbarMessage}
           onClose={() => setSnackbarMessage('')}
         />

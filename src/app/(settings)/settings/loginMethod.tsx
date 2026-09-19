@@ -12,11 +12,11 @@ import {
   Grid,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   Typography,
 } from '@mui/material';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
@@ -197,14 +197,9 @@ export default function LoginMethod() {
                 <span>{errorMessage}</span>
               </p>
             ) : null}
-            <Snackbar
+            <PopupMessage
               open={Boolean(successMessage)}
               message={successMessage}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-              }}
-              autoHideDuration={2700}
               onClose={() => setSuccessMessage('')}
             />
           </Stack>

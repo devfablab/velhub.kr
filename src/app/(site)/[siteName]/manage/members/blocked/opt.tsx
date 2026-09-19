@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -34,6 +33,7 @@ import {
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -608,12 +608,10 @@ export default function Opt() {
             }}
           />
 
-          <Snackbar
+          <PopupMessage
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
+            onClose={() => setSnackbarMessage('')}
           />
         </div>
       </div>

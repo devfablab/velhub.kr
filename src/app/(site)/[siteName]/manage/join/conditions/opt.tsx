@@ -14,7 +14,6 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -28,6 +27,7 @@ import { ko } from 'date-fns/locale';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -769,12 +769,10 @@ export default function Opt() {
               {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
             </Stack>
 
-            <Snackbar
+            <PopupMessage
               open={Boolean(snackbarMessage)}
-              autoHideDuration={2700}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              onClose={() => setSnackbarMessage('')}
               message={snackbarMessage}
+              onClose={() => setSnackbarMessage('')}
             />
           </div>
         </div>

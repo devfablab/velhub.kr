@@ -19,7 +19,6 @@ import {
   Radio,
   RadioGroup,
   Select,
-  Snackbar,
   Stack,
   styled,
   TextField,
@@ -37,6 +36,7 @@ import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/concierge.module.sass';
 
 type ReportTargetType = 'site' | 'board' | 'post' | 'comment';
@@ -1456,16 +1456,7 @@ export default function Opt() {
           </button>
         </Stack>
       </Stack>
-      <Snackbar
-        open={snackbarOpen}
-        message="신고가 접수되었습니다."
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
-        onClose={() => setSnackbarOpen(false)}
-      />
+      <PopupMessage open={snackbarOpen} message={'신고가 접수되었습니다.'} onClose={() => setSnackbarOpen(false)} />
     </div>
   );
 }

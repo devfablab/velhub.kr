@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
-import { Checkbox, Radio, Snackbar, Stack, Typography } from '@mui/material';
+import { Checkbox, Radio, Stack, Typography } from '@mui/material';
 import {
   formatMembershipPrice,
   getMembershipFeatures,
@@ -13,6 +13,7 @@ import {
   type MembershipType,
 } from '@/lib/memberships/catalog';
 import Anchor from '@/components/Anchor';
+import PopupMessage from '@/components/PopupMessage';
 import { ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/memberships.module.sass';
 
@@ -459,13 +460,7 @@ export default function Opt() {
           </div>
         </Stack>
       </div>
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={3000}
-        message={snackbarMessage}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        onClose={() => setSnackbarMessage('')}
-      />
+      <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </main>
   );
 }

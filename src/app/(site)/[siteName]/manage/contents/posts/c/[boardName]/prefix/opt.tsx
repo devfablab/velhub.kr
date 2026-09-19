@@ -16,7 +16,6 @@ import {
   DialogTitle,
   Drawer,
   Paper,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -31,6 +30,7 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -576,12 +576,10 @@ export default function Opt() {
             </Dialog>
           )}
 
-          <Snackbar
+          <PopupMessage
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
+            onClose={() => setSnackbarMessage('')}
           />
         </div>
       </div>

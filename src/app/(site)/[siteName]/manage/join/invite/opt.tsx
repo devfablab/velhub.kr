@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -25,6 +24,7 @@ import {
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -90,6 +90,7 @@ export default function Opt() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
@@ -196,6 +197,7 @@ export default function Opt() {
         const responseError = 'error' in result ? result.error || '초대에 실패했습니다.' : '초대에 실패했습니다.';
 
         if (responseError === '이미 가입한 멤버입니다.' || responseError === '이미 초대장을 받은 멤버입니다.') {
+          setSnackbarKind('error');
           setSnackbarMessage(responseError);
           return;
         }
@@ -210,6 +212,7 @@ export default function Opt() {
       setInvites((previousInvites) => [result.invite, ...previousInvites]);
       setInviteEmail('');
       setIsInviteDialogOpen(false);
+      setSnackbarKind('info');
       setSnackbarMessage('초대 메일을 발송했습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -529,12 +532,11 @@ export default function Opt() {
             </Dialog>
           )}
 
-          <Snackbar
+          <PopupMessage
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
+            onClose={() => setSnackbarMessage('')}
+            kind={snackbarKind}
           />
         </div>
       </div>

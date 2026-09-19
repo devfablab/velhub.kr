@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -18,6 +17,7 @@ import {
 import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
+import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
@@ -483,15 +483,11 @@ export default function PostPurchaseButton(props: Props) {
         </Dialog>
       )}
 
-      <Snackbar
+      <PopupMessage
         open={Boolean(errorMessage)}
         message={errorMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
         onClose={() => setErrorMessage('')}
+        kind="error"
       />
       {isMobile ? (
         <Drawer

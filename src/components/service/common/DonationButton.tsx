@@ -9,7 +9,6 @@ import {
   DialogTitle,
   Drawer,
   InputAdornment,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -20,6 +19,7 @@ import PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
+import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
@@ -411,15 +411,11 @@ export default function DonationButton(props: Props) {
 
         <PaymentTerms type="donation" disabled={isProcessing} />
 
-        <Snackbar
+        <PopupMessage
           open={Boolean(errorMessage)}
           message={errorMessage}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-          autoHideDuration={2700}
           onClose={() => setErrorMessage('')}
+          kind="error"
         />
       </Stack>
     );

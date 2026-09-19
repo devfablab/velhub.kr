@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -21,6 +20,7 @@ import {
 import * as PortOne from '@portone/browser-sdk/v2';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
+import PopupMessage from '@/components/PopupMessage';
 import IdentityVerificationButton from './IdentityVerificationButton';
 import PaymentEmailDialog from './PaymentEmailDialog';
 import PaymentTerms from './PaymentTerms';
@@ -754,29 +754,16 @@ export default function SubscriptionButton({
       ) : null}
 
       {errorMessage ? (
-        <Snackbar
+        <PopupMessage
           open={Boolean(errorMessage)}
           message={errorMessage}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-          autoHideDuration={2700}
           onClose={() => setErrorMessage('')}
+          kind="error"
         />
       ) : null}
 
       {successMessage ? (
-        <Snackbar
-          open={Boolean(successMessage)}
-          message={successMessage}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-          autoHideDuration={2700}
-          onClose={() => setSuccessMessage('')}
-        />
+        <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
       ) : null}
 
       {isMobile ? (

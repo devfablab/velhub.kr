@@ -4,19 +4,10 @@ import { type JSX, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Box,
-  Grid,
-  Snackbar,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Stack, TextField, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
@@ -271,14 +262,9 @@ export default function PasswordChange() {
                   <span>{errorMessage}</span>
                 </p>
               ) : null}
-              <Snackbar
+              <PopupMessage
                 open={Boolean(successMessage)}
                 message={successMessage}
-                anchorOrigin={{
-                  vertical: 'top',
-                  horizontal: 'center',
-                }}
-                autoHideDuration={2700}
                 onClose={() => setSuccessMessage('')}
               />
             </Stack>

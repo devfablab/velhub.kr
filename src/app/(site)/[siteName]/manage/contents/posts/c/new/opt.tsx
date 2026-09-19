@@ -12,7 +12,6 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -22,6 +21,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -458,14 +458,9 @@ export default function Opt() {
 
                   {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(successMessage)}
                     message={successMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
                     onClose={() => setSuccessMessage('')}
                   />
 
@@ -571,14 +566,9 @@ export default function Opt() {
                     />
                   </Stack>
 
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(boardLabelCheckMessage)}
                     message={boardLabelCheckMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
                     onClose={() => setBoardLabelCheckMessage('')}
                   />
 

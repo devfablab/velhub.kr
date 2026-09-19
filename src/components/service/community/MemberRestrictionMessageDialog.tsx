@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -23,6 +22,7 @@ import {
 } from '@/lib/users/memberRestrictionMessages';
 import { formatTimeAgo } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 
 type Props = {
   open: boolean;
@@ -272,13 +272,7 @@ export default function MemberRestrictionMessageDialog({
         </Drawer>
       )}
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2700}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        message={snackbarMessage}
-        onClose={() => setSnackbarMessage('')}
-      />
+      <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </>
   );
 }

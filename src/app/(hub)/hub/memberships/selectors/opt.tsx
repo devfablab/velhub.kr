@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FormControl, FormControlLabel, Radio, RadioGroup, Snackbar, Stack, Typography } from '@mui/material';
+import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
@@ -59,6 +60,7 @@ export default function MembershipSelectors() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
 
   const loadData = () => {
     setIsLoading(true);
@@ -76,6 +78,7 @@ export default function MembershipSelectors() {
       .catch((error) => {
         const message = error instanceof Error ? error.message : '라운지 노출 대상을 불러오지 못했습니다.';
         setFetchError(message);
+        setSnackbarKind('error');
         setSnackbarMessage(message);
       })
       .finally(() => setIsLoading(false));
@@ -95,8 +98,10 @@ export default function MembershipSelectors() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message ?? '라운지 노출 대상을 저장하지 못했습니다.');
+      setSnackbarKind('info');
       setSnackbarMessage(body.message);
     } catch (error) {
+      setSnackbarKind('error');
       setSnackbarMessage(error instanceof Error ? error.message : '라운지 노출 대상을 저장하지 못했습니다.');
     } finally {
       setIsSaving(false);
@@ -205,12 +210,11 @@ export default function MembershipSelectors() {
           <ScreenState kind="warning">라운지 노출 기능을 이용 중인 멤버십이 없습니다.</ScreenState>
         )}
       </Stack>
-      <Snackbar
+      <PopupMessage
         open={Boolean(snackbarMessage)}
-        autoHideDuration={2700}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        onClose={() => setSnackbarMessage('')}
         message={snackbarMessage}
+        onClose={() => setSnackbarMessage('')}
+        kind={snackbarKind}
       />
     </>
   );

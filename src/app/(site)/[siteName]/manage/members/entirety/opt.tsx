@@ -20,7 +20,6 @@ import {
   Radio,
   RadioGroup,
   Select,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -39,6 +38,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -1448,12 +1448,10 @@ export default function Opt() {
               </Dialog>
             )}
 
-            <Snackbar
+            <PopupMessage
               open={Boolean(snackbarMessage)}
-              autoHideDuration={2700}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-              onClose={() => setSnackbarMessage('')}
               message={snackbarMessage}
+              onClose={() => setSnackbarMessage('')}
             />
           </div>
         </div>

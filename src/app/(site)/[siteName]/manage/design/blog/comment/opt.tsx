@@ -13,7 +13,6 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -22,6 +21,7 @@ import {
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -475,13 +475,7 @@ export default function Opt() {
           )}
 
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
-          <Snackbar
-            open={Boolean(successMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSuccessMessage('')}
-            message={successMessage}
-          />
+          <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
         </div>
       </div>
     </Container>

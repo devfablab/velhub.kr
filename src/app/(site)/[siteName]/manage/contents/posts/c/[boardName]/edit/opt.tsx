@@ -11,7 +11,6 @@ import {
   MenuItem,
   Radio,
   RadioGroup,
-  Snackbar,
   Stack,
   TextField,
   Typography,
@@ -22,6 +21,7 @@ import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -469,12 +469,10 @@ export default function Opt() {
           {boardId ? (
             <div className={`paper ${styles.paper}`}>
               <Stack component="form" gap={2.5} onSubmit={handleSubmit}>
-                <Snackbar
+                <PopupMessage
                   open={Boolean(successMessage)}
-                  autoHideDuration={2700}
-                  anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                  onClose={() => setSuccessMessage('')}
                   message={successMessage}
+                  onClose={() => setSuccessMessage('')}
                 />
 
                 <Stack gap={1}>
@@ -554,14 +552,9 @@ export default function Opt() {
                     }}
                   />
 
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(boardLabelCheckMessage)}
                     message={boardLabelCheckMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
                     onClose={() => setBoardLabelCheckMessage('')}
                   />
                 </Stack>

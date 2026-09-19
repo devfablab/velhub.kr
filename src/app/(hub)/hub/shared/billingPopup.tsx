@@ -8,11 +8,11 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/hub.module.sass';
 
 type BillingPopupDetailType = 'billing' | 'donation';
@@ -245,15 +245,11 @@ export default function BillingPopup({ paymentId, detail, children }: BillingPop
         </Dialog>
       )}
 
-      <Snackbar
+      <PopupMessage
         open={Boolean(errorMessage)}
         message={errorMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
         onClose={() => setErrorMessage('')}
+        kind="error"
       />
     </>
   );

@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -29,6 +28,7 @@ import {
 } from '@/lib/reports/guidelineAppeals';
 import { formatDateTimeDetail, formatTimeAgo, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -548,13 +548,7 @@ export default function Opt() {
         </Drawer>
       )}
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        autoHideDuration={2700}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        message={snackbarMessage}
-        onClose={() => setSnackbarMessage('')}
-      />
+      <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>
   );
 }

@@ -14,7 +14,6 @@ import {
   FormControl,
   MenuItem,
   Select,
-  Snackbar,
   Stack,
   styled,
   Table,
@@ -46,6 +45,7 @@ import {
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import ToastEditor from '@/components/editor/ToastEditor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -1378,16 +1378,7 @@ export default function Opt() {
         </Dialog>
       )}
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        message={snackbarMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
-        onClose={() => setSnackbarMessage('')}
-      />
+      <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>
   );
 }

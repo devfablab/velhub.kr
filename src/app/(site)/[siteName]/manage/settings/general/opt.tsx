@@ -17,7 +17,6 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
-  Snackbar,
   Stack,
   styled,
   Table,
@@ -37,6 +36,7 @@ import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -1062,13 +1062,7 @@ export default function Opt() {
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {errorMessage ? <div className={`paper paper-error ${styles.paper}`}>{errorMessage}</div> : null}
 
-          <Snackbar
-            open={Boolean(successMessage)}
-            message={successMessage}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSuccessMessage('')}
-          />
+          <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
 
           <Typography variant="subtitle2" sx={{ p: 2 }}>
             {siteInfo.site_type === 'blog' ? '블로그' : '커뮤니티'} ‘{siteInfo.site_label}’{' '}
@@ -1179,11 +1173,9 @@ export default function Opt() {
                   </Stack>
                 </Stack>
                 {siteKeyCheckMessage ? (
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(siteKeyCheckMessage)}
                     message={siteKeyCheckMessage}
-                    autoHideDuration={2700}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                     onClose={() => setSiteKeyCheckMessage('')}
                   />
                 ) : null}
@@ -1274,11 +1266,9 @@ export default function Opt() {
                   </button>
                 </Stack>
                 {customDomainCheckMessage ? (
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(customDomainCheckMessage)}
                     message={customDomainCheckMessage}
-                    autoHideDuration={2700}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
                     onClose={() => setCustomDomainCheckMessage('')}
                   />
                 ) : null}

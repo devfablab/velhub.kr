@@ -18,7 +18,6 @@ import {
   FormControl,
   MenuItem,
   Select,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -47,6 +46,7 @@ import type { ReportTargetType } from '@/lib/reports/guidelines';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import EmbeddedContentHtml from '@/components/service/EmbeddedContentHtml';
 import ScreenState from '@/components/service/ScreenState';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
@@ -1404,16 +1404,7 @@ export default function Opt() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={Boolean(snackbarMessage)}
-        message={snackbarMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
-        onClose={() => setSnackbarMessage('')}
-      />
+      <PopupMessage open={Boolean(snackbarMessage)} message={snackbarMessage} onClose={() => setSnackbarMessage('')} />
     </Stack>
   );
 }

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FormControlLabel, FormLabel, Snackbar, Stack } from '@mui/material';
+import { FormControlLabel, FormLabel, Stack } from '@mui/material';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 type AdvancedUserResponse = {
@@ -130,27 +131,14 @@ export default function Opt() {
         수정 완료
       </button>
 
-      <Snackbar
+      <PopupMessage
         open={Boolean(errorMessage)}
         message={errorMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
         onClose={() => setErrorMessage('')}
+        kind="error"
       />
 
-      <Snackbar
-        open={Boolean(successMessage)}
-        message={successMessage}
-        anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        autoHideDuration={2700}
-        onClose={() => setSuccessMessage('')}
-      />
+      <PopupMessage open={Boolean(successMessage)} message={successMessage} onClose={() => setSuccessMessage('')} />
     </div>
   );
 }

@@ -18,7 +18,6 @@ import {
   DialogTitle,
   Drawer,
   InputAdornment,
-  Snackbar,
   Stack,
   styled,
   Table,
@@ -34,6 +33,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -1121,14 +1121,10 @@ export default function Opt() {
                     </p>
                   ) : null}
 
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(dialogSuccessMessage)}
                     message={dialogSuccessMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
+                    onClose={() => setDialogSuccessMessage('')}
                   />
                 </Stack>
                 <Stack direction="column" gap={1.5}>
@@ -1288,14 +1284,10 @@ export default function Opt() {
                     </p>
                   ) : null}
 
-                  <Snackbar
+                  <PopupMessage
                     open={Boolean(dialogSuccessMessage)}
                     message={dialogSuccessMessage}
-                    anchorOrigin={{
-                      vertical: 'top',
-                      horizontal: 'center',
-                    }}
-                    autoHideDuration={3000}
+                    onClose={() => setDialogSuccessMessage('')}
                   />
                 </Stack>
               </DialogContent>

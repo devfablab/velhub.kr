@@ -5,9 +5,10 @@ import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Accordion, AccordionDetails, AccordionSummary, Chip, Grid, Snackbar, Stack, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Chip, Grid, Stack, Typography } from '@mui/material';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/settings.module.sass';
 
 export default function PasswordSetup() {
@@ -170,14 +171,9 @@ export default function PasswordSetup() {
                 <span>{errorMessage}</span>
               </p>
             ) : null}
-            <Snackbar
+            <PopupMessage
               open={Boolean(successMessage)}
               message={successMessage}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'center',
-              }}
-              autoHideDuration={2700}
               onClose={() => setSuccessMessage('')}
             />
           </Stack>

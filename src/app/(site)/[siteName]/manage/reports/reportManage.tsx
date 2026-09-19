@@ -16,7 +16,6 @@ import {
   FormControl,
   MenuItem,
   Select,
-  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -43,6 +42,7 @@ import {
 } from '@/lib/reports/manage';
 import { formatTimeAgo } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/manage.module.sass';
 
@@ -1166,10 +1166,8 @@ export default function ReportManage({ targetType }: ReportManageProps) {
           </DialogActions>
         </Dialog>
 
-        <Snackbar
+        <PopupMessage
           open={Boolean(snackbarMessage)}
-          autoHideDuration={2700}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           message={snackbarMessage}
           onClose={() => setSnackbarMessage('')}
         />

@@ -11,7 +11,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
@@ -29,6 +28,7 @@ import {
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import Anchor from '@/components/Anchor';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
@@ -629,12 +629,11 @@ export default function MembershipPlan() {
         )}
       </section>
 
-      <Snackbar
+      <PopupMessage
         open={Boolean(errorMessage)}
         message={errorMessage}
-        autoHideDuration={3000}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         onClose={() => setErrorMessage('')}
+        kind="error"
       />
 
       <Dialog

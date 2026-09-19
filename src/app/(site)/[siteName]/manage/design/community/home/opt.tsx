@@ -20,10 +20,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import { Box, FormControlLabel, Snackbar, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, FormControlLabel, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -391,12 +392,10 @@ export default function Opt() {
             </>
           )}
 
-          <Snackbar
+          <PopupMessage
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
             message={snackbarMessage}
+            onClose={() => setSnackbarMessage('')}
           />
         </div>
       </div>

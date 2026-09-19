@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { Snackbar } from '@mui/material';
 import PortOne from '@portone/browser-sdk/v2';
-import IdentityAgreement from '@/components/service/common/IdentityAgreement';
+import PopupMessage from '@/components/PopupMessage';
 import DevIdentityBypassModal from '@/components/service/common/DevIdentityBypassModal';
+import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 
 type IdentityVerificationRequest = {
   storeId: string;
@@ -166,14 +167,7 @@ export default function IdentityVerificationButton({
         }}
         onConfirm={(bypass, mockTxId) => void handleBypassConfirm(bypass, mockTxId)}
       />
-      <Snackbar
-        open={Boolean(message)}
-        message={message}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        autoHideDuration={2700}
-        onClose={() => setMessage('')}
-        sx={{ zIndex: 20002 }}
-      />
+      <PopupMessage open={Boolean(message)} message={message} onClose={() => setMessage('')} />
     </>
   );
 }

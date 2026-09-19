@@ -17,7 +17,6 @@ import {
   Drawer,
   FormControlLabel,
   InputAdornment,
-  Snackbar,
   Stack,
   styled,
   Table,
@@ -33,6 +32,7 @@ import {
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -224,6 +224,7 @@ export default function Opt() {
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
   const [isKeyChecked, setIsKeyChecked] = useState(false);
   const [isLabelChecked, setIsLabelChecked] = useState(false);
   const [checkedSeriesKey, setCheckedSeriesKey] = useState('');
@@ -347,8 +348,10 @@ export default function Opt() {
       }
     } catch (unknownError) {
       if (unknownError instanceof Error) {
+        setSnackbarKind('error');
         setSnackbarMessage(unknownError.message || '연재 정보를 불러오지 못했습니다.');
       } else {
+        setSnackbarKind('error');
         setSnackbarMessage('연재 정보를 불러오지 못했습니다.');
       }
     }
@@ -794,6 +797,7 @@ export default function Opt() {
         setDialogMode(null);
         setSelectedSeries(null);
         resetDialogFields();
+        setSnackbarKind('info');
         setSnackbarMessage('연재가 등록되었습니다.');
         return;
       }
@@ -825,6 +829,7 @@ export default function Opt() {
         setDialogMode(null);
         setSelectedSeries(null);
         resetDialogFields();
+        setSnackbarKind('info');
         setSnackbarMessage('연재가 수정되었습니다.');
       }
     } catch (unknownError) {
@@ -866,6 +871,7 @@ export default function Opt() {
       setDialogMode(null);
       setSelectedSeries(null);
       resetDialogFields();
+      setSnackbarKind('info');
       setSnackbarMessage('연재가 삭제되었습니다.');
     } catch (unknownError) {
       if (unknownError instanceof Error) {
@@ -1700,13 +1706,11 @@ export default function Opt() {
             </Dialog>
           )}
 
-          <Snackbar
+          <PopupMessage
             open={Boolean(snackbarMessage)}
-            autoHideDuration={2700}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            onClose={() => setSnackbarMessage('')}
-            sx={{ zIndex: 20007 }}
             message={snackbarMessage}
+            onClose={() => setSnackbarMessage('')}
+            kind={snackbarKind}
           />
         </div>
       </div>

@@ -26,7 +26,6 @@ import {
   DialogContent,
   DialogTitle,
   Drawer,
-  Snackbar,
   TextField,
   useMediaQuery,
   useTheme,
@@ -36,6 +35,7 @@ import { formatDateSimple, formatDateTimeDetail, formatDateTimeFull, normalizeTe
 import Anchor from '@/components/Anchor';
 import Comment from '@/components/comments/Comment';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
+import PopupMessage from '@/components/PopupMessage';
 import PostPurchaseButton from '@/components/service/common/PostPurchaseButton';
 import ReportButton from '@/components/service/common/ReportButton';
 import SubscriptionButton from '@/components/service/common/SubscriptionButton';
@@ -822,15 +822,11 @@ export default function Opt({ isCommunity }: Props) {
           )}
           <strong>저장</strong>
         </button>
-        <Snackbar
+        <PopupMessage
           open={Boolean(postActionErrorMessage)}
           message={postActionErrorMessage}
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-          autoHideDuration={2700}
           onClose={() => setPostActionErrorMessage('')}
+          kind="error"
         />
       </>
     ) : null;

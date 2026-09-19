@@ -1430,6 +1430,19 @@ html[data-site-type='blog']
         width: ds.rem(20)
         height: ds.rem(20)
 
+.popup-message
+  @include ds.fw(neo, 600)
+  font-size: ds.rem(16)
+
+  &.info
+    color: ds.$hex-primary
+
+    html[data-theme="yellow-dark"] &
+      color: ds.$hex-bright
+
+  &.error
+    color: ds.$hex-warning
+
 .alerts
   margin-top: ds.rem(23)
   display: flex
