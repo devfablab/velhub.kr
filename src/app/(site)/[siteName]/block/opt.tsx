@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { Stack, Typography } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
+import ScreenState from '@/components/service/ScreenState';
 import { ServiceErrorIcon } from '@/components/Svgs';
 import Container from '../menu';
 import styles from '@/app/board.module.sass';
@@ -74,12 +74,7 @@ export default function Opt() {
 
             <h2>활동 정지</h2>
 
-            {errorMessage ? (
-              <p className="alert error">
-                <ErrorOutlineRoundedIcon />
-                <span>{errorMessage}</span>
-              </p>
-            ) : null}
+            {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
             {!errorMessage ? (
               <Stack direction="column" gap={1}>
