@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
@@ -18,7 +17,7 @@ type PostRow = {
   href: string;
 };
 
-type PostsResponse = {
+export type PostsResponse = {
   posts?: PostRow[];
   error?: string;
 };
@@ -26,11 +25,9 @@ type PostsResponse = {
 type Props = {
   siteType: SiteType;
   type: HistoryType;
+  initialData: PostsResponse | null;
+  initialError: string;
 };
-
-function getApiPath(type: HistoryType) {
-  return type === 'read' ? '/api/hub/read-posts' : '/api/hub/saved-posts';
-}
 
 function getTitle(type: HistoryType) {
   return type === 'read' ? `읽은 글` : `저장한 글`;
@@ -40,50 +37,13 @@ function getDateLabel(type: HistoryType) {
   return type === 'read' ? '읽은 날짜' : '저장한 날짜';
 }
 
-export default function PostHistory({ siteType, type }: Props) {
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+export default function PostHistory({ type, initialData, initialError }: Props) {
+  const posts = Array.isArray(initialData?.posts) ? initialData.posts : [];
 
-  useEffect(() => {
-    async function loadPosts() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`${getApiPath(type)}?siteType=${siteType}&limit=3`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PostsResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '글 목록을 불러오지 못했습니다.');
-        }
-
-        setPosts(Array.isArray(result.posts) ? result.posts : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '글 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('글 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPosts();
-  }, [siteType, type]);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (errorMessage) {
+  if (initialError) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <ScreenState kind="error">{errorMessage}</ScreenState>
+        <ScreenState kind="error">{initialError}</ScreenState>
       </section>
     );
   }

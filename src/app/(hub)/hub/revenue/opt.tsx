@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormControl, InputLabel, MenuItem, Select, Tab, Tabs } from '@mui/material';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import SettlementForm from '@/components/service/common/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import { ServiceWarningIcon } from '@/components/Svgs';
@@ -18,7 +17,7 @@ type RevenueSite = {
   siteType: string | null;
 };
 
-type RevenueSitesResponse = {
+export type RevenueSitesResponse = {
   isAuthor?: boolean;
   isSettlementError?: boolean;
   sites?: RevenueSite[];
@@ -55,14 +54,19 @@ function getSiteTypeLabel(siteType: string | null) {
   return null;
 }
 
-export default function RevenueHub() {
+export default function RevenueHub({
+  initialData,
+  initialError,
+}: {
+  initialData: RevenueSitesResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [sites, setSites] = useState<RevenueSite[]>([]);
-  const [isAuthor, setIsAuthor] = useState<boolean | null>(null);
-  const [isSettlementError, setIsSettlementError] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [sites, setSites] = useState<RevenueSite[]>(initialData?.sites ?? []);
+  const [isAuthor, setIsAuthor] = useState<boolean | null>(initialData?.isAuthor ?? null);
+  const [isSettlementError, setIsSettlementError] = useState<boolean>(initialData?.isSettlementError ?? false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const requestedSiteName = searchParams.get('siteName') ?? '';
   const selectedSiteName = useMemo(() => {
@@ -93,24 +97,18 @@ export default function RevenueHub() {
       setErrorMessage('');
     } catch (unknownError) {
       setErrorMessage(unknownError instanceof Error ? unknownError.message : '수입/정산 사이트를 불러오지 못했습니다.');
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadSites();
-  }, [loadSites]);
-
-  useEffect(() => {
-    if (isLoading || !selectedSiteName || requestedSiteName === selectedSiteName) {
+    if (!selectedSiteName || requestedSiteName === selectedSiteName) {
       return;
     }
 
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.set('siteName', selectedSiteName);
     router.replace(`?${nextSearchParams.toString()}`);
-  }, [isLoading, requestedSiteName, router, searchParams, selectedSiteName]);
+  }, [requestedSiteName, router, searchParams, selectedSiteName]);
 
   function updateSelection(key: 'siteName' | 'view', value: string) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -123,17 +121,9 @@ export default function RevenueHub() {
   return (
     <div className={`container ${styles['revenue-container']}`}>
       <div className={`content ${styles.content} ${styles['revenue-content']}`}>
-        {isLoading ? (
-          <div className="paper">
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        ) : null}
-
         {errorMessage ? <ScreenState kind="error">{errorMessage}</ScreenState> : null}
 
-        {!isLoading && !errorMessage && sites.length === 0 ? (
+        {!errorMessage && sites.length === 0 ? (
           <>
             <div className="paper page-warning">
               <ServiceWarningIcon />
@@ -153,7 +143,7 @@ export default function RevenueHub() {
           </>
         ) : null}
 
-        {!isLoading && !errorMessage && selectedSiteName ? (
+        {!errorMessage && selectedSiteName ? (
           <>
             <section className={`paper ${styles['revenue-selector']}`}>
               <FormControl fullWidth size="small">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 import ModeCommentOutlinedIcon from '@mui/icons-material/ModeCommentOutlined';
 import { formatDateSimple } from '@/lib/utils';
@@ -29,7 +29,7 @@ type CommentLikeRow = {
   href: string;
 };
 
-type LikedResponse = {
+export type LikedItemsResponse = {
   postLikes?: PostLikeRow[];
   commentLikes?: CommentLikeRow[];
   error?: string;
@@ -37,50 +37,14 @@ type LikedResponse = {
 
 type Props = {
   siteType: SiteType;
+  initialData: LikedItemsResponse | null;
+  initialError: string;
 };
 
-export default function LikedItems({ siteType }: Props) {
-  const [postLikes, setPostLikes] = useState<PostLikeRow[]>([]);
-  const [commentLikes, setCommentLikes] = useState<CommentLikeRow[]>([]);
+export default function LikedItems({ initialData, initialError }: Props) {
+  const postLikes = Array.isArray(initialData?.postLikes) ? initialData.postLikes : [];
+  const commentLikes = Array.isArray(initialData?.commentLikes) ? initialData.commentLikes : [];
   const [viewType, setViewType] = useState<LikeViewType>('posts');
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadLiked() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/hub/liked?siteType=${siteType}&limit=100`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as LikedResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '좋아요 목록을 불러오지 못했습니다.');
-        }
-
-        setPostLikes(Array.isArray(result.postLikes) ? result.postLikes : []);
-        setCommentLikes(Array.isArray(result.commentLikes) ? result.commentLikes : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '좋아요 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('좋아요 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadLiked();
-  }, [siteType]);
-
-  if (isLoading) {
-    return null;
-  }
 
   return (
     <section className={`paper ${styles.paper} ${styles.likey}`}>
@@ -111,9 +75,9 @@ export default function LikedItems({ siteType }: Props) {
         </ul>
       </div>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
+      {initialError ? <p>{initialError}</p> : null}
 
-      {!errorMessage && viewType === 'posts' ? (
+      {!initialError && viewType === 'posts' ? (
         postLikes.length > 0 ? (
           <ol>
             {postLikes.map((post) => (
@@ -137,7 +101,7 @@ export default function LikedItems({ siteType }: Props) {
         )
       ) : null}
 
-      {!errorMessage && viewType === 'comments' ? (
+      {!initialError && viewType === 'comments' ? (
         commentLikes.length > 0 ? (
           <ol>
             {commentLikes.map((comment) => (

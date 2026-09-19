@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Box, Chip, Stack, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
@@ -10,13 +9,7 @@ import { BillingMethod } from './page';
 
 type BillingMethodsProps = {
   billingMethods: BillingMethod[];
-};
-
-type SettlementResponse = {
-  exists: boolean;
-  settlement: {
-    settlement_type: 'individual' | 'business';
-  } | null;
+  hasSettlement: boolean;
 };
 
 function formatCardNumber(cardNumberMasked: string | null | undefined) {
@@ -76,32 +69,7 @@ function getOwnerTypeText(ownerType: string | null | undefined) {
   return (ownerTypeTextMap[normalizedOwnerType] ?? normalizedOwnerType) || '소유 유형 확인 필요';
 }
 
-export default function BillingMethods({ billingMethods }: BillingMethodsProps) {
-  const [hasSettlement, setHasSettlement] = useState(false);
-  useEffect(() => {
-    async function loadIdentity() {
-      const [identityResponse, settlementResponse] = await Promise.all([
-        fetch('/api/identity/portone/status', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        }),
-        fetch('/api/settlement', {
-          method: 'GET',
-          credentials: 'include',
-          cache: 'no-store',
-        }),
-      ]);
-
-      const settlementData = settlementResponse.ok
-        ? ((await settlementResponse.json().catch(() => null)) as SettlementResponse | null)
-        : null;
-
-      setHasSettlement(Boolean(settlementData?.exists && settlementData.settlement));
-    }
-
-    void loadIdentity();
-  }, []);
+export default function BillingMethods({ billingMethods, hasSettlement }: BillingMethodsProps) {
   return (
     <>
       {billingMethods.length ? (

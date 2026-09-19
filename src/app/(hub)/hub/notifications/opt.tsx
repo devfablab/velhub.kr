@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
-type NotificationItem = {
+export type NotificationItem = {
   id: string;
   createdAt: string;
   notificationType: string;
@@ -17,49 +17,22 @@ type NotificationItem = {
   isRead: boolean;
 };
 
-type NotificationsResponse = {
+export type NotificationsResponse = {
   items?: NotificationItem[];
   error?: string;
 };
 
-export default function Opt() {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasLoadedNotifications, setHasLoadedNotifications] = useState(false);
+export default function Opt({
+  initialItems,
+  initialError,
+}: {
+  initialItems: NotificationItem[];
+  initialError: string;
+}) {
+  const [items, setItems] = useState<NotificationItem[]>(initialItems);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const hasLoadedNotifications = !initialError;
   const [isReadingAll, setIsReadingAll] = useState(false);
-
-  async function loadNotifications() {
-    try {
-      setErrorMessage('');
-
-      const response = await fetch('/api/notifications', {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as NotificationsResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '알림을 불러오지 못했습니다.');
-      }
-
-      setItems(result.items ?? []);
-      setHasLoadedNotifications(true);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '알림을 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('알림을 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadNotifications();
-  }, []);
 
   async function markNotificationAsRead(notificationId: string) {
     const targetItem = items.find((item) => item.id === notificationId);
@@ -138,10 +111,6 @@ export default function Opt() {
     } finally {
       setIsReadingAll(false);
     }
-  }
-
-  if (isLoading) {
-    return null;
   }
 
   return (

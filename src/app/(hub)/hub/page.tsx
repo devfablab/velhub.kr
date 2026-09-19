@@ -6,8 +6,8 @@ import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Container from './menu';
-import PendingInvite from './pendingInvite';
-import PendingJoin from './pendingJoin';
+import PendingInvite, { PendingInviteResponse } from './pendingInvite';
+import PendingJoin, { PendingJoinResponse } from './pendingJoin';
 import Personal from './personal';
 import MemberStatusSites, { type MemberStatusSiteRow } from './shared/memberStatusSites';
 import styles from '@/app/hub.module.sass';
@@ -110,6 +110,28 @@ export default async function Page() {
 
   const account = accountResult.data as AccountRow;
   const statusSites = await getMemberStatusSites();
+  const cookieStore = await cookies();
+  const headerList = await headers();
+  const host = headerList.get('host');
+  const protocol = headerList.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  const load = async <T,>(path: string, fallback: string): Promise<{ data: T | null; error: string }> => {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        headers: { cookie: cookieStore.toString() },
+        cache: 'no-store',
+      });
+      const data = (await response.json()) as T & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? fallback);
+      return { data, error: '' };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : fallback };
+    }
+  };
+  const [pendingInvites, pendingJoins] = await Promise.all([
+    load<PendingInviteResponse>('/api/hub/pending-invites', '초대 정보를 불러오지 못했습니다.'),
+    load<PendingJoinResponse>('/api/hub/pending-join', '가입 신청 정보를 불러오지 못했습니다.'),
+  ]);
 
   return (
     <Container pageTitle="마이허브" pageBack="/">
@@ -122,8 +144,8 @@ export default async function Page() {
             bio={decryptValue(account.bio)}
           />
           <MemberStatusSites statusSites={statusSites} rejoinOnly />
-          <PendingInvite />
-          <PendingJoin />
+          <PendingInvite initialData={pendingInvites.data} initialError={pendingInvites.error} />
+          <PendingJoin initialData={pendingJoins.data} initialError={pendingJoins.error} />
         </div>
       </div>
     </Container>

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
@@ -20,55 +19,24 @@ type PendingJoinRow = {
   profileLogoUrl: string | null;
 };
 
-type PendingJoinResponse = {
+export type PendingJoinResponse = {
   joins?: PendingJoinRow[];
   error?: string;
 };
 
-export default function PendingJoin() {
-  const [joins, setJoins] = useState<PendingJoinRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+export default function PendingJoin({
+  initialData,
+  initialError,
+}: {
+  initialData: PendingJoinResponse | null;
+  initialError: string;
+}) {
+  const joins = Array.isArray(initialData?.joins) ? initialData.joins : [];
 
-  useEffect(() => {
-    async function loadPendingJoin() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch('/api/hub/pending-join', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PendingJoinResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '가입 신청 정보를 불러오지 못했습니다.');
-        }
-
-        setJoins(Array.isArray(result.joins) ? result.joins : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '가입 신청 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('가입 신청 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPendingJoin();
-  }, []);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (errorMessage) {
+  if (initialError) {
     return (
       <section className={`paper ${styles.paper} ${styles.pending}`}>
-        <ScreenState kind="error">{errorMessage}</ScreenState>
+        <ScreenState kind="error">{initialError}</ScreenState>
       </section>
     );
   }

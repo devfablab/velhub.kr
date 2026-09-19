@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatDateTimeDetail } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import ScreenState from '@/components/service/ScreenState';
@@ -11,7 +11,7 @@ type ReportTarget = {
   href: string;
 };
 
-type ReportItem = {
+export type ReportItem = {
   id: string;
   reportTypeLabel: string;
   targetTypeLabel: string;
@@ -25,7 +25,7 @@ type ReportItem = {
   comment: { content: string } | null;
 };
 
-type ReportsResponse = {
+export type ReportsResponse = {
   items?: ReportItem[];
   error?: string;
 };
@@ -52,42 +52,9 @@ function ReportTargetSummary({ item }: { item: ReportItem }) {
   );
 }
 
-export default function Opt() {
-  const [items, setItems] = useState<ReportItem[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadReports() {
-      try {
-        const response = await fetch('/api/hub/reports', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const result = (await response.json()) as ReportsResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '신고관리 정보를 불러오지 못했습니다.');
-        }
-
-        setItems(result.items ?? []);
-      } catch (unknownError) {
-        setErrorMessage(
-          unknownError instanceof Error
-            ? unknownError.message || '신고관리 정보를 불러오지 못했습니다.'
-            : '신고관리 정보를 불러오지 못했습니다.',
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadReports();
-  }, []);
-
-  if (isLoading) {
-    return null;
-  }
+export default function Opt({ initialItems, initialError }: { initialItems: ReportItem[]; initialError: string }) {
+  const [items] = useState<ReportItem[]>(initialItems);
+  const errorMessage = initialError;
 
   return (
     <section className={`paper ${styles.paper} ${styles.reports}`}>

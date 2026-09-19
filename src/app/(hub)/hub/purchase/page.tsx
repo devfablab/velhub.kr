@@ -68,6 +68,11 @@ type PurchaseResponse = {
   error?: string;
 };
 
+type SettlementResponse = {
+  exists: boolean;
+  settlement: { settlement_type: 'individual' | 'business' } | null;
+};
+
 function formatAmount(value: number) {
   return `${value.toLocaleString('ko-KR')} 원`;
 }
@@ -158,6 +163,22 @@ export default async function Page() {
       paymentHistory,
     ];
   });
+  const cookieStore = await cookies();
+  const headerList = await headers();
+  const host = headerList.get('host');
+  const protocol = headerList.get('x-forwarded-proto') || 'http';
+  let hasSettlement = false;
+
+  try {
+    const settlementResponse = await fetch(`${protocol}://${host}/api/settlement`, {
+      headers: { cookie: cookieStore.toString() },
+      cache: 'no-store',
+    });
+    const settlement = (await settlementResponse.json()) as SettlementResponse;
+    hasSettlement = settlementResponse.ok && Boolean(settlement.exists && settlement.settlement);
+  } catch {
+    hasSettlement = false;
+  }
 
   return (
     <Container pageTitle="구입내역" pageBack="/hub">
@@ -205,7 +226,7 @@ export default async function Page() {
 
           <section className={`paper ${styles.paper}`}>
             <h2>결제수단</h2>
-            <BillingMethods billingMethods={result.billingMethods} />
+            <BillingMethods billingMethods={result.billingMethods} hasSettlement={hasSettlement} />
           </section>
 
           <section className={`paper ${styles.paper} ${styles.history}`}>

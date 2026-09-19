@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { formatDateSimple } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { ServiceNoDataIcon } from '@/components/Svgs';
@@ -17,62 +16,27 @@ type PostRow = {
   href: string;
 };
 
-type PostsResponse = {
+export type SavedResponse = {
   posts?: PostRow[];
   error?: string;
 };
 
 type Props = {
   siteType: SiteType;
+  initialData: SavedResponse | null;
+  initialError: string;
 };
 
-export default function SavedItems({ siteType }: Props) {
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadPosts() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/hub/saved-posts?siteType=${siteType}&limit=100`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PostsResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '저장한 글 목록을 불러오지 못했습니다.');
-        }
-
-        setPosts(Array.isArray(result.posts) ? result.posts : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '저장한 글 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('저장한 글 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPosts();
-  }, [siteType]);
-
-  if (isLoading) {
-    return null;
-  }
+export default function SavedItems({ initialData, initialError }: Props) {
+  const posts = Array.isArray(initialData?.posts) ? initialData.posts : [];
 
   return (
     <section className={`paper ${styles.paper} ${styles.history}`}>
       <h2>보고 또 보고 👉</h2>
 
-      {errorMessage ? <p>{errorMessage}</p> : null}
+      {initialError ? <p>{initialError}</p> : null}
 
-      {!errorMessage && posts.length > 0 ? (
+      {!initialError && posts.length > 0 ? (
         <div className={styles.items}>
           <ol>
             {posts.map((post) => (
@@ -91,7 +55,7 @@ export default function SavedItems({ siteType }: Props) {
         </div>
       ) : null}
 
-      {!errorMessage && posts.length === 0 ? (
+      {!initialError && posts.length === 0 ? (
         <div className="paper page-info">
           <ServiceNoDataIcon />
           <p>저장한 글이 없습니다.</p>

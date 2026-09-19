@@ -1,21 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import {
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Stack,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Chip, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import { requestGuardianIdentityVerification } from '@/lib/identity/requestGuardianVerification';
 import {
   formatMembershipPrice,
@@ -27,14 +17,13 @@ import {
 } from '@/lib/memberships/catalog';
 import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
-type Eligibility = {
+export type Eligibility = {
   owner: { available: boolean; message: string | null };
   creator: { available: boolean; message: string | null };
   allInOne: { available: boolean; message: string | null };
@@ -42,7 +31,7 @@ type Eligibility = {
 
 type MembershipSelection = Partial<Record<'owner' | 'creator' | 'allInOne' | 'affetto', MembershipFeatureKey[]>>;
 
-type MembershipResponse = {
+export type MembershipResponse = {
   memberships: Array<{
     id: string;
     type: MembershipType;
@@ -56,7 +45,7 @@ type MembershipResponse = {
   message?: string;
 };
 
-type IdentityStatusResponse = {
+export type IdentityStatusResponse = {
   exists: boolean;
   identity: { birth_date: string } | null;
 };
@@ -184,77 +173,36 @@ function getAge(birthDate: string | null | undefined) {
   return age;
 }
 
-export default function MembershipPlan() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
+export default function MembershipPlan({
+  initialMemberships,
+  initialEligibility,
+  initialIdentity,
+  initialError,
+}: {
+  initialMemberships: MembershipResponse | null;
+  initialEligibility: Eligibility | null;
+  initialIdentity: IdentityStatusResponse | null;
+  initialError: string;
+}) {
   const { isBlocked, isLoaded: isMinorControlLoaded } = useMinorPaymentControl();
   const searchParams = useSearchParams();
   const selection = useMemo(() => parseSelection(searchParams.get('selection')), [searchParams]);
-  const [memberships, setMemberships] = useState<MembershipResponse['memberships']>([]);
-  const [billingMethods, setBillingMethods] = useState<BillingMethod[]>([]);
-  const [selectedBillingMethodId, setSelectedBillingMethodId] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const memberships = useMemo(() => initialMemberships?.memberships ?? [], [initialMemberships]);
+  const billingMethods = useMemo(() => initialMemberships?.billingMethods ?? [], [initialMemberships]);
+  const selectedBillingMethodId =
+    initialMemberships?.billingMethods.find((method) => method.isDefault)?.id ??
+    initialMemberships?.billingMethods[0]?.id ??
+    '';
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CurrentMembership | null>(null);
   const [refundTarget, setRefundTarget] = useState<CurrentMembership | null>(null);
   const [isPaymentPopupOpen, setIsPaymentPopupOpen] = useState(false);
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [eligibility, setEligibility] = useState<Eligibility | null>(null);
-  const [isUnder14Age, setIsUnder14Age] = useState(false);
-  const [isMinorUser, setIsMinorUser] = useState(false);
-
-  useEffect(() => {
-    async function loadMemberships() {
-      try {
-        const [membershipResponse, eligibilityResponse, identityResponse] = await Promise.all([
-          fetch('/api/memberships', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-store',
-          }),
-          fetch('/api/memberships/eligibility', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-store',
-          }),
-          fetch('/api/identity/portone/status', {
-            method: 'GET',
-            credentials: 'include',
-            cache: 'no-store',
-          }),
-        ]);
-
-        const result = (await membershipResponse.json()) as MembershipResponse;
-        const eligibilityResult = (await eligibilityResponse.json().catch(() => null)) as Eligibility | null;
-        const identityResult = (await identityResponse.json().catch(() => null)) as IdentityStatusResponse | null;
-        const age = identityResponse.ok && identityResult?.exists ? getAge(identityResult.identity?.birth_date) : null;
-
-        setIsUnder14Age(age === null || age < 14);
-        setIsMinorUser(age !== null && age < 19);
-
-        if (!membershipResponse.ok) {
-          throw new Error(result.message || '멤버십 정보를 불러오지 못했습니다.');
-        }
-
-        if (eligibilityResponse.ok && eligibilityResult && 'owner' in eligibilityResult) {
-          setEligibility(eligibilityResult);
-        }
-
-        setMemberships(result.memberships);
-        setBillingMethods(result.billingMethods);
-        setSelectedBillingMethodId(
-          result.billingMethods.find((method) => method.isDefault)?.id ?? result.billingMethods[0]?.id ?? '',
-        );
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : '멤버십 정보를 불러오지 못했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadMemberships();
-  }, []);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const eligibility = initialEligibility;
+  const initialAge = initialIdentity?.exists ? getAge(initialIdentity.identity?.birth_date) : null;
+  const isUnder14Age = initialAge === null || initialAge < 14;
+  const isMinorUser = initialAge !== null && initialAge < 19;
 
   const selectedItems = useMemo(() => {
     const items = getSelectionItems(selection);
@@ -278,7 +226,7 @@ export default function MembershipPlan() {
 
   if (!isMinorControlLoaded) return null;
 
-  if (!isLoading && (isUnder14Age || isBlocked)) {
+  if (isUnder14Age || isBlocked) {
     return (
       <section className={`paper ${styles.paper}`}>
         <div className="paper page-warning">
@@ -518,115 +466,109 @@ export default function MembershipPlan() {
 
       <section className={`paper ${styles.paper}`}>
         <h2>멤버십 이용 상태</h2>
-        {isLoading ? (
-          <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
-            <LoadingIndicator />
-          </Stack>
-        ) : (
-          <Stack gap={1}>
-            {(Object.keys(MEMBERSHIP_LABEL) as MembershipType[])
-              .filter((type) => {
-                const status = getMembershipStatus(type);
-                if (status.membership) return true;
-                if (!eligibility) return true;
+        <Stack gap={1}>
+          {(Object.keys(MEMBERSHIP_LABEL) as MembershipType[])
+            .filter((type) => {
+              const status = getMembershipStatus(type);
+              if (status.membership) return true;
+              if (!eligibility) return true;
 
-                if (type === 'owner') return eligibility.owner.available;
-                if (type === 'creator') return eligibility.creator.available;
-                if (type === 'all_in_one') return eligibility.allInOne.available;
-                return true;
-              })
-              .map((type) => {
-                const status = getMembershipStatus(type);
+              if (type === 'owner') return eligibility.owner.available;
+              if (type === 'creator') return eligibility.creator.available;
+              if (type === 'all_in_one') return eligibility.allInOne.available;
+              return true;
+            })
+            .map((type) => {
+              const status = getMembershipStatus(type);
 
-                return (
-                  <div className={`paper ${styles.paper}`} key={type}>
-                    <Stack direction="row" justifyContent="space-between" gap={2} alignItems="center">
-                      <Typography variant="subtitle2">{MEMBERSHIP_LABEL[type]}</Typography>
-                      {status.label ? (
-                        <Chip
-                          label={status.label}
-                          size="small"
-                          className={`chip ${status.label === '유료 기능 이용 중' ? 'success' : 'default'}`}
-                        />
-                      ) : null}
+              return (
+                <div className={`paper ${styles.paper}`} key={type}>
+                  <Stack direction="row" justifyContent="space-between" gap={2} alignItems="center">
+                    <Typography variant="subtitle2">{MEMBERSHIP_LABEL[type]}</Typography>
+                    {status.label ? (
+                      <Chip
+                        label={status.label}
+                        size="small"
+                        className={`chip ${status.label === '유료 기능 이용 중' ? 'success' : 'default'}`}
+                      />
+                    ) : null}
+                  </Stack>
+                  <Stack direction="column" gap={0.5}>
+                    {MEMBERSHIP_DESCRIPTIONS[type].map((itemLabel) => (
+                      <Typography
+                        key={itemLabel}
+                        variant="body2"
+                        sx={{ opacity: status.membership?.itemLabels.includes(itemLabel) ? 1 : 0.2 }}
+                      >
+                        • {itemLabel}
+                      </Typography>
+                    ))}
+                  </Stack>
+                  {status.isPastDue ? (
+                    <p className="alert warning">
+                      <InfoOutlineRoundedIcon />
+                      <span>
+                        자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요. 유예 기간 안에 결제가 완료되지 않으면
+                        멤버십 기능 이용이 종료됩니다.
+                      </span>
+                    </p>
+                  ) : null}
+                  {!status.membership ? (
+                    <Stack direction="row">
+                      <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
+                        자세히 알아보기
+                      </Anchor>
                     </Stack>
-                    <Stack direction="column" gap={0.5}>
-                      {MEMBERSHIP_DESCRIPTIONS[type].map((itemLabel) => (
-                        <Typography
-                          key={itemLabel}
-                          variant="body2"
-                          sx={{ opacity: status.membership?.itemLabels.includes(itemLabel) ? 1 : 0.2 }}
+                  ) : null}
+                  {status.isDirectMembership && status.membership ? (
+                    <Stack direction="row" gap={1} flexWrap="wrap">
+                      {status.isCanceled ? (
+                        <button
+                          type="button"
+                          className="button small action"
+                          onClick={() => setCancelTarget(status.membership ?? null)}
                         >
-                          • {itemLabel}
-                        </Typography>
-                      ))}
-                    </Stack>
-                    {status.isPastDue ? (
-                      <p className="alert warning">
-                        <InfoOutlineRoundedIcon />
-                        <span>
-                          자동결제가 완료되지 않았습니다. 결제수단을 확인해 주세요. 유예 기간 안에 결제가 완료되지
-                          않으면 멤버십 기능 이용이 종료됩니다.
-                        </span>
-                      </p>
-                    ) : null}
-                    {!status.membership ? (
-                      <Stack direction="row">
-                        <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
-                          자세히 알아보기
-                        </Anchor>
-                      </Stack>
-                    ) : null}
-                    {status.isDirectMembership && status.membership ? (
-                      <Stack direction="row" gap={1} flexWrap="wrap">
-                        {status.isCanceled ? (
-                          <button
-                            type="button"
-                            className="button small action"
-                            onClick={() => setCancelTarget(status.membership ?? null)}
-                          >
-                            취소 철회
-                          </button>
-                        ) : (
-                          (() => {
-                            const elapsedMs = status.membership.createdAt
-                              ? new Date().getTime() - new Date(status.membership.createdAt).getTime()
-                              : 0;
-                            const isPast7Days = elapsedMs > 7 * 24 * 60 * 60 * 1000;
+                          취소 철회
+                        </button>
+                      ) : (
+                        (() => {
+                          const elapsedMs = status.membership.createdAt
+                            ? new Date().getTime() - new Date(status.membership.createdAt).getTime()
+                            : 0;
+                          const isPast7Days = elapsedMs > 7 * 24 * 60 * 60 * 1000;
 
-                            if (isPast7Days) {
-                              return (
-                                <button
-                                  type="button"
-                                  className="button small action"
-                                  onClick={() => setCancelTarget(status.membership ?? null)}
-                                >
-                                  구독 취소
-                                </button>
-                              );
-                            }
-
+                          if (isPast7Days) {
                             return (
                               <button
                                 type="button"
-                                className="button small danger"
-                                onClick={() => setRefundTarget(status.membership ?? null)}
+                                className="button small action"
+                                onClick={() => setCancelTarget(status.membership ?? null)}
                               >
-                                환불
+                                구독 취소
                               </button>
                             );
-                          })()
-                        )}
-                        <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
-                          자세히 알아보기
-                        </Anchor>
-                      </Stack>
-                    ) : null}
-                  </div>
-                );
-              })}
-          </Stack>
-        )}
+                          }
+
+                          return (
+                            <button
+                              type="button"
+                              className="button small danger"
+                              onClick={() => setRefundTarget(status.membership ?? null)}
+                            >
+                              환불
+                            </button>
+                          );
+                        })()
+                      )}
+                      <Anchor href={MEMBERSHIP_JOIN_HREF[type]} className="button small action">
+                        자세히 알아보기
+                      </Anchor>
+                    </Stack>
+                  ) : null}
+                </div>
+              );
+            })}
+        </Stack>
       </section>
 
       <PopupMessage

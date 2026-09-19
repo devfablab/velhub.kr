@@ -31,7 +31,7 @@ type PostRow = {
   kinds: PostKind[];
 };
 
-type PostsResponse = {
+export type PostsResponse = {
   posts?: PostRow[];
   error?: string;
 };
@@ -75,6 +75,8 @@ type ContentResponse = {
 
 type Props = {
   siteType: SiteType;
+  initialData: PostsResponse | null;
+  initialError: string;
 };
 
 function getKindLabel(kind: PostKind) {
@@ -260,42 +262,13 @@ function PostPreview({ response, errorMessage }: { response: ContentResponse | n
   );
 }
 
-export default function OwnedDonationPosts({ siteType }: Props) {
+export default function OwnedDonationPosts({ initialData, initialError }: Props) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [posts, setPosts] = useState<PostRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const posts = Array.isArray(initialData?.posts) ? initialData.posts : [];
   const [selectedPost, setSelectedPost] = useState<PostRow | null>(null);
   const [contentResponse, setContentResponse] = useState<ContentResponse | null>(null);
   const [contentErrorMessage, setContentErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadPosts() {
-      try {
-        const response = await fetch(`/api/hub/owned-donation-posts?siteType=${siteType}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-        const result = (await response.json()) as PostsResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error || '소장/후원글 목록을 불러오지 못했습니다.');
-        }
-
-        setPosts(Array.isArray(result.posts) ? result.posts : []);
-        setErrorMessage('');
-      } catch (unknownError) {
-        setErrorMessage(
-          unknownError instanceof Error ? unknownError.message : '소장/후원글 목록을 불러오지 못했습니다.',
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPosts();
-  }, [siteType]);
 
   useEffect(() => {
     if (!selectedPost) {
@@ -347,14 +320,10 @@ export default function OwnedDonationPosts({ siteType }: Props) {
     setContentErrorMessage('');
   }
 
-  if (isLoading) {
-    return null;
-  }
-
-  if (errorMessage) {
+  if (initialError) {
     return (
       <section className={`paper ${styles.paper}`}>
-        <ScreenState kind="error">{errorMessage}</ScreenState>
+        <ScreenState kind="error">{initialError}</ScreenState>
       </section>
     );
   }

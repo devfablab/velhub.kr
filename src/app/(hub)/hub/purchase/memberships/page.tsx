@@ -2,8 +2,9 @@ import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { ServiceNoDataIcon } from '@/components/Svgs';
-import MembershipPlan from '../../memberships/opt';
+import MembershipPlan, { Eligibility, IdentityStatusResponse, MembershipResponse } from '../../memberships/opt';
 import Container from '../../menu';
+import { getHubApiData } from '../../shared/getHubApiData';
 import Content from '../tab';
 import styles from '@/app/hub.module.sass';
 
@@ -47,7 +48,12 @@ async function getMemberships() {
 }
 
 export default async function Page() {
-  const result = await getMemberships();
+  const [result, membership, eligibility, identity] = await Promise.all([
+    getMemberships(),
+    getHubApiData<MembershipResponse>('/api/memberships', '멤버십 정보를 불러오지 못했습니다.'),
+    getHubApiData<Eligibility>('/api/memberships/eligibility', '멤버십 이용 가능 여부를 불러오지 못했습니다.'),
+    getHubApiData<IdentityStatusResponse>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.'),
+  ]);
   const paymentHistory = result.payments.flatMap((payment) => {
     const isRefunded = (payment.refunded_amount ?? 0) > 0;
     const paymentHistoryItem = {
@@ -134,7 +140,12 @@ export default async function Page() {
             )}
           </section>
           <Suspense fallback={null}>
-            <MembershipPlan />
+            <MembershipPlan
+              initialMemberships={membership.data}
+              initialEligibility={eligibility.data}
+              initialIdentity={identity.data}
+              initialError={membership.error}
+            />
           </Suspense>
         </Content>
       </div>

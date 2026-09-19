@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import ScreenState from '@/components/service/ScreenState';
@@ -22,21 +22,28 @@ type FavoriteBlogRow = {
   sortOrder: number;
 };
 
-type FavoriteBlogsResponse = {
+export type FavoriteBlogsResponse = {
   blogs?: FavoriteBlogRow[];
   error?: string;
 };
 
-type Folder = {
+export type Folder = {
   id: string;
   label: string;
 };
 
-export default function FavoriteBlogs() {
-  const [blogs, setBlogs] = useState<FavoriteBlogRow[]>([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+export default function FavoriteBlogs({
+  initialBlogs,
+  initialFolders,
+  initialError,
+}: {
+  initialBlogs: FavoriteBlogsResponse | null;
+  initialFolders: { folders?: Folder[] } | null;
+  initialError: string;
+}) {
+  const [blogs, setBlogs] = useState<FavoriteBlogRow[]>(initialBlogs?.blogs ?? []);
+  const [folders, setFolders] = useState<Folder[]>(initialFolders?.folders ?? []);
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const [isAddFolderOpen, setIsAddFolderOpen] = useState(false);
   const [editFolder, setEditFolder] = useState<Folder | null>(null);
@@ -64,14 +71,8 @@ export default function FavoriteBlogs() {
       setFolders(foldersResult.folders || []);
     } catch (unknownError) {
       setErrorMessage(unknownError instanceof Error ? unknownError.message : '오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    void loadData();
-  }, []);
 
   const handleAddFolder = async (label: string) => {
     await fetch('/api/hub/favorite-folders', {
@@ -207,7 +208,6 @@ export default function FavoriteBlogs() {
     </div>
   );
 
-  if (isLoading) return null;
   if (errorMessage)
     return (
       <section className={`paper ${styles.paper}`}>

@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormControl, FormControlLabel, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
 type Site = { id: string; siteKey: string; siteLabel: string; siteType: string };
 type Post = { id: string; subject: string; slug: number | null; siteKey: string; siteLabel: string };
-type SelectorResponse = {
+export type SelectorResponse = {
   features: { ownerLounge: boolean; creatorLounge: boolean };
   sites: Site[];
   ownPosts: Post[];
@@ -50,20 +49,24 @@ function SelectorGroup({
   );
 }
 
-export default function MembershipSelectors() {
-  const [data, setData] = useState<SelectorResponse | null>(null);
+export default function MembershipSelectors({
+  initialData,
+  initialError,
+}: {
+  initialData: SelectorResponse | null;
+  initialError: string;
+}) {
+  const [data, setData] = useState<SelectorResponse | null>(initialData);
   const [ownerSiteId, setOwnerSiteId] = useState('');
   const [creatorSiteId, setCreatorSiteId] = useState('');
   const [creatorOwnPostId, setCreatorOwnPostId] = useState('');
   const [creatorOtherPostId, setCreatorOtherPostId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
+  const [fetchError, setFetchError] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarKind, setSnackbarKind] = useState<'info' | 'error'>('info');
 
   const loadData = () => {
-    setIsLoading(true);
     setFetchError('');
     fetch('/api/memberships/selectors')
       .then(async (response) => ({ response, body: await response.json() }))
@@ -80,13 +83,8 @@ export default function MembershipSelectors() {
         setFetchError(message);
         setSnackbarKind('error');
         setSnackbarMessage(message);
-      })
-      .finally(() => setIsLoading(false));
+      });
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   async function handleSubmit() {
     setIsSaving(true);
@@ -107,16 +105,6 @@ export default function MembershipSelectors() {
       setIsSaving(false);
     }
   }
-
-  if (isLoading)
-    return (
-      <section className={`paper ${styles.paper}`}>
-        <h2>라운지 노출</h2>
-        <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 240 }}>
-          <LoadingIndicator />
-        </Stack>
-      </section>
-    );
 
   if (fetchError || !data) {
     return (

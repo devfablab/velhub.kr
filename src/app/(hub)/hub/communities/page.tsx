@@ -3,10 +3,10 @@ import { cookies, headers } from 'next/headers';
 import { ServiceNoDataIcon } from '@/components/Svgs';
 import Container from '../menu';
 import JoinSites, { JoinSiteRow } from '../shared/joinSites';
-import Liked from '../shared/liked';
+import Liked, { LikedResponse } from '../shared/liked';
 import MemberStatusSites, { MemberStatusSiteRow } from '../shared/memberStatusSites';
-import OwnedDonationPosts from '../shared/ownedDonationPosts';
-import PostHistory from '../shared/postHistory';
+import OwnedDonationPosts, { PostsResponse as OwnedDonationPostsResponse } from '../shared/ownedDonationPosts';
+import PostHistory, { PostsResponse } from '../shared/postHistory';
 import Content from './tab';
 import styles from '@/app/hub.module.sass';
 
@@ -81,6 +81,31 @@ export default async function SectionJoinSites() {
   const joinSites = Array.isArray(result.joinSites) ? result.joinSites : [];
   const statusSites = Array.isArray(result.statusSites) ? result.statusSites : [];
   const hasCommunity = joinSites.some((site) => site.site_type === 'community');
+  const cookieStore = await cookies();
+  const headerList = await headers();
+  const host = headerList.get('host');
+  const protocol = headerList.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+  const requestHeaders = { cookie: cookieStore.toString() };
+  const load = async <T,>(path: string, fallback: string): Promise<{ data: T | null; error: string }> => {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, { headers: requestHeaders, cache: 'no-store' });
+      const data = (await response.json()) as T & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? fallback);
+      return { data, error: '' };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : fallback };
+    }
+  };
+  const [liked, saved, read, owned] = await Promise.all([
+    load<LikedResponse>('/api/hub/liked?siteType=community&limit=3', '좋아요 목록을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/saved-posts?siteType=community&limit=3', '저장한 글을 불러오지 못했습니다.'),
+    load<PostsResponse>('/api/hub/read-posts?siteType=community&limit=3', '읽은 글을 불러오지 못했습니다.'),
+    load<OwnedDonationPostsResponse>(
+      '/api/hub/owned-donation-posts?siteType=community',
+      '소장/후원글 목록을 불러오지 못했습니다.',
+    ),
+  ]);
 
   return (
     <Container pageTitle="커뮤니티 허브" pageBack="/hub">
@@ -97,10 +122,10 @@ export default async function SectionJoinSites() {
               </div>
             </section>
           )}
-          <Liked siteType="community" />
-          <PostHistory siteType="community" type="saved" />
-          <PostHistory siteType="community" type="read" />
-          <OwnedDonationPosts siteType="community" />
+          <Liked siteType="community" initialData={liked.data} initialError={liked.error} />
+          <PostHistory siteType="community" type="saved" initialData={saved.data} initialError={saved.error} />
+          <PostHistory siteType="community" type="read" initialData={read.data} initialError={read.error} />
+          <OwnedDonationPosts siteType="community" initialData={owned.data} initialError={owned.error} />
         </Content>
       </div>
     </Container>

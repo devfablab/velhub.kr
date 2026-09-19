@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { formatDateTimeFull } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
@@ -20,55 +19,24 @@ type PendingInviteRow = {
   profileLogoUrl: string | null;
 };
 
-type PendingInviteResponse = {
+export type PendingInviteResponse = {
   invites?: PendingInviteRow[];
   error?: string;
 };
 
-export default function PendingInvite() {
-  const [invites, setInvites] = useState<PendingInviteRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+export default function PendingInvite({
+  initialData,
+  initialError,
+}: {
+  initialData: PendingInviteResponse | null;
+  initialError: string;
+}) {
+  const invites = Array.isArray(initialData?.invites) ? initialData.invites : [];
 
-  useEffect(() => {
-    async function loadPendingInvites() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch('/api/hub/pending-invites', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as PendingInviteResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '초대 정보를 불러오지 못했습니다.');
-        }
-
-        setInvites(Array.isArray(result.invites) ? result.invites : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '초대 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('초대 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPendingInvites();
-  }, []);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (errorMessage) {
+  if (initialError) {
     return (
       <section className={`paper ${styles.paper} ${styles.pending}`}>
-        <ScreenState kind="error">{errorMessage}</ScreenState>
+        <ScreenState kind="error">{initialError}</ScreenState>
       </section>
     );
   }

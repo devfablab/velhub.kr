@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
 
-type Post = {
+export type Post = {
   id: string;
   subject: string;
   url: string;
@@ -14,7 +14,7 @@ type Post = {
   seriesLabel: string;
   publishedAt: string | null;
 };
-type Response = { posts: Post[]; total: number; page: number };
+export type PostsResponse = { posts: Post[]; total: number; page: number; message?: string };
 
 function openPost(url: string) {
   window.open(
@@ -36,10 +36,17 @@ function openPost(url: string) {
   );
 }
 
-export default function Opt() {
-  const [data, setData] = useState<Response | null>(null);
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: PostsResponse | null;
+  initialError: string;
+}) {
+  const [data, setData] = useState<PostsResponse | null>(initialData);
   const [page, setPage] = useState(1);
   const [message, setMessage] = useState('');
+  const hasInitialData = useRef(Boolean(initialData) || Boolean(initialError));
 
   const load = useCallback(async (nextPage: number) => {
     setMessage('');
@@ -50,10 +57,14 @@ export default function Opt() {
   }, []);
 
   useEffect(() => {
+    if (hasInitialData.current) {
+      hasInitialData.current = false;
+      return;
+    }
     load(page).catch((error) => setMessage(error instanceof Error ? error.message : '포스트를 불러오지 못했습니다.'));
   }, [load, page]);
 
-  if (message) return <ScreenState kind="error">{message}</ScreenState>;
+  if (initialError || message) return <ScreenState kind="error">{initialError || message}</ScreenState>;
   if (!data) return null;
 
   const totalPages = Math.ceil(data.total / 20);
