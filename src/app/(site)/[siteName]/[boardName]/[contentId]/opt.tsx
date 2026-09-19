@@ -1262,7 +1262,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
                 <header className={styles['content-header']}>
                   <div className={styles['content-board-name']}>
                     <Anchor
-                      href={seriesName ? `/${siteName}/s/${seriesName}` : `/${siteName}/${board.board_key}`}
+                      href={listHref}
                       className={styles['board-link']}
                     >
                       {board.board_type === 'blog' ? (
