@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -44,7 +43,7 @@ import InquiryDetails from '@/components/concierge/InquiryDetails';
 import IdentityAgreement from '@/components/service/common/IdentityAgreement';
 import styles from '@/app/concierge.module.sass';
 
-type Inquiry = {
+export type Inquiry = {
   inquiry_type: InquiryType;
   status: InquiryStatus;
   title: string | null;
@@ -86,13 +85,19 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Opt() {
+export default function Opt({
+  initialInquiry,
+  initialError,
+}: {
+  initialInquiry: Inquiry | null;
+  initialError: string;
+}) {
   const { inquiryId } = useParams<{ inquiryId: string }>();
   const searchParams = useSearchParams();
   const certificateInputRef = useRef<HTMLInputElement | null>(null);
-  const [inquiry, setInquiry] = useState<Inquiry | null>(null);
+  const [inquiry, setInquiry] = useState<Inquiry | null>(initialInquiry);
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [success, setSuccess] = useState('');
   const [uploading, setUploading] = useState(false);
   const [savingControl, setSavingControl] = useState(false);
@@ -121,10 +126,6 @@ export default function Opt() {
     }
     setInquiry(result.inquiry);
   }
-
-  useEffect(() => {
-    void load();
-  }, [inquiryId]);
 
   async function upload() {
     if (!file) return;

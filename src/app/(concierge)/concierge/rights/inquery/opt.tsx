@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, type ReactNode, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -58,7 +58,7 @@ type SubmitResponse = {
   error?: string;
 };
 
-type SettlementResponse = {
+export type SettlementResponse = {
   exists?: boolean;
   identity?: {
     name: string;
@@ -244,7 +244,13 @@ function RequiredFieldLabel({ children, isMobile }: { children: ReactNode; isMob
   );
 }
 
-export default function Opt() {
+export default function Opt({
+  initialReporter,
+  initialError,
+}: {
+  initialReporter: SettlementResponse | null;
+  initialError: string;
+}) {
   const searchParams = useSearchParams();
 
   const targetTypeParam = useMemo(() => normalizeTargetType(searchParams.get('targetType')), [searchParams]);
@@ -275,8 +281,8 @@ export default function Opt() {
   const selectedReportCategoryOption =
     rightsReportCategoryOptions.find((option) => option.value === reportCategory) ?? null;
 
-  const [reporterName, setReporterName] = useState('');
-  const [reporterLoading, setReporterLoading] = useState(true);
+  const reporterName = initialReporter?.identity?.name ?? '';
+  const reporterLoading = false;
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -297,7 +303,7 @@ export default function Opt() {
   const [copyrightProofFiles, setCopyrightProofFiles] = useState<File[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const theme = useTheme();
@@ -332,36 +338,6 @@ export default function Opt() {
 
     return true;
   })();
-
-  useEffect(() => {
-    async function loadReporter() {
-      try {
-        setReporterLoading(true);
-
-        const response = await fetch('/api/settlement', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json().catch(() => ({
-          message: '신고자 정보를 불러오지 못했습니다.',
-        }))) as SettlementResponse;
-
-        if (!response.ok || result.message) {
-          setErrorMessage(result.message ?? '신고자 정보를 불러오지 못했습니다.');
-          return;
-        }
-
-        setReporterName(result.identity?.name ?? '');
-      } catch {
-        setErrorMessage('신고자 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      } finally {
-        setReporterLoading(false);
-      }
-    }
-
-    void loadReporter();
-  }, []);
 
   function resetCategoryFields() {
     setRightsOwnerType('');

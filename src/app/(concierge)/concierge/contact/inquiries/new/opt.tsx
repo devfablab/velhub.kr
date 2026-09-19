@@ -27,7 +27,7 @@ import { MEMBERSHIP_FEATURES, type MembershipFeatureKey, type MembershipType } f
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import Anchor from '@/components/Anchor';
 
-type PaymentRow = {
+export type PaymentRow = {
   id: string;
   label: string;
   approvedAt: string | null;
@@ -88,17 +88,27 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-export default function Opt() {
+export default function Opt({
+  initialPayments,
+  initialCancellationPayments,
+  initialCancellationAvailableAt,
+  initialPaymentError,
+}: {
+  initialPayments: PaymentRow[];
+  initialCancellationPayments: PaymentRow[];
+  initialCancellationAvailableAt: string | null;
+  initialPaymentError: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedPaymentId = searchParams.get('paymentId')?.trim() ?? '';
   const isAutoMinorCancellation =
     searchParams.get('inquiryType') === 'minor_purchase_cancellation' && Boolean(requestedPaymentId);
   const evidenceInputRef = useRef<HTMLInputElement | null>(null);
-  const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [cancellationPayments, setCancellationPayments] = useState<PaymentRow[]>([]);
-  const [cancellationAvailableAt, setCancellationAvailableAt] = useState<string | null>(null);
-  const [paymentLoadError, setPaymentLoadError] = useState('');
+  const payments = initialPayments;
+  const cancellationPayments = initialCancellationPayments;
+  const cancellationAvailableAt = initialCancellationAvailableAt;
+  const paymentLoadError = initialPaymentError;
   const [inquiryType, setInquiryType] = useState<InquiryType>(
     isAutoMinorCancellation ? 'minor_purchase_cancellation' : 'service_question',
   );
@@ -132,36 +142,6 @@ export default function Opt() {
   const [evidence, setEvidence] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    async function loadPayments() {
-      const [cancellationResponse, paymentResponse] = await Promise.all([
-        fetch('/api/concierge/contact/inquiries?payments=true', { cache: 'no-store' }),
-        fetch('/api/concierge/contact/inquiries?payments=all', { cache: 'no-store' }),
-      ]);
-      const result = (await cancellationResponse.json().catch(() => null)) as {
-        payments?: PaymentRow[];
-        cancellationAvailableAt?: string | null;
-        error?: string;
-      } | null;
-      const paymentResult = (await paymentResponse.json().catch(() => null)) as {
-        payments?: PaymentRow[];
-        error?: string;
-      } | null;
-
-      if (!cancellationResponse.ok || !paymentResponse.ok) {
-        setPaymentLoadError(result?.error ?? '결제 내역을 불러오지 못했습니다.');
-        return;
-      }
-
-      setPaymentLoadError('');
-      setCancellationPayments(result?.payments ?? []);
-      setPayments(paymentResult?.payments ?? []);
-      setCancellationAvailableAt(result?.cancellationAvailableAt ?? null);
-    }
-
-    void loadPayments();
-  }, []);
 
   useEffect(() => {
     if (!isAutoMinorCancellation) return;

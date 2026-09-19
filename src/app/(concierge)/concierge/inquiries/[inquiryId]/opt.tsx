@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -22,7 +22,7 @@ import InquiryDetails from '@/components/concierge/InquiryDetails';
 import PopupMessage from '@/components/PopupMessage';
 import styles from '@/app/concierge.module.sass';
 
-type Inquiry = {
+export type Inquiry = {
   id: string;
   requester_stigma_id: string;
   requesterActivityName: string;
@@ -52,7 +52,7 @@ type Inquiry = {
     created_at: string;
   }[];
 };
-type Parent = {
+export type Parent = {
   fatherName: string;
   fatherBirthDate: string;
   motherName: string;
@@ -60,7 +60,13 @@ type Parent = {
   verifiedAt: string | null;
   certificateUrl: string | null;
 };
-type ManualRefund = { hasAccount: boolean; remainingAdjustmentAmount: number };
+export type ManualRefund = { hasAccount: boolean; remainingAdjustmentAmount: number };
+export type InquiryDetailResponse = {
+  inquiry?: Inquiry;
+  parent?: Parent | null;
+  manualRefund?: ManualRefund;
+  error?: string;
+};
 
 function resolutionOptions(type: InquiryType) {
   const common = ['request_withdrawn', 'additional_information_not_submitted'] as InquiryResolutionCode[];
@@ -74,35 +80,43 @@ function resolutionOptions(type: InquiryType) {
   return [...common, 'error_resolved_guidance_completed'] as InquiryResolutionCode[];
 }
 
-export default function Opt() {
+export default function Opt({
+  initialData,
+  initialError,
+}: {
+  initialData: InquiryDetailResponse | null;
+  initialError: string;
+}) {
   const params = useParams<{ inquiryId: string }>();
   const router = useRouter();
-  const [inquiry, setInquiry] = useState<Inquiry | null>(null);
-  const [status, setStatus] = useState<Inquiry['status']>('received');
-  const [resolutionCode, setResolutionCode] = useState<InquiryResolutionCode>('error_resolved_guidance_completed');
-  const [summary, setSummary] = useState('');
+  const initialInquiry = initialData?.inquiry ?? null;
+  const initialParent = initialData?.parent ?? null;
+  const [inquiry, setInquiry] = useState<Inquiry | null>(initialInquiry);
+  const [status, setStatus] = useState<Inquiry['status']>(initialInquiry?.status ?? 'received');
+  const [resolutionCode, setResolutionCode] = useState<InquiryResolutionCode>(
+    initialInquiry?.resolution_code ??
+      (initialInquiry ? resolutionOptions(initialInquiry.inquiry_type)[0] : 'error_resolved_guidance_completed'),
+  );
+  const [summary, setSummary] = useState(initialInquiry?.resolution_summary ?? '');
   const [informationRequestType, setInformationRequestType] = useState<InquiryInformationRequestType>('text_response');
   const [informationRequestMessage, setInformationRequestMessage] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(initialError);
   const [isSaving, setIsSaving] = useState(false);
-  const [fatherName, setFatherName] = useState('');
-  const [fatherBirthDate, setFatherBirthDate] = useState('');
-  const [motherName, setMotherName] = useState('');
-  const [motherBirthDate, setMotherBirthDate] = useState('');
-  const [manualRefund, setManualRefund] = useState<ManualRefund>({ hasAccount: false, remainingAdjustmentAmount: 0 });
-  const [certificateUrl, setCertificateUrl] = useState<string | null>(null);
-  const [parentVerifiedAt, setParentVerifiedAt] = useState<string | null>(null);
+  const [fatherName, setFatherName] = useState(initialParent?.fatherName ?? '');
+  const [fatherBirthDate, setFatherBirthDate] = useState(initialParent?.fatherBirthDate ?? '');
+  const [motherName, setMotherName] = useState(initialParent?.motherName ?? '');
+  const [motherBirthDate, setMotherBirthDate] = useState(initialParent?.motherBirthDate ?? '');
+  const [manualRefund, setManualRefund] = useState<ManualRefund>(
+    initialData?.manualRefund ?? { hasAccount: false, remainingAdjustmentAmount: 0 },
+  );
+  const [certificateUrl, setCertificateUrl] = useState<string | null>(initialParent?.certificateUrl ?? null);
+  const [parentVerifiedAt, setParentVerifiedAt] = useState<string | null>(initialParent?.verifiedAt ?? null);
   const [pgCancellationCheckRequired, setPgCancellationCheckRequired] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/concierge/inquiries/${params.inquiryId}`, { cache: 'no-store' });
-    const result = (await response.json().catch(() => null)) as {
-      inquiry?: Inquiry;
-      parent?: Parent | null;
-      manualRefund?: ManualRefund;
-      error?: string;
-    } | null;
+    const result = (await response.json().catch(() => null)) as InquiryDetailResponse | null;
     if (!response.ok || !result?.inquiry) {
       setError(result?.error ?? '문의를 불러오지 못했습니다.');
       return;
@@ -121,10 +135,6 @@ export default function Opt() {
     }
     if (result.manualRefund) setManualRefund(result.manualRefund);
   }, [params.inquiryId]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -2,15 +2,8 @@ import { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import Container from '../../menu';
-import Opt from './opt';
+import Opt, { SettlementResponse } from './opt';
 import styles from '@/app/concierge.module.sass';
-
-type SettlementResponse = {
-  exists: boolean;
-  settlement: {
-    settlement_type: 'individual' | 'business';
-  } | null;
-};
 
 export const metadata: Metadata = {
   title: '신고하기 - 신고센터  - 데브허브',
@@ -39,21 +32,21 @@ async function getSettlementStatus(baseUrl: string, cookieHeader: string) {
   });
 
   if (!response.ok) {
-    return false;
+    return null;
   }
 
   const data = (await response.json().catch(() => null)) as SettlementResponse | null;
 
-  return Boolean(data?.exists && data.settlement);
+  return data?.exists && data.settlement ? data : null;
 }
 
 export default async function Page() {
   const cookieStore = await cookies();
   const baseUrl = await getBaseUrl();
   const cookieHeader = cookieStore.toString();
-  let hasSettlement = false;
+  let reporter: SettlementResponse | null = null;
   if (baseUrl) {
-    hasSettlement = await getSettlementStatus(baseUrl, cookieHeader);
+    reporter = await getSettlementStatus(baseUrl, cookieHeader);
   }
 
   return (
@@ -61,12 +54,12 @@ export default async function Page() {
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content}`}>
           <h1>신고센터</h1>
-          {!hasSettlement ? (
+          {!reporter ? (
             <div className="paper">
               <IdentityVerificationButton />
             </div>
           ) : null}
-          {hasSettlement ? <Opt /> : null}
+          {reporter ? <Opt initialReporter={reporter} initialError="" /> : null}
         </div>
       </div>
     </Container>

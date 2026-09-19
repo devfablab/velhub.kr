@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useEffect, useMemo, useState } from 'react';
+import { type ChangeEvent, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -35,7 +35,7 @@ type SubmitResponse = {
   error?: string;
 };
 
-type SettlementResponse = {
+export type SettlementResponse = {
   exists?: boolean;
   identity?: {
     name: string;
@@ -260,7 +260,13 @@ function getSingleFileError(file: File, currentFiles: File[]) {
   return '';
 }
 
-export default function Opt() {
+export default function Opt({
+  initialReporter,
+  initialError,
+}: {
+  initialReporter: SettlementResponse | null;
+  initialError: string;
+}) {
   const searchParams = useSearchParams();
 
   const initialLegalType = useMemo(
@@ -288,11 +294,11 @@ export default function Opt() {
   const [selectedLegalType, setSelectedLegalType] = useState<LegalType | ''>(initialLegalType);
   const [reportUrl, setReportUrl] = useState('');
 
-  const [reporterName, setReporterName] = useState('');
-  const [reporterCompanyName, setReporterCompanyName] = useState('');
-  const [reporterBirthDate, setReporterBirthDate] = useState('');
-  const [reporterCompanyNumber, setReporterCompanyNumber] = useState('');
-  const [reporterLoading, setReporterLoading] = useState(true);
+  const reporterName = initialReporter?.identity?.name ?? '';
+  const reporterCompanyName = initialReporter?.settlement?.company_name ?? '';
+  const reporterBirthDate = initialReporter?.identity?.birth_date ?? '';
+  const reporterCompanyNumber = initialReporter?.settlement?.company_number ?? '';
+  const reporterLoading = false;
 
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -319,7 +325,7 @@ export default function Opt() {
   const [privacyRequestReason, setPrivacyRequestReason] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
   const theme = useTheme();
@@ -332,39 +338,6 @@ export default function Opt() {
         ? 'other'
         : ''
     : privacyReportType;
-
-  useEffect(() => {
-    async function loadReporter() {
-      try {
-        setReporterLoading(true);
-
-        const response = await fetch('/api/settlement', {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json().catch(() => ({
-          message: '신고자 정보를 불러오지 못했습니다.',
-        }))) as SettlementResponse;
-
-        if (!response.ok || result.message) {
-          setErrorMessage(result.message ?? '신고자 정보를 불러오지 못했습니다.');
-          return;
-        }
-
-        setReporterName(result.identity?.name ?? '');
-        setReporterBirthDate(result.identity?.birth_date ?? '');
-        setReporterCompanyName(result.settlement?.company_name ?? '');
-        setReporterCompanyNumber(result.settlement?.company_number ?? '');
-      } catch {
-        setErrorMessage('신고자 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      } finally {
-        setReporterLoading(false);
-      }
-    }
-
-    void loadReporter();
-  }, []);
 
   function resetTypeFields() {
     setRequestType('');
