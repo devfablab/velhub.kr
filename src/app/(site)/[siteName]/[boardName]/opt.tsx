@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useEffect, useState } from 'react';
+import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
@@ -38,6 +38,8 @@ import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  initialData: BoardListResponse | null;
+  initialError: string;
 };
 
 type BoardItem = {
@@ -92,7 +94,7 @@ type SelectedSeries = {
   series_label: string;
 };
 
-type BoardListResponse = {
+export type BoardListResponse = {
   board: BoardItem;
   contents?: PostItem[];
   page?: number;
@@ -263,7 +265,7 @@ function YoutubeThumbnailImage({ content }: { content: PostItem }) {
   );
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -273,19 +275,20 @@ export default function Opt({ isCommunity }: Props) {
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
 
-  const [board, setBoard] = useState<BoardItem | null>(null);
-  const [contents, setContents] = useState<PostItem[]>([]);
+  const [board, setBoard] = useState<BoardItem | null>(initialData?.board ?? null);
+  const [contents, setContents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
   const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
-  const [selectedSeries, setSelectedSeries] = useState<SelectedSeries | null>(null);
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPage, setTotalPage] = useState(1);
+  const [selectedSeries, setSelectedSeries] = useState<SelectedSeries | null>(initialData?.selectedSeries ?? null);
+  const [currentPage, setCurrentPage] = useState(initialData?.page ?? initialPage);
+  const [totalCount, setTotalCount] = useState(initialData?.totalCount ?? 0);
+  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
   const [boardViewType, setBoardViewType] = useState<BoardViewType>('default');
-  const [canWritePost, setCanWritePost] = useState(false);
-  const [blogType, setBlogType] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [canWritePost, setCanWritePost] = useState(Boolean(initialData?.actions?.canWritePost));
+  const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const isInitialLoad = useRef(true);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
@@ -367,6 +370,10 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
     const nextSeriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();

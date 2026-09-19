@@ -58,6 +58,11 @@ import styles from '@/app/board.module.sass';
 type Props = {
   isCommunity: boolean;
   writePolicyMessage?: string;
+  initialBoards: BoardsResponse | null;
+  initialBoardInfo: BoardInfoResponse | null;
+  initialPrefixes: PrefixListResponse | null;
+  initialSeries: SeriesListResponse | null;
+  initialError: string;
 };
 
 type BoardItem = {
@@ -69,12 +74,12 @@ type BoardItem = {
   is_active: boolean;
 };
 
-type BoardsResponse = {
+export type BoardsResponse = {
   boards?: BoardItem[];
   error?: string;
 };
 
-type BoardInfoResponse = {
+export type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series' | 'both';
@@ -95,7 +100,7 @@ type PrefixRow = {
   created_at: string;
 };
 
-type PrefixListResponse = {
+export type PrefixListResponse = {
   prefixes?: PrefixRow[];
   error?: string;
 };
@@ -115,7 +120,7 @@ type SeriesRow = {
   user_id: string | null;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
@@ -555,7 +560,15 @@ function buildDrawPayload(draw: DrawState): DrawPayload {
   };
 }
 
-export default function Opt({ isCommunity, writePolicyMessage }: Props) {
+export default function Opt({
+  isCommunity,
+  writePolicyMessage,
+  initialBoards,
+  initialBoardInfo,
+  initialPrefixes,
+  initialSeries,
+  initialError,
+}: Props) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -568,15 +581,19 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
   const prefixSelectReference = useRef<HTMLDivElement | null>(null);
   const seriesSelectReference = useRef<HTMLDivElement | null>(null);
+  const isInitialBoardsLoad = useRef(true);
+  const isInitialBoardMetaLoad = useRef(true);
 
   const [accessDialogType, setAccessDialogType] = useState<AccessDialogType>(null);
   const [alertMessage, setAlertMessage] = useState('');
-  const [boards, setBoards] = useState<BoardItem[]>([]);
+  const [boards, setBoards] = useState<BoardItem[]>(() =>
+    (initialBoards?.boards ?? []).filter((board) => board.is_active === true && board.board_type !== 'page'),
+  );
   const [selectedBoardKey, setSelectedBoardKey] = useState(boardName);
-  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>('none');
-  const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(initialBoardInfo?.board?.board_type ?? 'basic');
+  const [postType, setPostType] = useState<'none' | 'prefix' | 'series' | 'both'>(initialBoardInfo?.board?.post_type ?? 'none');
+  const [prefixList, setPrefixList] = useState<PrefixRow[]>(initialPrefixes?.prefixes ?? []);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const [subject, setSubject] = useState('');
@@ -608,8 +625,8 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const [galleryDialogMessage, setGalleryDialogMessage] = useState('');
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
-  const [canPinPost, setCanPinPost] = useState(false);
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
+  const [canPinPost, setCanPinPost] = useState(initialBoardInfo?.actions?.canPinPost === true);
+  const [markdownStatus, setMarkdownStatus] = useState<string | null>(initialBoardInfo?.board?.markdown_status ?? 'markdown_default');
   const [isPollEnabled, setIsPollEnabled] = useState(false);
   const [poll, setPoll] = useState<PollState>(() => createEmptyPoll());
   const [pollDialogOpen, setPollDialogOpen] = useState(false);
@@ -620,13 +637,13 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   const [drawDialogOpen, setDrawDialogOpen] = useState(false);
   const [drawDialog, setDrawDialog] = useState<DrawState>(() => createEmptyDraw());
   const [drawDialogMessage, setDrawDialogMessage] = useState('');
-  const [isLoadingBoards, setIsLoadingBoards] = useState(true);
+  const [isLoadingBoards, setIsLoadingBoards] = useState(false);
   const [isLoadingBoardMeta, setIsLoadingBoardMeta] = useState(false);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
@@ -754,6 +771,10 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   }, []);
 
   useEffect(() => {
+    if (isInitialBoardsLoad.current) {
+      isInitialBoardsLoad.current = false;
+      return;
+    }
     async function loadBoards() {
       try {
         setErrorMessage('');
@@ -800,6 +821,10 @@ export default function Opt({ isCommunity, writePolicyMessage }: Props) {
   }, [siteName, boardName]);
 
   useEffect(() => {
+    if (isInitialBoardMetaLoad.current) {
+      isInitialBoardMetaLoad.current = false;
+      return;
+    }
     async function loadBoardMeta() {
       if (!selectedBoardKey) {
         setBoardType('basic');

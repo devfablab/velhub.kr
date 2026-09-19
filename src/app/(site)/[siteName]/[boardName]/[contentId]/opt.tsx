@@ -57,6 +57,8 @@ import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  initialData: ContentResponse | null;
+  initialError: string;
 };
 
 type BoardInfo = {
@@ -251,7 +253,7 @@ type SeriesContentItem = {
   href: string;
 };
 
-type ContentResponse = {
+export type ContentResponse = {
   board: BoardInfo;
   content?: PostContent;
   series?: SeriesItem | null;
@@ -375,7 +377,7 @@ function extractUrls(value: string) {
   return Array.from(new Set(matchedUrls.map((url) => url.replace(/[),.!?]+$/g, '').trim()).filter(Boolean)));
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const theme = useTheme();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -385,18 +387,18 @@ export default function Opt({ isCommunity }: Props) {
   const categoryName = normalizeText(searchParams.get('categoryName')).toLowerCase();
   const seriesName = normalizeText(searchParams.get('seriesName')).toLowerCase();
 
-  const [board, setBoard] = useState<BoardInfo | null>(null);
-  const [content, setContent] = useState<PostContent | null>(null);
-  const [series, setSeries] = useState<SeriesItem | null>(null);
-  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>([]);
-  const [previousPost, setPreviousPost] = useState<AdjacentPost | null>(null);
-  const [nextPost, setNextPost] = useState<AdjacentPost | null>(null);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [canManageContent, setCanManageContent] = useState(false);
-  const [canEditContent, setCanEditContent] = useState(false);
-  const [canDeleteContent, setCanDeleteContent] = useState(false);
-  const [canMovePost, setCanMovePost] = useState(false);
+  const [board, setBoard] = useState<BoardInfo | null>(initialData?.board ?? null);
+  const [content, setContent] = useState<PostContent | null>(initialData?.content ?? null);
+  const [series, setSeries] = useState<SeriesItem | null>(initialData?.series ?? null);
+  const [seriesContents, setSeriesContents] = useState<SeriesContentItem[]>(initialData?.seriesContents ?? []);
+  const [previousPost, setPreviousPost] = useState<AdjacentPost | null>(initialData?.previousPost ?? null);
+  const [nextPost, setNextPost] = useState<AdjacentPost | null>(initialData?.nextPost ?? null);
+  const [isAuthor, setIsAuthor] = useState(initialData?.isAuthor ?? false);
+  const [isStaff, setIsStaff] = useState(initialData?.isStaff ?? false);
+  const [canManageContent, setCanManageContent] = useState(initialData?.canManageContent === true);
+  const [canEditContent, setCanEditContent] = useState(initialData?.canEditContent === true);
+  const [canDeleteContent, setCanDeleteContent] = useState(initialData?.canDeleteContent === true);
+  const [canMovePost, setCanMovePost] = useState(initialData?.canMovePost === true);
   const [isSeriesMoveDialogOpen, setIsSeriesMoveDialogOpen] = useState(false);
   const [isPostMoveDialogOpen, setIsPostMoveDialogOpen] = useState(false);
   const [moveBoards, setMoveBoards] = useState<MoveBoard[]>([]);
@@ -408,8 +410,8 @@ export default function Opt({ isCommunity }: Props) {
   const [deleteReason, setDeleteReason] = useState('');
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const [galleryViewerOpen, setGalleryViewerOpen] = useState(false);
   const [galleryViewerIndex, setGalleryViewerIndex] = useState(0);
@@ -417,16 +419,17 @@ export default function Opt({ isCommunity }: Props) {
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
   const [pollErrorMessage, setPollErrorMessage] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(null);
-  const [draw, setDraw] = useState<DrawInfo | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(initialData?.selectedCategory ?? null);
+  const [draw, setDraw] = useState<DrawInfo | null>(initialData?.draw ?? null);
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(initialData?.postActions?.isLiked === true);
+  const [isSaved, setIsSaved] = useState(initialData?.postActions?.isSaved === true);
+  const [likeCount, setLikeCount] = useState(initialData?.postActions?.likeCount ?? 0);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
   const [isTogglingSave, setIsTogglingSave] = useState(false);
   const [postActionErrorMessage, setPostActionErrorMessage] = useState('');
   const youtubePlayerReference = useRef<YoutubePlayerHandle | null>(null);
+  const isInitialLoad = useRef(true);
 
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
@@ -707,7 +710,18 @@ export default function Opt({ isCommunity }: Props) {
     }
   }
 
+  // The initial response is supplied by the server; later route changes still reload here.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      if (initialData?.content?.poll) void loadPollResult(boardName, initialData.content.id);
+      if (initialData?.content?.published_status === 'published') {
+        void increasePostCount(boardName, contentId);
+        void recordPostRead(boardName, contentId);
+      }
+      return;
+    }
     async function loadContent() {
       try {
         setErrorMessage('');

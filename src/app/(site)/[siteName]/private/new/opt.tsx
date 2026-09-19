@@ -25,7 +25,7 @@ import SiteInfo from '@/components/service/community/SiteInfo';
 import TableList from '@/components/service/community/TableList';
 import styles from '@/app/board.module.sass';
 
-type Response = { board?: { is_image_enabled: boolean }; categories?: { id: string; label: string }[]; error?: string };
+export type Response = { board?: { is_image_enabled: boolean }; categories?: { id: string; label: string }[]; error?: string };
 
 type SelectedImage = {
   id: string;
@@ -37,21 +37,21 @@ const MAX_IMAGE_COUNT = 5;
 const MAX_IMAGE_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
-export default function Opt() {
+export default function Opt({ initialData, initialError, initialStatus }: { initialData: Response | null; initialError: string; initialStatus: number }) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
-  const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
-  const [categoryId, setCategoryId] = useState('');
-  const [isImageEnabled, setIsImageEnabled] = useState(false);
+  const [categories] = useState<{ id: string; label: string }[]>(initialData?.categories ?? []);
+  const [categoryId, setCategoryId] = useState(initialData?.categories?.[0]?.id ?? '');
+  const [isImageEnabled] = useState(initialData?.board?.is_image_enabled === true);
   const [subject, setSubject] = useState('');
   const [contentHtml, setContentHtml] = useState('');
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [imageDialogImages, setImageDialogImages] = useState<SelectedImage[]>([]);
   const [imageDialogMessage, setImageDialogMessage] = useState('');
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(initialError);
+  const [isLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const categorySelectReference = useRef<HTMLDivElement | null>(null);
   const imageInputReference = useRef<HTMLInputElement | null>(null);
@@ -61,24 +61,8 @@ export default function Opt() {
   const isMobile = !isNotMobile;
 
   useEffect(() => {
-    void fetch(`/api/private-board?siteName=${siteName}`, { credentials: 'include' })
-      .then(async (response) => {
-        const result = (await response.json()) as Response;
-        if (response.status === 401) {
-          router.replace(`/auth/sign-in?next=/${siteName}/private/new`);
-          return;
-        }
-        if (!response.ok) {
-          setError(result.error ?? '글 작성 정보를 불러오지 못했습니다.');
-          return;
-        }
-        setCategories(result.categories ?? []);
-        setCategoryId(result.categories?.[0]?.id ?? '');
-        setIsImageEnabled(result.board?.is_image_enabled === true);
-      })
-      .catch(() => setError('글 작성 정보를 불러오지 못했습니다.'))
-      .finally(() => setIsLoading(false));
-  }, [router, siteName]);
+    if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private/new`);
+  }, [initialStatus, router, siteName]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {

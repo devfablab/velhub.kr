@@ -2,13 +2,18 @@ import { notFound } from 'next/navigation';
 import { getBoardPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import Opt from './opt';
+import { getSiteApiData } from '../../getSiteApiData';
+import Opt, { type BoardListResponse } from './opt';
 
 type RouteContext = {
   params: Promise<{
     siteName: string;
     boardName: string;
   }>;
+};
+
+type SearchContext = RouteContext & {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata(context: RouteContext) {
@@ -21,8 +26,9 @@ export async function generateMetadata(context: RouteContext) {
   });
 }
 
-export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
+export default async function Page(context: SearchContext) {
+  const { siteName, boardName } = await context.params;
+  const searchParams = await context.searchParams;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
 
   if (!normalizedSiteName) {
@@ -43,5 +49,14 @@ export default async function Page(context: RouteContext) {
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
 
-  return <Opt isCommunity={isCommunity} />;
+  const queryParams = new URLSearchParams({
+    siteName: normalizedSiteName,
+    page: typeof searchParams.page === 'string' ? searchParams.page : '1',
+    size: boardName.toLowerCase() === 'b' ? '9' : '20',
+  });
+  if (typeof searchParams.keyword === 'string' && searchParams.keyword) queryParams.set('keyword', searchParams.keyword);
+  if (typeof searchParams.seriesName === 'string' && searchParams.seriesName) queryParams.set('seriesName', searchParams.seriesName);
+  const initial = await getSiteApiData<BoardListResponse>(`/api/boards/${boardName.toLowerCase()}?${queryParams.toString()}`, '전체 게시글을 불러오지 못했습니다.');
+
+  return <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} />;
 }

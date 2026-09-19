@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
@@ -24,7 +24,7 @@ type Post = {
   hasAnswer: boolean;
   createdAt: string;
 };
-type Response = { board?: { board_label: string }; isStaff?: boolean; posts?: Post[]; total?: number; error?: string };
+export type Response = { board?: { board_label: string }; isStaff?: boolean; posts?: Post[]; total?: number; error?: string };
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(
@@ -32,14 +32,15 @@ function formatDate(value: string) {
   );
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError, initialStatus }: { initialData: Response | null; initialError: string; initialStatus: number }) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<Response>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<Response>(initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError });
+  const isInitialLoad = useRef(true);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
@@ -47,6 +48,11 @@ export default function Opt() {
   const isTablet = !isNotTablet;
 
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private`);
+      return;
+    }
     async function load() {
       setIsLoading(true);
       const response = await fetch(`/api/private-board?siteName=${siteName}&filter=${filter}&page=${page}`, {
@@ -64,7 +70,7 @@ export default function Opt() {
     }
 
     void load();
-  }, [filter, page, router, siteName]);
+  }, [filter, initialStatus, page, router, siteName]);
 
   if (isLoading)
     return (

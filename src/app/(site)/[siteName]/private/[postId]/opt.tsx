@@ -48,7 +48,7 @@ type Reply = {
   images: AttachedImage[];
 };
 type AttachedImage = { id: string; url: string; file?: File | null };
-type Data = {
+export type Data = {
   canEditPost?: boolean;
   canDeletePost?: boolean;
   previousPost?: { id: string; subject: string } | null;
@@ -237,12 +237,12 @@ function PrivateImageDialog({ images, isMobile, onApply, onClose, open }: Privat
   );
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError, initialStatus }: { initialData: Data | null; initialError: string; initialStatus: number }) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
   const postId = normalizeText(params.postId);
-  const [data, setData] = useState<Data>({});
+  const [data, setData] = useState<Data>(initialData ? { ...initialData, error: initialError || initialData.error } : { error: initialError });
   const [contentHtml, setContentHtml] = useState('');
   const [replyImages, setReplyImages] = useState<AttachedImage[]>([]);
   const [replyImageDialogOpen, setReplyImageDialogOpen] = useState(false);
@@ -273,31 +273,8 @@ export default function Opt() {
   }
 
   useEffect(() => {
-    let isActive = true;
-
-    fetch(`/api/private-board/${postId}?siteName=${siteName}`, { credentials: 'include' })
-      .then(async (response) => {
-        const result = (await response.json()) as Data;
-
-        if (response.status === 401) {
-          router.replace(`/auth/sign-in?next=/${siteName}/private/${postId}`);
-          return;
-        }
-
-        if (isActive) {
-          setData(result);
-        }
-      })
-      .catch(() => {
-        if (isActive) {
-          setData({ error: '글 정보를 불러오지 못했습니다.' });
-        }
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [postId, router, siteName]);
+    if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private/${postId}`);
+  }, [initialStatus, postId, router, siteName]);
 
   async function reply() {
     if (isSaving) return;

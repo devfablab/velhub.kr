@@ -33,14 +33,24 @@ type Post = {
   subject: string;
   images: { id: string; url: string }[];
 };
-type BoardResponse = { board?: { is_image_enabled: boolean }; categories?: Category[]; error?: string };
-type PostResponse = { post?: Post; error?: string };
+export type BoardResponse = { board?: { is_image_enabled: boolean }; categories?: Category[]; error?: string };
+export type PostResponse = { post?: Post; error?: string };
 
 const MAX_IMAGE_COUNT = 5;
 const MAX_IMAGE_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 
-export default function Opt() {
+export default function Opt({
+  initialBoard,
+  initialPost,
+  initialError,
+  initialStatus,
+}: {
+  initialBoard: BoardResponse | null;
+  initialPost: PostResponse | null;
+  initialError: string;
+  initialStatus: number;
+}) {
   const params = useParams();
   const router = useRouter();
   const siteName = normalizeText(params.siteName);
@@ -48,17 +58,17 @@ export default function Opt() {
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryId, setCategoryId] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [subject, setSubject] = useState('');
-  const [isImageEnabled, setIsImageEnabled] = useState(false);
-  const [images, setImages] = useState<EditableImage[]>([]);
+  const [categories] = useState<Category[]>(initialBoard?.categories ?? []);
+  const [categoryId, setCategoryId] = useState(initialPost?.post?.category_id ?? '');
+  const [contentHtml, setContentHtml] = useState(initialPost?.post?.content_html ?? '');
+  const [subject, setSubject] = useState(initialPost?.post?.subject ?? '');
+  const [isImageEnabled] = useState(initialBoard?.board?.is_image_enabled === true);
+  const [images, setImages] = useState<EditableImage[]>(initialPost?.post?.images.map((image) => ({ id: image.id, file: null, previewUrl: image.url })) ?? []);
   const [imageDialogImages, setImageDialogImages] = useState<EditableImage[]>([]);
   const [imageDialogMessage, setImageDialogMessage] = useState('');
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const [isLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const categorySelectReference = useRef<HTMLDivElement | null>(null);
   const imageInputReference = useRef<HTMLInputElement | null>(null);
@@ -74,34 +84,8 @@ export default function Opt() {
   }, [categories, categoryId]);
 
   useEffect(() => {
-    void Promise.all([
-      fetch(`/api/private-board?siteName=${siteName}`, { credentials: 'include' }),
-      fetch(`/api/private-board/${postId}?siteName=${siteName}`, { credentials: 'include' }),
-    ])
-      .then(async ([boardResponse, postResponse]) => {
-        const boardResult = (await boardResponse.json()) as BoardResponse;
-        const postResult = (await postResponse.json()) as PostResponse;
-
-        if (boardResponse.status === 401 || postResponse.status === 401) {
-          router.replace(`/auth/sign-in?next=/${siteName}/private/${postId}/edit`);
-          return;
-        }
-
-        if (!boardResponse.ok || !postResponse.ok || !postResult.post) {
-          setErrorMessage(postResult.error ?? boardResult.error ?? '글 수정 정보를 불러오지 못했습니다.');
-          return;
-        }
-
-        setCategories(boardResult.categories ?? []);
-        setCategoryId(postResult.post.category_id);
-        setSubject(postResult.post.subject);
-        setContentHtml(postResult.post.content_html);
-        setIsImageEnabled(boardResult.board?.is_image_enabled === true);
-        setImages(postResult.post.images.map((image) => ({ id: image.id, file: null, previewUrl: image.url })));
-      })
-      .catch(() => setErrorMessage('글 수정 정보를 불러오지 못했습니다.'))
-      .finally(() => setIsLoading(false));
-  }, [postId, router, siteName]);
+    if (initialStatus === 401) router.replace(`/auth/sign-in?next=/${siteName}/private/${postId}/edit`);
+  }, [initialStatus, postId, router, siteName]);
 
   async function handleSubmit() {
     if (isSaving) return;

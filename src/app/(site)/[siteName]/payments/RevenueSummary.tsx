@@ -11,7 +11,7 @@ import SettlementForm from '@/components/service/common/SettlementForm';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
-type RevenueSummaryResponse = {
+export type RevenueSummaryResponse = {
   isAuthor?: boolean;
   isSettlementError?: boolean;
   hasData?: boolean;
@@ -32,6 +32,8 @@ type RevenueErrorResponse = {
 type RevenueSummaryProps = {
   siteName?: string;
   apiPath?: string;
+  initialData?: RevenueSummaryResponse | null;
+  initialError?: string;
 };
 
 function isRevenueErrorResponse(value: RevenueSummaryResponse | RevenueErrorResponse): value is RevenueErrorResponse {
@@ -60,11 +62,13 @@ const summaryItems: {
 export default function RevenueSummary({
   siteName: siteNameProp,
   apiPath = '/api/revenue/summary',
+  initialData = null,
+  initialError = '',
 }: RevenueSummaryProps = {}) {
   const params = useParams();
   const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
-  const [summary, setSummary] = useState<RevenueSummaryResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [summary, setSummary] = useState<RevenueSummaryResponse | null>(initialData);
+  const [errorMessage, setErrorMessage] = useState(initialError);
 
   const loadSummary = useCallback(async () => {
     if (!siteName) {
@@ -90,8 +94,9 @@ export default function RevenueSummary({
   }, [apiPath, siteName]);
 
   useEffect(() => {
+    if (initialData || initialError) return;
     void loadSummary();
-  }, [loadSummary]);
+  }, [initialData, initialError, loadSummary]);
 
   if (errorMessage) {
     return (

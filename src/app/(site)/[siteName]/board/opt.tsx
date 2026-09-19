@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, type ReactNode, useEffect, useState } from 'react';
+import { type JSX, type ReactNode, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import ArrowBackIosRoundedIcon from '@mui/icons-material/ArrowBackIosRounded';
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -26,6 +26,8 @@ import styles from '@/app/board.module.sass';
 
 type Props = {
   isCommunity: boolean;
+  initialData: BoardListResponse | null;
+  initialError: string;
 };
 
 type PostItem = {
@@ -51,7 +53,7 @@ type PostItem = {
   search_content: string;
 };
 
-type BoardListResponse = {
+export type BoardListResponse = {
   contents?: PostItem[];
   page?: number;
   size?: number;
@@ -119,7 +121,7 @@ function getPageNumbers(currentPage: number, totalPage: number) {
   return Array.from({ length: endPage - startPage + 1 }, (_, index) => startPage + index);
 }
 
-export default function Opt({ isCommunity }: Props) {
+export default function Opt({ isCommunity, initialData, initialError }: Props) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -128,14 +130,15 @@ export default function Opt({ isCommunity }: Props) {
   const initialPage = parsePage(searchParams.get('page'));
   const initialKeyword = normalizeText(searchParams.get('keyword'));
 
-  const [contents, setContents] = useState<PostItem[]>([]);
+  const [contents, setContents] = useState<PostItem[]>(initialData?.contents ?? []);
   const [keywordInput, setKeywordInput] = useState(initialKeyword);
   const [searchKeyword, setSearchKeyword] = useState(initialKeyword);
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPage, setTotalPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(initialData?.page ?? initialPage);
+  const [totalCount, setTotalCount] = useState(initialData?.totalCount ?? 0);
+  const [totalPage, setTotalPage] = useState(initialData?.totalPage ?? 1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const isInitialLoad = useRef(true);
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isNotTablet = useMediaQuery(theme.breakpoints.up('xl'));
@@ -200,6 +203,10 @@ export default function Opt({ isCommunity }: Props) {
   }
 
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     const nextPage = parsePage(searchParams.get('page'));
     const nextKeyword = normalizeText(searchParams.get('keyword'));
 

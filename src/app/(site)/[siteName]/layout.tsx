@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
+import { getSiteApiData } from '../getSiteApiData';
+import { SiteHeaderProvider, type SiteHeaderData } from './SiteHeaderContext';
 
 type RouteContext = {
   children: ReactNode;
@@ -80,10 +82,11 @@ export async function generateMetadata({ params }: RouteContext): Promise<Metada
 export default async function SiteLayout({ children, params }: RouteContext) {
   const { siteName } = await params;
   const settings = await getSiteAdvancedSettings(siteName);
+  const header = await getSiteApiData<SiteHeaderData>(`/api/header/site?siteName=${encodeURIComponent(siteName)}`, '사이트 정보를 불러오지 못했습니다.');
 
   return (
     <>
-      {children}
+      <SiteHeaderProvider value={header.data}>{children}</SiteHeaderProvider>
       {settings.googleAnalytics ? (
         <Suspense fallback={null}>
           <SiteGoogleAnalytics measurementId={settings.googleAnalytics} />

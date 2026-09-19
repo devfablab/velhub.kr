@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
@@ -23,7 +23,7 @@ import { LoadingIndicator } from '@/components/LoadingIndicator';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/payments.module.sass';
 
-type RevenueListType = 'transactions' | 'refunds' | 'scheduled' | 'confirmed' | 'completed';
+export type RevenueListType = 'transactions' | 'refunds' | 'scheduled' | 'confirmed' | 'completed';
 type RevenueRangeType = 'all' | 'year' | 'quarter' | 'half' | 'custom';
 
 type RevenueListItem = {
@@ -42,7 +42,7 @@ type RevenueListItem = {
   completedAt: string | null;
 };
 
-type RevenueListResponse = {
+export type RevenueListResponse = {
   items: RevenueListItem[];
   total: number;
   page: number;
@@ -66,6 +66,8 @@ type RevenueListPageProps = {
   type: RevenueListType;
   siteName?: string;
   apiBasePath?: string;
+  initialData?: RevenueListResponse | null;
+  initialError?: string;
 };
 
 type RevenueErrorResponse = {
@@ -109,14 +111,17 @@ export default function RevenueList({
   type,
   siteName: siteNameProp,
   apiBasePath = '/api/revenue',
+  initialData = null,
+  initialError = '',
 }: RevenueListPageProps) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const siteName = normalizeText(siteNameProp) || normalizeText(params.siteName);
 
-  const [responseData, setResponseData] = useState<RevenueListResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [responseData, setResponseData] = useState<RevenueListResponse | null>(initialData);
+  const [errorMessage, setErrorMessage] = useState(initialError);
+  const isInitialLoad = useRef(true);
 
   const page = Number(searchParams.get('page') ?? '1') || 1;
   const rangeType = (searchParams.get('rangeType') as RevenueRangeType | null) ?? 'all';
@@ -133,6 +138,10 @@ export default function RevenueList({
   }, [page, searchParams, siteName]);
 
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      if (initialData || initialError) return;
+    }
     async function loadList() {
       if (!siteName) {
         return;
@@ -158,7 +167,7 @@ export default function RevenueList({
     }
 
     void loadList();
-  }, [apiBasePath, queryString, siteName, type]);
+  }, [apiBasePath, initialData, initialError, queryString, siteName, type]);
 
   function updateSearchParams(nextValues: Record<string, string | null>) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
