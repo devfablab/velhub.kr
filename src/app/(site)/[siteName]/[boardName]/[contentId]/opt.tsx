@@ -421,7 +421,9 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
   const [pollResult, setPollResult] = useState<PollResult | null>(null);
   const [isSubmittingPoll, setIsSubmittingPoll] = useState(false);
   const [pollErrorMessage, setPollErrorMessage] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(initialData?.selectedCategory ?? null);
+  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory | null>(
+    initialData?.selectedCategory ?? null,
+  );
   const [draw, setDraw] = useState<DrawInfo | null>(initialData?.draw ?? null);
 
   const [isLiked, setIsLiked] = useState(initialData?.postActions?.isLiked === true);
@@ -484,7 +486,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
       setIsLoadingMoveBoards(true);
 
       const response = await fetch(
-        `/api/boards?siteName=${encodeURIComponent(siteName)}${canManageContent ? '&manageContents=true' : ''}`,
+        `/api/boards?siteName=${siteName}${canManageContent ? '&manageContents=true' : ''}`,
         {
           method: 'GET',
           credentials: 'include',
@@ -522,7 +524,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
       setMoveBoardErrorMessage('');
 
       const response = await fetch(
-        `/api/boards/${encodeURIComponent(boardName)}/${encodeURIComponent(contentId)}/move?siteName=${encodeURIComponent(siteName)}`,
+        `/api/boards/${encodeURIComponent(boardName)}/${encodeURIComponent(contentId)}/move?siteName=${siteName}`,
         {
           method: 'PATCH',
           credentials: 'include',
@@ -1261,10 +1263,7 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
               <div className="paper">
                 <header className={styles['content-header']}>
                   <div className={styles['content-board-name']}>
-                    <Anchor
-                      href={listHref}
-                      className={styles['board-link']}
-                    >
+                    <Anchor href={listHref} className={styles['board-link']}>
                       {board.board_type === 'blog' ? (
                         <span>{selectedCategory ? selectedCategory.category_label : '글 목록'}</span>
                       ) : (

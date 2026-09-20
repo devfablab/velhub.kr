@@ -17,7 +17,10 @@ export default async function Page(context: SearchContext) {
   const searchParams = await context.searchParams;
   const filter = typeof searchParams.filter === 'string' ? searchParams.filter : 'all';
   const page = typeof searchParams.page === 'string' ? searchParams.page : '1';
-  const initial = await getSiteApiData<Response>(`/api/private-board?siteName=${encodeURIComponent(siteName)}&filter=${encodeURIComponent(filter)}&page=${encodeURIComponent(page)}`, '비공개 게시글을 불러오지 못했습니다.');
+  const initial = await getSiteApiData<Response>(
+    `/api/private-board?siteName=${siteName}&filter=${encodeURIComponent(filter)}&page=${encodeURIComponent(page)}`,
+    '비공개 게시글을 불러오지 못했습니다.',
+  );
 
   return (
     <Container pageBack={`/${siteName}`} pageTitle="비공개 게시판">

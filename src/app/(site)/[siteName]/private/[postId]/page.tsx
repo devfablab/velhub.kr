@@ -11,7 +11,10 @@ type RouteContext = {
 
 export default async function Page(context: RouteContext) {
   const { siteName, postId } = await context.params;
-  const initial = await getSiteApiData<Data>(`/api/private-board/${encodeURIComponent(postId)}?siteName=${encodeURIComponent(siteName)}`, '글 정보를 불러오지 못했습니다.');
+  const initial = await getSiteApiData<Data>(
+    `/api/private-board/${encodeURIComponent(postId)}?siteName=${siteName}`,
+    '글 정보를 불러오지 못했습니다.',
+  );
 
   return (
     <Container pageBack={`/${siteName}/private`} pageTitle="글 보기" pageFin>

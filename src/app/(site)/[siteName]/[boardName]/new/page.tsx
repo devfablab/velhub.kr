@@ -4,7 +4,12 @@ import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import { getSiteApiData } from '../../../getSiteApiData';
-import Opt, { type BoardInfoResponse, type BoardsResponse, type PrefixListResponse, type SeriesListResponse } from './opt';
+import Opt, {
+  type BoardInfoResponse,
+  type BoardsResponse,
+  type PrefixListResponse,
+  type SeriesListResponse,
+} from './opt';
 
 type RouteContext = {
   params: Promise<{
@@ -59,20 +64,44 @@ export default async function Page(context: RouteContext) {
     }
   }
 
-  const initialBoards = await getSiteApiData<BoardsResponse>(`/api/boards/write?siteName=${encodeURIComponent(normalizedSiteName)}`, '게시판 목록을 불러오지 못했습니다.');
-  const currentBoard = (initialBoards.data?.boards ?? []).find((board) => board.is_active && board.board_type !== 'page' && board.board_key === boardName.toLowerCase());
+  const initialBoards = await getSiteApiData<BoardsResponse>(
+    `/api/boards/write?siteName=${normalizedSiteName}`,
+    '게시판 목록을 불러오지 못했습니다.',
+  );
+  const currentBoard = (initialBoards.data?.boards ?? []).find(
+    (board) => board.is_active && board.board_type !== 'page' && board.board_key === boardName.toLowerCase(),
+  );
   const initialBoardInfo = currentBoard
-    ? await getSiteApiData<BoardInfoResponse>(`/api/boards/${encodeURIComponent(currentBoard.board_key)}?siteName=${encodeURIComponent(normalizedSiteName)}`, '게시판 정보를 불러오지 못했습니다.')
+    ? await getSiteApiData<BoardInfoResponse>(
+        `/api/boards/${encodeURIComponent(currentBoard.board_key)}?siteName=${normalizedSiteName}`,
+        '게시판 정보를 불러오지 못했습니다.',
+      )
     : { data: null, error: '접근 권한이 없습니다.' };
   const [initialPrefixes, initialSeries] = await Promise.all([
     currentBoard && initialBoardInfo.data?.board?.post_type === 'prefix'
-      ? getSiteApiData<PrefixListResponse>(`/api/boards/${encodeURIComponent(currentBoard.board_key)}/prefix?siteName=${encodeURIComponent(normalizedSiteName)}`, '말머리 목록을 불러오지 못했습니다.')
+      ? getSiteApiData<PrefixListResponse>(
+          `/api/boards/${encodeURIComponent(currentBoard.board_key)}/prefix?siteName=${normalizedSiteName}`,
+          '말머리 목록을 불러오지 못했습니다.',
+        )
       : Promise.resolve({ data: null, error: '' }),
     currentBoard && ['series', 'both'].includes(initialBoardInfo.data?.board?.post_type ?? 'none')
-      ? getSiteApiData<SeriesListResponse>(`/api/boards/${encodeURIComponent(currentBoard.board_key)}/series?siteName=${encodeURIComponent(normalizedSiteName)}`, '연재 목록을 불러오지 못했습니다.')
+      ? getSiteApiData<SeriesListResponse>(
+          `/api/boards/${encodeURIComponent(currentBoard.board_key)}/series?siteName=${normalizedSiteName}`,
+          '연재 목록을 불러오지 못했습니다.',
+        )
       : Promise.resolve({ data: null, error: '' }),
   ]);
   const initialError = initialBoards.error || initialBoardInfo.error || initialPrefixes.error || initialSeries.error;
 
-  return <Opt isCommunity={isCommunity} writePolicyMessage={writePolicyMessage} initialBoards={initialBoards.data} initialBoardInfo={initialBoardInfo.data} initialPrefixes={initialPrefixes.data} initialSeries={initialSeries.data} initialError={initialError} />;
+  return (
+    <Opt
+      isCommunity={isCommunity}
+      writePolicyMessage={writePolicyMessage}
+      initialBoards={initialBoards.data}
+      initialBoardInfo={initialBoardInfo.data}
+      initialPrefixes={initialPrefixes.data}
+      initialSeries={initialSeries.data}
+      initialError={initialError}
+    />
+  );
 }

@@ -55,10 +55,25 @@ export default async function Page(context: SearchContext) {
     page: typeof searchParams.page === 'string' ? searchParams.page : '1',
     size: boardName.toLowerCase() === 'b' ? '9' : '20',
   });
-  if (typeof searchParams.keyword === 'string' && searchParams.keyword) queryParams.set('keyword', searchParams.keyword);
-  if (typeof searchParams.seriesName === 'string' && searchParams.seriesName) queryParams.set('seriesName', searchParams.seriesName);
-  const initial = await getSiteApiData<BoardListResponse>(`/api/boards/${boardName.toLowerCase()}?${queryParams.toString()}`, '전체 게시글을 불러오지 못했습니다.');
-  const initialPopularPosts = await getSiteApiData<BoardPostCountResponse>(`/api/boards/${boardName.toLowerCase()}?siteName=${encodeURIComponent(normalizedSiteName)}&page=1&size=10&sort=post_count&includePin=false`, '인기글을 불러오지 못했습니다.');
+  if (typeof searchParams.keyword === 'string' && searchParams.keyword)
+    queryParams.set('keyword', searchParams.keyword);
+  if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
+    queryParams.set('seriesName', searchParams.seriesName);
+  const initial = await getSiteApiData<BoardListResponse>(
+    `/api/boards/${boardName.toLowerCase()}?${queryParams.toString()}`,
+    '전체 게시글을 불러오지 못했습니다.',
+  );
+  const initialPopularPosts = await getSiteApiData<BoardPostCountResponse>(
+    `/api/boards/${boardName.toLowerCase()}?siteName=${normalizedSiteName}&page=1&size=10&sort=post_count&includePin=false`,
+    '인기글을 불러오지 못했습니다.',
+  );
 
-  return <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} initialPopularPosts={initialPopularPosts.data} />;
+  return (
+    <Opt
+      isCommunity={isCommunity}
+      initialData={initial.data}
+      initialError={initial.error}
+      initialPopularPosts={initialPopularPosts.data}
+    />
+  );
 }

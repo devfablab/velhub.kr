@@ -52,10 +52,25 @@ export default async function Page(context: SearchContext) {
 
   const isCommunity = rhizomeResult.data.site_type === 'community';
   const queryParams = new URLSearchParams({ siteName: normalizedSiteName });
-  if (typeof searchParams.categoryName === 'string' && searchParams.categoryName) queryParams.set('categoryName', searchParams.categoryName);
-  if (typeof searchParams.seriesName === 'string' && searchParams.seriesName) queryParams.set('seriesName', searchParams.seriesName);
-  const initial = await getSiteApiData<ContentResponse>(`/api/boards/${boardName.toLowerCase()}/${contentId}?${queryParams.toString()}`, '게시글 정보를 불러오지 못했습니다.');
-  const initialComments = await getSiteApiData<CommentsResponse>(`/api/boards/${boardName.toLowerCase()}/${contentId}/comments?siteName=${encodeURIComponent(normalizedSiteName)}`, '댓글 목록을 불러오지 못했습니다.');
+  if (typeof searchParams.categoryName === 'string' && searchParams.categoryName)
+    queryParams.set('categoryName', searchParams.categoryName);
+  if (typeof searchParams.seriesName === 'string' && searchParams.seriesName)
+    queryParams.set('seriesName', searchParams.seriesName);
+  const initial = await getSiteApiData<ContentResponse>(
+    `/api/boards/${boardName.toLowerCase()}/${contentId}?${queryParams.toString()}`,
+    '게시글 정보를 불러오지 못했습니다.',
+  );
+  const initialComments = await getSiteApiData<CommentsResponse>(
+    `/api/boards/${boardName.toLowerCase()}/${contentId}/comments?siteName=${normalizedSiteName}`,
+    '댓글 목록을 불러오지 못했습니다.',
+  );
 
-  return <Opt isCommunity={isCommunity} initialData={initial.data} initialError={initial.error} initialComments={initialComments.data} />;
+  return (
+    <Opt
+      isCommunity={isCommunity}
+      initialData={initial.data}
+      initialError={initial.error}
+      initialComments={initialComments.data}
+    />
+  );
 }
