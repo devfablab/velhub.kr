@@ -14,7 +14,7 @@ export default async function Page(context: RouteContext) {
   const [initialBoard, initialPost] = await Promise.all([
     getSiteApiData<BoardResponse>(`/api/private-board?siteName=${siteName}`, '글 수정 정보를 불러오지 못했습니다.'),
     getSiteApiData<PostResponse>(
-      `/api/private-board/${encodeURIComponent(postId)}?siteName=${siteName}`,
+      `/api/private-board/${postId}?siteName=${siteName}`,
       '글 수정 정보를 불러오지 못했습니다.',
     ),
   ]);

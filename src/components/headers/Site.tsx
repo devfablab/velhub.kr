@@ -39,8 +39,8 @@ import NavPayments from '../header-groups/site/NavPayments';
 import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
-import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
+import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';

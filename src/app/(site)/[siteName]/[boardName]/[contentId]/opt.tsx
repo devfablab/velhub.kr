@@ -523,15 +523,12 @@ export default function Opt({ isCommunity, initialData, initialError, initialCom
       setIsMovingPost(true);
       setMoveBoardErrorMessage('');
 
-      const response = await fetch(
-        `/api/boards/${encodeURIComponent(boardName)}/${encodeURIComponent(contentId)}/move?siteName=${siteName}`,
-        {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ targetBoardKey: selectedMoveBoardKey }),
-        },
-      );
+      const response = await fetch(`/api/boards/${boardName}/${contentId}/move?siteName=${siteName}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetBoardKey: selectedMoveBoardKey }),
+      });
       const result = (await response.json()) as {
         error?: string;
         content?: { slug?: number | string };

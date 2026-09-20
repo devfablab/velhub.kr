@@ -73,20 +73,20 @@ export default async function Page(context: RouteContext) {
   );
   const initialBoardInfo = currentBoard
     ? await getSiteApiData<BoardInfoResponse>(
-        `/api/boards/${encodeURIComponent(currentBoard.board_key)}?siteName=${normalizedSiteName}`,
+        `/api/boards/${currentBoard.board_key}?siteName=${normalizedSiteName}`,
         '게시판 정보를 불러오지 못했습니다.',
       )
     : { data: null, error: '접근 권한이 없습니다.' };
   const [initialPrefixes, initialSeries] = await Promise.all([
     currentBoard && initialBoardInfo.data?.board?.post_type === 'prefix'
       ? getSiteApiData<PrefixListResponse>(
-          `/api/boards/${encodeURIComponent(currentBoard.board_key)}/prefix?siteName=${normalizedSiteName}`,
+          `/api/boards/${currentBoard.board_key}/prefix?siteName=${normalizedSiteName}`,
           '말머리 목록을 불러오지 못했습니다.',
         )
       : Promise.resolve({ data: null, error: '' }),
     currentBoard && ['series', 'both'].includes(initialBoardInfo.data?.board?.post_type ?? 'none')
       ? getSiteApiData<SeriesListResponse>(
-          `/api/boards/${encodeURIComponent(currentBoard.board_key)}/series?siteName=${normalizedSiteName}`,
+          `/api/boards/${currentBoard.board_key}/series?siteName=${normalizedSiteName}`,
           '연재 목록을 불러오지 못했습니다.',
         )
       : Promise.resolve({ data: null, error: '' }),

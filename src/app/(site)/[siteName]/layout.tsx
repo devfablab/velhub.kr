@@ -2,8 +2,8 @@ import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
 import HeaderSite from '@/components/headers/Site';
+import SiteGoogleAnalytics from '@/components/service/common/SiteGoogleAnalytics';
 import { getSiteApiData } from '../getSiteApiData';
 import { SiteHeaderProvider, type SiteHeaderData } from './SiteHeaderContext';
 import { SiteInitialDataProvider } from './SiteInitialDataContext';
@@ -147,13 +147,10 @@ export default async function SiteLayout({ children, params }: RouteContext) {
         )
       : Promise.resolve({ data: null }),
     header.data?.siteType === 'community'
-      ? getSiteApiData<unknown>(`/api/users/${encodeURIComponent(siteName)}/me`, '사용자 정보를 불러오지 못했습니다.')
+      ? getSiteApiData<unknown>(`/api/users/${siteName}/me`, '사용자 정보를 불러오지 못했습니다.')
       : Promise.resolve({ data: null }),
     header.data?.siteType === 'blog'
-      ? getSiteApiData<unknown>(
-          `/api/info/general/site/${encodeURIComponent(siteName)}`,
-          '사이트 정보를 불러오지 못했습니다.',
-        )
+      ? getSiteApiData<unknown>(`/api/info/general/site/${siteName}`, '사이트 정보를 불러오지 못했습니다.')
       : Promise.resolve({ data: null }),
     header.data?.siteType === 'blog'
       ? getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.')
