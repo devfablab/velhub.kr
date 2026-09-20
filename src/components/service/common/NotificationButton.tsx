@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import { formatTimeAgo } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 import styles from '@/app/header.module.sass';
 
 type Props = {
@@ -38,11 +39,12 @@ type UnreadCountResponse = {
 
 export default function NotificationButton({ isMobile }: Props) {
   const router = useRouter();
+  const initialData = useSiteInitialData();
 
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(initialData?.unreadNotificationCount ?? 0);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -119,6 +121,7 @@ export default function NotificationButton({ isMobile }: Props) {
   }
 
   useEffect(() => {
+    if (initialData) return;
     void loadUnreadCount();
   }, []);
 

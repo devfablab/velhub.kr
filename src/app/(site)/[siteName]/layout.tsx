@@ -85,7 +85,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
   const { siteName } = await params;
   const settings = await getSiteAdvancedSettings(siteName);
   const header = await getSiteApiData<SiteHeaderData>(`/api/header/site?siteName=${encodeURIComponent(siteName)}`, '사이트 정보를 불러오지 못했습니다.');
-  const [boards, writeBoards, postCounts, communitySiteInfo, communityLinks, communityUserInfo, blogProfile, siteMenu] = await Promise.all([
+  const [boards, writeBoards, postCounts, communitySiteInfo, communityLinks, communityUserInfo, blogProfile, blogIdentity, blogSubscription, blogDonation, blogLinks, siteMenu, unreadNotifications] = await Promise.all([
     getSiteApiData<{ boards?: Array<{ id: string; board_key: string; board_label: string; board_type: 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed'; is_active: boolean }> }>(`/api/boards?siteName=${encodeURIComponent(siteName)}`, '게시판 목록을 불러오지 못했습니다.'),
     getSiteApiData<{ boards?: Array<{ id: string; board_key: string; board_label: string; board_type: 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed'; is_active: boolean }> }>(`/api/boards/write?siteName=${encodeURIComponent(siteName)}`, '글쓰기 게시판을 불러오지 못했습니다.'),
     getSiteApiData<{ contents?: Array<{ id: string; slug: string; subject: string; board_key: string; post_count: number; comment_count: number }> }>(`/api/boards/all?siteName=${encodeURIComponent(siteName)}&page=1&size=10&sort=post_count&includePin=false`, '인기글을 불러오지 못했습니다.'),
@@ -93,13 +93,18 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     header.data?.siteType === 'community' ? getSiteApiData<{ links?: unknown[] }>(`/api/manage/design/community/links?siteName=${encodeURIComponent(siteName)}`, '커뮤니티 링크를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
     header.data?.siteType === 'community' ? getSiteApiData<unknown>(`/api/users/${encodeURIComponent(siteName)}/me`, '사용자 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
     header.data?.siteType === 'blog' ? getSiteApiData<unknown>(`/api/info/general/site/${encodeURIComponent(siteName)}`, '사이트 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
+    header.data?.siteType === 'blog' ? getSiteApiData<unknown>('/api/identity/portone/status', '본인인증 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
+    header.data?.siteType === 'blog' ? getSiteApiData<unknown>(`/api/payments/portone/subscriptions/status?targetType=site&siteName=${encodeURIComponent(siteName)}`, '구독 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
+    header.data?.siteType === 'blog' ? getSiteApiData<unknown>(`/api/payments/portone/donation/status?siteName=${encodeURIComponent(siteName)}&targetType=site`, '후원 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
+    header.data?.siteType === 'blog' ? getSiteApiData<unknown>(`/api/manage/design/blog/links?siteName=${encodeURIComponent(siteName)}`, '링크 정보를 불러오지 못했습니다.') : Promise.resolve({ data: null }),
     getSiteApiData<{ menus?: Array<{ id: string; board_type: string; board_label: string; slug: string; display_label: string; sort_order: number; is_renameable: boolean }>; privateBoard?: { label: string } | null }>(`/api/site/public?siteName=${encodeURIComponent(siteName)}`, '메뉴를 불러오지 못했습니다.'),
+    getSiteApiData<{ count?: number }>('/api/notifications/unread-count', '알림을 불러오지 못했습니다.'),
   ]);
 
   return (
     <>
       <SiteHeaderProvider value={header.data}>
-        <SiteInitialDataProvider value={{ boards: boards.data?.boards ?? [], writeBoards: writeBoards.data?.boards ?? [], postCountContents: postCounts.data?.contents ?? [], communitySiteInfo: communitySiteInfo.data?.siteInfo ?? null, communityLinks: communityLinks.data?.links ?? [], communityUserInfo: communityUserInfo.data ?? null, blogProfile: blogProfile.data ?? null, siteMenus: siteMenu.data?.menus ?? [], privateBoardLabel: header.data?.siteType === 'community' ? (siteMenu.data?.privateBoard?.label ?? '') : '' }}>
+        <SiteInitialDataProvider value={{ boards: boards.data?.boards ?? [], writeBoards: writeBoards.data?.boards ?? [], postCountContents: postCounts.data?.contents ?? [], communitySiteInfo: communitySiteInfo.data?.siteInfo ?? null, communityLinks: communityLinks.data?.links ?? [], communityUserInfo: communityUserInfo.data ?? null, blogProfile: blogProfile.data ? { ...(blogProfile.data as object), identity: blogIdentity.data, subscription: blogSubscription.data, donation: blogDonation.data, links: blogLinks.data } : null, siteMenus: siteMenu.data?.menus ?? [], privateBoardLabel: header.data?.siteType === 'community' ? (siteMenu.data?.privateBoard?.label ?? '') : '', unreadNotificationCount: Number(unreadNotifications.data?.count ?? 0) }}>
           <HeaderSite />
           {children}
         </SiteInitialDataProvider>

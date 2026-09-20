@@ -30,6 +30,7 @@ type InitialData = {
   blogProfile: unknown;
   siteMenus: SiteMenu[];
   privateBoardLabel: string;
+  unreadNotificationCount: number;
 };
 
 const SiteInitialDataContext = createContext<InitialData | null>(null);

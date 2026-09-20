@@ -40,6 +40,7 @@ import PrimaryMenu from '../header-groups/site/PrimaryMenu';
 import NotificationButton from '../service/common/NotificationButton';
 import { ServiceLogo } from '../Svgs';
 import { type ThemeMode, useThemeMode } from '@/app/themeProvider';
+import { useSiteHeader } from '@/app/(site)/[siteName]/SiteHeaderContext';
 import styles from '@/app/header.module.sass';
 
 type SiteType = 'blog' | 'community';
@@ -248,6 +249,8 @@ function applyColorSet(themeType: string) {
 export default function HeaderSite() {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
+  const initialHeader = useSiteHeader();
+  const hasInitialHeader = useRef(Boolean(initialHeader));
 
   const theme = useTheme();
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
@@ -259,28 +262,28 @@ export default function HeaderSite() {
   const [isMounted, setIsMounted] = useState(false);
   const [themeModeAnchorElement, setThemeModeAnchorElement] = useState<null | HTMLElement>(null);
   const [profileAnchorElement, setProfileAnchorElement] = useState<null | HTMLElement>(null);
-  const [siteType, setSiteType] = useState<SiteType | null>(null);
+  const [siteType, setSiteType] = useState<SiteType | null>(initialHeader?.siteType ?? null);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: null,
-    email: null,
-    avatarUrl: null,
-    isLoggedIn: false,
-    globalRole: null,
-    siteRole: null,
-    siteRoleLabels: [],
-    nickname: null,
-    isApproval: null,
-    invite: false,
-    join: false,
-    isAuthor: false,
-    creatorHandleName: null,
-    userHandleName: null,
-    hasAffettoMyPosts: false,
+    name: initialHeader?.userName ?? null,
+    email: initialHeader?.email ?? null,
+    avatarUrl: initialHeader?.avatar ?? null,
+    isLoggedIn: initialHeader?.isLoggedIn ?? false,
+    globalRole: initialHeader?.globalRole ?? null,
+    siteRole: initialHeader?.siteRole ?? null,
+    siteRoleLabels: initialHeader?.siteRoleLabels ?? [],
+    nickname: initialHeader?.nickname ?? null,
+    isApproval: initialHeader?.isApproval ?? null,
+    invite: initialHeader?.invite ?? false,
+    join: initialHeader?.join ?? false,
+    isAuthor: initialHeader?.isAuthor ?? false,
+    creatorHandleName: initialHeader?.creatorHandleName ?? null,
+    userHandleName: initialHeader?.userHandleName ?? null,
+    hasAffettoMyPosts: initialHeader?.hasAffettoMyPosts ?? false,
   });
 
-  const [siteLabel, setSiteLabel] = useState('');
-  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(null);
-  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(null);
+  const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
+  const [profileLogoUrl, setProfileLogoUrl] = useState<string | null>(initialHeader?.profileLogoUrl ?? null);
 
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -341,6 +344,14 @@ export default function HeaderSite() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
+    if (hasInitialHeader.current) {
+      if (initialHeader) {
+        applyColorSet(initialHeader.themeType);
+        applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
+      }
+      return;
+    }
+
     async function loadHeader() {
       if (!siteName) {
         return;

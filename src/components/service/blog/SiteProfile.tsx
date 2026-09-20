@@ -49,6 +49,13 @@ type SiteProfileResponse = {
   error?: string;
 };
 
+type InitialSiteProfile = SiteProfileResponse & {
+  identity?: IdentityStatusResponse | null;
+  subscription?: BlogSubscriptionStatusResponse | null;
+  donation?: DonationStatusResponse | null;
+  links?: SocialLinksResponse | null;
+};
+
 type ServiceValue = 'Facebook' | 'GitHub' | 'Instagram' | 'LinkedIn' | 'Pinterest' | 'X' | 'YouTube';
 
 type SocialLink = {
@@ -221,31 +228,31 @@ export default function SiteProfile() {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
   const initialData = useSiteInitialData();
-  const initialProfile = initialData?.blogProfile as SiteProfileResponse | null;
+  const initialProfile = initialData?.blogProfile as InitialSiteProfile | null;
 
   const [siteInfo, setSiteInfo] = useState<SiteInfo | null>(initialProfile?.siteInfo ?? null);
   const [blogType, setBlogType] = useState<string | null>(initialProfile?.blogType ?? null);
   const [profilePictureUrl, setProfilePictureUrl] = useState(initialProfile?.profilePictureUrl ?? '');
   const [profileLogoUrl, setProfileLogoUrl] = useState(initialProfile?.profileLogoUrl ?? '');
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialProfile?.links?.links ?? []);
   const [isLoading, setIsLoading] = useState(!initialProfile);
   const [errorMessage, setErrorMessage] = useState('');
   const [isDonationProcessing, setIsDonationProcessing] = useState(false);
-  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
-  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(null);
-  const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>('none');
-  const [isBlogSubscriptionRefundable, setIsBlogSubscriptionRefundable] = useState(false);
-  const [blogSubscriptionRefundAmount, setBlogSubscriptionRefundAmount] = useState(0);
+  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(Boolean(initialProfile?.subscription?.isEnabled));
+  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState<number | null>(initialProfile?.subscription?.price ?? null);
+  const [blogSubscriptionStatus, setBlogSubscriptionStatus] = useState<BlogSubscriptionStatus>(initialProfile?.subscription?.subscriptionStatus ?? 'none');
+  const [isBlogSubscriptionRefundable, setIsBlogSubscriptionRefundable] = useState(Boolean(initialProfile?.subscription?.isRefundableCancellation));
+  const [blogSubscriptionRefundAmount, setBlogSubscriptionRefundAmount] = useState(initialProfile?.subscription?.refundAmount ?? 0);
   const [isBlogSubscriptionDialogOpen, setIsBlogSubscriptionDialogOpen] = useState(false);
   const [isBlogSubscriptionCancelDialogOpen, setIsBlogSubscriptionCancelDialogOpen] = useState(false);
   const [blogSubscriptionErrorMessage, setBlogSubscriptionErrorMessage] = useState('');
   const [isBlogSubscriptionProcessing, setIsBlogSubscriptionProcessing] = useState(false);
-  const [isDonationEnabled, setIsDonationEnabled] = useState(false);
-  const [hasIdentity, setHasIdentity] = useState(false);
-  const [paymentEmail, setPaymentEmail] = useState('');
-  const [paymentPhone, setPaymentPhone] = useState('');
-  const [isMinor, setIsMinor] = useState(false);
-  const [isUnder14Age, setIsUnder14Age] = useState(false);
+  const [isDonationEnabled, setIsDonationEnabled] = useState(Boolean(initialProfile?.donation?.isEnabled));
+  const [hasIdentity, setHasIdentity] = useState(Boolean(initialProfile?.identity?.exists));
+  const [paymentEmail, setPaymentEmail] = useState(normalizeText(initialProfile?.subscription?.paymentEmail));
+  const [paymentPhone, setPaymentPhone] = useState(normalizeText(initialProfile?.subscription?.paymentPhone));
+  const [isMinor, setIsMinor] = useState(() => initialProfile?.identity?.identity ? !isAdult(initialProfile.identity.identity.birth_date) : false);
+  const [isUnder14Age, setIsUnder14Age] = useState(() => initialProfile?.identity?.identity ? isUnder14(initialProfile.identity.identity.birth_date) : false);
   const [isIdentityDialogOpen, setIsIdentityDialogOpen] = useState(false);
   const [isPaymentEmailDialogOpen, setIsPaymentEmailDialogOpen] = useState(false);
 
@@ -253,6 +260,8 @@ export default function SiteProfile() {
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
+    if (initialProfile) return;
+
     async function loadIdentity() {
       const identityResponse = await fetch('/api/identity/portone/status', {
         method: 'GET',
@@ -276,6 +285,8 @@ export default function SiteProfile() {
   }, [siteName]);
 
   useEffect(() => {
+    if (initialProfile) return;
+
     async function loadBlogSubscriptionStatus() {
       const response = await fetch(`/api/payments/portone/subscriptions/status?targetType=site&siteName=${siteName}`, {
         method: 'GET',
