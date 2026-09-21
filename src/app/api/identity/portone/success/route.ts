@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decrypt } from '@/lib/encryption/decrypt';
 import { createLookupHash, encrypt } from '@/lib/encryption/encrypt';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
+import {
+  assertActiveIdentityVerificationRequest,
+  consumeIdentityVerificationRequest,
+} from '@/lib/identity/verificationRequest';
 import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { maskEmail } from '@/lib/utils';
@@ -10,10 +14,6 @@ type SuccessRequestBody = {
   identityVerificationId?: string;
   mockTxId?: string;
 };
-
-function isValidIdentityVerificationId(identityVerificationId: string, userId: string) {
-  return identityVerificationId.startsWith(`identity-${userId}-`);
-}
 
 async function findExistingVerifiedAccount(
   supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
@@ -77,8 +77,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '본인인증 요청 정보가 없습니다.' }, { status: 400 });
   }
 
-  if (!isValidIdentityVerificationId(identityVerificationId, sessionClaims.userId)) {
-    return NextResponse.json({ message: '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
+  try {
+    await assertActiveIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -129,6 +131,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (duplicateIdentity.exists) {
+    await consumeIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
     return NextResponse.json(
       {
         message: duplicateIdentity.accountEmail
@@ -161,6 +164,11 @@ export async function POST(request: NextRequest) {
     ...(ciHash ? { ci_hash: ciHash } : {}),
     ...(diHash ? { di_hash: diHash } : {}),
   };
+  const responseBody = {
+    name: verifiedIdentity.name,
+    birth_date: verifiedIdentity.birthDate,
+    gender: verifiedIdentity.gender,
+  };
 
   if (existingRow) {
     const { error } = await supabaseAdmin.from('chorogons').update(payload).eq('user_id', stigma.id);
@@ -169,7 +177,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: '본인인증 정보 저장에 실패했습니다.' }, { status: 500 });
     }
 
-    return NextResponse.json(verifiedIdentity);
+    await consumeIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
+    return NextResponse.json(responseBody);
   }
 
   const { error } = await supabaseAdmin.from('chorogons').insert({
@@ -181,9 +190,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '본인인증 정보 저장에 실패했습니다.' }, { status: 500 });
   }
 
-  return NextResponse.json({
-    name: verifiedIdentity.name,
-    birth_date: verifiedIdentity.birthDate,
-    gender: verifiedIdentity.gender,
-  });
+  await consumeIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
+  return NextResponse.json(responseBody);
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createIdentityVerificationId, createPortOneIdentityRequest } from '@/lib/identity/portone';
+import { createIdentityVerificationRequest } from '@/lib/identity/verificationRequest';
 import { getSessionClaims } from '@/lib/session';
 
 export async function POST() {
@@ -10,6 +11,7 @@ export async function POST() {
   }
 
   const identityVerificationId = createIdentityVerificationId(sessionClaims.userId);
+  await createIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
 
   return NextResponse.json(createPortOneIdentityRequest(identityVerificationId));
 }

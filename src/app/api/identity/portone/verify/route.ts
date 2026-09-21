@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractVerifiedIdentity, getPortOneIdentityVerification } from '@/lib/identity/portone';
+import { assertActiveIdentityVerificationRequest } from '@/lib/identity/verificationRequest';
 import { getSessionClaims } from '@/lib/session';
 
 type SuccessRequestBody = {
   identityVerificationId?: string;
 };
-
-function isValidIdentityVerificationId(identityVerificationId: string, userId: string) {
-  return identityVerificationId.startsWith(`identity-${userId}-`);
-}
 
 export async function POST(request: NextRequest) {
   const sessionClaims = await getSessionClaims();
@@ -24,8 +21,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: '본인인증 요청 정보가 없습니다.' }, { status: 400 });
   }
 
-  if (!isValidIdentityVerificationId(identityVerificationId, sessionClaims.userId)) {
-    return NextResponse.json({ message: '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
+  try {
+    await assertActiveIdentityVerificationRequest(identityVerificationId, sessionClaims.userId);
+  } catch (error) {
+    return NextResponse.json({ message: error instanceof Error ? error.message : '본인인증 요청 정보가 일치하지 않습니다.' }, { status: 400 });
   }
 
   const portOneVerification = await getPortOneIdentityVerification(identityVerificationId);
