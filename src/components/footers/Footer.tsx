@@ -76,7 +76,7 @@ export default function Footer() {
                 <div>
                   <dt>주소</dt>
                   <dd>
-                    <address>서울시 관악구 조원로 20길 10</address>
+                    <address>서울시 관악구 조원로 20길 10 204호</address>
                   </dd>
                 </div>
               </div>
