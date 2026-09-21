@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
+import { assertReadyPaymentOrder, completePaymentOrder, getPaymentOrder } from '@/lib/payments/paymentOrder';
 import {
   assertPortOnePaidPayment,
   getCurrentPortOneProvider,
@@ -122,6 +123,10 @@ async function confirmPortOnePayment({
 
     if (paidAmount !== amount) {
       throw new PortOnePaymentConfirmError('결제 금액이 올바르지 않습니다.', payment);
+    }
+
+    if (payment.order?.id !== orderId) {
+      throw new PortOnePaymentConfirmError('결제 주문번호가 올바르지 않습니다.', payment);
     }
 
     return {
@@ -386,6 +391,24 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const paymentOrder = assertReadyPaymentOrder(
+      await getPaymentOrder(supabaseAdmin, {
+        paymentKey,
+        orderNo: orderId,
+        buyerUserId: session.stigmaId,
+      }),
+    );
+
+    if (
+      paymentOrder.payment_type !== PAYMENT_TYPE.PURCHASE_POST ||
+      paymentOrder.target_type !== PAYMENT_TARGET_TYPE.POST ||
+      paymentOrder.site_id !== siteId ||
+      paymentOrder.post_id !== postId ||
+      paymentOrder.target_id !== postId ||
+      paymentOrder.amount !== amount
+    ) {
+      return Response.json({ error: '결제 주문 정보가 올바르지 않습니다.' }, { status: 400 });
+    }
 
     const site = await getSiteById({
       supabaseAdmin,
@@ -465,6 +488,7 @@ export async function POST(request: NextRequest) {
         postAuthorStigmaId,
         amount: existingPayment.amount,
       });
+      await completePaymentOrder(supabaseAdmin, paymentOrder.id);
 
       return Response.json({
         ok: true,
@@ -536,6 +560,7 @@ export async function POST(request: NextRequest) {
       postAuthorStigmaId,
       amount: confirmResult.totalAmount,
     });
+    await completePaymentOrder(supabaseAdmin, paymentOrder.id);
 
     return Response.json({
       ok: true,

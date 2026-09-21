@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { getPaymentCustomerName } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
+import { assertReadyPaymentOrder, completePaymentOrder, getPaymentOrder } from '@/lib/payments/paymentOrder';
 import {
   assertPortOnePaidPayment,
   getCurrentPortOneProvider,
@@ -130,6 +131,10 @@ async function confirmPortOnePayment({
 
     if (paidAmount !== amount) {
       throw new PortOnePaymentConfirmError('결제 금액이 올바르지 않습니다.', payment);
+    }
+
+    if (payment.order?.id !== orderId) {
+      throw new PortOnePaymentConfirmError('결제 주문번호가 올바르지 않습니다.', payment);
     }
 
     return {
@@ -409,6 +414,13 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const paymentOrder = assertReadyPaymentOrder(
+      await getPaymentOrder(supabaseAdmin, {
+        paymentKey,
+        orderNo: orderId,
+        buyerUserId: session.stigmaId,
+      }),
+    );
 
     const site = await getSiteById({
       supabaseAdmin,
@@ -420,6 +432,18 @@ export async function POST(request: NextRequest) {
 
     if (isSeriesDonation && (!boardId || !seriesId)) {
       return Response.json({ error: '연재 후원 정보가 없습니다.' }, { status: 400 });
+    }
+
+    if (
+      paymentOrder.site_id !== siteId ||
+      paymentOrder.amount !== amount ||
+      paymentOrder.payment_type !== (isSeriesDonation ? PAYMENT_TYPE.DONATION_SERIES : PAYMENT_TYPE.DONATION_SITE) ||
+      paymentOrder.target_type !== (isSeriesDonation ? PAYMENT_TARGET_TYPE.SERIES : PAYMENT_TARGET_TYPE.SITE) ||
+      paymentOrder.target_id !== (isSeriesDonation ? seriesId : siteId) ||
+      paymentOrder.board_id !== (isSeriesDonation ? boardId : null) ||
+      paymentOrder.series_id !== (isSeriesDonation ? seriesId : null)
+    ) {
+      return Response.json({ error: '결제 주문 정보가 올바르지 않습니다.' }, { status: 400 });
     }
 
     if (isSiteDonation) {
@@ -495,6 +519,7 @@ export async function POST(request: NextRequest) {
         siteOwnerStigmaId,
         amount: existingPayment.amount,
       });
+      await completePaymentOrder(supabaseAdmin, paymentOrder.id);
 
       return Response.json({
         ok: true,
@@ -559,6 +584,7 @@ export async function POST(request: NextRequest) {
       siteOwnerStigmaId,
       amount: confirmResult.totalAmount,
     });
+    await completePaymentOrder(supabaseAdmin, paymentOrder.id);
 
     const buyerEmail = await getDonationPaymentEmail(session.authUserId);
 

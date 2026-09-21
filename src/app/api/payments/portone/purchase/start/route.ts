@@ -4,6 +4,7 @@ import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
+import { createPaymentOrder } from '@/lib/payments/paymentOrder';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import {
   PAYMENT_STATUS,
@@ -378,6 +379,20 @@ export async function POST(request: NextRequest) {
 
     const orderNo = createPaymentOrderNo('PURCHASE_POST');
     const paymentId = createPortOnePaymentKey(orderNo);
+    await createPaymentOrder(supabaseAdmin, {
+      payment_key: paymentId,
+      order_no: orderNo,
+      buyer_user_id: session.stigmaId,
+      payment_type: PAYMENT_TYPE.PURCHASE_POST,
+      target_type: PAYMENT_TARGET_TYPE.POST,
+      target_id: post.id,
+      site_id: site.id,
+      board_id: board.id,
+      series_id: post.series_id,
+      post_id: post.id,
+      amount: postPurchasePrice,
+      currency: 'KRW',
+    });
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 

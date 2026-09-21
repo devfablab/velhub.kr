@@ -75,6 +75,10 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: '발급된 빌링키를 확인하지 못했습니다.' }, { status: 400 });
     }
 
+    if (normalizeText(billingKeyInfo.customer?.id) !== expectedCustomerKey) {
+      return Response.json({ error: '결제수단의 고객 정보가 올바르지 않습니다.' }, { status: 400 });
+    }
+
     let cardInfo: ReturnType<typeof getPortOneBillingCardInfo>;
 
     try {

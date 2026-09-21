@@ -52,6 +52,11 @@ export type PortOnePayment = {
   pgTxId?: string;
   transactionId?: string;
   paymentId?: string;
+  order?: {
+    id?: string;
+    name?: string;
+    [key: string]: unknown;
+  };
   orderName?: string;
   paidAt?: string;
   approvedAt?: string;

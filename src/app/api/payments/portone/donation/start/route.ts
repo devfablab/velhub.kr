@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { hasValidBlogSubscription, hasValidSeriesSubscription } from '@/lib/payments/blogDonation';
 import { enforceMinorPaymentControl } from '@/lib/payments/minorPaymentControl';
 import { createPaymentOrderNo } from '@/lib/payments/orderNo';
+import { createPaymentOrder } from '@/lib/payments/paymentOrder';
 import { createPortOnePaymentKey, getPortOneKpnGeneralChannelKey, getPortOneStoreId } from '@/lib/payments/portone';
 import { getPaymentCustomerName, getPaymentCustomerPhone, getPaymentCustomerRealName } from '@/lib/payments/customer';
 import { PAYMENT_TARGET_TYPE, PAYMENT_TYPE } from '@/lib/payments/types';
@@ -354,6 +355,20 @@ export async function POST(request: NextRequest) {
 
     const orderNo = createOrderNo(target.targetType);
     const paymentId = createPortOnePaymentKey(orderNo);
+    await createPaymentOrder(getSupabaseAdmin(), {
+      payment_key: paymentId,
+      order_no: orderNo,
+      buyer_user_id: session.stigmaId,
+      payment_type: target.paymentType,
+      target_type: target.paymentTargetType,
+      target_id: target.series?.id ?? target.site.id,
+      site_id: target.site.id,
+      board_id: target.board?.id ?? null,
+      series_id: target.series?.id ?? null,
+      post_id: null,
+      amount,
+      currency: 'KRW',
+    });
     const successUrl = getSafeRedirectUrl(request, body.successUrl);
     const failUrl = getSafeRedirectUrl(request, body.failUrl);
 
