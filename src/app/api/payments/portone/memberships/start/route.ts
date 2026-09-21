@@ -158,12 +158,21 @@ export async function POST(request: Request) {
   const supabaseAdmin = getSupabaseAdmin();
   const identityResult = await supabaseAdmin
     .from('chorogons')
-    .select('id, birth_date, birth_date_dummy')
+    .select('id, name, birth_date, birth_date_dummy, gender, identity_verified_at')
     .eq('user_id', currentStigma.stigmaId)
     .maybeSingle();
 
   if (identityResult.error) {
     return NextResponse.json({ error: '본인인증 정보를 확인하지 못했습니다.' }, { status: 500 });
+  }
+
+  if (
+    !identityResult.data?.identity_verified_at ||
+    !identityResult.data.name ||
+    (!identityResult.data.birth_date && !identityResult.data.birth_date_dummy) ||
+    !identityResult.data.gender
+  ) {
+    return NextResponse.json({ error: '멤버십 결제를 하려면 본인인증이 필요합니다.' }, { status: 403 });
   }
 
   const birthDate = getChorogonBirthDate(identityResult.data);

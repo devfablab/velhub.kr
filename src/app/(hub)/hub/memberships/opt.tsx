@@ -19,6 +19,7 @@ import { useMinorPaymentControl } from '@/lib/payments/useMinorPaymentControl';
 import Anchor from '@/components/Anchor';
 import PopupMessage from '@/components/PopupMessage';
 import BillingMethodButton from '@/components/service/common/BillingMethodButton';
+import IdentityVerificationButton from '@/components/service/common/IdentityVerificationButton';
 import PaymentTerms from '@/components/service/common/PaymentTerms';
 import ScreenState from '@/components/service/ScreenState';
 import styles from '@/app/hub.module.sass';
@@ -200,8 +201,9 @@ export default function MembershipPlan({
   const [isChangingSubscription, setIsChangingSubscription] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const eligibility = initialEligibility;
+  const hasIdentity = Boolean(initialIdentity?.exists);
   const initialAge = initialIdentity?.exists ? getAge(initialIdentity.identity?.birth_date) : null;
-  const isUnder14Age = initialAge === null || initialAge < 14;
+  const isUnder14Age = hasIdentity && (initialAge === null || initialAge < 14);
   const isMinorUser = initialAge !== null && initialAge < 19;
 
   const selectedItems = useMemo(() => {
@@ -413,55 +415,66 @@ export default function MembershipPlan({
       ) : null}
 
       <section className={`paper ${styles.paper}`}>
-        <h2>결제수단 선택</h2>
-        <Stack gap={2}>
-          <Stack gap={1}>
-            <Typography variant="body2">
-              {isMinorUser ? '1개월 이용권 결제에 사용할 카드를 관리합니다.' : '자동결제에 사용할 카드를 관리합니다.'}
-            </Typography>
-            <p className="alert info">
-              <InfoOutlineRoundedIcon />
-              <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
-            </p>
-
-            {billingMethods.length ? (
+        <h2>{hasIdentity ? '결제수단 선택' : '본인인증'}</h2>
+        {hasIdentity ? (
+          <>
+            <Stack gap={2}>
               <Stack gap={1}>
-                {billingMethods.map((billingMethod) => (
-                  <div className="paper" key={billingMethod.id}>
-                    <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="body2">
-                        {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
-                        {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
-                        {getCardNumberLabel(billingMethod.cardNumberMasked)}
-                      </Typography>
-                      {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}
-                    </Stack>
-                  </div>
-                ))}
-              </Stack>
-            ) : (
-              <ScreenState kind="warning">등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</ScreenState>
-            )}
-          </Stack>
-          <div>
-            <BillingMethodButton />
-          </div>
-        </Stack>
+                <Typography variant="body2">
+                  {isMinorUser ? '1개월 이용권 결제에 사용할 카드를 관리합니다.' : '자동결제에 사용할 카드를 관리합니다.'}
+                </Typography>
+                <p className="alert info">
+                  <InfoOutlineRoundedIcon />
+                  <span>마지막에 추가한 결제수단으로 결제됩니다.</span>
+                </p>
 
-        {selectedItems.length && selectedPrice > 0 ? (
-          <div className={styles['membership-actions']}>
-            <button
-              type="button"
-              className="button medium submit"
-              onClick={() => setIsPaymentPopupOpen(true)}
-              disabled={!selectedBillingMethodId || isSubmitting}
-            >
-              {isMinorUser
-                ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제`
-                : `${formatMembershipPrice(selectedPrice)} 결제하기`}
-            </button>
-          </div>
-        ) : null}
+                {billingMethods.length ? (
+                  <Stack gap={1}>
+                    {billingMethods.map((billingMethod) => (
+                      <div className="paper" key={billingMethod.id}>
+                        <Stack gap={0.5} direction="row" justifyContent="space-between" alignItems="center">
+                          <Typography variant="body2">
+                            {getCardCompanyLabel(billingMethod.cardCompany)} ({getCardTypeLabel(billingMethod.cardType)} /{' '}
+                            {getOwnerTypeLabel(billingMethod.ownerType)}){' '}
+                            {getCardNumberLabel(billingMethod.cardNumberMasked)}
+                          </Typography>
+                          {billingMethod.isDefault ? <Chip label="기본" size="small" className="chip success" /> : null}
+                        </Stack>
+                      </div>
+                    ))}
+                  </Stack>
+                ) : (
+                  <ScreenState kind="warning">등록된 결제수단이 없습니다. 결제수단을 먼저 등록해 주세요.</ScreenState>
+                )}
+              </Stack>
+              <div>
+                <BillingMethodButton />
+              </div>
+            </Stack>
+
+            {selectedItems.length && selectedPrice > 0 ? (
+              <div className={styles['membership-actions']}>
+                <button
+                  type="button"
+                  className="button medium submit"
+                  onClick={() => setIsPaymentPopupOpen(true)}
+                  disabled={!selectedBillingMethodId || isSubmitting}
+                >
+                  {isMinorUser
+                    ? `1개월 ${formatMembershipPrice(selectedPrice)} 단건 결제`
+                    : `${formatMembershipPrice(selectedPrice)} 결제하기`}
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <Stack gap={1}>
+            <Typography variant="body2">멤버십을 결제하려면 먼저 본인인증을 완료해 주세요.</Typography>
+            <div>
+              <IdentityVerificationButton onVerified={() => window.location.reload()} />
+            </div>
+          </Stack>
+        )}
       </section>
 
       <section className={`paper ${styles.paper}`}>

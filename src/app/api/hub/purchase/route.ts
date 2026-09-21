@@ -208,9 +208,9 @@ function createPaymentDisplayInfo({
   if (payment.target_type === PAYMENT_TARGET_TYPE.MEMBERSHIP) {
     return {
       siteLabel: '데브허브',
-      siteHref: '/hub/memberships',
+      siteHref: '/hub/purchase/memberships',
       targetLabel: getMembershipTypeLabel(membership?.membership_type),
-      targetHref: '/hub/memberships',
+      targetHref: '/hub/purchase/memberships',
     };
   }
 
