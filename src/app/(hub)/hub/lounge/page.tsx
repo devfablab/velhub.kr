@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
-import MembershipSelectors, { SelectorResponse } from '../memberships/selectors/opt';
 import Container from '../menu';
 import { getHubApiData } from '../shared/getHubApiData';
+import Opt, { SelectorResponse } from './opt';
 import styles from '@/app/hub.module.sass';
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default async function LoungePage() {
     <Container pageTitle="라운지" pageBack="/hub">
       <div className="container">
         <div className={`content ${styles.content} ${styles['hub-content']}`}>
-          <MembershipSelectors initialData={result.data} initialError={result.error} />
+          <Opt initialData={result.data} initialError={result.error} />
         </div>
       </div>
     </Container>

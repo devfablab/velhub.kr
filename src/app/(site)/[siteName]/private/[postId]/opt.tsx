@@ -49,6 +49,7 @@ type Reply = {
 };
 type AttachedImage = { id: string; url: string; file?: File | null };
 export type Data = {
+  boardLabel?: string;
   canEditPost?: boolean;
   canDeletePost?: boolean;
   previousPost?: { id: string; subject: string } | null;
@@ -467,7 +468,7 @@ export default function Opt({ initialData, initialError, initialStatus }: { init
                 <header className={styles['content-header']}>
                   <div className={styles['content-board-name']}>
                     <Anchor href={`/${siteName}/private`} className={styles['board-link']}>
-                      <span>비공개 게시판</span>
+                      <span>{data.boardLabel}</span>
                       <ArrowForwardIosRoundedIcon />
                     </Anchor>
                     {data.canEditPost ? (

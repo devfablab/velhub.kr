@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import { getPostPageMetadata } from '@/lib/seoSite';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
+import type { CommentsResponse } from '@/components/comments/CommentList';
 import { getSiteApiData } from '../../../getSiteApiData';
 import Opt, { type ContentResponse } from './opt';
-import type { CommentsResponse } from '@/components/comments/CommentList';
 
 type RouteContext = {
   params: Promise<{

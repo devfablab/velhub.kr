@@ -2,10 +2,10 @@ import { Suspense } from 'react';
 import { cookies, headers } from 'next/headers';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import { ServiceNoDataIcon } from '@/components/Svgs';
-import MembershipPlan, { Eligibility, IdentityStatusResponse, MembershipResponse } from '../../memberships/opt';
 import Container from '../../menu';
 import { getHubApiData } from '../../shared/getHubApiData';
 import Content from '../tab';
+import MembershipPlan, { Eligibility, IdentityStatusResponse, MembershipResponse } from './opt';
 import styles from '@/app/hub.module.sass';
 
 type Result = {

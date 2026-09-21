@@ -217,6 +217,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ post
     }),
   );
   return Response.json({
+    boardLabel: result.access.board.board_label,
     canEditPost:
       result.post.author_stigma_id === result.access.stigmaId &&
       Date.now() - new Date(result.post.created_at).getTime() <= 5 * 60 * 1000,

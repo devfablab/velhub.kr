@@ -1,5 +1,6 @@
 import { getChorogonBirthDate } from '@/lib/identity/chorogon';
 import { hasMembershipFeature } from '@/lib/memberships/features';
+import { getSessionClaims } from '@/lib/session';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 
@@ -116,6 +117,24 @@ export async function GET(request: Request) {
     const privateBoardPromise =
       siteType === 'community'
         ? (async () => {
+            const session = await getSessionClaims();
+            if (!session?.userId) return { data: null, error: null };
+
+            const stigmaResult = await supabaseAdmin
+              .from('stigmas')
+              .select('id')
+              .eq('user_id', session.userId)
+              .maybeSingle();
+            if (stigmaResult.error || !stigmaResult.data) return { data: null, error: stigmaResult.error };
+
+            const membershipResult = await supabaseAdmin
+              .from('rhizome_stigmas')
+              .select('id')
+              .eq('site_id', siteId)
+              .eq('user_id', stigmaResult.data.id)
+              .maybeSingle();
+            if (membershipResult.error || !membershipResult.data) return { data: null, error: membershipResult.error };
+
             return await supabaseAdmin.from('private_boards').select('board_label').eq('site_id', siteId).maybeSingle();
           })()
         : Promise.resolve(null);
