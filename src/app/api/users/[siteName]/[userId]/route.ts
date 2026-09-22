@@ -602,7 +602,7 @@ async function getSiteUserInfo(siteName: string) {
         const levelRow = levelResult.data as LevelRow;
 
         level = {
-          name: normalizeText(levelRow.name) || String(levelRow.lv),
+          name: normalizeText(levelRow.name) || `lv.${levelRow.lv}`,
           iconUrl: getLevelIconUrl(levelRow.icon),
         };
       }

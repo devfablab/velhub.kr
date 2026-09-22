@@ -272,7 +272,7 @@ async function getUserDisplayInfo(siteId: string, boardId: string, userId: strin
       level = {
         id: levelData.id,
         lv: Number(levelData.lv),
-        name: normalizeText(levelData.name) || String(levelData.lv),
+        name: normalizeText(levelData.name) || `lv.${levelData.lv}`,
         icon: levelData.icon,
         iconUrl: getLevelIconUrl(levelData.icon),
       };

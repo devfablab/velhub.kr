@@ -557,7 +557,7 @@ export function buildMemberResponse(
       ? {
           id: level.id,
           lv: level.lv,
-          name: normalizeText(level.name) || String(level.lv),
+          name: normalizeText(level.name) || `lv.${level.lv}`,
           icon: level.icon ?? null,
           iconUrl: level.icon ? getLevelIconUrl(level.icon) : '',
         }

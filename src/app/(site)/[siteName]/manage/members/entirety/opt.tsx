@@ -312,21 +312,10 @@ export default function Opt() {
 
   const selectableLevels = useMemo(() => {
     const sortedLevels = [...levels].sort((a, b) => a.lv - b.lv);
-    const hasAnyName = sortedLevels.some((level) => Boolean(normalizeText(level.name)));
-
-    if (!hasAnyName) {
-      return sortedLevels.map((level) => ({
-        id: level.id,
-        label: String(level.lv),
-      }));
-    }
-
-    return sortedLevels
-      .filter((level) => Boolean(normalizeText(level.name)))
-      .map((level) => ({
-        id: level.id,
-        label: normalizeText(level.name),
-      }));
+    return sortedLevels.map((level) => ({
+      id: level.id,
+      label: normalizeText(level.name) || `lv.${level.lv}`,
+    }));
   }, [levels]);
 
   useEffect(() => {

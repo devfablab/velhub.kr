@@ -232,7 +232,7 @@ export async function POST(request: Request) {
         site_id: access.siteId,
         lv: index + 1,
         icon: null,
-        name: null,
+        name: `lv.${index + 1}`,
         description: null,
         requirement_type: 'manual',
         required_posts: 0,
@@ -336,12 +336,13 @@ export async function POST(request: Request) {
       const currentLevel = currentLevelMap.get(level.id)!;
       const nextIcon = level.icon ?? null;
       const nextRequirementType = normalizeText(level.requirement_type).toLowerCase();
+      const nextLv = normalizeNumericValue(level.lv);
 
       const updateResult = await access.supabaseAdmin
         .from('community_levels')
         .update({
           icon: nextIcon,
-          name: normalizeNullableText(level.name),
+          name: normalizeNullableText(level.name) ?? `lv.${nextLv}`,
           description: normalizeNullableText(level.description),
           requirement_type: isAllowedRequirementType(nextRequirementType) ? nextRequirementType : 'manual',
           required_posts: normalizeNumericValue(level.required_posts),

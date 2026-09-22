@@ -672,7 +672,7 @@ export default function Opt() {
                     {levels.map((level) => (
                       <div key={level.id} className={styles['popup-level-row']}>
                         <Stack direction="row" gap={2} alignItems="center">
-                          <Typography variant="subtitle2">lv {level.lv}</Typography>
+                          <Typography variant="subtitle2">lv.{level.lv}</Typography>
 
                           <Box
                             sx={{
@@ -764,7 +764,7 @@ export default function Opt() {
                   {levels.map((level) => (
                     <div key={level.id} className={styles['popup-level-row']}>
                       <Stack direction="row" gap={2} alignItems="center">
-                        <Typography variant="subtitle2">lv {level.lv}</Typography>
+                        <Typography variant="subtitle2">lv.{level.lv}</Typography>
 
                         <Box
                           sx={{
