@@ -26,7 +26,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDate, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -94,7 +93,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedUser, setSelectedUser] = useState<JoinApplicantRow | null>(null);
 
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -277,22 +275,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

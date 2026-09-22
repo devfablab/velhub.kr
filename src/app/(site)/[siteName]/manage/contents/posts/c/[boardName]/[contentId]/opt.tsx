@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import { Box, Chip, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import YoutubeEmbed from '@/components/service/YoutubeEmbed';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -43,7 +42,7 @@ type ImageRow = {
   height: number | null;
 };
 
-type ContentResponse = {
+export type ContentResponse = {
   board?: {
     id: string;
     board_key: string;
@@ -99,7 +98,7 @@ type ContentResponse = {
   error?: string;
 };
 
-export default function Opt() {
+export default function Opt({ initialContent, initialError }: { initialContent?: ContentResponse | null, initialError?: string | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
   const boardName = normalizeText(params.boardName).toLowerCase();
@@ -109,131 +108,12 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const viewTimerReference = useRef<number | null>(null);
-  const hasRequestedViewReference = useRef(false);
-
-  const [board, setBoard] = useState<ContentResponse['board'] | null>(null);
-  const [content, setContent] = useState<ContentResponse['content'] | null>(null);
-  const [series, setSeries] = useState<SeriesRow | null>(null);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-        hasRequestedViewReference.current = false;
-
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '글 정보를 불러오지 못했습니다.');
-        }
-
-        if (!result.board || !result.content) {
-          throw new Error('글 정보를 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board);
-        setContent(result.content);
-        setSeries(result.series ?? null);
-        setIsAuthor(result.isAuthor === true);
-        setIsStaff(result.isStaff === true);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadContent();
-
-    return () => {
-      if (viewTimerReference.current) {
-        window.clearTimeout(viewTimerReference.current);
-      }
-    };
-  }, [boardName, contentId, siteName]);
-
-  useEffect(() => {
-    if (!board || !content || board.board_type === 'page' || isAuthor) {
-      return;
-    }
-
-    if (content.published_status !== 'published') {
-      return;
-    }
-
-    if (content.is_closed) {
-      return;
-    }
-
-    if (hasRequestedViewReference.current) {
-      return;
-    }
-
-    viewTimerReference.current = window.setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}&countView=1`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as ContentResponse;
-
-        if (!response.ok || !result.content) {
-          return;
-        }
-
-        hasRequestedViewReference.current = true;
-        setContent((previousContent) => {
-          if (!previousContent) {
-            return previousContent;
-          }
-
-          return {
-            ...previousContent,
-            post_count: result.content?.post_count ?? previousContent.post_count,
-          };
-        });
-      } catch {
-        return;
-      }
-    }, 5000);
-
-    return () => {
-      if (viewTimerReference.current) {
-        window.clearTimeout(viewTimerReference.current);
-      }
-    };
-  }, [board, boardName, content, contentId, isAuthor, siteName]);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
+  const [board] = useState<ContentResponse['board'] | null>(initialContent?.board ?? null);
+  const [content] = useState<ContentResponse['content'] | null>(initialContent?.content ?? null);
+  const [series] = useState<SeriesRow | null>(initialContent?.series ?? null);
+  const [isAuthor] = useState(initialContent?.isAuthor ?? false);
+  const [isStaff] = useState(initialContent?.isStaff ?? false);
+  const [errorMessage] = useState(initialError || '');
 
   if (!board || !content) {
     return (

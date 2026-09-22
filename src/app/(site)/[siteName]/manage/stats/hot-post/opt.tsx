@@ -220,7 +220,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName).toLowerCase();
   const yearOptions = createYearOptions();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(!initialData && !initialError);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isListLoading, setIsListLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [selectedRange, setSelectedRange] = useState<RangeType>('today');

@@ -33,7 +33,7 @@ type BoardType = 'basic' | 'gallery' | 'youtube' | 'feed';
 type MarkdownStatus = 'markdown_default' | 'markdown_on' | 'markdown_off';
 type WritePermission = 'member' | 'manager' | 'community-manager' | 'owner';
 
-type BoardResponse = {
+export type BoardResponse = {
   board?: {
     id: string;
     board_key: string;
@@ -98,7 +98,7 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError }: { initialData: BoardResponse | null; initialError: string }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -108,29 +108,30 @@ export default function Opt() {
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [boardId, setBoardId] = useState('');
-  const [boardLabel, setBoardLabel] = useState('');
-  const [originBoardLabel, setOriginBoardLabel] = useState('');
-  const [boardKey, setBoardKey] = useState('');
-  const [originBoardKey, setOriginBoardKey] = useState('');
-  const [boardType, setBoardType] = useState<BoardType>('basic');
-  const [postPerPage, setPostPerPage] = useState(5);
-  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>('markdown_default');
-  const [writePermission, setWritePermission] = useState<WritePermission>('member');
-  const [postType, setPostType] = useState<PostType>('none');
-  const [isActive, setIsActive] = useState(true);
+  const initialBoard = initialData?.board;
+  const [boardId] = useState(initialBoard?.id ?? '');
+  const [boardLabel, setBoardLabel] = useState(initialBoard?.board_label ?? '');
+  const [originBoardLabel] = useState(initialBoard?.board_label ?? '');
+  const [boardKey, setBoardKey] = useState(initialBoard?.board_key ?? '');
+  const [originBoardKey] = useState(initialBoard?.board_key ?? '');
+  const [boardType] = useState<BoardType>(initialBoard?.board_type ?? 'basic');
+  const [postPerPage, setPostPerPage] = useState(initialBoard?.post_per_page ?? 5);
+  const [markdownStatus, setMarkdownStatus] = useState<MarkdownStatus>(initialBoard?.markdown_status ?? 'markdown_default');
+  const [writePermission, setWritePermission] = useState<WritePermission>(initialBoard?.write_permission ?? 'member');
+  const [postType, setPostType] = useState<PostType>(initialBoard?.post_type ?? 'none');
+  const [isActive, setIsActive] = useState(initialBoard?.is_active ?? true);
 
   const [isChecking, setIsChecking] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  const [isAvailable, setIsAvailable] = useState(false);
-  const [checkedBoardKey, setCheckedBoardKey] = useState('');
+  const [isChecked, setIsChecked] = useState(Boolean(initialBoard));
+  const [isAvailable, setIsAvailable] = useState(Boolean(initialBoard));
+  const [checkedBoardKey, setCheckedBoardKey] = useState(initialBoard?.board_key ?? '');
 
   const [isCheckingBoardLabel, setIsCheckingBoardLabel] = useState(false);
-  const [checkedBoardLabel, setCheckedBoardLabel] = useState('');
-  const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(false);
+  const [checkedBoardLabel, setCheckedBoardLabel] = useState(initialBoard?.board_label ?? '');
+  const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(Boolean(initialBoard));
   const [boardLabelCheckMessage, setBoardLabelCheckMessage] = useState('');
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
@@ -180,42 +181,6 @@ export default function Opt() {
 
   function handleIsActiveChange(event: React.ChangeEvent<HTMLInputElement>) {
     setIsActive(event.target.checked);
-  }
-
-  async function loadBoard() {
-    const response = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as BoardResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
-    }
-
-    if (!result.board) {
-      throw new Error('게시판 정보를 불러오지 못했습니다.');
-    }
-
-    setBoardId(result.board.id);
-    setBoardLabel(result.board.board_label);
-    setOriginBoardLabel(result.board.board_label);
-    setBoardKey(result.board.board_key);
-    setOriginBoardKey(result.board.board_key);
-    setBoardType(result.board.board_type);
-    setPostPerPage(result.board.post_per_page ?? 5);
-    setMarkdownStatus(result.board.markdown_status ?? 'markdown_default');
-    setWritePermission(result.board.write_permission ?? 'member');
-    setPostType(result.board.post_type ?? 'none');
-    setIsActive(result.board.is_active);
-
-    setIsChecked(true);
-    setIsAvailable(true);
-    setCheckedBoardKey(result.board.board_key);
-
-    setIsBoardLabelAvailable(true);
-    setCheckedBoardLabel(result.board.board_label);
   }
 
   async function handleCheckBoardLabel() {
@@ -439,21 +404,6 @@ export default function Opt() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        setErrorMessage('');
-        await loadBoard();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      }
-    })();
-  }, [siteName, boardName]);
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">

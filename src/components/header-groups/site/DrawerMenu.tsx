@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import CollectionsOutlinedIcon from '@mui/icons-material/CollectionsOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -16,17 +15,12 @@ import OndemandVideoOutlinedIcon from '@mui/icons-material/OndemandVideoOutlined
 import WysiwygOutlinedIcon from '@mui/icons-material/WysiwygOutlined';
 import { MenuItem } from '@mui/material';
 import Anchor from '@/components/Anchor';
+import { useSiteInitialData } from '@/app/(site)/[siteName]/SiteInitialDataContext';
 
 type Props = {
   siteName: string;
   isBlog: boolean;
   onClose: () => void;
-};
-
-type MenuResponse = {
-  menus?: MenuRow[];
-  privateBoard?: { label: string } | null;
-  error?: string;
 };
 
 type BoardType = 'blog' | 'page' | 'basic' | 'gallery' | 'youtube' | 'feed';
@@ -78,39 +72,9 @@ function renderBoardTypeIcon(boardType: BoardItem['board_type']) {
 }
 
 export default function DrawerMenu({ siteName, isBlog, onClose }: Props) {
-  const [menus, setMenus] = useState<MenuRow[]>([]);
-  const [privateBoardLabel, setPrivateBoardLabel] = useState('');
-
-  useEffect(() => {
-    async function loadMenus() {
-      try {
-        const response = await fetch(`/api/site/public?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as MenuResponse;
-
-        if (!response.ok) {
-          setMenus([]);
-          setPrivateBoardLabel('');
-          return;
-        }
-
-        setMenus(Array.isArray(result.menus) ? result.menus : []);
-        setPrivateBoardLabel(isBlog ? '' : (result.privateBoard?.label ?? ''));
-      } catch {
-        setMenus([]);
-        setPrivateBoardLabel('');
-      }
-    }
-
-    if (!siteName) {
-      return;
-    }
-
-    void loadMenus();
-  }, [isBlog, siteName]);
+  const initialData = useSiteInitialData();
+  const menus = (initialData?.siteMenus ?? []) as MenuRow[];
+  const privateBoardLabel = isBlog ? '' : (initialData?.privateBoardLabel ?? '');
 
   const allHref = `/${siteName}/board`;
   const hasCommunityBoard = menus.some((menu) => menu.board_type !== 'page');

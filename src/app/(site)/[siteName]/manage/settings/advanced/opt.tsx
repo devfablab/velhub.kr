@@ -13,7 +13,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -75,10 +74,9 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
   const isNotMobile = useMediaQuery(theme.breakpoints.up('lg'));
   const isMobile = !isNotMobile;
 
-  const [isLoading, setIsLoading] = useState(!initialError && (!initialInfo || !initialSites));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(initialInfo?.siteInfo ?? null);
+  const [siteInfo] = useState<SiteInfoInfo | null>(initialInfo?.siteInfo ?? null);
 
   const [visibilityMember, setVisibilityMember] = useState<VisibilityMember>(
     initialSites?.sites?.visibility_member === 'private' ? 'private' : 'public',
@@ -89,31 +87,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
 
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  async function loadInfo() {
-    try {
-      const response = await fetch(`/api/info/general/site/${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
-      }
-
-      setSiteInfo(result.siteInfo);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('사이트 정보를 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   async function loadSites() {
     const response = await fetch(`/api/info/advanced/site/${siteName}`, {
@@ -200,22 +173,6 @@ export default function Opt({ initialInfo, initialSites, initialError }: OptProp
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (!siteInfo) {

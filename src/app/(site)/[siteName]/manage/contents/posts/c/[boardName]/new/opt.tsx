@@ -27,7 +27,6 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -65,7 +64,7 @@ type PrefixRow = {
   site_id: string;
 };
 
-type BoardInfoResponse = {
+export type BoardInfoResponse = {
   board?: {
     board_type: 'basic' | 'gallery' | 'youtube' | 'feed';
     post_type: 'none' | 'prefix' | 'series';
@@ -74,12 +73,12 @@ type BoardInfoResponse = {
   error?: string;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
 
-type PrefixListResponse = {
+export type PrefixListResponse = {
   prefixes?: PrefixRow[];
   error?: string;
 };
@@ -229,7 +228,7 @@ function getYoutubeId(value: string) {
   return '';
 }
 
-export default function Opt() {
+export default function Opt({ initialBoard, initialSeries, initialPrefix, initialError }: { initialBoard: BoardInfoResponse | null; initialSeries: SeriesListResponse | null; initialPrefix: PrefixListResponse | null; initialError: string }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -243,11 +242,11 @@ export default function Opt() {
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
-  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
-  const [prefixList, setPrefixList] = useState<PrefixRow[]>([]);
+  const [boardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(initialBoard?.board?.board_type ?? 'basic');
+  const [postType] = useState<'none' | 'prefix' | 'series'>(initialBoard?.board?.post_type ?? 'none');
+  const [markdownStatus] = useState<string | null>(initialBoard?.board?.markdown_status ?? 'markdown_default');
+  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
+  const [prefixList] = useState<PrefixRow[]>(initialPrefix?.prefixes ?? []);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
   const [selectedPrefixId, setSelectedPrefixId] = useState('');
   const [subject, setSubject] = useState('');
@@ -265,12 +264,11 @@ export default function Opt() {
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
   const [isComment, setIsComment] = useState(true);
   const [isPin, setIsPin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingPublish, setIsSubmittingPublish] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
@@ -290,72 +288,6 @@ export default function Opt() {
     };
   }, []);
 
-  useEffect(() => {
-    async function loadBoardData() {
-      try {
-        setErrorMessage('');
-
-        const boardResponse = await fetch(`/api/boards/${boardName}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const boardResult = (await boardResponse.json()) as BoardInfoResponse;
-
-        if (!boardResponse.ok) {
-          throw new Error(boardResult.error ?? '게시판 정보를 불러오지 못했습니다.');
-        }
-
-        const nextBoardType = boardResult.board?.board_type ?? 'basic';
-        const nextPostType = boardResult.board?.post_type ?? 'none';
-        const nextMarkdownStatus = boardResult.board?.markdown_status ?? 'markdown_default';
-
-        setBoardType(nextBoardType);
-        setPostType(nextPostType);
-        setMarkdownStatus(nextMarkdownStatus);
-
-        if (nextPostType === 'series') {
-          const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-          if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-          }
-
-          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        }
-
-        if (nextPostType === 'prefix') {
-          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
-
-          if (!prefixResponse.ok) {
-            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
-          }
-
-          setPrefixList(Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : []);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadBoardData();
-  }, [boardName, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -627,7 +559,7 @@ export default function Opt() {
   async function handleSubmit(action: 'draft' | 'publish', event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmittingDraft || isSubmittingPublish || isLoading || isUploadingThumbnail || isUploadingImages) {
+    if (isSubmittingDraft || isSubmittingPublish || isUploadingThumbnail || isUploadingImages) {
       return;
     }
 
@@ -698,22 +630,6 @@ export default function Opt() {
       setIsSubmittingDraft(false);
       setIsSubmittingPublish(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

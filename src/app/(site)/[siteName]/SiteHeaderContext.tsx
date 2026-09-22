@@ -35,6 +35,7 @@ export type SiteHeaderData = {
   creatorHandleName?: string | null;
   userHandleName?: string | null;
   hasAffettoMyPosts?: boolean;
+  isAdult?: boolean;
 };
 
 const SiteHeaderContext = createContext<SiteHeaderData | null>(null);

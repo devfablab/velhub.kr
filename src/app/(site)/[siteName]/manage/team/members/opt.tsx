@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -25,7 +24,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -160,7 +158,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
   const [isOwnerTransferSubmitting, setIsOwnerTransferSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'manager' | 'member'>('manager');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRoleSubmitting, setIsRoleSubmitting] = useState(false);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
@@ -171,65 +168,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
-  async function loadTeams() {
-    const response = await fetch(`/api/manage/team/members?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as TeamResponse | { error?: string };
-
-    if (!response.ok) {
-      throw new Error(
-        'error' in result
-          ? result.error || '팀블로그 목록을 불러오지 못했습니다.'
-          : '팀블로그 목록을 불러오지 못했습니다.',
-      );
-    }
-
-    if ('teams' in result && Array.isArray(result.teams)) {
-      setTeams(result.teams);
-      setCanRequestOwnerTransfer(result.ownerTransfer?.canRequest === true);
-      setHasPendingOwnerTransfer(result.ownerTransfer?.hasPendingRequest === true);
-    } else {
-      setTeams([]);
-      setCanRequestOwnerTransfer(false);
-      setHasPendingOwnerTransfer(false);
-    }
-  }
-
-  async function loadInvites() {
-    const response = await fetch(`/api/manage/team/members/invite?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as InviteResponse | { error?: string };
-
-    if (!response.ok) {
-      throw new Error(
-        'error' in result ? result.error || '초대 목록을 불러오지 못했습니다.' : '초대 목록을 불러오지 못했습니다.',
-      );
-    }
-
-    setInvites('invites' in result && Array.isArray(result.invites) ? result.invites : []);
-  }
-
-  async function loadAll() {
-    try {
-      setErrorMessage('');
-      await Promise.all([loadTeams(), loadInvites()]);
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '팀원 설정 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('팀원 설정 정보를 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   const sortedTeams = useMemo(() => {
     return [...teams].sort((a, b) => {
@@ -621,22 +559,6 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
     }
   }
 
-  if (isLoading) {
-    return (
-      <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
-
   return (
     <Container pageTitle="팀원 관리" pageBack={`/${siteName}/manage`} menu="team">
       <div className={`container ${styles.container}`}>
@@ -655,7 +577,7 @@ export default function Opt({ initialTeams, initialInvites, initialError }: OptP
             <button
               type="button"
               className="button small cancel"
-              disabled={!isLoading && sortedInvites.length === 0}
+              disabled={sortedInvites.length === 0}
               onClick={handleOpenInviteListDialog}
             >
               초대 목록

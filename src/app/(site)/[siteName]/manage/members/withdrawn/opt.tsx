@@ -35,7 +35,6 @@ import {
   type MemberRestrictionType,
 } from '@/lib/users/memberRestrictionMessages';
 import { formatDate, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import MemberRestrictionMessageDialog from '@/components/service/community/MemberRestrictionMessageDialog';
 import Container from '../../menu';
@@ -92,7 +91,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [nicknameKeyword, setNicknameKeyword] = useState('');
   const [appliedKeyword, setAppliedKeyword] = useState('');
 
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
 
   const [actionType, setActionType] = useState<ActionType>(null);
@@ -357,22 +355,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsActionSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

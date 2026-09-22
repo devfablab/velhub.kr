@@ -1,5 +1,6 @@
 import { cache, type ReactNode, Suspense } from 'react';
 import type { Metadata } from 'next';
+import { detectAdult } from '@/lib/service/detectAdult';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import HeaderSite from '@/components/headers/Site';
@@ -88,6 +89,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
     `/api/header/site?siteName=${siteName}`,
     '사이트 정보를 불러오지 못했습니다.',
   );
+  const isAdult = await detectAdult(siteName);
   const [
     boards,
     writeBoards,
@@ -190,7 +192,7 @@ export default async function SiteLayout({ children, params }: RouteContext) {
 
   return (
     <>
-      <SiteHeaderProvider value={header.data}>
+      <SiteHeaderProvider value={header.data ? { ...header.data, isAdult } : null}>
         <SiteInitialDataProvider
           value={{
             boards: boards.data?.boards ?? [],

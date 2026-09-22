@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import Opt, { type SeriesListResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{

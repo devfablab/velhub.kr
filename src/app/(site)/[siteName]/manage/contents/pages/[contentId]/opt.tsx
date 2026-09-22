@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -77,7 +76,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [content, setContent] = useState<ContentRow | null>(initialData?.content ?? null);
   const [boardName, setBoardName] = useState<string | null>(initialData?.boardName ?? null);
   const [profileImageUrl, setProfileImageUrl] = useState(initialData?.content?.og_image_url ?? '');
-  const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -190,22 +188,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (!content) {

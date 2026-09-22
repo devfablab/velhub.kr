@@ -32,7 +32,6 @@ import {
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -60,7 +59,7 @@ type BoardRow = {
   site_id: string;
 };
 
-type CategoryListResponse = {
+export type CategoryListResponse = {
   board?: BoardRow;
   categories?: CategoryRow[];
   error?: string;
@@ -88,7 +87,7 @@ type CategoryOrderResponse = {
   error?: string;
 };
 
-type StatusResponse = {
+export type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
 };
@@ -250,7 +249,7 @@ function SortableCategoryRow({
   );
 }
 
-export default function Opt() {
+export default function Opt({ initialStatus, initialCategory, initialError }: { initialStatus?: StatusResponse | null, initialCategory?: CategoryListResponse | null, initialError?: string | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -269,8 +268,8 @@ export default function Opt() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [board, setBoard] = useState<BoardRow | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
+  const [board, setBoard] = useState<BoardRow | null>(initialCategory?.board ?? null);
+  const [categories, setCategories] = useState<CategoryRow[]>(initialCategory?.categories ?? []);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryRow | null>(null);
   const [categoryKey, setCategoryKey] = useState('');
@@ -278,7 +277,6 @@ export default function Opt() {
   const [summary, setSummary] = useState('');
   const [thumbnailImage, setThumbnailImage] = useState('');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdering, setIsOrdering] = useState(false);
   const [isOrderChanged, setIsOrderChanged] = useState(false);
@@ -286,7 +284,7 @@ export default function Opt() {
   const [isCheckingLabel, setIsCheckingLabel] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogSuccessMessage, setDialogSuccessMessage] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
@@ -301,64 +299,6 @@ export default function Opt() {
     });
   }, [categories]);
 
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        setErrorMessage('');
-
-        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-        if (!statusResponse.ok) {
-          throw new Error(
-            'error' in statusResult
-              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-              : '블로그 상태를 확인하지 못했습니다.',
-          );
-        }
-
-        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-          throw new Error('블로그 상태를 확인하지 못했습니다.');
-        }
-
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          throw new Error('블로그 게시판을 찾을 수 없습니다.');
-        }
-
-        const response = await fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as CategoryListResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '카테고리 목록을 불러오지 못했습니다.');
-        }
-
-        if (!result.board) {
-          throw new Error('카테고리 목록을 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board);
-        setCategories(Array.isArray(result.categories) ? result.categories : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '카테고리 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('카테고리 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadCategories();
-  }, [siteName]);
 
   function resetDialogFields() {
     setCategoryKey('');
@@ -901,22 +841,6 @@ export default function Opt() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">

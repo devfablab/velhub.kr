@@ -1,7 +1,7 @@
 import Container from '../../menu';
 import ReportManage from '../reportManage';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import type { ReportListResponse } from '../reportManage';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 export default async function Page({ params }: RouteContext) {

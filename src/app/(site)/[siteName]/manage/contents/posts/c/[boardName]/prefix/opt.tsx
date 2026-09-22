@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useMemo, useState } from 'react';
+import { type JSX, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -29,7 +29,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../../../menu';
@@ -93,7 +92,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [prefixLabel, setPrefixLabel] = useState('');
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
@@ -279,22 +277,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/c/${boardName}`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

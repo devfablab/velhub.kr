@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
@@ -21,7 +21,6 @@ import {
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
 type BlogSubscriptionMember = {
@@ -34,7 +33,7 @@ type BlogSubscriptionMember = {
   totalPaidAmount: number;
 };
 
-type BlogSubscriptionResponse = {
+export type BlogSubscriptionResponse = {
   site?: {
     id: string;
     siteKey: string;
@@ -56,7 +55,7 @@ type BlogSubscriptionResponse = {
   error?: string;
 };
 
-import SettlementForm from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
 import { ServiceErrorIcon } from '@/components/Svgs';
 
 type BlogSubscriptionSaveResponse = {
@@ -105,67 +104,31 @@ function formatAmount(value: number | null | undefined) {
   return `${value.toLocaleString('ko-KR')}원`;
 }
 
-export default function Opt() {
+export default function Opt({
+  initialData,
+  initialError,
+  initialSettlement,
+  initialSettlementError,
+}: {
+  initialData: BlogSubscriptionResponse | null;
+  initialError: string | null;
+  initialSettlement: SettlementResponse | null;
+  initialSettlementError: string;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(false);
-  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState('10,000');
-  const [requiredMinPrice, setRequiredMinPrice] = useState(10000);
-  const [maxSeriesPrice, setMaxSeriesPrice] = useState(0);
-  const [members, setMembers] = useState<BlogSubscriptionMember[]>([]);
-  const [blogSubscriptionData, setBlogSubscriptionData] = useState<BlogSubscriptionResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isBlogSubscriptionEnabled, setIsBlogSubscriptionEnabled] = useState(initialData?.setting?.isEnabled ?? false);
+  const [blogSubscriptionPrice, setBlogSubscriptionPrice] = useState(
+    formatCurrencyInput(initialData?.setting?.price ?? 10000),
+  );
+  const [requiredMinPrice, setRequiredMinPrice] = useState(initialData?.setting?.requiredMinPrice ?? 10000);
+  const [maxSeriesPrice, setMaxSeriesPrice] = useState(initialData?.setting?.maxSeriesPrice ?? 0);
+  const [members] = useState<BlogSubscriptionMember[]>(initialData?.members ?? []);
+  const [blogSubscriptionData] = useState<BlogSubscriptionResponse | null>(initialData);
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    async function loadBlogSubscription() {
-      try {
-        setErrorMessage('');
-        setSuccessMessage('');
-
-        const response = await fetch(`/api/manage/payments/subscriptions/site?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as BlogSubscriptionResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '블로그 구독 정보를 불러오지 못했습니다.');
-        }
-
-        const nextRequiredMinPrice = result.setting?.requiredMinPrice ?? 10000;
-        const nextPrice = result.setting?.price ?? nextRequiredMinPrice;
-
-        setIsBlogSubscriptionEnabled(Boolean(result.setting?.isEnabled));
-        setRequiredMinPrice(nextRequiredMinPrice);
-        setMaxSeriesPrice(result.setting?.maxSeriesPrice ?? 0);
-        setBlogSubscriptionPrice(formatCurrencyInput(Math.max(nextPrice, nextRequiredMinPrice)));
-        setMembers(result.members ?? []);
-        setBlogSubscriptionData(result);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 구독 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('블로그 구독 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-
-      return;
-    }
-
-    void loadBlogSubscription();
-  }, [siteName]);
 
   function handleBlogSubscriptionEnabledChange(event: ChangeEvent<HTMLInputElement>) {
     setIsBlogSubscriptionEnabled(event.target.checked);
@@ -237,16 +200,6 @@ export default function Opt() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className={`paper ${styles.paper}`}>
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
-    );
-  }
-
   if (errorMessage === '블로그 구독은 블로그에서만 사용할 수 있습니다.') {
     return (
       <div className="paper page-error">
@@ -276,7 +229,7 @@ export default function Opt() {
         </p>
         {blogSubscriptionData.ownerStatus.isOwner && (
           <div className={`paper ${styles.paper}`}>
-            <SettlementForm />
+            <SettlementForm initialData={initialSettlement} initialError={initialSettlementError} />
           </div>
         )}
       </Stack>

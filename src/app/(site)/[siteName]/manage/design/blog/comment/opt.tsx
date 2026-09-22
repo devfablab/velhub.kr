@@ -20,7 +20,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -101,7 +100,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const [commentProvider, setCommentProvider] = useState<CommentProvider>(initialData?.blog?.commentProvider ?? 'none');
   const [giscusSettings, setGiscusSettings] = useState<GiscusSettings>(initialData?.blog?.giscusSettings ?? DEFAULT_GISCUS_SETTINGS);
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
@@ -205,22 +203,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

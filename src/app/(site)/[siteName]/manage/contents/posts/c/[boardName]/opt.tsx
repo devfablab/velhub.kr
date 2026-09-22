@@ -142,7 +142,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContentRow | null>(null);
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isFetching, setIsFetching] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(Boolean(initialData || initialError));
   const [isDeleting, setIsDeleting] = useState(false);
@@ -174,7 +173,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }, [currentPageIds, selectedIds]);
 
   useEffect(() => {
-    if (initialData && reloadKey === 0) return;
+    if (reloadKey === 0) return;
     async function loadBoard() {
       try {
         if (hasLoaded) {
@@ -218,7 +217,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
         }
       } finally {
         setHasLoaded(true);
-        setIsLoading(false);
         setIsFetching(false);
       }
     }
@@ -231,10 +229,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }, [contents]);
 
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
     if (currentPage > totalPage) {
       const nextSearchParams = new URLSearchParams(searchParams.toString());
 
@@ -247,7 +241,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const nextQuery = nextSearchParams.toString();
       router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     }
-  }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
+  }, [currentPage, pathname, router, searchParams, totalPage]);
 
   function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'deleted' }) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -466,22 +460,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsDeleting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

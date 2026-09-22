@@ -1,29 +1,20 @@
-import { redirect } from 'next/navigation';
-import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
-
-type RouteContext = {
-  params: Promise<{
-    siteName: string;
-  }>;
-};
-
-export default async function Page(context: RouteContext) {
-  const { siteName } = await context.params;
+import type { StatusResponse, ContentResponse, CategoryListResponse, SeriesListResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+type Props = { params: Promise<{ siteName: string, contentId: string }> };
+export default async function Page({ params }: Props) {
+  const { siteName, contentId } = await params;
   const normalizedSiteName = normalizeText(siteName).toLowerCase();
-
-  const supabaseAdmin = getSupabaseAdmin();
-
-  const siteInfo = await supabaseAdmin
-    .from('rhizomes')
-    .select('site_type')
-    .eq('site_key', normalizedSiteName)
-    .maybeSingle();
-
-  if (siteInfo.data?.site_type !== 'blog') {
-    redirect(`/${normalizedSiteName}/manage/contents/posts`);
+  const statusData = await getSiteApiData<StatusResponse>(`/api/manage/contents/blog-posts/status?siteName=${normalizedSiteName}`, '블로그 상태를 확인하지 못했습니다.');
+  let contentData = null, categoryData = null, seriesData = null;
+  if (statusData.data?.hasBoard && statusData.data?.boardName) {
+    const boardName = statusData.data.boardName;
+    [contentData, categoryData, seriesData] = await Promise.all([
+      getSiteApiData<ContentResponse>(`/api/boards/${boardName}/${contentId}?siteName=${normalizedSiteName}`, '글을 불러오지 못했습니다.'),
+      getSiteApiData<CategoryListResponse>(`/api/boards/${boardName}/category?siteName=${normalizedSiteName}`, '카테고리를 불러오지 못했습니다.'),
+      getSiteApiData<SeriesListResponse>(`/api/boards/${boardName}/series?siteName=${normalizedSiteName}`, '시리즈를 불러오지 못했습니다.')
+    ]);
   }
-
-  return <Opt />;
+  return <Opt initialStatus={statusData.data} initialContent={contentData?.data} initialCategory={categoryData?.data} initialSeries={seriesData?.data} initialError={statusData.error || contentData?.error} />;
 }

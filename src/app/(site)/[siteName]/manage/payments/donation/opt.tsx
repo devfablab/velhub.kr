@@ -16,7 +16,6 @@ import {
   Typography,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
 type DonationKind = 'site' | 'series';
@@ -62,7 +61,7 @@ export type DonationManageResponse = {
   error?: string;
 };
 
-import SettlementForm from '@/components/service/common/SettlementForm';
+import SettlementForm, { type SettlementResponse } from '@/components/service/common/SettlementForm';
 
 function formatPrice(price: number | null | undefined) {
   if (typeof price !== 'number') {
@@ -94,25 +93,19 @@ function getDonationKindLabel(donationKind: DonationKind) {
   return '사이트 후원';
 }
 
-type OptProps = { initialData: DonationManageResponse | null; initialError: string };
+type OptProps = {
+  initialData: DonationManageResponse | null;
+  initialError: string;
+  initialSettlement: SettlementResponse | null;
+  initialSettlementError: string;
+};
 
-export default function Opt({ initialData, initialError }: OptProps) {
+export default function Opt({ initialData, initialError, initialSettlement, initialSettlementError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [donationData, setDonationData] = useState<DonationManageResponse | null>(initialData);
-
-  if (isLoading) {
-    return (
-      <div className={`paper ${styles.paper}`}>
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
-    );
-  }
 
   if (donationData?.ownerStatus && !donationData.ownerStatus.isCreator) {
     return (
@@ -134,7 +127,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
         </p>
         {donationData.ownerStatus.isOwner && (
           <div className={`paper ${styles.paper}`}>
-            <SettlementForm />
+            <SettlementForm initialData={initialSettlement} initialError={initialSettlementError} />
           </div>
         )}
       </Stack>

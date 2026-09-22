@@ -28,7 +28,6 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -39,7 +38,7 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
-type StatusResponse = {
+export type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
   commentProvider: CommentProvider;
@@ -80,7 +79,7 @@ type CategoryRow = {
   created_at?: string;
 };
 
-type CategoryListResponse = {
+export type CategoryListResponse = {
   categories?: CategoryRow[];
   error?: string;
 };
@@ -99,7 +98,7 @@ type SeriesRow = {
   user_id: string | null;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
@@ -196,7 +195,17 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
   throw new Error(maxSizeMessage);
 }
 
-export default function Opt() {
+export default function Opt({
+  initialStatus,
+  initialCategories,
+  initialSeries,
+  initialError,
+}: {
+  initialStatus: StatusResponse | null;
+  initialCategories: CategoryListResponse | null;
+  initialSeries: SeriesListResponse | null;
+  initialError: string;
+}) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -218,19 +227,18 @@ export default function Opt() {
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
   const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
-  const [hasBoard, setHasBoard] = useState(false);
-  const [authority, setAuthority] = useState('');
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [hasBoard] = useState(initialStatus?.hasBoard ?? false);
+  const [authority] = useState(initialStatus?.authority ?? '');
+  const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
+  const [categories] = useState<CategoryRow[]>(initialCategories?.categories ?? []);
+  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
-  const [isStatusLoading, setIsStatusLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
-  const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
-  const [isComment, setIsComment] = useState(false);
+  const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
+  const [isComment, setIsComment] = useState(initialStatus?.commentProvider !== 'none');
   const [publishTimeMode, setPublishTimeMode] = useState<PublishTimeMode>('now');
   const [scheduledPublishedAt, setScheduledPublishedAt] = useState<Date | null>(null);
   const ti = normalizeText(searchParams.get('t'));
@@ -245,80 +253,6 @@ export default function Opt() {
       editorBlobImagesReference.current = [];
     };
   }, []);
-
-  useEffect(() => {
-    async function loadStatus() {
-      try {
-        setErrorMessage('');
-        setIsStatusLoading(true);
-
-        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-        if (!statusResponse.ok) {
-          throw new Error(
-            'error' in statusResult
-              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-              : '블로그 상태를 확인하지 못했습니다.',
-          );
-        }
-
-        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-          throw new Error('블로그 상태를 확인하지 못했습니다.');
-        }
-
-        setHasBoard(statusResult.hasBoard);
-        setBoardName(statusResult.boardName);
-        setCommentProvider(statusResult.commentProvider);
-        setIsComment(statusResult.commentProvider !== 'none');
-        setAuthority(statusResult.authority);
-
-        if (statusResult.hasBoard && statusResult.boardName) {
-          const [categoryResponse, seriesResponse] = await Promise.all([
-            fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
-              method: 'GET',
-              credentials: 'include',
-            }),
-            fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
-              method: 'GET',
-              credentials: 'include',
-            }),
-          ]);
-
-          const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
-          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-          if (!categoryResponse.ok) {
-            throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
-          }
-
-          if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-          }
-
-          setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
-          setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        } else {
-          setCategories([]);
-          setSeriesList([]);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 상태를 확인하지 못했습니다.');
-        } else {
-          setErrorMessage('블로그 상태를 확인하지 못했습니다.');
-        }
-      } finally {
-        setIsStatusLoading(false);
-      }
-    }
-
-    void loadStatus();
-  }, [siteName]);
 
   function handlePublishTimeModeChange(event: InputChangeEvent) {
     const nextValue = event.currentTarget.value;
@@ -559,7 +493,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isStatusLoading) {
+    if (isSubmitting) {
       return;
     }
 
@@ -640,22 +574,6 @@ export default function Opt() {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isStatusLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (!hasBoard && authority !== 'admin' && authority !== 'staff') {

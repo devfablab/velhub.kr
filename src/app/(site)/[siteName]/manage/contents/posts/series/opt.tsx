@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, type JSX, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -31,7 +31,6 @@ import {
 } from '@mui/material';
 import { runInputAdornmentAction } from '@/lib/input/runInputAdornmentAction';
 import { formatDateTimeDetail, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -39,7 +38,7 @@ import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type StatusResponse = {
+export type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
 };
@@ -75,7 +74,7 @@ type SeriesUserSearchRow = {
   nickname: string;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   board?: BoardRow;
   series?: SeriesRow[];
   error?: string;
@@ -191,7 +190,7 @@ function buildCheckUrl({
   return `/api/boards/${boardName}/series/check?${searchParams.toString()}`;
 }
 
-export default function Opt() {
+export default function Opt({ initialStatus, initialSeries, initialError }: { initialStatus?: StatusResponse | null, initialSeries?: SeriesListResponse | null, initialError?: string | null }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -200,8 +199,8 @@ export default function Opt() {
 
   const fileInputReference = useRef<HTMLInputElement | null>(null);
 
-  const [board, setBoard] = useState<BoardRow | null>(null);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
+  const [board, setBoard] = useState<BoardRow | null>(initialSeries?.board ?? null);
+  const [seriesList, setSeriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [selectedSeries, setSelectedSeries] = useState<SeriesRow | null>(null);
 
@@ -213,7 +212,6 @@ export default function Opt() {
   const [selectedUser, setSelectedUser] = useState<SeriesUserSearchRow | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDeletingImage, setIsDeletingImage] = useState(false);
@@ -225,7 +223,7 @@ export default function Opt() {
   const [searchedUsers, setSearchedUsers] = useState<SeriesUserSearchRow[]>([]);
   const [isUserSearching, setIsUserSearching] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
   const [dialogHelperMessage, setDialogHelperMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -248,62 +246,6 @@ export default function Opt() {
     });
   }, [seriesList]);
 
-  useEffect(() => {
-    async function loadSeries() {
-      try {
-        setErrorMessage('');
-
-        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-        if (!statusResponse.ok) {
-          throw new Error(
-            'error' in statusResult
-              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-              : '블로그 상태를 확인하지 못했습니다.',
-          );
-        }
-
-        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-          throw new Error('블로그 게시판을 찾을 수 없습니다.');
-        }
-
-        const boardName = normalizeText(statusResult.boardName) || 'b';
-
-        const response = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as SeriesListResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '연재 목록을 불러오지 못했습니다.');
-        }
-
-        if (!result.board) {
-          throw new Error('연재 목록을 불러오지 못했습니다.');
-        }
-
-        setBoard(result.board);
-        setSeriesList(Array.isArray(result.series) ? result.series : []);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '연재 목록을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('연재 목록을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadSeries();
-  }, [siteName]);
 
   function resetDialogFields() {
     setSeriesKey('');
@@ -898,22 +840,6 @@ export default function Opt() {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

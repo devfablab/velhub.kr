@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Opt from './opt';
+import type { BoardsResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{
@@ -25,5 +27,10 @@ export default async function Page(context: RouteContext) {
     redirect(`/${normalizedSiteName}/manage/contents/posts`);
   }
 
-  return <Opt />;
+  const initial = await getSiteApiData<BoardsResponse>(
+    `/api/boards?siteName=${normalizedSiteName}`,
+    '게시판 정보를 불러오지 못했습니다.',
+  );
+
+  return <Opt initialData={initial.data} initialError={initial.error} />;
 }

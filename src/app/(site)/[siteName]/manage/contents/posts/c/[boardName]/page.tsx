@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import Opt, { type BoardResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{
@@ -34,5 +34,11 @@ export default async function Page(context: SearchContext) {
   const size = Number(searchParams.size) > 0 ? `&size=${Number(searchParams.size)}` : '';
   const filter = searchParams.filter === 'deleted' ? '&filter=deleted' : '';
   const initial = await getSiteApiData<BoardResponse>(`/api/boards/${boardName}?siteName=${normalizedSiteName}&manageContents=true&page=${page}${size}${filter}`, '게시판을 불러오지 못했습니다.');
-  return <Opt initialData={initial.data} initialError={initial.error} />;
+  return (
+    <Opt
+      key={`${boardName}:${page}:${size}:${filter}`}
+      initialData={initial.data}
+      initialError={initial.error}
+    />
+  );
 }

@@ -20,7 +20,6 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -64,6 +63,16 @@ type ContentRow = {
   board_id: string;
   author_name: string;
   is_comment: boolean;
+};
+
+export type StatusResponse = {
+  boardName: string | null;
+  error?: string;
+};
+
+export type ContentResponse = {
+  content?: ContentRow;
+  error?: string;
 };
 
 const VisuallyHiddenInput = styled('input')({
@@ -167,7 +176,7 @@ async function convertImageToWebpFile(file: File, errorMessage = '이미지는 1
   });
 }
 
-export default function Opt() {
+export default function Opt({ initialStatus, initialContent, initialError }: { initialStatus: StatusResponse | null; initialContent: ContentResponse | null; initialError?: string | null }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -179,83 +188,25 @@ export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [slug, setSlug] = useState('');
-  const [initialSlug, setInitialSlug] = useState('');
-  const [subject, setSubject] = useState('');
-  const [summary, setSummary] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [contentMarkdown, setContentMarkdown] = useState('');
+  const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
+  const [slug, setSlug] = useState(initialContent?.content?.slug ?? '');
+  const [initialSlug] = useState(initialContent?.content?.slug ?? '');
+  const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
+  const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
+  const [contentHtml, setContentHtml] = useState(initialContent?.content?.content_html ?? '');
+  const [contentMarkdown, setContentMarkdown] = useState(initialContent?.content?.content_markdown ?? '');
   const [, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
-  const [ogImage, setOgImage] = useState('');
-  const [ogImageUrl, setOgImageUrl] = useState('');
-  const [isComment, setIsComment] = useState(false);
+  const [ogImage, setOgImage] = useState(initialContent?.content?.og_image ?? '');
+  const [ogImageUrl, setOgImageUrl] = useState(initialContent?.content?.og_image_url ?? '');
+  const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? false);
   const [slugMessage, setSlugMessage] = useState('');
   const [isSlugAvailable, setIsSlugAvailable] = useState<boolean | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingOgImage, setIsUploadingOgImage] = useState(false);
   const [isCheckingSlug, setIsCheckingSlug] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
 
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        const statusResponse = await fetch(`/api/manage/contents/pages/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = await statusResponse.json();
-
-        if (!statusResponse.ok) {
-          throw new Error(statusResult.error ?? '페이지 상태를 확인하지 못했습니다.');
-        }
-
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          throw new Error('페이지 게시판을 찾을 수 없습니다.');
-        }
-
-        setBoardName(statusResult.boardName);
-
-        const contentResponse = await fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const contentResult = await contentResponse.json();
-
-        if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '페이지 정보를 불러오지 못했습니다.');
-        }
-
-        const content = contentResult.content as ContentRow;
-
-        setSlug(content.slug ?? '');
-        setInitialSlug(content.slug ?? '');
-        setSubject(content.subject ?? '');
-        setSummary(content.summary ?? '');
-        setContentHtml(content.content_html ?? '');
-        setContentMarkdown(content.content_markdown ?? '');
-        setOgImage(content.og_image ?? '');
-        setOgImageUrl(content.og_image_url ?? '');
-        setIsComment(Boolean(content.is_comment));
-        setSlugMessage('');
-        setIsSlugAvailable(null);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '페이지 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('페이지 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadContent();
-  }, [contentId, siteName]);
 
   useEffect(() => {
     return () => {
@@ -582,22 +533,6 @@ export default function Opt() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/pages/${contentId}`} menu="contents">

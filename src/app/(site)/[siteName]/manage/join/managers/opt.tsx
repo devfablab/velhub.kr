@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useMemo, useRef, useState } from 'react';
+import { type JSX, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CompareArrowsRoundedIcon from '@mui/icons-material/CompareArrowsRounded';
@@ -28,7 +28,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -89,7 +88,7 @@ type ManagerIconItem = {
   site_id: string;
 };
 
-type ManagersResponse = {
+export type ManagersResponse = {
   ok?: boolean;
   managers?: ManagerItem[];
   boards?: BoardItem[];
@@ -182,7 +181,7 @@ function getInitialBoardRole(board: BoardItem | null | undefined) {
   return board && board.boardGeneralManagerCount > 0 ? 'board-assistant-manager' : 'board-general-manager';
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError }: { initialData: ManagersResponse | null; initialError: string }) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
@@ -190,11 +189,10 @@ export default function Opt() {
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [managers, setManagers] = useState<ManagerItem[]>([]);
-  const [boards, setBoards] = useState<BoardItem[]>([]);
-  const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>([]);
-  const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [managers, setManagers] = useState<ManagerItem[]>(initialData?.managers || []);
+  const [boards, setBoards] = useState<BoardItem[]>(initialData?.boards || []);
+  const [managerIcons, setManagerIcons] = useState<ManagerIconItem[]>(initialData?.managerIcons || []);
+  const [ownerTransfer, setOwnerTransfer] = useState<ManagersResponse['ownerTransfer'] | null>(initialData?.ownerTransfer || null);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchedKeyword, setSearchedKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<MemberSearchItem[]>([]);
@@ -209,7 +207,7 @@ export default function Opt() {
   );
   const [moveRole, setMoveRole] = useState<ManagerRole>('community-manager');
   const [moveBoardId, setMoveBoardId] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [searchDialogErrorMessage, setSearchDialogErrorMessage] = useState('');
   const [managerEditErrorMessage, setManagerEditErrorMessage] = useState('');
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -259,23 +257,6 @@ export default function Opt() {
 
     return [];
   }, [boards, moveRole]);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        setErrorMessage('');
-        await loadManagers();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '매니저 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('매니저 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
 
   async function loadManagers() {
     const response = await fetch(`/api/manage/join/managers?siteName=${siteName}`, {
@@ -830,22 +811,6 @@ export default function Opt() {
     } finally {
       setIsSubmittingMove(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   const managerEditContent = selectedManager ? (

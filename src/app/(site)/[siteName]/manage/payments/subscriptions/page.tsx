@@ -3,9 +3,13 @@ import { detectAdult } from '@/lib/service/detectAdult';
 import { getAuthorState } from '@/lib/session/author';
 import verifySession from '@/lib/session/verifySession';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import type { SettlementResponse } from '@/components/service/common/SettlementForm';
 import Container from '../../menu';
+import type { BlogSubscriptionResponse } from './blog';
 import BlogSubscription from './blog';
+import type { SeriesSubscriptionsResponse } from './series';
 import SeriesSubscriptions from './series';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {
@@ -63,14 +67,49 @@ export default async function Page(context: RouteContext) {
   }
 
   const canManageBlogSubscriptions = isBlog && authorState?.isAuthor === true;
-  return (
+
+  let initialSeriesSubscriptions: SeriesSubscriptionsResponse | null = null;
+  let initialBlogSubscription: BlogSubscriptionResponse | null = null;
+  let initialError: string | null = null;
+  const settlementResult = await getSiteApiData<SettlementResponse>('/api/settlement', '정산 정보를 불러오지 못했습니다.');
+
+  if (canManageBlogSubscriptions || isAdult) {
+    const [seriesResult, blogResult] = await Promise.all([
+      getSiteApiData<SeriesSubscriptionsResponse>(
+        `/api/manage/payments/subscriptions/series?siteName=${siteName}`,
+        '연재 구독 목록을 불러오지 못했습니다.',
+      ),
+      canManageBlogSubscriptions && !isTeamBlog
+        ? getSiteApiData<BlogSubscriptionResponse>(
+            `/api/manage/payments/subscriptions/site?siteName=${siteName}`,
+            '블로그 구독 정보를 불러오지 못했습니다.',
+          )
+        : Promise.resolve(null),
+    ]);
+
+    initialSeriesSubscriptions = seriesResult.data ?? null;
+    if (seriesResult.error) initialError = seriesResult.error;
+
+    if (blogResult) {
+      initialBlogSubscription = blogResult.data ?? null;
+      if (blogResult.error) initialError = blogResult.error;
+    }
+  }
+return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {canManageBlogSubscriptions ? (
             <>
-              {!isTeamBlog ? <BlogSubscription /> : null}
-              <SeriesSubscriptions guidanceMessages={getBlogGuidanceMessages()} />
+              {!isTeamBlog ? (
+                <BlogSubscription
+                  initialData={initialBlogSubscription}
+                  initialError={initialError}
+                  initialSettlement={settlementResult.data}
+                  initialSettlementError={settlementResult.error}
+                />
+              ) : null}
+              <SeriesSubscriptions guidanceMessages={getBlogGuidanceMessages()} initialData={initialSeriesSubscriptions} initialError={initialError} />
             </>
           ) : isBlog ? (
             <div className="paper">
@@ -80,7 +119,7 @@ export default async function Page(context: RouteContext) {
               </p>
             </div>
           ) : isAdult ? (
-            <SeriesSubscriptions />
+            <SeriesSubscriptions initialData={initialSeriesSubscriptions} initialError={initialError} />
           ) : (
             <div className="paper">
               <p className="alert warning">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -23,7 +23,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -51,7 +50,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSaving, setIsSaving] = useState(false);
   const [isCommunity, setIsCommunity] = useState(initialData?.siteType === 'community');
   const [isInstalled, setIsInstalled] = useState(Boolean(initialData?.board));
@@ -65,40 +63,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [notice, setNotice] = useState<Notice | null>(
     initialError ? { title: '불러오기 실패', message: initialError } : null,
   );
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-
-    async function load() {
-      try {
-        const response = await fetch(`/api/private-board/manage?siteName=${siteName}`, { credentials: 'include' });
-        const result = (await response.json()) as BoardResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '비공개 게시판 정보를 불러오지 못했습니다.');
-        }
-
-        setIsCommunity(result.siteType === 'community');
-        setIsInstalled(Boolean(result.board));
-        setBoardLabel(result.board?.board_label ?? '');
-        setIsImageEnabled(result.board?.is_image_enabled ?? true);
-        setCategories(
-          result.categories?.length
-            ? result.categories.map((category) => ({ id: category.id, label: category.category_label }))
-            : [{ id: null, label: '분류없음' }],
-        );
-      } catch (error) {
-        setNotice({
-          title: '불러오기 실패',
-          message: error instanceof Error ? error.message : '비공개 게시판 정보를 불러오지 못했습니다.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void load();
-  }, [siteName]);
 
   function changeCategory(index: number, label: string) {
     setCategories((previous) =>
@@ -151,18 +115,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="비공개 게시판" pageBack={`/${siteName}/manage`}>
-        <div className={`container ${styles.container}`}>
-          <div className="loading-container">
-            <LoadingIndicator />
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (!isCommunity) {

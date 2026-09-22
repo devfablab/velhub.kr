@@ -22,7 +22,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -93,7 +92,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const [enabled, setEnabled] = useState(Boolean(initialData?.enabled));
   const [levels, setLevels] = useState<LevelRow[]>(Array.isArray(initialData?.levels) ? initialData.levels : []);
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isEnabling, setIsEnabling] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIconDialogOpen, setIsIconDialogOpen] = useState(false);
@@ -102,22 +100,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [deletingIconLevelId, setDeletingIconLevelId] = useState('');
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-
-  async function loadLevels() {
-    const response = await fetch(`/api/manage/members/levels?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as LevelResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '등급 정보를 불러오지 못했습니다.');
-    }
-
-    setEnabled(Boolean(result.enabled));
-    setLevels(Array.isArray(result.levels) ? result.levels : []);
-  }
 
   function handleOpenIconDialog() {
     setIsIconDialogOpen(true);
@@ -431,22 +413,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setDeletingIconLevelId('');
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

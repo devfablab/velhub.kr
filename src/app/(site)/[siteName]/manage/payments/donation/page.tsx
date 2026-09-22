@@ -1,9 +1,10 @@
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { detectAdult } from '@/lib/service/detectAdult';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
+import type { SettlementResponse } from '@/components/service/common/SettlementForm';
 import Container from '../../menu';
 import Opt, { type DonationManageResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import styles from '@/app/manage.module.sass';
 
 type RouteContext = {
@@ -17,16 +18,27 @@ export default async function Page(context: RouteContext) {
   const isAdult = await detectAdult(siteName);
   const supabaseAdmin = getSupabaseAdmin();
   const siteInfo = await supabaseAdmin.from('rhizomes').select('site_type').eq('site_key', siteName).maybeSingle();
-  const initial = isAdult
-    ? await getSiteApiData<DonationManageResponse>(`/api/manage/payments/donation?siteName=${siteName}`, '후원 내역을 불러오지 못했습니다.')
-    : null;
+  const [initial, settlement] = isAdult
+    ? await Promise.all([
+        getSiteApiData<DonationManageResponse>(
+          `/api/manage/payments/donation?siteName=${siteName}`,
+          '후원 내역을 불러오지 못했습니다.',
+        ),
+        getSiteApiData<SettlementResponse>('/api/settlement', '정산 정보를 불러오지 못했습니다.'),
+      ])
+    : [null, null];
 
   return (
     <Container pageTitle="결제 관리" pageBack={`/${siteName}/manage`} menu="payments">
       <div className={`container ${styles.container}`}>
         <div className={`content ${styles.content} ${styles['content-manage']}`}>
           {isAdult ? (
-            <Opt initialData={initial?.data ?? null} initialError={initial?.error ?? ''} />
+            <Opt
+              initialData={initial?.data ?? null}
+              initialError={initial?.error ?? ''}
+              initialSettlement={settlement?.data ?? null}
+              initialSettlementError={settlement?.error ?? ''}
+            />
           ) : (
             <div className="paper">
               <p className="alert warning">

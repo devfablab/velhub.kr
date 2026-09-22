@@ -34,7 +34,7 @@ type CreateBoardResponse = {
   error?: string;
 };
 
-type BoardsResponse = {
+export type BoardsResponse = {
   boards?: Array<{
     id: string;
     board_key: string;
@@ -100,7 +100,7 @@ function hasInvalidBoardKeyCharacters(value: string) {
   return /[^a-z0-9-]/.test(value);
 }
 
-export default function Opt() {
+export default function Opt({ initialData, initialError }: { initialData: BoardsResponse | null; initialError: string }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -124,13 +124,13 @@ export default function Opt() {
   const [checkedBoardLabel, setCheckedBoardLabel] = useState('');
   const [isBoardLabelAvailable, setIsBoardLabelAvailable] = useState(false);
   const [boardLabelCheckMessage, setBoardLabelCheckMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
-  const [maxBoardCount, setMaxBoardCount] = useState(0);
-  const [currentBoardCount, setCurrentBoardCount] = useState(0);
-  const [canCreateBoard, setCanCreateBoard] = useState(true);
+  const [maxBoardCount] = useState(initialData?.limit?.maxBoardCount ?? 0);
+  const [currentBoardCount] = useState(initialData?.limit?.currentBoardCount ?? 0);
+  const [canCreateBoard] = useState(initialData?.limit?.canCreateBoard ?? false);
 
   const canUsePostType = useMemo(() => {
     return boardType === 'basic';
@@ -183,23 +183,6 @@ export default function Opt() {
 
   function handlePostTypeChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPostType(event.target.value as PostType);
-  }
-
-  async function loadBoardLimit() {
-    const response = await fetch(`/api/boards?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as BoardsResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '게시판 정보를 불러오지 못했습니다.');
-    }
-
-    setMaxBoardCount(result.limit?.maxBoardCount ?? 0);
-    setCurrentBoardCount(result.limit?.currentBoardCount ?? 0);
-    setCanCreateBoard(result.limit?.canCreateBoard ?? false);
   }
 
   async function handleCheckBoardLabel() {
@@ -416,21 +399,6 @@ export default function Opt() {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        setErrorMessage('');
-        await loadBoardLimit();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '게시판 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('게시판 정보를 불러오지 못했습니다.');
-        }
-      }
-    })();
-  }, [siteName]);
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">

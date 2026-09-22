@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { type JSX, useMemo, useState } from 'react';
@@ -23,7 +22,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { formatDateTimeFull, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../menu';
@@ -86,7 +84,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [invites, setInvites] = useState<InviteRow[]>(Array.isArray(initialData?.invites) ? initialData.invites : []);
   const [targetInvite, setTargetInvite] = useState<InviteRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
@@ -96,38 +93,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
-
-  async function loadInvites() {
-    const response = await fetch(`/api/manage/join/invite?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as InviteResponse | { error?: string };
-
-    if (!response.ok) {
-      throw new Error(
-        'error' in result ? result.error || '초대 목록을 불러오지 못했습니다.' : '초대 목록을 불러오지 못했습니다.',
-      );
-    }
-
-    setInvites('invites' in result && Array.isArray(result.invites) ? result.invites : []);
-  }
-
-  async function loadAll() {
-    try {
-      setErrorMessage('');
-      await loadInvites();
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '초대 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('초대 정보를 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   const sortedInvites = useMemo(() => {
     return [...invites].sort((a, b) => {
@@ -269,22 +234,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsCancelSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="join">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

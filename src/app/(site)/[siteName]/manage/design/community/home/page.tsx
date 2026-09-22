@@ -1,6 +1,6 @@
 import Opt from './opt';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import type { HomeOrderResponse } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = { params: Promise<{ siteName: string }> };
 

@@ -20,7 +20,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
@@ -90,7 +89,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const blog = initialData?.blog;
   const hasSubject = blog?.subject_font_family !== null || blog?.subject_letter_spacing !== null || blog?.subject_line_height !== null;
   const hasDescription = blog?.description_font_family !== null || blog?.description_letter_spacing !== null || blog?.description_line_height !== null || blog?.description_font_size !== null || blog?.description_margin !== null;
-  const [isLoading, setIsLoading] = useState(false);
   const [applyScope, setApplyScope] = useState<ApplyScope>(hasSubject ? (hasDescription ? 'both' : 'subject') : hasDescription ? 'description' : 'subject');
   const [subjectFontFamily, setSubjectFontFamily] = useState<FontFamily | ''>((blog?.subject_font_family ?? 'neo') as FontFamily);
   const [subjectLetterSpacing, setSubjectLetterSpacing] = useState<number | ''>(blog?.subject_letter_spacing ?? -0.005);
@@ -190,22 +188,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

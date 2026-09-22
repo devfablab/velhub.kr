@@ -1,6 +1,6 @@
 'use client';
 
-import { type JSX, useEffect, useState } from 'react';
+import { type JSX, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
@@ -26,13 +26,12 @@ import {
 import type { SelectChangeEvent } from '@mui/material/Select';
 import { formatDate, getOgImageUrl, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 
-type StatusResponse = {
+export type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
 };
@@ -92,6 +91,8 @@ type PostResponse = {
   error?: string;
 };
 
+export type ContentResponse = PostResponse;
+
 type CategoryListResponse = {
   categories?: CategoryRow[];
   error?: string;
@@ -107,7 +108,7 @@ type ActionResponse = {
   error?: string;
 };
 
-export default function Opt() {
+export default function Opt({ initialStatus, initialContent, initialError }: { initialStatus?: StatusResponse | null, initialContent?: ContentResponse | null, initialError?: string | null }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -116,17 +117,18 @@ export default function Opt() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [boardName, setBoardName] = useState('');
-  const [post, setPost] = useState<PostResponse['content'] | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [series, setSeries] = useState<SeriesRow | null>(null);
+  const [boardName, setBoardName] = useState(initialStatus?.boardName || '');
+  const [post, setPost] = useState<PostResponse['content'] | null>(initialContent?.content ?? null);
+  const [categories, setCategories] = useState<CategoryRow[]>(initialContent?.categories ?? []);
+  const [series, setSeries] = useState<SeriesRow | null>(initialContent?.series ?? null);
   const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialContent?.categories?.map((category) => category.category_key) ?? [],
+  );
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
   const [isSeriesLocked, setIsSeriesLocked] = useState(false);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthor] = useState(initialContent?.isAuthor ?? false);
+  const [isStaff] = useState(initialContent?.isStaff ?? false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
@@ -136,101 +138,9 @@ export default function Opt() {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [isSeriesDialogOpen, setIsSeriesDialogOpen] = useState(false);
   const [closedMessage, setClosedMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [dialogErrorMessage, setDialogErrorMessage] = useState('');
 
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        setErrorMessage('');
-
-        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-        if (!statusResponse.ok) {
-          throw new Error(
-            'error' in statusResult
-              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-              : '블로그 상태를 확인하지 못했습니다.',
-          );
-        }
-
-        if (
-          !('hasBoard' in statusResult) ||
-          !('boardName' in statusResult) ||
-          !statusResult.hasBoard ||
-          !statusResult.boardName
-        ) {
-          throw new Error('블로그 상태를 확인하지 못했습니다.');
-        }
-
-        setBoardName(statusResult.boardName);
-
-        const [contentResponse, categoryResponse, seriesResponse] = await Promise.all([
-          fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-          fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-          fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-        ]);
-
-        const contentResult = (await contentResponse.json()) as PostResponse;
-        const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
-        const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-        if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '블로그 글을 불러오지 못했습니다.');
-        }
-
-        if (!contentResult.content) {
-          throw new Error('블로그 글을 불러오지 못했습니다.');
-        }
-
-        if (!categoryResponse.ok) {
-          throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
-        }
-
-        if (!seriesResponse.ok) {
-          throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-        }
-
-        setPost(contentResult.content);
-        setSeries(contentResult.series || null);
-        setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        setSelectedSeriesKey(contentResult.series?.series_key || '');
-        setIsSeriesLocked(Boolean(contentResult.series?.series_key));
-        setIsAuthor(Boolean(contentResult.isAuthor));
-        setIsStaff(Boolean(contentResult.isStaff));
-        setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
-        setSelectedCategories(
-          Array.isArray(contentResult.categories)
-            ? contentResult.categories.map((category) => category.category_key)
-            : [],
-        );
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '블로그 글을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('블로그 글을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadContent();
-  }, [contentId, siteName]);
 
   function handleOpenDeleteDialog() {
     setClosedMessage('');
@@ -495,22 +405,6 @@ export default function Opt() {
     } finally {
       setIsSeriesSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

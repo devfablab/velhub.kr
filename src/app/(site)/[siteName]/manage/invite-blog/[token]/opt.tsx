@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import InfoOutlineRoundedIcon from '@mui/icons-material/InfoOutlineRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
-import { Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import Link from '@mui/material/Link';
-import { getSupabaseBrowser } from '@/lib/supabase';
 
-type InviteResponse = {
+export type InviteResponse = {
   ok: boolean;
   invite: {
     id: string;
@@ -28,11 +27,6 @@ type InviteResponse = {
 type AcceptResponse = {
   ok: boolean;
   siteName: string;
-};
-
-type SignInCheckResponse = {
-  accountType?: string;
-  hasPassword?: boolean;
 };
 
 type Props = {
@@ -72,80 +66,26 @@ function formatDate(value: string | null) {
   return `${year}.${month}.${day} ${hour}:${minute}`;
 }
 
-export default function Opt({ siteName, token }: Props) {
-  const supabase = getSupabaseBrowser();
+type OptProps = Props & {
+  initialData: InviteResponse | null;
+  initialError: string;
+  currentUserEmail: string;
+  isLoggedIn: boolean;
+  isRegisteredEmail: boolean;
+};
 
-  const [isLoading, setIsLoading] = useState(true);
+export default function Opt({
+  siteName,
+  token,
+  initialData,
+  initialError,
+  currentUserEmail,
+  isLoggedIn,
+  isRegisteredEmail,
+}: OptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [invite, setInvite] = useState<InviteResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegisteredEmail, setIsRegisteredEmail] = useState(false);
-
-  useEffect(() => {
-    async function loadPage() {
-      try {
-        setErrorMessage('');
-
-        const inviteResponse = await fetch(`/api/manage/design/blog/team/invite/${token}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const inviteResult = (await inviteResponse.json()) as InviteResponse | { error?: string };
-
-        if (!inviteResponse.ok) {
-          throw new Error(
-            'error' in inviteResult
-              ? inviteResult.error || '초대장을 불러오지 못했습니다.'
-              : '초대장을 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('invite' in inviteResult) || !('site' in inviteResult)) {
-          throw new Error('초대장을 불러오지 못했습니다.');
-        }
-
-        const [session, signInCheckResponse] = await Promise.all([
-          supabase.auth.getSession(),
-          fetch('/api/auth/email/sign-in/check', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              email: inviteResult.invite.email,
-            }),
-          }),
-        ]);
-
-        const signInCheckResult = (await signInCheckResponse.json()) as SignInCheckResponse | { error?: string };
-
-        if (session.error && session.error.message !== 'Auth session missing!') {
-          throw new Error(session.error.message || '사용자 정보를 불러오지 못했습니다.');
-        }
-
-        const sessionUser = session.data.session?.user ?? null;
-
-        setInvite(inviteResult);
-        setCurrentUserEmail((sessionUser?.email ?? '').trim().toLowerCase());
-        setIsLoggedIn(Boolean(sessionUser));
-        setIsRegisteredEmail(signInCheckResponse.ok && 'accountType' in signInCheckResult);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '초대장을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('초대장을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadPage();
-  }, [siteName, token, supabase.auth]);
+  const [invite] = useState<InviteResponse | null>(initialData);
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
 
   async function handleJoin() {
     try {
@@ -176,17 +116,6 @@ export default function Opt({ siteName, token }: Props) {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Box sx={{ py: 8 }}>
-        <Stack gap={2} alignItems="center">
-          <CircularProgress />
-          <Typography>초대 정보를 확인하고 있습니다.</Typography>
-        </Stack>
-      </Box>
-    );
   }
 
   const inviteEmail = invite?.invite.email.trim().toLowerCase() ?? '';

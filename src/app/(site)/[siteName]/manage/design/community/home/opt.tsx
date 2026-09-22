@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   closestCenter,
@@ -23,7 +23,6 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { Box, FormControlLabel, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import ScreenState from '@/components/service/ScreenState';
 import Container from '../../../menu';
@@ -143,7 +142,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
 
   const [items, setItems] = useState<HomeOrderItem[]>(Array.isArray(initialData?.items) ? initialData.items : []);
   const [hasHomeOrders, setHasHomeOrders] = useState(Boolean(initialData?.hasHomeOrders));
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
@@ -292,40 +290,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
             }
           : item,
       ),
-    );
-  }
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-    void (async () => {
-      try {
-        setErrorMessage('');
-        await loadHomeOrders();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '커뮤니티 홈 설정을 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('커뮤니티 홈 설정을 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, [initialData, initialError, siteName]);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="커뮤니티 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
     );
   }
 

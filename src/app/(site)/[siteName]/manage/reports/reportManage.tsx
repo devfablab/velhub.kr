@@ -432,7 +432,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
 
   const [reports, setReports] = useState<ReportItem[]>(initialData?.reports ?? []);
   const [showPast, setShowPast] = useState(false);
-  const [loading, setLoading] = useState(!initialData && !initialError);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [isListError, setIsListError] = useState(Boolean(initialError));
   const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null);
@@ -447,7 +447,7 @@ export default function ReportManage({ targetType, initialData, initialError }: 
   const [finalReport, setFinalReport] = useState<ReportItem | null>(null);
   const [finalSaving, setFinalSaving] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const hasInitialData = useRef(Boolean(initialData || initialError));
+  const hasInitialData = useRef(true);
 
   const statusOptions = useMemo(() => getStatusOptions(targetType), [targetType]);
 

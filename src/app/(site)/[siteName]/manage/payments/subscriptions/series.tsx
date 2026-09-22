@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
@@ -25,7 +25,6 @@ import {
 } from '@mui/material';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/payments/currencyInput';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import styles from '@/app/manage.module.sass';
 
 type Subscriber = {
@@ -60,7 +59,7 @@ type BoardSeriesGroup = {
   series: SeriesSubscriptionItem[];
 };
 
-type SeriesSubscriptionsResponse = {
+export type SeriesSubscriptionsResponse = {
   site?: {
     id: string;
     siteKey: string;
@@ -164,61 +163,28 @@ function getAvailableSeriesRows(boards: BoardSeriesGroup[]) {
   return rows;
 }
 
-export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanceMessages?: string[] }) {
+export default function SeriesSubscriptions({
+  guidanceMessages = [],
+  initialData,
+  initialError,
+}: {
+  guidanceMessages?: string[];
+  initialData: SeriesSubscriptionsResponse | null;
+  initialError: string | null;
+}) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [siteType, setSiteType] = useState('');
-  const [boards, setBoards] = useState<BoardSeriesGroup[]>([]);
-  const [emptyMessage, setEmptyMessage] = useState('');
+  const [siteType] = useState(initialData?.site?.siteType ?? '');
+  const [boards, setBoards] = useState<BoardSeriesGroup[]>(initialData?.boards ?? []);
+  const [emptyMessage] = useState(initialData?.emptyMessage ?? '');
   const [editingRow, setEditingRow] = useState<EditingRow>(null);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError ?? '');
   const [successMessage, setSuccessMessage] = useState('');
 
   const enabledSeriesRows = getEnabledSeriesRows(boards);
   const availableSeriesRows = getAvailableSeriesRows(boards);
-
-  async function loadSeriesSubscriptions() {
-    try {
-      setErrorMessage('');
-      setSuccessMessage('');
-
-      const response = await fetch(`/api/manage/payments/subscriptions/series?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as SeriesSubscriptionsResponse;
-
-      if (!response.ok) {
-        throw new Error(result.error ?? '연재 구독 정보를 불러오지 못했습니다.');
-      }
-
-      setSiteType(result.site?.siteType ?? '');
-      setBoards(result.boards ?? []);
-      setEmptyMessage(result.emptyMessage ?? '');
-    } catch (unknownError) {
-      if (unknownError instanceof Error) {
-        setErrorMessage(unknownError.message || '연재 구독 정보를 불러오지 못했습니다.');
-      } else {
-        setErrorMessage('연재 구독 정보를 불러오지 못했습니다.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadSeriesSubscriptions();
-  }, [siteName]);
 
   function findBoard(boardId: string) {
     return boards.find((board) => board.id === boardId) ?? null;
@@ -620,16 +586,6 @@ export default function SeriesSubscriptions({ guidanceMessages = [] }: { guidanc
           </button>
         </Stack>
       </Stack>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={`paper ${styles.paper}`}>
-        <div className="loading-container">
-          <LoadingIndicator />
-        </div>
-      </div>
     );
   }
 

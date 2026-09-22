@@ -276,7 +276,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const [deleteMode, setDeleteMode] = useState<DeleteMode>(null);
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [deleteTarget, setDeleteTarget] = useState<PostRow | null>(null);
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOrderingBoards, setIsOrderingBoards] = useState(false);
   const [isBoardOrderChanged, setIsBoardOrderChanged] = useState(false);
@@ -318,7 +317,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }, [currentPageIds, selectedIds]);
 
   useEffect(() => {
-    if (reloadKey === 0 && initialData) return;
+    if (reloadKey === 0) return;
     async function loadData() {
       try {
         if (hasLoaded) {
@@ -461,7 +460,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
         }
       } finally {
         setHasLoaded(true);
-        setIsLoading(false);
         setIsFetching(false);
       }
     }
@@ -474,10 +472,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   }, [posts]);
 
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
     if (currentPage > totalPage) {
       const nextSearchParams = new URLSearchParams(searchParams.toString());
 
@@ -490,7 +484,7 @@ export default function Opt({ initialData, initialError }: OptProps) {
       const nextQuery = nextSearchParams.toString();
       router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
     }
-  }, [currentPage, isLoading, pathname, router, searchParams, totalPage]);
+  }, [currentPage, pathname, router, searchParams, totalPage]);
 
   function getListHref({ page, size, filter }: { page?: number; size?: number; filter?: 'all' | 'deleted' }) {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
@@ -759,20 +753,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsDeleting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className={`container ${styles.container}`}>
-        <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-          <div className={`paper ${styles.paper}`}>
-            <div className="loading-container">
-              <LoadingIndicator />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   if (siteType === 'community') {

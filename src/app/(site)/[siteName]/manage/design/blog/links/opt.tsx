@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { closestCenter, DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -27,7 +27,6 @@ import {
   useTheme,
 } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -182,7 +181,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const siteName = normalizeText(params.siteName);
 
   const [items, setItems] = useState<LinkItem[]>(Array.isArray(initialData?.links) ? toLinkItems(initialData.links) : []);
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const theme = useTheme();
@@ -196,42 +194,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
       },
     }),
   );
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-    async function loadLinks() {
-      try {
-        const response = await fetch(`/api/manage/design/blog/links?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as LinkResponse | { error?: string };
-
-        if (!response.ok) {
-          throw new Error(
-            'error' in result ? result.error || '소셜 링크를 불러오지 못했습니다.' : '소셜 링크를 불러오지 못했습니다.',
-          );
-        }
-
-        if (!('links' in result) || !Array.isArray(result.links)) {
-          throw new Error('소셜 링크를 불러오지 못했습니다.');
-        }
-
-        setItems(toLinkItems(result.links));
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '소셜 링크를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('소셜 링크를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadLinks();
-  }, [initialData, initialError, siteName]);
 
   const sortableIds = useMemo(() => items.map((item) => item.localId), [items]);
 
@@ -350,22 +312,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="블로그 디자인 설정" pageBack={`/${siteName}/manage`} menu="design">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   return (

@@ -22,7 +22,6 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -31,7 +30,7 @@ type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onS
 
 type CommentProvider = 'none' | 'giscus' | 'disqus' | 'velhub';
 
-type StatusResponse = {
+export type StatusResponse = {
   hasBoard: boolean;
   boardName: string | null;
   commentProvider: CommentProvider;
@@ -63,7 +62,7 @@ type SeriesRow = {
   user_id: string | null;
 };
 
-type ContentResponse = {
+export type ContentResponse = {
   content?: {
     id: string;
     slug: string;
@@ -103,12 +102,12 @@ type EditorBlobImage = {
   previewUrl: string;
 };
 
-type CategoryListResponse = {
+export type CategoryListResponse = {
   categories?: CategoryRow[];
   error?: string;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: SeriesRow[];
   error?: string;
 };
@@ -205,7 +204,7 @@ async function convertImageToWebpFile(file: File, maxSizeMessage: string) {
   throw new Error(maxSizeMessage);
 }
 
-export default function Opt() {
+export default function Opt({ initialStatus, initialContent, initialCategory, initialSeries, initialError }: { initialStatus?: StatusResponse | null, initialContent?: ContentResponse | null, initialCategory?: CategoryListResponse | null, initialSeries?: SeriesListResponse | null, initialError?: string | null }) {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -220,28 +219,29 @@ export default function Opt() {
   const fileInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
-  const [subject, setSubject] = useState('');
-  const [summary, setSummary] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [contentMarkdown, setContentMarkdown] = useState('');
+  const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
+  const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
+  const [contentHtml, setContentHtml] = useState(initialContent?.content?.content_html ?? '');
+  const [contentMarkdown, setContentMarkdown] = useState(initialContent?.content?.content_markdown ?? '');
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
-  const [thumbnailImage, setThumbnailImage] = useState('');
+  const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
-  const [hasBoard, setHasBoard] = useState(false);
-  const [boardName, setBoardName] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CategoryRow[]>([]);
-  const [seriesList, setSeriesList] = useState<SeriesRow[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
+  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(initialContent?.content?.thumbnail_height ?? null);
+  const [hasBoard, setHasBoard] = useState(initialStatus?.hasBoard || false);
+  const [boardName] = useState<string | null>(initialStatus?.boardName ?? null);
+  const [categories] = useState<CategoryRow[]>(initialCategory?.categories ?? []);
+  const [seriesList] = useState<SeriesRow[]>(initialSeries?.series ?? []);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    initialContent?.categories?.map((category) => category.category_key) ?? [],
+  );
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
   const [isSeriesLocked, setIsSeriesLocked] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
-  const [commentProvider, setCommentProvider] = useState<CommentProvider>('none');
-  const [isComment, setIsComment] = useState(false);
+  const [commentProvider] = useState<CommentProvider>(initialStatus?.commentProvider ?? 'none');
+  const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? false);
 
   useEffect(() => {
     editorBlobImagesReference.current = editorBlobImages;
@@ -254,116 +254,6 @@ export default function Opt() {
     };
   }, []);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setErrorMessage('');
-        setIsLoading(true);
-
-        const statusResponse = await fetch(`/api/manage/contents/blog-posts/status?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const statusResult = (await statusResponse.json()) as StatusResponse | { error?: string };
-
-        if (!statusResponse.ok) {
-          throw new Error(
-            'error' in statusResult
-              ? statusResult.error || '블로그 상태를 확인하지 못했습니다.'
-              : '블로그 상태를 확인하지 못했습니다.',
-          );
-        }
-
-        if (!('hasBoard' in statusResult) || !('boardName' in statusResult)) {
-          throw new Error('블로그 상태를 확인하지 못했습니다.');
-        }
-
-        setHasBoard(statusResult.hasBoard);
-        setBoardName(statusResult.boardName);
-        setCommentProvider(statusResult.commentProvider);
-
-        if (!statusResult.hasBoard || !statusResult.boardName) {
-          return;
-        }
-
-        const [contentResponse, categoryResponse, seriesResponse] = await Promise.all([
-          fetch(`/api/boards/${statusResult.boardName}/${contentId}?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-          fetch(`/api/boards/${statusResult.boardName}/category?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-          fetch(`/api/boards/${statusResult.boardName}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          }),
-        ]);
-
-        const contentResult = (await contentResponse.json()) as ContentResponse;
-        const categoryResult = (await categoryResponse.json()) as CategoryListResponse;
-        const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-        if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '글 정보를 불러오지 못했습니다.');
-        }
-
-        if (!contentResult.content) {
-          throw new Error('글 정보를 불러오지 못했습니다.');
-        }
-
-        if (!categoryResponse.ok) {
-          throw new Error(categoryResult.error ?? '카테고리 목록을 불러오지 못했습니다.');
-        }
-
-        if (!seriesResponse.ok) {
-          throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-        }
-
-        setSubject(contentResult.content.subject);
-        setSummary(contentResult.content.summary || '');
-        setContentHtml(contentResult.content.content_html);
-        setContentMarkdown(contentResult.content.content_markdown || '');
-        setThumbnailImage(contentResult.content.thumbnail_image || '');
-        setThumbnailWidth(contentResult.content.thumbnail_width ?? null);
-        setThumbnailHeight(contentResult.content.thumbnail_height ?? null);
-        setIsComment(statusResult.commentProvider === 'none' ? false : contentResult.content.is_comment);
-        setSelectedCategories(
-          Array.isArray(contentResult.categories)
-            ? contentResult.categories.map((category) => category.category_key)
-            : [],
-        );
-        setCategories(Array.isArray(categoryResult.categories) ? categoryResult.categories : []);
-        setSeriesList(Array.isArray(seriesResult.series) ? seriesResult.series : []);
-        setSelectedSeriesKey(contentResult.series?.series_key || '');
-        setIsSeriesLocked(Boolean(contentResult.series?.series_key));
-        if (contentResult.content.thumbnail_image) {
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-          const imagePath = contentResult.content.thumbnail_image;
-
-          if (supabaseUrl && imagePath) {
-            setThumbnailImageUrl(`${supabaseUrl}/storage/v1/object/public/og-image/${imagePath}`);
-          } else {
-            setThumbnailImageUrl('');
-          }
-        } else {
-          setThumbnailImageUrl('');
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadData();
-  }, [contentId, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -591,7 +481,7 @@ export default function Opt() {
   async function handleSubmit(event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmitting || isLoading) {
+    if (isSubmitting) {
       return;
     }
 
@@ -644,22 +534,6 @@ export default function Opt() {
       }
       setIsSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage/contents/posts/${contentId}`} menu="contents">
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   if (!hasBoard) {

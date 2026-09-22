@@ -37,7 +37,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { ko } from 'date-fns/locale';
 import { formatDate, normalizeText } from '@/lib/utils';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -219,7 +218,7 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
   const siteName = normalizeText(params.siteName).toLowerCase();
 
   const [users, setUsers] = useState<UserRow[]>(Array.isArray(initialUsers?.users) ? initialUsers.users : []);
-  const [levels, setLevels] = useState<ManageLevelRow[]>(Array.isArray(initialLevels?.levels) ? initialLevels.levels : []);
+  const [levels] = useState<ManageLevelRow[]>(Array.isArray(initialLevels?.levels) ? initialLevels.levels : []);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   const [searchMethod, setSearchMethod] = useState<SearchMethod>('nickname');
@@ -240,7 +239,6 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
   const [appliedSearch, setAppliedSearch] = useState<AppliedSearch>(null);
   const [selectedLevelId, setSelectedLevelId] = useState('');
 
-  const [isLoading, setIsLoading] = useState(!initialUsers && !initialLevels && !initialError);
   const [isLevelChanging, setIsLevelChanging] = useState(false);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
   const [isLevelChangeDialogOpen, setIsLevelChangeDialogOpen] = useState(false);
@@ -276,46 +274,6 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
     setUsers(nextUsers);
     setSelectedUserIds((previousUserIds) => previousUserIds.filter((userId) => selectableUserIdSet.has(userId)));
   }
-
-  async function loadLevels() {
-    const response = await fetch(`/api/manage/members/levels?siteName=${siteName}`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    const result = (await response.json()) as LevelsResponse;
-
-    if (!response.ok) {
-      throw new Error(result.error ?? '등급 정보를 불러오지 못했습니다.');
-    }
-
-    const nextLevels = Array.isArray(result.levels) ? result.levels : [];
-    setLevels(nextLevels);
-  }
-
-  async function loadAll() {
-    setErrorMessage('');
-    await Promise.all([loadUsers(), loadLevels()]);
-  }
-
-  useEffect(() => {
-    if (initialUsers || initialLevels || initialError) return;
-    async function init() {
-      try {
-        await loadAll();
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '멤버 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('멤버 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void init();
-  }, [initialError, initialLevels, initialUsers, siteName]);
 
   const selectableLevels = useMemo(() => {
     const sortedLevels = [...levels].sort((a, b) => a.lv - b.lv);
@@ -755,22 +713,6 @@ export default function Opt({ initialUsers, initialLevels, initialError }: OptPr
     } finally {
       setIsActionSubmitting(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="멤버 관리" pageBack={`/${siteName}/manage`} menu="members">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   const searchContent = (

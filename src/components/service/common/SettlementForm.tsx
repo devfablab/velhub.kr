@@ -47,7 +47,7 @@ type Settlement = {
   status: string | null;
 };
 
-type SettlementResponse = {
+export type SettlementResponse = {
   exists: boolean;
   identity: Identity | null;
   settlement: Settlement | null;
@@ -177,15 +177,23 @@ function isMinorAge(birthDate: string | null | undefined) {
   return age < 19;
 }
 
-export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [identity, setIdentity] = useState<Identity | null>(null);
-  const [settlement, setSettlement] = useState<Settlement | null>(null);
-  const [paymentEmail, setPaymentEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+export default function SettlementForm({
+  onSuccess,
+  initialData,
+  initialError = '',
+}: {
+  onSuccess?: () => void;
+  initialData?: SettlementResponse | null;
+  initialError?: string;
+}) {
+  const [identity, setIdentity] = useState<Identity | null>(initialData?.identity ?? null);
+  const [settlement, setSettlement] = useState<Settlement | null>(initialData?.settlement ?? null);
+  const [paymentEmail, setPaymentEmail] = useState(initialData?.paymentEmail ?? '');
+  const [isLoading, setIsLoading] = useState(initialData === undefined && !initialError);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError);
   const [settlementAgreementOpen, setSettlementAgreementOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(Boolean(initialData?.identity && !initialData?.settlement));
   const [settlementType, setSettlementType] = useState<SettlementType>('individual');
   const [residentSuffix, setResidentSuffix] = useState('');
   const [residentSuffixConfirm, setResidentSuffixConfirm] = useState('');
@@ -230,8 +238,11 @@ export default function SettlementForm({ onSuccess }: { onSuccess?: () => void }
   };
 
   useEffect(() => {
+    if (initialData !== undefined || initialError) {
+      return;
+    }
     void load();
-  }, []);
+  }, [initialData, initialError]);
 
   const handleBusinessLicenseChange = (event: ChangeEvent<HTMLInputElement>) => {
     setBusinessLicenseFile(event.target.files?.[0] ?? null);

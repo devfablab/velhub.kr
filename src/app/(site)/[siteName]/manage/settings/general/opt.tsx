@@ -35,7 +35,6 @@ import { formatDate, formatDateTimeFull, normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import PopupMessage from '@/components/PopupMessage';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
@@ -167,7 +166,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName);
 
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [siteInfo, setSiteInfo] = useState<SiteInfoInfo | null>(initialData?.siteInfo ?? null);
   const [sites, setSites] = useState<SitesInfo | null>(initialData?.sites ?? null);
   const [blogType, setBlogType] = useState<string | null>(initialData?.blogType ?? null);
@@ -209,47 +207,10 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const isMobile = !isNotMobile;
 
   useEffect(() => {
-    if (initialData || initialError) {
-      if (initialData?.siteInfo) {
-        applyColorSet(initialData.siteInfo.theme_type);
-      }
-      return;
+    if (initialData?.siteInfo) {
+      applyColorSet(initialData.siteInfo.theme_type);
     }
-    async function loadInfo() {
-      try {
-        const response = await fetch(`/api/info/general/site/${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '사이트 정보를 불러오지 못했습니다.');
-        }
-
-        setSiteInfo(result.siteInfo);
-        setSites(result.sites);
-        setBlogType(result.blogType ?? null);
-        setHasOwnerDomainFeature(Boolean(result.hasOwnerDomainFeature));
-        applyColorSet(result.siteInfo.theme_type);
-        setProfilePictureUrl(result.profilePictureUrl ?? '');
-        setProfileLogoUrl(result.profileLogoUrl ?? '');
-        setSiteOgImageUrl(result.siteOgImageUrl ?? '');
-        setPromotionImageUrl(result.promotionImageUrl ?? '');
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '사이트 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('사이트 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadInfo();
-  }, [initialData, initialError, siteName]);
+  }, [initialData]);
 
   function resetSiteKeyCheck() {
     setCheckedSiteKey('');
@@ -1027,22 +988,6 @@ export default function Opt({ initialData, initialError }: OptProps) {
   useEffect(() => {
     setBaseUrl(window.location.origin);
   }, []);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="사이트 정보" pageBack={`/${siteName}/manage`} menu="settings">
-        <div className={`container ${styles.container}`}>
-          <div className={`${styles.content} content`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   if (!siteInfo) {
     return (

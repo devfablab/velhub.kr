@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, usePathname } from 'next/navigation';
 import ArrowBackIosNewRoundedIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
@@ -35,11 +35,9 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { detectAdult } from '@/lib/service/detectAdult.client';
 import { getSupabaseBrowser } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { useAuthState } from '@/components/auth/AuthStateProvider';
 import AppIconAvatar from '@/components/custom-ui/AppIconAvatar';
 import BlogSearch from '@/components/header-groups/site/BlogSearch';
 import CommunitySearch from '@/components/header-groups/site/CommunitySearch';
@@ -520,13 +518,11 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   const isMobile = !isNotMobile;
   const breadcrumbs = createBreadcrumbItems(pathname);
 
-  const { isReady } = useAuthState();
   const { themeMode, setThemeMode } = useThemeMode();
   const initialHeader = useSiteHeader();
-  const hasInitialHeader = useRef(Boolean(initialHeader));
   const [siteLabel, setSiteLabel] = useState(initialHeader?.siteLabel || initialHeader?.siteName || '');
   const [profilePictureUrl, setProfilePictureUrl] = useState<string | null>(initialHeader?.profilePictureUrl ?? null);
-  const [isAdult, setIsAdult] = useState<boolean>(false);
+  const [isAdult] = useState<boolean>(initialHeader?.isAdult ?? false);
 
   const [isMounted, setIsMounted] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
@@ -576,82 +572,11 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
   }, [isMounted, themeMode]);
 
   useEffect(() => {
-    if (hasInitialHeader.current) {
-      hasInitialHeader.current = false;
-      if (initialHeader) {
-        applyColorSet(initialHeader.themeType);
-        applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
-      }
-      void detectAdult(siteName).then(setIsAdult);
-      return;
+    if (initialHeader) {
+      applyColorSet(initialHeader.themeType);
+      applyBlogFontSettings(initialHeader.siteType, initialHeader.blogFontSettings);
     }
-    async function loadHeader() {
-      if (!siteName) {
-        return;
-      }
-
-      const response = await fetch(`/api/header/site?siteName=${siteName}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      const result = (await response.json()) as HeaderResponse | { error?: string };
-
-      if (!response.ok || !('isLoggedIn' in result)) {
-        clearBlogFontSettings();
-        setSiteType(null);
-        setUserProfile({
-          name: null,
-          email: null,
-          avatarUrl: null,
-          isLoggedIn: false,
-          globalRole: null,
-          siteRole: null,
-          nickname: null,
-          isApproval: null,
-          invite: false,
-          join: false,
-          isAuthor: false,
-          creatorHandleName: null,
-          userHandleName: null,
-          hasAffettoMyPosts: false,
-        });
-        setSiteLabel('');
-        setProfilePictureUrl('');
-        return;
-      }
-
-      applyColorSet(result.themeType);
-      applyBlogFontSettings(result.siteType, result.blogFontSettings);
-      setSiteType(result.siteType);
-
-      setUserProfile({
-        name: result.userName,
-        email: result.email,
-        avatarUrl: result.avatar,
-        isLoggedIn: result.isLoggedIn,
-        globalRole: result.globalRole,
-        siteRole: result.siteRole,
-        nickname: result.nickname,
-        isApproval: result.isApproval,
-        invite: result.invite,
-        join: result.join,
-        isAuthor: result.isAuthor,
-        creatorHandleName: result.creatorHandleName,
-        userHandleName: result.userHandleName,
-        hasAffettoMyPosts: result.hasAffettoMyPosts,
-      });
-      setSiteLabel(result.siteLabel || result.siteName || '');
-      setProfilePictureUrl(result.profilePictureUrl);
-      setIsAdult(await detectAdult(siteName));
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    void loadHeader();
-  }, [isReady, siteName]);
+  }, [initialHeader]);
 
   function handleOpenProfileDrawer() {
     setIsProfileDrawerOpen(true);
@@ -774,7 +699,7 @@ export default function Container({ pageTitle, pageBack, pageEnterance, menu, ch
 
   const tabMenuItems = getTabMenuItems(menu, siteName, isBlog);
 
-  if (!isMounted || !isReady) {
+  if (!isMounted) {
     return null;
   }
 

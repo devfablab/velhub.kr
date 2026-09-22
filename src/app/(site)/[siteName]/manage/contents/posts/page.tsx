@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { normalizeText } from '@/lib/utils';
-import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 import Container from '../../menu';
 import Opt, { type BoardContentsResponse, type BoardsResponse, type InitialPostsData } from './opt';
+import { getSiteApiData } from '@/app/(site)/getSiteApiData';
 
 type RouteContext = {
   params: Promise<{
@@ -68,7 +68,11 @@ export default async function Page(context: SearchContext) {
 
   return (
     <Container pageTitle="콘텐츠 관리" pageBack={`/${siteName}/manage`} menu="contents">
-      <Opt initialData={initialData} initialError={initialError} />
+      <Opt
+        key={`${page}:${size}:${filter}`}
+        initialData={initialData}
+        initialError={initialError}
+      />
     </Container>
   );
 }

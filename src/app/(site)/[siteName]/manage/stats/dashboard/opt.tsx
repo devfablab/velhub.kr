@@ -1,11 +1,10 @@
 'use client';
 
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../menu';
 import styles from '@/app/manage.module.sass';
 
@@ -102,64 +101,8 @@ export default function Opt({ initialData, initialError }: OptProps) {
   const params = useParams();
   const siteName = normalizeText(params.siteName).toLowerCase();
 
-  const [isLoading, setIsLoading] = useState(!initialData && !initialError);
   const [errorMessage, setErrorMessage] = useState(initialError);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(initialData);
-
-  useEffect(() => {
-    if (initialData || initialError) return;
-
-    async function loadDashboard() {
-      try {
-        setErrorMessage('');
-
-        const response = await fetch(`/api/manage/stats/dashboard?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const result = (await response.json()) as DashboardResponse;
-
-        if (!response.ok) {
-          throw new Error(result.error ?? '통계 정보를 불러오지 못했습니다.');
-        }
-
-        setDashboard(result);
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '통계 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('통계 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    if (!siteName) {
-      setErrorMessage('siteName이 유효하지 않습니다.');
-      setIsLoading(false);
-      return;
-    }
-
-    void loadDashboard();
-  }, [siteName]);
-
-  if (isLoading) {
-    return (
-      <Container pageTitle="통계" pageBack={`/${siteName}/manage`}>
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
-  }
 
   if (errorMessage || !dashboard?.site || !dashboard.visits) {
     return (

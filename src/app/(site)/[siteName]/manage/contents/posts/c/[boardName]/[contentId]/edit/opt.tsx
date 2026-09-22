@@ -27,14 +27,13 @@ import { normalizeText } from '@/lib/utils';
 import Anchor from '@/components/Anchor';
 import { IOSSwitch } from '@/components/custom-ui/CustomizedSwitches';
 import ToastEditor from '@/components/editor/ToastEditor';
-import { LoadingIndicator } from '@/components/LoadingIndicator';
 import Container from '../../../../../../menu';
 import styles from '@/app/manage.module.sass';
 
 type InputChangeEvent = Parameters<NonNullable<JSX.IntrinsicElements['input']['onChange']>>[0];
 type FormSubmitEvent = Parameters<NonNullable<JSX.IntrinsicElements['form']['onSubmit']>>[0];
 
-type ContentResponse = {
+export type ContentResponse = {
   board?: {
     id: string;
     board_key: string;
@@ -99,7 +98,7 @@ type ContentResponse = {
   error?: string;
 };
 
-type SeriesListResponse = {
+export type SeriesListResponse = {
   series?: Array<{
     id: string;
     series_key: string;
@@ -109,7 +108,7 @@ type SeriesListResponse = {
   error?: string;
 };
 
-type PrefixListResponse = {
+export type PrefixListResponse = {
   prefixes?: Array<{
     id: string;
     prefix_label: string;
@@ -275,7 +274,7 @@ function getYoutubeId(value: string) {
   return '';
 }
 
-export default function Opt() {
+export default function Opt({ initialContent, initialSeries, initialPrefix, initialError }: { initialContent: ContentResponse | null; initialSeries: SeriesListResponse | null; initialPrefix: PrefixListResponse | null; initialError: string }) {
   const router = useRouter();
   const params = useParams();
   const siteName = normalizeText(params.siteName);
@@ -290,44 +289,53 @@ export default function Opt() {
   const galleryInputReference = useRef<HTMLInputElement | null>(null);
   const editorBlobImagesReference = useRef<EditorBlobImage[]>([]);
 
-  const [boardType, setBoardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>('basic');
-  const [postType, setPostType] = useState<'none' | 'prefix' | 'series'>('none');
-  const [markdownStatus, setMarkdownStatus] = useState<string | null>('markdown_default');
+  const [boardType] = useState<'basic' | 'gallery' | 'youtube' | 'feed'>(
+    initialContent?.board?.board_type === 'page' ? 'basic' : (initialContent?.board?.board_type ?? 'basic'),
+  );
+  const [postType] = useState<'none' | 'prefix' | 'series'>(initialContent?.board?.post_type ?? 'none');
+  const [markdownStatus] = useState<string | null>(initialContent?.board?.markdown_status ?? 'markdown_default');
   const [seriesList, setSeriesList] = useState<
     Array<{ id: string; series_key: string; series_label: string; is_completed: boolean }>
-  >([]);
-  const [prefixList, setPrefixList] = useState<Array<{ id: string; prefix_label: string }>>([]);
-  const [selectedSeriesKey, setSelectedSeriesKey] = useState('');
-  const [selectedPrefixId, setSelectedPrefixId] = useState('');
-  const [isClosed, setIsClosed] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [isAuthor, setIsAuthor] = useState(false);
-  const [isStaff, setIsStaff] = useState(false);
-  const [subject, setSubject] = useState('');
-  const [summary, setSummary] = useState('');
-  const [contentHtml, setContentHtml] = useState('');
-  const [contentMarkdown, setContentMarkdown] = useState('');
-  const [contentSimple, setContentSimple] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [youtubeCreatedAt, setYoutubeCreatedAt] = useState<Date | null>(null);
-  const [thumbnailImage, setThumbnailImage] = useState('');
-  const [thumbnailImageUrl, setThumbnailImageUrl] = useState('');
-  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(null);
-  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null);
-  const [images, setImages] = useState<PostImageRow[]>([]);
+  >(initialSeries?.series ?? []);
+  const [prefixList] = useState<Array<{ id: string; prefix_label: string }>>(initialPrefix?.prefixes ?? []);
+  const [selectedSeriesKey, setSelectedSeriesKey] = useState(initialContent?.series?.series_key ?? '');
+  const [selectedPrefixId, setSelectedPrefixId] = useState(initialContent?.content?.prefix_id ?? '');
+  const [isClosed, setIsClosed] = useState(initialContent?.content?.is_closed || false);
+  const [isLocked, setIsLocked] = useState(initialContent?.content?.is_locked || false);
+  const [isAuthor, setIsAuthor] = useState(initialContent?.isAuthor || false);
+  const [isStaff, setIsStaff] = useState(initialContent?.isStaff || initialContent?.canManageContent || false);
+  const [subject, setSubject] = useState(initialContent?.content?.subject ?? '');
+  const [summary, setSummary] = useState(initialContent?.content?.summary ?? '');
+  const [contentHtml, setContentHtml] = useState(initialContent?.content?.content_html ?? '');
+  const [contentMarkdown, setContentMarkdown] = useState(initialContent?.content?.content_markdown ?? '');
+  const [contentSimple, setContentSimple] = useState(initialContent?.content?.content_simple ?? '');
+  const [youtubeUrl, setYoutubeUrl] = useState(initialContent?.content?.youtube_url ?? '');
+  const [youtubeCreatedAt, setYoutubeCreatedAt] = useState<Date | null>(
+    initialContent?.content?.youtube_created_at ? new Date(initialContent.content.youtube_created_at) : null,
+  );
+  const [thumbnailImage, setThumbnailImage] = useState(initialContent?.content?.thumbnail_image ?? '');
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState(initialContent?.content?.thumbnail_image_url ?? '');
+  const [thumbnailWidth, setThumbnailWidth] = useState<number | null>(initialContent?.content?.thumbnail_width ?? null);
+  const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(initialContent?.content?.thumbnail_height ?? null);
+  const [images, setImages] = useState<PostImageRow[]>(
+    (initialContent?.content?.images ?? []).map((image) => ({ ...image, url: image.url ?? '' })),
+  );
   const [editorBlobImages, setEditorBlobImages] = useState<EditorBlobImage[]>([]);
-  const [isPollEnabled, setIsPollEnabled] = useState(false);
+  const [isPollEnabled, setIsPollEnabled] = useState(Boolean(initialContent?.content?.poll));
   const [isPollLocked, setIsPollLocked] = useState(false);
-  const [poll, setPoll] = useState<PollState>(EMPTY_POLL);
-  const [isComment, setIsComment] = useState(true);
-  const [isPin, setIsPin] = useState(false);
-  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>('draft');
-  const [isLoading, setIsLoading] = useState(true);
+  const [poll, setPoll] = useState<PollState>(
+    initialContent?.content?.poll
+      ? { question: initialContent.content.poll.question, options: initialContent.content.poll.options.map((option) => option.label) }
+      : EMPTY_POLL,
+  );
+  const [isComment, setIsComment] = useState(initialContent?.content?.is_comment ?? true);
+  const [isPin, setIsPin] = useState(initialContent?.content?.is_pin ?? false);
+  const [publishedStatus, setPublishedStatus] = useState<'draft' | 'published'>(initialContent?.content?.published_status ?? 'draft');
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
   const [isSubmittingSave, setIsSubmittingSave] = useState(false);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState(initialError || '');
 
   const isBasicBoard = boardType === 'basic';
   const isGalleryBoard = boardType === 'gallery';
@@ -346,122 +354,6 @@ export default function Opt() {
     };
   }, []);
 
-  useEffect(() => {
-    async function loadContentData() {
-      try {
-        setErrorMessage('');
-
-        const contentResponse = await fetch(`/api/boards/${boardName}/${contentId}?siteName=${siteName}`, {
-          method: 'GET',
-          credentials: 'include',
-        });
-
-        const contentResult = (await contentResponse.json()) as ContentResponse;
-
-        if (!contentResponse.ok) {
-          throw new Error(contentResult.error ?? '글 정보를 불러오지 못했습니다.');
-        }
-
-        const nextBoardType = contentResult.board?.board_type ?? 'basic';
-        const nextPostType = contentResult.board?.post_type ?? 'none';
-        const nextMarkdownStatus = contentResult.board?.markdown_status ?? 'markdown_default';
-        const nextContent = contentResult.content;
-
-        if (!nextContent || nextBoardType === 'page') {
-          throw new Error('글 정보를 불러오지 못했습니다.');
-        }
-
-        setBoardType(nextBoardType);
-        setPostType(nextPostType);
-        setMarkdownStatus(nextMarkdownStatus);
-        setIsAuthor(contentResult.isAuthor);
-        setIsStaff(contentResult.isStaff || contentResult.canManageContent === true);
-        setIsClosed(nextContent.is_closed);
-        setIsLocked(nextContent.is_locked);
-        setSubject(nextContent.subject ?? '');
-        setSummary(nextContent.summary ?? '');
-        setContentHtml(nextContent.content_html ?? '');
-        setContentMarkdown(nextContent.content_markdown ?? '');
-        setContentSimple(nextContent.content_simple ?? '');
-        setYoutubeUrl(nextContent.youtube_url ?? '');
-        setYoutubeCreatedAt(nextContent.youtube_created_at ? new Date(nextContent.youtube_created_at) : null);
-        setThumbnailImage(nextContent.thumbnail_image ?? '');
-        setThumbnailImageUrl(nextContent.thumbnail_image_url ?? '');
-        setThumbnailWidth(nextContent.thumbnail_width ?? null);
-        setThumbnailHeight(nextContent.thumbnail_height ?? null);
-        setImages(
-          Array.isArray(nextContent.images)
-            ? nextContent.images.map((image) => ({
-                path: image.path,
-                url: normalizeText(image.url),
-                width: image.width,
-                height: image.height,
-              }))
-            : [],
-        );
-        setPublishedStatus(nextContent.published_status ?? 'draft');
-        setIsComment(nextContent.is_comment !== false);
-        setIsPin(nextContent.is_pin === true);
-
-        if (nextPostType === 'series') {
-          const seriesResponse = await fetch(`/api/boards/${boardName}/series?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const seriesResult = (await seriesResponse.json()) as SeriesListResponse;
-
-          if (!seriesResponse.ok) {
-            throw new Error(seriesResult.error ?? '연재 목록을 불러오지 못했습니다.');
-          }
-
-          const nextSeriesList = Array.isArray(seriesResult.series) ? seriesResult.series : [];
-          setSeriesList(nextSeriesList);
-          setSelectedSeriesKey(contentResult.series?.series_key ?? '');
-        }
-
-        if (nextPostType === 'prefix') {
-          const prefixResponse = await fetch(`/api/boards/${boardName}/prefix?siteName=${siteName}`, {
-            method: 'GET',
-            credentials: 'include',
-          });
-
-          const prefixResult = (await prefixResponse.json()) as PrefixListResponse;
-
-          if (!prefixResponse.ok) {
-            throw new Error(prefixResult.error ?? '말머리 목록을 불러오지 못했습니다.');
-          }
-
-          const nextPrefixList = Array.isArray(prefixResult.prefixes) ? prefixResult.prefixes : [];
-          setPrefixList(nextPrefixList);
-          setSelectedPrefixId(nextContent.prefix_id ?? '');
-        }
-
-        if (nextContent.poll) {
-          setIsPollEnabled(true);
-          setIsPollLocked(nextContent.published_status === 'published');
-          setPoll({
-            question: nextContent.poll.question,
-            options: [0, 1, 2, 3, 4].map((index) => nextContent.poll?.options[index]?.label ?? ''),
-          });
-        } else {
-          setIsPollEnabled(false);
-          setIsPollLocked(nextContent.published_status === 'published');
-          setPoll(EMPTY_POLL);
-        }
-      } catch (unknownError) {
-        if (unknownError instanceof Error) {
-          setErrorMessage(unknownError.message || '글 정보를 불러오지 못했습니다.');
-        } else {
-          setErrorMessage('글 정보를 불러오지 못했습니다.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    void loadContentData();
-  }, [boardName, contentId, siteName]);
 
   function handleSubjectChange(event: InputChangeEvent) {
     setSubject(event.currentTarget.value);
@@ -767,7 +659,7 @@ export default function Opt() {
   async function handleSubmit(action: 'draft' | 'publish' | 'update', event: FormSubmitEvent) {
     event.preventDefault();
 
-    if (isSubmittingDraft || isSubmittingSave || isLoading || isUploadingThumbnail || isUploadingImages) {
+    if (isSubmittingDraft || isSubmittingSave || isUploadingThumbnail || isUploadingImages) {
       return;
     }
 
@@ -843,26 +735,6 @@ export default function Opt() {
       setIsSubmittingDraft(false);
       setIsSubmittingSave(false);
     }
-  }
-
-  if (isLoading) {
-    return (
-      <Container
-        pageTitle="콘텐츠 관리"
-        pageBack={`/${siteName}/manage/contents/posts/c/${boardName}/${contentId}`}
-        menu="contents"
-      >
-        <div className={`container ${styles.container}`}>
-          <div className={`content ${styles.content} ${styles['content-manage']} ${styles.Content}`}>
-            <div className={`paper ${styles.paper}`}>
-              <div className="loading-container">
-                <LoadingIndicator />
-              </div>
-            </div>
-          </div>
-        </div>
-      </Container>
-    );
   }
 
   const canEdit = (isAuthor && !isClosed) || (isStaff && !isLocked);
